@@ -19,8 +19,8 @@ INSTALLED_APPS = (
     'django_filters',            # for filtering rest endpoints
 
     # Your apps
-    'uobtheatre-api.users',
-    'uobtheatre-api.productions',
+    'uobtheatre.users',
+    'uobtheatre.productions',
 
 )
 
@@ -36,7 +36,7 @@ MIDDLEWARE = (
 )
 
 ALLOWED_HOSTS = ["*"]
-ROOT_URLCONF = 'uobtheatre-api.urls'
+ROOT_URLCONF = 'uobtheatre.urls'
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 WSGI_APPLICATION = 'config.wsgi.application'
 

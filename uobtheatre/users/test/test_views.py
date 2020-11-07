@@ -5,8 +5,8 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from faker import Faker
 import factory
-from ..models import User
-from .factories import UserFactory
+from uobtheatre.users.models import User
+from uobtheatre.users.test.factories import UserFactory
 
 fake = Faker()
 
