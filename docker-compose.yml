@@ -1,9 +1,11 @@
 version: '2'
 
 services:
+  
   postgres:
     image: postgres:11.6
-  web:
+    
+  api:
     restart: always
     environment:
       - DJANGO_SECRET_KEY=local
@@ -19,6 +21,7 @@ services:
       - "8000:8000"
     depends_on:
       - postgres
+
   documentation:
     restart: always
     build: ./
