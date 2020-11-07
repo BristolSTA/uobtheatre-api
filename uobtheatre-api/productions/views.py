@@ -5,7 +5,7 @@ from .serializers import ProductionSerializer
 
 class ProductionViewSet(viewsets.ModelViewSet):
     """
-    API endpoint that allows users to be viewed or edited.
+    API endpoint that allows productions to be viewed or edited.
     """
     queryset = Production.objects.all()
     serializer_class = ProductionSerializer 

@@ -6,6 +6,9 @@ help:
 up: ## Run api
 	docker-compose up -d
 
+down: ## Bring down api
+	docker-compose down
+
 superuser: ## Create a superuser in django
 	docker-compose run api python manage.py createsuperuser 
 
