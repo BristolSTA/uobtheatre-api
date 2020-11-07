@@ -24,6 +24,7 @@ class Common(Configuration):
 
         # Your apps
         'uobtheatre-api.users',
+        'uobtheatre-api.productions',
 
     )
 
