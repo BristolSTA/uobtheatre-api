@@ -5,8 +5,7 @@ import sys
 
 
 def main():
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "uobtheatre-api.config")
-    os.environ.setdefault("DJANGO_CONFIGURATION", "Local")
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.local")
 
     try:
         from configurations.management import execute_from_command_line

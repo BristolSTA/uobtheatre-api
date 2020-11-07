@@ -23,3 +23,6 @@ psql: ## Do the migrations
 
 clean: ## Remove all the things
 	docker-compose down --volumes --rmi all || true
+
+test: ## Run unit tests in docker container 
+	docker-compose run --rm api coverage run -m pytest
