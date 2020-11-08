@@ -72,8 +72,9 @@ target/
 # Jupyter Notebook
 .ipynb_checkpoints
 
-# pyenv
+# pyenv and pipenv
 .python-version
+Pipfile.lock
 
 # celery beat schedule file
 celerybeat-schedule
