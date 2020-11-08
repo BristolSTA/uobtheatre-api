@@ -26,3 +26,6 @@ clean: ## Remove all the things
 
 test: ## Run unit tests in docker container 
 	docker-compose run --rm api coverage run -m pytest
+
+test-v: ## Run verbose unit tests in docker container 
+	docker-compose run --rm api coverage run -m pytest -vv
