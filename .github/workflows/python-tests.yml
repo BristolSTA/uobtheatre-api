@@ -60,8 +60,4 @@ jobs:
       run: |
         pipenv run pytest
       env:
-        TEST_DB_HOST: localhost
-        TEST_DB_NAME: postgres
-        TEST_DB_PASS: postgres
-        TEST_DB_PORT: 5432
-        TEST_DB_USER: postgres
+        DATABASE_URL: postgres://postgres:postgres@0.0.0.0:5432/postgres
