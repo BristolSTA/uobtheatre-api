@@ -32,8 +32,11 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Install pipenv
-      uses: dschep/install-pipenv-action@v1
+    - name: set up python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: "3.8"
+
 
     - name: Cache Pipenv virtualenv
       uses: actions/cache@v1
@@ -46,8 +49,6 @@ jobs:
 
     - name: Install dependencies
       env:
-        PIPENV_NOSPIN: 'true'
-        WORKON_HOME: ~/.pipenv/virtualenvs
         PIPENV_CACHE_DIR: ~/.pipenv/pipcache
       if: steps.pipenv-cache.outputs.cache-hit != 'true'
       run: pipenv install --dev
