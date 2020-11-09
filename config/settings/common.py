@@ -34,7 +34,7 @@ MIDDLEWARE = (
 
 ALLOWED_HOSTS = ["*"]
 ROOT_URLCONF = "uobtheatre.urls"
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", default="Ha57AUXmBdFS48TKYPMhauspK7BhwpveyvM9PGsCwwcT7RfwUN2rVkYnbuXkWhcU")
 WSGI_APPLICATION = "config.wsgi.application"
 
 # Email
