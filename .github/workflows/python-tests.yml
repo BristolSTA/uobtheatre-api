@@ -17,12 +17,22 @@ jobs:
     - name: set up python 3.8
       uses: actions/setup-python@v2
       with:
-        python-version: 3.8
+        python-version: "3.8"
 
-    - name: get packages 
-      uses: VaultVulp/action-pipenv@v2.0.1
+    - name: Install pipenv
+      run: |
+        python -m pip install --upgrade pipenv wheel
+
+    - id: cache-pipenv
+      uses: actions/cache@v1
       with:
-        command: install -d
+        path: ~/.local/share/virtualenvs
+        key: ${{ runner.os }}-pipenv-${{ hashFiles('**/Pipfile.lock') }}
+
+    - name: Install dependencies
+      if: steps.cache-pipenv.outputs.cache-hit != 'true'
+      run: |
+        pipenv install --deploy --dev
 
     - name: black - formatting
       run: |
