@@ -36,8 +36,8 @@ jobs:
 
     - name: black - formatting
       run: |
-        black uobtheatre 
+        pipenv run black uobtheatre 
 
     - name: pytest - check tests pass and coverage is above 90%
       run: |
-        pytest --cov=uobtheatre --cov-fail-under=90
+        pipenv run pytest --cov=uobtheatre --cov-fail-under=90
