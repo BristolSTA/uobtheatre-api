@@ -21,7 +21,8 @@ jobs:
 
     - name: get packages 
       uses: VaultVulp/action-pipenv@v2.0.1
-      command: install -d
+      with:
+        command: install -d
 
     - name: black - formatting
       run: |
