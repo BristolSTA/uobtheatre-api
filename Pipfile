@@ -30,6 +30,7 @@ pytest-sugar = "==0.9.4"
 pytest-django = "==4.1.0"
 django-storages = "==1.10.1"
 boto3 = "==1.16.12"
+black = "*"
 
 [dev-packages]
 rope = "*"

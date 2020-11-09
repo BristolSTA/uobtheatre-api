@@ -29,3 +29,7 @@ test: ## Run unit tests in docker container
 
 test-v: ## Run verbose unit tests in docker container 
 	docker-compose run --rm api coverage run -m pytest -vv
+
+setup-pipenv: ## Setup pipenv locally
+	pipenv --python 3.8
+	pipenv install
