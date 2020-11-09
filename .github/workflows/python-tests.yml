@@ -1,0 +1,32 @@
+name: Python package
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: set up python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: get packages 
+      uses: VaultVulp/action-pipenv@v2.0.1
+      command: install -d
+
+    - name: black - formatting
+      run: |
+        black uobtheatre 
+
+    - name: pytest - check tests pass and coverage is above 90%
+      run: |
+        pytest --cov=uobtheatre --cov-fail-under=90
