@@ -51,8 +51,6 @@ jobs:
           ${{ runner.os }}-pipenv-v2-
 
     - name: Install dependencies
-      env:
-        PIPENV_CACHE_DIR: ~/.pipenv/pipcache
       if: steps.pipenv-cache.outputs.cache-hit != 'true'
       run: pipenv install --dev
 
