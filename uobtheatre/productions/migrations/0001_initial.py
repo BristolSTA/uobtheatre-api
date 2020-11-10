@@ -9,47 +9,114 @@ class Migration(migrations.Migration):
 
     initial = True
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.CreateModel(
-            name='Society',
+            name="Society",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=255)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=255)),
             ],
-            bases=(models.Model, uobtheatre.productions.models.SoftDeletionMixin, uobtheatre.productions.models.TimeStampedMixin),
+            bases=(
+                models.Model,
+                uobtheatre.productions.models.SoftDeletionMixin,
+                uobtheatre.productions.models.TimeStampedMixin,
+            ),
         ),
         migrations.CreateModel(
-            name='Venue',
+            name="Venue",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=255)),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=255)),
             ],
-            bases=(models.Model, uobtheatre.productions.models.SoftDeletionMixin, uobtheatre.productions.models.TimeStampedMixin),
+            bases=(
+                models.Model,
+                uobtheatre.productions.models.SoftDeletionMixin,
+                uobtheatre.productions.models.TimeStampedMixin,
+            ),
         ),
         migrations.CreateModel(
-            name='Production',
+            name="Production",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=255)),
-                ('subtitle', models.CharField(max_length=255, null=True)),
-                ('description', models.TextField(max_length=255, null=True)),
-                ('poster_image', models.FileField(null=True, upload_to='')),
-                ('featured_image', models.ImageField(null=True, upload_to='')),
-                ('society', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='productions.society')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("name", models.CharField(max_length=255)),
+                ("subtitle", models.CharField(max_length=255, null=True)),
+                ("description", models.TextField(max_length=255, null=True)),
+                ("poster_image", models.FileField(null=True, upload_to="")),
+                ("featured_image", models.ImageField(null=True, upload_to="")),
+                (
+                    "society",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to="productions.society",
+                    ),
+                ),
             ],
-            bases=(models.Model, uobtheatre.productions.models.SoftDeletionMixin, uobtheatre.productions.models.TimeStampedMixin),
+            bases=(
+                models.Model,
+                uobtheatre.productions.models.SoftDeletionMixin,
+                uobtheatre.productions.models.TimeStampedMixin,
+            ),
         ),
         migrations.CreateModel(
-            name='Performance',
+            name="Performance",
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('date', models.DateTimeField()),
-                ('production', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='productions.production')),
-                ('venue', models.ForeignKey(null=True, on_delete=django.db.models.deletion.SET_NULL, to='productions.venue')),
+                (
+                    "id",
+                    models.AutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("date", models.DateTimeField()),
+                (
+                    "production",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="productions.production",
+                    ),
+                ),
+                (
+                    "venue",
+                    models.ForeignKey(
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        to="productions.venue",
+                    ),
+                ),
             ],
-            bases=(models.Model, uobtheatre.productions.models.SoftDeletionMixin, uobtheatre.productions.models.TimeStampedMixin),
+            bases=(
+                models.Model,
+                uobtheatre.productions.models.SoftDeletionMixin,
+                uobtheatre.productions.models.TimeStampedMixin,
+            ),
         ),
     ]

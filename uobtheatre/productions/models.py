@@ -91,9 +91,9 @@ class Production(models.Model, SoftDeletionMixin, TimeStampedMixin):
 
     name = models.CharField(max_length=255)
     subtitle = models.CharField(max_length=255, null=True)
+    description = models.TextField(null=True)
     society = models.ForeignKey(Society, on_delete=models.SET_NULL, null=True)
-    description = models.TextField(max_length=255, null=True)
-    poster_image = models.FileField(null=True)
+    poster_image = models.ImageField(null=True)
     featured_image = models.ImageField(null=True)
 
     def __str__(self):
