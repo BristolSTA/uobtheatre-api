@@ -9,7 +9,7 @@ from django.db.models.query import QuerySet
 from rest_framework.authtoken.models import Token
 
 
-class TimeStampedModel:
+class TimeStampedMixin:
     """Adds created_at and updated_at to a model"""
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -44,7 +44,7 @@ class SoftDeletionManager(models.Manager):
         return self.get_queryset().hard_delete()
 
 
-class SoftDeletionModel(models.Model):
+class SoftDeletionMixin:
     """Model that allows soft delte. This set the model to deleted (disabled)
     but does remove it from the db. A hard delete will remove it completely.
     """
@@ -53,9 +53,6 @@ class SoftDeletionModel(models.Model):
 
     objects = SoftDeletionManager()
     all_objects = SoftDeletionManager(alive_only=False)
-
-    class Meta:
-        abstract = True
 
     def delete(self):
         self.deleted_at = timezone.now()
@@ -69,7 +66,7 @@ class SoftDeletionModel(models.Model):
         super(SoftDeletionModel, self).delete()
 
 
-class Society(SoftDeletionModel, TimeStampedModel):
+class Society(models.Model, SoftDeletionMixin, TimeStampedMixin):
     """A society is a society"""
 
     name = models.CharField(max_length=255)
@@ -78,7 +75,7 @@ class Society(SoftDeletionModel, TimeStampedModel):
         return self.name
 
 
-class Venue(SoftDeletionModel, TimeStampedModel):
+class Venue(models.Model, SoftDeletionMixin, TimeStampedMixin):
     """A venue is a space often where shows take place"""
 
     name = models.CharField(max_length=255)
@@ -87,7 +84,7 @@ class Venue(SoftDeletionModel, TimeStampedModel):
         return self.name
 
 
-class Production(SoftDeletionModel, TimeStampedModel):
+class Production(models.Model, SoftDeletionMixin, TimeStampedMixin):
     """A production is a show (like the 2 weeks things) and can have many
     performaces (these are like the nights).
     """
@@ -103,7 +100,7 @@ class Production(SoftDeletionModel, TimeStampedModel):
         return self.name
 
 
-class Performance(SoftDeletionModel, TimeStampedModel):
+class Performance(models.Model, SoftDeletionMixin, TimeStampedMixin):
     """A performance is a discrete event when the show takes place eg 7pm on
     Tuesday.
     """

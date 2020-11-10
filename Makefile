@@ -43,3 +43,16 @@ setup-pipenv: ## Setup pipenv locally
 
 pipenv-install: ## Setup pipenv locally
 	docker-compose run --rm api pipenv install 
+
+clean-productions-migrations: ## Generate clean migrations for productions
+	cd uobtheatre/productions/migrations/; find . -maxdepth 1 ! -name '__init__.py' -type f -exec rm {} +
+	make migrations
+
+clean-postgres-migrations: ## Apply clean migrations to postgres
+	docker rm -f uobtheatre-api_postgres_1
+	docker volume rm uobtheatre-api_postgres_data
+	make migrate 
+
+clean-migrations: ## Do the migrations from scratch
+	make clean-productions-migrations
+	make clean-postgres-migrations
