@@ -6,6 +6,9 @@ help:
 up: ## Run api
 	docker-compose up -d
 
+up-v: ## Run api with logs
+	docker-compose up
+
 down: ## Bring down api
 	docker-compose down
 
@@ -37,3 +40,6 @@ setup-pipenv: ## Setup pipenv locally
 	pipenv --python 3.8
 	# If black is causing issues: pipenv install --dev --pre
 	pipenv install
+
+pipenv-install: ## Setup pipenv locally
+	docker-compose run --rm api pipenv install 

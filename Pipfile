@@ -32,10 +32,10 @@ django-storages = "*"
 boto3 = "*"
 click = "*"
 black = "*"
+pillow = "*"
 
 [dev-packages]
 rope = "*"
-black = "==19.3b0"
 
 [requires]
 python_version = "3.8"

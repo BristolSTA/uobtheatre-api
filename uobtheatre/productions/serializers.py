@@ -1,5 +1,10 @@
 from rest_framework import serializers
-from .models import Production, Society
+from uobtheatre.productions.models import (
+    Production,
+    Society,
+    Venue,
+    Performance,
+)
 
 
 class SocietySerializer(serializers.ModelSerializer):
@@ -13,4 +18,16 @@ class ProductionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Production
+        fields = "__all__"
+
+
+class PerformanceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Performance
+        fields = "__all__"
+
+
+class VenueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Venue
         fields = "__all__"

@@ -34,7 +34,10 @@ MIDDLEWARE = (
 
 ALLOWED_HOSTS = ["*"]
 ROOT_URLCONF = "uobtheatre.urls"
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", default="Ha57AUXmBdFS48TKYPMhauspK7BhwpveyvM9PGsCwwcT7RfwUN2rVkYnbuXkWhcU")
+SECRET_KEY = os.getenv(
+    "DJANGO_SECRET_KEY",
+    default="Ha57AUXmBdFS48TKYPMhauspK7BhwpveyvM9PGsCwwcT7RfwUN2rVkYnbuXkWhcU",
+)
 WSGI_APPLICATION = "config.wsgi.application"
 
 # Email
@@ -45,7 +48,9 @@ ADMINS = (("Author", "webmaster@bristolsta.com"),)
 # Postgres
 DATABASES = {
     "default": dj_database_url.config(
-        default=os.getenv("DATABASE_URL", default="postgres://postgres:@postgres:5432/postgres"),
+        default=os.getenv(
+            "DATABASE_URL", default="postgres://postgres:@postgres:5432/postgres"
+        ),
         conn_max_age=int(os.getenv("POSTGRES_CONN_MAX_AGE", 600)),
     )
 }
