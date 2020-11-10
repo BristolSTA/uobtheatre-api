@@ -26,12 +26,20 @@ def test_production_view_get(api_client):
             {
                 "id": prod1.id,
                 "name": prod1.name,
+                "subtitle": prod1.subtitle,
+                "description": prod1.description,
                 "society": {"id": prod1.society.id, "name": prod1.society.name},
+                "poster_image": "http://testserver" + prod1.poster_image.url,
+                "featured_image": "http://testserver" + prod1.featured_image.url,
             },
             {
                 "id": prod2.id,
                 "name": prod2.name,
+                "subtitle": prod2.subtitle,
+                "description": prod2.description,
                 "society": {"id": prod2.society.id, "name": prod2.society.name},
+                "poster_image": "http://testserver" + prod2.poster_image.url,
+                "featured_image": "http://testserver" + prod2.featured_image.url,
             },
         ],
     }
