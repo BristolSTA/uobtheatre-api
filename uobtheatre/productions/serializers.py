@@ -7,6 +7,12 @@ from uobtheatre.productions.models import (
 )
 
 
+class VenueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Venue
+        fields = "__all__"
+
+
 class SocietySerializer(serializers.ModelSerializer):
     class Meta:
         model = Society
@@ -14,6 +20,8 @@ class SocietySerializer(serializers.ModelSerializer):
 
 
 class PerformanceSerializer(serializers.ModelSerializer):
+    venue = VenueSerializer()
+
     class Meta:
         model = Performance
         fields = "__all__"
@@ -35,9 +43,3 @@ class ProductionSerializer(serializers.ModelSerializer):
             "featured_image",
             "performances",
         )
-
-
-class VenueSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Venue
-        fields = "__all__"

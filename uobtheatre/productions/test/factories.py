@@ -38,7 +38,8 @@ class VenueFactory(factory.django.DjangoModelFactory):
 
 class PerformanceFactory(factory.django.DjangoModelFactory):
 
-    date = factory.Faker("date_time")
+    start = factory.Faker("date_time")
+    end = factory.Faker("date_time")
     production = factory.SubFactory(ProductionFactory)
     venue = factory.SubFactory(VenueFactory)
 

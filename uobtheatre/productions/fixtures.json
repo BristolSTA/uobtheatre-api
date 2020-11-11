@@ -1,0 +1,50 @@
+[
+    {
+        "model": "productions.venue",
+        "pk": 1,
+        "fields": {"name": "The Winston Theatre"}
+    },
+    {
+        "model": "productions.venue",
+        "pk": 2,
+        "fields": {"name": "The Pegg Theatre"}
+    },
+    {
+        "model": "productions.venue",
+        "pk": 3,
+        "fields": {"name": "The Anson Rooms"}
+    },
+   
+    {
+        "model": "productions.society",
+        "pk": 1,
+        "fields": {"name": "MTB"}
+    },
+    {
+        "model": "productions.society",
+        "pk": 2,
+        "fields": {"name": "Dramsoc"}
+    },
+    
+    {
+        "model": "productions.production",
+        "pk": 1,
+        "fields": {
+          "name": "Example show",
+          "subtitle": "This is an example show",
+          "description": "The description of the example show",
+          "society": 1 
+        }
+    },
+    
+    {
+        "model": "productions.performance",
+        "pk": 1,
+        "fields": {
+          "production": 1,
+          "venue": 1,
+          "start": "2020-11-11T12:24:32+0000",
+          "end": "2020-11-11T12:24:32+0000"
+        }
+    }
+]

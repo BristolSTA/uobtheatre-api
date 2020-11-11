@@ -77,14 +77,22 @@ def test_production_with_performances_serializer():
             {
                 "id": performance1.id,
                 "production": performance1.production.id,
-                "venue": performance1.venue.id,
-                "date": performance1.date.isoformat() + "+0000",
+                "venue": {
+                    "id": performance1.venue.id,
+                    "name": performance1.venue.name,
+                },
+                "start": performance1.start.isoformat() + "+0000",
+                "end": performance1.end.isoformat() + "+0000",
             },
             {
                 "id": performance2.id,
                 "production": performance2.production.id,
-                "venue": performance2.venue.id,
-                "date": performance2.date.isoformat() + "+0000",
+                "venue": {
+                    "id": performance2.venue.id,
+                    "name": performance2.venue.name,
+                },
+                "start": performance2.start.isoformat() + "+0000",
+                "end": performance2.end.isoformat() + "+0000",
             },
         ],
     }
@@ -104,13 +112,17 @@ def test_venue_serializer():
 
 @pytest.mark.django_db
 def test_performance_serializer():
-    performace = PerformanceFactory()
+    performance = PerformanceFactory()
     data = Performance.objects.first()
     serialized_performance = PerformanceSerializer(data)
 
     assert serialized_performance.data == {
-        "id": performace.id,
-        "production": performace.production.id,
-        "venue": performace.venue.id,
-        "date": performace.date.isoformat() + "+0000",
+        "id": performance.id,
+        "production": performance.production.id,
+        "venue": {
+            "id": performance.venue.id,
+            "name": performance.venue.name,
+        },
+        "start": performance.start.isoformat() + "+0000",
+        "end": performance.end.isoformat() + "+0000",
     }

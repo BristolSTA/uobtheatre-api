@@ -39,6 +39,6 @@ urlpatterns = [
     # the 'api-root' from django rest-frameworks default router
     # http://www.django-rest-framework.org/api-guide/routers/#defaultrouter
     re_path(r"^$", RedirectView.as_view(url=reverse_lazy("api-root"), permanent=False)),
-    path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
     # Documentation
+    path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

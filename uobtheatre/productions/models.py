@@ -109,7 +109,10 @@ class Performance(models.Model, SoftDeletionMixin, TimeStampedMixin):
         Production, on_delete=models.CASCADE, related_name="performances"
     )
     venue = models.ForeignKey(Venue, on_delete=models.SET_NULL, null=True)
-    date = models.DateTimeField()
+    start = models.DateTimeField(null=True)
+    end = models.DateTimeField(null=True)
 
     def __str__(self):
-        return f"Perforamce of {self.production.name} at {self.date.strftime('%H:%M')} on {self.date.strftime('%m/%d/%Y')}"
+        if self.start is None:
+            return f"Perforamce of {self.production.name}"
+        return f"Perforamce of {self.production.name} at {self.start.strftime('%H:%M')} on {self.start.strftime('%m/%d/%Y')}"

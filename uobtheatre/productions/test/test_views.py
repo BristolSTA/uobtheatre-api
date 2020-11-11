@@ -49,14 +49,22 @@ def test_production_view_get(api_client):
                     {
                         "id": performance1.id,
                         "production": performance1.production.id,
-                        "venue": performance1.venue.id,
-                        "date": performance1.date.isoformat() + "+0000",
+                        "venue": {
+                            "id": performance1.venue.id,
+                            "name": performance1.venue.name,
+                        },
+                        "start": performance1.start.isoformat() + "+0000",
+                        "end": performance1.end.isoformat() + "+0000",
                     },
                     {
                         "id": performance2.id,
                         "production": performance2.production.id,
-                        "venue": performance2.venue.id,
-                        "date": performance2.date.isoformat() + "+0000",
+                        "venue": {
+                            "id": performance2.venue.id,
+                            "name": performance2.venue.name,
+                        },
+                        "start": performance2.start.isoformat() + "+0000",
+                        "end": performance2.end.isoformat() + "+0000",
                     },
                 ],
             },

@@ -190,3 +190,9 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.TokenAuthentication",
     ),
 }
+
+
+# Documentation settings
+SWAGGER_SETTINGS = {
+    "DEFAULT_API_URL": "https://api.uobtheatre.com",
+}
