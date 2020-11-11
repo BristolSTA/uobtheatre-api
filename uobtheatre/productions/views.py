@@ -18,7 +18,8 @@ class ProductionViewSet(viewsets.ModelViewSet):
         """
         Action to return 6 upcoming productions. It will return the soonest
         next productions. The date of the production is based on the maximun
-        (latest) end date of all the performaces.
+        (latest) end date of all the performaces. It returns in order of ending
+        date st those which are ending soonest are returned first.
         """
         future_productions = [
             production
