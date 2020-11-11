@@ -53,6 +53,7 @@ def test_production_serializer():
                 "id": performance.venue.id,
                 "name": performance.venue.name,
             },
+            "extra_information": performance.extra_information,
             "start": performance.start.isoformat() + "+0000",
             "end": performance.end.isoformat() + "+0000",
         }
@@ -121,6 +122,7 @@ def test_performance_serializer():
             "id": performance.venue.id,
             "name": performance.venue.name,
         },
+        "extra_information": performance.extra_information,
         "start": performance.start.isoformat() + "+0000",
         "end": performance.end.isoformat() + "+0000",
     }

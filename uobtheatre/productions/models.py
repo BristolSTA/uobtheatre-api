@@ -112,9 +112,12 @@ class Performance(models.Model, SoftDeletionMixin, TimeStampedMixin):
     production = models.ForeignKey(
         Production, on_delete=models.CASCADE, related_name="performances"
     )
+
     venue = models.ForeignKey(Venue, on_delete=models.SET_NULL, null=True)
     start = models.DateTimeField(null=True)
     end = models.DateTimeField(null=True)
+
+    extra_information = models.TextField(null=True, blank=True)
 
     def __str__(self):
         if self.start is None:

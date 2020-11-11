@@ -28,6 +28,7 @@ def test_production_view_get(api_client):
                 "id": prod1.venue.id,
                 "name": prod1.venue.name,
             },
+            "extra_information": prod1.extra_information,
             "start": prod1.start.isoformat() + "+0000",
             "end": prod1.end.isoformat() + "+0000",
         }

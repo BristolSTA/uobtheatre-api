@@ -71,6 +71,7 @@ class PerformanceFactory(factory.django.DjangoModelFactory):
 
     start = factory.Faker("date_time")
     end = factory.Faker("date_time")
+    extra_information = factory.Faker("sentence")
     production = factory.SubFactory(ProductionFactory)
     venue = factory.SubFactory(VenueFactory)
 
