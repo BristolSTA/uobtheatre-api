@@ -16,6 +16,7 @@ INSTALLED_APPS = (
     "rest_framework",  # utilities for rest apis
     "rest_framework.authtoken",  # token authentication
     "django_filters",  # for filtering rest endpoints
+    "drf_yasg",  # Swagger documentation
     # Your apps
     "uobtheatre.users",
     "uobtheatre.productions",

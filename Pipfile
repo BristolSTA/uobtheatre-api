@@ -33,6 +33,7 @@ boto3 = "*"
 click = "*"
 black = "*"
 pillow = "*"
+drf-yasg = "*"
 
 [dev-packages]
 rope = "*"

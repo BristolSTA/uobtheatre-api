@@ -7,6 +7,24 @@ from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken import views
 from .users.views import UserViewSet, UserCreateViewSet
 from .productions.views import ProductionViewSet
+from django.views.generic import TemplateView
+from drf_yasg import openapi
+from drf_yasg.views import get_schema_view
+from rest_framework import permissions
+
+# Documentation setup
+schema_view = get_schema_view(
+    openapi.Info(
+        title="UOB Theatre API",
+        default_version="v1",
+        description="The api for uob theatre",
+        # terms_of_service="https://www.google.com/policies/terms/",
+        contact=openapi.Contact(email="webmaster@bristolsta.com"),
+        # license=openapi.License(name="None"),
+    ),
+    public=True,
+    permission_classes=(permissions.AllowAny,),
+)
 
 router = DefaultRouter()
 router.register(r"users", UserViewSet)
@@ -21,4 +39,6 @@ urlpatterns = [
     # the 'api-root' from django rest-frameworks default router
     # http://www.django-rest-framework.org/api-guide/routers/#defaultrouter
     re_path(r"^$", RedirectView.as_view(url=reverse_lazy("api-root"), permanent=False)),
+    path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="schema-redoc"),
+    # Documentation
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
