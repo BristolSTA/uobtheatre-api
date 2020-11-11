@@ -13,18 +13,28 @@ class SocietySerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class ProductionSerializer(serializers.ModelSerializer):
-    society = SocietySerializer()
-
-    class Meta:
-        model = Production
-        fields = "__all__"
-
-
 class PerformanceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Performance
         fields = "__all__"
+
+
+class ProductionSerializer(serializers.ModelSerializer):
+    society = SocietySerializer()
+    performances = PerformanceSerializer(many=True)
+
+    class Meta:
+        model = Production
+        fields = (
+            "id",
+            "name",
+            "subtitle",
+            "description",
+            "society",
+            "poster_image",
+            "featured_image",
+            "performances",
+        )
 
 
 class VenueSerializer(serializers.ModelSerializer):

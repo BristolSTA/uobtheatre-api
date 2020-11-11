@@ -105,7 +105,9 @@ class Performance(models.Model, SoftDeletionMixin, TimeStampedMixin):
     Tuesday.
     """
 
-    production = models.ForeignKey(Production, on_delete=models.CASCADE)
+    production = models.ForeignKey(
+        Production, on_delete=models.CASCADE, related_name="performances"
+    )
     venue = models.ForeignKey(Venue, on_delete=models.SET_NULL, null=True)
     date = models.DateTimeField()
 
