@@ -57,6 +57,13 @@
           "warning": "Strobe"
         }
     },
+    {
+        "model": "productions.warning",
+        "pk": 2,
+        "fields": {
+          "warning": "Pyro"
+        }
+    },
     
     {
         "model": "productions.production",
