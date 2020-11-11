@@ -1,4 +1,8 @@
 import pytest
+import factory
+
+from django.utils import timezone
+from datetime import timedelta
 
 from uobtheatre.productions.test.factories import (
     ProductionFactory,
@@ -71,3 +75,58 @@ def test_production_view_get(api_client):
             },
         ],
     }
+
+
+@pytest.mark.django_db
+def test_production_view_upcoming_productions_action(api_client):
+
+    # Create some productions that are in the past
+    production1 = ProductionFactory()
+    production2 = ProductionFactory()
+    for i in range(10):
+
+        PerformanceFactory(
+            start=timezone.now() - timedelta(hours=i * 2),
+            end=timezone.now() - timedelta(hours=i),
+            production=production1,
+        )
+
+    # Assert that there are no productions
+    response = api_client.get("/api/v1/productions/upcoming_productions/")
+    assert response.status_code == 200
+    assert len(response.json()["results"]) == 0
+
+    # Create some productions that are on going (have started by not ended)
+    for i in range(10):
+        PerformanceFactory(
+            start=timezone.now() - timedelta(hours=i),
+            end=timezone.now() + timedelta(hours=i),
+            production=production1,
+        )
+
+    # Still assert no productions
+    response = api_client.get("/api/v1/productions/upcoming_productions/")
+    assert response.status_code == 200
+    assert len(response.json()["results"]) == 0
+
+    # Create some productions that are in the future
+    for i in range(10):
+        PerformanceFactory(
+            start=timezone.now() + timedelta(hours=i * 4),
+            end=timezone.now() + timedelta(hours=i * 6),
+            production=production1,
+        )
+        PerformanceFactory(
+            start=timezone.now() + timedelta(hours=i),
+            end=timezone.now() + timedelta(hours=i * 2),
+            production=production2,
+        )
+
+    response = api_client.get("/api/v1/productions/upcoming_productions/")
+    assert response.status_code == 200
+    assert len(response.json()["results"]) == 2
+
+    # Check the order
+    # The first performance is more in the future so should be returned second
+    assert response.json()["results"][0]["id"] == production2.id
+    assert response.json()["results"][1]["id"] == production1.id

@@ -1,6 +1,6 @@
 import uuid
 import factory
-from datetime import datetime
+from django.utils import timezone
 from django.db import models
 from django.conf import settings
 from django.dispatch import receiver
@@ -147,6 +147,14 @@ class Production(models.Model, SoftDeletionMixin, TimeStampedMixin):
 
     def __str__(self):
         return self.name
+
+    def is_upcoming(self) -> bool:
+        performances = self.performances.all()
+        return any(performance.start > timezone.now() for performance in performances)
+
+    def end_date(self):
+        performances = self.performances.all()
+        return max(performance.end for performance in performances)
 
 
 class Performance(models.Model, SoftDeletionMixin, TimeStampedMixin):
