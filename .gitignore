@@ -109,3 +109,6 @@ venv.bak/
 
 # media
 media/
+
+# MacOS
+.DS_Store
