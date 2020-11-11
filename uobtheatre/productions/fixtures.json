@@ -27,13 +27,48 @@
     },
     
     {
+        "model": "productions.crewrole",
+        "pk": 1,
+        "fields": {
+          "name": "CLX"
+        }
+    },
+    {
+        "model": "productions.crewmember",
+        "pk": 1,
+        "fields": {
+          "name": "Alex",
+          "role": 1
+        }
+    },
+    {
+        "model": "productions.castmember",
+        "pk": 1,
+        "fields": {
+          "name": "Tom",
+          "role": "Peter pan"
+        }
+    },
+    
+    {
+        "model": "productions.warning",
+        "pk": 1,
+        "fields": {
+          "warning": "Strobe"
+        }
+    },
+    
+    {
         "model": "productions.production",
         "pk": 1,
         "fields": {
           "name": "Example show",
           "subtitle": "This is an example show",
           "description": "The description of the example show",
-          "society": 1 
+          "society": 1,
+          "crew": [1],
+          "cast": [1],
+          "warnings": [1]
         }
     },
     

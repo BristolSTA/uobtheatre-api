@@ -5,18 +5,25 @@ from uobtheatre.productions.test.factories import (
     SocietyFactory,
     VenueFactory,
     PerformanceFactory,
+    CrewMemberFactory,
+    CastMemberFactory,
 )
 from uobtheatre.productions.serializers import (
     ProductionSerializer,
     SocietySerializer,
     VenueSerializer,
     PerformanceSerializer,
+    CrewMemberSerialzier,
+    CastMemberSerialzier,
 )
 from uobtheatre.productions.models import (
     Production,
     Performance,
     Society,
     Venue,
+    CrewRole,
+    CrewMember,
+    CastMember,
 )
 
 
@@ -33,10 +40,43 @@ def test_society_serializer():
 
 
 @pytest.mark.django_db
-def test_production_no_performances_serializer():
+def test_production_serializer():
     production = ProductionFactory()
     data = Production.objects.first()
     serialized_prod = ProductionSerializer(data)
+
+    performances = [
+        {
+            "id": performance.id,
+            "production": performance.production.id,
+            "venue": {
+                "id": performance.venue.id,
+                "name": performance.venue.name,
+            },
+            "start": performance.start.isoformat() + "+0000",
+            "end": performance.end.isoformat() + "+0000",
+        }
+        for performance in production.performances.all()
+    ]
+
+    warnings = [warning.name for warning in production.warnings.all()]
+
+    cast = [
+        {
+            "name": castmember.name,
+            "profile_picture": castmember.profile_picture.url,
+            "role": castmember.role,
+        }
+        for castmember in production.cast.all()
+    ]
+
+    crew = [
+        {
+            "name": crewmember.name,
+            "role": crewmember.role.name,
+        }
+        for crewmember in production.crew.all()
+    ]
 
     assert serialized_prod.data == {
         "id": production.id,
@@ -49,52 +89,10 @@ def test_production_no_performances_serializer():
         },
         "poster_image": production.poster_image.url,
         "featured_image": production.featured_image.url,
-        "performances": [],
-    }
-
-
-@pytest.mark.django_db
-def test_production_with_performances_serializer():
-    production = ProductionFactory()
-    data = Production.objects.first()
-    serialized_prod = ProductionSerializer(data)
-
-    performance1 = PerformanceFactory(production=production)
-    performance2 = PerformanceFactory(production=production)
-
-    assert serialized_prod.data == {
-        "id": production.id,
-        "name": production.name,
-        "subtitle": production.subtitle,
-        "description": production.description,
-        "society": {
-            "id": production.society.id,
-            "name": production.society.name,
-        },
-        "poster_image": production.poster_image.url,
-        "featured_image": production.featured_image.url,
-        "performances": [
-            {
-                "id": performance1.id,
-                "production": performance1.production.id,
-                "venue": {
-                    "id": performance1.venue.id,
-                    "name": performance1.venue.name,
-                },
-                "start": performance1.start.isoformat() + "+0000",
-                "end": performance1.end.isoformat() + "+0000",
-            },
-            {
-                "id": performance2.id,
-                "production": performance2.production.id,
-                "venue": {
-                    "id": performance2.venue.id,
-                    "name": performance2.venue.name,
-                },
-                "start": performance2.start.isoformat() + "+0000",
-                "end": performance2.end.isoformat() + "+0000",
-            },
-        ],
+        "performances": performances,
+        "warnings": warnings,
+        "cast": cast,
+        "crew": crew,
     }
 
 
@@ -125,4 +123,31 @@ def test_performance_serializer():
         },
         "start": performance.start.isoformat() + "+0000",
         "end": performance.end.isoformat() + "+0000",
+    }
+
+
+@pytest.mark.django_db
+def test_crew_member_serializer():
+    crew_member = CrewMemberFactory()
+    data = CrewMember.objects.first()
+    serialized_crew_member = CrewMemberSerialzier(data)
+
+    assert serialized_crew_member.data == {
+        "id": crew_member.id,
+        "name": crew_member.name,
+        "role": crew_member.role.name,
+    }
+
+
+@pytest.mark.django_db
+def test_cast_member_serializer():
+    cast_member = CastMemberFactory()
+    data = CastMember.objects.first()
+    serialized_cast_member = CastMemberSerialzier(data)
+
+    assert serialized_cast_member.data == {
+        "id": cast_member.id,
+        "name": cast_member.name,
+        "role": cast_member.role,
+        "profile_picture": cast_member.profile_picture.url,
     }

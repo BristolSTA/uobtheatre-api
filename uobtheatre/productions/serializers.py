@@ -4,12 +4,35 @@ from uobtheatre.productions.models import (
     Society,
     Venue,
     Performance,
+    Warning,
+    CrewMember,
+    CastMember,
 )
+
+
+class CrewMemberSerialzier(serializers.ModelSerializer):
+    role = serializers.StringRelatedField()
+
+    class Meta:
+        model = CrewMember
+        fields = "__all__"
+
+
+class CastMemberSerialzier(serializers.ModelSerializer):
+    class Meta:
+        model = CastMember
+        fields = "__all__"
 
 
 class VenueSerializer(serializers.ModelSerializer):
     class Meta:
         model = Venue
+        fields = "__all__"
+
+
+class WarningSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Warning
         fields = "__all__"
 
 
@@ -30,6 +53,9 @@ class PerformanceSerializer(serializers.ModelSerializer):
 class ProductionSerializer(serializers.ModelSerializer):
     society = SocietySerializer()
     performances = PerformanceSerializer(many=True)
+    warnings = serializers.StringRelatedField(many=True)
+    crew = CrewMemberSerialzier(many=True)
+    cast = CastMemberSerialzier(many=True)
 
     class Meta:
         model = Production
@@ -42,4 +68,7 @@ class ProductionSerializer(serializers.ModelSerializer):
             "poster_image",
             "featured_image",
             "performances",
+            "warnings",
+            "cast",
+            "crew",
         )

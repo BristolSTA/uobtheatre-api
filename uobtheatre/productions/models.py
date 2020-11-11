@@ -66,6 +66,36 @@ class SoftDeletionMixin:
         super(SoftDeletionModel, self).delete()
 
 
+class CrewRole(models.Model):
+    """Crew role"""
+
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
+
+
+class CastMember(models.Model):
+    """Member of production cast"""
+
+    name = models.CharField(max_length=255)
+    profile_picture = models.ImageField(null=True, blank=True)
+    role = models.CharField(max_length=255, null=True)
+
+    def __str__(self):
+        return self.name
+
+
+class CrewMember(models.Model):
+    """Member of production crew"""
+
+    name = models.CharField(max_length=255)
+    role = models.ForeignKey(CrewRole, null=True, on_delete=models.SET_NULL)
+
+    def __str__(self):
+        return self.name
+
+
 class Society(models.Model, SoftDeletionMixin, TimeStampedMixin):
     """A society is a society"""
 
@@ -84,6 +114,15 @@ class Venue(models.Model, SoftDeletionMixin, TimeStampedMixin):
         return self.name
 
 
+class Warning(models.Model):
+    """A venue is a space often where shows take place"""
+
+    warning = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.warning
+
+
 class Production(models.Model, SoftDeletionMixin, TimeStampedMixin):
     """A production is a show (like the 2 weeks things) and can have many
     performaces (these are like the nights).
@@ -92,9 +131,19 @@ class Production(models.Model, SoftDeletionMixin, TimeStampedMixin):
     name = models.CharField(max_length=255)
     subtitle = models.CharField(max_length=255, null=True)
     description = models.TextField(null=True)
+
     society = models.ForeignKey(Society, on_delete=models.SET_NULL, null=True)
+
     poster_image = models.ImageField(null=True)
     featured_image = models.ImageField(null=True)
+
+    age_rating = models.SmallIntegerField(null=True)
+    facebook_event = models.CharField(max_length=255, null=True)
+
+    warnings = models.ManyToManyField(Warning)
+
+    cast = models.ManyToManyField(CastMember, blank=True)
+    crew = models.ManyToManyField(CrewMember, blank=True)
 
     def __str__(self):
         return self.name

@@ -12,18 +12,47 @@ def test_production_view_get(api_client):
 
     # Create a fake production
     prod1 = ProductionFactory()
-    prod2 = ProductionFactory()
-
-    performance1 = PerformanceFactory(production=prod2)
-    performance2 = PerformanceFactory(production=prod2)
 
     # Get the productions endpoint
     response = api_client.get("/api/v1/productions/")
 
+    performances = [
+        {
+            "id": prod1.id,
+            "production": prod1.production.id,
+            "venue": {
+                "id": prod1.venue.id,
+                "name": prod1.venue.name,
+            },
+            "start": prod1.start.isoformat() + "+0000",
+            "end": prod1.end.isoformat() + "+0000",
+        }
+        for performance in prod1.performances.all()
+    ]
+
+    warnings = [warning.name for warning in prod1.warnings.all()]
+
+    cast = [
+        {
+            "name": castmember.name,
+            "profile_picture": castmember.profile_picture.url,
+            "role": castmember.role,
+        }
+        for castmember in prod1.cast.all()
+    ]
+
+    crew = [
+        {
+            "name": crewmember.name,
+            "role": crewmember.role.name,
+        }
+        for crewmember in prod1.crew.all()
+    ]
+
     # Assert it returns 200 and what is expected
     assert response.status_code == 200
     assert response.json() == {
-        "count": 2,
+        "count": 1,
         "next": None,
         "previous": None,
         "results": [
@@ -35,38 +64,10 @@ def test_production_view_get(api_client):
                 "society": {"id": prod1.society.id, "name": prod1.society.name},
                 "poster_image": "http://testserver" + prod1.poster_image.url,
                 "featured_image": "http://testserver" + prod1.featured_image.url,
-                "performances": [],
-            },
-            {
-                "id": prod2.id,
-                "name": prod2.name,
-                "subtitle": prod2.subtitle,
-                "description": prod2.description,
-                "society": {"id": prod2.society.id, "name": prod2.society.name},
-                "poster_image": "http://testserver" + prod2.poster_image.url,
-                "featured_image": "http://testserver" + prod2.featured_image.url,
-                "performances": [
-                    {
-                        "id": performance1.id,
-                        "production": performance1.production.id,
-                        "venue": {
-                            "id": performance1.venue.id,
-                            "name": performance1.venue.name,
-                        },
-                        "start": performance1.start.isoformat() + "+0000",
-                        "end": performance1.end.isoformat() + "+0000",
-                    },
-                    {
-                        "id": performance2.id,
-                        "production": performance2.production.id,
-                        "venue": {
-                            "id": performance2.venue.id,
-                            "name": performance2.venue.name,
-                        },
-                        "start": performance2.start.isoformat() + "+0000",
-                        "end": performance2.end.isoformat() + "+0000",
-                    },
-                ],
+                "performances": performances,
+                "cast": cast,
+                "crew": crew,
+                "warnings": warnings,
             },
         ],
     }

@@ -5,6 +5,10 @@ from uobtheatre.productions.models import (
     Production,
     Venue,
     Performance,
+    Warning,
+    CrewMember,
+    CrewRole,
+    CastMember,
 )
 
 
@@ -15,6 +19,30 @@ class SocietyFactory(factory.django.DjangoModelFactory):
         model = Society
 
 
+class CrewRoleFactory(factory.django.DjangoModelFactory):
+    name = factory.Faker("sentence", nb_words=2)
+
+    class Meta:
+        model = CrewRole
+
+
+class CrewMemberFactory(factory.django.DjangoModelFactory):
+    name = factory.Faker("sentence", nb_words=3)
+    role = factory.SubFactory(CrewRoleFactory)
+
+    class Meta:
+        model = CrewMember
+
+
+class CastMemberFactory(factory.django.DjangoModelFactory):
+    name = factory.Faker("sentence", nb_words=3)
+    role = factory.Faker("sentence", nb_words=3)
+    profile_picture = factory.django.ImageField(color="blue", use_url=True)
+
+    class Meta:
+        model = CastMember
+
+
 class ProductionFactory(factory.django.DjangoModelFactory):
 
     name = factory.Faker("sentence", nb_words=3)
@@ -23,6 +51,9 @@ class ProductionFactory(factory.django.DjangoModelFactory):
     society = factory.SubFactory(SocietyFactory)
     poster_image = factory.django.ImageField(color="blue", use_url=True)
     featured_image = factory.django.ImageField(color="blue", use_url=True)
+
+    # cast = factory.List([factory.SubFactory(CastMemberFactory) for _ in range(5)])
+    # crew = factory.List([factory.SubFactory(CrewMemberFactory) for _ in range(5)])
 
     class Meta:
         model = Production
