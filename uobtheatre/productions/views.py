@@ -11,7 +11,6 @@ class ProductionViewSet(viewsets.ModelViewSet):
 
     queryset = Production.objects.all()
     serializer_class = ProductionSerializer
-    fields = "__all__"
 
     @action(detail=False)
     def upcoming_productions(self, request):
