@@ -83,6 +83,8 @@ def test_production_view_upcoming_productions_action(api_client):
     # Create some productions that are in the past
     production1 = ProductionFactory()
     production2 = ProductionFactory()
+    production3 = ProductionFactory()
+
     for i in range(10):
 
         PerformanceFactory(
@@ -121,12 +123,18 @@ def test_production_view_upcoming_productions_action(api_client):
             end=timezone.now() + timedelta(hours=i * 2),
             production=production2,
         )
+        PerformanceFactory(
+            start=timezone.now() + timedelta(hours=i * 8),
+            end=timezone.now() + timedelta(hours=i * 12),
+            production=production3,
+        )
 
     response = api_client.get("/api/v1/productions/upcoming_productions/")
     assert response.status_code == 200
-    assert len(response.json()["results"]) == 2
+    assert len(response.json()["results"]) == 3
 
     # Check the order
     # The first performance is more in the future so should be returned second
     assert response.json()["results"][0]["id"] == production2.id
     assert response.json()["results"][1]["id"] == production1.id
+    assert response.json()["results"][2]["id"] == production3.id
