@@ -22,12 +22,19 @@ class SeatType(models.Model):
     name = models.CharField(max_length=255)
     is_internal = models.BooleanField(default=True)
 
+    def __str__(self):
+        return self.name
+
 
 class SeatGroup(models.Model):
-    seat_type = models.ForeignKey(SeatType, on_delete=models.SET_NULL)
+    name = models.CharField(max_length=255, null=True, blank=True)
+    seat_type = models.ForeignKey(SeatType, on_delete=models.SET_NULL, null=True)
     venue = models.ForeignKey(
         Venue, on_delete=models.CASCADE, related_name="seat_groups"
     )
-    seat_row = models.CharField(max_length=5, null=True, blank=True)
-    seat_number = models.CharField(null=True, blank=True)
     capacity = models.IntegerField(null=True)
+    seat_row = models.CharField(max_length=5, null=True, blank=True)
+    seat_number = models.CharField(max_length=5, null=True, blank=True)
+
+    def __str__(self):
+        return self.name

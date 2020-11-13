@@ -1,21 +1,12 @@
 import uuid
-import factory
 from django.utils import timezone
 from django.db import models
-from django.conf import settings
-from django.dispatch import receiver
-from django.db.models.signals import post_save
-from django.db.models.query import QuerySet
-from rest_framework.authtoken.models import Token
-from cached_property import cached_property_with_ttl
 from django.utils.functional import cached_property
 from uobtheatre.utils.models import (
     SoftDeletionMixin,
     TimeStampedMixin,
 )
-from uobtheatre.venues.models import (
-    Venue
-)
+from uobtheatre.venues.models import Venue, SeatGroup
 
 
 class CrewRole(models.Model):
@@ -108,6 +99,14 @@ class Production(models.Model, SoftDeletionMixin, TimeStampedMixin):
             return None
         return min(performance.start for performance in performances)
 
+    def seat_group_capacity(self, seat_group: SeatGroup):
+        return (
+            seat_group.capacity
+            - SeatsBookings.objects.filter(
+                seat_group=seat_group, production=self
+            ).count()
+        )
+
 
 class Performance(models.Model, SoftDeletionMixin, TimeStampedMixin):
     """A performance is a discrete event when the show takes place eg 7pm on
@@ -125,11 +124,12 @@ class Performance(models.Model, SoftDeletionMixin, TimeStampedMixin):
     extra_information = models.TextField(null=True, blank=True)
 
     # Bookings
-    capacity = model.SmallIntegerField()
+    capacity = models.SmallIntegerField()
 
     @cached_property
     def capacity_remaining(self):
-        sum(ticket.ticket_price_band.number_of_tickets 
+        # sum(ticket.ticket_price_band.number_of_tickets)
+        pass
 
     def __str__(self):
         if self.start is None:
