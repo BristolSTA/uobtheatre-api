@@ -5,6 +5,13 @@ from uobtheatre.utils.models import (
 )
 
 
+class Seat(models.Model):
+    """ A seat which can be booked """
+
+    row = models.CharField(max_length=5, null=True, blank=True)
+    number = models.CharField(max_length=5, null=True, blank=True)
+
+
 class Venue(models.Model, SoftDeletionMixin, TimeStampedMixin):
     """A venue is a space often where shows take place"""
 
@@ -33,8 +40,4 @@ class SeatGroup(models.Model):
         Venue, on_delete=models.CASCADE, related_name="seat_groups"
     )
     capacity = models.IntegerField(null=True)
-    seat_row = models.CharField(max_length=5, null=True, blank=True)
-    seat_number = models.CharField(max_length=5, null=True, blank=True)
-
-    def __str__(self):
-        return self.name
+    seat = models.ForeignKey(Seat, on_delete=models.RESTRICT, null=True, blank=True)

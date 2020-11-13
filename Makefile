@@ -22,6 +22,7 @@ migrate: ## Do the migrations
 	docker-compose run api python manage.py migrate
 
 seed: ## Seed the db with some example data 
+	docker-compose run api python manage.py loaddata uobtheatre/venues/fixtures.json
 	docker-compose run api python manage.py loaddata uobtheatre/productions/fixtures.json
 
 psql: ## Do the migrations
@@ -54,11 +55,11 @@ clean-app-migrations: ## Generate clean migrations for productions
 	find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
 	make migrations
 
-clean-postgres-migrations: ## Apply clean migrations to postgres
+clean-postgres-migrate: ## Apply clean migrations to postgres
 	docker rm -f uobtheatre-api_postgres_1
 	docker volume rm uobtheatre-api_postgres_data
 	make migrate 
 
 clean-migrations: ## Do the migrations from scratch
-	make clean-productions-migrations
-	make clean-postgres-migrations
+	make clean-app-migrations
+	make clean-postgres-migrate

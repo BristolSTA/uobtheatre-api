@@ -1,0 +1,28 @@
+[
+    {
+        "model": "venues.venue",
+        "pk": 1,
+        "fields": {"name": "The Winston Theatre", "internal_capacity": 209}
+    },
+    {
+        "model": "venues.venue",
+        "pk": 2,
+        "fields": {"name": "The Pegg Theatre", "internal_capacity": 80}
+    },
+    {
+        "model": "venues.venue",
+        "pk": 3,
+        "fields": {"name": "The Anson Rooms", "internal_capacity": 1000}
+    },
+    
+    {
+        "model": "venues.seattype",
+        "pk": 1,
+        "fields": {"name": "Generic seating", "is_internal": true}
+    },
+    {
+        "model": "venues.seatgroup",
+        "pk": 1,
+        "fields": {"seat_type": 1, "venue": 1, "capacity": 204}
+    }
+]
