@@ -10,6 +10,23 @@ from uobtheatre.productions.test.factories import (
     PerformanceFactory,
 )
 
+@pytest.mark.django_db
+def test_society_view_get(api_client):
+
+    socTest = SocietyFactory()
+
+    response = api_client.get("/api/v1/societies/")
+
+    socities = [
+        {
+            "id": socTest.id,
+            "name": socTest.name,
+        },
+    ]
+
+    assert response.status_code == 200
+    assert response.json()['results'] == socities
+
 
 @pytest.mark.django_db
 def test_production_view_get(api_client):
