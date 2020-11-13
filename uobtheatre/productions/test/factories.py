@@ -51,6 +51,7 @@ class ProductionFactory(factory.django.DjangoModelFactory):
     society = factory.SubFactory(SocietyFactory)
     poster_image = factory.django.ImageField(color="blue", use_url=True)
     featured_image = factory.django.ImageField(color="blue", use_url=True)
+    cover_image = factory.django.ImageField(color="blue", use_url=True)
 
     # cast = factory.List([factory.SubFactory(CastMemberFactory) for _ in range(5)])
     # crew = factory.List([factory.SubFactory(CrewMemberFactory) for _ in range(5)])

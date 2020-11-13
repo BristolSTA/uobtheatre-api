@@ -56,19 +56,9 @@ class ProductionSerializer(serializers.ModelSerializer):
     warnings = serializers.StringRelatedField(many=True)
     crew = CrewMemberSerialzier(many=True)
     cast = CastMemberSerialzier(many=True)
+    start_date = serializers.DateTimeField("iso-8601")
+    end_date = serializers.DateTimeField("iso-8601")
 
     class Meta:
         model = Production
-        fields = (
-            "id",
-            "name",
-            "subtitle",
-            "description",
-            "society",
-            "poster_image",
-            "featured_image",
-            "performances",
-            "warnings",
-            "cast",
-            "crew",
-        )
+        fields = "__all__"

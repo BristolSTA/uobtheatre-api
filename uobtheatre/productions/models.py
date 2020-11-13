@@ -7,9 +7,14 @@ from django.dispatch import receiver
 from django.db.models.signals import post_save
 from django.db.models.query import QuerySet
 from rest_framework.authtoken.models import Token
+from cached_property import cached_property_with_ttl
+from django.utils.functional import cached_property
 from uobtheatre.utils.models import (
     SoftDeletionMixin,
     TimeStampedMixin,
+)
+from uobtheatre.venues.models import (
+    Venue
 )
 
 
@@ -52,15 +57,6 @@ class Society(models.Model, SoftDeletionMixin, TimeStampedMixin):
         return self.name
 
 
-class Venue(models.Model, SoftDeletionMixin, TimeStampedMixin):
-    """A venue is a space often where shows take place"""
-
-    name = models.CharField(max_length=255)
-
-    def __str__(self):
-        return self.name
-
-
 class Warning(models.Model):
     """A venue is a space often where shows take place"""
 
@@ -83,6 +79,7 @@ class Production(models.Model, SoftDeletionMixin, TimeStampedMixin):
 
     poster_image = models.ImageField(null=True)
     featured_image = models.ImageField(null=True)
+    cover_image = models.ImageField(null=True)
 
     age_rating = models.SmallIntegerField(null=True)
     facebook_event = models.CharField(max_length=255, null=True)
@@ -101,7 +98,15 @@ class Production(models.Model, SoftDeletionMixin, TimeStampedMixin):
 
     def end_date(self):
         performances = self.performances.all()
+        if not performances:
+            return None
         return max(performance.end for performance in performances)
+
+    def start_date(self):
+        performances = self.performances.all()
+        if not performances:
+            return None
+        return min(performance.start for performance in performances)
 
 
 class Performance(models.Model, SoftDeletionMixin, TimeStampedMixin):
@@ -118,6 +123,13 @@ class Performance(models.Model, SoftDeletionMixin, TimeStampedMixin):
     end = models.DateTimeField(null=True)
 
     extra_information = models.TextField(null=True, blank=True)
+
+    # Bookings
+    capacity = model.SmallIntegerField()
+
+    @cached_property
+    def capacity_remaining(self):
+        sum(ticket.ticket_price_band.number_of_tickets 
 
     def __str__(self):
         if self.start is None:

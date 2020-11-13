@@ -45,21 +45,6 @@ def test_production_serializer():
     data = Production.objects.first()
     serialized_prod = ProductionSerializer(data)
 
-    performances = [
-        {
-            "id": performance.id,
-            "production": performance.production.id,
-            "venue": {
-                "id": performance.venue.id,
-                "name": performance.venue.name,
-            },
-            "extra_information": performance.extra_information,
-            "start": performance.start.isoformat() + "+0000",
-            "end": performance.end.isoformat() + "+0000",
-        }
-        for performance in production.performances.all()
-    ]
-
     warnings = [warning.name for warning in production.warnings.all()]
 
     cast = [
@@ -79,7 +64,7 @@ def test_production_serializer():
         for crewmember in production.crew.all()
     ]
 
-    assert serialized_prod.data == {
+    expected_output = {
         "id": production.id,
         "name": production.name,
         "subtitle": production.subtitle,
@@ -90,11 +75,46 @@ def test_production_serializer():
         },
         "poster_image": production.poster_image.url,
         "featured_image": production.featured_image.url,
-        "performances": performances,
+        "cover_image": production.cover_image.url,
+        "age_rating": production.age_rating,
+        "facebook_event": production.facebook_event,
         "warnings": warnings,
         "cast": cast,
         "crew": crew,
+        "performances": [],
+        "start_date": None,
+        "end_date": None,
     }
+    assert expected_output == serialized_prod.data
+
+    # Add 2 performances
+    PerformanceFactory(production=production)
+    PerformanceFactory(production=production)
+    performances = [
+        {
+            "id": performance.id,
+            "production": performance.production.id,
+            "venue": {
+                "id": performance.venue.id,
+                "name": performance.venue.name,
+            },
+            "extra_information": performance.extra_information,
+            "start": performance.start.isoformat() + "",
+            "end": performance.end.isoformat() + "",
+        }
+        for performance in production.performances.all()
+    ]
+    assert len(performances) == 2
+
+    performance_updates = {
+        "performances": performances,
+        "start_date": production.start_date().isoformat(),
+        "end_date": production.end_date().isoformat(),
+    }
+    expected_output.update(performance_updates)
+
+    serialized_prod = ProductionSerializer(data)
+    assert expected_output == serialized_prod.data
 
 
 @pytest.mark.django_db
