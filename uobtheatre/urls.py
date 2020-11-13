@@ -6,7 +6,7 @@ from django.views.generic.base import RedirectView
 from rest_framework.routers import DefaultRouter
 from rest_framework.authtoken import views
 from uobtheatre.users.views import UserViewSet, UserCreateViewSet
-from uobtheatre.productions.views import ProductionViewSet,SocietyViewSet
+from uobtheatre.productions.views import ProductionViewSet, SocietyViewSet
 from django.views.generic import TemplateView
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
