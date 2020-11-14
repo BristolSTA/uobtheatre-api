@@ -8,6 +8,7 @@ from rest_framework.authtoken import views
 from uobtheatre.users.views import UserViewSet, UserCreateViewSet
 from uobtheatre.productions.views import ProductionViewSet
 from uobtheatre.societies.views import SocietyViewSet
+from uobtheatre.venues.views import VenueViewSet
 from django.views.generic import TemplateView
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
@@ -32,7 +33,7 @@ router.register(r"users", UserViewSet)
 router.register(r"users", UserCreateViewSet)
 router.register(r"productions", ProductionViewSet)
 router.register(r"societies", SocietyViewSet)
-
+router.register(r"venues", VenueViewSet)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
