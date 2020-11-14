@@ -30,7 +30,7 @@
     {
         "model": "bookings.discount",
         "pk": 2,
-        "fields": {"name": "Family discount", "discount": 0.2, "performances": [1]}
+        "fields": {"name": "Family discount", "discount": 0.3, "performances": [1]}
     },
     {
         "model": "bookings.discountrequirement",
@@ -39,19 +39,34 @@
     },
     {
         "model": "bookings.discountrequirement",
-        "pk": 2,
+        "pk": 3,
         "fields": {"consession_type": 2, "number": 2, "discount": 2}
     },
     
     {
         "model": "bookings.booking",
-        "pk": 2,
+        "pk": 1,
         "fields": {"user": 1, "performance": 1}
     },
     {
         "model": "bookings.seatbooking",
         "pk": 1,
         "fields": {"seat_group": 1, "booking": 1, "consession_type": 1}
+    },
+    {
+        "model": "bookings.seatbooking",
+        "pk": 2,
+        "fields": {"seat_group": 1, "booking": 1, "consession_type": 1}
+    },
+    {
+        "model": "bookings.seatbooking",
+        "pk": 3,
+        "fields": {"seat_group": 1, "booking": 1, "consession_type": 2}
+    },
+    {
+        "model": "bookings.seatbooking",
+        "pk": 4,
+        "fields": {"seat_group": 1, "booking": 1, "consession_type": 2}
     }
     
 ]

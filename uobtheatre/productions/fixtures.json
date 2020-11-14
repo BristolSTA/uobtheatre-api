@@ -59,7 +59,27 @@
           "production": 1,
           "venue": 1,
           "start": "2020-11-11T12:24:32+0000",
-          "end": "2020-11-11T12:24:32+0000"
+          "end": "2020-11-11T14:24:32+0000"
+        }
+    },
+    {
+        "model": "productions.performance",
+        "pk": 2,
+        "fields": {
+          "production": 1,
+          "venue": 1,
+          "start": "2020-11-12T12:24:32+0000",
+          "end": "2020-11-12T14:24:32+0000"
+        }
+    },
+    {
+        "model": "productions.performance",
+        "pk": 3,
+        "fields": {
+          "production": 1,
+          "venue": 2,
+          "start": "2020-11-13T12:24:32+0000",
+          "end": "2020-11-13T14:24:32+0000"
         }
     }
 ]
