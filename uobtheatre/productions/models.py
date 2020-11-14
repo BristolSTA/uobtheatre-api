@@ -123,9 +123,6 @@ class Performance(models.Model, SoftDeletionMixin, TimeStampedMixin):
 
     extra_information = models.TextField(null=True, blank=True)
 
-    # Bookings
-    capacity = models.SmallIntegerField()
-
     @cached_property
     def capacity_remaining(self):
         # sum(ticket.ticket_price_band.number_of_tickets)

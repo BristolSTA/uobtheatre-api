@@ -27,7 +27,7 @@ class CastMemberSerialzier(serializers.ModelSerializer):
 class VenueSerializer(serializers.ModelSerializer):
     class Meta:
         model = Venue
-        fields = "__all__"
+        fields = ["id", "name"]
 
 
 class WarningSerializer(serializers.ModelSerializer):
