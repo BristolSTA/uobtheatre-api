@@ -2,7 +2,6 @@ import pytest
 
 from uobtheatre.productions.test.factories import (
     ProductionFactory,
-    SocietyFactory,
     VenueFactory,
     PerformanceFactory,
     CrewMemberFactory,
@@ -10,7 +9,6 @@ from uobtheatre.productions.test.factories import (
 )
 from uobtheatre.productions.serializers import (
     ProductionSerializer,
-    SocietySerializer,
     VenueSerializer,
     PerformanceSerializer,
     CrewMemberSerialzier,
@@ -19,7 +17,6 @@ from uobtheatre.productions.serializers import (
 from uobtheatre.productions.models import (
     Production,
     Performance,
-    Society,
     Venue,
     CrewRole,
     CrewMember,
@@ -28,18 +25,6 @@ from uobtheatre.productions.models import (
 
 
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
-
-
-@pytest.mark.django_db
-def test_society_serializer():
-    society = SocietyFactory()
-    data = Society.objects.first()
-    serialized_society = SocietySerializer(data)
-
-    assert serialized_society.data == {
-        "id": society.id,
-        "name": society.name,
-    }
 
 
 @pytest.mark.django_db

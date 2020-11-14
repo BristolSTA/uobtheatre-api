@@ -7,6 +7,7 @@ from uobtheatre.utils.models import (
     TimeStampedMixin,
 )
 from uobtheatre.venues.models import Venue, SeatGroup
+from uobtheatre.societies.models import Society
 
 
 class CrewRole(models.Model):
@@ -34,15 +35,6 @@ class CrewMember(models.Model):
 
     name = models.CharField(max_length=255)
     role = models.ForeignKey(CrewRole, null=True, on_delete=models.SET_NULL)
-
-    def __str__(self):
-        return self.name
-
-
-class Society(models.Model, SoftDeletionMixin, TimeStampedMixin):
-    """A society is a society"""
-
-    name = models.CharField(max_length=255)
 
     def __str__(self):
         return self.name

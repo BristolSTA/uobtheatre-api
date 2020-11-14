@@ -23,6 +23,7 @@ INSTALLED_APPS = (
     "uobtheatre.utils",
     "uobtheatre.venues",
     "uobtheatre.bookings",
+    "uobtheatre.societies",
 )
 
 # https://docs.djangoproject.com/en/2.0/topics/http/middleware/
