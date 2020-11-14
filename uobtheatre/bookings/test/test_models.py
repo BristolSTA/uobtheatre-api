@@ -242,13 +242,14 @@ def test_get_price():
 
 
 @pytest.mark.django_db
-def test_get_price():
+def test_get_price_with_discount():
     venue = VenueFactory()
     performance = PerformanceFactory(venue=venue)
     booking = BookingFactory(performance=performance)
 
     seat_group = SeatGroupFactory(venue=venue)
     consession_type_student = ConsessionTypeFactory(name="Student")
+    consession_type_adult = ConsessionTypeFactory(name="Adult")
 
     # Set seat type price for performance
     seat_price = PerformanceSeatPriceFactory(
@@ -273,7 +274,87 @@ def test_get_price():
     )
     discount_combination = DiscountCombination((discount_student,))
     assert discount_student.discount == 0.2
-    assert (
-        booking.get_price_with_discounts(discount_combination)
-        == (seat_price.price * (1 - discount_student.discount)) + seat_price.price
+    assert round(booking.get_price_with_discounts(discount_combination)) == round(
+        (seat_price.price * (1 - discount_student.discount)) + seat_price.price
+    )
+
+    discount_family = DiscountFactory(name="Family", discount=0.2)
+    discount_family.performances.set([performance])
+    DiscountRequirementFactory(
+        consession_type=consession_type_student, number=1, discount=discount_family
+    )
+    DiscountRequirementFactory(
+        consession_type=consession_type_adult, number=2, discount=discount_family
+    )
+
+    SeatBookingFactory(
+        booking=booking, seat_group=seat_group, consession_type=consession_type_adult
+    )
+    SeatBookingFactory(
+        booking=booking, seat_group=seat_group, consession_type=consession_type_adult
+    )
+
+    discount_combination = DiscountCombination((discount_student, discount_family))
+    assert round(booking.get_price_with_discounts(discount_combination)) == round(
+        (seat_price.price * (1 - discount_student.discount))
+        + (seat_price.price * 3 * (1 - discount_family.discount))
+    )
+
+
+@pytest.mark.django_db
+def test_get_best_discount_combination():
+    performance = PerformanceFactory()
+    booking = BookingFactory(performance=performance)
+    venue = VenueFactory()
+
+    # Create some consession types
+    consession_type_student = ConsessionTypeFactory(name="Student")
+    consession_type_adult = ConsessionTypeFactory(name="Adult")
+
+    seat_group = SeatGroupFactory(venue=venue)
+
+    # Set seat type price for performance
+    seat_price = PerformanceSeatPriceFactory(
+        performance=performance, seat_type=seat_group.seat_type
+    )
+
+    # Create a family discount - 1 student ticket and 2 adults required
+    discount_family = DiscountFactory(name="Family", discount=0.2)
+    discount_family.performances.set([performance])
+    DiscountRequirementFactory(
+        consession_type=consession_type_student, number=1, discount=discount_family
+    )
+    DiscountRequirementFactory(
+        consession_type=consession_type_adult, number=2, discount=discount_family
+    )
+
+    # Create a student discount - 1 student ticket required
+    discount_student = DiscountFactory(name="Student", discount=0.2)
+    discount_student.performances.set([performance])
+    DiscountRequirementFactory(
+        consession_type=consession_type_student, number=1, discount=discount_student
+    )
+
+    SeatBookingFactory(
+        booking=booking, consession_type=consession_type_student, seat_group=seat_group
+    )
+    SeatBookingFactory(
+        booking=booking, consession_type=consession_type_adult, seat_group=seat_group
+    )
+    SeatBookingFactory(
+        booking=booking, consession_type=consession_type_adult, seat_group=seat_group
+    )
+    SeatBookingFactory(
+        booking=booking, consession_type=consession_type_student, seat_group=seat_group
+    )
+
+    assert booking.performance.discounts.count() == 2
+
+    assert booking.performance.discounts.first().name == "Family"
+    assert booking.performance.discounts.first().discount == 0.2
+    assert set(booking.get_best_discount_combination().discount_combination) == set(
+        (
+            discount_student,
+            discount_family,
+        )
     )

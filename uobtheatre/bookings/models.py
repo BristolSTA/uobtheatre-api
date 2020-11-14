@@ -12,7 +12,7 @@ from uobtheatre.venues.models import SeatGroup, SeatType
 
 class Discount(models.Model):
     name = models.CharField(max_length=255)
-    discount = models.SmallIntegerField()
+    discount = models.FloatField()
     performances = models.ManyToManyField(
         Performance, blank=True, related_name="discounts"
     )
@@ -78,6 +78,9 @@ class DiscountCombination:
             consession_requirements[requirement.consession_type] += requirement.number
         return consession_requirements
 
+    def __str__(self):
+        return f"{self.discount_combination[0]}"
+
 
 class Booking(models.Model, TimeStampedMixin):
     """A booking is for one performance and has many tickets"""
@@ -130,7 +133,7 @@ class Booking(models.Model, TimeStampedMixin):
             for seat in self.seat_bookings.all()
         )
 
-    def get_price_with_discounts(self, discounts: Tuple[DiscountCombination]) -> float:
+    def get_price_with_discounts(self, discounts: DiscountCombination) -> float:
         discount_total = 0
         seats_available_to_discount = [seat for seat in self.seat_bookings.all()]
         for discount_from_comb in discounts.discount_combination:
@@ -156,8 +159,21 @@ class Booking(models.Model, TimeStampedMixin):
         return self.get_price() - discount_total
 
     def get_best_discount_combination(self):
-        valid_discounts = get_valid_discounts()
-        pass
+        best_price = self.get_price()
+        best_discount = None
+        print("VALID DISCOUNT COMBOS")
+        print(f"Price is {self.get_price()}")
+        print(self.get_valid_discounts())
+        for discount_combo in self.get_valid_discounts():
+            print("WOKRING ON:")
+            print(discount_combo)
+            discount_combo_price = self.get_price_with_discounts(discount_combo)
+            print(f"Discount combo price is {discount_combo_price}")
+            if discount_combo_price < best_price:
+                best_price = discount_combo_price
+                best_discount = discount_combo
+
+        return best_discount
 
 
 class SeatBooking(models.Model):
