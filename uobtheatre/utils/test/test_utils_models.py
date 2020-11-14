@@ -1,8 +1,7 @@
 import pytest
-from uobtheatre.utils.models import TimeStampedMixin, SoftDeletionMixin
-
 from django.db import models
 
+from uobtheatre.utils.models import SoftDeletionMixin, TimeStampedMixin
 
 # class ExampleModel(models.Model, TimeStampedMixin):
 #    app_label = "example"

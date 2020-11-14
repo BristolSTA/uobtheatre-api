@@ -1,9 +1,10 @@
-from django.test import TestCase
-from django.forms.models import model_to_dict
 from django.contrib.auth.hashers import check_password
+from django.forms.models import model_to_dict
+from django.test import TestCase
 from nose.tools import eq_, ok_
-from uobtheatre.users.test.factories import UserFactory
+
 from uobtheatre.users.serializers import CreateUserSerializer
+from uobtheatre.users.test.factories import UserFactory
 
 
 class TestCreateUserSerializer(TestCase):

@@ -1,4 +1,5 @@
 from rest_framework import viewsets
+
 from uobtheatre.societies.models import Society
 from uobtheatre.societies.serializers import SocietySerializer
 

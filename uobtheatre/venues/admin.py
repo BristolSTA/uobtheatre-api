@@ -1,5 +1,6 @@
 from django.contrib import admin
-from uobtheatre.venues.models import Venue, SeatType, SeatGroup
+
+from uobtheatre.venues.models import SeatGroup, SeatType, Venue
 
 admin.site.register(Venue)
 admin.site.register(SeatType)

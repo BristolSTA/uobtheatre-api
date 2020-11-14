@@ -1,6 +1,6 @@
 import os
-from .common import Common
 
+from .common import Common
 
 INSTALLED_APPS = Common.INSTALLED_APPS
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")

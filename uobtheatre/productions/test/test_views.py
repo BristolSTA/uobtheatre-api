@@ -1,14 +1,11 @@
-import pytest
-import factory
-
-from django.utils import timezone
 from datetime import timedelta
 
-from uobtheatre.productions.test.factories import (
-    ProductionFactory,
-    PerformanceFactory,
-)
+import factory
+import pytest
+from django.utils import timezone
 
+from uobtheatre.productions.test.factories import (PerformanceFactory,
+                                                   ProductionFactory)
 
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 

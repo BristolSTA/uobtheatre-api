@@ -1,8 +1,6 @@
 import factory
 
-from uobtheatre.societies.models import (
-    Society,
-)
+from uobtheatre.societies.models import Society
 
 
 class SocietyFactory(factory.django.DjangoModelFactory):

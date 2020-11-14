@@ -1,15 +1,8 @@
 import pytest
 
-from uobtheatre.societies.test.factories import (
-    SocietyFactory,
-)
-from uobtheatre.societies.serializers import (
-    SocietySerializer,
-)
-from uobtheatre.societies.models import (
-    Society,
-)
-
+from uobtheatre.societies.models import Society
+from uobtheatre.societies.serializers import SocietySerializer
+from uobtheatre.societies.test.factories import SocietyFactory
 
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 

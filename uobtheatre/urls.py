@@ -1,17 +1,18 @@
 from django.conf import settings
-from django.urls import path, re_path, include, reverse_lazy
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.views.generic.base import RedirectView
-from rest_framework.routers import DefaultRouter
-from rest_framework.authtoken import views
-from uobtheatre.users.views import UserViewSet, UserCreateViewSet
-from uobtheatre.productions.views import ProductionViewSet
-from uobtheatre.societies.views import SocietyViewSet
+from django.urls import include, path, re_path, reverse_lazy
 from django.views.generic import TemplateView
+from django.views.generic.base import RedirectView
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
+from rest_framework.authtoken import views
+from rest_framework.routers import DefaultRouter
+
+from uobtheatre.productions.views import ProductionViewSet
+from uobtheatre.societies.views import SocietyViewSet
+from uobtheatre.users.views import UserCreateViewSet, UserViewSet
 
 # Documentation setup
 schema_view = get_schema_view(

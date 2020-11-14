@@ -35,7 +35,7 @@ test: ## Run unit tests in docker container
 	docker-compose run --rm api coverage run -m pytest
 
 test-v: ## Run verbose unit tests in docker container 
-	docker-compose run --rm api coverage run -m pytest -vv
+	docker-compose run --rm api coverage run -m pytest -s -vv
 
 coverage: ## Generate test coverage report 
 	docker-compose run --rm api coverage html

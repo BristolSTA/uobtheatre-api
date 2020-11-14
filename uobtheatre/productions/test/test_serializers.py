@@ -1,28 +1,17 @@
 import pytest
 
-from uobtheatre.productions.test.factories import (
-    ProductionFactory,
-    VenueFactory,
-    PerformanceFactory,
-    CrewMemberFactory,
-    CastMemberFactory,
-)
-from uobtheatre.productions.serializers import (
-    ProductionSerializer,
-    VenueSerializer,
-    PerformanceSerializer,
-    CrewMemberSerialzier,
-    CastMemberSerialzier,
-)
-from uobtheatre.productions.models import (
-    Production,
-    Performance,
-    Venue,
-    CrewRole,
-    CrewMember,
-    CastMember,
-)
-
+from uobtheatre.productions.models import (CastMember, CrewMember, CrewRole,
+                                           Performance, Production, Venue)
+from uobtheatre.productions.serializers import (CastMemberSerialzier,
+                                                CrewMemberSerialzier,
+                                                PerformanceSerializer,
+                                                ProductionSerializer,
+                                                VenueSerializer)
+from uobtheatre.productions.test.factories import (CastMemberFactory,
+                                                   CrewMemberFactory,
+                                                   PerformanceFactory,
+                                                   ProductionFactory,
+                                                   VenueFactory)
 
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 

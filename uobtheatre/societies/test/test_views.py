@@ -1,8 +1,6 @@
 import pytest
 
-from uobtheatre.societies.test.factories import (
-    SocietyFactory,
-)
+from uobtheatre.societies.test.factories import SocietyFactory
 
 
 @pytest.mark.django_db

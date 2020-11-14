@@ -1,8 +1,6 @@
 from django.db import models
-from uobtheatre.utils.models import (
-    SoftDeletionMixin,
-    TimeStampedMixin,
-)
+
+from uobtheatre.utils.models import SoftDeletionMixin, TimeStampedMixin
 
 
 class Society(models.Model, SoftDeletionMixin, TimeStampedMixin):

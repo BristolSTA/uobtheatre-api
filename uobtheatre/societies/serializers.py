@@ -1,7 +1,6 @@
 from rest_framework import serializers
-from uobtheatre.societies.models import (
-    Society,
-)
+
+from uobtheatre.societies.models import Society
 
 
 class SocietySerializer(serializers.ModelSerializer):
