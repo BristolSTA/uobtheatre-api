@@ -7,7 +7,7 @@ from django.db import models
 from uobtheatre.productions.models import Performance
 from uobtheatre.users.models import User
 from uobtheatre.utils.models import SoftDeletionMixin, TimeStampedMixin
-from uobtheatre.venues.models import SeatGroup
+from uobtheatre.venues.models import SeatGroup, SeatType
 
 
 class Discount(models.Model):
@@ -15,6 +15,9 @@ class Discount(models.Model):
     discount = models.SmallIntegerField()
     performances = models.ManyToManyField(
         Performance, blank=True, related_name="discounts"
+    )
+    seat_type = models.ForeignKey(
+        SeatType, on_delete=models.CASCADE, null=True, blank=True
     )
 
     def __str__(self):
@@ -39,6 +42,8 @@ class DiscountRequirement(models.Model):
 def combinations(iterable: List, max_length: int) -> List[Tuple]:
     """ Given a list give all the combinations of that list up to a given length """
 
+    print(f"iterable is {iterable}")
+    print(f"max_length is: {max_length}")
     return set(
         [
             combination
@@ -94,15 +99,17 @@ class Booking(models.Model, TimeStampedMixin):
         )
 
     def get_valid_discounts(self) -> List[Discount]:
-        all_discount_combinations = combinations(self.performance.discounts)
-        valid_discounts = [
+        list(self.performance.discounts.all()),
+        return [
             discounts
-            for discounts in all_discount_combinations
+            for discounts in combinations(
+                list(self.performance.discounts.all()),
+                self.seat_bookings.count(),
+            )
             if self.is_valid_discount_combination(discounts)
         ]
-        pass
 
-    def get_discounts(self):
+    def get_best_discount_combination(self):
         pass
 
 

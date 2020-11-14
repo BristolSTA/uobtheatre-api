@@ -114,7 +114,7 @@ def test_is_valid_single_discount():
 
 
 @pytest.mark.django_db
-def test_is_valid_muli_discount():
+def test_is_valid_multi_discount():
     booking = BookingFactory()
     discount = DiscountFactory()
     discount.performance = booking.performance
@@ -144,5 +144,58 @@ def test_is_valid_muli_discount():
     assert booking.is_valid_discount_combination((discount,))
 
 
+@pytest.mark.django_db
 def test_get_valid_discounts():
-    pass
+    performance = PerformanceFactory()
+    booking = BookingFactory(performance=performance)
+
+    # Create some consession types
+    consession_type_student = ConsessionTypeFactory(name="Student")
+    consession_type_adult = ConsessionTypeFactory(name="Adult")
+
+    # Create a family discount - 1 student ticket and 2 adults required
+    discount_family = DiscountFactory(name="Family", discount=0.2)
+    discount_family.performances.set([performance])
+    DiscountRequirementFactory(
+        consession_type=consession_type_student, number=1, discount=discount_family
+    )
+    DiscountRequirementFactory(
+        consession_type=consession_type_adult, number=2, discount=discount_family
+    )
+
+    # Create a student discount - 1 student ticket required
+    discount_student = DiscountFactory(name="Student", discount=0.2)
+    discount_student.performances.set([performance])
+    DiscountRequirementFactory(
+        consession_type=consession_type_student, number=1, discount=discount_student
+    )
+
+    # Check that both discounts have been created
+    assert performance.discounts.all().count() == 2
+
+    # When no seats are booked there are no valid discounts
+    assert booking.get_valid_discounts() == []
+
+    # When one student seat is booked the student discount should be available
+    SeatBookingFactory(booking=booking, consession_type=consession_type_student)
+    assert booking.get_valid_discounts() == [(discount_student,)]
+
+    SeatBookingFactory(booking=booking, consession_type=consession_type_adult)
+    SeatBookingFactory(booking=booking, consession_type=consession_type_adult)
+    assert set(booking.get_valid_discounts()) == set(
+        [
+            (discount_student,),
+            (discount_family,),
+        ]
+    )
+
+    SeatBookingFactory(booking=booking, consession_type=consession_type_student)
+    assert set(booking.get_valid_discounts()) == set(
+        [
+            (discount_family, discount_student),
+            (discount_student, discount_family),
+            (discount_family,),
+            (discount_student,),
+            (discount_student, discount_student),
+        ]
+    )

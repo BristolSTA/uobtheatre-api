@@ -4,8 +4,7 @@ import factory
 import pytest
 from django.utils import timezone
 
-from uobtheatre.productions.test.factories import (PerformanceFactory,
-                                                   ProductionFactory)
+from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
 
