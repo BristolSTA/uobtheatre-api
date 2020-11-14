@@ -11,6 +11,9 @@ from uobtheatre.productions.test.factories import (
 )
 
 
+DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+
+
 @pytest.mark.django_db
 def test_society_view_get(api_client):
 
@@ -46,21 +49,23 @@ def test_production_view_get(api_client):
 
     # Create a fake production
     prod1 = ProductionFactory()
+    perf1 = PerformanceFactory(production=prod1)
+    perf2 = PerformanceFactory(production=prod1)
 
     # Get the productions endpoint
     response = api_client.get("/api/v1/productions/")
 
     performances = [
         {
-            "id": prod1.id,
-            "production": prod1.production.id,
+            "id": performance.id,
+            "production": prod1.id,
             "venue": {
-                "id": prod1.venue.id,
-                "name": prod1.venue.name,
+                "id": performance.venue.id,
+                "name": performance.venue.name,
             },
-            "extra_information": prod1.extra_information,
-            "start": prod1.start.isoformat() + "+0000",
-            "end": prod1.end.isoformat() + "+0000",
+            "extra_information": performance.extra_information,
+            "start": performance.start.isoformat()[:-3] + "00",
+            "end": performance.end.isoformat()[:-3] + "00",
         }
         for performance in prod1.performances.all()
     ]
@@ -106,8 +111,8 @@ def test_production_view_get(api_client):
                 "cast": cast,
                 "crew": crew,
                 "warnings": warnings,
-                "start_date": str(prod1.start_date()),
-                "end_date": str(prod1.end_date()),
+                "start_date": prod1.start_date().strftime(DATE_FORMAT),
+                "end_date": prod1.end_date().strftime(DATE_FORMAT),
             },
         ],
     }

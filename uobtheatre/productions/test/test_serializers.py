@@ -27,6 +27,9 @@ from uobtheatre.productions.models import (
 )
 
 
+DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+
+
 @pytest.mark.django_db
 def test_society_serializer():
     society = SocietyFactory()
@@ -99,8 +102,8 @@ def test_production_serializer():
                 "name": performance.venue.name,
             },
             "extra_information": performance.extra_information,
-            "start": performance.start.isoformat() + "",
-            "end": performance.end.isoformat() + "",
+            "start": performance.start.isoformat()[:-3] + "00",
+            "end": performance.end.isoformat()[:-3] + "00",
         }
         for performance in production.performances.all()
     ]
@@ -108,8 +111,8 @@ def test_production_serializer():
 
     performance_updates = {
         "performances": performances,
-        "start_date": production.start_date().isoformat(),
-        "end_date": production.end_date().isoformat(),
+        "start_date": production.start_date().strftime(DATE_FORMAT),
+        "end_date": production.end_date().strftime(DATE_FORMAT),
     }
     expected_output.update(performance_updates)
 
