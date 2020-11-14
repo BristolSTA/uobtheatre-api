@@ -134,41 +134,25 @@ class Booking(models.Model, TimeStampedMixin):
         discount_total = 0
         seats_available_to_discount = [seat for seat in self.seat_bookings.all()]
         for discount_from_comb in discounts.discount_combination:
-            print(f"Looking at discount {discount_from_comb}")
             discount = DiscountCombination((discount_from_comb,))
             consession_map = discount.get_consession_map()
             for consession_type in consession_map.keys():
-                print(f"working on {consession_type}")
-            for i in range(consession_map[consession_type]):
-                print(f"in loop {i}")
-                seat = next(
-                    seat
-                    for seat in seats_available_to_discount
-                    if seat.consession_type == consession_type
-                )
-                print(f"Got seat {seat}")
-                print(
-                    self.performance.seat_prices.filter(
-                        seat_type=seat.seat_group.seat_type
+                for i in range(consession_map[consession_type]):
+                    seat = next(
+                        seat
+                        for seat in seats_available_to_discount
+                        if seat.consession_type == consession_type
                     )
-                    .first()
-                    .price
-                )
-                discount_total += (
-                    self.performance.seat_prices.filter(
-                        seat_type=seat.seat_group.seat_type
+                    discount_total += (
+                        self.performance.seat_prices.filter(
+                            seat_type=seat.seat_group.seat_type
+                        )
+                        .first()
+                        .price
+                        * discount_from_comb.discount
                     )
-                    .first()
-                    .price
-                    * discount_from_comb.discount
-                )
-                print(f"Discount value is: {discount_from_comb.discount}")
-                print(f"New discount total is {discount_total}")
-                seats_available_to_discount.remove(seat)
+                    seats_available_to_discount.remove(seat)
         # For each type of conession
-        print(f"Calcaulated total is: {self.get_price()}")
-        print(f"Calcaulated discount total is: {discount_total}")
-        print(f"Caclulated response: {self.get_price() - discount_total}")
         return self.get_price() - discount_total
 
     def get_best_discount_combination(self):

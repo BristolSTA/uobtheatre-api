@@ -272,8 +272,6 @@ def test_get_price():
         consession_type=consession_type_student, number=1, discount=discount_student
     )
     discount_combination = DiscountCombination((discount_student,))
-    print(f"seatprice {seat_price.price}")
-    print(f"getting price: {booking.get_price_with_discounts(discount_combination)}")
     assert discount_student.discount == 0.2
     assert (
         booking.get_price_with_discounts(discount_combination)
