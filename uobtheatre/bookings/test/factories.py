@@ -2,9 +2,16 @@ import uuid
 
 import factory
 
-from uobtheatre.bookings.models import Booking, ConsessionType, Discount
+from uobtheatre.bookings.models import (
+    Booking,
+    ConsessionType,
+    Discount,
+    DiscountRequirement,
+    SeatBooking,
+)
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
+from uobtheatre.venues.test.factories import SeatGroupFactory
 
 
 class DiscountFactory(factory.django.DjangoModelFactory):
@@ -24,6 +31,15 @@ class ConsessionTypeFactory(factory.django.DjangoModelFactory):
         model = ConsessionType
 
 
+class DiscountRequirementFactory(factory.django.DjangoModelFactory):
+
+    number = 1
+    consession_type = factory.SubFactory(ConsessionTypeFactory)
+
+    class Meta:
+        model = DiscountRequirement
+
+
 class BookingFactory(factory.django.DjangoModelFactory):
 
     booking_reference = uuid.uuid4()
@@ -32,3 +48,13 @@ class BookingFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = Booking
+
+
+class SeatBookingFactory(factory.django.DjangoModelFactory):
+
+    seat_group = factory.SubFactory(SeatGroupFactory)
+    booking = factory.SubFactory(BookingFactory)
+    consession_type = factory.SubFactory(ConsessionTypeFactory)
+
+    class Meta:
+        model = SeatBooking

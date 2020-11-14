@@ -35,9 +35,6 @@ class DiscountRequirement(models.Model):
     )
     consession_type = models.ForeignKey(ConsessionType, on_delete=models.CASCADE)
 
-    def __str__(self):
-        return self.name
-
 
 def combinations(iterable: List, max_length: int) -> List[Tuple]:
     """ Given a list give all the combinations of that list up to a given length """
@@ -76,7 +73,7 @@ class Booking(models.Model, TimeStampedMixin):
         print(f"discount requirements are {discount_requirements}")
         consession_requirements = {}
         for requirement in discount_requirements:
-            if not requirement.consession_type in consession_counts.keys():
+            if not requirement.consession_type in consession_requirements.keys():
                 consession_requirements[requirement.consession_type] = 0
             consession_requirements[requirement.consession_type] += requirement.number
 
@@ -84,12 +81,11 @@ class Booking(models.Model, TimeStampedMixin):
 
         booking_consessions = {}
         for seat_booking in self.seat_bookings.all():
-            if (
-                not seat_booking.consession_type.consession_type
-                in booking_consessions.keys()
-            ):
-                booking_consessions[requirement.consession_type] = 0
-            booking_consessions[requirement.consession_type] += 1
+            if not seat_booking.consession_type in booking_consessions.keys():
+                booking_consessions[seat_booking.consession_type] = 0
+            booking_consessions[seat_booking.consession_type] += 1
+
+        print(f"Booking consessions are: {booking_consessions}")
 
         return not any(
             consession_requirements[requirement]
