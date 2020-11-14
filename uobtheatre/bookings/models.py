@@ -161,14 +161,8 @@ class Booking(models.Model, TimeStampedMixin):
     def get_best_discount_combination(self):
         best_price = self.get_price()
         best_discount = None
-        print("VALID DISCOUNT COMBOS")
-        print(f"Price is {self.get_price()}")
-        print(self.get_valid_discounts())
         for discount_combo in self.get_valid_discounts():
-            print("WOKRING ON:")
-            print(discount_combo)
             discount_combo_price = self.get_price_with_discounts(discount_combo)
-            print(f"Discount combo price is {discount_combo_price}")
             if discount_combo_price < best_price:
                 best_price = discount_combo_price
                 best_discount = discount_combo
