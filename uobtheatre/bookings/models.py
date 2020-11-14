@@ -159,6 +159,9 @@ class Booking(models.Model, TimeStampedMixin):
         return self.get_price() - discount_total
 
     def get_best_discount_combination(self):
+        return self.get_best_discount_combination_with_price()[0]
+
+    def get_best_discount_combination_with_price(self):
         best_price = self.get_price()
         best_discount = None
         for discount_combo in self.get_valid_discounts():
@@ -167,7 +170,7 @@ class Booking(models.Model, TimeStampedMixin):
                 best_price = discount_combo_price
                 best_discount = discount_combo
 
-        return best_discount
+        return best_discount, best_price
 
 
 class SeatBooking(models.Model):

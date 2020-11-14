@@ -1,32 +1,5 @@
 [
     {
-        "model": "productions.venue",
-        "pk": 1,
-        "fields": {"name": "The Winston Theatre"}
-    },
-    {
-        "model": "productions.venue",
-        "pk": 2,
-        "fields": {"name": "The Pegg Theatre"}
-    },
-    {
-        "model": "productions.venue",
-        "pk": 3,
-        "fields": {"name": "The Anson Rooms"}
-    },
-   
-    {
-        "model": "productions.society",
-        "pk": 1,
-        "fields": {"name": "MTB"}
-    },
-    {
-        "model": "productions.society",
-        "pk": 2,
-        "fields": {"name": "Dramsoc"}
-    },
-    
-    {
         "model": "productions.crewrole",
         "pk": 1,
         "fields": {

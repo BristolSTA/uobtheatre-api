@@ -1,0 +1,57 @@
+[
+    {
+        "model": "bookings.consessiontype",
+        "pk": 1,
+        "fields": {"name": "Student"}
+    },
+    {
+        "model": "bookings.consessiontype",
+        "pk": 2,
+        "fields": {"name": "Adult"}
+    },
+    {
+        "model": "bookings.consessiontype",
+        "pk": 3,
+        "fields": {"name": "Child"}
+    },
+    
+
+    {
+        "model": "bookings.discount",
+        "pk": 1,
+        "fields": {"name": "Student discount", "discount": 0.2, "performances": [1]}
+    },
+    {
+        "model": "bookings.discountrequirement",
+        "pk": 1,
+        "fields": {"consession_type": 1, "number": 1, "discount": 1}
+    },
+    
+    {
+        "model": "bookings.discount",
+        "pk": 2,
+        "fields": {"name": "Family discount", "discount": 0.2, "performances": [1]}
+    },
+    {
+        "model": "bookings.discountrequirement",
+        "pk": 2,
+        "fields": {"consession_type": 1, "number": 2, "discount": 2}
+    },
+    {
+        "model": "bookings.discountrequirement",
+        "pk": 2,
+        "fields": {"consession_type": 2, "number": 2, "discount": 2}
+    },
+    
+    {
+        "model": "bookings.booking",
+        "pk": 2,
+        "fields": {"user": 1, "performance": 1}
+    },
+    {
+        "model": "bookings.seatbooking",
+        "pk": 1,
+        "fields": {"seat_group": 1, "booking": 1, "consession_type": 1}
+    }
+    
+]

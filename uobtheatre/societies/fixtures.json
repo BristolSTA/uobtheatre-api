@@ -1,0 +1,23 @@
+[
+    {
+        "model": "societies.society",
+        "pk": 1,
+        "fields": {
+          "name": "STA"
+        }
+    },
+    {
+        "model": "societies.society",
+        "pk": 2,
+        "fields": {
+          "name": "MTB"
+        }
+    },
+    {
+        "model": "societies.society",
+        "pk": 3,
+        "fields": {
+          "name": "Dramsoc"
+        }
+    }
+]

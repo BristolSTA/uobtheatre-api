@@ -22,8 +22,11 @@ migrate: ## Do the migrations
 	docker-compose run api python manage.py migrate
 
 seed: ## Seed the db with some example data 
+	docker-compose run api python manage.py loaddata uobtheatre/users/fixtures.json
 	docker-compose run api python manage.py loaddata uobtheatre/venues/fixtures.json
+	docker-compose run api python manage.py loaddata uobtheatre/societies/fixtures.json
 	docker-compose run api python manage.py loaddata uobtheatre/productions/fixtures.json
+	docker-compose run api python manage.py loaddata uobtheatre/bookings/fixtures.json
 
 psql: ## Do the migrations
 	docker-compose exec postgres psql -d postgres -U postgres 
