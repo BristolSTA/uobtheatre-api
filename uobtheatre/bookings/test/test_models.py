@@ -2,15 +2,16 @@ from collections import Counter
 
 import pytest
 
-from uobtheatre.bookings.models import Discount, DiscountRequirement, combinations
-from uobtheatre.bookings.test.factories import (
-    BookingFactory,
-    ConsessionTypeFactory,
-    DiscountFactory,
-    DiscountRequirementFactory,
-    SeatBookingFactory,
-)
+from uobtheatre.bookings.models import (Discount, DiscountRequirement,
+                                        combinations)
+from uobtheatre.bookings.test.factories import (BookingFactory,
+                                                ConsessionTypeFactory,
+                                                DiscountFactory,
+                                                DiscountRequirementFactory,
+                                                PerformanceSeatPriceFactory,
+                                                SeatBookingFactory)
 from uobtheatre.productions.test.factories import PerformanceFactory
+from uobtheatre.venues.test.factories import SeatGroupFactory, VenueFactory
 
 
 @pytest.mark.parametrize(
@@ -199,3 +200,32 @@ def test_get_valid_discounts():
             (discount_student, discount_student),
         ]
     )
+
+
+@pytest.mark.django_db
+def test_get_price():
+    venue = VenueFactory()
+    performance = PerformanceFactory(venue=venue)
+    booking = BookingFactory(performance=performance)
+
+    seat_group = SeatGroupFactory(venue=venue)
+
+    # Set seat type price for performance
+    seat_price = PerformanceSeatPriceFactory(
+        performance=performance, seat_type=seat_group.seat_type
+    )
+
+    # Create a seat booking
+    SeatBookingFactory(booking=booking, seat_group=seat_group)
+
+    assert booking.get_price() == seat_price.price
+
+    SeatBookingFactory(booking=booking, seat_group=seat_group)
+    assert booking.get_price() == seat_price.price * 2
+
+    seat_group_2 = SeatGroupFactory(venue=venue)
+    seat_price_2 = PerformanceSeatPriceFactory(
+        performance=performance, seat_type=seat_group_2.seat_type
+    )
+    SeatBookingFactory(booking=booking, seat_group=seat_group_2)
+    assert booking.get_price() == seat_price.price * 2 + seat_price_2.price

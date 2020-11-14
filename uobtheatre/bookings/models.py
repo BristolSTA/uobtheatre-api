@@ -109,7 +109,16 @@ class Booking(models.Model, TimeStampedMixin):
             if self.is_valid_discount_combination(discounts)
         ]
 
+    def get_price(self):
+        return sum(
+            self.performance.seat_prices.filter(seat_type=seat.seat_group.seat_type)
+            .first()
+            .price
+            for seat in self.seat_bookings.all()
+        )
+
     def get_best_discount_combination(self):
+        valid_discounts = get_valid_discounts()
         pass
 
 
@@ -128,3 +137,11 @@ class SeatBooking(models.Model):
         related_name="seat_bookings",
         null=True,
     )
+
+
+class PerformanceSeatPrice(models.Model):
+    seat_type = models.ForeignKey(SeatType, on_delete=models.RESTRICT)
+    performance = models.ForeignKey(
+        Performance, on_delete=models.RESTRICT, related_name="seat_prices"
+    )
+    price = models.IntegerField()

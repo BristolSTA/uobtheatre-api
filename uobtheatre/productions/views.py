@@ -2,7 +2,8 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 
 from uobtheatre.productions.models import Production, Society
-from uobtheatre.productions.serializers import ProductionSerializer, SocietySerializer
+from uobtheatre.productions.serializers import (ProductionSerializer,
+                                                SocietySerializer)
 
 
 class ProductionViewSet(viewsets.ModelViewSet):

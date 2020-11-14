@@ -1,16 +1,9 @@
 import factory
 
-from uobtheatre.productions.models import (
-    CastMember,
-    CrewMember,
-    CrewRole,
-    Performance,
-    Production,
-    Society,
-    Venue,
-    Warning,
-)
-from uobtheatre.venues.test.factories import VenueFactory
+from uobtheatre.productions.models import (CastMember, CrewMember, CrewRole,
+                                           Performance, Production, Society,
+                                           Venue, Warning)
+from uobtheatre.venues.test.factories import SeatTypeFactory, VenueFactory
 
 
 class SocietyFactory(factory.django.DjangoModelFactory):

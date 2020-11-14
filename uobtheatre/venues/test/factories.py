@@ -1,6 +1,6 @@
 import factory
 
-from uobtheatre.venues.models import Venue, SeatGroup, SeatType
+from uobtheatre.venues.models import SeatGroup, SeatType, Venue
 
 
 class VenueFactory(factory.django.DjangoModelFactory):
