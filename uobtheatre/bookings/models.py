@@ -1,6 +1,6 @@
+import itertools
 import uuid
 from typing import List, Tuple
-import itertools
 
 from django.db import models
 

@@ -1,8 +1,9 @@
-import factory
 import uuid
 
+import factory
+
+from uobtheatre.bookings.models import Booking, ConsessionType, Discount
 from uobtheatre.productions.test.factories import PerformanceFactory
-from uobtheatre.bookings.models import Discount, ConsessionType, Booking
 from uobtheatre.users.test.factories import UserFactory
 
 

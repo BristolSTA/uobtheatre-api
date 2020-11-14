@@ -43,6 +43,9 @@ coverage: ## Generate test coverage report
 black: ## Run verbose unit tests in docker container 
 	docker-compose run --rm api black .
 
+isort: ## Run verbose unit tests in docker container 
+	docker-compose run --rm api isort .
+
 setup-pipenv: ## Setup pipenv locally
 	pipenv --python 3.8
 	# If black is causing issues: pipenv install --dev --pre

@@ -95,18 +95,6 @@ def test_production_serializer():
 
 
 @pytest.mark.django_db
-def test_venue_serializer():
-    venue = VenueFactory()
-    data = Venue.objects.first()
-    serialized_venue = VenueSerializer(data)
-
-    assert serialized_venue.data == {
-        "id": venue.id,
-        "name": venue.name,
-    }
-
-
-@pytest.mark.django_db
 def test_performance_serializer():
     performance = PerformanceFactory()
     data = Performance.objects.first()

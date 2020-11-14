@@ -3,6 +3,7 @@ from rest_framework import serializers
 from uobtheatre.productions.models import (CastMember, CrewMember, Performance,
                                            Production, Venue, Warning)
 from uobtheatre.societies.serializers import SocietySerializer
+from uobtheatre.venues.serializers import VenueSerializer
 
 
 class CrewMemberSerialzier(serializers.ModelSerializer):
@@ -17,12 +18,6 @@ class CastMemberSerialzier(serializers.ModelSerializer):
     class Meta:
         model = CastMember
         fields = "__all__"
-
-
-class VenueSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Venue
-        fields = ["id", "name"]
 
 
 class WarningSerializer(serializers.ModelSerializer):

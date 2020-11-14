@@ -1,13 +1,12 @@
 import uuid
-from django.utils import timezone
+
 from django.db import models
+from django.utils import timezone
 from django.utils.functional import cached_property
-from uobtheatre.utils.models import (
-    SoftDeletionMixin,
-    TimeStampedMixin,
-)
-from uobtheatre.venues.models import Venue, SeatGroup
+
 from uobtheatre.societies.models import Society
+from uobtheatre.utils.models import SoftDeletionMixin, TimeStampedMixin
+from uobtheatre.venues.models import SeatGroup, Venue
 
 
 class CrewRole(models.Model):

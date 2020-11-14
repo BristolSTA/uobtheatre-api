@@ -13,6 +13,7 @@ from rest_framework.routers import DefaultRouter
 from uobtheatre.productions.views import ProductionViewSet
 from uobtheatre.societies.views import SocietyViewSet
 from uobtheatre.users.views import UserCreateViewSet, UserViewSet
+from uobtheatre.venues.views import VenueViewSet
 
 # Documentation setup
 schema_view = get_schema_view(
@@ -33,7 +34,7 @@ router.register(r"users", UserViewSet)
 router.register(r"users", UserCreateViewSet)
 router.register(r"productions", ProductionViewSet)
 router.register(r"societies", SocietyViewSet)
-
+router.register(r"venues", VenueViewSet)
 
 urlpatterns = [
     path("admin/", admin.site.urls),

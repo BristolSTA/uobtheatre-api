@@ -1,13 +1,13 @@
+from collections import Counter
+
 import pytest
 
-from uobtheatre.bookings.models import Discount, DiscountRequirement, combinations
-from uobtheatre.bookings.test.factories import (
-    DiscountFactory,
-    ConsessionTypeFactory,
-    BookingFactory,
-)
+from uobtheatre.bookings.models import (Discount, DiscountRequirement,
+                                        combinations)
+from uobtheatre.bookings.test.factories import (BookingFactory,
+                                                ConsessionTypeFactory,
+                                                DiscountFactory)
 from uobtheatre.productions.test.factories import PerformanceFactory
-from collections import Counter
 
 
 @pytest.mark.parametrize(
