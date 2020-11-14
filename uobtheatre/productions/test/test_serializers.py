@@ -2,14 +2,12 @@ import pytest
 
 from uobtheatre.productions.test.factories import (
     ProductionFactory,
-    VenueFactory,
     PerformanceFactory,
     CrewMemberFactory,
     CastMemberFactory,
 )
 from uobtheatre.productions.serializers import (
     ProductionSerializer,
-    VenueSerializer,
     PerformanceSerializer,
     CrewMemberSerialzier,
     CastMemberSerialzier,
@@ -17,7 +15,6 @@ from uobtheatre.productions.serializers import (
 from uobtheatre.productions.models import (
     Production,
     Performance,
-    Venue,
     CrewRole,
     CrewMember,
     CastMember,
@@ -103,18 +100,6 @@ def test_production_serializer():
 
     serialized_prod = ProductionSerializer(data)
     assert expected_output == serialized_prod.data
-
-
-@pytest.mark.django_db
-def test_venue_serializer():
-    venue = VenueFactory()
-    data = Venue.objects.first()
-    serialized_venue = VenueSerializer(data)
-
-    assert serialized_venue.data == {
-        "id": venue.id,
-        "name": venue.name,
-    }
 
 
 @pytest.mark.django_db

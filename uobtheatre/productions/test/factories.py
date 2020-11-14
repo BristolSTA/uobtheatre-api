@@ -10,6 +10,7 @@ from uobtheatre.productions.models import (
     CrewRole,
     CastMember,
 )
+from uobtheatre.venues.test.factories import VenueFactory
 
 
 class SocietyFactory(factory.django.DjangoModelFactory):
@@ -58,15 +59,6 @@ class ProductionFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = Production
-
-
-class VenueFactory(factory.django.DjangoModelFactory):
-
-    name = factory.Faker("sentence", nb_words=2)
-    internal_capacity = factory.Faker("pyint")
-
-    class Meta:
-        model = Venue
 
 
 class PerformanceFactory(factory.django.DjangoModelFactory):
