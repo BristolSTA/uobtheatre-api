@@ -1,7 +1,16 @@
 from rest_framework import viewsets
-from .models import Production
-from .serializers import ProductionSerializer
+from uobtheatre.productions.models import Production, Society
+from uobtheatre.productions.serializers import ProductionSerializer, SocietySerializer
 from rest_framework.decorators import action
+
+
+class SocietyViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint that allows societies to be viewed or edited.
+    """
+
+    queryset = Society.objects.all()
+    serializer_class = SocietySerializer
 
 
 class ProductionViewSet(viewsets.ModelViewSet):
