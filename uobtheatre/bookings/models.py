@@ -42,8 +42,6 @@ class DiscountRequirement(models.Model):
 def combinations(iterable: List, max_length: int) -> List[Tuple]:
     """ Given a list give all the combinations of that list up to a given length """
 
-    print(f"iterable is {iterable}")
-    print(f"max_length is: {max_length}")
     return set(
         [
             combination
@@ -51,6 +49,34 @@ def combinations(iterable: List, max_length: int) -> List[Tuple]:
             for combination in itertools.combinations(iterable * i, i)
         ]
     )
+
+
+class DiscountCombination:
+    def __init__(self, discount_combination):
+        self.discount_combination = discount_combination
+
+    def __eq__(self, obj):
+        return (
+            isinstance(obj, DiscountCombination)
+            and obj.discount_combination == self.discount_combination
+        )
+
+    def get_requirements(self):
+        return [
+            requirement
+            for discount in self.discount_combination
+            for requirement in discount.discount_requirements.all()
+        ]
+
+    def get_consession_map(self):
+        """Return a map of how many of each consession type are rquired for
+        this discount combination"""
+        consession_requirements = {}
+        for requirement in self.get_requirements():
+            if not requirement.consession_type in consession_requirements.keys():
+                consession_requirements[requirement.consession_type] = 0
+            consession_requirements[requirement.consession_type] += requirement.number
+        return consession_requirements
 
 
 class Booking(models.Model, TimeStampedMixin):
@@ -67,31 +93,18 @@ class Booking(models.Model, TimeStampedMixin):
     def __str__(self):
         return str(self.booking_reference)
 
-    def is_valid_discount_combination(self, discounts: Tuple) -> bool:
-        print(f"discounts are {discounts}")
-        print(f"discounts are {discounts[0].discount_requirements.all()}")
-        discount_requirements = [
-            requirement
-            for discount in discounts
-            for requirement in discount.discount_requirements.all()
-        ]
-        print(f"discount requirements are {discount_requirements}")
-        consession_requirements = {}
-        for requirement in discount_requirements:
-            if not requirement.consession_type in consession_requirements.keys():
-                consession_requirements[requirement.consession_type] = 0
-            consession_requirements[requirement.consession_type] += requirement.number
-
-        print(f"Consession requirements are: {consession_requirements}")
-
+    def get_consession_map(self):
+        """ Return the number of each type of consession in this booking """
         booking_consessions = {}
         for seat_booking in self.seat_bookings.all():
             if not seat_booking.consession_type in booking_consessions.keys():
                 booking_consessions[seat_booking.consession_type] = 0
             booking_consessions[seat_booking.consession_type] += 1
+        return booking_consessions
 
-        print(f"Booking consessions are: {booking_consessions}")
-
+    def is_valid_discount_combination(self, discounts: DiscountCombination) -> bool:
+        consession_requirements = discounts.get_consession_map()
+        booking_consessions = self.get_consession_map()
         return not any(
             consession_requirements[requirement]
             > booking_consessions.get(requirement, 0)
@@ -101,21 +114,62 @@ class Booking(models.Model, TimeStampedMixin):
     def get_valid_discounts(self) -> List[Discount]:
         list(self.performance.discounts.all()),
         return [
-            discounts
+            DiscountCombination(discounts)
             for discounts in combinations(
                 list(self.performance.discounts.all()),
                 self.seat_bookings.count(),
             )
-            if self.is_valid_discount_combination(discounts)
+            if self.is_valid_discount_combination(DiscountCombination(discounts))
         ]
 
-    def get_price(self):
+    def get_price(self) -> float:
         return sum(
             self.performance.seat_prices.filter(seat_type=seat.seat_group.seat_type)
             .first()
             .price
             for seat in self.seat_bookings.all()
         )
+
+    def get_price_with_discounts(self, discounts: Tuple[DiscountCombination]) -> float:
+        discount_total = 0
+        seats_available_to_discount = [seat for seat in self.seat_bookings.all()]
+        for discount_from_comb in discounts.discount_combination:
+            print(f"Looking at discount {discount_from_comb}")
+            discount = DiscountCombination((discount_from_comb,))
+            consession_map = discount.get_consession_map()
+            for consession_type in consession_map.keys():
+                print(f"working on {consession_type}")
+            for i in range(consession_map[consession_type]):
+                print(f"in loop {i}")
+                seat = next(
+                    seat
+                    for seat in seats_available_to_discount
+                    if seat.consession_type == consession_type
+                )
+                print(f"Got seat {seat}")
+                print(
+                    self.performance.seat_prices.filter(
+                        seat_type=seat.seat_group.seat_type
+                    )
+                    .first()
+                    .price
+                )
+                discount_total += (
+                    self.performance.seat_prices.filter(
+                        seat_type=seat.seat_group.seat_type
+                    )
+                    .first()
+                    .price
+                    * discount_from_comb.discount
+                )
+                print(f"Discount value is: {discount_from_comb.discount}")
+                print(f"New discount total is {discount_total}")
+                seats_available_to_discount.remove(seat)
+        # For each type of conession
+        print(f"Calcaulated total is: {self.get_price()}")
+        print(f"Calcaulated discount total is: {discount_total}")
+        print(f"Caclulated response: {self.get_price() - discount_total}")
+        return self.get_price() - discount_total
 
     def get_best_discount_combination(self):
         valid_discounts = get_valid_discounts()
