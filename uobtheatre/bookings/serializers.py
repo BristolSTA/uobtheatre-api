@@ -3,6 +3,7 @@ from rest_framework import serializers
 from uobtheatre.bookings.models import Booking
 from uobtheatre.productions.serializers import PerformanceSerializer
 
+
 class CreateBookingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Booking
@@ -11,7 +12,7 @@ class CreateBookingSerializer(serializers.ModelSerializer):
 
 class UserBookingGetSerialiser(serializers.ModelSerializer):
     performance = PerformanceSerializer()
-    
+
     class Meta:
         model = Booking
         fields = (
@@ -20,4 +21,3 @@ class UserBookingGetSerialiser(serializers.ModelSerializer):
             "booking_reference",
             "performance",
         )
-
