@@ -14,6 +14,7 @@ from uobtheatre.productions.views import ProductionViewSet
 from uobtheatre.societies.views import SocietyViewSet
 from uobtheatre.users.views import UserCreateViewSet, UserViewSet
 from uobtheatre.venues.views import VenueViewSet
+from uobtheatre.bookings.views import UserBookingViewSet
 
 # Documentation setup
 schema_view = get_schema_view(
@@ -35,6 +36,7 @@ router.register(r"users", UserCreateViewSet)
 router.register(r"productions", ProductionViewSet)
 router.register(r"societies", SocietyViewSet)
 router.register(r"venues", VenueViewSet)
+router.register(r"user-booking", UserBookingViewSet)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
