@@ -1,16 +1,16 @@
-from rest_framework import mixins, generics
+from rest_framework import mixins, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated 
 
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.serializers import UserBookingGetSerialiser
 
 
-class BookingList(generics.ListAPIView):
+class UserBookingViewSet(viewsets.ReadOnlyModelViewSet):
     """
     API endpoint that allows Users to see thier bookings.
     """
 
-    # permission_classes = (IsAuthenticated,)
+    permission_classes = (IsAuthenticated,)
     serializer_class = UserBookingGetSerialiser
 
     def get_queryset(self):
