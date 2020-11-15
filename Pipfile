@@ -35,6 +35,7 @@ black = "*"
 pillow = "*"
 drf-yasg = "*"
 isort = "*"
+stripe = "*"
 
 [dev-packages]
 rope = "*"

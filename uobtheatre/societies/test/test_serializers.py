@@ -16,4 +16,5 @@ def test_society_serializer():
     assert serialized_society.data == {
         "id": society.id,
         "name": society.name,
+        "logo": society.logo.url if society.logo else None,
     }

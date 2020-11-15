@@ -3,21 +3,24 @@
         "model": "societies.society",
         "pk": 1,
         "fields": {
-          "name": "STA"
+          "name": "STA",
+          "logo": "media/example.jpg"
         }
     },
     {
         "model": "societies.society",
         "pk": 2,
         "fields": {
-          "name": "MTB"
+          "name": "MTB",
+          "logo": "media/example.jpg"
         }
     },
     {
         "model": "societies.society",
         "pk": 3,
         "fields": {
-          "name": "Dramsoc"
+          "name": "Dramsoc",
+          "logo": "media/example.jpg"
         }
     }
 ]

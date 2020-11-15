@@ -1,6 +1,7 @@
 import uuid
 
 from django.db import models
+from django.template.defaultfilters import slugify
 from django.utils import timezone
 from django.utils.functional import cached_property
 
@@ -96,6 +97,14 @@ class Production(models.Model, SoftDeletionMixin, TimeStampedMixin):
             - SeatsBookings.objects.filter(
                 seat_group=seat_group, production=self
             ).count()
+        )
+
+    def slug(self):
+        """ Generate a slug for this production """
+        return (
+            slugify(self.name + "-" + str(self.start_date().year))
+            if self.start_date()
+            else slugify(self.name + "-" + str(self.id))
         )
 
 

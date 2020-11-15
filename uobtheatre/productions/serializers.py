@@ -42,6 +42,7 @@ class ProductionSerializer(serializers.ModelSerializer):
     cast = CastMemberSerialzier(many=True)
     start_date = serializers.DateTimeField("iso-8601")
     end_date = serializers.DateTimeField("iso-8601")
+    slug = serializers.CharField()
 
     class Meta:
         model = Production

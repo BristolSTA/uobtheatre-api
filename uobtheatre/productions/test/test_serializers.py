@@ -1,4 +1,5 @@
 import pytest
+from django.template.defaultfilters import slugify
 
 from uobtheatre.productions.models import (CastMember, CrewMember, CrewRole,
                                            Performance, Production, Venue)
@@ -49,6 +50,7 @@ def test_production_serializer():
         "society": {
             "id": production.society.id,
             "name": production.society.name,
+            "logo": production.society.logo.url if production.society.logo else None,
         },
         "poster_image": production.poster_image.url,
         "featured_image": production.featured_image.url,
@@ -61,6 +63,7 @@ def test_production_serializer():
         "performances": [],
         "start_date": None,
         "end_date": None,
+        "slug": slugify(production.name) + "-" + str(production.id),
     }
     assert expected_output == serialized_prod.data
 
@@ -87,6 +90,7 @@ def test_production_serializer():
         "performances": performances,
         "start_date": production.start_date().strftime(DATE_FORMAT),
         "end_date": production.end_date().strftime(DATE_FORMAT),
+        "slug": slugify(production.name) + "-" + str(production.start_date().year),
     }
     expected_output.update(performance_updates)
 

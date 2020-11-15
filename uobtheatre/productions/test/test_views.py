@@ -2,6 +2,7 @@ from datetime import timedelta
 
 import factory
 import pytest
+from django.template.defaultfilters import slugify
 from django.utils import timezone
 
 from uobtheatre.productions.test.factories import (PerformanceFactory,
@@ -67,7 +68,11 @@ def test_production_view_get(api_client):
                 "name": prod1.name,
                 "subtitle": prod1.subtitle,
                 "description": prod1.description,
-                "society": {"id": prod1.society.id, "name": prod1.society.name},
+                "society": {
+                    "id": prod1.society.id,
+                    "name": prod1.society.name,
+                    "logo": prod1.society.logo.url if prod1.society.logo else None,
+                },
                 "poster_image": "http://testserver" + prod1.poster_image.url,
                 "featured_image": "http://testserver" + prod1.featured_image.url,
                 "cover_image": "http://testserver" + prod1.cover_image.url,
@@ -79,6 +84,7 @@ def test_production_view_get(api_client):
                 "warnings": warnings,
                 "start_date": prod1.start_date().strftime(DATE_FORMAT),
                 "end_date": prod1.end_date().strftime(DATE_FORMAT),
+                "slug": slugify(prod1.name + "-" + str(prod1.start_date().year)),
             },
         ],
     }
