@@ -1,21 +1,28 @@
 import pytest
 
 from uobtheatre.bookings.test.factories import BookingFactory
+from uobtheatre.users.test.factories import UserFactory
 
 
-# @pytest.mark.django_db
-# def test_booking_view_get(api_client):
+@pytest.mark.django_db
+def test_booking_view_get(api_client):
 
-#     bookingTest = BookingFactory()
+    user = UserFactory()
 
-#     response = api_client.get("/api/v1/bookings/")
+    api_client.force_authenticate(user=user)
 
-#     bookings = [
-#         {
-#             # "id": venueTest.id,
-#             # "name": venueTest.name,
-#         },
-#     ]
+    bookingTest = BookingFactory()
 
-#     assert response.status_code == 200
-#     assert response.json()["results"] == bookings
+    response = api_client.get("/api/v1/bookings/")
+
+    bookings = [
+        {
+            # "id": venueTest.id,
+            # "name": venueTest.name,
+        },
+    ]
+
+    assert response.status_code == 200
+    assert response.json()["results"] == bookings
+
+    api_client.force_authenticate(user=None)
