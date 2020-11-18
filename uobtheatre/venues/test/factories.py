@@ -1,6 +1,6 @@
 import factory
 
-from uobtheatre.venues.models import SeatGroup, SeatType, Venue
+from uobtheatre.venues.models import SeatGroup, Venue
 
 
 class VenueFactory(factory.django.DjangoModelFactory):
@@ -12,19 +12,9 @@ class VenueFactory(factory.django.DjangoModelFactory):
         model = Venue
 
 
-class SeatTypeFactory(factory.django.DjangoModelFactory):
-
-    name = factory.Faker("sentence", nb_words=2)
-    is_internal = True
-
-    class Meta:
-        model = SeatType
-
-
 class SeatGroupFactory(factory.django.DjangoModelFactory):
 
     name = factory.Faker("sentence", nb_words=2)
-    seat_type = factory.SubFactory(SeatTypeFactory)
     venue = factory.SubFactory(VenueFactory)
     capacity = factory.Faker("pyint")
 
