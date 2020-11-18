@@ -7,7 +7,7 @@ from django.db import models
 from uobtheatre.productions.models import Performance
 from uobtheatre.users.models import User
 from uobtheatre.utils.models import SoftDeletionMixin, TimeStampedMixin
-from uobtheatre.venues.models import SeatGroup, SeatType
+from uobtheatre.venues.models import Seat, SeatGroup
 
 
 class Discount(models.Model):
@@ -16,8 +16,8 @@ class Discount(models.Model):
     performances = models.ManyToManyField(
         Performance, blank=True, related_name="discounts"
     )
-    seat_type = models.ForeignKey(
-        SeatType, on_delete=models.CASCADE, null=True, blank=True
+    seat_group = models.ForeignKey(
+        SeatGroup, on_delete=models.CASCADE, null=True, blank=True
     )
 
     def __str__(self):
@@ -127,9 +127,7 @@ class Booking(models.Model, TimeStampedMixin):
 
     def get_price(self) -> float:
         return sum(
-            self.performance.seat_prices.filter(seat_type=seat.seat_group.seat_type)
-            .first()
-            .price
+            self.performance.seating.filter(seat_group=seat.seat_group).first().price
             for seat in self.seat_bookings.all()
         )
 
@@ -147,9 +145,7 @@ class Booking(models.Model, TimeStampedMixin):
                         if seat.consession_type == consession_type
                     )
                     discount_total += (
-                        self.performance.seat_prices.filter(
-                            seat_type=seat.seat_group.seat_type
-                        )
+                        self.performance.seating.filter(seat_group=seat.seat_group)
                         .first()
                         .price
                         * discount_from_comb.discount
@@ -188,11 +184,15 @@ class SeatBooking(models.Model):
         related_name="seat_bookings",
         null=True,
     )
+    seat = models.ForeignKey(Seat, on_delete=models.RESTRICT, null=True, blank=True)
 
 
-class PerformanceSeatPrice(models.Model):
-    seat_type = models.ForeignKey(SeatType, on_delete=models.RESTRICT)
+class PerformanceSeating(models.Model):
+    """ Storing the price and number of seats of each seat type for a show """
+
+    seat_group = models.ManyToManyField(SeatGroup)
     performance = models.ForeignKey(
-        Performance, on_delete=models.RESTRICT, related_name="seat_prices"
+        Performance, on_delete=models.RESTRICT, related_name="seating"
     )
     price = models.IntegerField()
+    capacity = models.SmallIntegerField(null=True, blank=True)

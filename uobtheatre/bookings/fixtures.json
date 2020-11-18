@@ -69,8 +69,8 @@
         "fields": {"seat_group": 1, "booking": 1, "consession_type": 2}
     },
     {
-        "model": "bookings.performanceseatprice",
+        "model": "bookings.performanceseating",
         "pk": 1,
-        "fields": {"seat_type": 1, "performance": 1, "price": 1000}
+        "fields": {"seat_group": [1], "price": 1000, "performance": 1}
     }
 ]

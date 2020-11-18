@@ -11,13 +11,13 @@ class CrewMemberSerialzier(serializers.ModelSerializer):
 
     class Meta:
         model = CrewMember
-        fields = "__all__"
+        fields = ("name", "role")
 
 
 class CastMemberSerialzier(serializers.ModelSerializer):
     class Meta:
         model = CastMember
-        fields = "__all__"
+        fields = ("name", "role", "profile_picture")
 
 
 class WarningSerializer(serializers.ModelSerializer):

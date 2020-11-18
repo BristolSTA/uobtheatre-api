@@ -4,10 +4,10 @@ import factory
 
 from uobtheatre.bookings.models import (Booking, ConsessionType, Discount,
                                         DiscountRequirement,
-                                        PerformanceSeatPrice, SeatBooking)
+                                        PerformanceSeating, SeatBooking)
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
-from uobtheatre.venues.test.factories import SeatGroupFactory, SeatTypeFactory
+from uobtheatre.venues.test.factories import SeatGroupFactory
 
 
 class DiscountFactory(factory.django.DjangoModelFactory):
@@ -60,7 +60,6 @@ class PerformanceSeatPriceFactory(factory.django.DjangoModelFactory):
 
     price = factory.Faker("pyint")
     performance = factory.SubFactory(PerformanceFactory)
-    seat_type = factory.SubFactory(SeatTypeFactory)
 
     class Meta:
-        model = PerformanceSeatPrice
+        model = PerformanceSeating

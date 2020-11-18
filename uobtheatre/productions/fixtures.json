@@ -1,29 +1,5 @@
 [
     {
-        "model": "productions.crewrole",
-        "pk": 1,
-        "fields": {
-          "name": "CLX"
-        }
-    },
-    {
-        "model": "productions.crewmember",
-        "pk": 1,
-        "fields": {
-          "name": "Alex",
-          "role": 1
-        }
-    },
-    {
-        "model": "productions.castmember",
-        "pk": 1,
-        "fields": {
-          "name": "Tom",
-          "role": "Peter pan"
-        }
-    },
-    
-    {
         "model": "productions.warning",
         "pk": 1,
         "fields": {
@@ -46,8 +22,6 @@
           "subtitle": "This is an example show",
           "description": "The description of the example show",
           "society": 1,
-          "crew": [1],
-          "cast": [1],
           "warnings": [1]
         }
     },
@@ -81,5 +55,31 @@
           "start": "2020-11-13T12:24:32+0000",
           "end": "2020-11-13T14:24:32+0000"
         }
+    },
+    {
+        "model": "productions.crewrole",
+        "pk": 1,
+        "fields": {
+          "name": "CLX"
+        }
+    },
+    {
+        "model": "productions.crewmember",
+        "pk": 1,
+        "fields": {
+          "name": "Alex",
+          "role": 1,
+          "production": 1
+        }
+    },
+    {
+        "model": "productions.castmember",
+        "pk": 1,
+        "fields": {
+          "name": "Tom",
+          "role": "Peter pan",
+          "production": 1
+        }
     }
+    
 ]

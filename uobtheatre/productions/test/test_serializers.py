@@ -124,7 +124,6 @@ def test_crew_member_serializer():
     serialized_crew_member = CrewMemberSerialzier(data)
 
     assert serialized_crew_member.data == {
-        "id": crew_member.id,
         "name": crew_member.name,
         "role": crew_member.role.name,
     }
@@ -137,7 +136,6 @@ def test_cast_member_serializer():
     serialized_cast_member = CastMemberSerialzier(data)
 
     assert serialized_cast_member.data == {
-        "id": cast_member.id,
         "name": cast_member.name,
         "role": cast_member.role,
         "profile_picture": cast_member.profile_picture.url,

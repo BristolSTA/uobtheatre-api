@@ -19,27 +19,6 @@ class CrewRole(models.Model):
         return self.name
 
 
-class CastMember(models.Model):
-    """Member of production cast"""
-
-    name = models.CharField(max_length=255)
-    profile_picture = models.ImageField(null=True, blank=True)
-    role = models.CharField(max_length=255, null=True)
-
-    def __str__(self):
-        return self.name
-
-
-class CrewMember(models.Model):
-    """Member of production crew"""
-
-    name = models.CharField(max_length=255)
-    role = models.ForeignKey(CrewRole, null=True, on_delete=models.SET_NULL)
-
-    def __str__(self):
-        return self.name
-
-
 class Warning(models.Model):
     """A venue is a space often where shows take place"""
 
@@ -68,9 +47,6 @@ class Production(models.Model, SoftDeletionMixin, TimeStampedMixin):
     facebook_event = models.CharField(max_length=255, null=True)
 
     warnings = models.ManyToManyField(Warning)
-
-    cast = models.ManyToManyField(CastMember, blank=True)
-    crew = models.ManyToManyField(CrewMember, blank=True)
 
     def __str__(self):
         return self.name
@@ -106,6 +82,33 @@ class Production(models.Model, SoftDeletionMixin, TimeStampedMixin):
             if self.start_date()
             else slugify(self.name + "-" + str(self.id))
         )
+
+
+class CastMember(models.Model):
+    """Member of production cast"""
+
+    name = models.CharField(max_length=255)
+    profile_picture = models.ImageField(null=True, blank=True)
+    role = models.CharField(max_length=255, null=True)
+    production = models.ForeignKey(
+        Production, on_delete=models.CASCADE, related_name="cast"
+    )
+
+    def __str__(self):
+        return self.name
+
+
+class CrewMember(models.Model):
+    """Member of production crew"""
+
+    name = models.CharField(max_length=255)
+    role = models.ForeignKey(CrewRole, null=True, on_delete=models.SET_NULL)
+    production = models.ForeignKey(
+        Production, on_delete=models.CASCADE, related_name="crew"
+    )
+
+    def __str__(self):
+        return self.name
 
 
 class Performance(models.Model, SoftDeletionMixin, TimeStampedMixin):

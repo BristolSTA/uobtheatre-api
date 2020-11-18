@@ -3,10 +3,10 @@ from django.utils.html import format_html
 
 from uobtheatre.bookings.models import (Booking, ConsessionType, Discount,
                                         DiscountRequirement,
-                                        PerformanceSeatPrice, SeatBooking)
+                                        PerformanceSeating, SeatBooking)
 
 admin.site.register(ConsessionType)
-admin.site.register(PerformanceSeatPrice)
+admin.site.register(PerformanceSeating)
 
 
 class DiscountRequirementInline(admin.StackedInline):
