@@ -6,7 +6,7 @@ ENV PYTHONUNBUFFERED 1
 # Install dependencies using pipenv
 RUN pip install pipenv
 COPY Pipfile* /tmp/
-RUN cd /tmp && pipenv lock --requirements > requirements.txt
+RUN cd /tmp && pipenv lock --requirements --dev > requirements.txt
 RUN pip install -r /tmp/requirements.txt
 
 # Alternative install with just requirements.txt

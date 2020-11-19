@@ -4,8 +4,6 @@ from uobtheatre.venues.models import Venue
 from uobtheatre.venues.serializers import VenueSerializer
 from uobtheatre.venues.test.factories import VenueFactory
 
-DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
-
 
 @pytest.mark.django_db
 def test_venue_serializer():

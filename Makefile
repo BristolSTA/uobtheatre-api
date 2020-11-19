@@ -55,7 +55,7 @@ setup-pipenv: ## Setup pipenv locally
 	pipenv install
 
 pipenv-install: ## Setup pipenv locally
-	docker-compose run --rm api pipenv install 
+	docker-compose run --rm api cd /tmp; pipenv lock --requirements > requirements.txt; pip install -r /tmp/requirements.txt
 
 clean-app-migrations: ## Generate clean migrations for productions
 	find . -path "*/migrations/*.py" -not -name "__init__.py" -delete

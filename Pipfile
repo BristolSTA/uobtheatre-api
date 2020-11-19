@@ -31,14 +31,15 @@ pytest-django = "*"
 django-storages = "*"
 boto3 = "*"
 click = "*"
-black = "*"
 pillow = "*"
 drf-yasg = "*"
 isort = "*"
 stripe = "*"
+pytest-factoryboy = "*"
 
 [dev-packages]
 rope = "*"
+black="*"
 
 [requires]
 python_version = "3.8"

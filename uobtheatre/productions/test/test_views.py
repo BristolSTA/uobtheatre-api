@@ -8,11 +8,9 @@ from django.utils import timezone
 from uobtheatre.productions.test.factories import (PerformanceFactory,
                                                    ProductionFactory)
 
-DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
-
 
 @pytest.mark.django_db
-def test_production_view_get(api_client):
+def test_production_view_get(api_client, date_format):
 
     # Create a fake production
     prod1 = ProductionFactory()
@@ -82,8 +80,8 @@ def test_production_view_get(api_client):
                 "cast": cast,
                 "crew": crew,
                 "warnings": warnings,
-                "start_date": prod1.start_date().strftime(DATE_FORMAT),
-                "end_date": prod1.end_date().strftime(DATE_FORMAT),
+                "start_date": prod1.start_date().strftime(date_format),
+                "end_date": prod1.end_date().strftime(date_format),
                 "slug": slugify(prod1.name + "-" + str(prod1.start_date().year)),
             },
         ],
