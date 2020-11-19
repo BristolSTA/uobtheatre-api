@@ -1,24 +1,32 @@
 import pytest
 from django.template.defaultfilters import slugify
 
-from uobtheatre.productions.models import (CastMember, CrewMember, CrewRole,
-                                           Performance, Production, Venue)
-from uobtheatre.productions.serializers import (CastMemberSerialzier,
-                                                CrewMemberSerialzier,
-                                                PerformanceSerializer,
-                                                ProductionSerializer,
-                                                VenueSerializer)
-from uobtheatre.productions.test.factories import (CastMemberFactory,
-                                                   CrewMemberFactory,
-                                                   PerformanceFactory,
-                                                   ProductionFactory,
-                                                   VenueFactory)
-
-DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+from uobtheatre.productions.models import (
+    CastMember,
+    CrewMember,
+    CrewRole,
+    Performance,
+    Production,
+    Venue,
+)
+from uobtheatre.productions.serializers import (
+    CastMemberSerialzier,
+    CrewMemberSerialzier,
+    PerformanceSerializer,
+    ProductionSerializer,
+    VenueSerializer,
+)
+from uobtheatre.productions.test.factories import (
+    CastMemberFactory,
+    CrewMemberFactory,
+    PerformanceFactory,
+    ProductionFactory,
+    VenueFactory,
+)
 
 
 @pytest.mark.django_db
-def test_production_serializer():
+def test_production_serializer(date_format):
     production = ProductionFactory()
     data = Production.objects.first()
     serialized_prod = ProductionSerializer(data)
@@ -88,8 +96,8 @@ def test_production_serializer():
 
     performance_updates = {
         "performances": performances,
-        "start_date": production.start_date().strftime(DATE_FORMAT),
-        "end_date": production.end_date().strftime(DATE_FORMAT),
+        "start_date": production.start_date().strftime(date_format),
+        "end_date": production.end_date().strftime(date_format),
         "slug": slugify(production.name) + "-" + str(production.start_date().year),
     }
     expected_output.update(performance_updates)

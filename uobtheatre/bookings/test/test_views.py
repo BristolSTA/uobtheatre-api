@@ -3,8 +3,6 @@ import pytest
 from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.users.test.factories import UserFactory
 
-DATE_FORMAT = "%Y-%m-%dT%H:%M:%S+0000"
-
 
 @pytest.mark.django_db
 def test_booking_view_only_returns_users_bookings(api_client):
@@ -32,7 +30,7 @@ def test_booking_view_only_returns_users_bookings(api_client):
 
 
 @pytest.mark.django_db
-def test_booking_view_get(api_client):
+def test_booking_view_get(api_client, date_format_2):
 
     user = UserFactory()
     bookingTest = BookingFactory(user=user)
@@ -49,8 +47,8 @@ def test_booking_view_get(api_client):
             "name": bookingTest.performance.venue.name,
         },
         "extra_information": bookingTest.performance.extra_information,
-        "start": bookingTest.performance.start.strftime(DATE_FORMAT),
-        "end": bookingTest.performance.end.strftime(DATE_FORMAT),
+        "start": bookingTest.performance.start.strftime(date_format_2),
+        "end": bookingTest.performance.end.strftime(date_format_2),
     }
 
     bookings = [
