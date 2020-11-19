@@ -30,14 +30,12 @@ def test_booking_view_only_returns_users_bookings(api_client):
 
 
 @pytest.mark.django_db
-def test_booking_view_get(api_client, date_format_2):
+def test_booking_view_get(api_client_flexible, date_format_2):
 
-    user = UserFactory()
-    bookingTest = BookingFactory(user=user)
+    api_client_flexible.authenticate()
+    bookingTest = BookingFactory(user=api_client_flexible.user)
 
-    api_client.force_authenticate(user=user)
-
-    response = api_client.get("/api/v1/bookings/")
+    response = api_client_flexible.get("/api/v1/bookings/")
 
     performance = {
         "id": bookingTest.performance.id,
@@ -54,7 +52,7 @@ def test_booking_view_get(api_client, date_format_2):
     bookings = [
         {
             "id": bookingTest.id,
-            "user": str(user.id),
+            "user": str(api_client_flexible.user.id),
             "booking_reference": str(bookingTest.booking_reference),
             "performance": performance,
         }
@@ -62,5 +60,3 @@ def test_booking_view_get(api_client, date_format_2):
 
     assert response.status_code == 200
     assert response.json()["results"] == bookings
-
-    api_client.force_authenticate(user=None)
