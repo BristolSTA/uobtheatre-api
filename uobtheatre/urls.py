@@ -10,11 +10,11 @@ from rest_framework import permissions
 from rest_framework.authtoken import views
 from rest_framework.routers import DefaultRouter
 
+from uobtheatre.bookings.views import UserBookingViewSet
 from uobtheatre.productions.views import ProductionViewSet
 from uobtheatre.societies.views import SocietyViewSet
 from uobtheatre.users.views import UserCreateViewSet, UserViewSet
 from uobtheatre.venues.views import VenueViewSet
-from uobtheatre.bookings.views import UserBookingViewSet
 
 # Documentation setup
 schema_view = get_schema_view(
