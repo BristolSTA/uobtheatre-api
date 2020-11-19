@@ -5,28 +5,25 @@ from uobtheatre.users.test.factories import UserFactory
 
 
 @pytest.mark.django_db
-def test_booking_view_only_returns_users_bookings(api_client):
+def test_booking_view_only_returns_users_bookings(api_client_flexible):
 
     user_booking = UserFactory()
     bookingTest = BookingFactory(user=user_booking)
 
     user_nobooking = UserFactory()
 
-    api_client.force_authenticate(user=user_nobooking)
-
-    response = api_client.get("/api/v1/bookings/")
+    api_client_flexible.authenticate()
+    response = api_client_flexible.get("/api/v1/bookings/")
 
     assert response.status_code == 200
     assert len(response.json()["results"]) == 0
 
-    api_client.force_authenticate(user=user_booking)
-    response = api_client.get("/api/v1/bookings/")
+    api_client_flexible.authenticate(user=user_booking)
+    response = api_client_flexible.get("/api/v1/bookings/")
 
     assert response.status_code == 200
     assert len(response.json()["results"]) == 1
     assert response.json()["results"][0]["user"] == user_booking.id
-
-    api_client.force_authenticate(user=None)
 
 
 @pytest.mark.django_db
