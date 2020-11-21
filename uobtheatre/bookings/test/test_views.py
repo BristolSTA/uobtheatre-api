@@ -23,7 +23,7 @@ def test_booking_view_only_returns_users_bookings(api_client_flexible):
 
     assert response.status_code == 200
     assert len(response.json()["results"]) == 1
-    assert response.json()["results"][0]["user"] == user_booking.id
+    assert response.json()["results"][0]["user_id"] == user_booking.id
 
 
 @pytest.mark.django_db
@@ -49,7 +49,7 @@ def test_booking_view_get(api_client_flexible, date_format_2):
     bookings = [
         {
             "id": bookingTest.id,
-            "user": str(api_client_flexible.user.id),
+            "user_id": str(api_client_flexible.user.id),
             "booking_reference": str(bookingTest.booking_reference),
             "performance": performance,
         }

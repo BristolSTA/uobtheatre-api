@@ -58,13 +58,14 @@ class SoftDeletionMixin:
     def hard_delete(self):
         super(SoftDeletionModel, self).delete()
 
+
 class ReadWriteSerializerMixin(object):
     """
     Overrides get_serializer_class to choose the read serializer
     for GET requests and the write serializer for POST requests.
 
     Set read_serializer_class and write_serializer_class attributes on a
-    viewset. 
+    viewset.
     """
 
     read_serializer_class = None

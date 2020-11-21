@@ -1,9 +1,16 @@
 from rest_framework import serializers
 
-from uobtheatre.productions.models import (CastMember, CrewMember, Performance,
-                                           Production, Venue, Warning)
+from uobtheatre.productions.models import (
+    CastMember,
+    CrewMember,
+    Performance,
+    Production,
+    Venue,
+    Warning,
+)
 from uobtheatre.societies.serializers import SocietySerializer
 from uobtheatre.venues.serializers import VenueSerializer
+from uobtheatre.utils.serializers import AppendIdSerializerMixin
 
 
 class CrewMemberSerialzier(serializers.ModelSerializer):
@@ -34,7 +41,7 @@ class PerformanceSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class ProductionSerializer(serializers.ModelSerializer):
+class ProductionSerializer(serializers.ModelSerializer, AppendIdSerializerMixin):
     society = SocietySerializer()
     performances = PerformanceSerializer(many=True)
     warnings = serializers.StringRelatedField(many=True)
