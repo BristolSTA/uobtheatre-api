@@ -10,7 +10,7 @@ from rest_framework import permissions
 from rest_framework.authtoken import views
 from rest_framework.routers import DefaultRouter
 
-from uobtheatre.bookings.views import UserBookingViewSet
+from uobtheatre.bookings.views import BookingViewSet
 from uobtheatre.productions.views import ProductionViewSet
 from uobtheatre.societies.views import SocietyViewSet
 from uobtheatre.users.views import UserCreateViewSet, UserViewSet
@@ -36,7 +36,7 @@ router.register(r"users", UserCreateViewSet)
 router.register(r"productions", ProductionViewSet)
 router.register(r"societies", SocietyViewSet)
 router.register(r"venues", VenueViewSet)
-router.register(r"bookings", UserBookingViewSet, basename="Booking")
+router.register(r"bookings", BookingViewSet, basename="Booking")
 
 urlpatterns = [
     path("admin/", admin.site.urls),

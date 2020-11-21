@@ -5,7 +5,7 @@ from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.serializers import UserBookingGetSerialiser
 
 
-class UserBookingViewSet(viewsets.ReadOnlyModelViewSet):
+class BookingViewSet(viewsets.ReadOnlyModelViewSet):
     """
     API endpoint that allows Users to see thier bookings.
     """
