@@ -36,7 +36,7 @@ def test_booking_view_get(api_client_flexible, date_format_2):
 
     performance = {
         "id": bookingTest.performance.id,
-        "production": bookingTest.performance.production.id,
+        "production_id": bookingTest.performance.production.id,
         "venue": {
             "id": bookingTest.performance.venue.id,
             "name": bookingTest.performance.venue.name,

@@ -5,8 +5,7 @@ import pytest
 from django.template.defaultfilters import slugify
 from django.utils import timezone
 
-from uobtheatre.productions.test.factories import (PerformanceFactory,
-                                                   ProductionFactory)
+from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 
 
 @pytest.mark.django_db
@@ -23,7 +22,7 @@ def test_production_view_get(api_client, date_format):
     performances = [
         {
             "id": performance.id,
-            "production": prod1.id,
+            "production_id": prod1.id,
             "venue": {
                 "id": performance.venue.id,
                 "name": performance.venue.name,

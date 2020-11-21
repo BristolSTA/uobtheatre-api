@@ -33,7 +33,7 @@ class WarningSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class PerformanceSerializer(serializers.ModelSerializer):
+class PerformanceSerializer(AppendIdSerializerMixin, serializers.ModelSerializer):
     venue = VenueSerializer()
 
     class Meta:
@@ -41,7 +41,7 @@ class PerformanceSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class ProductionSerializer(serializers.ModelSerializer, AppendIdSerializerMixin):
+class ProductionSerializer(AppendIdSerializerMixin, serializers.ModelSerializer):
     society = SocietySerializer()
     performances = PerformanceSerializer(many=True)
     warnings = serializers.StringRelatedField(many=True)

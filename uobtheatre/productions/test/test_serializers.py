@@ -1,18 +1,28 @@
 import pytest
 from django.template.defaultfilters import slugify
 
-from uobtheatre.productions.models import (CastMember, CrewMember, CrewRole,
-                                           Performance, Production, Venue)
-from uobtheatre.productions.serializers import (CastMemberSerialzier,
-                                                CrewMemberSerialzier,
-                                                PerformanceSerializer,
-                                                ProductionSerializer,
-                                                VenueSerializer)
-from uobtheatre.productions.test.factories import (CastMemberFactory,
-                                                   CrewMemberFactory,
-                                                   PerformanceFactory,
-                                                   ProductionFactory,
-                                                   VenueFactory)
+from uobtheatre.productions.models import (
+    CastMember,
+    CrewMember,
+    CrewRole,
+    Performance,
+    Production,
+    Venue,
+)
+from uobtheatre.productions.serializers import (
+    CastMemberSerialzier,
+    CrewMemberSerialzier,
+    PerformanceSerializer,
+    ProductionSerializer,
+    VenueSerializer,
+)
+from uobtheatre.productions.test.factories import (
+    CastMemberFactory,
+    CrewMemberFactory,
+    PerformanceFactory,
+    ProductionFactory,
+    VenueFactory,
+)
 
 
 @pytest.mark.django_db
@@ -71,7 +81,7 @@ def test_production_serializer(date_format):
     performances = [
         {
             "id": performance.id,
-            "production": performance.production.id,
+            "production_id": performance.production.id,
             "venue": {
                 "id": performance.venue.id,
                 "name": performance.venue.name,
@@ -104,7 +114,7 @@ def test_performance_serializer():
 
     assert serialized_performance.data == {
         "id": performance.id,
-        "production": performance.production.id,
+        "production_id": performance.production.id,
         "venue": {
             "id": performance.venue.id,
             "name": performance.venue.name,

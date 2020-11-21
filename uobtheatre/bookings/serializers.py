@@ -15,12 +15,16 @@ class BookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializer):
     """ Booking serializer to create booking """
 
     performance = PerformanceSerializer()
+    user_id = serializers.UUIDField(
+        format="hex_verbose",
+        source="user.id",
+    )
 
     class Meta:
         model = Booking
         fields = (
             "id",
-            "user",
+            "user_id",
             "booking_reference",
             "performance",
         )
