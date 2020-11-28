@@ -40,34 +40,12 @@ def test_booking_serializer(date_format_2):
 
 
 @pytest.mark.django_db
-def test_create_booking_serializer_obj_to_json(date_format_2):
-    booking = BookingFactory()
-    data = Booking.objects.first()
-    serialized_booking = CreateBookingSerialiser(data)
-
-    seat_bookings = [
-        {
-            "seat_group": seat_booking.seat_group.id,
-            "consession_type": seat_booking.consession_type.name,
-        }
-        for seat_booking in booking.seat_bookings.all()
-    ]
-
-    assert serialized_booking.data == {
-        "user_id": str(booking.user.id),
-        "seat_bookings": seat_bookings,
-        "performance_id": booking.performance.id,
-    }
-
-
-@pytest.mark.django_db
-def test_create_booking_serializer_json_to_obj(date_format_2):
+def test_create_booking_serializer(date_format_2):
     user = UserFactory()
     performance = PerformanceFactory()
     seat_group = SeatGroupFactory()
     consession_type = ConsessionTypeFactory()
     data = {
-        "user_id": user.id,
         "performance_id": performance.id,
         "seat_bookings": [
             {
@@ -77,7 +55,7 @@ def test_create_booking_serializer_json_to_obj(date_format_2):
         ],
     }
 
-    serialized_booking = CreateBookingSerialiser(data=data)
+    serialized_booking = CreateBookingSerialiser(data=data, context={"user": user})
     assert serialized_booking.is_valid()
 
     serialized_booking.save()
@@ -86,6 +64,7 @@ def test_create_booking_serializer_json_to_obj(date_format_2):
     serialized_booking = CreateBookingSerialiser(created_booking)
 
     assert serialized_booking.data == data
+    assert str(created_booking.user.id) == str(user.id)
 
 
 @pytest.mark.skip(reason="Need to write this")

@@ -40,13 +40,12 @@ class CreateBookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializ
     """ Booking serializer to create booking """
 
     seat_bookings = CreateSeatBookingSerializer(many=True)
-    user_id = UserIdSerializer()
 
     def create(self, validated_data):
         # Extract seating bookings from booking
         seat_bookings = validated_data.pop("seat_bookings")
         # Create the booking
-        booking = Booking.objects.create(**validated_data)
+        booking = Booking.objects.create(user=self.context["user"], **validated_data)
 
         # Create all the seat bookings
         for seat_booking in seat_bookings:
@@ -56,4 +55,4 @@ class CreateBookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializ
 
     class Meta:
         model = Booking
-        fields = ("user_id", "performance", "seat_bookings")
+        fields = ("performance", "seat_bookings")

@@ -19,3 +19,8 @@ class BookingViewSet(ReadWriteSerializerMixin, viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         return Booking.objects.filter(user=user)
+
+    def get_serializer_context(self):
+        context = super(BookingViewSet, self).get_serializer_context()
+        context.update({"user": self.request.user})
+        return context
