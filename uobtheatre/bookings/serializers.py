@@ -39,7 +39,7 @@ class CreateSeatBookingSerializer(AppendIdSerializerMixin, serializers.ModelSeri
 class CreateBookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializer):
     """ Booking serializer to create booking """
 
-    seat_bookings = CreateSeatBookingSerializer(many=True)
+    seat_bookings = CreateSeatBookingSerializer(many=True, required=False)
 
     def create(self, validated_data):
         # Extract seating bookings from booking

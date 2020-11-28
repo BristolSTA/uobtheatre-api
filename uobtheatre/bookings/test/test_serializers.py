@@ -67,6 +67,76 @@ def test_create_booking_serializer(date_format_2):
     assert str(created_booking.user.id) == str(user.id)
 
 
+@pytest.mark.django_db
+def test_create_booking_serializer_validation():
+    user = UserFactory()
+    performance = PerformanceFactory()
+    seat_group = SeatGroupFactory()
+    consession_type = ConsessionTypeFactory()
+
+    # Check performance is required to create booking
+    data = {
+        "seat_bookings": [
+            {
+                "seat_group_id": seat_group.id,
+                "consession_type_id": consession_type.id,
+            },
+        ],
+    }
+
+    serialized_booking = CreateBookingSerialiser(data=data, context={"user": user})
+    assert not serialized_booking.is_valid()
+
+    # Assert seat group is required for each seat booking
+    data = {
+        "performance_id": performance.id,
+        "seat_bookings": [
+            {
+                "consession_type_id": consession_type.id,
+            },
+        ],
+    }
+
+    serialized_booking = CreateBookingSerialiser(data=data, context={"user": user})
+    assert not serialized_booking.is_valid()
+
+    # Check consession type is not required (default to adult)
+    # TODO write test to check default to adult
+    data = {
+        "performance_id": performance.id,
+        "seat_bookings": [
+            {
+                "seat_group_id": seat_group.id,
+            },
+        ],
+    }
+
+    serialized_booking = CreateBookingSerialiser(data=data, context={"user": user})
+    assert serialized_booking.is_valid()
+
+    # Check seat booking is not required
+    data = {
+        "performance_id": performance.id,
+    }
+
+    serialized_booking = CreateBookingSerialiser(data=data, context={"user": user})
+    assert serialized_booking.is_valid()
+
+    # Check booking with all data is valid
+    data = {
+        "performance_id": performance.id,
+        "seat_bookings": [
+            {
+                "seat_group_id": seat_group.id,
+                "consession_type_id": consession_type.id,
+            },
+        ],
+    }
+
+    serialized_booking = CreateBookingSerialiser(data=data, context={"user": user})
+    assert serialized_booking.is_valid()
+
+
 @pytest.mark.skip(reason="Need to write this")
 def test_create_seat_booking_serializer(date_format_2):
     seat_booking = SeatBooking()
