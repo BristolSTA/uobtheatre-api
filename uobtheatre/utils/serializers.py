@@ -1,4 +1,9 @@
-from rest_framework import relations
+from rest_framework import relations, serializers
+
+
+class UserIdSerializer(serializers.UUIDField):
+    def __init__(self, source="user.id"):
+        super().__init__(format="hex_verbose", source=source)
 
 
 # Add _id to releated fields

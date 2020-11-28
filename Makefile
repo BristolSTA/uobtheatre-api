@@ -15,6 +15,9 @@ down: ## Bring down api
 superuser: ## Create a superuser in django
 	docker-compose run api python manage.py createsuperuser 
 
+admin-superuser: ## Create a superuser in django
+	docker-compose run api python manage.py createsuperusernoargs --username admin2 --password admin --noinput --email 'blank@email.com'
+
 migrations: ## Make the migrations
 	docker-compose run --rm api python manage.py makemigrations
 
@@ -22,11 +25,8 @@ migrate: ## Do the migrations
 	docker-compose run api python manage.py migrate
 
 seed: ## Seed the db with some example data 
-	docker-compose run api python manage.py loaddata uobtheatre/users/fixtures.json
-	docker-compose run api python manage.py loaddata uobtheatre/venues/fixtures.json
-	docker-compose run api python manage.py loaddata uobtheatre/societies/fixtures.json
-	docker-compose run api python manage.py loaddata uobtheatre/productions/fixtures.json
-	docker-compose run api python manage.py loaddata uobtheatre/bookings/fixtures.json
+	docker-compose run api python manage.py loaddata uobtheatre/users/fixtures.json uobtheatre/venues/fixtures.json uobtheatre/societies/fixtures.json uobtheatre/productions/fixtures.json uobtheatre/bookings/fixtures.json
+	make admin-superuser
 
 psql: ## Do the migrations
 	docker-compose exec postgres psql -d postgres -U postgres 

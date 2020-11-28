@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from uobtheatre.bookings.models import Booking, SeatBooking
 from uobtheatre.productions.serializers import PerformanceSerializer
-from uobtheatre.utils.serializers import AppendIdSerializerMixin
+from uobtheatre.utils.serializers import AppendIdSerializerMixin, UserIdSerializer
 
 
 class CreateBookingSerializer(serializers.ModelSerializer):
@@ -15,10 +15,7 @@ class BookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializer):
     """ Booking serializer to create booking """
 
     performance = PerformanceSerializer()
-    user_id = serializers.UUIDField(
-        format="hex_verbose",
-        source="user.id",
-    )
+    user_id = UserIdSerializer()
 
     class Meta:
         model = Booking
@@ -43,6 +40,7 @@ class CreateBookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializ
     """ Booking serializer to create booking """
 
     seat_bookings = CreateSeatBookingSerializer(many=True)
+    user_id = UserIdSerializer()
 
     def create(self, validated_data):
         # Extract seating bookings from booking
@@ -58,4 +56,4 @@ class CreateBookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializ
 
     class Meta:
         model = Booking
-        fields = ("user", "performance", "seat_bookings")
+        fields = ("user_id", "performance", "seat_bookings")
