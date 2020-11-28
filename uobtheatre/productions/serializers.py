@@ -1,16 +1,10 @@
 from rest_framework import serializers
 
-from uobtheatre.productions.models import (
-    CastMember,
-    CrewMember,
-    Performance,
-    Production,
-    Venue,
-    Warning,
-)
+from uobtheatre.productions.models import (CastMember, CrewMember, Performance,
+                                           Production, Venue, Warning)
 from uobtheatre.societies.serializers import SocietySerializer
-from uobtheatre.venues.serializers import VenueSerializer
 from uobtheatre.utils.serializers import AppendIdSerializerMixin
+from uobtheatre.venues.serializers import VenueSerializer
 
 
 class CrewMemberSerialzier(serializers.ModelSerializer):

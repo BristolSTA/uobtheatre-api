@@ -3,7 +3,7 @@ from django.core.management import CommandError
 
 
 class Command(createsuperuser.Command):
-    help = "Crate a superuser, and allow password to be provided"
+    help = "Create a superuser, and allow password to be provided"
 
     def add_arguments(self, parser):
         super(Command, self).add_arguments(parser)
