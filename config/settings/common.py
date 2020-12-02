@@ -18,6 +18,7 @@ INSTALLED_APPS = (
     "rest_framework.authtoken",  # token authentication
     "django_filters",  # for filtering rest endpoints
     "drf_yasg",  # Swagger documentation
+    "corsheaders", # CORS Headers Stuff
     # Your apps
     "uobtheatre.users",
     "uobtheatre.productions",
@@ -31,6 +32,7 @@ INSTALLED_APPS = (
 MIDDLEWARE = (
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
