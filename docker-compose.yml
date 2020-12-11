@@ -9,6 +9,8 @@ services:
     
   api:
     restart: on-failure
+    env_file:
+      .env
     environment:
       - DJANGO_SECRET_KEY=local
     image: web

@@ -25,6 +25,7 @@ INSTALLED_APPS = (
     "uobtheatre.venues",
     "uobtheatre.bookings",
     "uobtheatre.societies",
+    "uobtheatre.payments",
 )
 
 # https://docs.djangoproject.com/en/2.0/topics/http/middleware/
@@ -201,4 +202,21 @@ REST_FRAMEWORK = {
 # Documentation settings
 SWAGGER_SETTINGS = {
     "DEFAULT_API_URL": "https://api.uobtheatre.com",
+}
+
+SWAGGER_SETTINGS = {
+    "DEFAULT_API_URL": "https://api.uobtheatre.com",
+}
+
+
+# Square payments
+SQUARE_SETTINGS = {
+    "SQUARE_ACCESS_TOKEN": os.getenv(
+        "SQUARE_ACCESS_TOKEN",
+        default="",
+    ),
+    "SQUARE_ENVIRONMENT": os.getenv(
+        "SQUARE_ENVIRONMENT",
+        default="sandbox",
+    ),
 }

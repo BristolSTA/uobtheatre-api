@@ -36,10 +36,11 @@ drf-yasg = "*"
 isort = "*"
 stripe = "*"
 pytest-factoryboy = "*"
+squareup = "*"
 
 [dev-packages]
 rope = "*"
-black="*"
+black = "*"
 
 [requires]
 python_version = "3.8"
