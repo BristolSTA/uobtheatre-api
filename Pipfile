@@ -37,6 +37,9 @@ isort = "*"
 stripe = "*"
 pytest-factoryboy = "*"
 django-cors-headers = "*"
+django-allauth = "*"
+restauth = "*"
+django-rest-auth = "*"
 
 [dev-packages]
 rope = "*"

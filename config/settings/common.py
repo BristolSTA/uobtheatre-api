@@ -13,9 +13,17 @@ INSTALLED_APPS = (
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",
     # Third party apps
     "rest_framework",  # utilities for rest apis
+    ## Authentiaction
     "rest_framework.authtoken",  # token authentication
+    "rest_auth",
+    "rest_auth.registration",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    ##
     "django_filters",  # for filtering rest endpoints
     "drf_yasg",  # Swagger documentation
     "corsheaders",  # CORS
@@ -126,6 +134,23 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+
+# Auth setup
+# Yoinked from https://dev.to/rajeshj3/email-authentication-in-django-rest-framework-5f6h
+SITE_ID = 1
+ACCOUNT_AUTHENTICATION_METHOD = "email"
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+
+AUTHENTICATION_BACKENDS = [
+    # Needed to login by username in Django admin, regardless of `allauth`
+    "django.contrib.auth.backends.ModelBackend",
+    # `allauth` specific authentication methods, such as login by e-mail
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
+
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
 # Logging
 LOGGING = {
     "version": 1,
@@ -192,7 +217,9 @@ REST_FRAMEWORK = {
         "rest_framework.renderers.JSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",
     ),
-    "DEFAULT_PERMISSION_CLASSES": [],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly"
+    ],
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.TokenAuthentication",
