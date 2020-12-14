@@ -36,10 +36,11 @@ drf-yasg = "*"
 isort = "*"
 stripe = "*"
 pytest-factoryboy = "*"
+django-cors-headers = "*"
 
 [dev-packages]
 rope = "*"
-black="*"
+black = "*"
 
 [requires]
 python_version = "3.8"

@@ -18,6 +18,7 @@ INSTALLED_APPS = (
     "rest_framework.authtoken",  # token authentication
     "django_filters",  # for filtering rest endpoints
     "drf_yasg",  # Swagger documentation
+    "corsheaders",  # CORS
     # Your apps
     "uobtheatre.users",
     "uobtheatre.productions",
@@ -36,6 +37,8 @@ MIDDLEWARE = (
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
 )
 
 ALLOWED_HOSTS = ["*"]
