@@ -13,11 +13,20 @@ INSTALLED_APPS = (
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",
     # Third party apps
     "rest_framework",  # utilities for rest apis
+    ## Authentiaction
     "rest_framework.authtoken",  # token authentication
+    "rest_auth",
+    "rest_auth.registration",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    ##
     "django_filters",  # for filtering rest endpoints
     "drf_yasg",  # Swagger documentation
+    "corsheaders",  # CORS
     # Your apps
     "uobtheatre.users",
     "uobtheatre.productions",
@@ -37,6 +46,8 @@ MIDDLEWARE = (
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
 )
 
 ALLOWED_HOSTS = ["*"]
@@ -58,7 +69,7 @@ DATABASES = {
         default=os.getenv(
             "DATABASE_URL", default="postgres://postgres:@postgres:5432/postgres"
         ),
-        conn_max_age=int(os.getenv("POSTGRES_CONN_MAX_AGE", 600)),
+        conn_max_age=int(os.getenv("POSTGRES_CONN_MAX_AGE", "600")),
     )
 }
 
@@ -124,6 +135,23 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+
+# Auth setup
+# Yoinked from https://dev.to/rajeshj3/email-authentication-in-django-rest-framework-5f6h
+SITE_ID = 1
+ACCOUNT_AUTHENTICATION_METHOD = "email"
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+
+AUTHENTICATION_BACKENDS = [
+    # Needed to login by username in Django admin, regardless of `allauth`
+    "django.contrib.auth.backends.ModelBackend",
+    # `allauth` specific authentication methods, such as login by e-mail
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
+
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
 # Logging
 LOGGING = {
     "version": 1,
@@ -184,7 +212,7 @@ AUTH_USER_MODEL = "users.User"
 # Django Rest Framework
 REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": int(os.getenv("DJANGO_PAGINATION_LIMIT", 10)),
+    "PAGE_SIZE": int(os.getenv("DJANGO_PAGINATION_LIMIT", "10")),
     "DATETIME_FORMAT": "%Y-%m-%dT%H:%M:%S%z",
     "DEFAULT_RENDERER_CLASSES": (
         "rest_framework.renderers.JSONRenderer",

@@ -39,6 +39,7 @@ jobs:
 
     - name: Install pipenv
       run: |
+        sudo apt-get install libpq-dev -y
         python -m pip install --upgrade pipenv wheel
 
     - name: Cache Pipenv virtualenv
@@ -60,6 +61,6 @@ jobs:
 
     - name: pytest - check tests pass and coverage is above 90%
       run: |
-        pipenv run pytest
+        pipenv run pytest --cov uobtheatre
       env:
         DATABASE_URL: postgres://postgres:postgres@0.0.0.0:5432/postgres
