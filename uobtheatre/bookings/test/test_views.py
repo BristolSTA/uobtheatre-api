@@ -1,7 +1,14 @@
 import pytest
 
-from uobtheatre.bookings.test.factories import BookingFactory
+from uobtheatre.productions.test.factories import PerformanceFactory
+from uobtheatre.bookings.test.factories import (
+    BookingFactory,
+    SeatBookingFactory,
+    ConsessionTypeFactory,
+)
+from uobtheatre.venues.test.factories import SeatGroupFactory
 from uobtheatre.users.test.factories import UserFactory
+from uobtheatre.bookings.models import Booking
 
 
 @pytest.mark.django_db
@@ -57,3 +64,35 @@ def test_booking_view_get(api_client_flexible, date_format_2):
 
     assert response.status_code == 200
     assert response.json()["results"] == bookings
+
+
+@pytest.mark.django_db
+def test_booking_view_post(api_client_flexible, date_format_2):
+
+    api_client_flexible.authenticate()
+
+    performance = PerformanceFactory()
+    seat_group = SeatGroupFactory()
+    consession_type = ConsessionTypeFactory()
+
+    body = {
+        "performance_id": performance.id,
+        "seat_bookings": [
+            {"seat_group_id": seat_group.id, "consession_type_id": consession_type.id}
+        ],
+    }
+
+    # Create booking at get that created booking
+    response = api_client_flexible.post("/api/v1/bookings/", body, format="json")
+    print(response.json())
+    print(body)
+    assert response.status_code == 201
+
+    created_booking = Booking.objects.first()
+
+    assert str(created_booking.user.id) == str(api_client_flexible.user.id)
+    assert created_booking.performance.id == performance.id
+    assert created_booking.seat_bookings.first().seat_group.id == seat_group.id
+    assert (
+        created_booking.seat_bookings.first().consession_type.id == consession_type.id
+    )

@@ -2,8 +2,7 @@ from rest_framework import serializers
 
 from uobtheatre.bookings.models import Booking, SeatBooking
 from uobtheatre.productions.serializers import PerformanceSerializer
-from uobtheatre.utils.serializers import (AppendIdSerializerMixin,
-                                          UserIdSerializer)
+from uobtheatre.utils.serializers import AppendIdSerializerMixin, UserIdSerializer
 
 
 class CreateBookingSerializer(serializers.ModelSerializer):
@@ -43,6 +42,7 @@ class CreateBookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializ
     seat_bookings = CreateSeatBookingSerializer(many=True, required=False)
 
     def create(self, validated_data):
+        print("Helloooo there")
         # Extract seating bookings from booking
         seat_bookings = validated_data.pop("seat_bookings")
         # Create the booking
