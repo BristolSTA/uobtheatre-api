@@ -115,7 +115,6 @@ class Booking(models.Model, TimeStampedMixin):
         )
 
     def get_valid_discounts(self) -> List[Discount]:
-        list(self.performance.discounts.all()),
         return [
             DiscountCombination(discounts)
             for discounts in combinations(
