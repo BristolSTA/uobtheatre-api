@@ -68,7 +68,7 @@ DATABASES = {
         default=os.getenv(
             "DATABASE_URL", default="postgres://postgres:@postgres:5432/postgres"
         ),
-        conn_max_age=int(os.getenv("POSTGRES_CONN_MAX_AGE", 600)),
+        conn_max_age=int(os.getenv("POSTGRES_CONN_MAX_AGE", "600")),
     )
 }
 
@@ -211,7 +211,7 @@ AUTH_USER_MODEL = "users.User"
 # Django Rest Framework
 REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": int(os.getenv("DJANGO_PAGINATION_LIMIT", 10)),
+    "PAGE_SIZE": int(os.getenv("DJANGO_PAGINATION_LIMIT", "10")),
     "DATETIME_FORMAT": "%Y-%m-%dT%H:%M:%S%z",
     "DEFAULT_RENDERER_CLASSES": (
         "rest_framework.renderers.JSONRenderer",
