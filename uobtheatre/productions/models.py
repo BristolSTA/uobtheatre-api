@@ -52,31 +52,43 @@ class Production(models.Model, SoftDeletionMixin, TimeStampedMixin):
         return self.name
 
     def is_upcoming(self) -> bool:
+        """
+        Returns if the show is upcoming. If the show has no upcoming
+        productions (not ended) then it is not upcoming.
+        """
         performances = self.performances.all()
         return any(performance.start > timezone.now() for performance in performances)
 
     def end_date(self):
+        """
+        Return when the last performance ends.
+        """
         performances = self.performances.all()
         if not performances:
             return None
         return max(performance.end for performance in performances)
 
     def start_date(self):
+        """
+        Return when the first performance starts.
+        """
         performances = self.performances.all()
         if not performances:
             return None
         return min(performance.start for performance in performances)
 
-    def seat_group_capacity(self, seat_group: SeatGroup):
-        return (
-            seat_group.capacity
-            - SeatsBookings.objects.filter(
-                seat_group=seat_group, production=self
-            ).count()
-        )
+    def duration(self):
+        """
+        Returns the duration of the shortest show as a datetime object.
+        """
+        performances = self.performances.all()
+        if not performances:
+            return None
+        return min(performance.duration() for performance in performances)
 
     def slug(self):
         """ Generate a slug for this production """
+        # TODO axe this for auto slug
         return (
             slugify(self.name + "-" + str(self.start_date().year))
             if self.start_date()
@@ -126,10 +138,29 @@ class Performance(models.Model, SoftDeletionMixin, TimeStampedMixin):
 
     extra_information = models.TextField(null=True, blank=True)
 
-    @cached_property
+    def seat_bookings(self):
+        """ Get all seat bookings for this show """
+        return self.bookings.seat_bookings.all()
+
+    # @cached_property
     def capacity_remaining(self):
-        # sum(ticket.ticket_price_band.number_of_tickets)
-        pass
+        """
+        Returns the capacity remaining for a given seat group
+        """
+        return sum()
+
+    def seat_group_capacity(self, seat_group: SeatGroup):
+        """
+        Given a seat group, returns the capacity of that seat group for this
+        show.
+        """
+        return seat_group.capacity - self.bookings.filter()
+
+    def duration(self):
+        """
+        Returns the duration of the show as a datetime object
+        """
+        return self.end - self.start
 
     def __str__(self):
         if self.start is None:

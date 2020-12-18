@@ -43,11 +43,9 @@ def combinations(iterable: List, max_length: int) -> List[Tuple]:
     """ Given a list give all the combinations of that list up to a given length """
 
     return set(
-        [
-            combination
-            for i in range(1, max_length + 1)
-            for combination in itertools.combinations(iterable * i, i)
-        ]
+        combination
+        for i in range(1, max_length + 1)
+        for combination in itertools.combinations(iterable * i, i)
     )
 
 
