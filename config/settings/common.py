@@ -23,7 +23,7 @@ INSTALLED_APPS = (
     "allauth",
     "allauth.account",
     "allauth.socialaccount",
-    # 1
+    ##
     "django_filters",  # for filtering rest endpoints
     "drf_yasg",  # Swagger documentation
     "corsheaders",  # CORS
