@@ -58,8 +58,7 @@ class ProductionSerializer(AppendIdSerializerMixin, serializers.ModelSerializer)
 
 class PerformanceTicketTypesSerializer(serializers.ModelSerializer):
     def to_representation(self, performance):
-        print("TO REPRESENTATIOJNING")
-        json = {
+        return {
             "ticket_types": [
                 {
                     "seat_group_name": seat_group.name,
@@ -78,5 +77,3 @@ class PerformanceTicketTypesSerializer(serializers.ModelSerializer):
                 for seat_group in seating.seat_group.all()
             ]
         }
-        print(json)
-        return json

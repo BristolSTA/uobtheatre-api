@@ -89,5 +89,5 @@ def test_get_consession_discount():
 
     assert (
         performance.get_conession_discount(consession_type)
-        == discount_requirement_3.discount
+        == discount_requirement_3.discount.discount
     )
