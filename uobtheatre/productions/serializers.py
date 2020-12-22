@@ -74,6 +74,6 @@ class PerformanceTicketTypesSerializer(serializers.ModelSerializer):
                     ],
                 }
                 for seating in performance.seating.all()
-                for seat_group in seating.seat_group.all()
+                for seat_group in seating.seat_groups.all()
             ]
         }

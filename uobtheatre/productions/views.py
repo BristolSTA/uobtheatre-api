@@ -1,11 +1,15 @@
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework_extensions.mixins import NestedViewSetMixin
+
 
 from uobtheatre.productions.models import Production, Society, Performance
 from uobtheatre.productions.serializers import (
     ProductionSerializer,
     SocietySerializer,
     PerformanceSerializer,
+    PerformanceTicketTypesSerializer,
 )
 
 
@@ -37,10 +41,15 @@ class ProductionViewSet(viewsets.ModelViewSet):
         return self.get_paginated_response(serializer.data)
 
 
-from rest_framework_extensions.mixins import NestedViewSetMixin
-
-
 class PerforamceViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     model = Performance
     queryset = Performance.objects.all()
     serializer_class = PerformanceSerializer
+
+    @action(detail=True)
+    def ticket_types(self, request, parent_lookup_production=None, pk=None):
+        """
+        Action to return all tickets types for the performance
+        """
+        serializer = PerformanceTicketTypesSerializer(self.get_object())
+        return Response(serializer.data)
