@@ -1,18 +1,28 @@
 import pytest
 from django.template.defaultfilters import slugify
 
-from uobtheatre.productions.models import (CastMember, CrewMember, CrewRole,
-                                           Performance, Production, Venue)
-from uobtheatre.productions.serializers import (CastMemberSerialzier,
-                                                CrewMemberSerialzier,
-                                                PerformanceSerializer,
-                                                ProductionSerializer,
-                                                VenueSerializer)
-from uobtheatre.productions.test.factories import (CastMemberFactory,
-                                                   CrewMemberFactory,
-                                                   PerformanceFactory,
-                                                   ProductionFactory,
-                                                   VenueFactory)
+from uobtheatre.productions.models import (
+    CastMember,
+    CrewMember,
+    CrewRole,
+    Performance,
+    Production,
+    Venue,
+)
+from uobtheatre.productions.serializers import (
+    CastMemberSerialzier,
+    CrewMemberSerialzier,
+    PerformanceSerializer,
+    ProductionSerializer,
+    VenueSerializer,
+)
+from uobtheatre.productions.test.factories import (
+    CastMemberFactory,
+    CrewMemberFactory,
+    PerformanceFactory,
+    ProductionFactory,
+    VenueFactory,
+)
 
 
 @pytest.mark.django_db
