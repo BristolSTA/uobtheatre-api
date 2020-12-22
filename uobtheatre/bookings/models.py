@@ -20,11 +20,25 @@ class Discount(models.Model):
         SeatGroup, on_delete=models.CASCADE, null=True, blank=True
     )
 
+    def is_single_discount(self):
+        """
+        Retruns True if this discount applys to a single ticket.
+        """
+        return (
+            sum(requirement.number for requirement in self.discount_requirements.all())
+            == 1
+        )
+
     def __str__(self):
         return f"{self.discount * 100}% off for {self.name}"
 
 
 class ConsessionType(models.Model):
+    """
+    A conession type refers to the type of person booking a ticket.  e.g. a
+    student or society member.
+    """
+
     name = models.CharField(max_length=255)
 
     def __str__(self):

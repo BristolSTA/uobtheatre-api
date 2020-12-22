@@ -2,14 +2,20 @@ from collections import Counter
 
 import pytest
 
-from uobtheatre.bookings.models import (Discount, DiscountCombination,
-                                        DiscountRequirement, combinations)
-from uobtheatre.bookings.test.factories import (BookingFactory,
-                                                ConsessionTypeFactory,
-                                                DiscountFactory,
-                                                DiscountRequirementFactory,
-                                                PerformanceSeatPriceFactory,
-                                                SeatBookingFactory)
+from uobtheatre.bookings.models import (
+    Discount,
+    DiscountCombination,
+    DiscountRequirement,
+    combinations,
+)
+from uobtheatre.bookings.test.factories import (
+    BookingFactory,
+    ConsessionTypeFactory,
+    DiscountFactory,
+    DiscountRequirementFactory,
+    PerformanceSeatPriceFactory,
+    SeatBookingFactory,
+)
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory, VenueFactory
 
@@ -378,3 +384,28 @@ def test_get_best_discount_combination():
             discount_family,
         )
     )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "students, adults, is_single",
+    [
+        (1, 0, True),
+        (0, 1, True),
+        (2, 1, False),
+        (0, 0, False),
+    ],
+)
+def test_is_single_discount(students, adults, is_single):
+    # Create a discount
+    discount = DiscountFactory(name="Family")
+    DiscountRequirementFactory(number=students, discount=discount)
+    DiscountRequirementFactory(number=adults, discount=discount)
+
+    assert discount.is_single_discount() == is_single
+
+
+@pytest.mark.django_db
+def test_str_discount():
+    discount = DiscountFactory(discount=0.12, name="student")
+    assert str(discount) == "12.0% off for student"

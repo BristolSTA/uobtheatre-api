@@ -1,7 +1,13 @@
 from rest_framework import serializers
 
-from uobtheatre.productions.models import (CastMember, CrewMember, Performance,
-                                           Production, Venue, Warning)
+from uobtheatre.productions.models import (
+    CastMember,
+    CrewMember,
+    Performance,
+    Production,
+    Venue,
+    Warning,
+)
 from uobtheatre.societies.serializers import SocietySerializer
 from uobtheatre.utils.serializers import AppendIdSerializerMixin
 from uobtheatre.venues.serializers import VenueSerializer
@@ -48,3 +54,29 @@ class ProductionSerializer(AppendIdSerializerMixin, serializers.ModelSerializer)
     class Meta:
         model = Production
         fields = "__all__"
+
+
+class PerformanceTicketTypesSerializer(serializers.ModelSerializer):
+    def to_representation(self, performance):
+        print("TO REPRESENTATIOJNING")
+        json = {
+            "ticket_types": [
+                {
+                    "seat_group_name": seat_group.name,
+                    "consession_types": [
+                        {
+                            "consession_name": consession.name,
+                            "price": (
+                                1 - performance.get_conession_discount(consession)
+                            )
+                            * seating.price,
+                        }
+                        for consession in performance.consessions()
+                    ],
+                }
+                for seating in performance.seating.all()
+                for seat_group in seating.seat_group.all()
+            ]
+        }
+        print(json)
+        return json

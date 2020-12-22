@@ -1,4 +1,5 @@
 import uuid
+from typing import List
 
 from django.db import models
 from django.template.defaultfilters import slugify
@@ -142,25 +143,62 @@ class Performance(models.Model, SoftDeletionMixin, TimeStampedMixin):
         """ Get all seat bookings for this show """
         return self.bookings.seat_bookings.all()
 
-    # @cached_property
-    def capacity_remaining(self):
-        """
-        Returns the capacity remaining for a given seat group
-        """
-        return sum()
+    def total_capacity(self):
+        """ Returns the total capacity of show. """
+        return sum(seat_group.capacity for seat_group in self.seating.all())
+
+    def capacity_remaining(self, seat_group: SeatGroup = None):
+        """ Returns the capacity remaining.  """
+        self.select_related("bookings").prefetch_related("seat_bookings").filter(
+            seat_group=seat_group
+        ).count()
 
     def seat_group_capacity(self, seat_group: SeatGroup):
         """
         Given a seat group, returns the capacity of that seat group for this
-        show.
+        performance.
         """
-        return seat_group.capacity - self.bookings.filter()
+        return self.seating.get(seat_group=seat_group).capacity
 
     def duration(self):
         """
         Returns the duration of the show as a datetime object
         """
         return self.end - self.start
+
+    def get_single_discounts(self):
+        """ Returns all discounts that apply to a single ticket """
+        return [
+            discount
+            for discount in self.discounts.all()
+            if discount.is_single_discount()
+        ]
+
+    def get_conession_discount(self, consession_type) -> float:
+        """
+        Given a seat_group and a consession type returns the price of the
+        ticket with the single discounts applied.
+        """
+        discount = next(
+            (
+                discount
+                for discount in self.get_single_discounts()
+                if discount.discount_requirements.first().consession_type
+                == consession_type
+            ),
+            None,
+        )
+        return discount.discount if discount else 0
+
+    def consessions(self) -> List:
+        """ Returns list of all consession types """
+        return list(
+            set(
+                discounts_requirement.consession_type
+                for discount in self.discounts.all()
+                for discounts_requirement in discount.discount_requirements.all()
+            )
+        )
 
     def __str__(self):
         if self.start is None:

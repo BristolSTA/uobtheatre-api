@@ -1,18 +1,35 @@
 import pytest
 from django.template.defaultfilters import slugify
 
-from uobtheatre.productions.models import (CastMember, CrewMember, CrewRole,
-                                           Performance, Production, Venue)
-from uobtheatre.productions.serializers import (CastMemberSerialzier,
-                                                CrewMemberSerialzier,
-                                                PerformanceSerializer,
-                                                ProductionSerializer,
-                                                VenueSerializer)
-from uobtheatre.productions.test.factories import (CastMemberFactory,
-                                                   CrewMemberFactory,
-                                                   PerformanceFactory,
-                                                   ProductionFactory,
-                                                   VenueFactory)
+from uobtheatre.productions.models import (
+    CastMember,
+    CrewMember,
+    CrewRole,
+    Performance,
+    Production,
+    Venue,
+)
+from uobtheatre.productions.serializers import (
+    CastMemberSerialzier,
+    CrewMemberSerialzier,
+    PerformanceSerializer,
+    ProductionSerializer,
+    VenueSerializer,
+    PerformanceTicketTypesSerializer,
+)
+from uobtheatre.productions.test.factories import (
+    CastMemberFactory,
+    CrewMemberFactory,
+    PerformanceFactory,
+    ProductionFactory,
+    VenueFactory,
+)
+from uobtheatre.bookings.test.factories import (
+    PerformanceSeatPriceFactory,
+    DiscountFactory,
+    DiscountRequirementFactory,
+)
+from uobtheatre.venues.test.factories import SeatGroupFactory
 
 
 @pytest.mark.django_db
@@ -137,4 +154,34 @@ def test_cast_member_serializer():
         "name": cast_member.name,
         "role": cast_member.role,
         "profile_picture": cast_member.profile_picture.url,
+    }
+
+
+@pytest.mark.django_db
+def test_performance_ticket_types_serializer():
+    performance = PerformanceFactory()
+
+    seat_group_1 = SeatGroupFactory(venue=performance.venue)
+    seat_price_1 = PerformanceSeatPriceFactory(performance=performance)
+    seat_price_1.seat_group.set([seat_group_1])
+
+    # Create a discount
+    discount = DiscountFactory(name="Family", discount=0.2)
+    discount.performances.set([performance])
+    discount_requirement_1 = DiscountRequirementFactory(discount=discount, number=1)
+
+    serialized_ticket_types = PerformanceTicketTypesSerializer(performance)
+
+    assert serialized_ticket_types.data == {
+        "ticket_types": [
+            {
+                "seat_group_name": seat_group_1.name,
+                "consession_types": [
+                    {
+                        "consession_name": discount_requirement_1.consession_type.name,
+                        "price": 0.8 * seat_price_1.price,
+                    }
+                ],
+            }
+        ],
     }
