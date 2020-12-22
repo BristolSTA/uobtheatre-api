@@ -166,9 +166,17 @@ def test_performance_ticket_types_serializer():
     seat_price_1.seat_group.set([seat_group_1])
 
     # Create a discount
-    discount = DiscountFactory(name="Family", discount=0.2)
-    discount.performances.set([performance])
-    discount_requirement_1 = DiscountRequirementFactory(discount=discount, number=1)
+    discount_1 = DiscountFactory(name="Family", discount=0.2)
+    discount_1.performances.set([performance])
+    discount_requirement_1 = DiscountRequirementFactory(discount=discount_1, number=1)
+
+    seat_group_2 = SeatGroupFactory(venue=performance.venue)
+    seat_price_2 = PerformanceSeatPriceFactory(performance=performance)
+    seat_price_2.seat_group.set([seat_group_2])
+
+    discount_2 = DiscountFactory(name="Family 2", discount=0.3)
+    discount_2.performances.set([performance])
+    discount_requirement_2 = DiscountRequirementFactory(discount=discount_2, number=1)
 
     serialized_ticket_types = PerformanceTicketTypesSerializer(performance)
 
@@ -180,8 +188,25 @@ def test_performance_ticket_types_serializer():
                     {
                         "consession_name": discount_requirement_1.consession_type.name,
                         "price": 0.8 * seat_price_1.price,
-                    }
+                    },
+                    {
+                        "consession_name": discount_requirement_2.consession_type.name,
+                        "price": 0.7 * seat_price_1.price,
+                    },
                 ],
-            }
+            },
+            {
+                "seat_group_name": seat_group_2.name,
+                "consession_types": [
+                    {
+                        "consession_name": discount_requirement_1.consession_type.name,
+                        "price": 0.8 * seat_price_2.price,
+                    },
+                    {
+                        "consession_name": discount_requirement_2.consession_type.name,
+                        "price": 0.7 * seat_price_2.price,
+                    },
+                ],
+            },
         ],
     }
