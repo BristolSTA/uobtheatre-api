@@ -71,6 +71,6 @@
     {
         "model": "bookings.performanceseating",
         "pk": 1,
-        "fields": {"seat_group": [1], "price": 1000, "performance": 1}
+        "fields": {"seat_groups": [1], "price": 1000, "performance": 1}
     }
 ]

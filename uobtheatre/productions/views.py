@@ -1,9 +1,12 @@
 from rest_framework import viewsets
 from rest_framework.decorators import action
 
-from uobtheatre.productions.models import Production, Society
-from uobtheatre.productions.serializers import (ProductionSerializer,
-                                                SocietySerializer)
+from uobtheatre.productions.models import Production, Society, Performance
+from uobtheatre.productions.serializers import (
+    ProductionSerializer,
+    SocietySerializer,
+    PerformanceSerializer,
+)
 
 
 class ProductionViewSet(viewsets.ModelViewSet):
@@ -30,9 +33,14 @@ class ProductionViewSet(viewsets.ModelViewSet):
         future_productions.sort(key=lambda prod: prod.end_date(), reverse=False)
         page = self.paginate_queryset(future_productions[:6])
 
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
 
-        serializer = self.get_serializer(future_productions, many=True)
-        return Response(serializer.data)
+
+from rest_framework_extensions.mixins import NestedViewSetMixin
+
+
+class PerforamceViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
+    model = Performance
+    queryset = Performance.objects.all()
+    serializer_class = PerformanceSerializer

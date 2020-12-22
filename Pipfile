@@ -41,6 +41,7 @@ django-allauth = "*"
 django-rest-auth = "*"
 pytest-cov = "*"
 djangorestframework-jwt = "*"
+drf-extensions = "*"
 
 [dev-packages]
 rope = "*"

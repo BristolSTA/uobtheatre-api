@@ -27,6 +27,7 @@ INSTALLED_APPS = (
     "django_filters",  # for filtering rest endpoints
     "drf_yasg",  # Swagger documentation
     "corsheaders",  # CORS
+    "rest_framework_extensions",  # Extensions including nested views
     # Your apps
     "uobtheatre.users",
     "uobtheatre.productions",

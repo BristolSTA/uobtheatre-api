@@ -201,7 +201,7 @@ class SeatBooking(models.Model):
 class PerformanceSeating(models.Model):
     """ Storing the price and number of seats of each seat type for a show """
 
-    seat_group = models.ManyToManyField(SeatGroup)
+    seat_groups = models.ManyToManyField(SeatGroup)
     performance = models.ForeignKey(
         Performance, on_delete=models.RESTRICT, related_name="seating"
     )
