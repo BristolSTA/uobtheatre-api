@@ -8,7 +8,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 
 from uobtheatre.societies.models import Society
-from uobtheatre.utils.models import SoftDeletionMixin, TimeStampedMixin
+from uobtheatre.utils.models import TimeStampedMixin
 from uobtheatre.venues.models import SeatGroup, Venue
 
 
@@ -30,7 +30,7 @@ class Warning(models.Model):
         return self.warning
 
 
-class Production(models.Model, SoftDeletionMixin, TimeStampedMixin):
+class Production(models.Model, TimeStampedMixin):
     """A production is a show (like the 2 weeks things) and can have many
     performaces (these are like the nights).
     """
@@ -125,7 +125,7 @@ class CrewMember(models.Model):
         return self.name
 
 
-class Performance(models.Model, SoftDeletionMixin, TimeStampedMixin):
+class Performance(models.Model, TimeStampedMixin):
     """A performance is a discrete event when the show takes place eg 7pm on
     Tuesday.
     """

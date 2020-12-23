@@ -6,7 +6,7 @@ from django.db import models
 
 from uobtheatre.productions.models import Performance
 from uobtheatre.users.models import User
-from uobtheatre.utils.models import SoftDeletionMixin, TimeStampedMixin
+from uobtheatre.utils.models import TimeStampedMixin
 from uobtheatre.venues.models import Seat, SeatGroup
 
 
