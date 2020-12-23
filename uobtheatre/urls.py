@@ -37,7 +37,7 @@ router.register(r"productions", ProductionViewSet).register(
     r"performances",
     PerforamceViewSet,
     basename="production-performances",
-    parents_query_lookups=["production"],
+    parents_query_lookups=["production__slug"],
 )
 router.register(r"societies", SocietyViewSet)
 router.register(r"venues", VenueViewSet)

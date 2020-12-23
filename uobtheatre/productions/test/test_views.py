@@ -175,24 +175,24 @@ def test_production_performances(api_client):
     )
 
     # Assert that there are 10 performances for production 1
-    response = api_client.get(f"/api/v1/productions/{production1.id}/performances/")
+    response = api_client.get(f"/api/v1/productions/{production1.slug}/performances/")
     assert response.status_code == 200
     assert len(response.json()["results"]) == 10
 
     # Assert there are 8 performances for production 2
-    response = api_client.get(f"/api/v1/productions/{production2.id}/performances/")
+    response = api_client.get(f"/api/v1/productions/{production2.slug}/performances/")
     assert response.status_code == 200
     assert len(response.json()["results"]) == 1
 
     # Asser that detailed performances works
     response = api_client.get(
-        f"/api/v1/productions/{production2.id}/performances/{production2_performance.id}/"
+        f"/api/v1/productions/{production2.slug}/performances/{production2_performance.id}/"
     )
     assert response.status_code == 200
 
     # And that it is not found for the wrong production
     response = api_client.get(
-        f"/api/v1/productions/{production1.id}/performances/{production2_performance.id}/"
+        f"/api/v1/productions/{production1.slug}/performances/{production2_performance.id}/"
     )
     assert response.status_code == 404
 
@@ -221,7 +221,7 @@ def test_performance_ticket_types(api_client):
     serialized_ticket_types = PerformanceTicketTypesSerializer(performance)
 
     response = api_client.get(
-        f"/api/v1/productions/{performance.production.id}/performances/{performance.id}/ticket_types/"
+        f"/api/v1/productions/{performance.production.slug}/performances/{performance.id}/ticket_types/"
     )
     assert response.status_code == 200
 

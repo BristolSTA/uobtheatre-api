@@ -21,6 +21,7 @@ class ProductionViewSet(viewsets.ModelViewSet):
     queryset = Production.objects.all()
     serializer_class = ProductionSerializer
     ordering = ["id"]
+    lookup_field = "slug"
 
     @action(detail=False)
     def upcoming_productions(self, request):
@@ -49,7 +50,7 @@ class PerforamceViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     ordering = ["id"]
 
     @action(detail=True)
-    def ticket_types(self, request, parent_lookup_production=None, pk=None):
+    def ticket_types(self, request, parent_lookup_production__slug=None, pk=None):
         """
         Action to return all tickets types for the performance
         """

@@ -56,6 +56,7 @@ class ProductionSerializer(AppendIdSerializerMixin, serializers.ModelSerializer)
     class Meta:
         model = Production
         fields = "__all__"
+        lookup_field = "email"
 
 
 class PerformanceTicketTypesSerializer(serializers.ModelSerializer):
@@ -87,7 +88,7 @@ class PerformanceTicketTypesSerializer(serializers.ModelSerializer):
                         for consession in performance.consessions()
                     ],
                 }
-                for seating in performance.seating.all()
-                for seat_group in seating.seat_groups.all()
+                for seating in performance.seating.order_by("id")
+                for seat_group in seating.seat_groups.order_by("id")
             ]
         }

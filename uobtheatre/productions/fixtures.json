@@ -22,7 +22,8 @@
           "subtitle": "This is an example show",
           "description": "The description of the example show",
           "society": 1,
-          "warnings": [1]
+          "warnings": [1],
+          "slug": "example-show"
         }
     },
     
