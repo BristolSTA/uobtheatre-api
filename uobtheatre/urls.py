@@ -43,6 +43,7 @@ router.register(r"societies", SocietyViewSet)
 router.register(r"venues", VenueViewSet)
 router.register(r"bookings", BookingViewSet, basename="Booking")
 
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/v1/", include(router.urls)),

@@ -207,3 +207,13 @@ class PerformanceSeating(models.Model):
     )
     price = models.IntegerField()
     capacity = models.SmallIntegerField(null=True, blank=True)
+
+    def get_capacity(self):
+        return (
+            self.capacity
+            if self.capacity
+            else sum(seat_group.capacity for seat_group in self.seat_groups.all())
+        )
+
+    # def capacity_remaining(self):
+    #     self.get_capacity - sum(SeatBooking)

@@ -5,8 +5,7 @@ import pytest
 from django.template.defaultfilters import slugify
 from django.utils import timezone
 
-from uobtheatre.productions.test.factories import (PerformanceFactory,
-                                                   ProductionFactory)
+from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 
 
 @pytest.mark.django_db
@@ -149,3 +148,42 @@ def test_production_view_upcoming_productions_action(api_client):
     assert response.json()["results"][0]["id"] == production2.id
     assert response.json()["results"][1]["id"] == production1.id
     assert response.json()["results"][2]["id"] == production3.id
+
+
+@pytest.mark.django_db
+def test_production_performances(api_client):
+
+    # Create some productions that are in the past
+    production1 = ProductionFactory()
+    production2 = ProductionFactory()
+
+    for _ in range(10):
+        PerformanceFactory(
+            production=production1,
+        )
+
+    production2_performance = PerformanceFactory(
+        production=production2,
+    )
+
+    # Assert that there are 10 performances for production 1
+    response = api_client.get(f"/api/v1/productions/{production1.id}/performances/")
+    assert response.status_code == 200
+    assert len(response.json()["results"]) == 10
+
+    # Assert there are 8 performances for production 2
+    response = api_client.get(f"/api/v1/productions/{production2.id}/performances/")
+    assert response.status_code == 200
+    assert len(response.json()["results"]) == 1
+
+    # Asser that detailed performances works
+    response = api_client.get(
+        f"/api/v1/productions/{production2.id}/performances/{production2_performance.id}/"
+    )
+    assert response.status_code == 200
+
+    # And that it is not found for the wrong production
+    response = api_client.get(
+        f"/api/v1/productions/{production1.id}/performances/{production2_performance.id}/"
+    )
+    assert response.status_code == 404
