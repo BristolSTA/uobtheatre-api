@@ -3,18 +3,19 @@ import uuid
 import pytest
 
 from uobtheatre.bookings.models import Booking
-from uobtheatre.bookings.serializers import (BookingSerialiser,
-                                             CreateBookingSerialiser,
-                                             CreateSeatBookingSerializer)
-from uobtheatre.bookings.test.factories import (BookingFactory,
-                                                ConsessionTypeFactory)
+from uobtheatre.bookings.serializers import (
+    BookingSerialiser,
+    CreateBookingSerialiser,
+    CreateSeatBookingSerializer,
+)
+from uobtheatre.bookings.test.factories import BookingFactory, ConsessionTypeFactory
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory
 
 
 @pytest.mark.django_db
-def test_booking_serializer(date_format_2):
+def test_booking_serializer(date_format):
     booking = BookingFactory()
     data = Booking.objects.first()
     serialized_booking = BookingSerialiser(data)
@@ -27,8 +28,8 @@ def test_booking_serializer(date_format_2):
             "name": booking.performance.venue.name,
         },
         "extra_information": booking.performance.extra_information,
-        "start": booking.performance.start.strftime(date_format_2),
-        "end": booking.performance.end.strftime(date_format_2),
+        "start": booking.performance.start.strftime(date_format),
+        "end": booking.performance.end.strftime(date_format),
     }
 
     assert serialized_booking.data == {
@@ -40,7 +41,7 @@ def test_booking_serializer(date_format_2):
 
 
 @pytest.mark.django_db
-def test_create_booking_serializer(date_format_2):
+def test_create_booking_serializer():
     user = UserFactory()
     performance = PerformanceFactory()
     seat_group = SeatGroupFactory()
@@ -138,7 +139,7 @@ def test_create_booking_serializer_validation():
 
 
 @pytest.mark.skip(reason="Need to write this")
-def test_create_seat_booking_serializer(date_format_2):
+def test_create_seat_booking_serializer():
     seat_booking = SeatBooking()
     data = SeatBooking.objects.first()
     serialized_booking = CreateSeatBookingSerialiser(data)

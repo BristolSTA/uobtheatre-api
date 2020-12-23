@@ -3,6 +3,7 @@ from pytest_factoryboy import register
 from rest_framework.test import APIClient
 
 from uobtheatre.users.test.factories import UserFactory
+from config.settings.common import REST_FRAMEWORK
 
 register(UserFactory)  # fixture is user_factory
 
@@ -52,11 +53,4 @@ def api_client_flexible(api_client, user_factory):
 
 @pytest.fixture
 def date_format():
-    DATE_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
-    return DATE_FORMAT
-
-
-@pytest.fixture
-def date_format_2():
-    DATE_FORMAT = "%Y-%m-%dT%H:%M:%S+0000"
-    return DATE_FORMAT
+    return "%Y-%m-%dT%H:%M:%SZ"

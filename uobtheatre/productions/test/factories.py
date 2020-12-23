@@ -1,8 +1,16 @@
 import factory
+from django.utils import timezone
 
-from uobtheatre.productions.models import (CastMember, CrewMember, CrewRole,
-                                           Performance, Production, Society,
-                                           Venue, Warning)
+from uobtheatre.productions.models import (
+    CastMember,
+    CrewMember,
+    CrewRole,
+    Performance,
+    Production,
+    Society,
+    Venue,
+    Warning,
+)
 from uobtheatre.venues.test.factories import VenueFactory
 
 
@@ -29,8 +37,8 @@ class ProductionFactory(factory.django.DjangoModelFactory):
 
 class PerformanceFactory(factory.django.DjangoModelFactory):
 
-    start = factory.Faker("date_time")
-    end = factory.Faker("date_time")
+    start = factory.Faker("date_time", tzinfo=timezone.get_current_timezone())
+    end = factory.Faker("date_time", tzinfo=timezone.get_current_timezone())
     extra_information = factory.Faker("sentence")
     production = factory.SubFactory(ProductionFactory)
     venue = factory.SubFactory(VenueFactory)

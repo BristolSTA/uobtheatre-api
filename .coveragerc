@@ -8,3 +8,4 @@ omit = *migrations*,
        ./uobtheatre-api/config/*,
        ./uobtheatre-api/wsgi.py,
        *__init__*
+       ./uobtheatre/management/*

@@ -95,8 +95,8 @@ def test_production_serializer(date_format):
                 "name": performance.venue.name,
             },
             "extra_information": performance.extra_information,
-            "start": performance.start.isoformat()[:-3] + "00",
-            "end": performance.end.isoformat()[:-3] + "00",
+            "start": performance.start.strftime(date_format),
+            "end": performance.end.strftime(date_format),
         }
         for performance in production.performances.all()
     ]
@@ -115,7 +115,7 @@ def test_production_serializer(date_format):
 
 
 @pytest.mark.django_db
-def test_performance_serializer():
+def test_performance_serializer(date_format):
     performance = PerformanceFactory()
     data = Performance.objects.first()
     serialized_performance = PerformanceSerializer(data)
@@ -128,8 +128,8 @@ def test_performance_serializer():
             "name": performance.venue.name,
         },
         "extra_information": performance.extra_information,
-        "start": performance.start.isoformat() + "+0000",
-        "end": performance.end.isoformat() + "+0000",
+        "start": performance.start.strftime(date_format),
+        "end": performance.end.strftime(date_format),
     }
 
 

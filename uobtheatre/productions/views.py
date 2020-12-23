@@ -45,6 +45,7 @@ class PerforamceViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     model = Performance
     queryset = Performance.objects.all()
     serializer_class = PerformanceSerializer
+    ordering = ["id"]
 
     @action(detail=True)
     def ticket_types(self, request, parent_lookup_production=None, pk=None):

@@ -36,6 +36,8 @@ class WarningSerializer(serializers.ModelSerializer):
 
 class PerformanceSerializer(AppendIdSerializerMixin, serializers.ModelSerializer):
     venue = VenueSerializer()
+    start = serializers.DateTimeField()
+    end = serializers.DateTimeField()
 
     class Meta:
         model = Performance
@@ -48,8 +50,8 @@ class ProductionSerializer(AppendIdSerializerMixin, serializers.ModelSerializer)
     warnings = serializers.StringRelatedField(many=True)
     crew = CrewMemberSerialzier(many=True)
     cast = CastMemberSerialzier(many=True)
-    start_date = serializers.DateTimeField("iso-8601")
-    end_date = serializers.DateTimeField("iso-8601")
+    start_date = serializers.DateTimeField()
+    end_date = serializers.DateTimeField()
     slug = serializers.CharField()
 
     class Meta:

@@ -28,8 +28,8 @@ def test_production_view_get(api_client, date_format):
                 "name": performance.venue.name,
             },
             "extra_information": performance.extra_information,
-            "start": performance.start.isoformat()[:-3] + "00",
-            "end": performance.end.isoformat()[:-3] + "00",
+            "start": performance.start.strftime(date_format),
+            "end": performance.end.strftime(date_format),
         }
         for performance in prod1.performances.all()
     ]

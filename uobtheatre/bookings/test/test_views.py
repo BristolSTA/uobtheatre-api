@@ -34,7 +34,7 @@ def test_booking_view_only_returns_users_bookings(api_client_flexible):
 
 
 @pytest.mark.django_db
-def test_booking_view_get(api_client_flexible, date_format_2):
+def test_booking_view_get(api_client_flexible, date_format):
 
     api_client_flexible.authenticate()
     bookingTest = BookingFactory(user=api_client_flexible.user)
@@ -49,8 +49,8 @@ def test_booking_view_get(api_client_flexible, date_format_2):
             "name": bookingTest.performance.venue.name,
         },
         "extra_information": bookingTest.performance.extra_information,
-        "start": bookingTest.performance.start.strftime(date_format_2),
-        "end": bookingTest.performance.end.strftime(date_format_2),
+        "start": bookingTest.performance.start.strftime(date_format),
+        "end": bookingTest.performance.end.strftime(date_format),
     }
 
     bookings = [
@@ -67,7 +67,7 @@ def test_booking_view_get(api_client_flexible, date_format_2):
 
 
 @pytest.mark.django_db
-def test_booking_view_post(api_client_flexible, date_format_2):
+def test_booking_view_post(api_client_flexible):
 
     api_client_flexible.authenticate()
 
