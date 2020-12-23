@@ -184,3 +184,14 @@ def test_str_cast_member():
 def test_str_crew_member():
     crew_member = CrewMemberFactory()
     assert str(crew_member) == crew_member.name
+
+
+@pytest.mark.django_db
+def test_production_slug_is_unique():
+
+    # Create 2 productions with the same name
+    prod1 = ProductionFactory(name="show-name")
+    prod2 = ProductionFactory(name="show-name")
+
+    # Assert the production slugs are different
+    assert prod1.slug != prod2.slug
