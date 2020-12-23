@@ -1,3 +1,4 @@
+import math
 from rest_framework import serializers
 
 from uobtheatre.productions.models import (
@@ -61,14 +62,26 @@ class PerformanceTicketTypesSerializer(serializers.ModelSerializer):
         return {
             "ticket_types": [
                 {
-                    "seat_group_name": seat_group.name,
+                    "seat_group": {
+                        "name": seat_group.name,
+                        "id": seat_group.id,
+                    },
                     "consession_types": [
                         {
-                            "consession_name": consession.name,
-                            "price": (
-                                1 - performance.get_conession_discount(consession)
-                            )
-                            * seating.price,
+                            "consession": {
+                                "name": consession.name,
+                                "id": consession.id,
+                            },
+                            "price": performance.price_with_consession(
+                                consession, seating.price
+                            ),
+                            "price_pounds": "%.2f"
+                            % (
+                                performance.price_with_consession(
+                                    consession, seating.price
+                                )
+                                / 100
+                            ),
                         }
                         for consession in performance.consessions()
                     ],

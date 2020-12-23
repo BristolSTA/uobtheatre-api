@@ -91,3 +91,25 @@ def test_get_consession_discount():
         performance.get_conession_discount(consession_type)
         == discount_requirement_3.discount.discount
     )
+
+
+@pytest.mark.django_db
+def test_get_consession_discount():
+    performance = PerformanceFactory()
+    consession_type = ConsessionTypeFactory()
+    # Create a discount
+    discount_1 = DiscountFactory(name="Family")
+    DiscountRequirementFactory(
+        discount=discount_1, number=1, consession_type=consession_type
+    )
+    DiscountRequirementFactory(discount=discount_1, number=1)
+
+    discount_2 = DiscountFactory(name="Student", discount=0.1)
+    discount_requirement_3 = DiscountRequirementFactory(
+        discount=discount_2, number=1, consession_type=consession_type
+    )
+
+    discount_1.performances.set([performance])
+    discount_2.performances.set([performance])
+
+    assert performance.price_with_consession(consession_type, 20) == 18

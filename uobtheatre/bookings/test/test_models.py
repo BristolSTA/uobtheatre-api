@@ -222,7 +222,7 @@ def test_get_price():
 
     # Set seat type price for performance
     seat_price = PerformanceSeatPriceFactory(performance=performance)
-    seat_price.seat_group.set([seat_group])
+    seat_price.seat_groups.set([seat_group])
 
     # Create a seat booking
     SeatBookingFactory(booking=booking, seat_group=seat_group)
@@ -234,7 +234,7 @@ def test_get_price():
 
     seat_group_2 = SeatGroupFactory(venue=venue)
     seat_price_2 = PerformanceSeatPriceFactory(performance=performance)
-    seat_price_2.seat_group.set([seat_group_2])
+    seat_price_2.seat_groups.set([seat_group_2])
     SeatBookingFactory(booking=booking, seat_group=seat_group_2)
     assert booking.get_price() == seat_price.price * 2 + seat_price_2.price
 
@@ -254,7 +254,7 @@ def test_graceful_response_to_no_price():
    
     ```
     seat_price = PerformanceSeatPriceFactory(performance=performance)
-    seat_price.seat_group.set([seat_group])
+    seat_price.seat_groups.set([seat_group])
     ```
 
     If we do not do this no price will be found for the booked seat and bad
@@ -281,7 +281,7 @@ def test_get_price_with_discount():
 
     # Set seat type price for performance
     seat_price = PerformanceSeatPriceFactory(performance=performance)
-    seat_price.seat_group.set([seat_group])
+    seat_price.seat_groups.set([seat_group])
 
     # Create a seat booking
     SeatBookingFactory(
@@ -342,7 +342,7 @@ def test_get_best_discount_combination():
 
     # Set seat type price for performance
     seat_price = PerformanceSeatPriceFactory(performance=performance)
-    seat_price.seat_group.set([seat_group])
+    seat_price.seat_groups.set([seat_group])
 
     # Create a family discount - 1 student ticket and 2 adults required
     discount_family = DiscountFactory(name="Family", discount=0.2)

@@ -1,4 +1,5 @@
 import uuid
+import math
 from typing import List
 
 from django.db import models
@@ -176,8 +177,8 @@ class Performance(models.Model, SoftDeletionMixin, TimeStampedMixin):
 
     def get_conession_discount(self, consession_type) -> float:
         """
-        Given a seat_group and a consession type returns the price of the
-        ticket with the single discounts applied.
+        Given a seat_group and a consession type returns the consession type
+        discount for the ticket.
         """
         discount = next(
             (
@@ -189,6 +190,13 @@ class Performance(models.Model, SoftDeletionMixin, TimeStampedMixin):
             None,
         )
         return discount.discount if discount else 0
+
+    def price_with_consession(self, consession, price) -> int:
+        """
+        Given a seat_group and a consession type returns the price of the
+        ticket with the single discounts applied.
+        """
+        return math.ceil((1 - self.get_conession_discount(consession)) * price)
 
     def consessions(self) -> List:
         """ Returns list of all consession types """

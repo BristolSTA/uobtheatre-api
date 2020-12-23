@@ -138,7 +138,7 @@ class Booking(models.Model, TimeStampedMixin):
 
     def get_price(self) -> float:
         return sum(
-            self.performance.seating.filter(seat_group=seat.seat_group).first().price
+            self.performance.seating.filter(seat_groups=seat.seat_group).first().price
             for seat in self.seat_bookings.all()
         )
 
@@ -156,7 +156,7 @@ class Booking(models.Model, TimeStampedMixin):
                         if seat.consession_type == consession_type
                     )
                     discount_total += (
-                        self.performance.seating.filter(seat_group=seat.seat_group)
+                        self.performance.seating.filter(seat_groups=seat.seat_group)
                         .first()
                         .price
                         * discount_from_comb.discount
