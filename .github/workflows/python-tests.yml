@@ -59,8 +59,8 @@ jobs:
       run: |
         pipenv run black uobtheatre 
 
-    - name: pytest - check tests pass and coverage is above 90%
+    - name: pytest - check tests pass and coverage is above 95%
       run: |
-        pipenv run pytest --cov uobtheatre --cov-fail-under 90
+        pipenv run pytest --cov uobtheatre --cov-fail-under 95
       env:
         DATABASE_URL: postgres://postgres:postgres@0.0.0.0:5432/postgres
