@@ -2,7 +2,13 @@ import datetime
 import pytest
 from django.utils import timezone
 
-from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
+from uobtheatre.productions.test.factories import (
+    PerformanceFactory,
+    ProductionFactory,
+    CrewMemberFactory,
+    CastMemberFactory,
+    WarningFactory,
+)
 from uobtheatre.bookings.test.factories import (
     DiscountFactory,
     DiscountRequirementFactory,
@@ -146,3 +152,27 @@ def test_get_consession_discount():
     discount_2.performances.set([performance])
 
     assert performance.price_with_consession(consession_type, 20) == 18
+
+
+@pytest.mark.django_db
+def test_str_warning():
+    warning = WarningFactory()
+    assert str(warning) == warning.warning
+
+
+@pytest.mark.django_db
+def test_str_production():
+    production = ProductionFactory()
+    assert str(production) == production.name
+
+
+@pytest.mark.django_db
+def test_str_cast_member():
+    cast_member = CastMemberFactory()
+    assert str(cast_member) == cast_member.name
+
+
+@pytest.mark.django_db
+def test_str_crew_member():
+    crew_member = CrewMemberFactory()
+    assert str(crew_member) == crew_member.name

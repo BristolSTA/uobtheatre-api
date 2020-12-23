@@ -6,6 +6,15 @@ from django.template.defaultfilters import slugify
 from django.utils import timezone
 
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
+from uobtheatre.venues.test.factories import SeatGroupFactory
+from uobtheatre.bookings.test.factories import (
+    PerformanceSeatPriceFactory,
+    DiscountFactory,
+    DiscountRequirementFactory,
+)
+from uobtheatre.productions.serializers import (
+    PerformanceTicketTypesSerializer,
+)
 
 
 @pytest.mark.django_db
@@ -187,3 +196,36 @@ def test_production_performances(api_client):
         f"/api/v1/productions/{production1.id}/performances/{production2_performance.id}/"
     )
     assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def performance_ticket_types(api_client):
+    performance = PerformanceFactory()
+
+    seat_group_1 = SeatGroupFactory(venue=performance.venue)
+    seat_price_1 = PerformanceSeatPriceFactory(performance=performance)
+    seat_price_1.seat_groups.set([seat_group_1])
+
+    # Create a discount
+    discount_1 = DiscountFactory(name="Family", discount=0.2)
+    discount_1.performances.set([performance])
+    discount_requirement_1 = DiscountRequirementFactory(discount=discount_1, number=1)
+
+    seat_group_2 = SeatGroupFactory(venue=performance.venue)
+    seat_price_2 = PerformanceSeatPriceFactory(performance=performance)
+    seat_price_2.seat_groups.set([seat_group_2])
+
+    discount_2 = DiscountFactory(name="Family 2", discount=0.3)
+    discount_2.performances.set([performance])
+    discount_requirement_2 = DiscountRequirementFactory(discount=discount_2, number=1)
+
+    serialized_ticket_types = PerformanceTicketTypesSerializer(performance)
+
+    response = api_client.get(
+        f"/api/v1/productions/{performance.production.id}/performances/{performance.id}/ticket_types/"
+    )
+    assert response.status_code == 200
+
+    # In this case we will check against the serialized data this is fine as
+    # the serializer will only be used for this single view
+    assert response.data == serialized_ticket_types.data

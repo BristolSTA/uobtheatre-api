@@ -409,3 +409,15 @@ def test_is_single_discount(students, adults, is_single):
 def test_str_discount():
     discount = DiscountFactory(discount=0.12, name="student")
     assert str(discount) == "12.0% off for student"
+
+
+@pytest.mark.django_db
+def test_str_booking():
+    booking = BookingFactory()
+    assert str(booking) == str(booking.booking_reference)
+
+
+@pytest.mark.django_db
+def test_str_consession_type():
+    consession_type = ConsessionTypeFactory()
+    assert str(consession_type) == consession_type.name

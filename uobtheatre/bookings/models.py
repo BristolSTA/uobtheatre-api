@@ -90,9 +90,6 @@ class DiscountCombination:
             consession_requirements[requirement.consession_type] += requirement.number
         return consession_requirements
 
-    def __str__(self):
-        return f"{self.discount_combination[0]}"
-
 
 class Booking(models.Model, TimeStampedMixin):
     """A booking is for one performance and has many tickets"""

@@ -20,6 +20,7 @@ class ProductionViewSet(viewsets.ModelViewSet):
 
     queryset = Production.objects.all()
     serializer_class = ProductionSerializer
+    ordering = ["id"]
 
     @action(detail=False)
     def upcoming_productions(self, request):

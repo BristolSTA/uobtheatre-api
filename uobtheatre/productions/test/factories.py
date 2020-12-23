@@ -71,3 +71,10 @@ class CastMemberFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = CastMember
+
+
+class WarningFactory(factory.django.DjangoModelFactory):
+    warning = factory.Faker("sentence", nb_words=3)
+
+    class Meta:
+        model = Warning
