@@ -79,7 +79,7 @@ def test_production_serializer(date_format):
         "performances": [],
         "start_date": None,
         "end_date": None,
-        "slug": slugify(production.name) + "-" + str(production.id),
+        "slug": production.slug,
     }
     assert expected_output == serialized_prod.data
 
@@ -106,7 +106,7 @@ def test_production_serializer(date_format):
         "performances": performances,
         "start_date": production.start_date().strftime(date_format),
         "end_date": production.end_date().strftime(date_format),
-        "slug": slugify(production.name) + "-" + str(production.start_date().year),
+        "slug": production.slug,
     }
     expected_output.update(performance_updates)
 

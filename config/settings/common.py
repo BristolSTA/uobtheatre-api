@@ -28,6 +28,7 @@ INSTALLED_APPS = (
     "drf_yasg",  # Swagger documentation
     "corsheaders",  # CORS
     "rest_framework_extensions",  # Extensions including nested views
+    "autoslug",  # Auto slug
     # Your apps
     "uobtheatre.users",
     "uobtheatre.productions",

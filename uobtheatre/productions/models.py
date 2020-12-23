@@ -2,6 +2,7 @@ import uuid
 import math
 from typing import List
 
+from autoslug import AutoSlugField
 from django.db import models
 from django.template.defaultfilters import slugify
 from django.utils import timezone
@@ -50,6 +51,8 @@ class Production(models.Model, TimeStampedMixin):
 
     warnings = models.ManyToManyField(Warning)
 
+    slug = AutoSlugField(populate_from="name", unique=True, blank=True)
+
     def __str__(self):
         return self.name
 
@@ -87,15 +90,6 @@ class Production(models.Model, TimeStampedMixin):
         if not performances:
             return None
         return min(performance.duration() for performance in performances)
-
-    def slug(self):
-        """ Generate a slug for this production """
-        # TODO axe this for auto slug
-        return (
-            slugify(self.name + "-" + str(self.start_date().year))
-            if self.start_date()
-            else slugify(self.name + "-" + str(self.id))
-        )
 
 
 class CastMember(models.Model):

@@ -2,7 +2,6 @@ from datetime import timedelta
 
 import factory
 import pytest
-from django.template.defaultfilters import slugify
 from django.utils import timezone
 
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
@@ -90,7 +89,7 @@ def test_production_view_get(api_client, date_format):
                 "warnings": warnings,
                 "start_date": prod1.start_date().strftime(date_format),
                 "end_date": prod1.end_date().strftime(date_format),
-                "slug": slugify(prod1.name + "-" + str(prod1.start_date().year)),
+                "slug": prod1.slug,
             },
         ],
     }
@@ -199,7 +198,7 @@ def test_production_performances(api_client):
 
 
 @pytest.mark.django_db
-def performance_ticket_types(api_client):
+def test_performance_ticket_types(api_client):
     performance = PerformanceFactory()
 
     seat_group_1 = SeatGroupFactory(venue=performance.venue)

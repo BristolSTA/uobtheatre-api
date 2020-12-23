@@ -76,6 +76,14 @@ def test_production_duration():
 
 
 @pytest.mark.django_db
+def test_production_duration_with_no_performances():
+
+    # Create production with no performances
+    production = ProductionFactory()
+    assert production.duration() == None
+
+
+@pytest.mark.django_db
 def test_get_single_discounts():
     performance = PerformanceFactory()
     # Create a discount
