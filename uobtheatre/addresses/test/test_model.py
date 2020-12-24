@@ -5,6 +5,6 @@ from uobtheatre.addresses.test.factories import AddressFactory
 
 @pytest.mark.django_db
 def test_address_to_string():
-    address = AddressFactory()
+    address = AddressFactory(street="Richmond Hill", city="Bristol", postcode="BS1 1AE")
 
-    assert str(address) == f"{address.street}, {address.city}, {address.postcode}"
+    assert str(address) == f"Richmond Hill, Bristol, BS1 1AE"
