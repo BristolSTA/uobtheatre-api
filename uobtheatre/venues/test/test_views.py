@@ -14,6 +14,14 @@ def test_venue_view_get(api_client):
         {
             "id": venueTest.id,
             "name": venueTest.name,
+            "description": venueTest.description,
+            "address": {
+                "street": venueTest.address.street,
+                "city": venueTest.address.city,
+                "postcode": venueTest.address.postcode,
+                "latitude": float(venueTest.address.latitude),
+                "longitude": float(venueTest.address.longitude),
+            },
         },
     ]
 

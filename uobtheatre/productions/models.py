@@ -133,5 +133,5 @@ class Performance(models.Model, SoftDeletionMixin, TimeStampedMixin):
 
     def __str__(self):
         if self.start is None:
-            return f"Perforamce of {self.production.name}"
-        return f"Perforamce of {self.production.name} at {self.start.strftime('%H:%M')} on {self.start.strftime('%m/%d/%Y')}"
+            return f"Performance of {self.production.name}"
+        return f"Performance of {self.production.name} at {self.start.strftime('%H:%M')} on {self.start.strftime('%m/%d/%Y')}"

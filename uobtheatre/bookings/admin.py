@@ -1,9 +1,14 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from uobtheatre.bookings.models import (Booking, ConsessionType, Discount,
-                                        DiscountRequirement,
-                                        PerformanceSeating, SeatBooking)
+from uobtheatre.bookings.models import (
+    Booking,
+    ConsessionType,
+    Discount,
+    DiscountRequirement,
+    PerformanceSeating,
+    SeatBooking,
+)
 
 admin.site.register(ConsessionType)
 admin.site.register(PerformanceSeating)

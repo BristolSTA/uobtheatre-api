@@ -5,8 +5,7 @@ import pytest
 from django.template.defaultfilters import slugify
 from django.utils import timezone
 
-from uobtheatre.productions.test.factories import (PerformanceFactory,
-                                                   ProductionFactory)
+from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 
 
 @pytest.mark.django_db

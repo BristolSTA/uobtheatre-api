@@ -2,14 +2,20 @@ from collections import Counter
 
 import pytest
 
-from uobtheatre.bookings.models import (Discount, DiscountCombination,
-                                        DiscountRequirement, combinations)
-from uobtheatre.bookings.test.factories import (BookingFactory,
-                                                ConsessionTypeFactory,
-                                                DiscountFactory,
-                                                DiscountRequirementFactory,
-                                                PerformanceSeatPriceFactory,
-                                                SeatBookingFactory)
+from uobtheatre.bookings.models import (
+    Discount,
+    DiscountCombination,
+    DiscountRequirement,
+    combinations,
+)
+from uobtheatre.bookings.test.factories import (
+    BookingFactory,
+    ConsessionTypeFactory,
+    DiscountFactory,
+    DiscountRequirementFactory,
+    PerformanceSeatPriceFactory,
+    SeatBookingFactory,
+)
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory, VenueFactory
 
