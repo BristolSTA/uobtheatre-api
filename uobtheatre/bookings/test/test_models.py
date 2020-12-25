@@ -13,7 +13,7 @@ from uobtheatre.bookings.test.factories import (
     ConsessionTypeFactory,
     DiscountFactory,
     DiscountRequirementFactory,
-    PerformanceSeatPriceFactory,
+    PerformanceSeatingFactory,
     SeatBookingFactory,
 )
 from uobtheatre.productions.test.factories import PerformanceFactory
@@ -221,7 +221,7 @@ def test_get_price():
     seat_group = SeatGroupFactory(venue=venue)
 
     # Set seat type price for performance
-    seat_price = PerformanceSeatPriceFactory(performance=performance)
+    seat_price = PerformanceSeatingFactory(performance=performance)
     seat_price.seat_groups.set([seat_group])
 
     # Create a seat booking
@@ -233,7 +233,7 @@ def test_get_price():
     assert booking.get_price() == seat_price.price * 2
 
     seat_group_2 = SeatGroupFactory(venue=venue)
-    seat_price_2 = PerformanceSeatPriceFactory(performance=performance)
+    seat_price_2 = PerformanceSeatingFactory(performance=performance)
     seat_price_2.seat_groups.set([seat_group_2])
     SeatBookingFactory(booking=booking, seat_group=seat_group_2)
     assert booking.get_price() == seat_price.price * 2 + seat_price_2.price
@@ -250,10 +250,10 @@ def test_graceful_response_to_no_price():
 
     """ 
     Inorder to set the price of the seat_group the user is about to book we
-    would need to use the PerformanceSeatPriceFactory as below:
+    would need to use the PerformanceSeatingFactory as below:
    
     ```
-    seat_price = PerformanceSeatPriceFactory(performance=performance)
+    seat_price = PerformanceSeatingFactory(performance=performance)
     seat_price.seat_groups.set([seat_group])
     ```
 
@@ -280,7 +280,7 @@ def test_get_price_with_discount():
     consession_type_adult = ConsessionTypeFactory(name="Adult")
 
     # Set seat type price for performance
-    seat_price = PerformanceSeatPriceFactory(performance=performance)
+    seat_price = PerformanceSeatingFactory(performance=performance)
     seat_price.seat_groups.set([seat_group])
 
     # Create a seat booking
@@ -341,7 +341,7 @@ def test_get_best_discount_combination():
     seat_group = SeatGroupFactory(venue=venue)
 
     # Set seat type price for performance
-    seat_price = PerformanceSeatPriceFactory(performance=performance)
+    seat_price = PerformanceSeatingFactory(performance=performance)
     seat_price.seat_groups.set([seat_group])
 
     # Create a family discount - 1 student ticket and 2 adults required

@@ -204,7 +204,7 @@ class PerformanceSeating(models.Model):
         Performance, on_delete=models.RESTRICT, related_name="seating"
     )
     price = models.IntegerField()
-    capacity = models.SmallIntegerField(null=True, blank=True)
+    capacity = models.SmallIntegerField()
 
     def get_capacity(self):
         return (

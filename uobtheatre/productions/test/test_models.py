@@ -13,7 +13,11 @@ from uobtheatre.bookings.test.factories import (
     DiscountFactory,
     DiscountRequirementFactory,
     ConsessionTypeFactory,
+    BookingFactory,
+    SeatBookingFactory,
+    PerformanceSeatingFactory,
 )
+from uobtheatre.venues.test.factories import SeatGroupFactory
 
 
 @pytest.mark.django_db
@@ -195,3 +199,47 @@ def test_production_slug_is_unique():
 
     # Assert the production slugs are different
     assert prod1.slug != prod2.slug
+
+
+@pytest.mark.django_db
+def test_performance_seat_bookings():
+
+    prod = ProductionFactory()
+
+    perf1 = PerformanceFactory(production=prod)
+    perf2 = PerformanceFactory(production=prod)
+
+    # Create a booking for the perf1
+    booking1 = BookingFactory(performance=perf1)
+
+    # Create a booking for the perf2
+    booking2 = BookingFactory(performance=perf2)
+
+    # Seat group
+    seat_group = SeatGroupFactory()
+
+    # Create 3 seat bookings for perf1
+    for _ in range(3):
+        SeatBookingFactory(booking=booking1)
+
+    # And then 4 more with a given seat bookings for perf1
+    for _ in range(4):
+        SeatBookingFactory(booking=booking1, seat_group=seat_group)
+
+    # Create 2 seat bookings for perf2
+    for _ in range(2):
+        SeatBookingFactory(booking=booking2)
+
+    assert len(perf1.seat_bookings(seat_group)) == 4
+
+    assert len(perf1.seat_bookings()) == 7
+    assert len(perf2.seat_bookings()) == 2
+
+
+@pytest.mark.django_db
+def test_performance_total_capacity():
+    perf = PerformanceFactory()
+
+    seating = [PerformanceSeatingFactory(performance=perf) for _ in range(3)]
+
+    assert perf.total_capacity() == sum(perf_seat.capacity for perf_seat in seating)

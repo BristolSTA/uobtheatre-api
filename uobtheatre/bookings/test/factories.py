@@ -2,9 +2,14 @@ import uuid
 
 import factory
 
-from uobtheatre.bookings.models import (Booking, ConsessionType, Discount,
-                                        DiscountRequirement,
-                                        PerformanceSeating, SeatBooking)
+from uobtheatre.bookings.models import (
+    Booking,
+    ConsessionType,
+    Discount,
+    DiscountRequirement,
+    PerformanceSeating,
+    SeatBooking,
+)
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory
@@ -56,10 +61,11 @@ class SeatBookingFactory(factory.django.DjangoModelFactory):
         model = SeatBooking
 
 
-class PerformanceSeatPriceFactory(factory.django.DjangoModelFactory):
+class PerformanceSeatingFactory(factory.django.DjangoModelFactory):
 
     price = factory.Faker("pyint")
     performance = factory.SubFactory(PerformanceFactory)
+    capacity = factory.Faker("pyint")
 
     class Meta:
         model = PerformanceSeating

@@ -26,7 +26,7 @@ from uobtheatre.productions.test.factories import (
     VenueFactory,
 )
 from uobtheatre.bookings.test.factories import (
-    PerformanceSeatPriceFactory,
+    PerformanceSeatingFactory,
     DiscountFactory,
     DiscountRequirementFactory,
 )
@@ -163,7 +163,7 @@ def test_performance_ticket_types_serializer():
     performance = PerformanceFactory()
 
     seat_group_1 = SeatGroupFactory(venue=performance.venue)
-    seat_price_1 = PerformanceSeatPriceFactory(performance=performance)
+    seat_price_1 = PerformanceSeatingFactory(performance=performance)
     seat_price_1.seat_groups.set([seat_group_1])
 
     # Create a discount
@@ -172,7 +172,7 @@ def test_performance_ticket_types_serializer():
     discount_requirement_1 = DiscountRequirementFactory(discount=discount_1, number=1)
 
     seat_group_2 = SeatGroupFactory(venue=performance.venue)
-    seat_price_2 = PerformanceSeatPriceFactory(performance=performance)
+    seat_price_2 = PerformanceSeatingFactory(performance=performance)
     seat_price_2.seat_groups.set([seat_group_2])
 
     discount_2 = DiscountFactory(name="Family 2", discount=0.3)

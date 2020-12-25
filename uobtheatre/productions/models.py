@@ -4,6 +4,7 @@ from typing import List
 
 from autoslug import AutoSlugField
 from django.db import models
+from django.db.models import Sum
 from django.template.defaultfilters import slugify
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -134,19 +135,46 @@ class Performance(models.Model, TimeStampedMixin):
 
     extra_information = models.TextField(null=True, blank=True)
 
-    def seat_bookings(self):
+    def seat_bookings(self, seat_group=None):
         """ Get all seat bookings for this show """
-        return self.bookings.seat_bookings.all()
+        filters = {}
+        if seat_group:
+            filters["seat_group"] = seat_group
+
+        return [
+            seat_booking
+            for booking in self.bookings.all()
+            for seat_booking in booking.seat_bookings.filter(**filters)
+        ]
+
+    def total_seat_bookings(self, seat_group=None):
+        """ Returns the total capacity of show. """
+        if seat_group:
+            return self.seating.filter(seat_group=seat_group).first().get_capacity()
+        return self.seat_bookings().filter(booking__performance=self)
 
     def total_capacity(self):
         """ Returns the total capacity of show. """
-        return sum(seat_group.capacity for seat_group in self.seating.all())
+        response = self.seating.filter().aggregate(Sum("capacity"))
+        return response["capacity__sum"]
+
+    def seat_group_total_capacity(self, seat_group):
+        """ Returns the total capacity of show. """
+
+        response = self.seating.filter().aggregate(Sum("capacity"))
+        return response["capacity__sum"]
 
     def capacity_remaining(self, seat_group: SeatGroup = None):
         """ Returns the capacity remaining.  """
-        self.select_related("bookings").prefetch_related("seat_bookings").filter(
-            seat_group=seat_group
-        ).count()
+        # self.select_related("bookings").prefetch_related("seat_bookings").filter(
+        #     seat_group=seat_group
+        # ).count()
+        if seat_group:
+            self.total_capacity(seat_group=seat_group) - self.seats_booked()
+        return sum(
+            self.capacity_remaining(seat_group=seating.seat_group)
+            for seating in self.seating.all()
+        )
 
     def seat_group_capacity(self, seat_group: SeatGroup):
         """
