@@ -147,22 +147,15 @@ class Performance(models.Model, TimeStampedMixin):
             for seat_booking in booking.seat_bookings.filter(**filters)
         ]
 
-    def total_seat_bookings(self, seat_group=None):
+    def total_capacity(self, seat_group=None):
         """ Returns the total capacity of show. """
         if seat_group:
-            return self.seating.filter(seat_group=seat_group).first().get_capacity()
-        return self.seat_bookings().filter(booking__performance=self)
+            queryset = self.seating.filter(seat_groups__in=[seat_group])
+        else:
+            queryset = self.seating.filter()
 
-    def total_capacity(self):
-        """ Returns the total capacity of show. """
-        response = self.seating.filter().aggregate(Sum("capacity"))
-        return response["capacity__sum"]
-
-    def seat_group_total_capacity(self, seat_group):
-        """ Returns the total capacity of show. """
-
-        response = self.seating.filter().aggregate(Sum("capacity"))
-        return response["capacity__sum"]
+        response = queryset.aggregate(Sum("capacity"))
+        return response["capacity__sum"] or 0
 
     def capacity_remaining(self, seat_group: SeatGroup = None):
         """ Returns the capacity remaining.  """
@@ -222,13 +215,15 @@ class Performance(models.Model, TimeStampedMixin):
 
     def consessions(self) -> List:
         """ Returns list of all consession types """
-        return list(
+        consession_list = list(
             set(
                 discounts_requirement.consession_type
                 for discount in self.discounts.all()
                 for discounts_requirement in discount.discount_requirements.all()
             )
         )
+        consession_list.sort(key=lambda consession: consession.id)
+        return consession_list
 
     def __str__(self):
         if self.start is None:

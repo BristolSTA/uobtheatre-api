@@ -204,14 +204,7 @@ class PerformanceSeating(models.Model):
         Performance, on_delete=models.RESTRICT, related_name="seating"
     )
     price = models.IntegerField()
-    capacity = models.SmallIntegerField()
-
-    def get_capacity(self):
-        return (
-            self.capacity
-            if self.capacity
-            else sum(seat_group.capacity for seat_group in self.seat_groups.all())
-        )
+    capacity = models.SmallIntegerField(blank=True)
 
     # def capacity_remaining(self):
     #     self.get_capacity - sum(SeatBooking)

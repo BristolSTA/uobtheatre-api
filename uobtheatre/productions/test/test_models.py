@@ -243,3 +243,9 @@ def test_performance_total_capacity():
     seating = [PerformanceSeatingFactory(performance=perf) for _ in range(3)]
 
     assert perf.total_capacity() == sum(perf_seat.capacity for perf_seat in seating)
+
+    seat_group = SeatGroupFactory()
+    assert perf.total_capacity(seat_group) == 0
+
+    seating[0].seat_groups.set([seat_group])
+    assert perf.total_capacity(seat_group) == seating[0].capacity != 0
