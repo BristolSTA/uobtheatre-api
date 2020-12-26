@@ -11,3 +11,5 @@ class VenueViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = Venue.objects.all()
     serializer_class = FullVenueSerializer
+    ordering = ["id"]
+    lookup_field = "slug"

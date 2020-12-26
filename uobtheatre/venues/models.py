@@ -18,6 +18,10 @@ class Venue(models.Model, TimeStampedMixin):
     internal_capacity = models.SmallIntegerField()
     description = models.TextField(null=True)
     address = models.ForeignKey(Address, on_delete=models.CASCADE, null=True)
+    venue_image = models.ImageField(null=True)
+    publicly_listed = models.BooleanField(False)
+
+    slug = AutoSlugField(populate_from="name", unique=True, blank=True)
 
     def __str__(self):
         return self.name
