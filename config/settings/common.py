@@ -16,7 +16,7 @@ INSTALLED_APPS = (
     "django.contrib.sites",
     # Third party apps
     "rest_framework",  # utilities for rest apis
-    ## Authentiaction
+    # Authentiaction
     "rest_framework.authtoken",  # token authentication
     "rest_auth",
     "rest_auth.registration",
@@ -37,6 +37,7 @@ INSTALLED_APPS = (
     "uobtheatre.bookings",
     "uobtheatre.societies",
     "uobtheatre",
+    "uobtheatre.addresses",
 )
 
 # https://docs.djangoproject.com/en/2.0/topics/http/middleware/
