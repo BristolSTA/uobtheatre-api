@@ -1,14 +1,12 @@
 import pytest
 
-from uobtheatre.productions.test.factories import PerformanceFactory
-from uobtheatre.bookings.test.factories import (
-    BookingFactory,
-    SeatBookingFactory,
-    ConsessionTypeFactory,
-)
-from uobtheatre.venues.test.factories import SeatGroupFactory
-from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.bookings.models import Booking
+from uobtheatre.bookings.test.factories import (BookingFactory,
+                                                ConsessionTypeFactory,
+                                                SeatBookingFactory)
+from uobtheatre.productions.test.factories import PerformanceFactory
+from uobtheatre.users.test.factories import UserFactory
+from uobtheatre.venues.test.factories import SeatGroupFactory
 
 
 @pytest.mark.django_db

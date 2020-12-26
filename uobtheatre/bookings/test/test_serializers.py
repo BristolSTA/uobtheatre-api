@@ -3,12 +3,11 @@ import uuid
 import pytest
 
 from uobtheatre.bookings.models import Booking
-from uobtheatre.bookings.serializers import (
-    BookingSerialiser,
-    CreateBookingSerialiser,
-    CreateSeatBookingSerializer,
-)
-from uobtheatre.bookings.test.factories import BookingFactory, ConsessionTypeFactory
+from uobtheatre.bookings.serializers import (BookingSerialiser,
+                                             CreateBookingSerialiser,
+                                             CreateSeatBookingSerializer)
+from uobtheatre.bookings.test.factories import (BookingFactory,
+                                                ConsessionTypeFactory)
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory

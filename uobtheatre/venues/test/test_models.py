@@ -1,6 +1,6 @@
 import pytest
 
-from uobtheatre.venues.test.factories import VenueFactory, SeatGroupFactory
+from uobtheatre.venues.test.factories import SeatGroupFactory, VenueFactory
 
 
 @pytest.mark.django_db

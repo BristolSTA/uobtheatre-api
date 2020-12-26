@@ -1,5 +1,5 @@
-from django.db.models.sql import datastructures
 from django.core.exceptions import EmptyResultSet
+from django.db.models.sql import datastructures
 
 """
 A disgusting but necissary hacky fix

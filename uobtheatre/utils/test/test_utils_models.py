@@ -1,11 +1,11 @@
 import pytest
 from django.db import models
 
-from uobtheatre.utils.models import TimeStampedMixin
 from uobtheatre.bookings.models import Booking
-from uobtheatre.venues.models import Venue
+from uobtheatre.productions.models import Performance, Production
 from uobtheatre.societies.models import Society
-from uobtheatre.productions.models import Production, Performance
+from uobtheatre.utils.models import TimeStampedMixin
+from uobtheatre.venues.models import Venue
 
 
 @pytest.mark.django_db

@@ -51,16 +51,6 @@ class BookingFactory(factory.django.DjangoModelFactory):
         model = Booking
 
 
-class SeatBookingFactory(factory.django.DjangoModelFactory):
-
-    seat_group = factory.SubFactory(SeatGroupFactory)
-    booking = factory.SubFactory(BookingFactory)
-    consession_type = factory.SubFactory(ConsessionTypeFactory)
-
-    class Meta:
-        model = SeatBooking
-
-
 class PerformanceSeatingFactory(factory.django.DjangoModelFactory):
 
     price = factory.Faker("pyint")
@@ -69,3 +59,13 @@ class PerformanceSeatingFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = PerformanceSeating
+
+
+class SeatBookingFactory(factory.django.DjangoModelFactory):
+
+    seating = factory.SubFactory(PerformanceSeatingFactory)
+    booking = factory.SubFactory(BookingFactory)
+    consession_type = factory.SubFactory(ConsessionTypeFactory)
+
+    class Meta:
+        model = SeatBooking

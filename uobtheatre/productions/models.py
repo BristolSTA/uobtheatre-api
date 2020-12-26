@@ -1,5 +1,5 @@
-import uuid
 import math
+import uuid
 from typing import List
 
 from autoslug import AutoSlugField

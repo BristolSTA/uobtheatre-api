@@ -218,25 +218,20 @@ def test_get_price():
     performance = PerformanceFactory(venue=venue)
     booking = BookingFactory(performance=performance)
 
-    seat_group = SeatGroupFactory(venue=venue)
-
     # Set seat type price for performance
-    seat_price = PerformanceSeatingFactory(performance=performance)
-    seat_price.seat_groups.set([seat_group])
+    seating = PerformanceSeatingFactory(performance=performance)
 
     # Create a seat booking
-    SeatBookingFactory(booking=booking, seat_group=seat_group)
+    SeatBookingFactory(booking=booking, seating=seating)
 
-    assert booking.get_price() == seat_price.price
+    assert booking.get_price() == seating.price
 
-    SeatBookingFactory(booking=booking, seat_group=seat_group)
-    assert booking.get_price() == seat_price.price * 2
+    SeatBookingFactory(booking=booking, seating=seating)
+    assert booking.get_price() == seating.price * 2
 
-    seat_group_2 = SeatGroupFactory(venue=venue)
-    seat_price_2 = PerformanceSeatingFactory(performance=performance)
-    seat_price_2.seat_groups.set([seat_group_2])
-    SeatBookingFactory(booking=booking, seat_group=seat_group_2)
-    assert booking.get_price() == seat_price.price * 2 + seat_price_2.price
+    seating_2 = PerformanceSeatingFactory(performance=performance)
+    SeatBookingFactory(booking=booking, seating=seating_2)
+    assert booking.get_price() == seating.price * 2 + seating_2.price
 
 
 @pytest.mark.skip(reason="This needs implementing")

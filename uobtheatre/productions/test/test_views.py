@@ -4,16 +4,13 @@ import factory
 import pytest
 from django.utils import timezone
 
-from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
+from uobtheatre.bookings.test.factories import (DiscountFactory,
+                                                DiscountRequirementFactory,
+                                                PerformanceSeatingFactory)
+from uobtheatre.productions.serializers import PerformanceTicketTypesSerializer
+from uobtheatre.productions.test.factories import (PerformanceFactory,
+                                                   ProductionFactory)
 from uobtheatre.venues.test.factories import SeatGroupFactory
-from uobtheatre.bookings.test.factories import (
-    PerformanceSeatingFactory,
-    DiscountFactory,
-    DiscountRequirementFactory,
-)
-from uobtheatre.productions.serializers import (
-    PerformanceTicketTypesSerializer,
-)
 
 
 @pytest.mark.django_db

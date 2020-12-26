@@ -136,8 +136,8 @@ class Booking(models.Model, TimeStampedMixin):
 
     def get_price(self) -> float:
         return sum(
-            self.performance.seating.filter(seat_groups=seat.seat_group).first().price
-            for seat in self.seat_bookings.all()
+            self.performance.seating.get(pk=seat_booking.seating.pk).price
+            for seat_booking in self.seat_bookings.all()
         )
 
     def get_price_with_discounts(self, discounts: DiscountCombination) -> float:
@@ -178,11 +178,29 @@ class Booking(models.Model, TimeStampedMixin):
         return best_discount, best_price
 
 
+class PerformanceSeating(models.Model):
+    """ Storing the price and number of seats of each seat type for a show """
+
+    seat_groups = models.ManyToManyField(SeatGroup)
+    performance = models.ForeignKey(
+        Performance, on_delete=models.RESTRICT, related_name="seating"
+    )
+    price = models.IntegerField()
+    capacity = models.SmallIntegerField(blank=True)
+
+    def total_seat_bookings(self, seat_group=None):
+        if seat_group:
+            self.seat_bookings.all()
+
+    def capacity_remaining(self):
+        self.capacity - self.total_seat_bookings()
+
+
 class SeatBooking(models.Model):
     """A booking of a single seat (from a seat group)"""
 
-    seat_group = models.ForeignKey(
-        SeatGroup, on_delete=models.RESTRICT, related_name="seat_bookings"
+    seating = models.ForeignKey(
+        PerformanceSeating, on_delete=models.RESTRICT, related_name="seat_bookings"
     )
     booking = models.ForeignKey(
         Booking, on_delete=models.PROTECT, related_name="seat_bookings"
@@ -194,17 +212,3 @@ class SeatBooking(models.Model):
         null=True,
     )
     seat = models.ForeignKey(Seat, on_delete=models.RESTRICT, null=True, blank=True)
-
-
-class PerformanceSeating(models.Model):
-    """ Storing the price and number of seats of each seat type for a show """
-
-    seat_groups = models.ManyToManyField(SeatGroup)
-    performance = models.ForeignKey(
-        Performance, on_delete=models.RESTRICT, related_name="seating"
-    )
-    price = models.IntegerField()
-    capacity = models.SmallIntegerField(blank=True)
-
-    # def capacity_remaining(self):
-    #     self.get_capacity - sum(SeatBooking)

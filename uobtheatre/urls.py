@@ -11,7 +11,7 @@ from rest_framework.authtoken import views
 from rest_framework_extensions.routers import ExtendedDefaultRouter
 
 from uobtheatre.bookings.views import BookingViewSet
-from uobtheatre.productions.views import ProductionViewSet, PerforamceViewSet
+from uobtheatre.productions.views import PerforamceViewSet, ProductionViewSet
 from uobtheatre.societies.views import SocietyViewSet
 from uobtheatre.users.views import UserCreateViewSet, UserViewSet
 from uobtheatre.venues.views import VenueViewSet
