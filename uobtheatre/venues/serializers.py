@@ -13,7 +13,7 @@ class FullVenueSerializer(serializers.ModelSerializer):
             "id",
             "name",
             "description",
-            "venue_image",
+            "image",
             "address",
             "publicly_listed",
             "slug",

@@ -15,7 +15,7 @@ def test_venue_view_get(api_client):
             "id": venueTest.id,
             "name": venueTest.name,
             "description": venueTest.description,
-            "venue_image": "http://testserver" + venueTest.venue_image.url,
+            "image": "http://testserver" + venueTest.image.url,
             "address": {
                 "building_name": venueTest.address.building_name,
                 "building_number": venueTest.address.building_number,
@@ -46,7 +46,7 @@ def test_venue_view_get_detailed(api_client):
         "id": venueTest.id,
         "name": venueTest.name,
         "description": venueTest.description,
-        "venue_image": "http://testserver" + venueTest.venue_image.url,
+        "image": "http://testserver" + venueTest.image.url,
         "address": {
             "building_name": venueTest.address.building_name,
             "building_number": venueTest.address.building_number,

@@ -17,7 +17,7 @@ def test_full_venue_serializer():
         "id": venue.id,
         "name": venue.name,
         "description": venue.description,
-        "venue_image": venue.venue_image.url,
+        "image": venue.image.url,
         "address": {
             "street": venue.address.street,
             "building_name": venue.address.building_name,
