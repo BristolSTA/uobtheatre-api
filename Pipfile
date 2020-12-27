@@ -40,10 +40,13 @@ django-cors-headers = "*"
 django-allauth = "*"
 django-rest-auth = "*"
 pytest-cov = "*"
+djangorestframework-jwt = "*"
+drf-extensions = "*"
+django-autoslug = "*"
 
 [dev-packages]
 rope = "*"
-black = "*"
+black="*"
 
 [requires]
 python_version = "3.8"

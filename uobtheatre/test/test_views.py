@@ -11,7 +11,7 @@ ALL_HTTP_VERBS = ["GET", "POST", "PUT", "DELETE", "PATCH"]
     [
         ("venues", ["GET"], False),
         ("societies", ["GET"], False),
-        ("bookings", ["GET"], True),
+        ("bookings", ["GET", "POST"], True),
         ("users", ["POST"], False),
         ("productions", ["GET", "POST"], False),
     ],

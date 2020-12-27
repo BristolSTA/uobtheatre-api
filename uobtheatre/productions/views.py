@@ -1,8 +1,12 @@
-from rest_framework import viewsets
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework_extensions.mixins import NestedViewSetMixin
 
-from uobtheatre.productions.models import Production, Society
-from uobtheatre.productions.serializers import ProductionSerializer, SocietySerializer
+from uobtheatre.productions.models import Performance, Production, Society
+from uobtheatre.productions.serializers import (
+    PerformanceSerializer, PerformanceTicketTypesSerializer,
+    ProductionSerializer, SocietySerializer)
 
 
 class ProductionViewSet(viewsets.ModelViewSet):
@@ -12,6 +16,8 @@ class ProductionViewSet(viewsets.ModelViewSet):
 
     queryset = Production.objects.all()
     serializer_class = ProductionSerializer
+    ordering = ["id"]
+    lookup_field = "slug"
 
     @action(detail=False)
     def upcoming_productions(self, request):
@@ -29,9 +35,20 @@ class ProductionViewSet(viewsets.ModelViewSet):
         future_productions.sort(key=lambda prod: prod.end_date(), reverse=False)
         page = self.paginate_queryset(future_productions[:6])
 
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
 
-        serializer = self.get_serializer(future_productions, many=True)
+
+class PerforamceViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
+    model = Performance
+    queryset = Performance.objects.all()
+    serializer_class = PerformanceSerializer
+    ordering = ["id"]
+
+    @action(detail=True)
+    def ticket_types(self, request, parent_lookup_production__slug=None, pk=None):
+        """
+        Action to return all tickets types for the performance
+        """
+        serializer = PerformanceTicketTypesSerializer(self.get_object())
         return Response(serializer.data)

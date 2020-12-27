@@ -1,7 +1,8 @@
+from autoslug import AutoSlugField
 from django.db import models
 
-from uobtheatre.utils.models import SoftDeletionMixin, TimeStampedMixin
 from uobtheatre.addresses.models import Address
+from uobtheatre.utils.models import TimeStampedMixin
 
 
 class Seat(models.Model):
@@ -11,13 +12,17 @@ class Seat(models.Model):
     number = models.CharField(max_length=5, null=True, blank=True)
 
 
-class Venue(models.Model, SoftDeletionMixin, TimeStampedMixin):
+class Venue(models.Model, TimeStampedMixin):
     """A venue is a space often where shows take place"""
 
     name = models.CharField(max_length=255)
     internal_capacity = models.SmallIntegerField()
     description = models.TextField(null=True)
     address = models.ForeignKey(Address, on_delete=models.CASCADE, null=True)
+    image = models.ImageField(null=True)
+    publicly_listed = models.BooleanField(default=True)
+
+    slug = AutoSlugField(populate_from="name", unique=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -28,6 +33,7 @@ class SeatGroup(models.Model):
     just be a generic area eg front row or stading section"""
 
     name = models.CharField(max_length=255, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
     venue = models.ForeignKey(
         Venue, on_delete=models.CASCADE, related_name="seat_groups"
     )

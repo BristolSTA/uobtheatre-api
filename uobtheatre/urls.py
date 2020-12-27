@@ -8,10 +8,10 @@ from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 from rest_framework.authtoken import views
-from rest_framework.routers import DefaultRouter
+from rest_framework_extensions.routers import ExtendedDefaultRouter
 
 from uobtheatre.bookings.views import BookingViewSet
-from uobtheatre.productions.views import ProductionViewSet
+from uobtheatre.productions.views import PerforamceViewSet, ProductionViewSet
 from uobtheatre.societies.views import SocietyViewSet
 from uobtheatre.users.views import UserCreateViewSet, UserViewSet
 from uobtheatre.venues.views import VenueViewSet
@@ -30,13 +30,19 @@ schema_view = get_schema_view(
     permission_classes=(permissions.AllowAny,),
 )
 
-router = DefaultRouter()
+router = ExtendedDefaultRouter()
 router.register(r"users", UserViewSet)
 router.register(r"users", UserCreateViewSet)
-router.register(r"productions", ProductionViewSet)
+router.register(r"productions", ProductionViewSet).register(
+    r"performances",
+    PerforamceViewSet,
+    basename="production-performances",
+    parents_query_lookups=["production__slug"],
+)
 router.register(r"societies", SocietyViewSet)
 router.register(r"venues", VenueViewSet)
 router.register(r"bookings", BookingViewSet, basename="Booking")
+
 
 urlpatterns = [
     path("admin/", admin.site.urls),

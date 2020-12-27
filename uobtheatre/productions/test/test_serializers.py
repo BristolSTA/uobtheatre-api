@@ -1,28 +1,22 @@
+import math
+
 import pytest
 from django.template.defaultfilters import slugify
 
-from uobtheatre.productions.models import (
-    CastMember,
-    CrewMember,
-    CrewRole,
-    Performance,
-    Production,
-    Venue,
-)
+from uobtheatre.bookings.test.factories import (DiscountFactory,
+                                                DiscountRequirementFactory,
+                                                PerformanceSeatingFactory)
+from uobtheatre.productions.models import (CastMember, CrewMember, CrewRole,
+                                           Performance, Production, Venue)
 from uobtheatre.productions.serializers import (
-    CastMemberSerialzier,
-    CrewMemberSerialzier,
-    PerformanceSerializer,
-    ProductionSerializer,
-    VenueSerializer,
-)
-from uobtheatre.productions.test.factories import (
-    CastMemberFactory,
-    CrewMemberFactory,
-    PerformanceFactory,
-    ProductionFactory,
-    VenueFactory,
-)
+    CastMemberSerialzier, CrewMemberSerialzier, PerformanceSerializer,
+    PerformanceTicketTypesSerializer, ProductionSerializer, VenueSerializer)
+from uobtheatre.productions.test.factories import (CastMemberFactory,
+                                                   CrewMemberFactory,
+                                                   PerformanceFactory,
+                                                   ProductionFactory,
+                                                   VenueFactory)
+from uobtheatre.venues.test.factories import SeatGroupFactory
 
 
 @pytest.mark.django_db
@@ -71,7 +65,7 @@ def test_production_serializer(date_format):
         "performances": [],
         "start_date": None,
         "end_date": None,
-        "slug": slugify(production.name) + "-" + str(production.id),
+        "slug": production.slug,
     }
     assert expected_output == serialized_prod.data
 
@@ -81,14 +75,15 @@ def test_production_serializer(date_format):
     performances = [
         {
             "id": performance.id,
-            "production": performance.production.id,
+            "production_id": performance.production.id,
             "venue": {
                 "id": performance.venue.id,
                 "name": performance.venue.name,
+                "slug": performance.venue.slug,
             },
             "extra_information": performance.extra_information,
-            "start": performance.start.isoformat()[:-3] + "00",
-            "end": performance.end.isoformat()[:-3] + "00",
+            "start": performance.start.strftime(date_format),
+            "end": performance.end.strftime(date_format),
         }
         for performance in production.performances.all()
     ]
@@ -98,7 +93,7 @@ def test_production_serializer(date_format):
         "performances": performances,
         "start_date": production.start_date().strftime(date_format),
         "end_date": production.end_date().strftime(date_format),
-        "slug": slugify(production.name) + "-" + str(production.start_date().year),
+        "slug": production.slug,
     }
     expected_output.update(performance_updates)
 
@@ -107,21 +102,22 @@ def test_production_serializer(date_format):
 
 
 @pytest.mark.django_db
-def test_performance_serializer():
+def test_performance_serializer(date_format):
     performance = PerformanceFactory()
     data = Performance.objects.first()
     serialized_performance = PerformanceSerializer(data)
 
     assert serialized_performance.data == {
         "id": performance.id,
-        "production": performance.production.id,
+        "production_id": performance.production.id,
         "venue": {
             "id": performance.venue.id,
             "name": performance.venue.name,
+            "slug": performance.venue.slug,
         },
         "extra_information": performance.extra_information,
-        "start": performance.start.isoformat() + "+0000",
-        "end": performance.end.isoformat() + "+0000",
+        "start": performance.start.strftime(date_format),
+        "end": performance.end.strftime(date_format),
     }
 
 
@@ -147,4 +143,82 @@ def test_cast_member_serializer():
         "name": cast_member.name,
         "role": cast_member.role,
         "profile_picture": cast_member.profile_picture.url,
+    }
+
+
+@pytest.mark.django_db
+def test_performance_ticket_types_serializer():
+    performance = PerformanceFactory()
+
+    # Create some seat groups for this performance
+    performance_seat_group_1 = PerformanceSeatingFactory(performance=performance)
+    performance_seat_group_2 = PerformanceSeatingFactory(performance=performance)
+
+    # Create a discount
+    discount_1 = DiscountFactory(name="Family", discount=0.2)
+    discount_1.performances.set([performance])
+    discount_requirement_1 = DiscountRequirementFactory(discount=discount_1, number=1)
+
+    # Create a different
+    discount_2 = DiscountFactory(name="Family 2", discount=0.3)
+    discount_2.performances.set([performance])
+    discount_requirement_2 = DiscountRequirementFactory(discount=discount_2, number=1)
+
+    serialized_ticket_types = PerformanceTicketTypesSerializer(performance)
+
+    assert serialized_ticket_types.data == {
+        "ticket_types": [
+            {
+                "seat_group": {
+                    "name": performance_seat_group_1.seat_group.name,
+                    "id": performance_seat_group_1.seat_group.id,
+                },
+                "concession_types": [
+                    {
+                        "concession": {
+                            "name": discount_requirement_1.concession_type.name,
+                            "id": discount_requirement_1.concession_type.id,
+                        },
+                        "price": math.ceil(0.8 * performance_seat_group_1.price),
+                        "price_pounds": "%.2f"
+                        % (math.ceil(0.8 * performance_seat_group_1.price) / 100),
+                    },
+                    {
+                        "concession": {
+                            "name": discount_requirement_2.concession_type.name,
+                            "id": discount_requirement_2.concession_type.id,
+                        },
+                        "price": math.ceil(0.7 * performance_seat_group_1.price),
+                        "price_pounds": "%.2f"
+                        % (math.ceil(0.7 * performance_seat_group_1.price) / 100),
+                    },
+                ],
+            },
+            {
+                "seat_group": {
+                    "name": performance_seat_group_2.seat_group.name,
+                    "id": performance_seat_group_2.seat_group.id,
+                },
+                "concession_types": [
+                    {
+                        "concession": {
+                            "name": discount_requirement_1.concession_type.name,
+                            "id": discount_requirement_1.concession_type.id,
+                        },
+                        "price": math.ceil(0.8 * performance_seat_group_2.price),
+                        "price_pounds": "%.2f"
+                        % (math.ceil(0.8 * performance_seat_group_2.price) / 100),
+                    },
+                    {
+                        "concession": {
+                            "name": discount_requirement_2.concession_type.name,
+                            "id": discount_requirement_2.concession_type.id,
+                        },
+                        "price": math.ceil(0.7 * performance_seat_group_2.price),
+                        "price_pounds": "%.2f"
+                        % (math.ceil(0.7 * performance_seat_group_2.price) / 100),
+                    },
+                ],
+            },
+        ],
     }

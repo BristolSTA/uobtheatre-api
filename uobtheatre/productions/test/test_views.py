@@ -2,10 +2,15 @@ from datetime import timedelta
 
 import factory
 import pytest
-from django.template.defaultfilters import slugify
 from django.utils import timezone
 
-from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
+from uobtheatre.bookings.test.factories import (DiscountFactory,
+                                                DiscountRequirementFactory,
+                                                PerformanceSeatingFactory)
+from uobtheatre.productions.serializers import PerformanceTicketTypesSerializer
+from uobtheatre.productions.test.factories import (PerformanceFactory,
+                                                   ProductionFactory)
+from uobtheatre.venues.test.factories import SeatGroupFactory
 
 
 @pytest.mark.django_db
@@ -22,14 +27,15 @@ def test_production_view_get(api_client, date_format):
     performances = [
         {
             "id": performance.id,
-            "production": prod1.id,
+            "production_id": prod1.id,
             "venue": {
                 "id": performance.venue.id,
                 "name": performance.venue.name,
+                "slug": performance.venue.slug,
             },
             "extra_information": performance.extra_information,
-            "start": performance.start.isoformat()[:-3] + "00",
-            "end": performance.end.isoformat()[:-3] + "00",
+            "start": performance.start.strftime(date_format),
+            "end": performance.end.strftime(date_format),
         }
         for performance in prod1.performances.all()
     ]
@@ -81,7 +87,7 @@ def test_production_view_get(api_client, date_format):
                 "warnings": warnings,
                 "start_date": prod1.start_date().strftime(date_format),
                 "end_date": prod1.end_date().strftime(date_format),
-                "slug": slugify(prod1.name + "-" + str(prod1.start_date().year)),
+                "slug": prod1.slug,
             },
         ],
     }
@@ -148,3 +154,70 @@ def test_production_view_upcoming_productions_action(api_client):
     assert response.json()["results"][0]["id"] == production2.id
     assert response.json()["results"][1]["id"] == production1.id
     assert response.json()["results"][2]["id"] == production3.id
+
+
+@pytest.mark.django_db
+def test_production_performances(api_client):
+
+    # Create some productions that are in the past
+    production1 = ProductionFactory()
+    production2 = ProductionFactory()
+
+    for _ in range(10):
+        PerformanceFactory(
+            production=production1,
+        )
+
+    production2_performance = PerformanceFactory(
+        production=production2,
+    )
+
+    # Assert that there are 10 performances for production 1
+    response = api_client.get(f"/api/v1/productions/{production1.slug}/performances/")
+    assert response.status_code == 200
+    assert len(response.json()["results"]) == 10
+
+    # Assert there are 8 performances for production 2
+    response = api_client.get(f"/api/v1/productions/{production2.slug}/performances/")
+    assert response.status_code == 200
+    assert len(response.json()["results"]) == 1
+
+    # Asser that detailed performances works
+    response = api_client.get(
+        f"/api/v1/productions/{production2.slug}/performances/{production2_performance.id}/"
+    )
+    assert response.status_code == 200
+
+    # And that it is not found for the wrong production
+    response = api_client.get(
+        f"/api/v1/productions/{production1.slug}/performances/{production2_performance.id}/"
+    )
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_performance_ticket_types(api_client):
+    performance = PerformanceFactory()
+
+    performance_seat_group_1 = PerformanceSeatingFactory(performance=performance)
+    performance_seat_group_2 = PerformanceSeatingFactory(performance=performance)
+
+    # Create a discount
+    discount_1 = DiscountFactory(name="Family", discount=0.2)
+    discount_1.performances.set([performance])
+    DiscountRequirementFactory(discount=discount_1, number=1)
+
+    discount_2 = DiscountFactory(name="Family 2", discount=0.3)
+    discount_2.performances.set([performance])
+    DiscountRequirementFactory(discount=discount_2, number=1)
+
+    serialized_ticket_types = PerformanceTicketTypesSerializer(performance)
+
+    response = api_client.get(
+        f"/api/v1/productions/{performance.production.slug}/performances/{performance.id}/ticket_types/"
+    )
+    assert response.status_code == 200
+
+    # In this case we will check against the serialized data this is fine as
+    # the serializer will only be used for this single view
+    assert response.data == serialized_ticket_types.data
