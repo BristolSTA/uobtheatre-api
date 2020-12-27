@@ -25,7 +25,7 @@ migrate: ## Do the migrations
 	docker-compose run api python manage.py migrate
 
 seed: ## Seed the db with some example data 
-	docker-compose run api python manage.py loaddata uobtheatre/users/fixtures.json uobtheatre/venues/fixtures.json uobtheatre/societies/fixtures.json uobtheatre/productions/fixtures.json uobtheatre/bookings/fixtures.json
+	docker-compose run api python manage.py loaddata uobtheatre/addresses/fixtures.json uobtheatre/users/fixtures.json uobtheatre/venues/fixtures.json uobtheatre/societies/fixtures.json uobtheatre/productions/fixtures.json uobtheatre/bookings/fixtures.json
 	make admin-superuser
 
 psql: ## Do the migrations

@@ -1,7 +1,7 @@
 from rest_framework import viewsets
 
 from uobtheatre.venues.models import Venue
-from uobtheatre.venues.serializers import VenueSerializer
+from uobtheatre.venues.serializers import FullVenueSerializer
 
 
 class VenueViewSet(viewsets.ReadOnlyModelViewSet):
@@ -10,4 +10,6 @@ class VenueViewSet(viewsets.ReadOnlyModelViewSet):
     """
 
     queryset = Venue.objects.all()
-    serializer_class = VenueSerializer
+    serializer_class = FullVenueSerializer
+    ordering = ["id"]
+    lookup_field = "slug"

@@ -1,6 +1,9 @@
 from django.db import models
 
+from autoslug import AutoSlugField
+
 from uobtheatre.utils.models import TimeStampedMixin
+from uobtheatre.addresses.models import Address
 
 
 class Seat(models.Model):
@@ -15,6 +18,12 @@ class Venue(models.Model, TimeStampedMixin):
 
     name = models.CharField(max_length=255)
     internal_capacity = models.SmallIntegerField()
+    description = models.TextField(null=True)
+    address = models.ForeignKey(Address, on_delete=models.CASCADE, null=True)
+    image = models.ImageField(null=True)
+    publicly_listed = models.BooleanField(null=True)
+
+    slug = AutoSlugField(populate_from="name", unique=True, blank=True)
 
     def __str__(self):
         return self.name

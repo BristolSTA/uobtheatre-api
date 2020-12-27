@@ -1,0 +1,26 @@
+[
+    {
+        "model": "addresses.address",
+        "pk": 1,
+        "fields": {
+            "street": "Queens Road",
+            "building_name": "Bristol SU Richmond Building",
+            "building_number": "105",
+            "city": "Bristol",
+            "postcode": "BS1 1AE",
+            "latitude": 51.02,
+            "longitude": -0.1
+        }
+    },
+    {
+        "model": "addresses.address",
+        "pk": 2,
+        "fields": {
+            "street": "Queens Road",
+            "building_name": "Bristol SU Richmond Building",
+            "building_number": "105",
+            "city": "Bristol",
+            "postcode": "BS1 1AE"
+        }
+    }
+]

@@ -47,6 +47,7 @@ def test_booking_view_get(api_client_flexible, date_format):
         "venue": {
             "id": bookingTest.performance.venue.id,
             "name": bookingTest.performance.venue.name,
+            "slug": bookingTest.performance.venue.slug,
         },
         "extra_information": bookingTest.performance.extra_information,
         "start": bookingTest.performance.start.strftime(date_format),

@@ -8,6 +8,9 @@ from uobtheatre.bookings.models import (
     DiscountRequirement,
     Ticket,
 )
+from uobtheatre.productions.models import (
+    PerformanceSeatGroup,
+)
 
 admin.site.register(ConcessionType)
 

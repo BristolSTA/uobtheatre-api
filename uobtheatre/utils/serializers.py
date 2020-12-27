@@ -8,12 +8,12 @@ class UserIdSerializer(serializers.UUIDField):
 
 # Add _id to releated fields
 # https://stackoverflow.com/a/37908893
-class IdManyRelatedField(relations.ManyRelatedField):
-    field_name_suffix = "_ids"
-
-    def bind(self, field_name, parent):
-        self.source = field_name[: -len(self.field_name_suffix)]
-        super(IdManyRelatedField, self).bind(field_name, parent)
+# class IdManyRelatedField(relations.ManyRelatedField):
+#     field_name_suffix = "_ids"
+#
+#     def bind(self, field_name, parent):
+#         self.source = field_name[: -len(self.field_name_suffix)]
+#         super(IdManyRelatedField, self).bind(field_name, parent)
 
 
 class IdPrimaryKeyRelatedField(relations.PrimaryKeyRelatedField):
@@ -22,7 +22,7 @@ class IdPrimaryKeyRelatedField(relations.PrimaryKeyRelatedField):
     Only works together the our ModelSerializer.
     """
 
-    many_related_field_class = IdManyRelatedField
+    # many_related_field_class = IdManyRelatedField
     field_name_suffix = "_id"
 
     def bind(self, field_name, parent):
@@ -31,6 +31,9 @@ class IdPrimaryKeyRelatedField(relations.PrimaryKeyRelatedField):
         Changes the source  so that the original field name is used (removes
         the _id suffix).
         """
+        # This used to be in if statement but we dont use this atm so its
+        # commented out, if things start to break then probably add it back in
+
         if field_name:
             self.source = field_name[: -len(self.field_name_suffix)]
         super(IdPrimaryKeyRelatedField, self).bind(field_name, parent)

@@ -1,8 +1,14 @@
 from django.contrib import admin
 
-from uobtheatre.productions.models import (CastMember, CrewMember, CrewRole,
-                                           Performance, Production, Society,
-                                           Warning)
+from uobtheatre.productions.models import (
+    CastMember,
+    CrewMember,
+    CrewRole,
+    Performance,
+    Production,
+    Society,
+    Warning,
+)
 
 admin.site.register(Production)
 admin.site.register(Society)
