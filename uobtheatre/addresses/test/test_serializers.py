@@ -13,6 +13,8 @@ def test_address_serializer():
 
     assert serialized_address.data == {
         "street": address.street,
+        "building_name": address.building_name,
+        "building_number": address.building_number,
         "city": address.city,
         "postcode": address.postcode,
         "latitude": float(address.latitude),

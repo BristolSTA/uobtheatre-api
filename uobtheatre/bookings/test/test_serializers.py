@@ -26,6 +26,7 @@ def test_booking_serializer(date_format):
         "venue": {
             "id": booking.performance.venue.id,
             "name": booking.performance.venue.name,
+            "slug": booking.performance.venue.slug,
         },
         "extra_information": booking.performance.extra_information,
         "start": booking.performance.start.strftime(date_format),

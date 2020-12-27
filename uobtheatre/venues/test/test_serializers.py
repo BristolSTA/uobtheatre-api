@@ -17,13 +17,18 @@ def test_full_venue_serializer():
         "id": venue.id,
         "name": venue.name,
         "description": venue.description,
+        "venue_image": venue.venue_image.url,
         "address": {
             "street": venue.address.street,
+            "building_name": venue.address.building_name,
+            "building_number": venue.address.building_number,
             "city": venue.address.city,
             "postcode": venue.address.postcode,
             "latitude": float(venue.address.latitude),
             "longitude": float(venue.address.longitude),
         },
+        "publicly_listed": venue.publicly_listed,
+        "slug": venue.slug,
     }
 
 
@@ -36,4 +41,5 @@ def test_venue_serializer():
     assert serialized_venue.data == {
         "id": venue.id,
         "name": venue.name,
+        "slug": venue.slug,
     }

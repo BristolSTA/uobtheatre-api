@@ -6,7 +6,8 @@
             "name": "The Winston Theatre",
             "internal_capacity": 209,
             "address": 1,
-            "slug": "winston_theatre"
+            "publicly_listed": true,
+            "slug": "winston-theatre"
         }
     },
     {
@@ -16,7 +17,8 @@
             "name": "The Pegg Theatre",
             "internal_capacity": 80,
             "address": 2,
-            "slug": "pegg_theatre"
+            "publicly_listed": true,
+            "slug": "pegg-theatre"
         }
         
     },
@@ -26,7 +28,7 @@
         "fields": {
             "name": "The Anson Rooms",
             "internal_capacity": 1000,
-            "slug": "anson_rooms"
+            "slug": "anson-rooms"
         }
     },
     {
