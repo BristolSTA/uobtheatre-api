@@ -42,18 +42,18 @@ def test_venue_view_get_detailed(api_client):
 
     assert response.status_code == 200
     assert response.json() == {
-            "id": venueTest.id,
-            "name": venueTest.name,
-            "description": venueTest.description,
-            "address": {
-                "building_name": venueTest.address.building_name,
-                "building_number": venueTest.address.building_number,
-                "street": venueTest.address.street,
-                "city": venueTest.address.city,
-                "postcode": venueTest.address.postcode,
-                "latitude": float(venueTest.address.latitude),
-                "longitude": float(venueTest.address.longitude),
-            },
-            "publicly_listed": venueTest.publicly_listed,
-            "slug": venueTest.slug,
-        }
+        "id": venueTest.id,
+        "name": venueTest.name,
+        "description": venueTest.description,
+        "address": {
+            "building_name": venueTest.address.building_name,
+            "building_number": venueTest.address.building_number,
+            "street": venueTest.address.street,
+            "city": venueTest.address.city,
+            "postcode": venueTest.address.postcode,
+            "latitude": float(venueTest.address.latitude),
+            "longitude": float(venueTest.address.longitude),
+        },
+        "publicly_listed": venueTest.publicly_listed,
+        "slug": venueTest.slug,
+    }
