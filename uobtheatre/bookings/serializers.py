@@ -2,7 +2,8 @@ from rest_framework import serializers
 
 from uobtheatre.bookings.models import Booking, Ticket
 from uobtheatre.productions.serializers import PerformanceSerializer
-from uobtheatre.utils.serializers import AppendIdSerializerMixin, UserIdSerializer
+from uobtheatre.utils.serializers import (AppendIdSerializerMixin,
+                                          UserIdSerializer)
 
 
 class CreateBookingSerializer(serializers.ModelSerializer):

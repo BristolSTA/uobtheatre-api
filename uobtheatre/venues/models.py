@@ -1,9 +1,8 @@
+from autoslug import AutoSlugField
 from django.db import models
 
-from autoslug import AutoSlugField
-
-from uobtheatre.utils.models import TimeStampedMixin
 from uobtheatre.addresses.models import Address
+from uobtheatre.utils.models import TimeStampedMixin
 
 
 class Seat(models.Model):

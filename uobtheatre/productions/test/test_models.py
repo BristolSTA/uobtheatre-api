@@ -1,24 +1,20 @@
 import datetime
-from dateutil import parser
+
 import pytest
+from dateutil import parser
 from django.utils import timezone
 
-from uobtheatre.productions.test.factories import (
-    PerformanceFactory,
-    ProductionFactory,
-    CrewMemberFactory,
-    CastMemberFactory,
-    WarningFactory,
-)
-from uobtheatre.bookings.test.factories import (
-    DiscountFactory,
-    DiscountRequirementFactory,
-    ConcessionTypeFactory,
-    BookingFactory,
-    TicketFactory,
-    PerformanceSeatingFactory,
-    TicketFactory,
-)
+from uobtheatre.bookings.test.factories import (BookingFactory,
+                                                ConcessionTypeFactory,
+                                                DiscountFactory,
+                                                DiscountRequirementFactory,
+                                                PerformanceSeatingFactory,
+                                                TicketFactory)
+from uobtheatre.productions.test.factories import (CastMemberFactory,
+                                                   CrewMemberFactory,
+                                                   PerformanceFactory,
+                                                   ProductionFactory,
+                                                   WarningFactory)
 from uobtheatre.venues.test.factories import SeatGroupFactory
 
 

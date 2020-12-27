@@ -1,11 +1,9 @@
 import pytest
 
 from uobtheatre.bookings.models import Booking
-from uobtheatre.bookings.test.factories import (
-    BookingFactory,
-    ConcessionTypeFactory,
-    TicketFactory,
-)
+from uobtheatre.bookings.test.factories import (BookingFactory,
+                                                ConcessionTypeFactory,
+                                                TicketFactory)
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory

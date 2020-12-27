@@ -1,10 +1,9 @@
 import pytest
 
-from uobtheatre.venues.models import Venue
-from uobtheatre.venues.serializers import VenueSerializer, FullVenueSerializer
-from uobtheatre.venues.test.factories import VenueFactory
-
 from uobtheatre.addresses.serializers import AddressSerializer
+from uobtheatre.venues.models import Venue
+from uobtheatre.venues.serializers import FullVenueSerializer, VenueSerializer
+from uobtheatre.venues.test.factories import VenueFactory
 
 
 @pytest.mark.django_db

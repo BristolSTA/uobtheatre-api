@@ -3,34 +3,19 @@ import math
 import pytest
 from django.template.defaultfilters import slugify
 
-from uobtheatre.bookings.test.factories import (
-    DiscountFactory,
-    DiscountRequirementFactory,
-    PerformanceSeatingFactory,
-)
-from uobtheatre.productions.models import (
-    CastMember,
-    CrewMember,
-    CrewRole,
-    Performance,
-    Production,
-    Venue,
-)
+from uobtheatre.bookings.test.factories import (DiscountFactory,
+                                                DiscountRequirementFactory,
+                                                PerformanceSeatingFactory)
+from uobtheatre.productions.models import (CastMember, CrewMember, CrewRole,
+                                           Performance, Production, Venue)
 from uobtheatre.productions.serializers import (
-    CastMemberSerialzier,
-    CrewMemberSerialzier,
-    PerformanceSerializer,
-    PerformanceTicketTypesSerializer,
-    ProductionSerializer,
-    VenueSerializer,
-)
-from uobtheatre.productions.test.factories import (
-    CastMemberFactory,
-    CrewMemberFactory,
-    PerformanceFactory,
-    ProductionFactory,
-    VenueFactory,
-)
+    CastMemberSerialzier, CrewMemberSerialzier, PerformanceSerializer,
+    PerformanceTicketTypesSerializer, ProductionSerializer, VenueSerializer)
+from uobtheatre.productions.test.factories import (CastMemberFactory,
+                                                   CrewMemberFactory,
+                                                   PerformanceFactory,
+                                                   ProductionFactory,
+                                                   VenueFactory)
 from uobtheatre.venues.test.factories import SeatGroupFactory
 
 

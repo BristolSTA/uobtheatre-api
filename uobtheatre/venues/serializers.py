@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
-from uobtheatre.venues.models import Venue
 from uobtheatre.addresses.serializers import AddressSerializer
+from uobtheatre.venues.models import Venue
 
 
 class FullVenueSerializer(serializers.ModelSerializer):
