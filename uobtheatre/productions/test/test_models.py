@@ -250,11 +250,31 @@ def test_performance_total_capacity():
     seat_group = SeatGroupFactory()
     assert perf.total_capacity(seat_group) == 0
 
-    assert len(perf.performance_seat_groups.all()) == 3
     seating[0].seat_group = seat_group
     seating[0].save()
-    assert (
-        perf.performance_seat_groups.get(seat_group=seat_group).seat_group.id
-        == seat_group.id
-    )
     assert perf.total_capacity(seat_group) == seating[0].capacity != 0
+
+
+@pytest.mark.django_db
+def test_performance_capacity_remaining():
+    perf = PerformanceFactory()
+
+    seating = [PerformanceSeatingFactory(performance=perf) for _ in range(3)]
+
+    # Check total capacity is the same as capacity_remaining when no bookings
+    assert perf.capacity_remaining() == perf.total_capacity()
+
+    seat_group = SeatGroupFactory()
+    assert perf.total_capacity(seat_group) == 0
+
+    seating[0].seat_group = seat_group
+    seating[0].save()
+    assert perf.capacity_remaining(seat_group) == perf.total_capacity(seat_group) != 0
+
+    # Create some tickets for this performance
+    booking_1 = BookingFactory(performance=perf)
+    booking_2 = BookingFactory(performance=perf)
+    [TicketFactory(booking=booking_1, seat_group=seat_group) for _ in range(3)]
+    [TicketFactory(booking=booking_2, seat_group=seat_group) for _ in range(2)]
+    assert perf.capacity_remaining(seat_group) == perf.total_capacity(seat_group) - 5
+    assert perf.capacity_remaining() == perf.total_capacity() - 5

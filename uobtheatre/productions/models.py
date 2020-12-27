@@ -157,29 +157,20 @@ class Performance(models.Model, TimeStampedMixin):
             try:
                 return queryset.get(seat_group=seat_group).capacity
             except queryset.model.DoesNotExist:
-                print("NOT FOUND")
                 return 0
         response = self.performance_seat_groups.aggregate(Sum("capacity"))
         return response["capacity__sum"] or 0
 
     def capacity_remaining(self, seat_group: SeatGroup = None):
         """ Returns the capacity remaining.  """
-        # self.select_related("bookings").prefetch_related("seat_bookings").filter(
-        #     seat_group=seat_group
-        # ).count()
         if seat_group:
-            self.total_capacity(seat_group=seat_group) - self.seats_booked()
+            return self.total_capacity(seat_group=seat_group) - len(
+                self.tickets(seat_group=seat_group)
+            )
         return sum(
-            self.capacity_remaining(seat_group=seating.seat_group)
-            for seating in self.seating.all()
+            self.capacity_remaining(seat_group=performance_seat_group.seat_group)
+            for performance_seat_group in self.performance_seat_groups.all()
         )
-
-    def seat_group_capacity(self, seat_group: SeatGroup):
-        """
-        Given a seat group, returns the capacity of that seat group for this
-        performance.
-        """
-        return self.seating.get(seat_group=seat_group).capacity
 
     def duration(self):
         """
