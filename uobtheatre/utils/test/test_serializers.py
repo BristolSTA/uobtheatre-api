@@ -1,9 +1,12 @@
 import uuid
-
 import pytest
 
+from django.db import models
+from django.test import SimpleTestCase
+from rest_framework import serializers
+
 from uobtheatre.bookings.serializers import BookingSerialiser
-from uobtheatre.utils.serializers import UserIdSerializer
+from uobtheatre.utils.serializers import UserIdSerializer, AppendIdSerializerMixin
 
 
 def test_user_id_serializer():

@@ -125,7 +125,11 @@ def test_concessions():
 def test_get_concession_discount():
     performance = PerformanceFactory()
     concession_type = ConcessionTypeFactory()
-    # Create a discount
+
+    # Before any discounts are create assert there is no discount
+    performance.get_concession_discount(concession_type) == 0
+
+    # Create discounts
     discount_1 = DiscountFactory(name="Family")
     DiscountRequirementFactory(
         discount=discount_1, number=1, concession_type=concession_type
@@ -140,6 +144,8 @@ def test_get_concession_discount():
     discount_1.performances.set([performance])
     discount_2.performances.set([performance])
 
+    # Assert the discount for the concession_type is the discount where only 1
+    # of that concession_type is required (and nothing else)
     assert (
         performance.get_concession_discount(concession_type)
         == discount_requirement_3.discount.discount
@@ -147,9 +153,10 @@ def test_get_concession_discount():
 
 
 @pytest.mark.django_db
-def test_get_concession_discount():
+def test_price_with_concession():
     performance = PerformanceFactory()
     concession_type = ConcessionTypeFactory()
+
     # Create a discount
     discount_1 = DiscountFactory(name="Family")
     DiscountRequirementFactory(
