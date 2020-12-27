@@ -4,16 +4,14 @@ import factory
 import pytest
 from django.utils import timezone
 
-from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
-from uobtheatre.venues.test.factories import SeatGroupFactory
 from uobtheatre.bookings.test.factories import (
-    PerformanceSeatPriceFactory,
     DiscountFactory,
     DiscountRequirementFactory,
+    PerformanceSeatingFactory,
 )
-from uobtheatre.productions.serializers import (
-    PerformanceTicketTypesSerializer,
-)
+from uobtheatre.productions.serializers import PerformanceTicketTypesSerializer
+from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
+from uobtheatre.venues.test.factories import SeatGroupFactory
 
 
 @pytest.mark.django_db
@@ -201,22 +199,17 @@ def test_production_performances(api_client):
 def test_performance_ticket_types(api_client):
     performance = PerformanceFactory()
 
-    seat_group_1 = SeatGroupFactory(venue=performance.venue)
-    seat_price_1 = PerformanceSeatPriceFactory(performance=performance)
-    seat_price_1.seat_groups.set([seat_group_1])
+    performance_seat_group_1 = PerformanceSeatingFactory(performance=performance)
+    performance_seat_group_2 = PerformanceSeatingFactory(performance=performance)
 
     # Create a discount
     discount_1 = DiscountFactory(name="Family", discount=0.2)
     discount_1.performances.set([performance])
-    discount_requirement_1 = DiscountRequirementFactory(discount=discount_1, number=1)
-
-    seat_group_2 = SeatGroupFactory(venue=performance.venue)
-    seat_price_2 = PerformanceSeatPriceFactory(performance=performance)
-    seat_price_2.seat_groups.set([seat_group_2])
+    DiscountRequirementFactory(discount=discount_1, number=1)
 
     discount_2 = DiscountFactory(name="Family 2", discount=0.3)
     discount_2.performances.set([performance])
-    discount_requirement_2 = DiscountRequirementFactory(discount=discount_2, number=1)
+    DiscountRequirementFactory(discount=discount_2, number=1)
 
     serialized_ticket_types = PerformanceTicketTypesSerializer(performance)
 

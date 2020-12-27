@@ -1,4 +1,5 @@
 import math
+
 from rest_framework import serializers
 
 from uobtheatre.productions.models import (
@@ -41,7 +42,7 @@ class PerformanceSerializer(AppendIdSerializerMixin, serializers.ModelSerializer
 
     class Meta:
         model = Performance
-        fields = "__all__"
+        fields = ("id", "production", "venue", "start", "end", "extra_information")
 
 
 class ProductionSerializer(AppendIdSerializerMixin, serializers.ModelSerializer):
@@ -65,30 +66,31 @@ class PerformanceTicketTypesSerializer(serializers.ModelSerializer):
             "ticket_types": [
                 {
                     "seat_group": {
-                        "name": seat_group.name,
-                        "id": seat_group.id,
+                        "name": performance_seat_group.seat_group.name,
+                        "id": performance_seat_group.seat_group.id,
                     },
-                    "consession_types": [
+                    "concession_types": [
                         {
-                            "consession": {
-                                "name": consession.name,
-                                "id": consession.id,
+                            "concession": {
+                                "name": concession.name,
+                                "id": concession.id,
                             },
-                            "price": performance.price_with_consession(
-                                consession, seating.price
+                            "price": performance.price_with_concession(
+                                concession, performance_seat_group.price
                             ),
                             "price_pounds": "%.2f"
                             % (
-                                performance.price_with_consession(
-                                    consession, seating.price
+                                performance.price_with_concession(
+                                    concession, performance_seat_group.price
                                 )
                                 / 100
                             ),
                         }
-                        for consession in performance.consessions()
+                        for concession in performance.concessions()
                     ],
                 }
-                for seating in performance.seating.order_by("id")
-                for seat_group in seating.seat_groups.order_by("id")
+                for performance_seat_group in performance.performance_seat_groups.order_by(
+                    "id"
+                )
             ]
         }

@@ -8,10 +8,10 @@ from uobtheatre.bookings.models import (
     DiscountRequirement,
     PerformanceSeating,
     SeatBooking,
+    Ticket,
 )
 
-admin.site.register(ConsessionType)
-admin.site.register(PerformanceSeating)
+admin.site.register(ConcessionType)
 
 
 class DiscountRequirementInline(admin.StackedInline):
@@ -27,7 +27,7 @@ admin.site.register(Discount, DiscountAdmin)
 
 
 class SeatBookingInline(admin.StackedInline):
-    model = SeatBooking
+    model = Ticket
     extra = 1
 
 

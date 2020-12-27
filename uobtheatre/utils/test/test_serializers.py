@@ -1,7 +1,9 @@
 import uuid
+
 import pytest
-from uobtheatre.utils.serializers import UserIdSerializer
+
 from uobtheatre.bookings.serializers import BookingSerialiser
+from uobtheatre.utils.serializers import UserIdSerializer
 
 
 def test_user_id_serializer():

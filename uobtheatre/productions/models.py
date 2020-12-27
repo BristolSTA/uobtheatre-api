@@ -1,9 +1,10 @@
-import uuid
 import math
+import uuid
 from typing import List
 
 from autoslug import AutoSlugField
 from django.db import models
+from django.db.models import Sum
 from django.template.defaultfilters import slugify
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -120,7 +121,8 @@ class CrewMember(models.Model):
 
 
 class Performance(models.Model, TimeStampedMixin):
-    """A performance is a discrete event when the show takes place eg 7pm on
+    """
+    A performance is a discrete event when the show takes place eg 7pm on
     Tuesday.
     """
 
@@ -134,26 +136,41 @@ class Performance(models.Model, TimeStampedMixin):
 
     extra_information = models.TextField(null=True, blank=True)
 
-    def seat_bookings(self):
-        """ Get all seat bookings for this show """
-        return self.bookings.seat_bookings.all()
+    seat_groups = models.ManyToManyField(SeatGroup, through="PerformanceSeatGroup")
 
-    def total_capacity(self):
+    def tickets(self, seat_group=None):
+        """ Get all tickets for this performance """
+        filters = {}
+        if seat_group:
+            filters["seat_group"] = seat_group
+
+        return [
+            ticket
+            for booking in self.bookings.all()
+            for ticket in booking.tickets.filter(**filters)
+        ]
+
+    def total_capacity(self, seat_group=None):
         """ Returns the total capacity of show. """
-        return sum(seat_group.capacity for seat_group in self.seating.all())
+        if seat_group:
+            queryset = self.performance_seat_groups
+            try:
+                return queryset.get(seat_group=seat_group).capacity
+            except queryset.model.DoesNotExist:
+                return 0
+        response = self.performance_seat_groups.aggregate(Sum("capacity"))
+        return response["capacity__sum"] or 0
 
     def capacity_remaining(self, seat_group: SeatGroup = None):
         """ Returns the capacity remaining.  """
-        self.select_related("bookings").prefetch_related("seat_bookings").filter(
-            seat_group=seat_group
-        ).count()
-
-    def seat_group_capacity(self, seat_group: SeatGroup):
-        """
-        Given a seat group, returns the capacity of that seat group for this
-        performance.
-        """
-        return self.seating.get(seat_group=seat_group).capacity
+        if seat_group:
+            return self.total_capacity(seat_group=seat_group) - len(
+                self.tickets(seat_group=seat_group)
+            )
+        return sum(
+            self.capacity_remaining(seat_group=performance_seat_group.seat_group)
+            for performance_seat_group in self.performance_seat_groups.all()
+        )
 
     def duration(self):
         """
@@ -169,40 +186,53 @@ class Performance(models.Model, TimeStampedMixin):
             if discount.is_single_discount()
         ]
 
-    def get_conession_discount(self, consession_type) -> float:
+    def get_concession_discount(self, concession_type) -> float:
         """
-        Given a seat_group and a consession type returns the consession type
+        Given a seat_group and a concession type returns the concession type
         discount for the ticket.
         """
         discount = next(
             (
                 discount
                 for discount in self.get_single_discounts()
-                if discount.discount_requirements.first().consession_type
-                == consession_type
+                if discount.discount_requirements.first().concession_type
+                == concession_type
             ),
             None,
         )
         return discount.discount if discount else 0
 
-    def price_with_consession(self, consession, price) -> int:
+    def price_with_concession(self, concession, price) -> int:
         """
-        Given a seat_group and a consession type returns the price of the
+        Given a seat_group and a concession type returns the price of the
         ticket with the single discounts applied.
         """
-        return math.ceil((1 - self.get_conession_discount(consession)) * price)
+        return math.ceil((1 - self.get_concession_discount(concession)) * price)
 
-    def consessions(self) -> List:
-        """ Returns list of all consession types """
-        return list(
+    def concessions(self) -> List:
+        """ Returns list of all concession types """
+        concession_list = list(
             set(
-                discounts_requirement.consession_type
+                discounts_requirement.concession_type
                 for discount in self.discounts.all()
                 for discounts_requirement in discount.discount_requirements.all()
             )
         )
+        concession_list.sort(key=lambda concession: concession.id)
+        return concession_list
 
     def __str__(self):
         if self.start is None:
-            return f"Performance of {self.production.name}"
-        return f"Performance of {self.production.name} at {self.start.strftime('%H:%M')} on {self.start.strftime('%m/%d/%Y')}"
+            return f"Perforamce of {self.production.name}"
+        return f"Perforamce of {self.production.name} at {self.start.strftime('%H:%M')} on {self.start.strftime('%d/%m/%Y')}"
+
+
+class PerformanceSeatGroup(models.Model):
+    """ Storing the price and number of seats of each seat group for a show """
+
+    seat_group = models.ForeignKey(SeatGroup, on_delete=models.RESTRICT)
+    performance = models.ForeignKey(
+        Performance, on_delete=models.RESTRICT, related_name="performance_seat_groups"
+    )
+    price = models.IntegerField()
+    capacity = models.SmallIntegerField(blank=True)
