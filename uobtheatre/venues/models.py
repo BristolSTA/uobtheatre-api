@@ -1,6 +1,8 @@
 from django.db import models
 
-from uobtheatre.utils.models import SoftDeletionMixin, TimeStampedMixin
+from autoslug import AutoSlugField
+
+from uobtheatre.utils.models import TimeStampedMixin
 from uobtheatre.addresses.models import Address
 
 
