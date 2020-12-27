@@ -16,6 +16,8 @@ def test_venue_view_get(api_client):
             "name": venueTest.name,
             "description": venueTest.description,
             "address": {
+                "building_name": venueTest.address.building_name,
+                "building_number": venueTest.address.building_number,
                 "street": venueTest.address.street,
                 "city": venueTest.address.city,
                 "postcode": venueTest.address.postcode,

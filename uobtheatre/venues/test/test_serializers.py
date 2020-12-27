@@ -19,6 +19,8 @@ def test_full_venue_serializer():
         "description": venue.description,
         "address": {
             "street": venue.address.street,
+            "building_name": venue.address.building_name,
+            "building_number": venue.address.building_number,
             "city": venue.address.city,
             "postcode": venue.address.postcode,
             "latitude": float(venue.address.latitude),
