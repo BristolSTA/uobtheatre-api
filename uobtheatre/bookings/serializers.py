@@ -32,7 +32,7 @@ class CreateTicketSerializer(AppendIdSerializerMixin, serializers.ModelSerialize
         model = Ticket
         fields = (
             "seat_group",
-            "consession_type",
+            "concession_type",
         )
 
 

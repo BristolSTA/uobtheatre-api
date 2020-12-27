@@ -186,45 +186,45 @@ class Performance(models.Model, TimeStampedMixin):
             if discount.is_single_discount()
         ]
 
-    def get_conession_discount(self, consession_type) -> float:
+    def get_concession_discount(self, concession_type) -> float:
         """
-        Given a seat_group and a consession type returns the consession type
+        Given a seat_group and a concession type returns the concession type
         discount for the ticket.
         """
         discount = next(
             (
                 discount
                 for discount in self.get_single_discounts()
-                if discount.discount_requirements.first().consession_type
-                == consession_type
+                if discount.discount_requirements.first().concession_type
+                == concession_type
             ),
             None,
         )
         return discount.discount if discount else 0
 
-    def price_with_consession(self, consession, price) -> int:
+    def price_with_concession(self, concession, price) -> int:
         """
-        Given a seat_group and a consession type returns the price of the
+        Given a seat_group and a concession type returns the price of the
         ticket with the single discounts applied.
         """
-        return math.ceil((1 - self.get_conession_discount(consession)) * price)
+        return math.ceil((1 - self.get_concession_discount(concession)) * price)
 
-    def consessions(self) -> List:
-        """ Returns list of all consession types """
-        consession_list = list(
+    def concessions(self) -> List:
+        """ Returns list of all concession types """
+        concession_list = list(
             set(
-                discounts_requirement.consession_type
+                discounts_requirement.concession_type
                 for discount in self.discounts.all()
                 for discounts_requirement in discount.discount_requirements.all()
             )
         )
-        consession_list.sort(key=lambda consession: consession.id)
-        return consession_list
+        concession_list.sort(key=lambda concession: concession.id)
+        return concession_list
 
     def __str__(self):
         if self.start is None:
             return f"Perforamce of {self.production.name}"
-        return f"Perforamce of {self.production.name} at {self.start.strftime('%H:%M')} on {self.start.strftime('%m/%d/%Y')}"
+        return f"Perforamce of {self.production.name} at {self.start.strftime('%H:%M')} on {self.start.strftime('%d/%m/%Y')}"
 
 
 class PerformanceSeatGroup(models.Model):
@@ -236,10 +236,3 @@ class PerformanceSeatGroup(models.Model):
     )
     price = models.IntegerField()
     capacity = models.SmallIntegerField(blank=True)
-
-    def total_seat_bookings(self, seat_group=None):
-        if seat_group:
-            self.seat_bookings.all()
-
-    def capacity_remaining(self):
-        self.capacity - self.total_seat_bookings()

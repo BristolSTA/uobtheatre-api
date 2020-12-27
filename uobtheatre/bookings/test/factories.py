@@ -4,7 +4,7 @@ import factory
 
 from uobtheatre.bookings.models import (
     Booking,
-    ConsessionType,
+    ConcessionType,
     Discount,
     DiscountRequirement,
     Ticket,
@@ -24,18 +24,18 @@ class DiscountFactory(factory.django.DjangoModelFactory):
         model = Discount
 
 
-class ConsessionTypeFactory(factory.django.DjangoModelFactory):
+class ConcessionTypeFactory(factory.django.DjangoModelFactory):
 
     name = factory.Faker("sentence")
 
     class Meta:
-        model = ConsessionType
+        model = ConcessionType
 
 
 class DiscountRequirementFactory(factory.django.DjangoModelFactory):
 
     number = 1
-    consession_type = factory.SubFactory(ConsessionTypeFactory)
+    concession_type = factory.SubFactory(ConcessionTypeFactory)
 
     class Meta:
         model = DiscountRequirement
@@ -66,7 +66,7 @@ class TicketFactory(factory.django.DjangoModelFactory):
 
     seat_group = factory.SubFactory(SeatGroupFactory)
     booking = factory.SubFactory(BookingFactory)
-    consession_type = factory.SubFactory(ConsessionTypeFactory)
+    concession_type = factory.SubFactory(ConcessionTypeFactory)
 
     class Meta:
         model = Ticket

@@ -186,20 +186,20 @@ def test_performance_ticket_types_serializer():
                     "name": performance_seat_group_1.seat_group.name,
                     "id": performance_seat_group_1.seat_group.id,
                 },
-                "consession_types": [
+                "concession_types": [
                     {
-                        "consession": {
-                            "name": discount_requirement_1.consession_type.name,
-                            "id": discount_requirement_1.consession_type.id,
+                        "concession": {
+                            "name": discount_requirement_1.concession_type.name,
+                            "id": discount_requirement_1.concession_type.id,
                         },
                         "price": math.ceil(0.8 * performance_seat_group_1.price),
                         "price_pounds": "%.2f"
                         % (math.ceil(0.8 * performance_seat_group_1.price) / 100),
                     },
                     {
-                        "consession": {
-                            "name": discount_requirement_2.consession_type.name,
-                            "id": discount_requirement_2.consession_type.id,
+                        "concession": {
+                            "name": discount_requirement_2.concession_type.name,
+                            "id": discount_requirement_2.concession_type.id,
                         },
                         "price": math.ceil(0.7 * performance_seat_group_1.price),
                         "price_pounds": "%.2f"
@@ -212,20 +212,20 @@ def test_performance_ticket_types_serializer():
                     "name": performance_seat_group_2.seat_group.name,
                     "id": performance_seat_group_2.seat_group.id,
                 },
-                "consession_types": [
+                "concession_types": [
                     {
-                        "consession": {
-                            "name": discount_requirement_1.consession_type.name,
-                            "id": discount_requirement_1.consession_type.id,
+                        "concession": {
+                            "name": discount_requirement_1.concession_type.name,
+                            "id": discount_requirement_1.concession_type.id,
                         },
                         "price": math.ceil(0.8 * performance_seat_group_2.price),
                         "price_pounds": "%.2f"
                         % (math.ceil(0.8 * performance_seat_group_2.price) / 100),
                     },
                     {
-                        "consession": {
-                            "name": discount_requirement_2.consession_type.name,
-                            "id": discount_requirement_2.consession_type.id,
+                        "concession": {
+                            "name": discount_requirement_2.concession_type.name,
+                            "id": discount_requirement_2.concession_type.id,
                         },
                         "price": math.ceil(0.7 * performance_seat_group_2.price),
                         "price_pounds": "%.2f"

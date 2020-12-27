@@ -8,7 +8,7 @@ from uobtheatre.bookings.serializers import (
     CreateBookingSerialiser,
     CreateTicketSerializer,
 )
-from uobtheatre.bookings.test.factories import BookingFactory, ConsessionTypeFactory
+from uobtheatre.bookings.test.factories import BookingFactory, ConcessionTypeFactory
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory
@@ -45,13 +45,13 @@ def test_create_booking_serializer():
     user = UserFactory()
     performance = PerformanceFactory()
     seat_group = SeatGroupFactory()
-    consession_type = ConsessionTypeFactory()
+    concession_type = ConcessionTypeFactory()
     data = {
         "performance_id": performance.id,
         "tickets": [
             {
                 "seat_group_id": seat_group.id,
-                "consession_type_id": consession_type.id,
+                "concession_type_id": concession_type.id,
             },
         ],
     }
@@ -78,7 +78,7 @@ def test_create_booking_serializer():
                 "tickets": [
                     {
                         "seat_group_id": 1,
-                        "consession_type_id": 1,
+                        "concession_type_id": 1,
                     },
                 ],
             },
@@ -90,13 +90,13 @@ def test_create_booking_serializer():
                 "performance_id": 1,
                 "tickets": [
                     {
-                        "consession_type_id": 1,
+                        "concession_type_id": 1,
                     },
                 ],
             },
             False,
         ),
-        # Check consession type is not required (default to adult)
+        # Check concession type is not required (default to adult)
         # TODO write test to check default to adult
         (
             {
@@ -123,7 +123,7 @@ def test_create_booking_serializer():
                 "tickets": [
                     {
                         "seat_group_id": 1,
-                        "consession_type_id": 1,
+                        "concession_type_id": 1,
                     },
                 ],
             },
@@ -135,7 +135,7 @@ def test_create_booking_serializer_validation(data, is_valid):
     user = UserFactory(id=1)
     performance = PerformanceFactory(id=1)
     seat_group = SeatGroupFactory(id=1)
-    consession_type = ConsessionTypeFactory(id=1)
+    concession_type = ConcessionTypeFactory(id=1)
 
     serialized_booking = CreateBookingSerialiser(data=data, context={"user": user})
     assert serialized_booking.is_valid() == is_valid

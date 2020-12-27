@@ -5,8 +5,11 @@ from rest_framework_extensions.mixins import NestedViewSetMixin
 
 from uobtheatre.productions.models import Performance, Production, Society
 from uobtheatre.productions.serializers import (
-    PerformanceSerializer, PerformanceTicketTypesSerializer,
-    ProductionSerializer, SocietySerializer)
+    PerformanceSerializer,
+    PerformanceTicketTypesSerializer,
+    ProductionSerializer,
+    SocietySerializer,
+)
 
 
 class ProductionViewSet(viewsets.ModelViewSet):

@@ -1,4 +1,5 @@
 import datetime
+from dateutil import parser
 import pytest
 from django.utils import timezone
 
@@ -12,7 +13,7 @@ from uobtheatre.productions.test.factories import (
 from uobtheatre.bookings.test.factories import (
     DiscountFactory,
     DiscountRequirementFactory,
-    ConsessionTypeFactory,
+    ConcessionTypeFactory,
     BookingFactory,
     TicketFactory,
     PerformanceSeatingFactory,
@@ -103,7 +104,7 @@ def test_get_single_discounts():
 
 
 @pytest.mark.django_db
-def test_consessions():
+def test_concessions():
     performance = PerformanceFactory()
     # Create a discount
     discount_1 = DiscountFactory(name="Student")
@@ -117,54 +118,54 @@ def test_consessions():
     discount_1.performances.set([performance])
     discount_2.performances.set([performance])
 
-    assert len(performance.consessions()) == 4
+    assert len(performance.concessions()) == 4
 
 
 @pytest.mark.django_db
-def test_get_consession_discount():
+def test_get_concession_discount():
     performance = PerformanceFactory()
-    consession_type = ConsessionTypeFactory()
+    concession_type = ConcessionTypeFactory()
     # Create a discount
     discount_1 = DiscountFactory(name="Family")
     DiscountRequirementFactory(
-        discount=discount_1, number=1, consession_type=consession_type
+        discount=discount_1, number=1, concession_type=concession_type
     )
     DiscountRequirementFactory(discount=discount_1, number=1)
 
     discount_2 = DiscountFactory(name="Student")
     discount_requirement_3 = DiscountRequirementFactory(
-        discount=discount_2, number=1, consession_type=consession_type
+        discount=discount_2, number=1, concession_type=concession_type
     )
 
     discount_1.performances.set([performance])
     discount_2.performances.set([performance])
 
     assert (
-        performance.get_conession_discount(consession_type)
+        performance.get_concession_discount(concession_type)
         == discount_requirement_3.discount.discount
     )
 
 
 @pytest.mark.django_db
-def test_get_consession_discount():
+def test_get_concession_discount():
     performance = PerformanceFactory()
-    consession_type = ConsessionTypeFactory()
+    concession_type = ConcessionTypeFactory()
     # Create a discount
     discount_1 = DiscountFactory(name="Family")
     DiscountRequirementFactory(
-        discount=discount_1, number=1, consession_type=consession_type
+        discount=discount_1, number=1, concession_type=concession_type
     )
     DiscountRequirementFactory(discount=discount_1, number=1)
 
     discount_2 = DiscountFactory(name="Student", discount=0.1)
     discount_requirement_3 = DiscountRequirementFactory(
-        discount=discount_2, number=1, consession_type=consession_type
+        discount=discount_2, number=1, concession_type=concession_type
     )
 
     discount_1.performances.set([performance])
     discount_2.performances.set([performance])
 
-    assert performance.price_with_consession(consession_type, 20) == 18
+    assert performance.price_with_concession(concession_type, 20) == 18
 
 
 @pytest.mark.django_db
@@ -278,3 +279,19 @@ def test_performance_capacity_remaining():
     [TicketFactory(booking=booking_2, seat_group=seat_group) for _ in range(2)]
     assert perf.capacity_remaining(seat_group) == perf.total_capacity(seat_group) - 5
     assert perf.capacity_remaining() == perf.total_capacity() - 5
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "name, start, string",
+    [
+        ("TRASH", None, "Perforamce of TRASH"),
+        ("TRASH", "2020-12-27T11:17:43Z", "Perforamce of TRASH at 11:17 on 27/12/2020"),
+    ],
+)
+def test_performance_str(name, start, string):
+    production = ProductionFactory(name=name)
+    start_date = parser.parse(start) if start else None
+    performance = PerformanceFactory(production=production, start=start_date)
+
+    assert str(performance) == string
