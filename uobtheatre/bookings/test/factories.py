@@ -4,7 +4,7 @@ import factory
 
 from uobtheatre.bookings.models import (
     Booking,
-    ConsessionType,
+    ConcessionType,
     Discount,
     DiscountRequirement,
     PerformanceSeating,
