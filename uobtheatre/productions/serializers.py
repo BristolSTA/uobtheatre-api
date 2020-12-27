@@ -66,8 +66,8 @@ class PerformanceTicketTypesSerializer(serializers.ModelSerializer):
             "ticket_types": [
                 {
                     "seat_group": {
-                        "name": seat_group.name,
-                        "id": seat_group.id,
+                        "name": performance_seat_group.seat_group.name,
+                        "id": performance_seat_group.seat_group.id,
                     },
                     "consession_types": [
                         {
@@ -76,12 +76,12 @@ class PerformanceTicketTypesSerializer(serializers.ModelSerializer):
                                 "id": consession.id,
                             },
                             "price": performance.price_with_consession(
-                                consession, seating.price
+                                consession, performance_seat_group.price
                             ),
                             "price_pounds": "%.2f"
                             % (
                                 performance.price_with_consession(
-                                    consession, seating.price
+                                    consession, performance_seat_group.price
                                 )
                                 / 100
                             ),
@@ -89,7 +89,8 @@ class PerformanceTicketTypesSerializer(serializers.ModelSerializer):
                         for consession in performance.consessions()
                     ],
                 }
-                for seating in performance.seating.order_by("id")
-                for seat_group in seating.seat_groups.order_by("id")
+                for performance_seat_group in performance.performance_seat_groups.order_by(
+                    "id"
+                )
             ]
         }

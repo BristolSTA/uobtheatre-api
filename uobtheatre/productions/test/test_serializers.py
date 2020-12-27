@@ -3,19 +3,34 @@ import math
 import pytest
 from django.template.defaultfilters import slugify
 
-from uobtheatre.bookings.test.factories import (DiscountFactory,
-                                                DiscountRequirementFactory,
-                                                PerformanceSeatingFactory)
-from uobtheatre.productions.models import (CastMember, CrewMember, CrewRole,
-                                           Performance, Production, Venue)
+from uobtheatre.bookings.test.factories import (
+    DiscountFactory,
+    DiscountRequirementFactory,
+    PerformanceSeatingFactory,
+)
+from uobtheatre.productions.models import (
+    CastMember,
+    CrewMember,
+    CrewRole,
+    Performance,
+    Production,
+    Venue,
+)
 from uobtheatre.productions.serializers import (
-    CastMemberSerialzier, CrewMemberSerialzier, PerformanceSerializer,
-    PerformanceTicketTypesSerializer, ProductionSerializer, VenueSerializer)
-from uobtheatre.productions.test.factories import (CastMemberFactory,
-                                                   CrewMemberFactory,
-                                                   PerformanceFactory,
-                                                   ProductionFactory,
-                                                   VenueFactory)
+    CastMemberSerialzier,
+    CrewMemberSerialzier,
+    PerformanceSerializer,
+    PerformanceTicketTypesSerializer,
+    ProductionSerializer,
+    VenueSerializer,
+)
+from uobtheatre.productions.test.factories import (
+    CastMemberFactory,
+    CrewMemberFactory,
+    PerformanceFactory,
+    ProductionFactory,
+    VenueFactory,
+)
 from uobtheatre.venues.test.factories import SeatGroupFactory
 
 
@@ -148,19 +163,16 @@ def test_cast_member_serializer():
 def test_performance_ticket_types_serializer():
     performance = PerformanceFactory()
 
-    seat_group_1 = SeatGroupFactory(venue=performance.venue)
-    seat_price_1 = PerformanceSeatingFactory(performance=performance)
-    seat_price_1.seat_groups.set([seat_group_1])
+    # Create some seat groups for this performance
+    performance_seat_group_1 = PerformanceSeatingFactory(performance=performance)
+    performance_seat_group_2 = PerformanceSeatingFactory(performance=performance)
 
     # Create a discount
     discount_1 = DiscountFactory(name="Family", discount=0.2)
     discount_1.performances.set([performance])
     discount_requirement_1 = DiscountRequirementFactory(discount=discount_1, number=1)
 
-    seat_group_2 = SeatGroupFactory(venue=performance.venue)
-    seat_price_2 = PerformanceSeatingFactory(performance=performance)
-    seat_price_2.seat_groups.set([seat_group_2])
-
+    # Create a different
     discount_2 = DiscountFactory(name="Family 2", discount=0.3)
     discount_2.performances.set([performance])
     discount_requirement_2 = DiscountRequirementFactory(discount=discount_2, number=1)
@@ -171,8 +183,8 @@ def test_performance_ticket_types_serializer():
         "ticket_types": [
             {
                 "seat_group": {
-                    "name": seat_group_1.name,
-                    "id": seat_group_1.id,
+                    "name": performance_seat_group_1.seat_group.name,
+                    "id": performance_seat_group_1.seat_group.id,
                 },
                 "consession_types": [
                     {
@@ -180,25 +192,25 @@ def test_performance_ticket_types_serializer():
                             "name": discount_requirement_1.consession_type.name,
                             "id": discount_requirement_1.consession_type.id,
                         },
-                        "price": math.ceil(0.8 * seat_price_1.price),
+                        "price": math.ceil(0.8 * performance_seat_group_1.price),
                         "price_pounds": "%.2f"
-                        % (math.ceil(0.8 * seat_price_1.price) / 100),
+                        % (math.ceil(0.8 * performance_seat_group_1.price) / 100),
                     },
                     {
                         "consession": {
                             "name": discount_requirement_2.consession_type.name,
                             "id": discount_requirement_2.consession_type.id,
                         },
-                        "price": math.ceil(0.7 * seat_price_1.price),
+                        "price": math.ceil(0.7 * performance_seat_group_1.price),
                         "price_pounds": "%.2f"
-                        % (math.ceil(0.7 * seat_price_1.price) / 100),
+                        % (math.ceil(0.7 * performance_seat_group_1.price) / 100),
                     },
                 ],
             },
             {
                 "seat_group": {
-                    "name": seat_group_2.name,
-                    "id": seat_group_2.id,
+                    "name": performance_seat_group_2.seat_group.name,
+                    "id": performance_seat_group_2.seat_group.id,
                 },
                 "consession_types": [
                     {
@@ -206,18 +218,18 @@ def test_performance_ticket_types_serializer():
                             "name": discount_requirement_1.consession_type.name,
                             "id": discount_requirement_1.consession_type.id,
                         },
-                        "price": math.ceil(0.8 * seat_price_2.price),
+                        "price": math.ceil(0.8 * performance_seat_group_2.price),
                         "price_pounds": "%.2f"
-                        % (math.ceil(0.8 * seat_price_2.price) / 100),
+                        % (math.ceil(0.8 * performance_seat_group_2.price) / 100),
                     },
                     {
                         "consession": {
                             "name": discount_requirement_2.consession_type.name,
                             "id": discount_requirement_2.consession_type.id,
                         },
-                        "price": math.ceil(0.7 * seat_price_2.price),
+                        "price": math.ceil(0.7 * performance_seat_group_2.price),
                         "price_pounds": "%.2f"
-                        % (math.ceil(0.7 * seat_price_2.price) / 100),
+                        % (math.ceil(0.7 * performance_seat_group_2.price) / 100),
                     },
                 ],
             },

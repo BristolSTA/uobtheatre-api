@@ -252,7 +252,9 @@ def test_performance_total_capacity():
 
     assert len(perf.performance_seat_groups.all()) == 3
     seating[0].seat_group = seat_group
-    assert seating[0].seat_group == seat_group
-    assert seating[0].performance == perf
-    assert len(perf.performance_seat_groups.get(seat_group=seat_group)) == 1
+    seating[0].save()
+    assert (
+        perf.performance_seat_groups.get(seat_group=seat_group).seat_group.id
+        == seat_group.id
+    )
     assert perf.total_capacity(seat_group) == seating[0].capacity != 0
