@@ -32,6 +32,7 @@ def test_production_view_get(api_client, date_format):
             "venue": {
                 "id": performance.venue.id,
                 "name": performance.venue.name,
+                "slug": performance.venue.slug,
             },
             "extra_information": performance.extra_information,
             "start": performance.start.strftime(date_format),

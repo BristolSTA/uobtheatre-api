@@ -26,6 +26,7 @@ def test_full_venue_serializer():
             "latitude": float(venue.address.latitude),
             "longitude": float(venue.address.longitude),
         },
+        "slug": venue.slug,
     }
 
 
@@ -38,4 +39,5 @@ def test_venue_serializer():
     assert serialized_venue.data == {
         "id": venue.id,
         "name": venue.name,
+        "slug": venue.slug,
     }

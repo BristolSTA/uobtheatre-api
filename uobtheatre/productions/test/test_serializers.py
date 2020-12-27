@@ -94,6 +94,7 @@ def test_production_serializer(date_format):
             "venue": {
                 "id": performance.venue.id,
                 "name": performance.venue.name,
+                "slug": performance.venue.slug,
             },
             "extra_information": performance.extra_information,
             "start": performance.start.strftime(date_format),
@@ -127,6 +128,7 @@ def test_performance_serializer(date_format):
         "venue": {
             "id": performance.venue.id,
             "name": performance.venue.name,
+            "slug": performance.venue.slug,
         },
         "extra_information": performance.extra_information,
         "start": performance.start.strftime(date_format),
