@@ -7,8 +7,6 @@ from uobtheatre.bookings.models import (
     ConcessionType,
     Discount,
     DiscountRequirement,
-    PerformanceSeating,
-    SeatBooking,
     Ticket,
 )
 from uobtheatre.productions.models import PerformanceSeatGroup

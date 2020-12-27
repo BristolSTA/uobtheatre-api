@@ -24,7 +24,7 @@
     {
         "model": "bookings.discountrequirement",
         "pk": 1,
-        "fields": {"consession_type": 1, "number": 1, "discount": 1}
+        "fields": {"concession_type": 1, "number": 1, "discount": 1}
     },
     
     {
@@ -35,12 +35,12 @@
     {
         "model": "bookings.discountrequirement",
         "pk": 2,
-        "fields": {"consession_type": 1, "number": 2, "discount": 2}
+        "fields": {"concession_type": 1, "number": 2, "discount": 2}
     },
     {
         "model": "bookings.discountrequirement",
         "pk": 3,
-        "fields": {"consession_type": 2, "number": 2, "discount": 2}
+        "fields": {"concession_type": 2, "number": 2, "discount": 2}
     },
     
     {
@@ -49,28 +49,23 @@
         "fields": {"user": 1, "performance": 1}
     },
     {
-        "model": "bookings.seatbooking",
+        "model": "bookings.ticket",
         "pk": 1,
-        "fields": {"seat_group": 1, "booking": 1, "consession_type": 1}
+        "fields": {"seat_group": 1, "booking": 1, "concession_type": 1}
     },
     {
-        "model": "bookings.seatbooking",
+        "model": "bookings.ticket",
         "pk": 2,
-        "fields": {"seat_group": 1, "booking": 1, "consession_type": 1}
+        "fields": {"seat_group": 1, "booking": 1, "concession_type": 1}
     },
     {
-        "model": "bookings.seatbooking",
+        "model": "bookings.ticket",
         "pk": 3,
-        "fields": {"seat_group": 1, "booking": 1, "consession_type": 2}
+        "fields": {"seat_group": 1, "booking": 1, "concession_type": 2}
     },
     {
-        "model": "bookings.seatbooking",
+        "model": "bookings.ticket",
         "pk": 4,
-        "fields": {"seat_group": 1, "booking": 1, "consession_type": 2}
-    },
-    {
-        "model": "bookings.performanceseating",
-        "pk": 1,
-        "fields": {"seat_groups": [1], "price": 1000, "performance": 1}
+        "fields": {"seat_group": 1, "booking": 1, "concession_type": 2}
     }
 ]
