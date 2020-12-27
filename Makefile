@@ -15,6 +15,9 @@ down: ## Bring down api
 superuser: ## Create a superuser in django
 	docker-compose run api python manage.py createsuperuser 
 
+admin-superuser: ## Create a superuser in django
+	docker-compose run api python manage.py createsuperusernoargs --username admin --password admin --noinput --email 'blank@email.com'
+
 migrations: ## Make the migrations
 	docker-compose run --rm api python manage.py makemigrations
 
@@ -22,11 +25,8 @@ migrate: ## Do the migrations
 	docker-compose run api python manage.py migrate
 
 seed: ## Seed the db with some example data 
-	docker-compose run api python manage.py loaddata uobtheatre/users/fixtures.json
-	docker-compose run api python manage.py loaddata uobtheatre/venues/fixtures.json
-	docker-compose run api python manage.py loaddata uobtheatre/societies/fixtures.json
-	docker-compose run api python manage.py loaddata uobtheatre/productions/fixtures.json
-	docker-compose run api python manage.py loaddata uobtheatre/bookings/fixtures.json
+	docker-compose run api python manage.py loaddata uobtheatre/addresses/fixtures.json uobtheatre/users/fixtures.json uobtheatre/venues/fixtures.json uobtheatre/societies/fixtures.json uobtheatre/productions/fixtures.json uobtheatre/bookings/fixtures.json
+	make admin-superuser
 
 psql: ## Do the migrations
 	docker-compose exec postgres psql -d postgres -U postgres 
@@ -35,7 +35,7 @@ clean: ## Remove all the things
 	docker-compose down --volumes --rmi all || true
 
 test: ## Run unit tests in docker container 
-	docker-compose run --rm api pytest --cov uobtheatre 
+	docker-compose run --rm api pytest --cov uobtheatre --cov-fail-under 95
 
 test-v: ## Run verbose unit tests in docker container 
 	docker-compose run --rm api coverage run -m pytest -s -vv
