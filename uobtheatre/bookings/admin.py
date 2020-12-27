@@ -3,7 +3,7 @@ from django.utils.html import format_html
 
 from uobtheatre.bookings.models import (
     Booking,
-    ConsessionType,
+    ConcessionType,
     Discount,
     DiscountRequirement,
     PerformanceSeating,

@@ -1,16 +1,16 @@
 [
     {
-        "model": "bookings.consessiontype",
+        "model": "bookings.concessiontype",
         "pk": 1,
         "fields": {"name": "Student"}
     },
     {
-        "model": "bookings.consessiontype",
+        "model": "bookings.concessiontype",
         "pk": 2,
         "fields": {"name": "Adult"}
     },
     {
-        "model": "bookings.consessiontype",
+        "model": "bookings.concessiontype",
         "pk": 3,
         "fields": {"name": "Child"}
     },
