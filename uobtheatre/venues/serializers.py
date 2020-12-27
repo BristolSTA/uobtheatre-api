@@ -9,7 +9,15 @@ class FullVenueSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Venue
-        fields = ["id", "name", "description", "address", "publicly_listed", "slug"]
+        fields = [
+            "id",
+            "name",
+            "description",
+            "venue_image",
+            "address",
+            "publicly_listed",
+            "slug",
+        ]
 
 
 class VenueSerializer(serializers.ModelSerializer):

@@ -10,6 +10,7 @@ class VenueFactory(factory.django.DjangoModelFactory):
     description = factory.Faker("paragraph", nb_sentences=3)
     internal_capacity = factory.Faker("pyint")
     address = factory.SubFactory(AddressFactory)
+    venue_image = factory.django.ImageField(color="blue", use_url=True)
 
     class Meta:
         model = Venue
