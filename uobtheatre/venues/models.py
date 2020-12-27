@@ -20,7 +20,7 @@ class Venue(models.Model, TimeStampedMixin):
     description = models.TextField(null=True)
     address = models.ForeignKey(Address, on_delete=models.CASCADE, null=True)
     image = models.ImageField(null=True)
-    publicly_listed = models.BooleanField(null=True)
+    publicly_listed = models.BooleanField(default=True)
 
     slug = AutoSlugField(populate_from="name", unique=True, blank=True)
 
