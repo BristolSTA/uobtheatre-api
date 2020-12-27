@@ -1,19 +1,23 @@
 import datetime
-
 import pytest
 from django.utils import timezone
 
-from uobtheatre.bookings.test.factories import (BookingFactory,
-                                                ConsessionTypeFactory,
-                                                DiscountFactory,
-                                                DiscountRequirementFactory,
-                                                PerformanceSeatingFactory,
-                                                SeatBookingFactory)
-from uobtheatre.productions.test.factories import (CastMemberFactory,
-                                                   CrewMemberFactory,
-                                                   PerformanceFactory,
-                                                   ProductionFactory,
-                                                   WarningFactory)
+from uobtheatre.productions.test.factories import (
+    PerformanceFactory,
+    ProductionFactory,
+    CrewMemberFactory,
+    CastMemberFactory,
+    WarningFactory,
+)
+from uobtheatre.bookings.test.factories import (
+    DiscountFactory,
+    DiscountRequirementFactory,
+    ConsessionTypeFactory,
+    BookingFactory,
+    TicketFactory,
+    PerformanceSeatingFactory,
+    TicketFactory,
+)
 from uobtheatre.venues.test.factories import SeatGroupFactory
 
 
@@ -217,20 +221,20 @@ def test_performance_seat_bookings():
 
     # Create 3 seat bookings for perf1
     for _ in range(3):
-        SeatBookingFactory(booking=booking1)
+        TicketFactory(booking=booking1)
 
     # And then 4 more with a given seat bookings for perf1
     for _ in range(4):
-        SeatBookingFactory(booking=booking1, seat_group=seat_group)
+        TicketFactory(booking=booking1, seat_group=seat_group)
 
     # Create 2 seat bookings for perf2
     for _ in range(2):
-        SeatBookingFactory(booking=booking2)
+        TicketFactory(booking=booking2)
 
-    assert len(perf1.seat_bookings(seat_group)) == 4
+    assert len(perf1.tickets(seat_group)) == 4
 
-    assert len(perf1.seat_bookings()) == 7
-    assert len(perf2.seat_bookings()) == 2
+    assert len(perf1.tickets()) == 7
+    assert len(perf2.tickets()) == 2
 
 
 @pytest.mark.django_db
@@ -239,10 +243,16 @@ def test_performance_total_capacity():
 
     seating = [PerformanceSeatingFactory(performance=perf) for _ in range(3)]
 
-    assert perf.total_capacity() == sum(perf_seat.capacity for perf_seat in seating)
+    assert (
+        perf.total_capacity() == sum(perf_seat.capacity for perf_seat in seating) != 0
+    )
 
     seat_group = SeatGroupFactory()
     assert perf.total_capacity(seat_group) == 0
 
-    seating[0].seat_groups.set([seat_group])
+    assert len(perf.performance_seat_groups.all()) == 3
+    seating[0].seat_group = seat_group
+    assert seating[0].seat_group == seat_group
+    assert seating[0].performance == perf
+    assert len(perf.performance_seat_groups.get(seat_group=seat_group)) == 1
     assert perf.total_capacity(seat_group) == seating[0].capacity != 0

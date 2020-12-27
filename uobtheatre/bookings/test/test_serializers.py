@@ -3,11 +3,12 @@ import uuid
 import pytest
 
 from uobtheatre.bookings.models import Booking
-from uobtheatre.bookings.serializers import (BookingSerialiser,
-                                             CreateBookingSerialiser,
-                                             CreateSeatBookingSerializer)
-from uobtheatre.bookings.test.factories import (BookingFactory,
-                                                ConsessionTypeFactory)
+from uobtheatre.bookings.serializers import (
+    BookingSerialiser,
+    CreateBookingSerialiser,
+    CreateTicketSerializer,
+)
+from uobtheatre.bookings.test.factories import BookingFactory, ConsessionTypeFactory
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory
@@ -47,7 +48,7 @@ def test_create_booking_serializer():
     consession_type = ConsessionTypeFactory()
     data = {
         "performance_id": performance.id,
-        "seat_bookings": [
+        "tickets": [
             {
                 "seat_group_id": seat_group.id,
                 "consession_type_id": consession_type.id,
@@ -68,73 +69,76 @@ def test_create_booking_serializer():
 
 
 @pytest.mark.django_db
-def test_create_booking_serializer_validation():
-    user = UserFactory()
-    performance = PerformanceFactory()
-    seat_group = SeatGroupFactory()
-    consession_type = ConsessionTypeFactory()
-
-    # Check performance is required to create booking
-    data = {
-        "seat_bookings": [
+@pytest.mark.parametrize(
+    "data, is_valid",
+    [
+        # Check performance is required to create booking
+        (
             {
-                "seat_group_id": seat_group.id,
-                "consession_type_id": consession_type.id,
+                "tickets": [
+                    {
+                        "seat_group_id": 1,
+                        "consession_type_id": 1,
+                    },
+                ],
             },
-        ],
-    }
-
-    serialized_booking = CreateBookingSerialiser(data=data, context={"user": user})
-    assert not serialized_booking.is_valid()
-
-    # Assert seat group is required for each seat booking
-    data = {
-        "performance_id": performance.id,
-        "seat_bookings": [
+            False,
+        ),
+        # Assert seat group is required for each seat booking
+        (
             {
-                "consession_type_id": consession_type.id,
+                "performance_id": 1,
+                "tickets": [
+                    {
+                        "consession_type_id": 1,
+                    },
+                ],
             },
-        ],
-    }
-
-    serialized_booking = CreateBookingSerialiser(data=data, context={"user": user})
-    assert not serialized_booking.is_valid()
-
-    # Check consession type is not required (default to adult)
-    # TODO write test to check default to adult
-    data = {
-        "performance_id": performance.id,
-        "seat_bookings": [
+            False,
+        ),
+        # Check consession type is not required (default to adult)
+        # TODO write test to check default to adult
+        (
             {
-                "seat_group_id": seat_group.id,
+                "performance_id": 1,
+                "tickets": [
+                    {
+                        "seat_group_id": 1,
+                    },
+                ],
             },
-        ],
-    }
-
-    serialized_booking = CreateBookingSerialiser(data=data, context={"user": user})
-    assert serialized_booking.is_valid()
-
-    # Check seat booking is not required
-    data = {
-        "performance_id": performance.id,
-    }
-
-    serialized_booking = CreateBookingSerialiser(data=data, context={"user": user})
-    assert serialized_booking.is_valid()
-
-    # Check booking with all data is valid
-    data = {
-        "performance_id": performance.id,
-        "seat_bookings": [
+            True,
+        ),
+        # Check seat booking is not required
+        (
             {
-                "seat_group_id": seat_group.id,
-                "consession_type_id": consession_type.id,
+                "performance_id": 1,
             },
-        ],
-    }
+            True,
+        ),
+        (
+            # Check booking with all data is valid
+            {
+                "performance_id": 1,
+                "tickets": [
+                    {
+                        "seat_group_id": 1,
+                        "consession_type_id": 1,
+                    },
+                ],
+            },
+            True,
+        ),
+    ],
+)
+def test_create_booking_serializer_validation(data, is_valid):
+    user = UserFactory(id=1)
+    performance = PerformanceFactory(id=1)
+    seat_group = SeatGroupFactory(id=1)
+    consession_type = ConsessionTypeFactory(id=1)
 
     serialized_booking = CreateBookingSerialiser(data=data, context={"user": user})
-    assert serialized_booking.is_valid()
+    assert serialized_booking.is_valid() == is_valid
 
 
 @pytest.mark.skip(reason="Need to write this")

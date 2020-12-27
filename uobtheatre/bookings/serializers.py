@@ -1,9 +1,8 @@
 from rest_framework import serializers
 
-from uobtheatre.bookings.models import Booking, SeatBooking
+from uobtheatre.bookings.models import Booking, Ticket
 from uobtheatre.productions.serializers import PerformanceSerializer
-from uobtheatre.utils.serializers import (AppendIdSerializerMixin,
-                                          UserIdSerializer)
+from uobtheatre.utils.serializers import AppendIdSerializerMixin, UserIdSerializer
 
 
 class CreateBookingSerializer(serializers.ModelSerializer):
@@ -28,9 +27,9 @@ class BookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializer):
         )
 
 
-class CreateSeatBookingSerializer(AppendIdSerializerMixin, serializers.ModelSerializer):
+class CreateTicketSerializer(AppendIdSerializerMixin, serializers.ModelSerializer):
     class Meta:
-        model = SeatBooking
+        model = Ticket
         fields = (
             "seat_group",
             "consession_type",
@@ -40,21 +39,20 @@ class CreateSeatBookingSerializer(AppendIdSerializerMixin, serializers.ModelSeri
 class CreateBookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializer):
     """ Booking serializer to create booking """
 
-    seat_bookings = CreateSeatBookingSerializer(many=True, required=False)
+    tickets = CreateTicketSerializer(many=True, required=False)
 
     def create(self, validated_data):
-        print("Helloooo there")
         # Extract seating bookings from booking
-        seat_bookings = validated_data.pop("seat_bookings")
+        tickets = validated_data.pop("tickets")
         # Create the booking
         booking = Booking.objects.create(user=self.context["user"], **validated_data)
 
         # Create all the seat bookings
-        for seat_booking in seat_bookings:
-            SeatBooking.objects.create(booking=booking, **seat_booking)
+        for ticket in tickets:
+            Ticket.objects.create(booking=booking, **ticket)
 
         return booking
 
     class Meta:
         model = Booking
-        fields = ("performance", "seat_bookings")
+        fields = ("performance", "tickets")

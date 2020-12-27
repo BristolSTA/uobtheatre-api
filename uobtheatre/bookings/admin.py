@@ -1,12 +1,15 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from uobtheatre.bookings.models import (Booking, ConsessionType, Discount,
-                                        DiscountRequirement,
-                                        PerformanceSeating, SeatBooking)
+from uobtheatre.bookings.models import (
+    Booking,
+    ConsessionType,
+    Discount,
+    DiscountRequirement,
+    Ticket,
+)
 
 admin.site.register(ConsessionType)
-admin.site.register(PerformanceSeating)
 
 
 class DiscountRequirementInline(admin.StackedInline):
@@ -22,7 +25,7 @@ admin.site.register(Discount, DiscountAdmin)
 
 
 class SeatBookingInline(admin.StackedInline):
-    model = SeatBooking
+    model = Ticket
     extra = 1
 
 

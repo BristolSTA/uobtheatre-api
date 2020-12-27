@@ -121,7 +121,8 @@ class CrewMember(models.Model):
 
 
 class Performance(models.Model, TimeStampedMixin):
-    """A performance is a discrete event when the show takes place eg 7pm on
+    """
+    A performance is a discrete event when the show takes place eg 7pm on
     Tuesday.
     """
 
@@ -135,26 +136,30 @@ class Performance(models.Model, TimeStampedMixin):
 
     extra_information = models.TextField(null=True, blank=True)
 
-    def seat_bookings(self, seat_group=None):
-        """ Get all seat bookings for this show """
+    seat_groups = models.ManyToManyField(SeatGroup, through="PerformanceSeatGroup")
+
+    def tickets(self, seat_group=None):
+        """ Get all tickets for this performance """
         filters = {}
         if seat_group:
             filters["seat_group"] = seat_group
 
         return [
-            seat_booking
+            ticket
             for booking in self.bookings.all()
-            for seat_booking in booking.seat_bookings.filter(**filters)
+            for ticket in booking.tickets.filter(**filters)
         ]
 
     def total_capacity(self, seat_group=None):
         """ Returns the total capacity of show. """
         if seat_group:
-            queryset = self.seating.filter(seat_groups__in=[seat_group])
-        else:
-            queryset = self.seating.filter()
-
-        response = queryset.aggregate(Sum("capacity"))
+            queryset = self.performance_seat_groups
+            try:
+                return queryset.get(seat_group=seat_group).capacity
+            except queryset.model.DoesNotExist:
+                print("NOT FOUND")
+                return 0
+        response = self.performance_seat_groups.aggregate(Sum("capacity"))
         return response["capacity__sum"] or 0
 
     def capacity_remaining(self, seat_group: SeatGroup = None):
@@ -229,3 +234,21 @@ class Performance(models.Model, TimeStampedMixin):
         if self.start is None:
             return f"Perforamce of {self.production.name}"
         return f"Perforamce of {self.production.name} at {self.start.strftime('%H:%M')} on {self.start.strftime('%m/%d/%Y')}"
+
+
+class PerformanceSeatGroup(models.Model):
+    """ Storing the price and number of seats of each seat group for a show """
+
+    seat_group = models.ForeignKey(SeatGroup, on_delete=models.RESTRICT)
+    performance = models.ForeignKey(
+        Performance, on_delete=models.RESTRICT, related_name="performance_seat_groups"
+    )
+    price = models.IntegerField()
+    capacity = models.SmallIntegerField(blank=True)
+
+    def total_seat_bookings(self, seat_group=None):
+        if seat_group:
+            self.seat_bookings.all()
+
+    def capacity_remaining(self):
+        self.capacity - self.total_seat_bookings()

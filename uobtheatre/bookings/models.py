@@ -109,10 +109,10 @@ class Booking(models.Model, TimeStampedMixin):
     def get_consession_map(self):
         """ Return the number of each type of consession in this booking """
         booking_consessions = {}
-        for seat_booking in self.seat_bookings.all():
-            if not seat_booking.consession_type in booking_consessions.keys():
-                booking_consessions[seat_booking.consession_type] = 0
-            booking_consessions[seat_booking.consession_type] += 1
+        for ticket in self.tickets.all():
+            if not ticket.consession_type in booking_consessions.keys():
+                booking_consessions[ticket.consession_type] = 0
+            booking_consessions[ticket.consession_type] += 1
         return booking_consessions
 
     def is_valid_discount_combination(self, discounts: DiscountCombination) -> bool:
@@ -129,37 +129,39 @@ class Booking(models.Model, TimeStampedMixin):
             DiscountCombination(discounts)
             for discounts in combinations(
                 list(self.performance.discounts.all()),
-                self.seat_bookings.count(),
+                self.tickets.count(),
             )
             if self.is_valid_discount_combination(DiscountCombination(discounts))
         ]
 
     def get_price(self) -> float:
         return sum(
-            self.performance.seating.get(pk=seat_booking.seating.pk).price
-            for seat_booking in self.seat_bookings.all()
+            self.performance.performance_seat_groups.get(
+                seat_group=ticket.seat_group.pk
+            ).price
+            for ticket in self.tickets.all()
         )
 
     def get_price_with_discounts(self, discounts: DiscountCombination) -> float:
         discount_total = 0
-        seats_available_to_discount = [seat for seat in self.seat_bookings.all()]
+        tickets_available_to_discount = [ticket for ticket in self.tickets.all()]
         for discount_from_comb in discounts.discount_combination:
             discount = DiscountCombination((discount_from_comb,))
             consession_map = discount.get_consession_map()
             for consession_type in consession_map.keys():
-                for i in range(consession_map[consession_type]):
-                    seat = next(
-                        seat
-                        for seat in seats_available_to_discount
-                        if seat.consession_type == consession_type
+                for _ in range(consession_map[consession_type]):
+                    ticket = next(
+                        ticket
+                        for ticket in tickets_available_to_discount
+                        if ticket.consession_type == consession_type
                     )
                     discount_total += (
-                        self.performance.seating.filter(seat_groups=seat.seat_group)
-                        .first()
-                        .price
+                        self.performance.performance_seat_groups.get(
+                            seat_group=ticket.seat_group
+                        ).price
                         * discount_from_comb.discount
                     )
-                    seats_available_to_discount.remove(seat)
+                    tickets_available_to_discount.remove(ticket)
         # For each type of conession
         return self.get_price() - discount_total
 
@@ -178,32 +180,14 @@ class Booking(models.Model, TimeStampedMixin):
         return best_discount, best_price
 
 
-class PerformanceSeating(models.Model):
-    """ Storing the price and number of seats of each seat type for a show """
-
-    seat_groups = models.ManyToManyField(SeatGroup)
-    performance = models.ForeignKey(
-        Performance, on_delete=models.RESTRICT, related_name="seating"
-    )
-    price = models.IntegerField()
-    capacity = models.SmallIntegerField(blank=True)
-
-    def total_seat_bookings(self, seat_group=None):
-        if seat_group:
-            self.seat_bookings.all()
-
-    def capacity_remaining(self):
-        self.capacity - self.total_seat_bookings()
-
-
-class SeatBooking(models.Model):
+class Ticket(models.Model):
     """A booking of a single seat (from a seat group)"""
 
-    seating = models.ForeignKey(
-        PerformanceSeating, on_delete=models.RESTRICT, related_name="seat_bookings"
+    seat_group = models.ForeignKey(
+        SeatGroup, on_delete=models.RESTRICT, related_name="tickets"
     )
     booking = models.ForeignKey(
-        Booking, on_delete=models.PROTECT, related_name="seat_bookings"
+        Booking, on_delete=models.PROTECT, related_name="tickets"
     )
     consession_type = models.ForeignKey(
         ConsessionType,

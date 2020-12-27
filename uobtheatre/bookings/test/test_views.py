@@ -1,9 +1,11 @@
 import pytest
 
 from uobtheatre.bookings.models import Booking
-from uobtheatre.bookings.test.factories import (BookingFactory,
-                                                ConsessionTypeFactory,
-                                                SeatBookingFactory)
+from uobtheatre.bookings.test.factories import (
+    BookingFactory,
+    ConsessionTypeFactory,
+    TicketFactory,
+)
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory
@@ -75,7 +77,7 @@ def test_booking_view_post(api_client_flexible):
 
     body = {
         "performance_id": performance.id,
-        "seat_bookings": [
+        "tickets": [
             {"seat_group_id": seat_group.id, "consession_type_id": consession_type.id}
         ],
     }
@@ -90,7 +92,5 @@ def test_booking_view_post(api_client_flexible):
 
     assert str(created_booking.user.id) == str(api_client_flexible.user.id)
     assert created_booking.performance.id == performance.id
-    assert created_booking.seat_bookings.first().seat_group.id == seat_group.id
-    assert (
-        created_booking.seat_bookings.first().consession_type.id == consession_type.id
-    )
+    assert created_booking.tickets.first().seat_group.id == seat_group.id
+    assert created_booking.tickets.first().consession_type.id == consession_type.id

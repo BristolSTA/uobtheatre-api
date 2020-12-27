@@ -14,7 +14,7 @@ from uobtheatre.bookings.test.factories import (
     DiscountFactory,
     DiscountRequirementFactory,
     PerformanceSeatingFactory,
-    SeatBookingFactory,
+    TicketFactory,
 )
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory, VenueFactory
@@ -110,11 +110,11 @@ def test_is_valid_single_discount():
     assert not booking.is_valid_discount_combination(DiscountCombination((discount,)))
 
     # When one non student seat is booked assert this discount cannot be applied
-    seat_booking = SeatBookingFactory(booking=booking)
+    seat_booking = TicketFactory(booking=booking)
     assert not booking.is_valid_discount_combination(DiscountCombination((discount,)))
 
     # When a student seat is booked assert this discount can be applied
-    seat_booking = SeatBookingFactory(
+    seat_booking = TicketFactory(
         booking=booking, consession_type=consession_type_student
     )
     assert booking.is_valid_discount_combination(DiscountCombination((discount,)))
@@ -141,13 +141,13 @@ def test_is_valid_multi_discount():
 
     # When only one student seat is booked and two adult seat assert this
     # discount cannot be applied
-    SeatBookingFactory(booking=booking, consession_type=consession_type_adult)
-    SeatBookingFactory(booking=booking, consession_type=consession_type_adult)
-    SeatBookingFactory(booking=booking, consession_type=consession_type_student)
+    TicketFactory(booking=booking, consession_type=consession_type_adult)
+    TicketFactory(booking=booking, consession_type=consession_type_adult)
+    TicketFactory(booking=booking, consession_type=consession_type_student)
     assert not booking.is_valid_discount_combination(DiscountCombination((discount,)))
 
     # When a student seat is booked assert this discount can be applied
-    SeatBookingFactory(booking=booking, consession_type=consession_type_student)
+    TicketFactory(booking=booking, consession_type=consession_type_student)
     assert booking.is_valid_discount_combination(DiscountCombination((discount,)))
 
 
@@ -184,11 +184,11 @@ def test_get_valid_discounts():
     assert booking.get_valid_discounts() == []
 
     # When one student seat is booked the student discount should be available
-    SeatBookingFactory(booking=booking, consession_type=consession_type_student)
+    TicketFactory(booking=booking, consession_type=consession_type_student)
     assert booking.get_valid_discounts() == [DiscountCombination((discount_student,))]
 
-    SeatBookingFactory(booking=booking, consession_type=consession_type_adult)
-    SeatBookingFactory(booking=booking, consession_type=consession_type_adult)
+    TicketFactory(booking=booking, consession_type=consession_type_adult)
+    TicketFactory(booking=booking, consession_type=consession_type_adult)
     assert set(
         map(lambda d: d.discount_combination, booking.get_valid_discounts())
     ) == set(
@@ -198,7 +198,7 @@ def test_get_valid_discounts():
         ]
     )
 
-    SeatBookingFactory(booking=booking, consession_type=consession_type_student)
+    TicketFactory(booking=booking, consession_type=consession_type_student)
     assert set(
         map(lambda d: d.discount_combination, booking.get_valid_discounts())
     ) == set(
@@ -219,19 +219,22 @@ def test_get_price():
     booking = BookingFactory(performance=performance)
 
     # Set seat type price for performance
-    seating = PerformanceSeatingFactory(performance=performance)
+    performance_seat_group = PerformanceSeatingFactory(performance=performance)
 
     # Create a seat booking
-    SeatBookingFactory(booking=booking, seating=seating)
+    TicketFactory(booking=booking, seat_group=performance_seat_group.seat_group)
 
-    assert booking.get_price() == seating.price
+    assert booking.get_price() == performance_seat_group.price
 
-    SeatBookingFactory(booking=booking, seating=seating)
-    assert booking.get_price() == seating.price * 2
+    TicketFactory(booking=booking, seat_group=performance_seat_group.seat_group)
+    assert booking.get_price() == performance_seat_group.price * 2
 
-    seating_2 = PerformanceSeatingFactory(performance=performance)
-    SeatBookingFactory(booking=booking, seating=seating_2)
-    assert booking.get_price() == seating.price * 2 + seating_2.price
+    performance_seat_group_2 = PerformanceSeatingFactory(performance=performance)
+    TicketFactory(booking=booking, seat_group=performance_seat_group_2.seat_group)
+    assert (
+        booking.get_price()
+        == performance_seat_group.price * 2 + performance_seat_group_2.price
+    )
 
 
 @pytest.mark.skip(reason="This needs implementing")
@@ -260,7 +263,7 @@ def test_graceful_response_to_no_price():
     """
 
     # Create a seat booking
-    SeatBookingFactory(booking=booking, seat_group=seat_group)
+    TicketFactory(booking=booking, seat_group=seat_group)
     assert booking.get_price() == seat_price.price
 
 
@@ -270,24 +273,26 @@ def test_get_price_with_discount():
     performance = PerformanceFactory(venue=venue)
     booking = BookingFactory(performance=performance)
 
-    seat_group = SeatGroupFactory(venue=venue)
     consession_type_student = ConsessionTypeFactory(name="Student")
     consession_type_adult = ConsessionTypeFactory(name="Adult")
 
     # Set seat type price for performance
-    seat_price = PerformanceSeatingFactory(performance=performance)
-    seat_price.seat_groups.set([seat_group])
+    seating = PerformanceSeatingFactory(performance=performance)
 
     # Create a seat booking
-    SeatBookingFactory(
-        booking=booking, seat_group=seat_group, consession_type=consession_type_student
+    TicketFactory(
+        booking=booking,
+        seat_group=seating.seat_group,
+        consession_type=consession_type_student,
     )
-    SeatBookingFactory(
-        booking=booking, seat_group=seat_group, consession_type=consession_type_student
+    TicketFactory(
+        booking=booking,
+        seat_group=seating.seat_group,
+        consession_type=consession_type_student,
     )
 
     # Check price without discount
-    assert booking.get_price() == seat_price.price * 2
+    assert booking.get_price() == seating.price * 2
 
     discount_student = DiscountFactory(name="Student", discount=0.2)
     discount_student.performances.set([performance])
@@ -297,7 +302,7 @@ def test_get_price_with_discount():
     discount_combination = DiscountCombination((discount_student,))
     assert discount_student.discount == 0.2
     assert round(booking.get_price_with_discounts(discount_combination)) == round(
-        (seat_price.price * (1 - discount_student.discount)) + seat_price.price
+        (seating.price * (1 - discount_student.discount)) + seating.price
     )
 
     discount_family = DiscountFactory(name="Family", discount=0.2)
@@ -309,17 +314,21 @@ def test_get_price_with_discount():
         consession_type=consession_type_adult, number=2, discount=discount_family
     )
 
-    SeatBookingFactory(
-        booking=booking, seat_group=seat_group, consession_type=consession_type_adult
+    TicketFactory(
+        booking=booking,
+        seat_group=seating.seat_group,
+        consession_type=consession_type_adult,
     )
-    SeatBookingFactory(
-        booking=booking, seat_group=seat_group, consession_type=consession_type_adult
+    TicketFactory(
+        booking=booking,
+        seat_group=seating.seat_group,
+        consession_type=consession_type_adult,
     )
 
     discount_combination = DiscountCombination((discount_student, discount_family))
     assert round(booking.get_price_with_discounts(discount_combination)) == round(
-        (seat_price.price * (1 - discount_student.discount))
-        + (seat_price.price * 3 * (1 - discount_family.discount))
+        (seating.price * (1 - discount_student.discount))
+        + (seating.price * 3 * (1 - discount_family.discount))
     )
 
 
@@ -336,8 +345,7 @@ def test_get_best_discount_combination():
     seat_group = SeatGroupFactory(venue=venue)
 
     # Set seat type price for performance
-    seat_price = PerformanceSeatingFactory(performance=performance)
-    seat_price.seat_groups.set([seat_group])
+    PerformanceSeatingFactory(performance=performance, seat_group=seat_group)
 
     # Create a family discount - 1 student ticket and 2 adults required
     discount_family = DiscountFactory(name="Family", discount=0.2)
@@ -356,16 +364,16 @@ def test_get_best_discount_combination():
         consession_type=consession_type_student, number=1, discount=discount_student
     )
 
-    SeatBookingFactory(
+    TicketFactory(
         booking=booking, consession_type=consession_type_student, seat_group=seat_group
     )
-    SeatBookingFactory(
+    TicketFactory(
         booking=booking, consession_type=consession_type_adult, seat_group=seat_group
     )
-    SeatBookingFactory(
+    TicketFactory(
         booking=booking, consession_type=consession_type_adult, seat_group=seat_group
     )
-    SeatBookingFactory(
+    TicketFactory(
         booking=booking, consession_type=consession_type_student, seat_group=seat_group
     )
 
