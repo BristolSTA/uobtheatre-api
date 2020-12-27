@@ -26,6 +26,7 @@ def test_full_venue_serializer():
             "latitude": float(venue.address.latitude),
             "longitude": float(venue.address.longitude),
         },
+        "publicly_listed": venue.publicly_listed,
         "slug": venue.slug,
     }
 

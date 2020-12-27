@@ -6,6 +6,7 @@
             "name": "The Winston Theatre",
             "internal_capacity": 209,
             "address": 1,
+            "publicly_listed": true,
             "slug": "winston-theatre"
         }
     },
@@ -16,6 +17,7 @@
             "name": "The Pegg Theatre",
             "internal_capacity": 80,
             "address": 2,
+            "publicly_listed": true,
             "slug": "pegg-theatre"
         }
         

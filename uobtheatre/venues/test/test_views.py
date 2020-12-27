@@ -24,6 +24,7 @@ def test_venue_view_get(api_client):
                 "latitude": float(venueTest.address.latitude),
                 "longitude": float(venueTest.address.longitude),
             },
+            "publicly_listed": venueTest.publicly_listed,
             "slug": venueTest.slug,
         },
     ]
@@ -53,5 +54,6 @@ def test_venue_view_get_detailed(api_client):
                 "latitude": float(venueTest.address.latitude),
                 "longitude": float(venueTest.address.longitude),
             },
+            "publicly_listed": venueTest.publicly_listed,
             "slug": venueTest.slug,
         }
