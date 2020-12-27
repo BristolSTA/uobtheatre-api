@@ -46,6 +46,7 @@ django-autoslug = "*"
 
 [dev-packages]
 rope = "*"
+black="*"
 
 [requires]
 python_version = "3.8"
