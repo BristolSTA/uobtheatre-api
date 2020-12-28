@@ -4,12 +4,13 @@ import factory
 import pytest
 from django.utils import timezone
 
-from uobtheatre.bookings.test.factories import (DiscountFactory,
-                                                DiscountRequirementFactory,
-                                                PerformanceSeatingFactory)
+from uobtheatre.bookings.test.factories import (
+    DiscountFactory,
+    DiscountRequirementFactory,
+    PerformanceSeatingFactory,
+)
 from uobtheatre.productions.serializers import PerformanceTicketTypesSerializer
-from uobtheatre.productions.test.factories import (PerformanceFactory,
-                                                   ProductionFactory)
+from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory
 
 
@@ -221,3 +222,59 @@ def test_performance_ticket_types(api_client):
     # In this case we will check against the serialized data this is fine as
     # the serializer will only be used for this single view
     assert response.data == serialized_ticket_types.data
+
+
+@pytest.mark.django_db
+def test_performance_discounts(api_client):
+    performance = PerformanceFactory()
+
+    performance_seat_group_1 = PerformanceSeatingFactory(performance=performance)
+    performance_seat_group_2 = PerformanceSeatingFactory(performance=performance)
+
+    # Create a discount
+    discount_1 = DiscountFactory(name="Family", discount=0.2)
+    discount_1.performances.set([performance])
+    discount_requirement_1 = DiscountRequirementFactory(discount=discount_1, number=3)
+    discount_requirement_2 = DiscountRequirementFactory(discount=discount_1, number=2)
+
+    discount_2 = DiscountFactory(name="Family 2", discount=0.3)
+    discount_2.performances.set([performance])
+    DiscountRequirementFactory(discount=discount_2, number=1)
+
+    serialized_ticket_types = PerformanceTicketTypesSerializer(performance)
+
+    response = api_client.get(
+        f"/api/v1/productions/{performance.production.slug}/performances/{performance.id}/discounts/"
+    )
+    assert response.status_code == 200
+
+    # Only the non single discount should be shown
+    assert len(response.data) == 1
+
+    # In this case we will check against the serialized data this is fine as
+    # the serializer will only be used for this single view
+    assert response.data == [
+        {
+            "name": discount_1.name,
+            "discount": discount_1.discount,
+            "seat_group": discount_1.seat_group,
+            "discount_requirements": [
+                {
+                    "number": discount_requirement_1.number,
+                    "concession_type": {
+                        "id": discount_requirement_1.concession_type.id,
+                        "name": discount_requirement_1.concession_type.name,
+                        "description": discount_requirement_1.concession_type.description,
+                    },
+                },
+                {
+                    "number": discount_requirement_2.number,
+                    "concession_type": {
+                        "id": discount_requirement_2.concession_type.id,
+                        "name": discount_requirement_2.concession_type.name,
+                        "description": discount_requirement_2.concession_type.description,
+                    },
+                },
+            ],
+        }
+    ]

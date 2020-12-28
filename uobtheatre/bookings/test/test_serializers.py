@@ -3,11 +3,18 @@ import uuid
 import pytest
 
 from uobtheatre.bookings.models import Booking
-from uobtheatre.bookings.serializers import (BookingSerialiser,
-                                             CreateBookingSerialiser,
-                                             CreateTicketSerializer)
-from uobtheatre.bookings.test.factories import (BookingFactory,
-                                                ConcessionTypeFactory)
+from uobtheatre.bookings.serializers import (
+    BookingSerialiser,
+    CreateBookingSerialiser,
+    CreateTicketSerializer,
+    DiscountSerializer,
+)
+from uobtheatre.bookings.test.factories import (
+    BookingFactory,
+    ConcessionTypeFactory,
+    DiscountFactory,
+    DiscountRequirementFactory,
+)
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory
@@ -146,3 +153,29 @@ def test_create_seat_booking_serializer():
     seat_booking = SeatBooking()
     data = SeatBooking.objects.first()
     serialized_booking = CreateSeatBookingSerialiser(data)
+
+
+@pytest.mark.django_db
+def test_discount_serializer():
+    discount = DiscountFactory()
+    requirement = DiscountRequirementFactory(discount=discount)
+
+    serialized_discount = DiscountSerializer(discount)
+
+    requirements = [
+        {
+            "number": requirement.number,
+            "concession_type": {
+                "id": requirement.concession_type.id,
+                "name": requirement.concession_type.name,
+                "description": requirement.concession_type.description,
+            },
+        }
+    ]
+
+    assert serialized_discount.data == {
+        "name": discount.name,
+        "discount": discount.discount,
+        "seat_group": discount.seat_group,
+        "discount_requirements": requirements,
+    }

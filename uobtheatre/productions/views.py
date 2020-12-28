@@ -5,8 +5,12 @@ from rest_framework_extensions.mixins import NestedViewSetMixin
 
 from uobtheatre.productions.models import Performance, Production, Society
 from uobtheatre.productions.serializers import (
-    PerformanceSerializer, PerformanceTicketTypesSerializer,
-    ProductionSerializer, SocietySerializer)
+    PerformanceSerializer,
+    PerformanceTicketTypesSerializer,
+    ProductionSerializer,
+    SocietySerializer,
+)
+from uobtheatre.bookings.serializers import DiscountSerializer
 
 
 class ProductionViewSet(viewsets.ModelViewSet):
@@ -51,4 +55,17 @@ class PerforamceViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
         Action to return all tickets types for the performance
         """
         serializer = PerformanceTicketTypesSerializer(self.get_object())
+        return Response(serializer.data)
+
+    @action(detail=True)
+    def discounts(self, request, parent_lookup_production__slug=None, pk=None):
+        """
+        Action to return all tickets types for the performance
+        """
+        discounts = [
+            discount
+            for discount in self.get_object().discounts.all()
+            if not discount.is_single_discount()
+        ]
+        serializer = DiscountSerializer(discounts, many=True)
         return Response(serializer.data)

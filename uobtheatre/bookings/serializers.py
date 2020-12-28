@@ -1,9 +1,14 @@
 from rest_framework import serializers
 
-from uobtheatre.bookings.models import Booking, Ticket
+from uobtheatre.bookings.models import (
+    Booking,
+    Ticket,
+    Discount,
+    DiscountRequirement,
+    ConcessionType,
+)
 from uobtheatre.productions.serializers import PerformanceSerializer
-from uobtheatre.utils.serializers import (AppendIdSerializerMixin,
-                                          UserIdSerializer)
+from uobtheatre.utils.serializers import AppendIdSerializerMixin, UserIdSerializer
 
 
 class CreateBookingSerializer(serializers.ModelSerializer):
@@ -57,3 +62,25 @@ class CreateBookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializ
     class Meta:
         model = Booking
         fields = ("performance", "tickets")
+
+
+class ConcessionTypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ConcessionType
+        fields = ("id", "name", "description")
+
+
+class DiscountRequirementSerializer(serializers.ModelSerializer):
+    concession_type = ConcessionTypeSerializer()
+
+    class Meta:
+        model = DiscountRequirement
+        fields = ("number", "concession_type")
+
+
+class DiscountSerializer(serializers.ModelSerializer):
+    discount_requirements = DiscountRequirementSerializer(many=True)
+
+    class Meta:
+        model = Discount
+        fields = ("name", "discount", "seat_group", "discount_requirements")
