@@ -81,5 +81,15 @@
           "role": "Peter pan",
           "production": 1
         }
+    },
+    {
+        "model": "productions.performanceseatgroup",
+        "pk": 1,
+        "fields": {
+          "seat_group": 1,
+          "performance": 1,
+          "price": 1000,
+          "capacity": 100
+        }
     }
 ]
