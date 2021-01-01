@@ -54,7 +54,7 @@ class BookingPriceBreakDownSerializer(serializers.ModelSerializer):
     subtotal_price = serializers.IntegerField(source="subtotal")
 
     misc_costs_value = serializers.IntegerField()
-    total_price = serializers.IntegerField(source="price_with_misc_costs")
+    total_price = serializers.IntegerField(source="total")
 
     class Meta:
         model = Booking

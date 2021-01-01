@@ -15,6 +15,8 @@ from uobtheatre.bookings.test.factories import (
     DiscountRequirementFactory,
     PerformanceSeatingFactory,
     TicketFactory,
+    PercentageMiscCostFactory,
+    ValueMiscCostFactory,
 )
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory, VenueFactory
@@ -429,13 +431,36 @@ def test_str_concession_type():
 
 
 @pytest.mark.django_db
-def test_misc_costs_value():
-    assert False
+def test_percentage_misc_cost_value():
+    misc_cost = PercentageMiscCostFactory(percentage=0.2)
+
+    # Create a booking costing £12
+    booking = BookingFactory()
+    psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
+    ticket = TicketFactory(booking=booking, seat_group=psg.seat_group)
+
+    assert misc_cost.value(booking) == 240
 
 
 @pytest.mark.django_db
-def price_with_misc_costs():
-    PercentageMiscCost
+def test_misc_costs_value():
+    ValueMiscCostFactory(value=200)
+    PercentageMiscCostFactory(percentage=0.1)
+
+    # Create a booking costing £12
     booking = BookingFactory()
-    _ = [TicketFactory() for _ in range(3)]
-    # assert booking.price ==
+    psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
+    ticket = TicketFactory(booking=booking, seat_group=psg.seat_group)
+    assert booking.misc_costs_value() == 320
+
+
+@pytest.mark.django_db
+def test_total():
+    ValueMiscCostFactory(value=200)
+    PercentageMiscCostFactory(percentage=0.1)
+
+    # Create a booking costing £12
+    booking = BookingFactory()
+    psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
+    ticket = TicketFactory(booking=booking, seat_group=psg.seat_group)
+    assert ticket.booking.total() == 1520

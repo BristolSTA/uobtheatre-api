@@ -261,7 +261,7 @@ class Booking(models.Model, TimeStampedMixin):
         )
         return percentage_misc_costs_value + value_misc_cost_value
 
-    def price_with_misc_costs(self):
+    def total(self):
         """
         The final price of the booking with all dicounts and misc costs applied.
         """
