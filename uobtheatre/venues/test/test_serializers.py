@@ -40,5 +40,6 @@ def test_venue_serializer():
     assert serialized_venue.data == {
         "id": venue.id,
         "name": venue.name,
+        "publicly_listed": venue.publicly_listed,
         "slug": venue.slug,
     }

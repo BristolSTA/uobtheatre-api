@@ -1,9 +1,11 @@
 import pytest
 
 from uobtheatre.bookings.models import Booking
-from uobtheatre.bookings.test.factories import (BookingFactory,
-                                                ConcessionTypeFactory,
-                                                TicketFactory)
+from uobtheatre.bookings.test.factories import (
+    BookingFactory,
+    ConcessionTypeFactory,
+    TicketFactory,
+)
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory
@@ -45,6 +47,7 @@ def test_booking_view_get(api_client_flexible, date_format):
         "venue": {
             "id": bookingTest.performance.venue.id,
             "name": bookingTest.performance.venue.name,
+            "publicly_listed": bookingTest.performance.venue.publicly_listed,
             "slug": bookingTest.performance.venue.slug,
         },
         "extra_information": bookingTest.performance.extra_information,
