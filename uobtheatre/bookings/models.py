@@ -1,6 +1,7 @@
 import itertools
 import uuid
 from typing import List, Tuple
+import math
 
 from django.db import models
 
@@ -261,11 +262,11 @@ class Booking(models.Model, TimeStampedMixin):
         )
         return percentage_misc_costs_value + value_misc_cost_value
 
-    def total(self):
+    def total(self) -> int:
         """
         The final price of the booking with all dicounts and misc costs applied.
         """
-        return self.subtotal() + self.misc_costs_value()
+        return math.ceil(self.subtotal() + self.misc_costs_value())
 
 
 class Ticket(models.Model):

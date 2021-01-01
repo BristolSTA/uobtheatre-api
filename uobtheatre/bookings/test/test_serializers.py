@@ -2,7 +2,7 @@ import uuid
 
 import pytest
 
-from uobtheatre.bookings.models import Booking
+from uobtheatre.bookings.models import Booking, PercentageMiscCost, ValueMiscCost
 from uobtheatre.bookings.serializers import (
     BookingSerialiser,
     CreateBookingSerialiser,
@@ -123,8 +123,27 @@ def test_booking_serializer_price_break_down(date_format):
         },
     ]
 
-    # Check 3 types of tickets
+    # Add in some misc costs
+    value_misc_costs = [ValueMiscCostFactory() for _ in range(2)]
+    percentage_misc_cost = [ValueMiscCostFactory() for _ in range(2)]
 
+    def misc_cost_to_dict(misc_cost):
+        misc_cost_expected = {
+            "name": misc_cost.name,
+            "description": misc_cost.description,
+            "value": misc_cost.value
+            if isinstance(misc_cost, ValueMiscCost)
+            else misc_cost.value,
+        }
+        if isinstance(misc_cost, PercentageMiscCost):
+            misc_cost_expected["percentage"] = misc_cost.percentage
+        return misc_cost_expected
+
+    misc_cost_expected = list(
+        map(misc_cost_to_dict, value_misc_costs + percentage_misc_cost)
+    )
+
+    # Check 3 types of tickets
     assert len(serialized_booking.data["price_breakdown"]["tickets"]) == 3
     assert serialized_booking.data["price_breakdown"] == {
         "tickets": [
@@ -137,7 +156,7 @@ def test_booking_serializer_price_break_down(date_format):
                     "description": ticket_group["seat_group"].description,
                     "capacity": ticket_group["seat_group"].capacity,
                     "is_internal": ticket_group["seat_group"].is_internal,
-                    "venue": ticket_group["seat_group"].venue,
+                    "venue": ticket_group["seat_group"].venue.id,
                     "seats": ticket_group["seat_group"].seats,
                 },
                 "concession_type": {
@@ -152,7 +171,7 @@ def test_booking_serializer_price_break_down(date_format):
         "tickets_price": booking.tickets_price(),
         "discounts_value": booking.discount_value(),
         "subtotal_price": booking.subtotal(),
-        "misc_costs": [],
+        "misc_costs": misc_cost_expected,
         "misc_costs_value": booking.misc_costs_value(),
         "total_price": booking.total(),
     }
