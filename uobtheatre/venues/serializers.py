@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from uobtheatre.addresses.serializers import AddressSerializer
-from uobtheatre.venues.models import Venue
+from uobtheatre.venues.models import Venue, SeatGroup
 
 
 class FullVenueSerializer(serializers.ModelSerializer):
@@ -24,3 +24,9 @@ class VenueSerializer(serializers.ModelSerializer):
     class Meta:
         model = Venue
         fields = ["id", "name", "slug"]
+
+
+class SeatGroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SeatGroup
+        fields = "__all__"

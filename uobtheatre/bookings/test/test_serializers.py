@@ -71,6 +71,7 @@ def test_create_booking_serializer():
     created_booking = Booking.objects.first()
     serialized_booking = CreateBookingSerialiser(created_booking)
 
+    data["id"] = created_booking.id
     assert serialized_booking.data == data
     assert str(created_booking.user.id) == str(user.id)
 

@@ -2,14 +2,20 @@ from collections import Counter
 
 import pytest
 
-from uobtheatre.bookings.models import (Discount, DiscountCombination,
-                                        DiscountRequirement, combinations)
-from uobtheatre.bookings.test.factories import (BookingFactory,
-                                                ConcessionTypeFactory,
-                                                DiscountFactory,
-                                                DiscountRequirementFactory,
-                                                PerformanceSeatingFactory,
-                                                TicketFactory)
+from uobtheatre.bookings.models import (
+    Discount,
+    DiscountCombination,
+    DiscountRequirement,
+    combinations,
+)
+from uobtheatre.bookings.test.factories import (
+    BookingFactory,
+    ConcessionTypeFactory,
+    DiscountFactory,
+    DiscountRequirementFactory,
+    PerformanceSeatingFactory,
+    TicketFactory,
+)
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory, VenueFactory
 
@@ -262,7 +268,7 @@ def test_graceful_response_to_no_price():
 
 
 @pytest.mark.django_db
-def test_get_price_with_discount():
+def test_get_price_with_discount_combination():
     venue = VenueFactory()
     performance = PerformanceFactory(venue=venue)
     booking = BookingFactory(performance=performance)
@@ -295,9 +301,9 @@ def test_get_price_with_discount():
     )
     discount_combination = DiscountCombination((discount_student,))
     assert discount_student.discount == 0.2
-    assert round(booking.get_price_with_discounts(discount_combination)) == round(
-        (seating.price * (1 - discount_student.discount)) + seating.price
-    )
+    assert round(
+        booking.get_price_with_discount_combination(discount_combination)
+    ) == round((seating.price * (1 - discount_student.discount)) + seating.price)
 
     discount_family = DiscountFactory(name="Family", discount=0.2)
     discount_family.performances.set([performance])
@@ -320,7 +326,9 @@ def test_get_price_with_discount():
     )
 
     discount_combination = DiscountCombination((discount_student, discount_family))
-    assert round(booking.get_price_with_discounts(discount_combination)) == round(
+    assert round(
+        booking.get_price_with_discount_combination(discount_combination)
+    ) == round(
         (seating.price * (1 - discount_student.discount))
         + (seating.price * 3 * (1 - discount_family.discount))
     )
@@ -418,3 +426,16 @@ def test_str_booking():
 def test_str_concession_type():
     concession_type = ConcessionTypeFactory()
     assert str(concession_type) == concession_type.name
+
+
+@pytest.mark.django_db
+def test_misc_costs_value():
+    assert False
+
+
+@pytest.mark.django_db
+def price_with_misc_costs():
+    PercentageMiscCost
+    booking = BookingFactory()
+    _ = [TicketFactory() for _ in range(3)]
+    # assert booking.price ==

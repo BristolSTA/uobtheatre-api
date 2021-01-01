@@ -10,6 +10,33 @@ from uobtheatre.utils.models import TimeStampedMixin
 from uobtheatre.venues.models import Seat, SeatGroup
 
 
+class MiscCost(models.Model):
+    """
+    Model for miscellaneous costs for shows
+    e.g. Booking fee/Theatre improvement levy
+    """
+
+    name = models.CharField(max_length=255)
+    description = models.TextField(null=True, blank=True)
+
+    class Meta:
+        abstract = True
+
+
+class PercentageMiscCost(MiscCost):
+    percentage = models.FloatField()
+
+    def value(self, booking) -> int:
+        """
+        Calculate the value of the misc cost given a booking
+        """
+        return booking.subtotal() * self.percentage
+
+
+class ValueMiscCost(MiscCost):
+    value = models.FloatField()
+
+
 class Discount(models.Model):
     name = models.CharField(max_length=255)
     discount = models.FloatField()
@@ -142,7 +169,27 @@ class Booking(models.Model, TimeStampedMixin):
             for ticket in self.tickets.all()
         )
 
-    def get_price_with_discounts(self, discounts: DiscountCombination) -> float:
+    def tickets_price(self) -> float:
+        """
+        Get the price of the booking if only single discounts (those applying
+        to only one ticket) applied.
+        """
+        return sum(
+            self.performance.price_with_concession(
+                ticket.concession_type,
+                self.performance.performance_seat_groups.get(
+                    seat_group=ticket.seat_group.pk
+                ).price,
+            )
+            for ticket in self.tickets.all()
+        )
+
+    def get_price_with_discount_combination(
+        self, discounts: DiscountCombination
+    ) -> float:
+        """
+        Given a discount combination work out the new subtotal of the booking
+        """
         discount_total = 0
         tickets_available_to_discount = [ticket for ticket in self.tickets.all()]
         for discount_from_comb in discounts.discount_combination:
@@ -166,18 +213,59 @@ class Booking(models.Model, TimeStampedMixin):
         return self.get_price() - discount_total
 
     def get_best_discount_combination(self):
+        """
+        Returns the discount combination applied to the discount to get the
+        subtotal. This is the discount combination with the greatest value.
+        """
         return self.get_best_discount_combination_with_price()[0]
 
+    def subtotal(self):
+        """
+        Returns the subtotal of the booking. This is the total value including
+        single and group discounts before any misc costs are applied.
+        """
+        return self.get_best_discount_combination_with_price()[1]
+
     def get_best_discount_combination_with_price(self):
+        """
+        Returns the discounted price (subtotal) and the discount combination
+        used to create that price.
+        """
         best_price = self.get_price()
         best_discount = None
         for discount_combo in self.get_valid_discounts():
-            discount_combo_price = self.get_price_with_discounts(discount_combo)
+            discount_combo_price = self.get_price_with_discount_combination(
+                discount_combo
+            )
             if discount_combo_price < best_price:
                 best_price = discount_combo_price
                 best_discount = discount_combo
 
         return best_discount, best_price
+
+    def discount_value(self):
+        """
+        Returns the value of the group discounts applied in pence
+        """
+        return self.tickets_price() - self.subtotal()
+
+    def misc_costs_value(self):
+        """
+        Returns the value of the misc costs applied in pence
+        """
+        percentage_misc_costs_value = sum(
+            misc_cost.value(self) for misc_cost in PercentageMiscCost.objects.all()
+        )
+        value_misc_cost_value = sum(
+            misc_cost.value for misc_cost in ValueMiscCost.objects.all()
+        )
+        return percentage_misc_costs_value + value_misc_cost_value
+
+    def price_with_misc_costs(self):
+        """
+        The final price of the booking with all dicounts and misc costs applied.
+        """
+        return self.subtotal() + self.misc_costs_value()
 
 
 class Ticket(models.Model):
