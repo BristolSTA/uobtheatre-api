@@ -28,18 +28,27 @@ class CreateBookingSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class ValueMiscCostSerializer(serializers.ModelSerializer):
+class MiscCostSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = ("name", "description")
+        abstract = True
+
+
+class ValueMiscCostSerializer(MiscCostSerializer):
     class Meta:
         model = ValueMiscCost
-        fields = ("name", "description", "value")
+        fields = MiscCostSerializer.Meta.fields + ("value",)
 
 
-class PercentageMiscCostSerializer(serializers.ModelSerializer):
+class PercentageMiscCostSerializer(MiscCostSerializer):
     value = serializers.SerializerMethodField("get_value")
 
     class Meta:
         model = PercentageMiscCost
-        fields = ("name", "description", "percentage", "value")
+        fields = MiscCostSerializer.Meta.fields + (
+            "percentage",
+            "value",
+        )
 
     def get_value(self, misc_cost):
         booking = self.context.get("booking", None)

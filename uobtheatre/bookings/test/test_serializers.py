@@ -8,12 +8,17 @@ from uobtheatre.bookings.serializers import (
     CreateBookingSerialiser,
     CreateTicketSerializer,
     DiscountSerializer,
+    ValueMiscCostSerializer,
+    PercentageMiscCostSerializer,
 )
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
     ConcessionTypeFactory,
     DiscountFactory,
     DiscountRequirementFactory,
+    ValueMiscCostFactory,
+    PercentageMiscCostFactory,
+    PerformanceSeatingFactory,
 )
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
@@ -180,3 +185,39 @@ def test_discount_serializer():
         "seat_group": discount.seat_group,
         "discount_requirements": requirements,
     }
+
+
+@pytest.mark.django_db
+def test_value_misc_cost_serializer():
+    value_misc_cost = ValueMiscCostFactory()
+    serialized_misc_cost = ValueMiscCostSerializer(value_misc_cost)
+
+    assert serialized_misc_cost.data == {
+        "name": value_misc_cost.name,
+        "description": value_misc_cost.description,
+        "value": value_misc_cost.value,
+    }
+
+
+@pytest.mark.django_db
+def test_percentage_misc_cost_serializer():
+    percentage_misc_cost = PercentageMiscCostFactory()
+    serialized_misc_cost = PercentageMiscCostSerializer(percentage_misc_cost)
+
+    # Test with no booking supplied
+    expected = {
+        "name": percentage_misc_cost.name,
+        "description": percentage_misc_cost.description,
+        "percentage": percentage_misc_cost.percentage,
+        "value": None,
+    }
+    assert serialized_misc_cost.data == expected
+
+    # Create a booking costing £12
+    booking = BookingFactory()
+    psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
+    serialized_misc_cost = PercentageMiscCostSerializer(
+        percentage_misc_cost, context={"booking": booking}
+    )
+    expected["value"] = percentage_misc_cost.value(booking)
+    assert serialized_misc_cost.data == expected
