@@ -93,7 +93,7 @@ class BookingPriceBreakDownSerializer(serializers.ModelSerializer):
 
     def get_tickets(self, booking):
         groups = itertools.groupby(
-            booking.tickets.all(),
+            booking.tickets.order_by("pk"),
             lambda ticket: (ticket.seat_group, ticket.concession_type),
         )
         tickets = []
