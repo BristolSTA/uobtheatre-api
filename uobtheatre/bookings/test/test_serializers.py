@@ -1,5 +1,3 @@
-import uuid
-
 import pytest
 
 from uobtheatre.bookings.models import Booking
@@ -151,9 +149,9 @@ def test_create_booking_serializer_validation(data, is_valid):
 
 @pytest.mark.skip(reason="Need to write this")
 def test_create_seat_booking_serializer():
-    seat_booking = SeatBooking()
+    SeatBooking()
     data = SeatBooking.objects.first()
-    serialized_booking = CreateSeatBookingSerialiser(data)
+    CreateSeatBookingSerialiser(data)
 
 
 @pytest.mark.django_db

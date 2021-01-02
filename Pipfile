@@ -33,7 +33,6 @@ boto3 = "*"
 click = "*"
 pillow = "*"
 drf-yasg = "*"
-isort = "*"
 stripe = "*"
 pytest-factoryboy = "*"
 django-cors-headers = "*"
@@ -47,6 +46,8 @@ django-autoslug = "*"
 [dev-packages]
 rope = "*"
 black="*"
+flake8="*"
+isort = "*"
 
 [requires]
 python_version = "3.8"

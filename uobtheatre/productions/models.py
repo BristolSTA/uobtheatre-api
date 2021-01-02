@@ -1,13 +1,10 @@
 import math
-import uuid
 from typing import List
 
 from autoslug import AutoSlugField
 from django.db import models
 from django.db.models import Sum
-from django.template.defaultfilters import slugify
 from django.utils import timezone
-from django.utils.functional import cached_property
 
 from uobtheatre.societies.models import Society
 from uobtheatre.utils.models import TimeStampedMixin

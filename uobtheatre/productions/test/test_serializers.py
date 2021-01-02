@@ -1,7 +1,6 @@
 import math
 
 import pytest
-from django.template.defaultfilters import slugify
 
 from uobtheatre.bookings.test.factories import (
     DiscountFactory,
@@ -31,7 +30,6 @@ from uobtheatre.productions.test.factories import (
     ProductionFactory,
     VenueFactory,
 )
-from uobtheatre.venues.test.factories import SeatGroupFactory
 
 
 @pytest.mark.django_db

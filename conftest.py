@@ -2,7 +2,6 @@ import pytest
 from pytest_factoryboy import register
 from rest_framework.test import APIClient
 
-from config.settings.common import REST_FRAMEWORK
 from uobtheatre.users.test.factories import UserFactory
 
 register(UserFactory)  # fixture is user_factory

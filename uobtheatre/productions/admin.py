@@ -5,10 +5,10 @@ from uobtheatre.productions.models import (
     CrewMember,
     CrewRole,
     Performance,
+    PerformanceSeatGroup,
     Production,
     Society,
     Warning,
-    PerformanceSeatGroup,
 )
 
 admin.site.register(Production)

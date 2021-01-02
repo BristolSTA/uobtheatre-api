@@ -1,12 +1,12 @@
 version: '2'
 
 services:
-  
+
   postgres:
     image: postgres:11.6
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    
+
   api:
     restart: on-failure
     environment:

@@ -1,6 +1,5 @@
 import pytest
 
-from uobtheatre.addresses.serializers import AddressSerializer
 from uobtheatre.venues.models import Venue
 from uobtheatre.venues.serializers import FullVenueSerializer, VenueSerializer
 from uobtheatre.venues.test.factories import VenueFactory

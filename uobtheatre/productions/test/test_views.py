@@ -1,6 +1,5 @@
 from datetime import timedelta
 
-import factory
 import pytest
 from django.utils import timezone
 
@@ -11,7 +10,6 @@ from uobtheatre.bookings.test.factories import (
 )
 from uobtheatre.productions.serializers import PerformanceTicketTypesSerializer
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
-from uobtheatre.venues.test.factories import SeatGroupFactory
 
 
 @pytest.mark.django_db
@@ -242,7 +240,7 @@ def test_performance_discounts(api_client):
     discount_2.performances.set([performance])
     DiscountRequirementFactory(discount=discount_2, number=1)
 
-    serialized_ticket_types = PerformanceTicketTypesSerializer(performance)
+    PerformanceTicketTypesSerializer(performance)
 
     response = api_client.get(
         f"/api/v1/productions/{performance.production.slug}/performances/{performance.id}/discounts/"

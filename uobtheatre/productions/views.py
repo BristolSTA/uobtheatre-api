@@ -1,16 +1,16 @@
-from rest_framework import status, viewsets
+from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework_extensions.mixins import NestedViewSetMixin
 
-from uobtheatre.productions.models import Performance, Production, Society
+from uobtheatre.bookings.serializers import DiscountSerializer
+from uobtheatre.productions.models import Performance, Production
 from uobtheatre.productions.serializers import (
     PerformanceSerializer,
     PerformanceTicketTypesSerializer,
     ProductionSerializer,
     SocietySerializer,
 )
-from uobtheatre.bookings.serializers import DiscountSerializer
 
 
 class ProductionViewSet(viewsets.ModelViewSet):

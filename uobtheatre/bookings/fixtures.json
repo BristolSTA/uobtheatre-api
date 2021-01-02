@@ -14,7 +14,7 @@
         "pk": 3,
         "fields": {"name": "Child"}
     },
-    
+
 
     {
         "model": "bookings.discount",
@@ -26,7 +26,7 @@
         "pk": 1,
         "fields": {"concession_type": 1, "number": 1, "discount": 1}
     },
-    
+
     {
         "model": "bookings.discount",
         "pk": 2,
@@ -42,7 +42,7 @@
         "pk": 3,
         "fields": {"concession_type": 2, "number": 2, "discount": 2}
     },
-    
+
     {
         "model": "bookings.booking",
         "pk": 1,

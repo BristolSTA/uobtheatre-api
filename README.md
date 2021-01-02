@@ -6,11 +6,11 @@ API for uobtheatre. Check out the project's [documentation](http://BristolSTA.gi
 
 # Prerequisites
 
-- [Docker](https://docs.docker.com/get-docker/)  
+- [Docker](https://docs.docker.com/get-docker/)
 
 # Local Development
 
-Everything you need should be contained in a docker container. For now all the commands you need are in a make file. 
+Everything you need should be contained in a docker container. For now all the commands you need are in a make file.
 
 To start the dev server for local development:
 
@@ -18,8 +18,8 @@ To start the dev server for local development:
 make up
 ```
 
-## Pre-commit 
+## Pre-commit
 
-Pre commit runs everything required before a pr can be merged. To install run 
+Pre commit runs everything required before a pr can be merged. To install run
 
 `pip install pre-commit`
