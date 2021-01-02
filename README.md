@@ -1,4 +1,4 @@
-# uobtheatre-api
+#uobtheatre-api
 
 ![Gitub actions](https://github.com/BristolSTA/uobtheatre-api/workflows/Python%20package/badge.svg?branch=main)
 
@@ -17,3 +17,9 @@ To start the dev server for local development:
 ```bash
 make up
 ```
+
+## Pre-commit 
+
+Pre commit runs everything required before a pr can be merged. To install run 
+
+`pip install pre-commit`
