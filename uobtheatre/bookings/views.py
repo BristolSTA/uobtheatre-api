@@ -2,7 +2,11 @@ from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 
 from uobtheatre.bookings.models import Booking
-from uobtheatre.bookings.serializers import BookingSerialiser, CreateBookingSerialiser
+from uobtheatre.bookings.serializers import (
+    BookingListSerialiser,
+    BookingSerialiser,
+    CreateBookingSerialiser,
+)
 from uobtheatre.utils.models import ReadWriteSerializerMixin
 
 
@@ -12,7 +16,8 @@ class BookingViewSet(ReadWriteSerializerMixin, viewsets.ModelViewSet):
     """
 
     permission_classes = (IsAuthenticated,)
-    read_serializer_class = BookingSerialiser
+    list_read_serializer_class = BookingListSerialiser
+    detail_read_serializer_class = BookingSerialiser
     write_serializer_class = CreateBookingSerialiser
 
     def get_queryset(self):

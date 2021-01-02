@@ -48,6 +48,8 @@ rope = "*"
 black="*"
 flake8="*"
 isort = "*"
+coreapi="*"
+Pygments="*"
 
 [requires]
 python_version = "3.8"

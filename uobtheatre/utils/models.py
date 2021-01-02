@@ -17,7 +17,13 @@ class ReadWriteSerializerMixin(object):
     viewset.
     """
 
+    # Serializer used for reading (overriden by below)
     read_serializer_class = None
+    # Serializer used for reading list
+    list_read_serializer_class = None
+    # Serializer used for reading detailed
+    detail_read_serializer_class = None
+
     write_serializer_class = None
 
     def get_serializer_class(self):
@@ -26,9 +32,15 @@ class ReadWriteSerializerMixin(object):
         return self.get_read_serializer_class()
 
     def get_read_serializer_class(self):
+        print(f"The action is: {self.action}")
+        if self.action == "list" and self.list_read_serializer_class:
+            return self.list_read_serializer_class
+        if self.action == "retrieve" and self.detail_read_serializer_class:
+            return self.detail_read_serializer_class
         assert self.read_serializer_class is not None, (
             "'%s' should either include a `read_serializer_class` attribute,"
-            "or override the `get_read_serializer_class()` method."
+            "or override the `get_read_serializer_class()` method or include"
+            "both list_read_serializer_class and detail_read_serializer_class."
             % self.__class__.__name__
         )
         return self.read_serializer_class

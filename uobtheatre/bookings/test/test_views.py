@@ -1,6 +1,7 @@
 import pytest
 
 from uobtheatre.bookings.models import Booking
+from uobtheatre.bookings.serializers import BookingPriceBreakDownSerializer
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
     ConcessionTypeFactory,
@@ -34,38 +35,75 @@ def test_booking_view_only_returns_users_bookings(api_client_flexible):
 
 
 @pytest.mark.django_db
-def test_booking_view_get(api_client_flexible, date_format):
+def test_booking_view_get_list(api_client_flexible, date_format):
 
     api_client_flexible.authenticate()
-    bookingTest = BookingFactory(user=api_client_flexible.user)
+    booking = BookingFactory(user=api_client_flexible.user)
 
     response = api_client_flexible.get("/api/v1/bookings/")
 
     performance = {
-        "id": bookingTest.performance.id,
-        "production_id": bookingTest.performance.production.id,
+        "id": booking.performance.id,
+        "production_id": booking.performance.production.id,
         "venue": {
-            "id": bookingTest.performance.venue.id,
-            "name": bookingTest.performance.venue.name,
-            "publicly_listed": bookingTest.performance.venue.publicly_listed,
-            "slug": bookingTest.performance.venue.slug,
+            "id": booking.performance.venue.id,
+            "name": booking.performance.venue.name,
+            "publicly_listed": booking.performance.venue.publicly_listed,
+            "slug": booking.performance.venue.slug,
         },
-        "extra_information": bookingTest.performance.extra_information,
-        "start": bookingTest.performance.start.strftime(date_format),
-        "end": bookingTest.performance.end.strftime(date_format),
+        "extra_information": booking.performance.extra_information,
+        "start": booking.performance.start.strftime(date_format),
+        "end": booking.performance.end.strftime(date_format),
     }
 
     bookings = [
         {
-            "id": bookingTest.id,
+            "id": booking.id,
             "user_id": str(api_client_flexible.user.id),
-            "booking_reference": str(bookingTest.booking_reference),
+            "booking_reference": str(booking.booking_reference),
             "performance": performance,
+            "total_price": booking.total(),
         }
     ]
 
     assert response.status_code == 200
     assert response.json()["results"] == bookings
+
+
+@pytest.mark.django_db
+def test_booking_view_get_details(api_client_flexible, date_format):
+
+    api_client_flexible.authenticate()
+    booking = BookingFactory(user=api_client_flexible.user)
+
+    response = api_client_flexible.get(f"/api/v1/bookings/{booking.id}/")
+
+    performance = {
+        "id": booking.performance.id,
+        "production_id": booking.performance.production.id,
+        "venue": {
+            "id": booking.performance.venue.id,
+            "name": booking.performance.venue.name,
+            "slug": booking.performance.venue.slug,
+            "publicly_listed": booking.performance.venue.publicly_listed,
+        },
+        "extra_information": booking.performance.extra_information,
+        "start": booking.performance.start.strftime(date_format),
+        "end": booking.performance.end.strftime(date_format),
+    }
+
+    price_breakdown = BookingPriceBreakDownSerializer(booking).data
+
+    booking = {
+        "id": booking.id,
+        "user_id": str(booking.user.id),
+        "booking_reference": str(booking.booking_reference),
+        "performance": performance,
+        "price_breakdown": price_breakdown,
+    }
+
+    assert response.status_code == 200
+    assert response.json() == booking
 
 
 @pytest.mark.django_db
