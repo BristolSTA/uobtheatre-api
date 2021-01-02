@@ -1,15 +1,13 @@
 import pytest
 
 from uobtheatre.bookings.models import Booking
-from uobtheatre.bookings.test.factories import (
-    BookingFactory,
-    ConcessionTypeFactory,
-    TicketFactory,
-)
+from uobtheatre.bookings.serializers import BookingPriceBreakDownSerializer
+from uobtheatre.bookings.test.factories import (BookingFactory,
+                                                ConcessionTypeFactory,
+                                                TicketFactory)
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory
-from uobtheatre.bookings.serializers import BookingPriceBreakDownSerializer
 
 
 @pytest.mark.django_db

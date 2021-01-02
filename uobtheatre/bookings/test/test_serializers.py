@@ -2,25 +2,22 @@ import uuid
 
 import pytest
 
-from uobtheatre.bookings.models import Booking, PercentageMiscCost, ValueMiscCost
-from uobtheatre.bookings.serializers import (
-    BookingSerialiser,
-    CreateBookingSerialiser,
-    CreateTicketSerializer,
-    DiscountSerializer,
-    ValueMiscCostSerializer,
-    PercentageMiscCostSerializer,
-)
-from uobtheatre.bookings.test.factories import (
-    BookingFactory,
-    ConcessionTypeFactory,
-    DiscountFactory,
-    DiscountRequirementFactory,
-    ValueMiscCostFactory,
-    PercentageMiscCostFactory,
-    PerformanceSeatingFactory,
-    TicketFactory,
-)
+from uobtheatre.bookings.models import (Booking, PercentageMiscCost,
+                                        ValueMiscCost)
+from uobtheatre.bookings.serializers import (BookingSerialiser,
+                                             CreateBookingSerialiser,
+                                             CreateTicketSerializer,
+                                             DiscountSerializer,
+                                             PercentageMiscCostSerializer,
+                                             ValueMiscCostSerializer)
+from uobtheatre.bookings.test.factories import (BookingFactory,
+                                                ConcessionTypeFactory,
+                                                DiscountFactory,
+                                                DiscountRequirementFactory,
+                                                PercentageMiscCostFactory,
+                                                PerformanceSeatingFactory,
+                                                TicketFactory,
+                                                ValueMiscCostFactory)
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory

@@ -1,7 +1,7 @@
 import itertools
+import math
 import uuid
 from typing import List, Tuple
-import math
 
 from django.db import models
 
