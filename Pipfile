@@ -42,14 +42,15 @@ pytest-cov = "*"
 djangorestframework-jwt = "*"
 drf-extensions = "*"
 django-autoslug = "*"
+pre-commit = "*"
 
 [dev-packages]
 rope = "*"
-black="*"
-flake8="*"
+black = "*"
+flake8 = "*"
 isort = "*"
-coreapi="*"
-Pygments="*"
+coreapi = "*"
+Pygments = "*"
 
 [requires]
 python_version = "3.8"
