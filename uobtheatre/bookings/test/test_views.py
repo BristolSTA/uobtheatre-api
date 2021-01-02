@@ -2,9 +2,11 @@ import pytest
 
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.serializers import BookingPriceBreakDownSerializer
-from uobtheatre.bookings.test.factories import (BookingFactory,
-                                                ConcessionTypeFactory,
-                                                TicketFactory)
+from uobtheatre.bookings.test.factories import (
+    BookingFactory,
+    ConcessionTypeFactory,
+    TicketFactory,
+)
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory
@@ -46,6 +48,7 @@ def test_booking_view_get_list(api_client_flexible, date_format):
         "venue": {
             "id": booking.performance.venue.id,
             "name": booking.performance.venue.name,
+            "publicly_listed": booking.performance.venue.publicly_listed,
             "slug": booking.performance.venue.slug,
         },
         "extra_information": booking.performance.extra_information,
@@ -82,6 +85,7 @@ def test_booking_view_get_details(api_client_flexible, date_format):
             "id": booking.performance.venue.id,
             "name": booking.performance.venue.name,
             "slug": booking.performance.venue.slug,
+            "publicly_listed": booking.performance.venue.publicly_listed,
         },
         "extra_information": booking.performance.extra_information,
         "start": booking.performance.start.strftime(date_format),

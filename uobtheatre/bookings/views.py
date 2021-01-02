@@ -2,9 +2,11 @@ from rest_framework import mixins, viewsets
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from uobtheatre.bookings.models import Booking
-from uobtheatre.bookings.serializers import (BookingListSerialiser,
-                                             BookingSerialiser,
-                                             CreateBookingSerialiser)
+from uobtheatre.bookings.serializers import (
+    BookingListSerialiser,
+    BookingSerialiser,
+    CreateBookingSerialiser,
+)
 from uobtheatre.utils.models import ReadWriteSerializerMixin
 
 

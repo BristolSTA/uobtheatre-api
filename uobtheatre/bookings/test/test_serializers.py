@@ -35,6 +35,7 @@ def test_booking_serializer_wo_tickets_misc(date_format):
         "venue": {
             "id": booking.performance.venue.id,
             "name": booking.performance.venue.name,
+            "publicly_listed": booking.performance.venue.publicly_listed,
             "slug": booking.performance.venue.slug,
         },
         "extra_information": booking.performance.extra_information,

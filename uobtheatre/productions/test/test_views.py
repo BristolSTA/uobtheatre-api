@@ -31,6 +31,7 @@ def test_production_view_get(api_client, date_format):
             "venue": {
                 "id": performance.venue.id,
                 "name": performance.venue.name,
+                "publicly_listed": performance.venue.publicly_listed,
                 "slug": performance.venue.slug,
             },
             "extra_information": performance.extra_information,

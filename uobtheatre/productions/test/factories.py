@@ -1,9 +1,16 @@
 import factory
 from django.utils import timezone
 
-from uobtheatre.productions.models import (CastMember, CrewMember, CrewRole,
-                                           Performance, Production, Society,
-                                           Venue, Warning)
+from uobtheatre.productions.models import (
+    CastMember,
+    CrewMember,
+    CrewRole,
+    Performance,
+    Production,
+    Society,
+    Venue,
+    Warning,
+)
 from uobtheatre.venues.test.factories import VenueFactory
 
 

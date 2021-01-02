@@ -2,10 +2,15 @@ import uuid
 
 import factory
 
-from uobtheatre.bookings.models import (Booking, ConcessionType, Discount,
-                                        DiscountRequirement,
-                                        PercentageMiscCost, Ticket,
-                                        ValueMiscCost)
+from uobtheatre.bookings.models import (
+    Booking,
+    ConcessionType,
+    Discount,
+    DiscountRequirement,
+    PercentageMiscCost,
+    Ticket,
+    ValueMiscCost,
+)
 from uobtheatre.productions.models import PerformanceSeatGroup
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory

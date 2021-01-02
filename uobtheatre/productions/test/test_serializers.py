@@ -3,19 +3,34 @@ import math
 import pytest
 from django.template.defaultfilters import slugify
 
-from uobtheatre.bookings.test.factories import (DiscountFactory,
-                                                DiscountRequirementFactory,
-                                                PerformanceSeatingFactory)
-from uobtheatre.productions.models import (CastMember, CrewMember, CrewRole,
-                                           Performance, Production, Venue)
+from uobtheatre.bookings.test.factories import (
+    DiscountFactory,
+    DiscountRequirementFactory,
+    PerformanceSeatingFactory,
+)
+from uobtheatre.productions.models import (
+    CastMember,
+    CrewMember,
+    CrewRole,
+    Performance,
+    Production,
+    Venue,
+)
 from uobtheatre.productions.serializers import (
-    CastMemberSerialzier, CrewMemberSerialzier, PerformanceSerializer,
-    PerformanceTicketTypesSerializer, ProductionSerializer, VenueSerializer)
-from uobtheatre.productions.test.factories import (CastMemberFactory,
-                                                   CrewMemberFactory,
-                                                   PerformanceFactory,
-                                                   ProductionFactory,
-                                                   VenueFactory)
+    CastMemberSerialzier,
+    CrewMemberSerialzier,
+    PerformanceSerializer,
+    PerformanceTicketTypesSerializer,
+    ProductionSerializer,
+    VenueSerializer,
+)
+from uobtheatre.productions.test.factories import (
+    CastMemberFactory,
+    CrewMemberFactory,
+    PerformanceFactory,
+    ProductionFactory,
+    VenueFactory,
+)
 from uobtheatre.venues.test.factories import SeatGroupFactory
 
 
@@ -79,6 +94,7 @@ def test_production_serializer(date_format):
             "venue": {
                 "id": performance.venue.id,
                 "name": performance.venue.name,
+                "publicly_listed": performance.venue.publicly_listed,
                 "slug": performance.venue.slug,
             },
             "extra_information": performance.extra_information,
@@ -113,6 +129,7 @@ def test_performance_serializer(date_format):
         "venue": {
             "id": performance.venue.id,
             "name": performance.venue.name,
+            "publicly_listed": performance.venue.publicly_listed,
             "slug": performance.venue.slug,
         },
         "extra_information": performance.extra_information,

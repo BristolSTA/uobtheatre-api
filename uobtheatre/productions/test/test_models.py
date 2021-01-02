@@ -4,17 +4,21 @@ import pytest
 from dateutil import parser
 from django.utils import timezone
 
-from uobtheatre.bookings.test.factories import (BookingFactory,
-                                                ConcessionTypeFactory,
-                                                DiscountFactory,
-                                                DiscountRequirementFactory,
-                                                PerformanceSeatingFactory,
-                                                TicketFactory)
-from uobtheatre.productions.test.factories import (CastMemberFactory,
-                                                   CrewMemberFactory,
-                                                   PerformanceFactory,
-                                                   ProductionFactory,
-                                                   WarningFactory)
+from uobtheatre.bookings.test.factories import (
+    BookingFactory,
+    ConcessionTypeFactory,
+    DiscountFactory,
+    DiscountRequirementFactory,
+    PerformanceSeatingFactory,
+    TicketFactory,
+)
+from uobtheatre.productions.test.factories import (
+    CastMemberFactory,
+    CrewMemberFactory,
+    PerformanceFactory,
+    ProductionFactory,
+    WarningFactory,
+)
 from uobtheatre.venues.test.factories import SeatGroupFactory
 
 
