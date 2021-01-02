@@ -2,26 +2,29 @@ import uuid
 
 import pytest
 
-from uobtheatre.bookings.models import Booking
-from uobtheatre.bookings.serializers import (
-    BookingSerialiser,
-    CreateBookingSerialiser,
-    CreateTicketSerializer,
-    DiscountSerializer,
-)
-from uobtheatre.bookings.test.factories import (
-    BookingFactory,
-    ConcessionTypeFactory,
-    DiscountFactory,
-    DiscountRequirementFactory,
-)
+from uobtheatre.bookings.models import (Booking, PercentageMiscCost,
+                                        ValueMiscCost)
+from uobtheatre.bookings.serializers import (BookingSerialiser,
+                                             CreateBookingSerialiser,
+                                             CreateTicketSerializer,
+                                             DiscountSerializer,
+                                             PercentageMiscCostSerializer,
+                                             ValueMiscCostSerializer)
+from uobtheatre.bookings.test.factories import (BookingFactory,
+                                                ConcessionTypeFactory,
+                                                DiscountFactory,
+                                                DiscountRequirementFactory,
+                                                PercentageMiscCostFactory,
+                                                PerformanceSeatingFactory,
+                                                TicketFactory,
+                                                ValueMiscCostFactory)
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory
 
 
 @pytest.mark.django_db
-def test_booking_serializer(date_format):
+def test_booking_serializer_wo_tickets_misc(date_format):
     booking = BookingFactory()
     data = Booking.objects.first()
     serialized_booking = BookingSerialiser(data)
@@ -45,6 +48,130 @@ def test_booking_serializer(date_format):
         "user_id": str(booking.user.id),
         "booking_reference": str(booking.booking_reference),
         "performance": performance,
+        "price_breakdown": {
+            "tickets": [],
+            "tickets_price": booking.tickets_price(),
+            "discounts_value": booking.discount_value(),
+            "subtotal_price": booking.subtotal(),
+            "misc_costs": [],
+            "misc_costs_value": booking.misc_costs_value(),
+            "total_price": booking.total(),
+        },
+    }
+
+
+@pytest.mark.django_db
+def test_booking_serializer_price_break_down(date_format):
+    booking = BookingFactory()
+    data = Booking.objects.first()
+    serialized_booking = BookingSerialiser(data)
+
+    # Create 3 tickets with the same seat group and concession type
+    seat_group_1 = SeatGroupFactory()
+    psg_1 = PerformanceSeatingFactory(
+        performance=booking.performance, seat_group=seat_group_1
+    )
+    concession_type_1 = ConcessionTypeFactory()
+    _ = [
+        TicketFactory(
+            seat_group=seat_group_1, concession_type=concession_type_1, booking=booking
+        )
+        for _ in range(3)
+    ]
+
+    # Create 2 with the same seat group but a different concession type
+    concession_type_2 = ConcessionTypeFactory()
+    _ = [
+        TicketFactory(
+            seat_group=seat_group_1, concession_type=concession_type_2, booking=booking
+        )
+        for _ in range(2)
+    ]
+
+    # Create 2 with the same concession but a different seat groups
+    seat_group_2 = SeatGroupFactory()
+    psg_2 = PerformanceSeatingFactory(
+        performance=booking.performance, seat_group=seat_group_2
+    )
+    _ = [
+        TicketFactory(
+            seat_group=seat_group_2, concession_type=concession_type_1, booking=booking
+        )
+        for _ in range(2)
+    ]
+
+    expected_ticket_groups = [
+        {
+            "seat_group": seat_group_1,
+            "concession_type": concession_type_1,
+            "number": 3,
+            "price": psg_1.price,
+        },
+        {
+            "seat_group": seat_group_1,
+            "concession_type": concession_type_2,
+            "number": 2,
+            "price": psg_1.price,
+        },
+        {
+            "seat_group": seat_group_2,
+            "concession_type": concession_type_1,
+            "number": 2,
+            "price": psg_2.price,
+        },
+    ]
+
+    # Add in some misc costs
+    value_misc_costs = [ValueMiscCostFactory() for _ in range(2)]
+    percentage_misc_cost = [ValueMiscCostFactory() for _ in range(2)]
+
+    def misc_cost_to_dict(misc_cost):
+        misc_cost_expected = {
+            "name": misc_cost.name,
+            "description": misc_cost.description,
+            "value": misc_cost.value
+            if isinstance(misc_cost, ValueMiscCost)
+            else misc_cost.value,
+        }
+        if isinstance(misc_cost, PercentageMiscCost):
+            misc_cost_expected["percentage"] = misc_cost.percentage
+        return misc_cost_expected
+
+    misc_cost_expected = list(
+        map(misc_cost_to_dict, value_misc_costs + percentage_misc_cost)
+    )
+
+    # Check 3 types of tickets
+    assert len(serialized_booking.data["price_breakdown"]["tickets"]) == 3
+    assert serialized_booking.data["price_breakdown"] == {
+        "tickets": [
+            {
+                "ticket_price": ticket_group["price"],
+                "number": ticket_group["number"],
+                "seat_group": {
+                    "id": ticket_group["seat_group"].id,
+                    "name": ticket_group["seat_group"].name,
+                    "description": ticket_group["seat_group"].description,
+                    "capacity": ticket_group["seat_group"].capacity,
+                    "is_internal": ticket_group["seat_group"].is_internal,
+                    "venue": ticket_group["seat_group"].venue.id,
+                    "seats": ticket_group["seat_group"].seats,
+                },
+                "concession_type": {
+                    "id": ticket_group["concession_type"].id,
+                    "name": ticket_group["concession_type"].name,
+                    "description": ticket_group["concession_type"].description,
+                },
+                "total_price": ticket_group["number"] * ticket_group["price"],
+            }
+            for ticket_group in expected_ticket_groups
+        ],
+        "tickets_price": booking.tickets_price(),
+        "discounts_value": booking.discount_value(),
+        "subtotal_price": booking.subtotal(),
+        "misc_costs": misc_cost_expected,
+        "misc_costs_value": booking.misc_costs_value(),
+        "total_price": booking.total(),
     }
 
 
@@ -72,6 +199,7 @@ def test_create_booking_serializer():
     created_booking = Booking.objects.first()
     serialized_booking = CreateBookingSerialiser(created_booking)
 
+    data["id"] = created_booking.id
     assert serialized_booking.data == data
     assert str(created_booking.user.id) == str(user.id)
 
@@ -180,3 +308,39 @@ def test_discount_serializer():
         "seat_group": discount.seat_group,
         "discount_requirements": requirements,
     }
+
+
+@pytest.mark.django_db
+def test_value_misc_cost_serializer():
+    value_misc_cost = ValueMiscCostFactory()
+    serialized_misc_cost = ValueMiscCostSerializer(value_misc_cost)
+
+    assert serialized_misc_cost.data == {
+        "name": value_misc_cost.name,
+        "description": value_misc_cost.description,
+        "value": value_misc_cost.value,
+    }
+
+
+@pytest.mark.django_db
+def test_percentage_misc_cost_serializer():
+    percentage_misc_cost = PercentageMiscCostFactory()
+    serialized_misc_cost = PercentageMiscCostSerializer(percentage_misc_cost)
+
+    # Test with no booking supplied
+    expected = {
+        "name": percentage_misc_cost.name,
+        "description": percentage_misc_cost.description,
+        "percentage": percentage_misc_cost.percentage,
+        "value": None,
+    }
+    assert serialized_misc_cost.data == expected
+
+    # Create a booking costing £12
+    booking = BookingFactory()
+    psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
+    serialized_misc_cost = PercentageMiscCostSerializer(
+        percentage_misc_cost, context={"booking": booking}
+    )
+    expected["value"] = percentage_misc_cost.value(booking)
+    assert serialized_misc_cost.data == expected

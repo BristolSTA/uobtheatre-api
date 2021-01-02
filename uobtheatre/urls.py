@@ -8,6 +8,7 @@ from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 from rest_framework.authtoken import views
+from rest_framework.documentation import include_docs_urls
 from rest_framework_extensions.routers import ExtendedDefaultRouter
 
 from uobtheatre.bookings.views import BookingViewSet
@@ -46,6 +47,7 @@ router.register(r"bookings", BookingViewSet, basename="Booking")
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("docs/", include_docs_urls(title="UOB Theatre")),
     path("api/v1/", include(router.urls)),
     # Authentication
     path("api/v1/auth/", include("rest_auth.urls")),
