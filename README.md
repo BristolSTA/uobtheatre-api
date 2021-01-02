@@ -1,4 +1,4 @@
-#uobtheatre-api
+# uobtheatre-api
 
 ![Gitub actions](https://github.com/BristolSTA/uobtheatre-api/workflows/Python%20package/badge.svg?branch=main)
 
