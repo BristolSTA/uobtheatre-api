@@ -41,6 +41,12 @@ make up
 
 ## Migrations :twisted_rightwards_arrows:
 
+A migration explains how a database changes between releases. It contains sql
+command (or equalivalent) to update an existing database to the required schema
+for the new version of the api. For example if you add a `name` field to the
+user object this will need to be reflected in the db before the new version of
+the api can work.
+
 Django generates migrations for with the `make migrations` command. These
 migrations can then be applied to the running postgres instance with `make
 migrate`. Every time you generate a new set of migrations it will create a new
@@ -50,9 +56,9 @@ of files with small migration changes. This is good for now but will have to
 stop when we start deploying a version of the api.
 
 After starting work on a new branch your running postgres container might be
-different to that expected on the branch. To fix this run `make
+different to the schema expected on the branch. To fix this run `make
 clean-postgres-migrations`. This removes your current postgres container and
-applies the migrations already in the branch.
+applies the migrations already in the branch (without generating new ones).
 
 ## Testing :mag:
 

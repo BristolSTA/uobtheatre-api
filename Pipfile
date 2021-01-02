@@ -43,6 +43,7 @@ djangorestframework-jwt = "*"
 drf-extensions = "*"
 django-autoslug = "*"
 pre-commit = "*"
+coveralls = "*"
 
 [dev-packages]
 rope = "*"
@@ -51,6 +52,7 @@ flake8 = "*"
 isort = "*"
 coreapi = "*"
 Pygments = "*"
+coveralls = "*"
 
 [requires]
 python_version = "3.8"

@@ -42,6 +42,8 @@ test-v: ## Run verbose unit tests in docker container
 
 coverage: ## Generate test coverage report
 	docker-compose run --rm api coverage html
+	docker-compose run --rm api coverage run --source=uobtheatre -m pytest
+	docker-compose run --rm api coveralls
 
 black: ## Run verbose unit tests in docker container
 	docker-compose run --rm api black .
