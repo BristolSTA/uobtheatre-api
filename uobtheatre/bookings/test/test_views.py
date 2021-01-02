@@ -35,7 +35,7 @@ def test_booking_view_only_returns_users_bookings(api_client_flexible):
 
 
 @pytest.mark.django_db
-def test_booking_view_get(api_client_flexible, date_format):
+def test_booking_view_get_list(api_client_flexible, date_format):
 
     api_client_flexible.authenticate()
     booking = BookingFactory(user=api_client_flexible.user)
@@ -55,20 +55,53 @@ def test_booking_view_get(api_client_flexible, date_format):
         "end": booking.performance.end.strftime(date_format),
     }
 
-    price_breakdown = BookingPriceBreakDownSerializer(booking).data
-
     bookings = [
         {
             "id": booking.id,
             "user_id": str(api_client_flexible.user.id),
             "booking_reference": str(booking.booking_reference),
             "performance": performance,
-            "price_breakdown": price_breakdown,
+            "total_price": booking.total(),
         }
     ]
 
     assert response.status_code == 200
     assert response.json()["results"] == bookings
+
+
+@pytest.mark.django_db
+def test_booking_view_get_details(api_client_flexible, date_format):
+
+    api_client_flexible.authenticate()
+    booking = BookingFactory(user=api_client_flexible.user)
+
+    response = api_client_flexible.get(f"/api/v1/bookings/{booking.id}/")
+
+    performance = {
+        "id": booking.performance.id,
+        "production_id": booking.performance.production.id,
+        "venue": {
+            "id": booking.performance.venue.id,
+            "name": booking.performance.venue.name,
+            "slug": booking.performance.venue.slug,
+        },
+        "extra_information": booking.performance.extra_information,
+        "start": booking.performance.start.strftime(date_format),
+        "end": booking.performance.end.strftime(date_format),
+    }
+
+    price_breakdown = BookingPriceBreakDownSerializer(booking).data
+
+    booking = {
+        "id": booking.id,
+        "user_id": str(booking.user.id),
+        "booking_reference": str(booking.booking_reference),
+        "performance": performance,
+        "price_breakdown": price_breakdown,
+    }
+
+    assert response.status_code == 200
+    assert response.json() == booking
 
 
 @pytest.mark.django_db

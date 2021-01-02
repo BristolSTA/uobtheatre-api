@@ -118,6 +118,20 @@ class BookingPriceBreakDownSerializer(serializers.ModelSerializer):
         return tickets
 
 
+class BookingListSerialiser(AppendIdSerializerMixin, serializers.ModelSerializer):
+    """
+    Booking serializers used
+    """
+
+    total_price = serializers.IntegerField(source="total")
+    user_id = UserIdSerializer()
+    performance = PerformanceSerializer()
+
+    class Meta:
+        model = Booking
+        fields = ("id", "booking_reference", "performance", "total_price", "user_id")
+
+
 class BookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializer):
     """ Booking serializer to create booking """
 
@@ -133,6 +147,7 @@ class BookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializer):
             "booking_reference",
             "performance",
             "price_breakdown",
+            "user_id",
         )
 
     def get_price_break_down(self, booking):
