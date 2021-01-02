@@ -1,6 +1,7 @@
 # uobtheatre-api
 
 ![Gitub actions](https://github.com/BristolSTA/uobtheatre-api/workflows/Python%20package/badge.svg?branch=main)
+[![Coverage Status](https://coveralls.io/repos/github/BristolSTA/uobtheatre-api/badge.svg?branch=main)](https://coveralls.io/github/BristolSTA/uobtheatre-api?branch=main)
 
 API for uobtheatre. Check out the project's [documentation](http://BristolSTA.github.io/uobtheatre-api/).
 
