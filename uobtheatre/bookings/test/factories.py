@@ -70,6 +70,7 @@ class BookingFactory(factory.django.DjangoModelFactory):
     booking_reference = uuid.uuid4()
     user = factory.SubFactory(UserFactory)
     performance = factory.SubFactory(PerformanceFactory)
+    status = Booking.BookingStatus.PAID
 
     class Meta:
         model = Booking

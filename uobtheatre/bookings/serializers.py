@@ -1,5 +1,6 @@
 import itertools
 
+from django.db.utils import IntegrityError
 from rest_framework import serializers
 
 from uobtheatre.bookings.models import (
@@ -179,9 +180,14 @@ class CreateBookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializ
 
     def create(self, validated_data):
         # Extract seating bookings from booking
-        tickets = validated_data.pop("tickets")
+        tickets = validated_data.pop("tickets", [])
         # Create the booking
-        booking = Booking.objects.create(user=self.context["user"], **validated_data)
+        try:
+            booking = Booking.objects.create(
+                user=self.context["user"], **validated_data
+            )
+        except IntegrityError as excption:
+            raise serializers.ValidationError(excption)
 
         # Create all the seat bookings
         for ticket in tickets:

@@ -1,4 +1,5 @@
 import pytest
+from rest_framework.exceptions import ValidationError
 
 from uobtheatre.bookings.models import Booking, PercentageMiscCost, ValueMiscCost
 from uobtheatre.bookings.serializers import (
@@ -346,3 +347,24 @@ def test_percentage_misc_cost_serializer():
     )
     expected["value"] = percentage_misc_cost.value(booking)
     assert serialized_misc_cost.data == expected
+
+
+@pytest.mark.django_db
+def test_draft_uniqueness_serializer_error():
+
+    user = UserFactory()
+    performance = PerformanceFactory()
+    # Cannot create 2 booking with in_progress status
+
+    booking_1 = CreateBookingSerialiser(
+        data={"performance_id": performance.id}, context={"user": user}
+    )
+    booking_1.is_valid()
+    booking_1.save()
+
+    booking_2 = CreateBookingSerialiser(
+        data={"performance_id": performance.id}, context={"user": user}
+    )
+    booking_2.is_valid()
+    with pytest.raises(ValidationError):
+        booking_2.save()
