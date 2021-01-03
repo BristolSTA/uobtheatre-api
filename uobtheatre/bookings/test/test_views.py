@@ -63,6 +63,7 @@ def test_booking_view_get_list(api_client_flexible, date_format):
             "booking_reference": str(booking.booking_reference),
             "performance": performance,
             "total_price": booking.total(),
+            "status": booking.status,
         }
     ]
 
@@ -100,6 +101,7 @@ def test_booking_view_get_details(api_client_flexible, date_format):
         "booking_reference": str(booking.booking_reference),
         "performance": performance,
         "price_breakdown": price_breakdown,
+        "status": booking.status,
     }
 
     assert response.status_code == 200

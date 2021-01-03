@@ -29,6 +29,7 @@ INSTALLED_APPS = (
     "corsheaders",  # CORS
     "rest_framework_extensions",  # Extensions including nested views
     "autoslug",  # Auto slug
+    "url_filter",
     # Your apps
     "uobtheatre.users",
     "uobtheatre.productions",
@@ -226,7 +227,7 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.TokenAuthentication",
     ),
-    "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
+    "DEFAULT_FILTER_BACKENDS": ["url_filter.integrations.drf.DjangoFilterBackend"],
 }
 
 

@@ -129,7 +129,14 @@ class BookingListSerialiser(AppendIdSerializerMixin, serializers.ModelSerializer
 
     class Meta:
         model = Booking
-        fields = ("id", "booking_reference", "performance", "total_price", "user_id")
+        fields = (
+            "id",
+            "booking_reference",
+            "performance",
+            "total_price",
+            "user_id",
+            "status",
+        )
 
 
 class BookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializer):
@@ -148,6 +155,7 @@ class BookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializer):
             "performance",
             "price_breakdown",
             "user_id",
+            "status",
         )
 
     def get_price_break_down(self, booking):

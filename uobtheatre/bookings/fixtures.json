@@ -46,7 +46,17 @@
     {
         "model": "bookings.booking",
         "pk": 1,
-        "fields": {"user": 1, "performance": 1}
+        "fields": {"user": 1, "performance": 1, "status": "IP"}
+    },
+    {
+        "model": "bookings.booking",
+        "pk": 2,
+        "fields": {"user": 1, "performance": 1, "status": "IP"}
+    },
+    {
+        "model": "bookings.booking",
+        "pk": 3,
+        "fields": {"user": 1, "performance": 1, "status": "P"}
     },
     {
         "model": "bookings.ticket",

@@ -58,6 +58,7 @@ def test_booking_serializer_wo_tickets_misc(date_format):
             "misc_costs_value": booking.misc_costs_value(),
             "total_price": booking.total(),
         },
+        "status": booking.status,
     }
 
 
