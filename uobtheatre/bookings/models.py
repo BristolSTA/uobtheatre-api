@@ -3,6 +3,7 @@ import math
 import uuid
 from typing import List, Tuple
 
+from django.core.validators import NON_FIELD_ERRORS, ValidationError
 from django.db import models
 from django.db.models import Q, UniqueConstraint
 
@@ -48,6 +49,35 @@ class Discount(models.Model):
     seat_group = models.ForeignKey(
         SeatGroup, on_delete=models.CASCADE, null=True, blank=True
     )
+
+    def validate_unique(self, *args, **kwargs):
+        """
+        Extend validate_unique to ensure only 1 discount with the same set of requirements can exist
+        """
+
+        super().validate_unique(*args, **kwargs)
+
+        discounts = self.__class__._default_manager.all()
+        if not self._state.adding and self.pk is not None:
+            discounts = discounts.exclude(pk=self.pk)
+
+        discounts_with_same_requirements = [
+            discount
+            for discount in discounts
+            if discount.get_concession_map() == self.get_concession_map()
+        ]
+        discounts_with_same_requirements_names = [
+            discount.name for discount in discounts_with_same_requirements
+        ]
+
+        if len(discounts_with_same_requirements) != 0:
+            raise ValidationError(
+                {
+                    NON_FIELD_ERRORS: [
+                        f"Discount with given requirements already exists ({','.join(discounts_with_same_requirements_names)})",
+                    ],
+                }
+            )
 
     def is_single_discount(self):
         """
