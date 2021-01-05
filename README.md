@@ -22,12 +22,22 @@ If you need to use a python thing locally (not in docker) go into pipenv with `p
 
 ## Pre-commit
 
-Pre-commit runs everything required before a pr can be merged. It should
-already be installed for you in pipenv so just make sure you are in pipenv
+Pre-commit runs everything required before a pr can be merged.
+
+## Install in pipenv
+It should already be installed for you in pipenv so just make sure you are in pipenv
 shell (`pipenv shell`) before running `git commit`.
 
+Then run `pre-commit install`
+
+## Install locally
 If you don't want to live inside a pipenv shell then just install pre-commit
-locally `pip install pre-commit`.
+locally `pip install pre-commit` (or `python3 -m pip install pre-commit`).
+
+Then run `pre-commit install`
+
+## Visual studio dev container
+TODO if people care
 
 # Local Development :computer:
 
