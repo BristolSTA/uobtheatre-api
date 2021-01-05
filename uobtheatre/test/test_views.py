@@ -1,7 +1,5 @@
 import pytest
 
-from uobtheatre.users.test.factories import UserFactory
-
 ALL_HTTP_VERBS = ["GET", "POST", "PUT", "DELETE", "PATCH"]
 
 

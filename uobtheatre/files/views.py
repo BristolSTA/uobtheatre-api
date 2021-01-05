@@ -1,5 +1,3 @@
-from django.contrib.auth.decorators import login_required
-from django.urls import reverse_lazy
 from django.views.generic.edit import CreateView
 
 from .models import Document

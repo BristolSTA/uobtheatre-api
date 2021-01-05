@@ -2,13 +2,17 @@ import itertools
 
 from rest_framework import serializers
 
-from uobtheatre.bookings.models import (Booking, ConcessionType, Discount,
-                                        DiscountRequirement,
-                                        PercentageMiscCost, Ticket,
-                                        ValueMiscCost)
+from uobtheatre.bookings.models import (
+    Booking,
+    ConcessionType,
+    Discount,
+    DiscountRequirement,
+    PercentageMiscCost,
+    Ticket,
+    ValueMiscCost,
+)
 from uobtheatre.productions.serializers import PerformanceSerializer
-from uobtheatre.utils.serializers import (AppendIdSerializerMixin,
-                                          UserIdSerializer)
+from uobtheatre.utils.serializers import AppendIdSerializerMixin, UserIdSerializer
 from uobtheatre.venues.serializers import SeatGroupSerializer
 
 

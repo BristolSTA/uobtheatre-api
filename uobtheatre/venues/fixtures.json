@@ -20,7 +20,7 @@
             "publicly_listed": true,
             "slug": "pegg-theatre"
         }
-        
+
     },
     {
         "model": "venues.venue",

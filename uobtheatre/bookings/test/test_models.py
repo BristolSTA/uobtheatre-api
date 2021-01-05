@@ -1,5 +1,3 @@
-from collections import Counter
-
 import pytest
 
 from uobtheatre.bookings.models import (
@@ -13,10 +11,10 @@ from uobtheatre.bookings.test.factories import (
     ConcessionTypeFactory,
     DiscountFactory,
     DiscountRequirementFactory,
+    PercentageMiscCostFactory,
     PerformanceSeatingFactory,
     TicketFactory,
     ValueMiscCostFactory,
-    PercentageMiscCostFactory,
 )
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory, VenueFactory
@@ -248,10 +246,10 @@ def test_graceful_response_to_no_price():
 
     seat_group = SeatGroupFactory(venue=venue)
 
-    """ 
+    """
     Inorder to set the price of the seat_group the user is about to book we
     would need to use the PerformanceSeatingFactory as below:
-   
+
     ```
     seat_price = PerformanceSeatingFactory(performance=performance)
     seat_price.seat_groups.set([seat_group])

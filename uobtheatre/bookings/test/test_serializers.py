@@ -1,23 +1,24 @@
-import uuid
-
 import pytest
 
-from uobtheatre.bookings.models import (Booking, PercentageMiscCost,
-                                        ValueMiscCost)
-from uobtheatre.bookings.serializers import (BookingSerialiser,
-                                             CreateBookingSerialiser,
-                                             CreateTicketSerializer,
-                                             DiscountSerializer,
-                                             PercentageMiscCostSerializer,
-                                             ValueMiscCostSerializer)
-from uobtheatre.bookings.test.factories import (BookingFactory,
-                                                ConcessionTypeFactory,
-                                                DiscountFactory,
-                                                DiscountRequirementFactory,
-                                                PercentageMiscCostFactory,
-                                                PerformanceSeatingFactory,
-                                                TicketFactory,
-                                                ValueMiscCostFactory)
+from uobtheatre.bookings.models import Booking, PercentageMiscCost, ValueMiscCost
+from uobtheatre.bookings.serializers import (
+    BookingSerialiser,
+    CreateBookingSerialiser,
+    CreateTicketSerializer,
+    DiscountSerializer,
+    PercentageMiscCostSerializer,
+    ValueMiscCostSerializer,
+)
+from uobtheatre.bookings.test.factories import (
+    BookingFactory,
+    ConcessionTypeFactory,
+    DiscountFactory,
+    DiscountRequirementFactory,
+    PercentageMiscCostFactory,
+    PerformanceSeatingFactory,
+    TicketFactory,
+    ValueMiscCostFactory,
+)
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory
@@ -279,9 +280,9 @@ def test_create_booking_serializer_validation(data, is_valid):
 
 @pytest.mark.skip(reason="Need to write this")
 def test_create_seat_booking_serializer():
-    seat_booking = SeatBooking()
+    SeatBooking()
     data = SeatBooking.objects.first()
-    serialized_booking = CreateSeatBookingSerialiser(data)
+    CreateSeatBookingSerialiser(data)
 
 
 @pytest.mark.django_db

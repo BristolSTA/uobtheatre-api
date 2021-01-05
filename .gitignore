@@ -112,3 +112,6 @@ media/
 
 # MacOS
 .DS_Store
+
+# Coveralls badge genenration
+.coveralls.yml

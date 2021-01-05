@@ -1,4 +1,4 @@
-from rest_framework import relations, serializers, viewsets
+from rest_framework import relations, serializers
 
 
 class UserIdSerializer(serializers.UUIDField):

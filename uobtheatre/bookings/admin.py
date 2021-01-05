@@ -10,7 +10,6 @@ from uobtheatre.bookings.models import (
     Ticket,
     ValueMiscCost,
 )
-from uobtheatre.productions.models import PerformanceSeatGroup
 
 admin.site.register(ConcessionType)
 admin.site.register(PercentageMiscCost)

@@ -13,7 +13,7 @@
           "warning": "Pyro"
         }
     },
-    
+
     {
         "model": "productions.production",
         "pk": 1,
@@ -26,7 +26,7 @@
           "slug": "example-show"
         }
     },
-    
+
     {
         "model": "productions.performance",
         "pk": 1,

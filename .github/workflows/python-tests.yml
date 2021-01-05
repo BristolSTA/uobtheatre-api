@@ -57,7 +57,7 @@ jobs:
 
     - name: black - formatting
       run: |
-        pipenv run black uobtheatre 
+        pipenv run black uobtheatre
 
     - name: pytest - check tests pass and coverage is above 99%
       run: |
