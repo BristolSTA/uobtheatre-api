@@ -3,9 +3,9 @@ import math
 import uuid
 from typing import List, Tuple
 
-from django.core.validators import NON_FIELD_ERRORS, ValidationError
 from django.db import models
 from django.db.models import Q, UniqueConstraint
+from rest_framework.exceptions import ValidationError
 
 from uobtheatre.productions.models import Performance
 from uobtheatre.users.models import User
@@ -40,6 +40,19 @@ class ValueMiscCost(MiscCost):
     value = models.FloatField()
 
 
+def get_concession_map(requirements: List) -> dict:
+    """
+    Given a list of DiscountRequirements return a dict with the number of each
+    concession type required.
+    """
+    concession_requirements = {}
+    for requirement in requirements:
+        if not requirement.concession_type in concession_requirements.keys():
+            concession_requirements[requirement.concession_type] = 0
+        concession_requirements[requirement.concession_type] += requirement.number
+    return concession_requirements
+
+
 class Discount(models.Model):
     name = models.CharField(max_length=255)
     discount = models.FloatField()
@@ -72,11 +85,7 @@ class Discount(models.Model):
 
         if len(discounts_with_same_requirements) != 0:
             raise ValidationError(
-                {
-                    NON_FIELD_ERRORS: [
-                        f"Discount with given requirements already exists ({','.join(discounts_with_same_requirements_names)})",
-                    ],
-                }
+                f"Discount with given requirements already exists ({','.join(discounts_with_same_requirements_names)})"
             )
 
     def is_single_discount(self):
@@ -87,6 +96,13 @@ class Discount(models.Model):
             sum(requirement.number for requirement in self.discount_requirements.all())
             == 1
         )
+
+    def get_concession_map(self):
+        """
+        Return a map of how many of each concession type are rquired for
+        this discount combination
+        """
+        return get_concession_map(self.discount_requirements.all())
 
     def __str__(self):
         return f"{self.discount * 100}% off for {self.name}"
@@ -124,7 +140,7 @@ def combinations(iterable: List, max_length: int) -> List[Tuple]:
 
 
 class DiscountCombination:
-    def __init__(self, discount_combination):
+    def __init__(self, discount_combination: Tuple[Discount]):
         self.discount_combination = discount_combination
 
     def __eq__(self, obj):
@@ -141,14 +157,11 @@ class DiscountCombination:
         ]
 
     def get_concession_map(self):
-        """Return a map of how many of each concession type are rquired for
-        this discount combination"""
-        concession_requirements = {}
-        for requirement in self.get_requirements():
-            if not requirement.concession_type in concession_requirements.keys():
-                concession_requirements[requirement.concession_type] = 0
-            concession_requirements[requirement.concession_type] += requirement.number
-        return concession_requirements
+        """
+        Return a map of how many of each concession type are rquired for
+        this discount combination
+        """
+        return get_concession_map(self.get_requirements())
 
 
 class Booking(models.Model, TimeStampedMixin):

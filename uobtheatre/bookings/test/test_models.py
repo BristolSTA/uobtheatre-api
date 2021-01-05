@@ -1,5 +1,6 @@
 import pytest
 from django.db.utils import IntegrityError
+from rest_framework.exceptions import ValidationError
 
 from uobtheatre.bookings.models import (
     Booking,
@@ -486,3 +487,23 @@ def test_draft_uniqueness():
     BookingFactory(**args)
     with pytest.raises(IntegrityError):
         BookingFactory(**args)
+
+
+@pytest.mark.django_db
+def test_cannot_create_2_discounts_with_the_same_requirements():
+    dis_1 = DiscountFactory()
+    dis_2 = DiscountFactory()
+
+    requirement_1 = DiscountRequirementFactory(discount=dis_1)
+
+    # Assert when discount 1 has these requirements it is unique
+    dis_1.validate_unique()
+
+    DiscountRequirementFactory(
+        discount=dis_2,
+        concession_type=requirement_1.concession_type,
+        number=requirement_1.number,
+    )
+
+    with pytest.raises(ValidationError):
+        dis_1.validate_unique()
