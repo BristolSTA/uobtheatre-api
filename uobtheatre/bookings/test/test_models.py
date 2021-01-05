@@ -1,6 +1,8 @@
 import pytest
+from django.db.utils import IntegrityError
 
 from uobtheatre.bookings.models import (
+    Booking,
     Discount,
     DiscountCombination,
     DiscountRequirement,
@@ -17,6 +19,7 @@ from uobtheatre.bookings.test.factories import (
     ValueMiscCostFactory,
 )
 from uobtheatre.productions.test.factories import PerformanceFactory
+from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory, VenueFactory
 
 
@@ -462,3 +465,24 @@ def test_total():
     psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
     ticket = TicketFactory(booking=booking, seat_group=psg.seat_group)
     assert ticket.booking.total() == 1520
+
+
+@pytest.mark.django_db
+def test_draft_uniqueness():
+    args = {
+        "user": UserFactory(),
+        "performance": PerformanceFactory(),
+        "status": Booking.BookingStatus.INPROGRESS,
+    }
+
+    # Check that can make more bookings that are no in_progress
+    BookingFactory(
+        status=Booking.BookingStatus.PAID,
+        performance=args["performance"],
+        user=args["user"],
+    )
+
+    # Cannot create 2 booking with in_progress status
+    BookingFactory(**args)
+    with pytest.raises(IntegrityError):
+        BookingFactory(**args)

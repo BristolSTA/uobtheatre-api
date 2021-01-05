@@ -1,4 +1,4 @@
-from rest_framework import viewsets
+from rest_framework import mixins, viewsets
 from rest_framework.permissions import IsAuthenticated
 
 from uobtheatre.bookings.models import Booking
@@ -10,7 +10,14 @@ from uobtheatre.bookings.serializers import (
 from uobtheatre.utils.models import ReadWriteSerializerMixin
 
 
-class BookingViewSet(ReadWriteSerializerMixin, viewsets.ModelViewSet):
+class BookingViewSet(
+    ReadWriteSerializerMixin,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.ListModelMixin,
+    viewsets.GenericViewSet,
+):
     """
     API endpoint that allows Users to see thier bookings.
     """
@@ -19,6 +26,12 @@ class BookingViewSet(ReadWriteSerializerMixin, viewsets.ModelViewSet):
     list_read_serializer_class = BookingListSerialiser
     detail_read_serializer_class = BookingSerialiser
     write_serializer_class = CreateBookingSerialiser
+
+    filter_fields = [
+        "status",
+        "booking_reference",
+        "performance_id",
+    ]
 
     def get_queryset(self):
         user = self.request.user

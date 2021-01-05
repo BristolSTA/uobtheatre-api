@@ -4,6 +4,7 @@ import uuid
 from typing import List, Tuple
 
 from django.db import models
+from django.db.models import Q, UniqueConstraint
 
 from uobtheatre.productions.models import Performance
 from uobtheatre.users.models import User
@@ -123,12 +124,30 @@ class DiscountCombination:
 class Booking(models.Model, TimeStampedMixin):
     """A booking is for one performance and has many tickets"""
 
+    class BookingStatus(models.TextChoices):
+        INPROGRESS = "in_progress", "In Progress"
+        PAID = "paid", "Paid"
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=["status", "performance"],
+                condition=Q(status="in_progress"),
+                name="one_in_progress_booking_per_user_per_performance",
+            )
+        ]
+
     booking_reference = models.UUIDField(default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bookings")
     performance = models.ForeignKey(
         Performance,
         on_delete=models.RESTRICT,
         related_name="bookings",
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=BookingStatus.choices,
+        default=BookingStatus.INPROGRESS,
     )
 
     def __str__(self):
