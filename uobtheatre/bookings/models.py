@@ -1,6 +1,5 @@
 import itertools
 import math
-import uuid
 from typing import List, Tuple
 
 from django.db import models
@@ -137,7 +136,7 @@ class Booking(models.Model, TimeStampedMixin):
             )
         ]
 
-    booking_reference = models.UUIDField(default=uuid.uuid4, editable=False)
+    booking_reference = models.CharField(max_length=12, unique=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bookings")
     performance = models.ForeignKey(
         Performance,

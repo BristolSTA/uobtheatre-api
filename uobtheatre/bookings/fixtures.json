@@ -46,17 +46,17 @@
     {
         "model": "bookings.booking",
         "pk": 1,
-        "fields": {"user": 1, "performance": 1, "status": "IP"}
+        "fields": {"user": 1, "performance": 1, "status": "IP", "booking_reference": "123456789012"}
     },
     {
         "model": "bookings.booking",
         "pk": 2,
-        "fields": {"user": 1, "performance": 1, "status": "IP"}
+        "fields": {"user": 1, "performance": 1, "status": "IP", "booking_reference": "923456789012"}
     },
     {
         "model": "bookings.booking",
         "pk": 3,
-        "fields": {"user": 1, "performance": 1, "status": "P"}
+        "fields": {"user": 1, "performance": 1, "status": "P", "booking_reference": "823456789012"}
     },
     {
         "model": "bookings.ticket",
