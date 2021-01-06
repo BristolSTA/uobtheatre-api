@@ -100,6 +100,7 @@ STATICFILES_FINDERS = (
 
 # Media files
 MEDIA_ROOT = join(os.path.dirname(BASE_DIR), "media")
+BIN_ROOT = join(os.path.dirname(BASE_DIR), "bin")
 MEDIA_URL = "/media/"
 
 TEMPLATES = [
