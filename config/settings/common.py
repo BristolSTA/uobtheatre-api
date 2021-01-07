@@ -63,7 +63,19 @@ SECRET_KEY = os.getenv(
 WSGI_APPLICATION = "config.wsgi.application"
 
 # Email
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+
+## SMTP Email
+# EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+
+## SES Email
+# https://github.com/django-ses/django-ses
+EMAIL_BACKEND = "django_ses.SESBackend"
+
+# Additionally, if you are not using the default AWS region of us-east-1,
+# you need to specify a region, like so:
+AWS_SES_REGION_NAME = "eu-west-2"
+AWS_SES_REGION_ENDPOINT = "email.eu-west-2.amazonaws.com"
+
 
 ADMINS = (("Author", "webmaster@bristolsta.com"),)
 

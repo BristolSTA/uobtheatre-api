@@ -45,6 +45,7 @@ django-autoslug = "*"
 pre-commit = "*"
 coveralls = "*"
 django-url-filter = "*"
+django-ses = "*"
 
 [dev-packages]
 rope = "*"

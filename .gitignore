@@ -115,3 +115,7 @@ media/
 
 # Coveralls badge genenration
 .coveralls.yml
+
+# Bin - For now ignore binaries
+# If no better solution found we will probably need to keep this in the repo
+bin/
