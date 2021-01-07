@@ -3,8 +3,10 @@ import math
 import uuid
 from typing import List, Tuple
 
+from django.core.mail import EmailMultiAlternatives
 from django.db import models
 from django.db.models import Q, UniqueConstraint
+from django.template.loader import get_template
 
 from uobtheatre.productions.models import Performance
 from uobtheatre.users.models import User
@@ -115,7 +117,7 @@ class DiscountCombination:
         this discount combination"""
         concession_requirements = {}
         for requirement in self.get_requirements():
-            if not requirement.concession_type in concession_requirements.keys():
+            if requirement.concession_type not in concession_requirements.keys():
                 concession_requirements[requirement.concession_type] = 0
             concession_requirements[requirement.concession_type] += requirement.number
         return concession_requirements
@@ -157,7 +159,7 @@ class Booking(models.Model, TimeStampedMixin):
         """ Return the number of each type of concession in this booking """
         booking_concessions = {}
         for ticket in self.tickets.all():
-            if not ticket.concession_type in booking_concessions.keys():
+            if ticket.concession_type not in booking_concessions.keys():
                 booking_concessions[ticket.concession_type] = 0
             booking_concessions[ticket.concession_type] += 1
         return booking_concessions
@@ -286,6 +288,24 @@ class Booking(models.Model, TimeStampedMixin):
         The final price of the booking with all dicounts and misc costs applied.
         """
         return math.ceil(self.subtotal() + self.misc_costs_value())
+
+    def send_confermation_email(self):
+
+        plaintext_template = get_template("ticket.txt")
+        html_template = get_template("ticket.html")
+
+        context = {"username": "Jelgar"}
+
+        subject, from_email, to_email = (
+            "hello",
+            '"UOB Theatre" <tickets@uobtheatre.com>',
+            self.user.email,
+        )
+        text_content = plaintext_template.render(context)
+        html_content = html_template.render(context)
+        msg = EmailMultiAlternatives(subject, text_content, from_email, [to_email])
+        msg.attach_alternative(html_content, "text/html")
+        msg.send()
 
 
 class Ticket(models.Model):

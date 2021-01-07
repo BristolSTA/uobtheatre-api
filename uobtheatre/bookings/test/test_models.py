@@ -486,3 +486,9 @@ def test_draft_uniqueness():
     BookingFactory(**args)
     with pytest.raises(IntegrityError):
         BookingFactory(**args)
+
+
+@pytest.mark.django_db
+def test_email():
+    booking = BookingFactory()
+    booking.send_confermation_email()

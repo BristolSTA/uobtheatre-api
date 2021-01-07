@@ -74,3 +74,6 @@ clean-postgres-migrate: ## Apply clean migrations to postgres
 clean-migrations: ## Do the migrations from scratch
 	make clean-app-migrations
 	make clean-postgres-migrate
+
+django-shell: ## Open django shell
+	docker-compose run --rm api python manage.py shell

@@ -45,6 +45,7 @@ router.register(r"bookings", BookingViewSet, basename="Booking")
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("admin/django-ses/", include("django_ses.urls")),
     path("docs/", include_docs_urls(title="UOB Theatre")),
     path("api/v1/", include(router.urls)),
     # Authentication

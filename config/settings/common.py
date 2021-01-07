@@ -30,14 +30,15 @@ INSTALLED_APPS = (
     "rest_framework_extensions",  # Extensions including nested views
     "autoslug",  # Auto slug
     "url_filter",
+    "django_ses",  # For ses dashboard
     # Your apps
+    "uobtheatre",
     "uobtheatre.users",
     "uobtheatre.productions",
     "uobtheatre.utils",
     "uobtheatre.venues",
     "uobtheatre.bookings",
     "uobtheatre.societies",
-    "uobtheatre",
     "uobtheatre.addresses",
 )
 
@@ -165,8 +166,6 @@ AUTHENTICATION_BACKENDS = [
     # `allauth` specific authentication methods, such as login by e-mail
     "allauth.account.auth_backends.AuthenticationBackend",
 ]
-
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
 # Logging
 LOGGING = {

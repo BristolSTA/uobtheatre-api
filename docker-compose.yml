@@ -11,6 +11,8 @@ services:
     restart: on-failure
     environment:
       - DJANGO_SECRET_KEY=local
+    env_file:
+      - .env
     image: web
     build: ./
     command: >

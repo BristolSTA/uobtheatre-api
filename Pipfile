@@ -46,6 +46,7 @@ pre-commit = "*"
 coveralls = "*"
 django-url-filter = "*"
 django-ses = "*"
+django-adminplus = "*"
 
 [dev-packages]
 rope = "*"
