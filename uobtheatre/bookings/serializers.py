@@ -23,12 +23,6 @@ class ConcessionTypeSerializer(serializers.ModelSerializer):
         fields = ("id", "name", "description")
 
 
-class CreateBookingSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Booking
-        fields = "__all__"
-
-
 class MiscCostSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ("name", "description")
@@ -178,9 +172,39 @@ class CreateBookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializ
 
     tickets = CreateTicketSerializer(many=True, required=False)
 
+    def check_ticket_capacities(self, tickets, booking):
+        """
+        Given the json list of tickets. Check there are enough tickets
+        available for the booking. If not return a validation error.
+        """
+        # Get the number of each seat group
+        seat_group_counts = {}
+        for ticket in tickets:
+            seat_group = ticket["seat_group"]
+            seat_group_count = seat_group_counts.get(seat_group)
+            seat_group_counts[seat_group] = (seat_group_count or 0) + 1
+
+        # Check that each seat group has enough capacity
+        for seat_group, number_booked in seat_group_counts.items():
+            seat_group_remaining_capacity = booking.performance.capacity_remaining(
+                seat_group=seat_group
+            )
+            if seat_group_remaining_capacity < number_booked:
+                return serializers.ValidationError(
+                    f"There are only {seat_group_remaining_capacity} seats reamining in {seat_group} but you have booked {number_booked}. Please updated your seat selections and try again."
+                )
+
+        # Also check total capacity
+        if booking.performance.capacity_remaining() < len(tickets):
+            return serializers.ValidationError(
+                f"There are only {booking.performance.capacity_remaining()} seats available for this performance. You attempted to book {len(tickets)}. Please remove some tickets and try again or select a different performance."
+            )
+
     def create(self, validated_data):
+
         # Extract seating bookings from booking
         tickets = validated_data.pop("tickets", [])
+
         # Create the booking
         try:
             booking = Booking.objects.create(
@@ -188,6 +212,14 @@ class CreateBookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializ
             )
         except IntegrityError as excption:
             raise serializers.ValidationError(excption)
+
+        # Check performance has sufficient capacity
+        err = self.check_ticket_capacities(tickets, booking)
+        if err:
+            # If not delete the booking that we just create and raise the
+            # validation error
+            booking.delete()
+            raise err
 
         # Create all the seat bookings
         for ticket in tickets:

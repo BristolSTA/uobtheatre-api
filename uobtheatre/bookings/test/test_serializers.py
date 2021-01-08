@@ -1,4 +1,5 @@
 import pytest
+from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from uobtheatre.bookings.models import Booking, PercentageMiscCost, ValueMiscCost
@@ -179,10 +180,13 @@ def test_booking_serializer_price_break_down(date_format):
 
 
 @pytest.mark.django_db
-def test_create_booking_serializer():
+def test_create_booking_serializer_with_capacity():
     user = UserFactory()
     performance = PerformanceFactory()
-    seat_group = SeatGroupFactory()
+    seat_group = SeatGroupFactory(capacity=1)
+    PerformanceSeatingFactory(
+        seat_group=seat_group, performance=performance, capacity=1
+    )
     concession_type = ConcessionTypeFactory()
     data = {
         "performance_id": performance.id,
@@ -205,6 +209,77 @@ def test_create_booking_serializer():
     data["id"] = created_booking.id
     assert serialized_booking.data == data
     assert str(created_booking.user.id) == str(user.id)
+
+
+@pytest.mark.django_db
+def test_create_booking_serializer_with_insufficient_seat_group_capacity():
+    user = UserFactory()
+    performance = PerformanceFactory()
+    seat_group = SeatGroupFactory()
+    PerformanceSeatingFactory(
+        seat_group=seat_group, performance=performance, capacity=1
+    )
+    concession_type = ConcessionTypeFactory()
+    data = {
+        "performance_id": performance.id,
+        "tickets": [
+            {
+                "seat_group_id": seat_group.id,
+                "concession_type_id": concession_type.id,
+            },
+            {
+                "seat_group_id": seat_group.id,
+                "concession_type_id": concession_type.id,
+            },
+        ],
+    }
+
+    serialized_booking = CreateBookingSerialiser(data=data, context={"user": user})
+    assert serialized_booking.is_valid()
+
+    with pytest.raises(
+        serializers.ValidationError,
+        match=f"There are only 1 seats reamining in {seat_group} but you have booked 2. Please updated your seat selections and try again.",
+    ):
+        serialized_booking.save()
+
+    # Check the booking was not saved
+    assert len(Booking.objects.all()) == 0
+
+
+@pytest.mark.django_db
+def test_create_booking_serializer_with_insufficient_performance_capacity():
+    user = UserFactory()
+    performance = PerformanceFactory(capacity=1)
+    seat_group = SeatGroupFactory()
+    PerformanceSeatingFactory(
+        seat_group=seat_group, performance=performance, capacity=3
+    )
+    concession_type = ConcessionTypeFactory()
+    data = {
+        "performance_id": performance.id,
+        "tickets": [
+            {
+                "seat_group_id": seat_group.id,
+                "concession_type_id": concession_type.id,
+            },
+            {
+                "seat_group_id": seat_group.id,
+                "concession_type_id": concession_type.id,
+            },
+        ],
+    }
+
+    serialized_booking = CreateBookingSerialiser(data=data, context={"user": user})
+    assert serialized_booking.is_valid()
+
+    with pytest.raises(
+        serializers.ValidationError,
+        match="There are only 1 seats available for this performance. You attempted to book 2. Please remove some tickets and try again or select a different performance.",
+    ):
+        serialized_booking.save()
+
+    assert len(Booking.objects.all()) == 0
 
 
 @pytest.mark.django_db

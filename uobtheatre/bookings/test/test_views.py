@@ -5,6 +5,7 @@ from uobtheatre.bookings.serializers import BookingPriceBreakDownSerializer
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
     ConcessionTypeFactory,
+    PerformanceSeatingFactory,
     TicketFactory,
 )
 from uobtheatre.productions.test.factories import PerformanceFactory
@@ -113,8 +114,11 @@ def test_booking_view_post(api_client_flexible):
 
     api_client_flexible.authenticate()
 
-    performance = PerformanceFactory()
+    performance = PerformanceFactory(capacity=12)
     seat_group = SeatGroupFactory()
+    PerformanceSeatingFactory(
+        seat_group=seat_group, performance=performance, capacity=10
+    )
     concession_type = ConcessionTypeFactory()
 
     body = {
@@ -139,30 +143,5 @@ def test_booking_view_post(api_client_flexible):
 
 
 @pytest.mark.django_db
-def test_booking_view_in_progress_unqiueness(api_client_flexible):
-
-    api_client_flexible.authenticate()
-
-    performance = PerformanceFactory()
-    seat_group = SeatGroupFactory()
-    concession_type = ConcessionTypeFactory()
-
-    body = {
-        "performance_id": performance.id,
-        "tickets": [
-            {"seat_group_id": seat_group.id, "concession_type_id": concession_type.id}
-        ],
-    }
-
-    # Create booking at get that created booking
-    response = api_client_flexible.post("/api/v1/bookings/", body, format="json")
-    print(response.json())
-    print(body)
-    assert response.status_code == 201
-
-    created_booking = Booking.objects.first()
-
-    assert str(created_booking.user.id) == str(api_client_flexible.user.id)
-    assert created_booking.performance.id == performance.id
-    assert created_booking.tickets.first().seat_group.id == seat_group.id
-    assert created_booking.tickets.first().concession_type.id == concession_type.id
+def test_booking_view_post_error(api_client_flexible):
+    assert False
