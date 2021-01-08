@@ -61,11 +61,15 @@ class ProductionSerializer(AppendIdSerializerMixin, serializers.ModelSerializer)
 class PerformanceTicketTypesSerializer(serializers.ModelSerializer):
     def to_representation(self, performance):
         return {
+            "capacity_remaining": performance.capacity_remaining(),
             "ticket_types": [
                 {
                     "seat_group": {
                         "name": performance_seat_group.seat_group.name,
                         "id": performance_seat_group.seat_group.id,
+                        "capacity_remaining": performance.capacity_remaining(
+                            performance_seat_group.seat_group
+                        ),
                     },
                     "concession_types": [
                         {
@@ -90,5 +94,5 @@ class PerformanceTicketTypesSerializer(serializers.ModelSerializer):
                 for performance_seat_group in performance.performance_seat_groups.order_by(
                     "id"
                 )
-            ]
+            ],
         }
