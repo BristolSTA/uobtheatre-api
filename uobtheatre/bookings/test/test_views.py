@@ -144,4 +144,38 @@ def test_booking_view_post(api_client_flexible):
 
 @pytest.mark.django_db
 def test_booking_view_post_error(api_client_flexible):
+    api_client_flexible.authenticate()
+
+    performance = PerformanceFactory(capacity=12)
+    seat_group = SeatGroupFactory()
+    PerformanceSeatingFactory(
+        seat_group=seat_group, performance=performance, capacity=10
+    )
+    concession_type = ConcessionTypeFactory()
+
+    body = {
+        "performance_id": performance.id,
+        "tickets": [
+            {"seat_group_id": seat_group.id, "concession_type_id": concession_type.id}
+            for _ in range(11)
+        ],
+    }
+
+    # Create booking at get that created booking
+    response = api_client_flexible.post("/api/v1/bookings/", body, format="json")
+    assert response.status_code == 400
+    assert response.json() == [
+        f"There are only 10 seats reamining in {seat_group.name} but you have booked 11. Please updated your seat selections and try again."
+    ]
+
+
+@pytest.mark.skip(reason="NotImplemented")
+@pytest.mark.django_db
+def test_booking_view_put(api_client_flexible):
+    assert False
+
+
+@pytest.mark.skip(reason="NotImplemented")
+@pytest.mark.django_db
+def test_completed_booking_cannot_be_updated(api_client_flexible):
     assert False
