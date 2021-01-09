@@ -35,12 +35,22 @@ class WarningSerializer(serializers.ModelSerializer):
 
 class PerformanceSerializer(AppendIdSerializerMixin, serializers.ModelSerializer):
     venue = VenueSerializer()
+
+    doors_open = serializers.DateTimeField()
     start = serializers.DateTimeField()
     end = serializers.DateTimeField()
 
     class Meta:
         model = Performance
-        fields = ("id", "production", "venue", "start", "end", "extra_information")
+        fields = (
+            "id",
+            "production",
+            "venue",
+            "doors_open",
+            "start",
+            "end",
+            "extra_information",
+        )
 
 
 class ProductionSerializer(AppendIdSerializerMixin, serializers.ModelSerializer):
