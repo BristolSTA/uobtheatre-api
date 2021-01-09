@@ -65,8 +65,9 @@ class PerformanceTicketTypesSerializer(serializers.ModelSerializer):
             "ticket_types": [
                 {
                     "seat_group": {
-                        "name": performance_seat_group.seat_group.name,
                         "id": performance_seat_group.seat_group.id,
+                        "name": performance_seat_group.seat_group.name,
+                        "description": performance_seat_group.seat_group.description,
                         "capacity_remaining": performance.capacity_remaining(
                             performance_seat_group.seat_group
                         ),

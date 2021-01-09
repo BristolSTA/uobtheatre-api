@@ -186,8 +186,9 @@ def test_performance_ticket_types_serializer():
         "ticket_types": [
             {
                 "seat_group": {
-                    "name": performance_seat_group_1.seat_group.name,
                     "id": performance_seat_group_1.seat_group.id,
+                    "name": performance_seat_group_1.seat_group.name,
+                    "description": performance_seat_group_1.seat_group.description,
                     "capacity_remaining": performance.capacity_remaining(
                         performance_seat_group_1.seat_group
                     ),
@@ -215,8 +216,9 @@ def test_performance_ticket_types_serializer():
             },
             {
                 "seat_group": {
-                    "name": performance_seat_group_2.seat_group.name,
                     "id": performance_seat_group_2.seat_group.id,
+                    "name": performance_seat_group_2.seat_group.name,
+                    "description": performance_seat_group_1.seat_group.description,
                     "capacity_remaining": performance.capacity_remaining(
                         performance_seat_group_2.seat_group
                     ),

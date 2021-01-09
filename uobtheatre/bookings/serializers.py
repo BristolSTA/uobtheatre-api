@@ -219,6 +219,7 @@ class CreateBookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializ
             # If not delete the booking that we just create and raise the
             # validation error
             booking.delete()
+            raise err
         # Create all the seat bookings
         for ticket in tickets:
             Ticket.objects.create(booking=booking, **ticket)
