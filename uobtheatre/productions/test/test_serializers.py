@@ -96,6 +96,7 @@ def test_production_serializer(date_format):
                 "slug": performance.venue.slug,
             },
             "extra_information": performance.extra_information,
+            "doors_open": performance.doors_open.strftime(date_format),
             "start": performance.start.strftime(date_format),
             "end": performance.end.strftime(date_format),
         }
@@ -131,6 +132,7 @@ def test_performance_serializer(date_format):
             "slug": performance.venue.slug,
         },
         "extra_information": performance.extra_information,
+        "doors_open": performance.doors_open.strftime(date_format),
         "start": performance.start.strftime(date_format),
         "end": performance.end.strftime(date_format),
     }
