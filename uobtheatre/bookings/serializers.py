@@ -1,6 +1,5 @@
 import itertools
 
-from django.db.utils import IntegrityError
 from rest_framework import serializers
 
 from uobtheatre.bookings.models import (
@@ -172,7 +171,7 @@ class CreateBookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializ
 
     tickets = CreateTicketSerializer(many=True, required=False)
 
-    def check_ticket_capacities(self, tickets, booking):
+    def _check_ticket_capacities(self, tickets, performance):
         """
         Given the json list of tickets. Check there are enough tickets
         available for the booking. If not return a validation error.
@@ -186,7 +185,7 @@ class CreateBookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializ
 
         # Check that each seat group has enough capacity
         for seat_group, number_booked in seat_group_counts.items():
-            seat_group_remaining_capacity = booking.performance.capacity_remaining(
+            seat_group_remaining_capacity = performance.capacity_remaining(
                 seat_group=seat_group
             )
             if seat_group_remaining_capacity < number_booked:
@@ -195,10 +194,33 @@ class CreateBookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializ
                 )
 
         # Also check total capacity
-        if booking.performance.capacity_remaining() < len(tickets):
+        if performance.capacity_remaining() < len(tickets):
             return serializers.ValidationError(
-                f"There are only {booking.performance.capacity_remaining()} seats available for this performance. You attempted to book {len(tickets)}. Please remove some tickets and try again or select a different performance."
+                f"There are only {performance.capacity_remaining()} seats available for this performance. You attempted to book {len(tickets)}. Please remove some tickets and try again or select a different performance."
             )
+
+    def validate(self, attrs):
+        # If draft booking already exists
+        if (
+            len(
+                Booking.objects.filter(
+                    status=Booking.BookingStatus.INPROGRESS,
+                    performance=attrs.get("performance"),
+                )
+            )
+            != 0
+        ):
+            raise serializers.ValidationError(
+                "A draft booking for this performance already exists"
+            )
+
+        # Check performance has sufficient capacity
+        err = self._check_ticket_capacities(
+            attrs.get("tickets"), attrs.get("performance")
+        )
+        if err:
+            raise err
+        return attrs
 
     def create(self, validated_data):
 
@@ -206,20 +228,8 @@ class CreateBookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializ
         tickets = validated_data.pop("tickets", [])
 
         # Create the booking
-        try:
-            booking = Booking.objects.create(
-                user=self.context["user"], **validated_data
-            )
-        except IntegrityError as excption:
-            raise serializers.ValidationError(excption)
+        booking = Booking.objects.create(user=self.context["user"], **validated_data)
 
-        # Check performance has sufficient capacity
-        err = self.check_ticket_capacities(tickets, booking)
-        if err:
-            # If not delete the booking that we just create and raise the
-            # validation error
-            booking.delete()
-            raise err
         # Create all the seat bookings
         for ticket in tickets:
             Ticket.objects.create(booking=booking, **ticket)
