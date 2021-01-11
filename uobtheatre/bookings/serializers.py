@@ -13,7 +13,8 @@ from uobtheatre.bookings.models import (
 )
 from uobtheatre.productions.serializers import PerformanceSerializer
 from uobtheatre.utils.serializers import AppendIdSerializerMixin, UserIdSerializer
-from uobtheatre.venues.serializers import SeatGroupSerializer
+from uobtheatre.venues.models import SeatGroup
+from uobtheatre.venues.serializers import SeatGroupSerializer, ShortSeatGroupSerializer
 
 
 class ConcessionTypeSerializer(serializers.ModelSerializer):
@@ -157,26 +158,25 @@ class BookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializer):
         return serialized_price_breakdown.data
 
 
-# class CreateTicketSerializer(serializers.ModelSerializer):
-#     seat_group_id = serializers.PrimaryKeyRelatedField(
-#         queryset=SeatGroup.objects.all(), source="seat_group"
-#     )  # TODO reduce queryset to only include those allowed for this performance
-#     concession_type_id = serializers.PrimaryKeyRelatedField(
-#         queryset=ConcessionType.objects.all(), source="concession_type"
-#     )
-#
-#     class Meta:
-#         model = Ticket
-#         fields = (
-#             "seat_group_id",
-#             "concession_type_id",
-#         )
+class CreateTicketSerializer(serializers.ModelSerializer):
+    seat_group_id = serializers.PrimaryKeyRelatedField(
+        queryset=SeatGroup.objects.all(), source="seat_group", write_only=True
+    )  # TODO reduce queryset to only include those allowed for this performance
+    concession_type_id = serializers.PrimaryKeyRelatedField(
+        queryset=ConcessionType.objects.all(),
+        source="concession_type",
+        required=False,
+        write_only=True,
+    )
 
+    seat_group = ShortSeatGroupSerializer(read_only=True)
+    concession_type = ConcessionTypeSerializer(read_only=True)
 
-class CreateTicketSerializer(AppendIdSerializerMixin, serializers.ModelSerializer):
     class Meta:
         model = Ticket
         fields = (
+            "seat_group_id",
+            "concession_type_id",
             "seat_group",
             "concession_type",
         )
@@ -248,6 +248,11 @@ class CreateBookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializ
 
         # Create all the seat bookings
         for ticket in tickets:
+            if not ticket.get("concession_type"):
+                # TODO for now the default concession type is always pk 1 - In
+                # general it should be the adult but we may want this to be set
+                # for each performance.
+                ticket["concession_type"] = ConcessionType.objects.get(pk=1)
             Ticket.objects.create(booking=booking, **ticket)
 
         return booking

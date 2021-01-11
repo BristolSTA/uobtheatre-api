@@ -188,17 +188,15 @@ def test_create_booking_serializer_with_capacity():
         seat_group=seat_group, performance=performance, capacity=1
     )
     concession_type = ConcessionTypeFactory()
-    data = {
+    input_data = {
         "performance_id": performance.id,
         "tickets": [
-            {
-                "seat_group_id": seat_group.id,
-                "concession_type_id": concession_type.id,
-            },
+            {"seat_group_id": seat_group.id, "concession_type_id": concession_type.id},
         ],
     }
-
-    serialized_booking = CreateBookingSerialiser(data=data, context={"user": user})
+    serialized_booking = CreateBookingSerialiser(
+        data=input_data, context={"user": user}
+    )
     assert serialized_booking.is_valid()
 
     serialized_booking.save()
@@ -206,8 +204,25 @@ def test_create_booking_serializer_with_capacity():
     created_booking = Booking.objects.first()
     serialized_booking = CreateBookingSerialiser(created_booking)
 
-    data["id"] = created_booking.id
-    assert serialized_booking.data == data
+    expected_output_data = {
+        "id": created_booking.id,
+        "performance_id": performance.id,
+        "tickets": [
+            {
+                "seat_group": {
+                    "id": seat_group.id,
+                    "name": seat_group.name,
+                    "description": seat_group.description,
+                },
+                "concession_type": {
+                    "id": concession_type.id,
+                    "name": concession_type.name,
+                    "description": concession_type.description,
+                },
+            },
+        ],
+    }
+    assert serialized_booking.data == expected_output_data
     assert str(created_booking.user.id) == str(user.id)
 
 
