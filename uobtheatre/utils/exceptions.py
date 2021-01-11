@@ -4,10 +4,6 @@ from rest_framework.views import exception_handler
 from config.settings.common import FIELD_ERRORS_KEY, NON_FIELD_ERRORS_KEY
 
 
-class UniqunessValidationError(ValidationError):
-    pass
-
-
 def custom_exception_handler(exception, context):
     # Call REST framework's default exception handler first
     response = exception_handler(exception, context)
