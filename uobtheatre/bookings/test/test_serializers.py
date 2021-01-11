@@ -1,7 +1,7 @@
 import pytest
-from rest_framework import serializers
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ErrorDetail
 
+from config.settings.common import NON_FIELD_ERRORS_KEY
 from uobtheatre.bookings.models import Booking, PercentageMiscCost, ValueMiscCost
 from uobtheatre.bookings.serializers import (
     BookingSerialiser,
@@ -235,13 +235,16 @@ def test_create_booking_serializer_with_insufficient_seat_group_capacity():
     }
 
     serialized_booking = CreateBookingSerialiser(data=data, context={"user": user})
-    assert serialized_booking.is_valid()
+    assert not serialized_booking.is_valid()
 
-    with pytest.raises(
-        serializers.ValidationError,
-        match=f"There are only 1 seats reamining in {seat_group} but you have booked 2. Please updated your seat selections and try again.",
-    ):
-        serialized_booking.save()
+    assert serialized_booking.errors == {
+        NON_FIELD_ERRORS_KEY: [
+            ErrorDetail(
+                string=f"There are only 1 seats reamining in {seat_group} but you have booked 2. Please updated your seat selections and try again.",
+                code="invalid",
+            )
+        ],
+    }
 
     # Check the booking was not saved
     assert len(Booking.objects.all()) == 0
@@ -271,20 +274,23 @@ def test_create_booking_serializer_with_insufficient_performance_capacity():
     }
 
     serialized_booking = CreateBookingSerialiser(data=data, context={"user": user})
-    assert serialized_booking.is_valid()
+    assert not serialized_booking.is_valid()
 
-    with pytest.raises(
-        serializers.ValidationError,
-        match="There are only 1 seats available for this performance. You attempted to book 2. Please remove some tickets and try again or select a different performance.",
-    ):
-        serialized_booking.save()
+    assert serialized_booking.errors == {
+        NON_FIELD_ERRORS_KEY: [
+            ErrorDetail(
+                string="There are only 1 seats available for this performance. You attempted to book 2. Please remove some tickets and try again or select a different performance.",
+                code="invalid",
+            )
+        ]
+    }
 
     assert len(Booking.objects.all()) == 0
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "data, is_valid",
+    "data, seat_group_capacity, performance_capacity, is_valid",
     [
         # Check performance is required to create booking
         (
@@ -296,6 +302,8 @@ def test_create_booking_serializer_with_insufficient_performance_capacity():
                     },
                 ],
             },
+            10,
+            10,
             False,
         ),
         # Assert seat group is required for each seat booking
@@ -308,6 +316,8 @@ def test_create_booking_serializer_with_insufficient_performance_capacity():
                     },
                 ],
             },
+            10,
+            10,
             False,
         ),
         # Check concession type is not required (default to adult)
@@ -321,6 +331,8 @@ def test_create_booking_serializer_with_insufficient_performance_capacity():
                     },
                 ],
             },
+            10,
+            10,
             True,
         ),
         # Check seat booking is not required
@@ -328,6 +340,8 @@ def test_create_booking_serializer_with_insufficient_performance_capacity():
             {
                 "performance_id": 1,
             },
+            10,
+            10,
             True,
         ),
         (
@@ -341,15 +355,69 @@ def test_create_booking_serializer_with_insufficient_performance_capacity():
                     },
                 ],
             },
+            10,
+            10,
             True,
+        ),
+        (
+            # Check if there is not enough performance capcaity it is not valid
+            {
+                "performance_id": 1,
+                "tickets": [
+                    {
+                        "seat_group_id": 1,
+                        "concession_type_id": 1,
+                    },
+                    {
+                        "seat_group_id": 1,
+                        "concession_type_id": 1,
+                    },
+                    {
+                        "seat_group_id": 1,
+                        "concession_type_id": 1,
+                    },
+                ],
+            },
+            10,
+            2,
+            False,
+        ),
+        (
+            # Check if there is not enough seat_group capcaity it is not valid
+            {
+                "performance_id": 1,
+                "tickets": [
+                    {
+                        "seat_group_id": 1,
+                        "concession_type_id": 1,
+                    },
+                    {
+                        "seat_group_id": 1,
+                        "concession_type_id": 1,
+                    },
+                    {
+                        "seat_group_id": 1,
+                        "concession_type_id": 1,
+                    },
+                ],
+            },
+            2,
+            10,
+            False,
         ),
     ],
 )
-def test_create_booking_serializer_validation(data, is_valid):
+def test_create_booking_serializer_validation(
+    data, seat_group_capacity, performance_capacity, is_valid
+):
     user = UserFactory(id=1)
-    performance = PerformanceFactory(id=1)
+    performance = PerformanceFactory(id=1, capacity=performance_capacity)
     seat_group = SeatGroupFactory(id=1)
-    concession_type = ConcessionTypeFactory(id=1)
+    ConcessionTypeFactory(id=1)
+
+    PerformanceSeatingFactory(
+        performance=performance, seat_group=seat_group, capacity=seat_group_capacity
+    )
 
     serialized_booking = CreateBookingSerialiser(data=data, context={"user": user})
     assert serialized_booking.is_valid() == is_valid
@@ -440,6 +508,5 @@ def test_draft_uniqueness_serializer_error():
     booking_2 = CreateBookingSerialiser(
         data={"performance_id": performance.id}, context={"user": user}
     )
-    booking_2.is_valid()
-    with pytest.raises(ValidationError):
-        booking_2.save()
+
+    booking_2.is_valid() == False

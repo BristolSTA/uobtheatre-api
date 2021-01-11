@@ -1,5 +1,6 @@
 import pytest
 
+from config.settings.common import FIELD_ERRORS_KEY, NON_FIELD_ERRORS_KEY
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.serializers import BookingPriceBreakDownSerializer
 from uobtheatre.bookings.test.factories import (
@@ -164,9 +165,16 @@ def test_booking_view_post_error(api_client_flexible):
     # Create booking at get that created booking
     response = api_client_flexible.post("/api/v1/bookings/", body, format="json")
     assert response.status_code == 400
-    assert response.json() == [
-        f"There are only 10 seats reamining in {seat_group.name} but you have booked 11. Please updated your seat selections and try again."
-    ]
+    assert response.json() == {
+        "errors": {
+            NON_FIELD_ERRORS_KEY: [
+                f"There are only 10 seats reamining in {seat_group.name} but you have booked 11. Please updated your seat selections and try again."
+            ],
+            FIELD_ERRORS_KEY: [],
+        },
+        "status_code": 400,
+        "error_type": "ValidationError",
+    }
 
 
 @pytest.mark.skip(reason="NotImplemented")

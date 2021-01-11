@@ -236,3 +236,6 @@ REST_FRAMEWORK = {
 SWAGGER_SETTINGS = {
     "DEFAULT_API_URL": "https://api.uobtheatre.com",
 }
+
+NON_FIELD_ERRORS_KEY = "non_field_errors"
+FIELD_ERRORS_KEY = "field_errors"

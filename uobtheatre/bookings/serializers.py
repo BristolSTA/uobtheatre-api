@@ -157,6 +157,22 @@ class BookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializer):
         return serialized_price_breakdown.data
 
 
+# class CreateTicketSerializer(serializers.ModelSerializer):
+#     seat_group_id = serializers.PrimaryKeyRelatedField(
+#         queryset=SeatGroup.objects.all(), source="seat_group"
+#     )  # TODO reduce queryset to only include those allowed for this performance
+#     concession_type_id = serializers.PrimaryKeyRelatedField(
+#         queryset=ConcessionType.objects.all(), source="concession_type"
+#     )
+#
+#     class Meta:
+#         model = Ticket
+#         fields = (
+#             "seat_group_id",
+#             "concession_type_id",
+#         )
+
+
 class CreateTicketSerializer(AppendIdSerializerMixin, serializers.ModelSerializer):
     class Meta:
         model = Ticket
@@ -216,7 +232,7 @@ class CreateBookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializ
 
         # Check performance has sufficient capacity
         err = self._check_ticket_capacities(
-            attrs.get("tickets"), attrs.get("performance")
+            attrs.get("tickets", []), attrs.get("performance")
         )
         if err:
             raise err
