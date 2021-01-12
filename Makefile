@@ -41,7 +41,7 @@ clean: ## Remove all the things
 	docker-compose down --volumes --rmi all || true
 
 test: ## Run unit tests in docker container
-	docker-compose run --rm api pytest --cov uobtheatre --cov-fail-under 99
+	docker-compose run --rm api pytest --cov uobtheatre --cov-fail-under 100
 
 test-v: ## Run verbose unit tests in docker container
 	docker-compose run --rm api coverage run -m pytest -s -vv
@@ -51,7 +51,7 @@ coverage: ## Generate test coverage report
 	docker-compose run --rm api coverage html
 	docker-compose run --rm api coveralls
 
-coverage-nr: ## Generate test coverage report
+coverage-nr: ## Generate test coverage report from last test run
 	docker-compose run --rm api coverage html
 
 black: ## Run verbose unit tests in docker container
