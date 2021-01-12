@@ -54,6 +54,7 @@ def test_booking_view_get_list(api_client_flexible, date_format):
             "slug": booking.performance.venue.slug,
         },
         "extra_information": booking.performance.extra_information,
+        "doors_open": booking.performance.doors_open.strftime(date_format),
         "start": booking.performance.start.strftime(date_format),
         "end": booking.performance.end.strftime(date_format),
     }
@@ -91,6 +92,7 @@ def test_booking_view_get_details(api_client_flexible, date_format):
             "publicly_listed": booking.performance.venue.publicly_listed,
         },
         "extra_information": booking.performance.extra_information,
+        "doors_open": booking.performance.doors_open.strftime(date_format),
         "start": booking.performance.start.strftime(date_format),
         "end": booking.performance.end.strftime(date_format),
     }

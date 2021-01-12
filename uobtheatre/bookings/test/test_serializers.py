@@ -42,6 +42,7 @@ def test_booking_serializer_wo_tickets_misc(date_format):
             "slug": booking.performance.venue.slug,
         },
         "extra_information": booking.performance.extra_information,
+        "doors_open": booking.performance.doors_open.strftime(date_format),
         "start": booking.performance.start.strftime(date_format),
         "end": booking.performance.end.strftime(date_format),
     }

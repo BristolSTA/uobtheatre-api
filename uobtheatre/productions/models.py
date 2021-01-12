@@ -128,6 +128,8 @@ class Performance(models.Model, TimeStampedMixin):
     )
 
     venue = models.ForeignKey(Venue, on_delete=models.SET_NULL, null=True)
+
+    doors_open = models.DateTimeField(null=True)
     start = models.DateTimeField(null=True)
     end = models.DateTimeField(null=True)
 
