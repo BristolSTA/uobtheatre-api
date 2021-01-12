@@ -438,6 +438,48 @@ def test_create_booking_serializer_validation(
     assert serialized_booking.is_valid() == is_valid
 
 
+@pytest.mark.django_db
+def test_create_booking_serializer_seat_group_is_from_performance_validation():
+    user = UserFactory(id=1)
+    performance = PerformanceFactory(id=1, capacity=10)
+    sg_1 = SeatGroupFactory(id=1)
+    sg_2 = SeatGroupFactory(id=2)
+    ConcessionTypeFactory(id=1)
+
+    data = {
+        "performance_id": 1,
+        "tickets": [
+            {
+                "seat_group_id": 1,
+                "concession_type_id": 1,
+            },
+            {
+                "seat_group_id": 2,
+                "concession_type_id": 1,
+            },
+            {
+                "seat_group_id": 1,
+                "concession_type_id": 1,
+            },
+        ],
+    }
+
+    # Notice no PerformanceSeatingFactory for seat_group 1 and 2 is used
+    # because this seat group is not assigned to the show.
+    psf = PerformanceSeatingFactory(performance=performance)
+
+    serialized_booking = CreateBookingSerialiser(data=data, context={"user": user})
+    assert not serialized_booking.is_valid()
+    assert serialized_booking.errors == {
+        "non_field_errors": [
+            ErrorDetail(
+                string=f"You cannot book a seat group that is not assigned to this performance, you have booked {sg_1.name}, {sg_2.name} but the performance only has {psf.seat_group.name}",
+                code="invalid",
+            )
+        ]
+    }
+
+
 @pytest.mark.skip(reason="Need to write this")
 def test_create_seat_booking_serializer():
     SeatBooking()

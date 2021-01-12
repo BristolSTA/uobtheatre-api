@@ -192,12 +192,25 @@ class CreateBookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializ
         Given the json list of tickets. Check there are enough tickets
         available for the booking. If not return a validation error.
         """
+
         # Get the number of each seat group
         seat_group_counts = {}
         for ticket in tickets:
             seat_group = ticket["seat_group"]
             seat_group_count = seat_group_counts.get(seat_group)
             seat_group_counts[seat_group] = (seat_group_count or 0) + 1
+
+        # Check each seat group is in the performance
+        seat_groups_not_in_perfromance = [
+            seat_group.name
+            for seat_group in seat_group_counts.keys()
+            if seat_group not in performance.seat_groups.all()
+        ]
+
+        if len(seat_groups_not_in_perfromance) != 0:
+            return serializers.ValidationError(
+                f"You cannot book a seat group that is not assigned to this performance, you have booked {', '.join(seat_groups_not_in_perfromance)} but the performance only has {', '.join([seat_group.name for seat_group in performance.seat_groups.all()])}"
+            )
 
         # Check that each seat group has enough capacity
         for seat_group, number_booked in seat_group_counts.items():
