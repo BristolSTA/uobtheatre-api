@@ -27,7 +27,7 @@ def custom_exception_handler(exception, context):
     elif isinstance(response.data, list):
         custom_response_data["errors"] = response.data
 
-    elif isinstance(response.data, dict):
+    else:
         custom_response_data["errors"] = [response.data]
 
     # Add status_code and error_type to exception

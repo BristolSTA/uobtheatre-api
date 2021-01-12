@@ -207,6 +207,7 @@ class CreateBookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializ
             if seat_group not in performance.seat_groups.all()
         ]
 
+        # If any of the seat_groups are not assigned to this performance then throw an error
         if len(seat_groups_not_in_perfromance) != 0:
             return serializers.ValidationError(
                 f"You cannot book a seat group that is not assigned to this performance, you have booked {', '.join(seat_groups_not_in_perfromance)} but the performance only has {', '.join([seat_group.name for seat_group in performance.seat_groups.all()])}"
@@ -261,11 +262,6 @@ class CreateBookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializ
 
         # Create all the seat bookings
         for ticket in tickets:
-            if not ticket.get("concession_type"):
-                # TODO for now the default concession type is always pk 1 - In
-                # general it should be the adult but we may want this to be set
-                # for each performance.
-                ticket["concession_type"] = ConcessionType.objects.get(pk=1)
             Ticket.objects.create(booking=booking, **ticket)
 
         return booking

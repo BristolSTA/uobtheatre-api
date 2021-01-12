@@ -466,14 +466,15 @@ def test_create_booking_serializer_seat_group_is_from_performance_validation():
 
     # Notice no PerformanceSeatingFactory for seat_group 1 and 2 is used
     # because this seat group is not assigned to the show.
-    psf = PerformanceSeatingFactory(performance=performance)
+    psf_1 = PerformanceSeatingFactory(performance=performance)
+    psf_2 = PerformanceSeatingFactory(performance=performance)
 
     serialized_booking = CreateBookingSerialiser(data=data, context={"user": user})
     assert not serialized_booking.is_valid()
     assert serialized_booking.errors == {
         "non_field_errors": [
             ErrorDetail(
-                string=f"You cannot book a seat group that is not assigned to this performance, you have booked {sg_1.name}, {sg_2.name} but the performance only has {psf.seat_group.name}",
+                string=f"You cannot book a seat group that is not assigned to this performance, you have booked {sg_1.name}, {sg_2.name} but the performance only has {psf_1.seat_group.name}, {psf_2.seat_group.name}",
                 code="invalid",
             )
         ]

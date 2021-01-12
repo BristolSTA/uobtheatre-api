@@ -217,7 +217,8 @@ class Booking(models.Model, TimeStampedMixin):
             concession_map = discount.get_concession_map()
             for concession_type in concession_map.keys():
                 for _ in range(concession_map[concession_type]):
-                    ticket = next(
+                    # Skipped coverage here as there is no way that the next could not get an item (hopefully)
+                    ticket = next(  # pragma: no cover
                         ticket
                         for ticket in tickets_available_to_discount
                         if ticket.concession_type == concession_type
@@ -295,12 +296,11 @@ class Ticket(models.Model):
         SeatGroup, on_delete=models.RESTRICT, related_name="tickets"
     )
     booking = models.ForeignKey(
-        Booking, on_delete=models.PROTECT, related_name="tickets"
+        Booking, on_delete=models.CASCADE, related_name="tickets"
     )
     concession_type = models.ForeignKey(
         ConcessionType,
-        on_delete=models.SET_NULL,
+        on_delete=models.RESTRICT,
         related_name="seat_bookings",
-        null=True,
     )
     seat = models.ForeignKey(Seat, on_delete=models.RESTRICT, null=True, blank=True)
