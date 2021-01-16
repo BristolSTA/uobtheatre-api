@@ -240,36 +240,6 @@ def test_get_price():
     )
 
 
-@pytest.mark.skip(reason="This needs implementing")
-@pytest.mark.django_db
-def test_graceful_response_to_no_price():
-    venue = VenueFactory()
-    performance = PerformanceFactory(venue=venue)
-    booking = BookingFactory(performance=performance)
-
-    seat_group = SeatGroupFactory(venue=venue)
-
-    """
-    Inorder to set the price of the seat_group the user is about to book we
-    would need to use the PerformanceSeatingFactory as below:
-
-    ```
-    seat_price = PerformanceSeatingFactory(performance=performance)
-    seat_price.seat_groups.set([seat_group])
-    ```
-
-    If we do not do this no price will be found for the booked seat and bad
-    things will happen.
-
-    Most importantly a user should not be able to book a seat if this is the
-    case as that means this seat has not been asigned for the show yet...
-    """
-
-    # Create a seat booking
-    TicketFactory(booking=booking, seat_group=seat_group)
-    assert booking.get_price() == seat_price.price
-
-
 @pytest.mark.django_db
 def test_get_price_with_discount_combination():
     venue = VenueFactory()
