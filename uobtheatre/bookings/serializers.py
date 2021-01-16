@@ -230,20 +230,6 @@ class CreateBookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializ
             )
 
     def validate(self, attrs):
-        # If draft booking already exists
-        if (
-            len(
-                Booking.objects.filter(
-                    status=Booking.BookingStatus.INPROGRESS,
-                    performance=attrs.get("performance"),
-                )
-            )
-            != 0
-        ):
-            raise serializers.ValidationError(
-                "A draft booking for this performance already exists"
-            )
-
         # Check performance has sufficient capacity
         err = self._check_ticket_capacities(
             attrs.get("tickets", []), attrs.get("performance")
@@ -253,6 +239,14 @@ class CreateBookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializ
         return attrs
 
     def create(self, validated_data):
+
+        print("Deleting booking")
+        print(validated_data["performance"])
+        # If draft booking(s) already exists remove the bookings
+        Booking.objects.filter(
+            status=Booking.BookingStatus.INPROGRESS,
+            performance=validated_data["performance"],
+        ).delete()
 
         # Extract seating bookings from booking
         tickets = validated_data.pop("tickets", [])

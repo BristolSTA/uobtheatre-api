@@ -482,11 +482,33 @@ def test_create_booking_serializer_seat_group_is_from_performance_validation():
     }
 
 
-@pytest.mark.skip(reason="Need to write this")
-def test_create_seat_booking_serializer():
-    SeatBooking()
-    data = SeatBooking.objects.first()
-    CreateSeatBookingSerialiser(data)
+@pytest.mark.django_db
+def test_create_seat_booking_serializer_removes_drafts():
+    """
+    Check that when create is called for CreateBookingSerialiser, if there is a
+    draft booking it is removed.
+    """
+    performance = PerformanceFactory()
+    user = UserFactory()
+
+    # Create a draft booking for this performance
+    BookingFactory(status=Booking.BookingStatus.INPROGRESS, performance=performance)
+
+    # Create a completed booking for this performance
+    paid_booking = BookingFactory(
+        status=Booking.BookingStatus.PAID, performance=performance
+    )
+
+    serialized_booking = CreateBookingSerialiser(
+        data={"performance_id": performance.id}, context={"user": user}
+    )
+    assert serialized_booking.is_valid()
+    created_booking = serialized_booking.save()
+
+    # Check only the new serialized booking and paid bookings persist
+    assert Booking.objects.count() == 2
+    assert Booking.objects.first().id == paid_booking.id
+    assert Booking.objects.all()[1].id == created_booking.id
 
 
 @pytest.mark.django_db
