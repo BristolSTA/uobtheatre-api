@@ -158,10 +158,10 @@ class BookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializer):
         return serialized_price_breakdown.data
 
 
-class CreateTicketSerializer(serializers.ModelSerializer):
+class TicketSerializer(serializers.ModelSerializer):
     seat_group_id = serializers.PrimaryKeyRelatedField(
         queryset=SeatGroup.objects.all(), source="seat_group", write_only=True
-    )  # TODO reduce queryset to only include those allowed for this performance
+    )
     concession_type_id = serializers.PrimaryKeyRelatedField(
         queryset=ConcessionType.objects.all(),
         source="concession_type",
@@ -185,7 +185,7 @@ class CreateTicketSerializer(serializers.ModelSerializer):
 class CreateBookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializer):
     """ Booking serializer to create booking """
 
-    tickets = CreateTicketSerializer(many=True, required=False)
+    tickets = TicketSerializer(many=True, required=False)
 
     def _check_ticket_capacities(self, tickets, performance):
         """

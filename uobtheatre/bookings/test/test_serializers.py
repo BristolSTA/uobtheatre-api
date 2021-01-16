@@ -6,9 +6,9 @@ from uobtheatre.bookings.models import Booking, PercentageMiscCost, ValueMiscCos
 from uobtheatre.bookings.serializers import (
     BookingSerialiser,
     CreateBookingSerialiser,
-    CreateTicketSerializer,
     DiscountSerializer,
     PercentageMiscCostSerializer,
+    TicketSerializer,
     ValueMiscCostSerializer,
 )
 from uobtheatre.bookings.test.factories import (
