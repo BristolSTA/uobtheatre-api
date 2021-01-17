@@ -99,7 +99,7 @@ and to run a single test
 docker-compose run --rm api pytest --cov uobtheatre -vv -s uobtheatre/bookings/test/test_views.py -k 'test_name'
 ```
 
-## Packages
+## Packages :package:
 
 When adding a package run 
 
