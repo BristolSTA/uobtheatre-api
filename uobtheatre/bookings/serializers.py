@@ -1,6 +1,5 @@
 import itertools
 
-from django.db.utils import IntegrityError
 from rest_framework import serializers
 
 from uobtheatre.bookings.models import (
@@ -14,19 +13,14 @@ from uobtheatre.bookings.models import (
 )
 from uobtheatre.productions.serializers import PerformanceSerializer
 from uobtheatre.utils.serializers import AppendIdSerializerMixin, UserIdSerializer
-from uobtheatre.venues.serializers import SeatGroupSerializer
+from uobtheatre.venues.models import SeatGroup
+from uobtheatre.venues.serializers import SeatGroupSerializer, ShortSeatGroupSerializer
 
 
 class ConcessionTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConcessionType
         fields = ("id", "name", "description")
-
-
-class CreateBookingSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Booking
-        fields = "__all__"
 
 
 class MiscCostSerializer(serializers.ModelSerializer):
@@ -164,10 +158,25 @@ class BookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializer):
         return serialized_price_breakdown.data
 
 
-class CreateTicketSerializer(AppendIdSerializerMixin, serializers.ModelSerializer):
+class TicketSerializer(serializers.ModelSerializer):
+    seat_group_id = serializers.PrimaryKeyRelatedField(
+        queryset=SeatGroup.objects.all(), source="seat_group", write_only=True
+    )
+    concession_type_id = serializers.PrimaryKeyRelatedField(
+        queryset=ConcessionType.objects.all(),
+        source="concession_type",
+        required=False,
+        write_only=True,
+    )
+
+    seat_group = ShortSeatGroupSerializer(read_only=True)
+    concession_type = ConcessionTypeSerializer(read_only=True)
+
     class Meta:
         model = Ticket
         fields = (
+            "seat_group_id",
+            "concession_type_id",
             "seat_group",
             "concession_type",
         )
@@ -176,18 +185,74 @@ class CreateTicketSerializer(AppendIdSerializerMixin, serializers.ModelSerialize
 class CreateBookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializer):
     """ Booking serializer to create booking """
 
-    tickets = CreateTicketSerializer(many=True, required=False)
+    tickets = TicketSerializer(many=True, required=False)
+
+    def _check_ticket_capacities(self, tickets, performance):
+        """
+        Given the json list of tickets. Check there are enough tickets
+        available for the booking. If not return a validation error.
+        """
+
+        # Get the number of each seat group
+        seat_group_counts = {}
+        for ticket in tickets:
+            seat_group = ticket["seat_group"]
+            seat_group_count = seat_group_counts.get(seat_group)
+            seat_group_counts[seat_group] = (seat_group_count or 0) + 1
+
+        # Check each seat group is in the performance
+        seat_groups_not_in_perfromance = [
+            seat_group.name
+            for seat_group in seat_group_counts.keys()
+            if seat_group not in performance.seat_groups.all()
+        ]
+
+        # If any of the seat_groups are not assigned to this performance then throw an error
+        if len(seat_groups_not_in_perfromance) != 0:
+            return serializers.ValidationError(
+                f"You cannot book a seat group that is not assigned to this performance, you have booked {', '.join(seat_groups_not_in_perfromance)} but the performance only has {', '.join([seat_group.name for seat_group in performance.seat_groups.all()])}"
+            )
+
+        # Check that each seat group has enough capacity
+        for seat_group, number_booked in seat_group_counts.items():
+            seat_group_remaining_capacity = performance.capacity_remaining(
+                seat_group=seat_group
+            )
+            if seat_group_remaining_capacity < number_booked:
+                return serializers.ValidationError(
+                    f"There are only {seat_group_remaining_capacity} seats reamining in {seat_group} but you have booked {number_booked}. Please updated your seat selections and try again."
+                )
+
+        # Also check total capacity
+        if performance.capacity_remaining() < len(tickets):
+            return serializers.ValidationError(
+                f"There are only {performance.capacity_remaining()} seats available for this performance. You attempted to book {len(tickets)}. Please remove some tickets and try again or select a different performance."
+            )
+
+    def validate(self, attrs):
+        # Check performance has sufficient capacity
+        err = self._check_ticket_capacities(
+            attrs.get("tickets", []), attrs.get("performance")
+        )
+        if err:
+            raise err
+        return attrs
 
     def create(self, validated_data):
+
+        print("Deleting booking")
+        print(validated_data["performance"])
+        # If draft booking(s) already exists remove the bookings
+        Booking.objects.filter(
+            status=Booking.BookingStatus.INPROGRESS,
+            performance=validated_data["performance"],
+        ).delete()
+
         # Extract seating bookings from booking
         tickets = validated_data.pop("tickets", [])
+
         # Create the booking
-        try:
-            booking = Booking.objects.create(
-                user=self.context["user"], **validated_data
-            )
-        except IntegrityError as excption:
-            raise serializers.ValidationError(excption)
+        booking = Booking.objects.create(user=self.context["user"], **validated_data)
 
         # Create all the seat bookings
         for ticket in tickets:

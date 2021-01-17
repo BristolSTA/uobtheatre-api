@@ -137,6 +137,8 @@ class Performance(models.Model, TimeStampedMixin):
 
     seat_groups = models.ManyToManyField(SeatGroup, through="PerformanceSeatGroup")
 
+    capacity = models.IntegerField(null=True, blank=True)
+
     def tickets(self, seat_group=None):
         """ Get all tickets for this performance """
         filters = {}
@@ -166,9 +168,17 @@ class Performance(models.Model, TimeStampedMixin):
             return self.total_capacity(seat_group=seat_group) - len(
                 self.tickets(seat_group=seat_group)
             )
-        return sum(
+
+        seat_groups_remaining_capacity = sum(
             self.capacity_remaining(seat_group=performance_seat_group.seat_group)
             for performance_seat_group in self.performance_seat_groups.all()
+        )
+        return (
+            seat_groups_remaining_capacity
+            if not self.capacity
+            else min(
+                self.capacity - len(self.tickets()), seat_groups_remaining_capacity
+            )
         )
 
     def duration(self):

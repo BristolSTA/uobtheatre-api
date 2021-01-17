@@ -1,10 +1,12 @@
 import pytest
 
+from config.settings.common import FIELD_ERRORS_KEY, NON_FIELD_ERRORS_KEY
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.serializers import BookingPriceBreakDownSerializer
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
     ConcessionTypeFactory,
+    PerformanceSeatingFactory,
     TicketFactory,
 )
 from uobtheatre.productions.test.factories import PerformanceFactory
@@ -115,8 +117,11 @@ def test_booking_view_post(api_client_flexible):
 
     api_client_flexible.authenticate()
 
-    performance = PerformanceFactory()
+    performance = PerformanceFactory(capacity=12)
     seat_group = SeatGroupFactory()
+    PerformanceSeatingFactory(
+        seat_group=seat_group, performance=performance, capacity=10
+    )
     concession_type = ConcessionTypeFactory()
 
     body = {
@@ -141,30 +146,46 @@ def test_booking_view_post(api_client_flexible):
 
 
 @pytest.mark.django_db
-def test_booking_view_in_progress_unqiueness(api_client_flexible):
-
+def test_booking_view_post_error(api_client_flexible):
     api_client_flexible.authenticate()
 
-    performance = PerformanceFactory()
+    performance = PerformanceFactory(capacity=12)
     seat_group = SeatGroupFactory()
+    PerformanceSeatingFactory(
+        seat_group=seat_group, performance=performance, capacity=10
+    )
     concession_type = ConcessionTypeFactory()
 
     body = {
         "performance_id": performance.id,
         "tickets": [
             {"seat_group_id": seat_group.id, "concession_type_id": concession_type.id}
+            for _ in range(11)
         ],
     }
 
     # Create booking at get that created booking
     response = api_client_flexible.post("/api/v1/bookings/", body, format="json")
-    print(response.json())
-    print(body)
-    assert response.status_code == 201
+    assert response.status_code == 400
+    assert response.json() == {
+        "errors": {
+            NON_FIELD_ERRORS_KEY: [
+                f"There are only 10 seats reamining in {seat_group.name} but you have booked 11. Please updated your seat selections and try again."
+            ],
+            FIELD_ERRORS_KEY: [],
+        },
+        "status_code": 400,
+        "error_type": "ValidationError",
+    }
 
-    created_booking = Booking.objects.first()
 
-    assert str(created_booking.user.id) == str(api_client_flexible.user.id)
-    assert created_booking.performance.id == performance.id
-    assert created_booking.tickets.first().seat_group.id == seat_group.id
-    assert created_booking.tickets.first().concession_type.id == concession_type.id
+@pytest.mark.skip(reason="NotImplemented")
+@pytest.mark.django_db
+def test_booking_view_put(api_client_flexible):
+    assert False
+
+
+@pytest.mark.skip(reason="NotImplemented")
+@pytest.mark.django_db
+def test_completed_booking_cannot_be_updated(api_client_flexible):
+    assert False

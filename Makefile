@@ -18,8 +18,11 @@ superuser: ## Create a superuser in django
 admin-superuser: ## Create a superuser in django
 	docker-compose run api python manage.py createsuperusernoargs --username admin --password admin --noinput --email 'blank@email.com'
 
+#migrations: ## Make the migrations
+#	docker-compose run --rm --user "$$(id -u):$$(id -g)" api python manage.py makemigrations
+
 migrations: ## Make the migrations
-	docker-compose run --rm --user "$$(id -u):$$(id -g)" api python manage.py makemigrations
+	docker-compose run --rm api python manage.py makemigrations
 
 migrations-without-user: ## Make the migrations without setting the user (the user will probably break windows)
 	docker-compose run --rm api python manage.py makemigrations
@@ -38,15 +41,18 @@ clean: ## Remove all the things
 	docker-compose down --volumes --rmi all || true
 
 test: ## Run unit tests in docker container
-	docker-compose run --rm api pytest --cov uobtheatre --cov-fail-under 99
+	docker-compose run --rm api pytest --cov uobtheatre --cov-fail-under 100
 
 test-v: ## Run verbose unit tests in docker container
 	docker-compose run --rm api coverage run -m pytest -s -vv
 
 coverage: ## Generate test coverage report
-	docker-compose run --rm api coverage html
 	docker-compose run --rm api coverage run --source=uobtheatre -m pytest
+	docker-compose run --rm api coverage html
 	docker-compose run --rm api coveralls
+
+coverage-nr: ## Generate test coverage report from last test run
+	docker-compose run --rm api coverage html
 
 black: ## Run verbose unit tests in docker container
 	docker-compose run --rm api black .

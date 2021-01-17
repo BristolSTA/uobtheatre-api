@@ -7,7 +7,7 @@ from uobtheatre.bookings.serializers import (
     BookingSerialiser,
     CreateBookingSerialiser,
 )
-from uobtheatre.utils.models import ReadWriteSerializerMixin
+from uobtheatre.utils.views import ReadWriteSerializerMixin
 
 
 class BookingViewSet(

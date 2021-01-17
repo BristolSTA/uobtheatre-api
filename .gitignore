@@ -115,3 +115,5 @@ media/
 
 # Coveralls badge genenration
 .coveralls.yml
+
+bin/
