@@ -80,3 +80,6 @@ clean-postgres-migrate: ## Apply clean migrations to postgres
 clean-migrations: ## Do the migrations from scratch
 	make clean-app-migrations
 	make clean-postgres-migrate
+
+mypy: ## Type checking - mypy
+	docker-compose run --rm api mypy uobtheatre

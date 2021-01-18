@@ -14,7 +14,7 @@ from uobtheatre.venues.serializers import VenueSerializer
 
 
 class CrewMemberSerialzier(serializers.ModelSerializer):
-    role = serializers.StringRelatedField()
+    role: serializers.StringRelatedField = serializers.StringRelatedField()
 
     class Meta:
         model = CrewMember
@@ -56,7 +56,7 @@ class PerformanceSerializer(AppendIdSerializerMixin, serializers.ModelSerializer
 class ProductionSerializer(AppendIdSerializerMixin, serializers.ModelSerializer):
     society = SocietySerializer()
     performances = PerformanceSerializer(many=True)
-    warnings = serializers.StringRelatedField(many=True)
+    warnings: serializers.StringRelatedField = serializers.StringRelatedField(many=True)
     crew = CrewMemberSerialzier(many=True)
     cast = CastMemberSerialzier(many=True)
     start_date = serializers.DateTimeField()

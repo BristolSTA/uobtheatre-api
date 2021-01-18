@@ -48,6 +48,9 @@ django-url-filter = "*"
 graphene-django = "*"
 graphene-django-extras = "*"
 snapshottest = "*"
+mypy = "*"
+django-stubs = "*"
+djangorestframework-stubs = "*"
 
 [dev-packages]
 rope = "*"

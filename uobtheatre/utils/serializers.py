@@ -45,7 +45,7 @@ class AppendIdSerializerMixin(object):
     https://gist.github.com/ostcar/eb78515a41ab41d1755b
     """
 
-    serializer_related_field = IdPrimaryKeyRelatedField
+    serializer_related_field: relations.RelatedField = IdPrimaryKeyRelatedField  # type: ignore
 
     def get_fields(self):
         fields = super(AppendIdSerializerMixin, self).get_fields()

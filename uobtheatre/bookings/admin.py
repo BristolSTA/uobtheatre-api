@@ -46,5 +46,6 @@ class BookingAdmin(admin.ModelAdmin):
             "<p> {} </p>", booking.get_best_discount_combination_with_price()[1]
         )
 
-    view_price.short_description = "Price"
-    view_price_with_discount.short_description = "Discounted Price"
+    view_price.short_description = "Price"  # type: ignore
+
+    view_price_with_discount.short_description = "Discounted Price"  # type: ignore
