@@ -1,22 +1,8 @@
 import graphene
 from graphene_django_extras import DjangoFilterListField, DjangoObjectType
 
-from uobtheatre.bookings.models import ConcessionType
+from uobtheatre.bookings.schema import ConcessionTypeType
 from uobtheatre.productions.models import Performance, PerformanceSeatGroup, Production
-
-
-class ConcessionTypeType(DjangoObjectType):
-    class Meta:
-        model = ConcessionType
-
-
-class ConcessionTypeBookingType(graphene.ObjectType):
-    concession = graphene.Field(ConcessionTypeType)
-    price = graphene.Int()
-    price_pounds = graphene.Int()
-
-    def resolve_price_pounds(self, info):
-        return "%.2f" % (self.price / 100)
 
 
 class ProductionType(DjangoObjectType):
@@ -26,6 +12,15 @@ class ProductionType(DjangoObjectType):
             "id": ("exact",),
             "slug": ("exact",),
         }
+
+
+class ConcessionTypeBookingType(graphene.ObjectType):
+    concession = graphene.Field(ConcessionTypeType)
+    price = graphene.Int()
+    price_pounds = graphene.Int()
+
+    def resolve_price_pounds(self, info):
+        return "%.2f" % (self.price / 100)
 
 
 class PerformanceSeatGroupType(DjangoObjectType):

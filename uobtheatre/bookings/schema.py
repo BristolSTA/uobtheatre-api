@@ -1,25 +1,24 @@
 import graphene
-from graphene_django import DjangoObjectType
+from graphene_django_extras import DjangoFilterListField, DjangoObjectType
 
-from uobtheatre.productions.models import Performance, Production
+from uobtheatre.bookings.models import Booking, ConcessionType
 
 
-class ProductionType(DjangoObjectType):
+class ConcessionTypeType(DjangoObjectType):
     class Meta:
-        model = Production
+        model = ConcessionType
 
 
-class PerformanceType(DjangoObjectType):
+class BookingType(DjangoObjectType):
     class Meta:
-        model = Performance
+        model = Booking
 
 
 class Query(graphene.ObjectType):
-    productions = graphene.List(ProductionType)
-    Performances = graphene.List(PerformanceType)
+    bookings = DjangoFilterListField(BookingType)
 
-    def resolve_productions(self, info, **kwargs):
-        return Production.objects.all()
-
-    def resolve_performance(self, info, **kwargs):
-        return Performance.objects.all()
+    def resolve_bookings(self, info):
+        if not info.context.user.is_authentiacted:
+            return Booking.objects.none()
+        else:
+            return Booking.objects.filter(user=info.context.user)
