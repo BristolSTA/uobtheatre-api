@@ -1,10 +1,17 @@
 import pytest
+from graphene.test import Client as GQLClient
 from pytest_factoryboy import register
 from rest_framework.test import APIClient
 
+from uobtheatre.schema import schema
 from uobtheatre.users.test.factories import UserFactory
 
 register(UserFactory)  # fixture is user_factory
+
+
+@pytest.fixture(scope="session")
+def gql_client():
+    return GQLClient(schema)
 
 
 @pytest.fixture(scope="session")
