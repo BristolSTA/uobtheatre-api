@@ -1,5 +1,9 @@
 import graphene
-from graphene_django_extras import DjangoFilterListField, DjangoObjectType
+from graphene_django_extras import (
+    DjangoFilterListField,
+    DjangoListObjectType,
+    DjangoObjectType,
+)
 
 from uobtheatre.bookings.models import Booking, ConcessionType
 
@@ -9,15 +13,17 @@ class ConcessionTypeType(DjangoObjectType):
         model = ConcessionType
 
 
-class BookingType(DjangoObjectType):
+class BookingListType(DjangoListObjectType):
     class Meta:
         model = Booking
+        queryset = Booking.obj
 
 
 class Query(graphene.ObjectType):
-    bookings = DjangoFilterListField(BookingType)
+    bookings = DjangoFilterListField(BookingListType)
 
     def resolve_bookings(self, info):
+        print("Resolving bookings")
         if not info.context.user.is_authentiacted:
             return Booking.objects.none()
         else:
