@@ -28,9 +28,9 @@ class ProductionNode(DjangoObjectType):
 
 
 class ConcessionTypeBookingType(graphene.ObjectType):
-    concession = relay.Node.Field(ConcessionTypeNode)
+    concession = graphene.Field(ConcessionTypeNode)
     price = graphene.Int()
-    price_pounds = graphene.Int()
+    price_pounds = graphene.String()
 
     def resolve_price_pounds(self, info):
         return "%.2f" % (self.price / 100)

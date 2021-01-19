@@ -1,5 +1,12 @@
+import math
+
 import pytest
 
+from uobtheatre.bookings.test.factories import (
+    DiscountFactory,
+    DiscountRequirementFactory,
+    PerformanceSeatingFactory,
+)
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 
 
@@ -185,3 +192,160 @@ def test_performance_blocked_attributes(gql_client, attribute, is_obj):
         response["errors"][0]["message"]
         == f'Cannot query field "{attribute}" on type "PerformanceNode".'
     )
+
+
+@pytest.mark.django_db
+def test_ticket_options(gql_client, gql_id):
+    performance = PerformanceFactory()
+
+    # Create some seat groups for this performance
+    performance_seat_group_1 = PerformanceSeatingFactory(performance=performance)
+    performance_seat_group_2 = PerformanceSeatingFactory(performance=performance)
+
+    # Create a discount
+    discount_1 = DiscountFactory(name="Family", discount=0.2)
+    discount_1.performances.set([performance])
+    discount_requirement_1 = DiscountRequirementFactory(discount=discount_1, number=1)
+
+    # Create a different
+    discount_2 = DiscountFactory(name="Family 2", discount=0.3)
+    discount_2.performances.set([performance])
+    discount_requirement_2 = DiscountRequirementFactory(discount=discount_2, number=1)
+
+    response = gql_client.execute(
+        """
+        {
+          performances {
+            edges {
+              node {
+              	ticketOptions {
+                  capacityRemaining
+                  seatGroup {
+                    id
+                  }
+                  concessionTypes {
+                    price
+                    pricePounds
+                    concession {
+                      id
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        """
+    )
+    assert response == {
+        "data": {
+            "performances": {
+                "edges": [
+                    {
+                        "node": {
+                            "ticketOptions": [
+                                {
+                                    "capacityRemaining": performance.capacity_remaining(
+                                        performance_seat_group_1.seat_group
+                                    ),
+                                    "concessionTypes": [
+                                        {
+                                            "concession": {
+                                                "id": gql_id(
+                                                    discount_requirement_1.concession_type.id,
+                                                    "ConcessionTypeNode",
+                                                ),
+                                            },
+                                            "price": math.ceil(
+                                                0.8 * performance_seat_group_1.price
+                                            ),
+                                            "pricePounds": "%.2f"
+                                            % (
+                                                math.ceil(
+                                                    0.8 * performance_seat_group_1.price
+                                                )
+                                                / 100
+                                            ),
+                                        },
+                                        {
+                                            "concession": {
+                                                "id": gql_id(
+                                                    discount_requirement_2.concession_type.id,
+                                                    "ConcessionTypeNode",
+                                                ),
+                                            },
+                                            "price": math.ceil(
+                                                0.7 * performance_seat_group_1.price
+                                            ),
+                                            "pricePounds": "%.2f"
+                                            % (
+                                                math.ceil(
+                                                    0.7 * performance_seat_group_1.price
+                                                )
+                                                / 100
+                                            ),
+                                        },
+                                    ],
+                                    "seatGroup": {
+                                        "id": gql_id(
+                                            performance_seat_group_1.seat_group.id,
+                                            "SeatGroupNode",
+                                        )
+                                    },
+                                },
+                                {
+                                    "capacityRemaining": performance.capacity_remaining(
+                                        performance_seat_group_2.seat_group
+                                    ),
+                                    "concessionTypes": [
+                                        {
+                                            "concession": {
+                                                "id": gql_id(
+                                                    discount_requirement_1.concession_type.id,
+                                                    "ConcessionTypeNode",
+                                                ),
+                                            },
+                                            "price": math.ceil(
+                                                0.8 * performance_seat_group_2.price
+                                            ),
+                                            "pricePounds": "%.2f"
+                                            % (
+                                                math.ceil(
+                                                    0.8 * performance_seat_group_2.price
+                                                )
+                                                / 100
+                                            ),
+                                        },
+                                        {
+                                            "concession": {
+                                                "id": gql_id(
+                                                    discount_requirement_2.concession_type.id,
+                                                    "ConcessionTypeNode",
+                                                ),
+                                            },
+                                            "price": math.ceil(
+                                                0.7 * performance_seat_group_2.price
+                                            ),
+                                            "pricePounds": "%.2f"
+                                            % (
+                                                math.ceil(
+                                                    0.7 * performance_seat_group_2.price
+                                                )
+                                                / 100
+                                            ),
+                                        },
+                                    ],
+                                    "seatGroup": {
+                                        "id": gql_id(
+                                            performance_seat_group_2.seat_group.id,
+                                            "SeatGroupNode",
+                                        )
+                                    },
+                                },
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+    }
