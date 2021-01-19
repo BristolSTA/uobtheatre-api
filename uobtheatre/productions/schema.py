@@ -58,6 +58,17 @@ class PerformanceType(DjangoObjectType):
         filter_fields = {
             "id": ("exact",),
         }
+        only_fields = (
+            "id",
+            "capacity",
+            "doors_open",
+            "end",
+            "extra_information",
+            "production",
+            "start",
+            "capacity_remaining",
+            "ticket_options",
+        )
 
 
 class Query(graphene.ObjectType):
