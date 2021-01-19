@@ -3,6 +3,11 @@ from graphene import relay
 from graphene_django import DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
 
+from uobtheatre.utils.schema import (
+    GrapheneImageField,
+    GrapheneImageFieldNode,
+    GrapheneImageMixin,
+)
 from uobtheatre.venues.models import SeatGroup, Venue
 
 
@@ -12,7 +17,9 @@ class SeatGroupNode(DjangoObjectType):
         interfaces = (relay.Node,)
 
 
-class VenueNode(DjangoObjectType):
+class VenueNode(GrapheneImageMixin, DjangoObjectType):
+    image = GrapheneImageField(GrapheneImageFieldNode)
+
     class Meta:
         model = Venue
         interfaces = (relay.Node,)

@@ -5,17 +5,17 @@ from graphene_django.filter import DjangoFilterConnectionField
 
 from uobtheatre.bookings.schema import ConcessionTypeNode
 from uobtheatre.productions.models import Performance, PerformanceSeatGroup, Production
+from uobtheatre.utils.schema import (
+    GrapheneImageField,
+    GrapheneImageFieldNode,
+    GrapheneImageMixin,
+)
 
 
-class GrapheneImageField(graphene.ObjectType):
-    url = graphene.String()
-    name = graphene.String()
-
-
-class ProductionNode(DjangoObjectType):
-    cover_image = graphene.Field(GrapheneImageField)
-    featured_image = graphene.Field(GrapheneImageField)
-    poster_image = graphene.Field(GrapheneImageField)
+class ProductionNode(GrapheneImageMixin, DjangoObjectType):
+    cover_image = GrapheneImageField(GrapheneImageFieldNode)
+    featured_image = GrapheneImageField(GrapheneImageFieldNode)
+    poster_image = GrapheneImageField(GrapheneImageFieldNode)
 
     class Meta:
         model = Production
