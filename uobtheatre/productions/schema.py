@@ -1,21 +1,34 @@
 import graphene
-from graphene_django_extras import DjangoFilterListField, DjangoObjectType
+from graphene import relay
+from graphene_django import DjangoObjectType
+from graphene_django.filter import DjangoFilterConnectionField
 
-from uobtheatre.bookings.schema import ConcessionTypeType
+from uobtheatre.bookings.schema import ConcessionTypeNode
 from uobtheatre.productions.models import Performance, PerformanceSeatGroup, Production
 
 
-class ProductionType(DjangoObjectType):
+class GrapheneImageField(graphene.ObjectType):
+    url = graphene.String()
+    name = graphene.String()
+
+
+class ProductionNode(DjangoObjectType):
+    cover_image = graphene.Field(GrapheneImageField)
+    featured_image = graphene.Field(GrapheneImageField)
+    poster_image = graphene.Field(GrapheneImageField)
+
     class Meta:
         model = Production
         filter_fields = {
             "id": ("exact",),
             "slug": ("exact",),
         }
+        fields = "__all__"
+        interfaces = (relay.Node,)
 
 
 class ConcessionTypeBookingType(graphene.ObjectType):
-    concession = graphene.Field(ConcessionTypeType)
+    concession = relay.Node.Field(ConcessionTypeNode)
     price = graphene.Int()
     price_pounds = graphene.Int()
 
@@ -23,7 +36,7 @@ class ConcessionTypeBookingType(graphene.ObjectType):
         return "%.2f" % (self.price / 100)
 
 
-class PerformanceSeatGroupType(DjangoObjectType):
+class PerformanceSeatGroupNode(DjangoObjectType):
     capacity_remaining = graphene.Int()
     concession_types = graphene.List(ConcessionTypeBookingType)
 
@@ -41,11 +54,19 @@ class PerformanceSeatGroupType(DjangoObjectType):
 
     class Meta:
         model = PerformanceSeatGroup
+        fields = (
+            "capacity",
+            "capacity_remaining",
+            "concession_types",
+            "seat_group",
+        )
+        filter_fields = {}
+        interfaces = (relay.Node,)
 
 
-class PerformanceType(DjangoObjectType):
+class PerformanceNode(DjangoObjectType):
     capacity_remaining = graphene.Int()
-    ticket_options = graphene.List(PerformanceSeatGroupType)
+    ticket_options = graphene.List(PerformanceSeatGroupNode)
 
     def resolve_ticket_options(self, info, **kwargs):
         return self.performance_seat_groups.all()
@@ -58,7 +79,7 @@ class PerformanceType(DjangoObjectType):
         filter_fields = {
             "id": ("exact",),
         }
-        only_fields = (
+        fields = (
             "id",
             "capacity",
             "doors_open",
@@ -69,14 +90,12 @@ class PerformanceType(DjangoObjectType):
             "capacity_remaining",
             "ticket_options",
         )
+        interfaces = (relay.Node,)
 
 
 class Query(graphene.ObjectType):
-    productions = DjangoFilterListField(ProductionType)
-    performances = DjangoFilterListField(PerformanceType)
+    production = relay.Node.Field(ProductionNode)
+    productions = DjangoFilterConnectionField(ProductionNode)
 
-    def resolve_productions(self, info, **kwargs):
-        return Production.objects.all()
-
-    def resolve_performances(self, info, **kwargs):
-        return Performance.objects.all()
+    performance = relay.Node.Field(PerformanceNode)
+    performances = DjangoFilterConnectionField(PerformanceNode)

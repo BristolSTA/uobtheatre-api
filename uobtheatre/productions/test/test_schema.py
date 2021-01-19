@@ -4,7 +4,7 @@ from uobtheatre.productions.test.factories import PerformanceFactory, Production
 
 
 @pytest.mark.django_db
-def test_productions_schema(gql_client):
+def test_productions_schema(gql_client, gql_id):
 
     production = ProductionFactory()
     performances = [PerformanceFactory(production=production) for i in range(2)]
@@ -13,18 +13,32 @@ def test_productions_schema(gql_client):
         """
         {
 	  productions {
-            ageRating
-            coverImage
-            description
-            facebookEvent
-            featuredImage
-            id
-            name
-            posterImage
-            slug
-            subtitle
-            performances {
-              id
+            edges {
+              node {
+                ageRating
+                coverImage {
+                  url
+                }
+                description
+                facebookEvent
+                featuredImage {
+                  url
+                }
+                id
+                name
+                posterImage {
+                  url
+                }
+                slug
+                subtitle
+                performances {
+                  edges {
+                    node {
+                      id
+                    }
+                  }
+                }
+              }
             }
           }
         }
@@ -33,23 +47,40 @@ def test_productions_schema(gql_client):
 
     assert response == {
         "data": {
-            "productions": [
-                {
-                    "ageRating": production.age_rating,
-                    "coverImage": production.cover_image,
-                    "description": production.description,
-                    "facebookEvent": production.facebook_event,
-                    "featuredImage": production.featured_image,
-                    "id": str(production.id),
-                    "name": production.name,
-                    "posterImage": production.poster_image,
-                    "slug": production.slug,
-                    "subtitle": production.subtitle,
-                    "performances": [
-                        {"id": str(performance.id)} for performance in performances
-                    ],
-                }
-            ]
+            "productions": {
+                "edges": [
+                    {
+                        "node": {
+                            "ageRating": production.age_rating,
+                            "coverImage": {"url": production.cover_image.url},
+                            "description": production.description,
+                            "facebookEvent": production.facebook_event,
+                            "featuredImage": {
+                                "url": production.featured_image.url,
+                            },
+                            "id": gql_id(production.id, "ProductionNode"),
+                            "name": production.name,
+                            "posterImage": {
+                                "url": production.poster_image.url,
+                            },
+                            "slug": production.slug,
+                            "subtitle": production.subtitle,
+                            "performances": {
+                                "edges": [
+                                    {
+                                        "node": {
+                                            "id": gql_id(
+                                                performance.id, "PerformanceNode"
+                                            )
+                                        }
+                                    }
+                                    for performance in performances
+                                ],
+                            },
+                        }
+                    }
+                ]
+            }
         }
     }
 
@@ -68,7 +99,7 @@ def test_production_by_id(gql_client):
 
 
 @pytest.mark.django_db
-def test_performance_schema(gql_client):
+def test_performance_schema(gql_client, gql_id):
     performances = [PerformanceFactory() for i in range(1)]
 
     response = gql_client.execute(
@@ -98,7 +129,7 @@ def test_performance_schema(gql_client):
                     "doorsOpen": performance.doors_open.isoformat(),
                     "end": performance.end.isoformat(),
                     "extraInformation": performance.extra_information,
-                    "id": str(performance.id),
+                    "id": gql_id(performances.id, "ProductionNode"),
                     "production": {"id": str(performance.production.id)},
                     "start": performance.start.isoformat(),
                     "capacityRemaining": performance.capacity_remaining(),

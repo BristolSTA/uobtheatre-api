@@ -46,7 +46,6 @@ pre-commit = "*"
 coveralls = "*"
 django-url-filter = "*"
 graphene-django = "*"
-graphene-django-extras = "*"
 snapshottest = "*"
 
 [dev-packages]

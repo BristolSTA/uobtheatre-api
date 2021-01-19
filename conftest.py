@@ -1,3 +1,5 @@
+import base64
+
 import pytest
 from graphene.test import Client as GQLClient
 from pytest_factoryboy import register
@@ -60,3 +62,10 @@ def api_client_flexible(api_client, user_factory):
 @pytest.fixture
 def date_format():
     return "%Y-%m-%dT%H:%M:%SZ"
+
+
+@pytest.fixture
+def gql_id():
+    return lambda id, node: base64.b64encode(f"{node}:{id}".encode("ascii")).decode(
+        "utf-8"
+    )
