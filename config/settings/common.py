@@ -30,6 +30,7 @@ INSTALLED_APPS = (
     "rest_framework_extensions",  # Extensions including nested views
     "autoslug",  # Auto slug
     "url_filter",
+    "graphene_django",  # Graphql
     # Your apps
     "uobtheatre.users",
     "uobtheatre.productions",
@@ -239,3 +240,6 @@ SWAGGER_SETTINGS = {
 
 NON_FIELD_ERRORS_KEY = "non_field_errors"
 FIELD_ERRORS_KEY = "field_errors"
+
+# GraphQL
+GRAPHENE = {"SCHEMA": "uobtheatre.schema.schema"}
