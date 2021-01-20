@@ -93,22 +93,52 @@ def test_productions_schema(gql_client, gql_id):
 
 
 @pytest.mark.django_db
-def test_production_by_id(gql_client, gql_id):
-    production = ProductionFactory()
+@pytest.mark.parametrize(
+    "factories, requests",
+    [
+        # slug exact tests
+        (
+            [
+                (ProductionFactory, {"slug": "not-example-show"}),
+                (ProductionFactory, {"slug": "example-show"}),
+            ],
+            [('slug: "example-show"', 1), ('slug: "not-a-thing"', 0)],
+        ),
+        # pk exact test
+        (
+            [
+                (ProductionFactory, {"id": 1}),
+                (ProductionFactory, {"id": 2}),
+            ],
+            [
+                ('id: "UHJvZHVjdGlvbk5vZGU6MQ=="', 1),
+                ('id: "UHJvZHVjdGlvbk5vZGU6Mw=="', 0),
+            ],
+        ),
+    ],
+)
+def test_productions_filter(factories, requests, gql_client):
+    """
+    factories - A list of tuples each tuple cosists of a factory and the
+    parameters to use when calling that factory.
+    requests - A list of tuples which contains a filter string and the number
+    of expected productions to be returned when a query with that filter string
+    is called.
+    """
 
-    query_string = '{ production(id: "%s") { id } }'
+    # Create all the objects with the factories
+    for fact in factories:
+        factory, args = fact
+        factory(**args)
 
-    response = gql_client.execute(query_string % ("NotTheID"))
-    print(response)
-    print(query_string % ("NotTheID"))
-    assert response["data"] == {"production": None}
+    # Test all the requests return the correct number
+    for request in requests:
+        filter_args, expected_number = request
 
-    response = gql_client.execute(
-        query_string % (gql_id(production.id, "ProductionNode"))
-    )
-    assert response["data"] == {
-        "production": {"id": gql_id(production.id, "ProductionNode")}
-    }
+        query_string = "{ productions(" + filter_args + ") { edges { node { id } } } }"
+        response = gql_client.execute(query_string)
+
+        assert len(response["data"]["productions"]["edges"]) == expected_number
 
 
 @pytest.mark.django_db

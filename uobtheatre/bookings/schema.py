@@ -23,6 +23,8 @@ class Query(graphene.ObjectType):
     bookings = DjangoFilterConnectionField(BookingNode)
 
     def resolve_bookings(self, info):
+        # If the user is not authenticated then return none
         if not info.context.user.is_authenticated:
             return Booking.objects.none()
+        # Otherwise return only the user's bookings
         return Booking.objects.filter(user=info.context.user)

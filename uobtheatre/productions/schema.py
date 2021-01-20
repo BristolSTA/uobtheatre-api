@@ -94,8 +94,5 @@ class PerformanceNode(DjangoObjectType):
 
 
 class Query(graphene.ObjectType):
-    production = relay.Node.Field(ProductionNode)
     productions = DjangoFilterConnectionField(ProductionNode)
-
-    performance = relay.Node.Field(PerformanceNode)
     performances = DjangoFilterConnectionField(PerformanceNode)
