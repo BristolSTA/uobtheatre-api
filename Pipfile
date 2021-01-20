@@ -46,11 +46,6 @@ pre-commit = "*"
 coveralls = "*"
 django-url-filter = "*"
 graphene-django = "*"
-graphene-django-extras = "*"
-snapshottest = "*"
-mypy = "*"
-django-stubs = "*"
-djangorestframework-stubs = "*"
 
 [dev-packages]
 rope = "*"
@@ -60,6 +55,9 @@ isort = "*"
 coreapi = "*"
 Pygments = "*"
 coveralls = "*"
+mypy = "*"
+django-stubs = "*"
+djangorestframework-stubs = "*"
 
 [requires]
 python_version = "3.8"

@@ -1,24 +1,33 @@
 import graphene
-from graphene_django_extras import DjangoFilterListField, DjangoObjectType
+from graphene import relay
+from graphene_django import DjangoObjectType
+from graphene_django.filter import DjangoFilterConnectionField
 
 from uobtheatre.bookings.models import Booking, ConcessionType
 
 
-class ConcessionTypeType(DjangoObjectType):
+class ConcessionTypeNode(DjangoObjectType):
     class Meta:
         model = ConcessionType
+        interfaces = (relay.Node,)
 
 
-class BookingType(DjangoObjectType):
+class BookingNode(DjangoObjectType):
     class Meta:
         model = Booking
+        interfaces = (relay.Node,)
+        filter_fields = {
+            "id": ("exact",),
+            "booking_reference": ("exact",),
+        }
 
 
 class Query(graphene.ObjectType):
-    bookings = DjangoFilterListField(BookingType)
+    bookings = DjangoFilterConnectionField(BookingNode)
 
     def resolve_bookings(self, info):
-        if not info.context.user.is_authentiacted:
+        # If the user is not authenticated then return none
+        if not info.context.user.is_authenticated:
             return Booking.objects.none()
-        else:
-            return Booking.objects.filter(user=info.context.user)
+        # Otherwise return only the user's bookings
+        return Booking.objects.filter(user=info.context.user)
