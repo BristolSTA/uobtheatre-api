@@ -23,9 +23,9 @@ class BookingViewSet(
     """
 
     permission_classes = (IsAuthenticated,)
-    list_read_serializer_class = BookingListSerialiser
-    detail_read_serializer_class = BookingSerialiser
-    write_serializer_class = CreateBookingSerialiser
+    list_read_serializer_class = BookingListSerialiser  # type: ignore
+    detail_read_serializer_class = BookingSerialiser  # type: ignore
+    write_serializer_class = CreateBookingSerialiser  # type: ignore
 
     filter_fields = [
         "status",

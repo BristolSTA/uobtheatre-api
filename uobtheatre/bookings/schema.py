@@ -16,7 +16,10 @@ class BookingNode(DjangoObjectType):
     class Meta:
         model = Booking
         interfaces = (relay.Node,)
-        filter_fields = {}
+        filter_fields = {
+            "id": ("exact",),
+            "booking_reference": ("exact",),
+        }
 
 
 class Query(graphene.ObjectType):

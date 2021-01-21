@@ -55,6 +55,9 @@ isort = "*"
 coreapi = "*"
 Pygments = "*"
 coveralls = "*"
+mypy = "*"
+django-stubs = "*"
+djangorestframework-stubs = "*"
 
 [requires]
 python_version = "3.8"

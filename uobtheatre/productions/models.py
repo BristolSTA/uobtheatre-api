@@ -60,7 +60,11 @@ class Production(models.Model, TimeStampedMixin):
         productions (not ended) then it is not upcoming.
         """
         performances = self.performances.all()
-        return any(performance.start > timezone.now() for performance in performances)
+        return any(
+            performance.start > timezone.now()
+            for performance in performances
+            if performance.start
+        )
 
     def end_date(self):
         """

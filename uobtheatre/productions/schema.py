@@ -60,7 +60,7 @@ class PerformanceSeatGroupNode(DjangoObjectType):
             "concession_types",
             "seat_group",
         )
-        filter_fields = {}
+        filter_fields = {}  # type: ignore
         interfaces = (relay.Node,)
 
 

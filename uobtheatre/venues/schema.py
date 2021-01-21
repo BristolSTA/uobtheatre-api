@@ -23,7 +23,9 @@ class VenueNode(GrapheneImageMixin, DjangoObjectType):
     class Meta:
         model = Venue
         interfaces = (relay.Node,)
-        filter_fields = {}
+        filter_fields = {
+            "id": ("exact",),
+        }
 
 
 class Query(graphene.ObjectType):

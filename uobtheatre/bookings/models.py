@@ -1,7 +1,7 @@
 import itertools
 import math
 import uuid
-from typing import List, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from django.db import models
 from django.db.models import Q, UniqueConstraint
@@ -26,6 +26,10 @@ class MiscCost(models.Model):
 
 
 class PercentageMiscCost(MiscCost):
+    """
+    A misc cost defined by its percentage
+    """
+
     percentage = models.FloatField()
 
     def value(self, booking) -> int:
@@ -36,6 +40,10 @@ class PercentageMiscCost(MiscCost):
 
 
 class ValueMiscCost(MiscCost):
+    """
+    A misc cost defined by value
+    """
+
     value = models.FloatField()
 
 
@@ -49,7 +57,7 @@ class Discount(models.Model):
         SeatGroup, on_delete=models.CASCADE, null=True, blank=True
     )
 
-    def is_single_discount(self):
+    def is_single_discount(self) -> bool:
         """
         Retruns True if this discount applys to a single ticket.
         """
@@ -58,7 +66,7 @@ class Discount(models.Model):
             == 1
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.discount * 100}% off for {self.name}"
 
 
@@ -71,7 +79,7 @@ class ConcessionType(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
@@ -83,7 +91,7 @@ class DiscountRequirement(models.Model):
     concession_type = models.ForeignKey(ConcessionType, on_delete=models.CASCADE)
 
 
-def combinations(iterable: List, max_length: int) -> List[Tuple]:
+def combinations(iterable: List, max_length: int) -> Set[Tuple]:
     """ Given a list give all the combinations of that list up to a given length """
 
     return set(
@@ -97,23 +105,23 @@ class DiscountCombination:
     def __init__(self, discount_combination):
         self.discount_combination = discount_combination
 
-    def __eq__(self, obj):
+    def __eq__(self, obj) -> bool:
         return (
             isinstance(obj, DiscountCombination)
             and obj.discount_combination == self.discount_combination
         )
 
-    def get_requirements(self):
+    def get_requirements(self) -> List[DiscountRequirement]:
         return [
             requirement
             for discount in self.discount_combination
             for requirement in discount.discount_requirements.all()
         ]
 
-    def get_concession_map(self):
+    def get_concession_map(self) -> Dict:
         """Return a map of how many of each concession type are rquired for
         this discount combination"""
-        concession_requirements = {}
+        concession_requirements: Dict["ConcessionType", int] = {}
         for requirement in self.get_requirements():
             if not requirement.concession_type in concession_requirements.keys():
                 concession_requirements[requirement.concession_type] = 0
@@ -153,9 +161,9 @@ class Booking(models.Model, TimeStampedMixin):
     def __str__(self):
         return str(self.booking_reference)
 
-    def get_concession_map(self):
+    def get_concession_map(self) -> Dict:
         """ Return the number of each type of concession in this booking """
-        booking_concessions = {}
+        booking_concessions: Dict = {}
         for ticket in self.tickets.all():
             if not ticket.concession_type in booking_concessions.keys():
                 booking_concessions[ticket.concession_type] = 0
@@ -171,7 +179,7 @@ class Booking(models.Model, TimeStampedMixin):
             for requirement in concession_requirements.keys()
         )
 
-    def get_valid_discounts(self) -> List[Discount]:
+    def get_valid_discounts(self) -> List[DiscountCombination]:
         return [
             DiscountCombination(discounts)
             for discounts in combinations(
@@ -233,27 +241,29 @@ class Booking(models.Model, TimeStampedMixin):
         # For each type of concession
         return self.get_price() - discount_total
 
-    def get_best_discount_combination(self):
+    def get_best_discount_combination(self) -> Optional[DiscountCombination]:
         """
         Returns the discount combination applied to the discount to get the
         subtotal. This is the discount combination with the greatest value.
         """
         return self.get_best_discount_combination_with_price()[0]
 
-    def subtotal(self):
+    def subtotal(self) -> float:
         """
         Returns the subtotal of the booking. This is the total value including
         single and group discounts before any misc costs are applied.
         """
         return self.get_best_discount_combination_with_price()[1]
 
-    def get_best_discount_combination_with_price(self):
+    def get_best_discount_combination_with_price(
+        self,
+    ) -> Tuple[Optional[DiscountCombination], float]:
         """
         Returns the discounted price (subtotal) and the discount combination
         used to create that price.
         """
         best_price = self.get_price()
-        best_discount = None
+        best_discount: Optional[DiscountCombination] = None
         for discount_combo in self.get_valid_discounts():
             discount_combo_price = self.get_price_with_discount_combination(
                 discount_combo
@@ -264,13 +274,13 @@ class Booking(models.Model, TimeStampedMixin):
 
         return best_discount, best_price
 
-    def discount_value(self):
+    def discount_value(self) -> float:
         """
         Returns the value of the group discounts applied in pence
         """
         return self.tickets_price() - self.subtotal()
 
-    def misc_costs_value(self):
+    def misc_costs_value(self) -> float:
         """
         Returns the value of the misc costs applied in pence
         """
@@ -282,7 +292,7 @@ class Booking(models.Model, TimeStampedMixin):
         )
         return percentage_misc_costs_value + value_misc_cost_value
 
-    def total(self) -> int:
+    def total(self) -> float:
         """
         The final price of the booking with all dicounts and misc costs applied.
         """
