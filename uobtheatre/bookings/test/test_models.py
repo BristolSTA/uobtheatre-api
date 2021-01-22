@@ -6,6 +6,7 @@ from uobtheatre.bookings.models import (
     Discount,
     DiscountCombination,
     DiscountRequirement,
+    MiscCost,
     combinations,
 )
 from uobtheatre.bookings.test.factories import (
@@ -456,3 +457,26 @@ def test_draft_uniqueness():
     BookingFactory(**args)
     with pytest.raises(IntegrityError):
         BookingFactory(**args)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "value, percentage, error",
+    [(None, None, True), (None, 1, False), (1, None, False), (1, 1, True)],
+)
+def test_misc_cost_constraints(value, percentage, error):
+    """
+    Check a when creating a misc cost you must have either a value or a
+    percentage but not both.
+    """
+    args = {
+        "name": "Some misc cost",
+        "value": value,
+        "percentage": percentage,
+    }
+
+    if not error:
+        MiscCost.objects.create(**args)
+    else:
+        with pytest.raises(IntegrityError):
+            MiscCost.objects.create(**args)

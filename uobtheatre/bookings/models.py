@@ -4,7 +4,6 @@ import uuid
 from typing import Dict, List, Optional, Set, Tuple
 
 from django.db import models
-from django.db.models import Q, UniqueConstraint
 
 from uobtheatre.productions.models import Performance
 from uobtheatre.users.models import User
@@ -23,8 +22,6 @@ class MiscCost(models.Model):
     percentage = models.FloatField(null=True, blank=True)
     value = models.FloatField(null=True, blank=True)
 
-    # TODO add check st value or percentage must not be null
-
     def get_value(self, booking) -> Optional[float]:
         """
         Calculate the value of the misc cost given a booking
@@ -32,6 +29,23 @@ class MiscCost(models.Model):
         if self.percentage:
             return booking.subtotal() * self.percentage
         return self.value
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                name="percentage_or_value_must_be_set_on_misc_cost",
+                check=(
+                    models.Q(
+                        percentage__isnull=True,
+                        value__isnull=False,
+                    )
+                    | models.Q(
+                        percentage__isnull=False,
+                        value__isnull=True,
+                    )
+                ),
+            )
+        ]
 
 
 class Discount(models.Model):
@@ -125,9 +139,9 @@ class Booking(models.Model, TimeStampedMixin):
 
     class Meta:
         constraints = [
-            UniqueConstraint(
+            models.UniqueConstraint(
                 fields=["status", "performance"],
-                condition=Q(status="in_progress"),
+                condition=models.Q(status="in_progress"),
                 name="one_in_progress_booking_per_user_per_performance",
             )
         ]
