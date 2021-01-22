@@ -84,9 +84,15 @@ class PriceBreakdownNode(DjangoObjectType):
         ]
 
     def resolve_misc_costs(self, info):
+        # For some reason the node isnt working for ive had to add all the
+        # values in here.
         return [
             MiscCostNode(
+                misc_cost,
+                name=misc_cost.name,
+                description=misc_cost.description,
                 value=misc_cost.get_value(self),
+                percentage=misc_cost.percentage,
             )
             for misc_cost in MiscCost.objects.all()
         ]
