@@ -7,9 +7,8 @@ from uobtheatre.bookings.models import (
     ConcessionType,
     Discount,
     DiscountRequirement,
-    PercentageMiscCost,
+    MiscCost,
     Ticket,
-    ValueMiscCost,
 )
 from uobtheatre.productions.models import PerformanceSeatGroup
 from uobtheatre.productions.test.factories import PerformanceFactory
@@ -17,26 +16,22 @@ from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory
 
 
-class MiscCostFactory(factory.django.DjangoModelFactory):
+class PercentageMiscCostFactory(factory.django.DjangoModelFactory):
     name = factory.Faker("sentence")
     description = factory.Faker("sentence")
+    percentage = factory.Faker("pyfloat")
 
     class Meta:
-        abstract = True
+        model = MiscCost
 
 
-class PercentageMiscCostFactory(MiscCostFactory):
-    percentage = factory.Faker("pyint")
-
-    class Meta:
-        model = PercentageMiscCost
-
-
-class ValueMiscCostFactory(MiscCostFactory):
+class ValueMiscCostFactory(factory.django.DjangoModelFactory):
+    name = factory.Faker("sentence")
+    description = factory.Faker("sentence")
     value = factory.Faker("pyint")
 
     class Meta:
-        model = ValueMiscCost
+        model = MiscCost
 
 
 class DiscountFactory(factory.django.DjangoModelFactory):

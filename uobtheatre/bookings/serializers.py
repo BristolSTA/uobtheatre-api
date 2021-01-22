@@ -7,9 +7,8 @@ from uobtheatre.bookings.models import (
     ConcessionType,
     Discount,
     DiscountRequirement,
-    PercentageMiscCost,
+    MiscCost,
     Ticket,
-    ValueMiscCost,
 )
 from uobtheatre.productions.serializers import PerformanceSerializer
 from uobtheatre.utils.serializers import AppendIdSerializerMixin, UserIdSerializer
@@ -24,30 +23,16 @@ class ConcessionTypeSerializer(serializers.ModelSerializer):
 
 
 class MiscCostSerializer(serializers.ModelSerializer):
-    class Meta:
-        fields = ("name", "description")
-        abstract = True
-
-
-class ValueMiscCostSerializer(MiscCostSerializer):
-    class Meta:
-        model = ValueMiscCost
-        fields = MiscCostSerializer.Meta.fields + ("value",)
-
-
-class PercentageMiscCostSerializer(MiscCostSerializer):
     value = serializers.SerializerMethodField("get_value")
 
     class Meta:
-        model = PercentageMiscCost
-        fields = MiscCostSerializer.Meta.fields + (
-            "percentage",
-            "value",
-        )
+        model = MiscCost
+        fields = ("name", "description", "value", "percentage")
 
     def get_value(self, misc_cost):
-        booking = self.context.get("booking", None)
-        return misc_cost.value(booking) if booking else None
+        if self.context.get("booking"):
+            return misc_cost.get_value(self.context["booking"])
+        return misc_cost.value
 
 
 class BookingPriceBreakDownSerializer(serializers.ModelSerializer):
@@ -73,18 +58,11 @@ class BookingPriceBreakDownSerializer(serializers.ModelSerializer):
         )
 
     def get_misc_costs(self, booking):
-        return (
-            PercentageMiscCostSerializer(
-                PercentageMiscCost.objects.all(),
-                many=True,
-                context={"booking": booking},
-            ).data
-            + ValueMiscCostSerializer(
-                ValueMiscCost.objects.all(),
-                many=True,
-                context={"booking": booking},
-            ).data
-        )
+        return MiscCostSerializer(
+            MiscCost.objects.all(),
+            many=True,
+            context={"booking": booking},
+        ).data
 
     def get_tickets(self, booking):
         groups = itertools.groupby(

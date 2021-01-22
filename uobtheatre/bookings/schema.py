@@ -86,7 +86,7 @@ class PriceBreakdownNode(DjangoObjectType):
     def resolve_misc_costs(self, info):
         return [
             MiscCostNode(
-                value=misc_cost.value(self),
+                value=misc_cost.get_value(self),
             )
             for misc_cost in MiscCost.objects.all()
         ]

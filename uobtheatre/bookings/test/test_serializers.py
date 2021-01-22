@@ -2,14 +2,13 @@ import pytest
 from rest_framework.exceptions import ErrorDetail
 
 from config.settings.common import NON_FIELD_ERRORS_KEY
-from uobtheatre.bookings.models import Booking, PercentageMiscCost, ValueMiscCost
+from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.serializers import (
     BookingSerialiser,
     CreateBookingSerialiser,
     DiscountSerializer,
-    PercentageMiscCostSerializer,
+    MiscCostSerializer,
     TicketSerializer,
-    ValueMiscCostSerializer,
 )
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
@@ -131,16 +130,12 @@ def test_booking_serializer_price_break_down(date_format):
     percentage_misc_cost = [ValueMiscCostFactory() for _ in range(2)]
 
     def misc_cost_to_dict(misc_cost):
-        misc_cost_expected = {
+        return {
             "name": misc_cost.name,
             "description": misc_cost.description,
-            "value": misc_cost.value
-            if isinstance(misc_cost, ValueMiscCost)
-            else misc_cost.value,
+            "value": misc_cost.get_value(booking),
+            "percentage": misc_cost.percentage,
         }
-        if isinstance(misc_cost, PercentageMiscCost):
-            misc_cost_expected["percentage"] = misc_cost.percentage
-        return misc_cost_expected
 
     misc_cost_expected = list(
         map(misc_cost_to_dict, value_misc_costs + percentage_misc_cost)
@@ -540,19 +535,20 @@ def test_discount_serializer():
 @pytest.mark.django_db
 def test_value_misc_cost_serializer():
     value_misc_cost = ValueMiscCostFactory()
-    serialized_misc_cost = ValueMiscCostSerializer(value_misc_cost)
+    serialized_misc_cost = MiscCostSerializer(value_misc_cost)
 
     assert serialized_misc_cost.data == {
         "name": value_misc_cost.name,
         "description": value_misc_cost.description,
         "value": value_misc_cost.value,
+        "percentage": None,
     }
 
 
 @pytest.mark.django_db
 def test_percentage_misc_cost_serializer():
     percentage_misc_cost = PercentageMiscCostFactory()
-    serialized_misc_cost = PercentageMiscCostSerializer(percentage_misc_cost)
+    serialized_misc_cost = MiscCostSerializer(percentage_misc_cost)
 
     # Test with no booking supplied
     expected = {
@@ -566,10 +562,10 @@ def test_percentage_misc_cost_serializer():
     # Create a booking costing £12
     booking = BookingFactory()
     psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
-    serialized_misc_cost = PercentageMiscCostSerializer(
+    serialized_misc_cost = MiscCostSerializer(
         percentage_misc_cost, context={"booking": booking}
     )
-    expected["value"] = percentage_misc_cost.value(booking)
+    expected["value"] = percentage_misc_cost.get_value(booking)
     assert serialized_misc_cost.data == expected
 
 

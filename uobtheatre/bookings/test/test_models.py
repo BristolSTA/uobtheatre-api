@@ -410,7 +410,7 @@ def test_percentage_misc_cost_value():
     psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
     ticket = TicketFactory(booking=booking, seat_group=psg.seat_group)
 
-    assert misc_cost.value(booking) == 240
+    assert misc_cost.get_value(booking) == 240
 
 
 @pytest.mark.django_db

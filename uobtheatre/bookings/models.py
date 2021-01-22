@@ -20,31 +20,18 @@ class MiscCost(models.Model):
 
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
+    percentage = models.FloatField(null=True, blank=True)
+    value = models.FloatField(null=True, blank=True)
 
-    class Meta:
-        abstract = True
+    # TODO add check st value or percentage must not be null
 
-
-class PercentageMiscCost(MiscCost):
-    """
-    A misc cost defined by its percentage
-    """
-
-    percentage = models.FloatField()
-
-    def value(self, booking) -> int:
+    def get_value(self, booking) -> Optional[float]:
         """
         Calculate the value of the misc cost given a booking
         """
-        return booking.subtotal() * self.percentage
-
-
-class ValueMiscCost(MiscCost):
-    """
-    A misc cost defined by value
-    """
-
-    value = models.FloatField()
+        if self.percentage:
+            return booking.subtotal() * self.percentage
+        return self.value
 
 
 class Discount(models.Model):
@@ -284,13 +271,7 @@ class Booking(models.Model, TimeStampedMixin):
         """
         Returns the value of the misc costs applied in pence
         """
-        percentage_misc_costs_value = sum(
-            misc_cost.value(self) for misc_cost in PercentageMiscCost.objects.all()
-        )
-        value_misc_cost_value = sum(
-            misc_cost.value for misc_cost in ValueMiscCost.objects.all()
-        )
-        return percentage_misc_costs_value + value_misc_cost_value
+        return sum(misc_cost.get_value(self) for misc_cost in MiscCost.objects.all())  # type: ignore
 
     def total(self) -> float:
         """
