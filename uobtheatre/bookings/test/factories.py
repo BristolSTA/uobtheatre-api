@@ -19,7 +19,7 @@ from uobtheatre.venues.test.factories import SeatGroupFactory
 class PercentageMiscCostFactory(factory.django.DjangoModelFactory):
     name = factory.Faker("sentence")
     description = factory.Faker("sentence")
-    percentage = factory.Faker("pyfloat")
+    percentage = factory.Faker("pyfloat", min_value=0, max_value=1)
 
     class Meta:
         model = MiscCost

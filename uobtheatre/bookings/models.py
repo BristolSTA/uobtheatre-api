@@ -7,7 +7,7 @@ from django.db import models
 
 from uobtheatre.productions.models import Performance
 from uobtheatre.users.models import User
-from uobtheatre.utils.models import TimeStampedMixin
+from uobtheatre.utils.models import TimeStampedMixin, validate_percentage
 from uobtheatre.venues.models import Seat, SeatGroup
 
 
@@ -19,16 +19,20 @@ class MiscCost(models.Model):
 
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
-    percentage = models.FloatField(null=True, blank=True)
+    percentage = models.FloatField(
+        null=True, blank=True, validators=[validate_percentage]
+    )
     value = models.FloatField(null=True, blank=True)
 
-    def get_value(self, booking) -> Optional[float]:
+    def get_value(self, booking) -> float:
         """
         Calculate the value of the misc cost given a booking
+        This will always return an value (not optional) as the model is
+        required to either hvae a non null percentage or a non null value
         """
         if self.percentage:
             return booking.subtotal() * self.percentage
-        return self.value
+        return self.value  # type: ignore
 
     class Meta:
         constraints = [
@@ -52,7 +56,9 @@ class Discount(models.Model):
     name = models.CharField(max_length=255)
     discount = models.FloatField()
     performances = models.ManyToManyField(
-        Performance, blank=True, related_name="discounts"
+        Performance,
+        blank=True,
+        related_name="discounts",
     )
     seat_group = models.ForeignKey(
         SeatGroup, on_delete=models.CASCADE, null=True, blank=True
@@ -285,7 +291,7 @@ class Booking(models.Model, TimeStampedMixin):
         """
         Returns the value of the misc costs applied in pence
         """
-        return sum(misc_cost.get_value(self) for misc_cost in MiscCost.objects.all())  # type: ignore
+        return sum(misc_cost.get_value(self) for misc_cost in MiscCost.objects.all())
 
     def total(self) -> float:
         """
