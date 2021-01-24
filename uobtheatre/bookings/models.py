@@ -4,11 +4,10 @@ import uuid
 from typing import Dict, List, Optional, Set, Tuple
 
 from django.db import models
-from django.db.models import Q, UniqueConstraint
 
 from uobtheatre.productions.models import Performance
 from uobtheatre.users.models import User
-from uobtheatre.utils.models import TimeStampedMixin
+from uobtheatre.utils.models import TimeStampedMixin, validate_percentage
 from uobtheatre.venues.models import Seat, SeatGroup
 
 
@@ -20,38 +19,46 @@ class MiscCost(models.Model):
 
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
+    percentage = models.FloatField(
+        null=True, blank=True, validators=[validate_percentage]
+    )
+    value = models.FloatField(null=True, blank=True)
 
-    class Meta:
-        abstract = True
-
-
-class PercentageMiscCost(MiscCost):
-    """
-    A misc cost defined by its percentage
-    """
-
-    percentage = models.FloatField()
-
-    def value(self, booking) -> int:
+    def get_value(self, booking) -> float:
         """
         Calculate the value of the misc cost given a booking
+        This will always return an value (not optional) as the model is
+        required to either hvae a non null percentage or a non null value
         """
-        return booking.subtotal() * self.percentage
+        if self.percentage:
+            return booking.subtotal() * self.percentage
+        return self.value  # type: ignore
 
-
-class ValueMiscCost(MiscCost):
-    """
-    A misc cost defined by value
-    """
-
-    value = models.FloatField()
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                name="percentage_or_value_must_be_set_on_misc_cost",
+                check=(
+                    models.Q(
+                        percentage__isnull=True,
+                        value__isnull=False,
+                    )
+                    | models.Q(
+                        percentage__isnull=False,
+                        value__isnull=True,
+                    )
+                ),
+            )
+        ]
 
 
 class Discount(models.Model):
     name = models.CharField(max_length=255)
     discount = models.FloatField()
     performances = models.ManyToManyField(
-        Performance, blank=True, related_name="discounts"
+        Performance,
+        blank=True,
+        related_name="discounts",
     )
     seat_group = models.ForeignKey(
         SeatGroup, on_delete=models.CASCADE, null=True, blank=True
@@ -138,9 +145,9 @@ class Booking(models.Model, TimeStampedMixin):
 
     class Meta:
         constraints = [
-            UniqueConstraint(
+            models.UniqueConstraint(
                 fields=["status", "performance"],
-                condition=Q(status="in_progress"),
+                condition=models.Q(status="in_progress"),
                 name="one_in_progress_booking_per_user_per_performance",
             )
         ]
@@ -284,13 +291,7 @@ class Booking(models.Model, TimeStampedMixin):
         """
         Returns the value of the misc costs applied in pence
         """
-        percentage_misc_costs_value = sum(
-            misc_cost.value(self) for misc_cost in PercentageMiscCost.objects.all()
-        )
-        value_misc_cost_value = sum(
-            misc_cost.value for misc_cost in ValueMiscCost.objects.all()
-        )
-        return percentage_misc_costs_value + value_misc_cost_value
+        return sum(misc_cost.get_value(self) for misc_cost in MiscCost.objects.all())
 
     def total(self) -> float:
         """

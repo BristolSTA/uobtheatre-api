@@ -6,14 +6,12 @@ from uobtheatre.bookings.models import (
     ConcessionType,
     Discount,
     DiscountRequirement,
-    PercentageMiscCost,
+    MiscCost,
     Ticket,
-    ValueMiscCost,
 )
 
 admin.site.register(ConcessionType)
-admin.site.register(PercentageMiscCost)
-admin.site.register(ValueMiscCost)
+admin.site.register(MiscCost)
 
 
 class DiscountRequirementInline(admin.StackedInline):

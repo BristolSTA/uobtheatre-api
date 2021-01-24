@@ -1,5 +1,15 @@
 [
     {
+        "model": "bookings.misccost",
+        "pk": 1,
+        "fields": {"name": "Theatre improvement levy", "percentage": 0.05}
+    },
+    {
+        "model": "bookings.misccost",
+        "pk": 2,
+        "fields": {"name": "Booking fee", "value": 100}
+    },
+    {
         "model": "bookings.concessiontype",
         "pk": 1,
         "fields": {"name": "Student"}
