@@ -38,7 +38,9 @@ class Production(models.Model, TimeStampedMixin):
     subtitle = models.CharField(max_length=255, null=True)
     description = models.TextField(null=True)
 
-    society = models.ForeignKey(Society, on_delete=models.SET_NULL, null=True)
+    society = models.ForeignKey(
+        Society, on_delete=models.SET_NULL, null=True, related_name="productions"
+    )
 
     poster_image = models.ImageField(null=True)
     featured_image = models.ImageField(null=True)
@@ -131,7 +133,9 @@ class Performance(models.Model, TimeStampedMixin):
         Production, on_delete=models.CASCADE, related_name="performances"
     )
 
-    venue = models.ForeignKey(Venue, on_delete=models.SET_NULL, null=True)
+    venue = models.ForeignKey(
+        Venue, on_delete=models.SET_NULL, null=True, related_name="performances"
+    )
 
     doors_open = models.DateTimeField(null=True)
     start = models.DateTimeField(null=True)

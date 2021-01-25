@@ -1,11 +1,15 @@
 import pytest
 
+from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.venues.test.factories import VenueFactory
 
 
 @pytest.mark.django_db
 def test_venues_schema(gql_client, gql_id):
     venues = [VenueFactory() for i in range(3)]
+    venue_performances = [
+        [PerformanceFactory(venue=venue) for i in range(10)] for venue in venues
+    ]
 
     response = gql_client.execute(
         """
@@ -29,7 +33,7 @@ def test_venues_schema(gql_client, gql_id):
                     }
                   }
                 }
-                performanceSet {
+                performances {
                   edges {
                     node {
                       id
@@ -57,10 +61,21 @@ def test_venues_schema(gql_client, gql_id):
                             "publiclyListed": venue.publicly_listed,
                             "slug": venue.slug,
                             "seatGroups": {"edges": []},
-                            "performanceSet": {"edges": []},
+                            "performances": {
+                                "edges": [
+                                    {
+                                        "node": {
+                                            "id": gql_id(
+                                                performance.id, "PerformanceNode"
+                                            )
+                                        }
+                                    }
+                                    for performance in venue_performances[index]
+                                ]
+                            },
                         }
                     }
-                    for venue in venues
+                    for index, venue in enumerate(venues)
                 ]
             }
         }

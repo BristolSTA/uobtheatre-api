@@ -78,6 +78,7 @@ class PerformanceNode(DjangoObjectType):
         model = Performance
         filter_fields = {
             "id": ("exact",),
+            "start": ("exact", "year__gt"),
         }
         fields = (
             "id",
