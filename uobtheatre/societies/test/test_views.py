@@ -14,7 +14,11 @@ def test_society_view_get(api_client):
         {
             "id": socTest.id,
             "name": socTest.name,
-            "logo": socTest.logo.url if socTest.logo else None,
+            "description": socTest.description,
+            "logo": "http://testserver" + socTest.logo.url if socTest.logo else None,
+            "banner": "http://testserver" + socTest.banner.url
+            if socTest.banner
+            else None,
         },
     ]
 

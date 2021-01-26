@@ -65,7 +65,11 @@ def test_production_serializer(date_format):
         "society": {
             "id": production.society.id,
             "name": production.society.name,
+            "description": production.society.description,
             "logo": production.society.logo.url if production.society.logo else None,
+            "banner": production.society.banner.url
+            if production.society.banner
+            else None,
         },
         "poster_image": production.poster_image.url,
         "featured_image": production.featured_image.url,

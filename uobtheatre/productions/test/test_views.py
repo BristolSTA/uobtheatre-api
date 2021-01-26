@@ -75,7 +75,11 @@ def test_production_view_get(api_client, date_format):
                 "society": {
                     "id": prod1.society.id,
                     "name": prod1.society.name,
+                    "description": prod1.society.description,
                     "logo": prod1.society.logo.url if prod1.society.logo else None,
+                    "banner": prod1.society.banner.url
+                    if prod1.society.banner
+                    else None,
                 },
                 "poster_image": "http://testserver" + prod1.poster_image.url,
                 "featured_image": "http://testserver" + prod1.featured_image.url,
