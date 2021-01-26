@@ -161,6 +161,9 @@ def test_performance_schema(gql_client, gql_id):
                 }
                 start
                 capacityRemaining
+                venue {
+                  id
+                }
               }
             }
           }
@@ -186,6 +189,7 @@ def test_performance_schema(gql_client, gql_id):
                             },
                             "start": performance.start.isoformat(),
                             "capacityRemaining": performance.capacity_remaining(),
+                            "venue": {"id": gql_id(performance.venue.id, "VenueNode")},
                         }
                     }
                     for performance in performances
