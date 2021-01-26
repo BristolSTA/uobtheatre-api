@@ -38,7 +38,9 @@ class Production(models.Model, TimeStampedMixin):
     subtitle = models.CharField(max_length=255, null=True)
     description = models.TextField(null=True)
 
-    society = models.ForeignKey(Society, on_delete=models.SET_NULL, null=True)
+    society = models.ForeignKey(
+        Society, on_delete=models.SET_NULL, null=True, related_name="productions"
+    )
 
     poster_image = models.ImageField(null=True)
     featured_image = models.ImageField(null=True)
@@ -93,6 +95,9 @@ class Production(models.Model, TimeStampedMixin):
             return None
         return min(performance.duration() for performance in performances)
 
+    class Meta:
+        ordering = ["id"]
+
 
 class CastMember(models.Model):
     """Member of production cast"""
@@ -128,10 +133,14 @@ class Performance(models.Model, TimeStampedMixin):
     """
 
     production = models.ForeignKey(
-        Production, on_delete=models.CASCADE, related_name="performances"
+        Production,
+        on_delete=models.CASCADE,
+        related_name="performances",
     )
 
-    venue = models.ForeignKey(Venue, on_delete=models.SET_NULL, null=True)
+    venue = models.ForeignKey(
+        Venue, on_delete=models.SET_NULL, null=True, related_name="performances"
+    )
 
     doors_open = models.DateTimeField(null=True)
     start = models.DateTimeField(null=True)
@@ -238,6 +247,9 @@ class Performance(models.Model, TimeStampedMixin):
         if self.start is None:
             return f"Perforamce of {self.production.name}"
         return f"Perforamce of {self.production.name} at {self.start.strftime('%H:%M')} on {self.start.strftime('%d/%m/%Y')}"
+
+    class Meta:
+        ordering = ["id"]
 
 
 class PerformanceSeatGroup(models.Model):

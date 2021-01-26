@@ -3,25 +3,19 @@ from graphene import relay
 from graphene_django import DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
 
+from uobtheatre.societies.models import Society
 from uobtheatre.utils.schema import (
     GrapheneImageField,
     GrapheneImageFieldNode,
     GrapheneImageMixin,
 )
-from uobtheatre.venues.models import SeatGroup, Venue
 
 
-class SeatGroupNode(DjangoObjectType):
-    class Meta:
-        model = SeatGroup
-        interfaces = (relay.Node,)
-
-
-class VenueNode(GrapheneImageMixin, DjangoObjectType):
-    image = GrapheneImageField(GrapheneImageFieldNode)
+class SocietyNode(GrapheneImageMixin, DjangoObjectType):
+    logo = GrapheneImageField(GrapheneImageFieldNode)
 
     class Meta:
-        model = Venue
+        model = Society
         interfaces = (relay.Node,)
         filter_fields = {
             "id": ("exact",),
@@ -30,7 +24,4 @@ class VenueNode(GrapheneImageMixin, DjangoObjectType):
 
 
 class Query(graphene.ObjectType):
-    venues = DjangoFilterConnectionField(VenueNode)
-
-    def resolve_venues(self, info, **kwargs):
-        return Venue.objects.all()
+    societies = DjangoFilterConnectionField(SocietyNode)

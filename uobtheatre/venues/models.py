@@ -27,6 +27,9 @@ class Venue(models.Model, TimeStampedMixin):
     def __str__(self):
         return self.name
 
+    class Meta:
+        ordering = ["id"]
+
 
 class SeatGroup(models.Model):
     """A seat group is a collection of seats, it can contains many seats or
@@ -43,3 +46,6 @@ class SeatGroup(models.Model):
 
     def __str__(self):
         return self.name or str(self.id)
+
+    class Meta:
+        ordering = ["id"]

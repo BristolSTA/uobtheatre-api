@@ -28,9 +28,9 @@ class MiscCost(models.Model):
         """
         Calculate the value of the misc cost given a booking
         This will always return an value (not optional) as the model is
-        required to either hvae a non null percentage or a non null value
+        required to either have a non null percentage or a non null value
         """
-        if self.percentage:
+        if self.percentage is not None:
             return booking.subtotal() * self.percentage
         return self.value  # type: ignore
 
