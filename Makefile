@@ -18,9 +18,6 @@ superuser: ## Create a superuser in django
 admin-superuser: ## Create a superuser in django
 	docker-compose run api python manage.py createsuperusernoargs --username admin --password admin --noinput --email 'blank@email.com'
 
-migrations-tom: ## Make the migrations
-	docker-compose run --rm --user "$$(id -u):$$(id -g)" api python manage.py makemigrations
-
 migrations: ## Make the migrations
 	docker-compose run --rm api python manage.py makemigrations
 
@@ -79,6 +76,11 @@ clean-postgres-migrate: ## Apply clean migrations to postgres
 
 clean-migrations: ## Do the migrations from scratch
 	make clean-app-migrations
+	make clean-postgres-migrate
+
+clean-migrations-tom: ## Do the migrations from scratch
+	find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
+	docker-compose run --rm --user "$$(id -u):$$(id -g)" api python manage.py makemigrations
 	make clean-postgres-migrate
 
 mypy: ## Type checking - mypy
