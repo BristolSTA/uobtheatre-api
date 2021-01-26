@@ -18,8 +18,8 @@ superuser: ## Create a superuser in django
 admin-superuser: ## Create a superuser in django
 	docker-compose run api python manage.py createsuperusernoargs --username admin --password admin --noinput --email 'blank@email.com'
 
-#migrations: ## Make the migrations
-#	docker-compose run --rm --user "$$(id -u):$$(id -g)" api python manage.py makemigrations
+migrations-tom: ## Make the migrations
+	docker-compose run --rm --user "$$(id -u):$$(id -g)" api python manage.py makemigrations
 
 migrations: ## Make the migrations
 	docker-compose run --rm api python manage.py makemigrations

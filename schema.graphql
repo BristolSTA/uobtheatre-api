@@ -66,6 +66,7 @@ type PageInfo {
 type PerformanceNode implements Node {
   id: ID!
   production: ProductionNode!
+  venue: VenueNode
   doorsOpen: DateTime
   start: DateTime
   end: DateTime
@@ -171,7 +172,9 @@ type SeatGroupNodeEdge {
 type SocietyNode implements Node {
   id: ID!
   name: String!
+  description: String!
   logo: GrapheneImageFieldNode
+  banner: GrapheneImageFieldNode
   productions(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, slug: String): ProductionNodeConnection!
 }
 
