@@ -86,3 +86,7 @@ mypy: ## Type checking - mypy
 
 schema: ## Dumps graphql schema in schema.json
 	docker-compose run --rm api ./manage.py graphql_schema --schema uobtheatre.schema.schema --out schema.graphql
+
+pr: ## Runs everything required (that is not included in precommit) for a pr
+	make schema
+	make test
