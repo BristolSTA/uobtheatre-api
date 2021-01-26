@@ -90,6 +90,7 @@ class PerformanceNode(DjangoObjectType):
             "start",
             "capacity_remaining",
             "ticket_options",
+            "venue",
         )
         interfaces = (relay.Node,)
 
