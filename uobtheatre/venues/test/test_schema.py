@@ -70,7 +70,7 @@ def test_venues_schema(gql_client, gql_id):
                                             "id": gql_id(seat_group.id, "SeatGroupNode")
                                         }
                                     }
-                                    for seat_group in reversed(venue_seat_groups[index])
+                                    for seat_group in venue_seat_groups[index]
                                 ]
                             },
                             "performances": {

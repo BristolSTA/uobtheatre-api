@@ -95,6 +95,9 @@ class Production(models.Model, TimeStampedMixin):
             return None
         return min(performance.duration() for performance in performances)
 
+    class Meta:
+        ordering = ["id"]
+
 
 class CastMember(models.Model):
     """Member of production cast"""
@@ -130,7 +133,9 @@ class Performance(models.Model, TimeStampedMixin):
     """
 
     production = models.ForeignKey(
-        Production, on_delete=models.CASCADE, related_name="performances"
+        Production,
+        on_delete=models.CASCADE,
+        related_name="performances",
     )
 
     venue = models.ForeignKey(
@@ -242,6 +247,9 @@ class Performance(models.Model, TimeStampedMixin):
         if self.start is None:
             return f"Perforamce of {self.production.name}"
         return f"Perforamce of {self.production.name} at {self.start.strftime('%H:%M')} on {self.start.strftime('%d/%m/%Y')}"
+
+    class Meta:
+        ordering = ["id"]
 
 
 class PerformanceSeatGroup(models.Model):

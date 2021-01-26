@@ -54,9 +54,7 @@ def test_societies_schema(gql_client, gql_id):
                                             )
                                         }
                                     }
-                                    for production in reversed(
-                                        society_productions[index]
-                                    )
+                                    for production in society_productions[index]
                                 ]
                             },
                         }
