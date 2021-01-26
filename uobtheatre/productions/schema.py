@@ -7,6 +7,7 @@ from uobtheatre.bookings.schema import ConcessionTypeNode
 from uobtheatre.productions.models import (
     CastMember,
     CrewMember,
+    CrewRole,
     Performance,
     PerformanceSeatGroup,
     Production,
@@ -19,7 +20,15 @@ from uobtheatre.utils.schema import (
 )
 
 
-class CastMemberNode(DjangoObjectType):
+class CrewRoleNode(DjangoObjectType):
+    class Meta:
+        model = CrewRole
+        interfaces = (relay.Node,)
+
+
+class CastMemberNode(GrapheneImageMixin, DjangoObjectType):
+    profile_picture = GrapheneImageField(GrapheneImageFieldNode)
+
     class Meta:
         model = CastMember
         interfaces = (relay.Node,)
@@ -41,6 +50,15 @@ class ProductionNode(GrapheneImageMixin, DjangoObjectType):
     cover_image = GrapheneImageField(GrapheneImageFieldNode)
     featured_image = GrapheneImageField(GrapheneImageFieldNode)
     poster_image = GrapheneImageField(GrapheneImageFieldNode)
+
+    start_date = graphene.DateTime()
+    end_date = graphene.DateTime()
+
+    def resolve_start_date(self, info):
+        return self.start_date()
+
+    def resolve_end_date(self, info):
+        return self.end_date()
 
     class Meta:
         model = Production

@@ -7,7 +7,13 @@ from uobtheatre.bookings.test.factories import (
     DiscountRequirementFactory,
     PerformanceSeatingFactory,
 )
-from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
+from uobtheatre.productions.test.factories import (
+    CastMemberFactory,
+    CrewMemberFactory,
+    PerformanceFactory,
+    ProductionFactory,
+    WarningFactory,
+)
 
 
 @pytest.mark.django_db
@@ -15,6 +21,12 @@ def test_productions_schema(gql_client, gql_id):
 
     production = ProductionFactory()
     performances = [PerformanceFactory(production=production) for i in range(2)]
+
+    warnings = [WarningFactory() for i in range(3)]
+    production.warnings.set(warnings)
+
+    cast = [CastMemberFactory(production=production) for i in range(10)]
+    crew = [CrewMemberFactory(production=production) for i in range(10)]
 
     response = gql_client.execute(
         """
@@ -42,6 +54,46 @@ def test_productions_schema(gql_client, gql_id):
                   edges {
                     node {
                       id
+                    }
+                  }
+                }
+                startDate
+                endDate
+                cast {
+                  edges {
+                    node {
+                      id
+                      name
+                      profilePicture {
+                        url
+                      }
+                      role
+                      production {
+                        id
+                      }
+                    }
+                  }
+                }
+                crew {
+                  edges {
+                    node {
+                      id
+                      name
+                      production {
+                        id
+                      }
+                      role {
+                        id
+                        name
+                      }
+                    }
+                  }
+                }
+                warnings {
+                  edges {
+                    node {
+                      id
+                      warning
                     }
                   }
                 }
@@ -83,6 +135,67 @@ def test_productions_schema(gql_client, gql_id):
                                     }
                                     for performance in performances
                                 ],
+                            },
+                            "startDate": production.start_date().isoformat(),
+                            "endDate": production.end_date().isoformat(),
+                            "cast": {
+                                "edges": [
+                                    {
+                                        "node": {
+                                            "id": gql_id(
+                                                cast_member.id, "CastMemberNode"
+                                            ),
+                                            "name": cast_member.name,
+                                            "profilePicture": {
+                                                "url": cast_member.profile_picture.url
+                                            }
+                                            if cast_member.profile_picture
+                                            else None,
+                                            "role": cast_member.role,
+                                            "production": {
+                                                "id": gql_id(
+                                                    production.id, "ProductionNode"
+                                                )
+                                            },
+                                        }
+                                    }
+                                    for cast_member in cast
+                                ]
+                            },
+                            "crew": {
+                                "edges": [
+                                    {
+                                        "node": {
+                                            "id": gql_id(
+                                                crew_member.id, "CrewMemberNode"
+                                            ),
+                                            "name": crew_member.name,
+                                            "production": {
+                                                "id": gql_id(
+                                                    production.id, "ProductionNode"
+                                                )
+                                            },
+                                            "role": {
+                                                "id": gql_id(
+                                                    crew_member.role.id, "CrewRoleNode"
+                                                ),
+                                                "name": crew_member.role.name,
+                                            },
+                                        }
+                                    }
+                                    for crew_member in crew
+                                ]
+                            },
+                            "warnings": {
+                                "edges": [
+                                    {
+                                        "node": {
+                                            "id": gql_id(warning.id, "WarningNode"),
+                                            "warning": warning.warning,
+                                        }
+                                    }
+                                    for warning in warnings
+                                ]
                             },
                         }
                     }

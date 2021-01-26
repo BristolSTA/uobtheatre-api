@@ -112,18 +112,26 @@ class CastMember(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        ordering = ["id"]
+
 
 class CrewMember(models.Model):
     """Member of production crew"""
 
     name = models.CharField(max_length=255)
-    role = models.ForeignKey(CrewRole, null=True, on_delete=models.SET_NULL)
+    role = models.ForeignKey(
+        CrewRole, null=True, on_delete=models.SET_NULL, related_name="crew_members"
+    )
     production = models.ForeignKey(
         Production, on_delete=models.CASCADE, related_name="crew"
     )
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        ordering = ["id"]
 
 
 class Performance(models.Model, TimeStampedMixin):
