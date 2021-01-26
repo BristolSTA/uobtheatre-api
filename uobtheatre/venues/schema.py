@@ -20,6 +20,13 @@ class SeatGroupNode(DjangoObjectType):
 class VenueNode(GrapheneImageMixin, DjangoObjectType):
     image = GrapheneImageField(GrapheneImageFieldNode)
 
+    # from uobtheatre.productions.schema import ProductionNode
+
+    # productions = DjangoFilterConnectionField(ProductionNode)
+
+    def resolve_productions(self, info):
+        self.productions()
+
     class Meta:
         model = Venue
         interfaces = (relay.Node,)

@@ -4,12 +4,37 @@ from graphene_django import DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
 
 from uobtheatre.bookings.schema import ConcessionTypeNode
-from uobtheatre.productions.models import Performance, PerformanceSeatGroup, Production
+from uobtheatre.productions.models import (
+    CastMember,
+    CrewMember,
+    Performance,
+    PerformanceSeatGroup,
+    Production,
+    Warning,
+)
 from uobtheatre.utils.schema import (
     GrapheneImageField,
     GrapheneImageFieldNode,
     GrapheneImageMixin,
 )
+
+
+class CastMemberNode(DjangoObjectType):
+    class Meta:
+        model = CastMember
+        interfaces = (relay.Node,)
+
+
+class CrewMemberNode(DjangoObjectType):
+    class Meta:
+        model = CrewMember
+        interfaces = (relay.Node,)
+
+
+class WarningNode(DjangoObjectType):
+    class Meta:
+        model = Warning
+        interfaces = (relay.Node,)
 
 
 class ProductionNode(GrapheneImageMixin, DjangoObjectType):
