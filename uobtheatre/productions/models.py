@@ -1,5 +1,6 @@
+import datetime
 import math
-from typing import List
+from typing import List, Optional
 
 from autoslug import AutoSlugField
 from django.db import models
@@ -68,7 +69,7 @@ class Production(models.Model, TimeStampedMixin):
             if performance.start
         )
 
-    def end_date(self):
+    def end_date(self) -> Optional[datetime.datetime]:
         """
         Return when the last performance ends.
         """
@@ -77,7 +78,7 @@ class Production(models.Model, TimeStampedMixin):
             return None
         return max(performance.end for performance in performances)
 
-    def start_date(self):
+    def start_date(self) -> Optional[datetime.datetime]:
         """
         Return when the first performance starts.
         """
@@ -86,7 +87,7 @@ class Production(models.Model, TimeStampedMixin):
             return None
         return min(performance.start for performance in performances)
 
-    def duration(self):
+    def duration(self) -> Optional[datetime.timedelta]:
         """
         Returns the duration of the shortest show as a datetime object.
         """
@@ -202,13 +203,13 @@ class Performance(models.Model, TimeStampedMixin):
             )
         )
 
-    def duration(self):
+    def duration(self) -> datetime.timedelta:
         """
         Returns the duration of the show as a datetime object
         """
         return self.end - self.start
 
-    def get_single_discounts(self):
+    def get_single_discounts(self) -> List["Discount"]:
         """ Returns all discounts that apply to a single ticket """
         return [
             discount

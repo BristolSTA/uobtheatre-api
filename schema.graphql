@@ -25,6 +25,24 @@ enum BookingStatus {
   PAID
 }
 
+type CastMemberNode implements Node {
+  id: ID!
+  name: String!
+  profilePicture: GrapheneImageFieldNode
+  role: String
+  production: ProductionNode!
+}
+
+type CastMemberNodeConnection {
+  pageInfo: PageInfo!
+  edges: [CastMemberNodeEdge]!
+}
+
+type CastMemberNodeEdge {
+  node: CastMemberNode
+  cursor: String!
+}
+
 type ConcessionTypeBookingType {
   concession: ConcessionTypeNode
   price: Int
@@ -35,6 +53,29 @@ type ConcessionTypeNode implements Node {
   id: ID!
   name: String!
   description: String
+}
+
+type CrewMemberNode implements Node {
+  id: ID!
+  name: String!
+  role: CrewRoleNode
+  production: ProductionNode!
+}
+
+type CrewMemberNodeConnection {
+  pageInfo: PageInfo!
+  edges: [CrewMemberNodeEdge]!
+}
+
+type CrewMemberNodeEdge {
+  node: CrewMemberNode
+  cursor: String!
+}
+
+type CrewRoleNode implements Node {
+  id: ID!
+  name: String!
+  crewMembers(offset: Int, before: String, after: String, first: Int, last: Int): CrewMemberNodeConnection!
 }
 
 scalar DateTime
@@ -66,6 +107,7 @@ type PageInfo {
 type PerformanceNode implements Node {
   id: ID!
   production: ProductionNode!
+  venue: VenueNode
   doorsOpen: DateTime
   start: DateTime
   end: DateTime
@@ -125,8 +167,13 @@ type ProductionNode implements Node {
   coverImage: GrapheneImageFieldNode
   ageRating: Int
   facebookEvent: String
+  warnings(offset: Int, before: String, after: String, first: Int, last: Int): WarningNodeConnection!
   slug: String!
+  cast(offset: Int, before: String, after: String, first: Int, last: Int): CastMemberNodeConnection!
+  crew(offset: Int, before: String, after: String, first: Int, last: Int): CrewMemberNodeConnection!
   performances(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, start: DateTime, start_Year_Gt: DateTime): PerformanceNodeConnection!
+  startDate: DateTime
+  endDate: DateTime
 }
 
 type ProductionNodeConnection {
@@ -214,5 +261,21 @@ type VenueNodeConnection {
 
 type VenueNodeEdge {
   node: VenueNode
+  cursor: String!
+}
+
+type WarningNode implements Node {
+  id: ID!
+  warning: String!
+  productionSet(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, slug: String): ProductionNodeConnection!
+}
+
+type WarningNodeConnection {
+  pageInfo: PageInfo!
+  edges: [WarningNodeEdge]!
+}
+
+type WarningNodeEdge {
+  node: WarningNode
   cursor: String!
 }
