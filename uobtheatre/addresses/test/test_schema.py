@@ -5,7 +5,7 @@ from uobtheatre.venues.test.factories import VenueFactory
 
 
 @pytest.mark.django_db
-def test_venues_schema(gql_client, gql_id):
+def test_address_schema(gql_client, gql_id):
     venues = [VenueFactory() for i in range(3)]
 
     response = gql_client.execute(
