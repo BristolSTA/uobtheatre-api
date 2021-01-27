@@ -24,13 +24,6 @@ def test_venues_schema(gql_client, gql_id):
                 name
                 address {
                   id
-                  buildingName
-                  buildingNumber
-                  street
-                  city
-                  postcode
-                  latitude
-                  longitude
                 }
                 internalCapacity
                 description
@@ -70,13 +63,6 @@ def test_venues_schema(gql_client, gql_id):
                             "name": venue.name,
                             "address": {
                                 "id": gql_id(venue.address.id, "AddressNode"),
-                                "buildingName": venue.address.building_name,
-                                "buildingNumber": venue.address.building_number,
-                                "street": venue.address.street,
-                                "city": venue.address.city,
-                                "postcode": venue.address.postcode,
-                                "latitude": float(venue.address.latitude),
-                                "longitude": float(venue.address.longitude),
                             },
                             "internalCapacity": venue.internal_capacity,
                             "description": venue.description,
