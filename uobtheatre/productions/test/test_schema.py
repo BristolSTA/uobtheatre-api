@@ -61,8 +61,8 @@ def test_productions_schema(gql_client, gql_id):
                     }
                   }
                 }
-                startDate
-                endDate
+                start
+                end
                 cast {
                   id
                   name
@@ -137,8 +137,8 @@ def test_productions_schema(gql_client, gql_id):
                                     for performance in performances
                                 ],
                             },
-                            "startDate": production.start_date().isoformat(),
-                            "endDate": production.end_date().isoformat(),
+                            "start": production.start_date().isoformat(),
+                            "end": production.end_date().isoformat(),
                             "cast": [
                                 {
                                     "id": gql_id(cast_member.id, "CastMemberNode"),
@@ -284,6 +284,7 @@ def test_performance_schema(gql_client, gql_id):
                 venue {
                   id
                 }
+                minSeatPrice
               }
             }
           }
@@ -312,6 +313,7 @@ def test_performance_schema(gql_client, gql_id):
                             "start": performance.start.isoformat(),
                             "capacityRemaining": performance.capacity_remaining(),
                             "venue": {"id": gql_id(performance.venue.id, "VenueNode")},
+                            "minSeatPrice": performance.min_seat_price(),
                         }
                     }
                     for performance in performances

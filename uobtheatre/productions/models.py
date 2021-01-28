@@ -285,6 +285,14 @@ class Performance(models.Model, TimeStampedMixin):
         concession_list.sort(key=lambda concession: concession.id)
         return concession_list
 
+    def min_seat_price(self) -> Optional[int]:
+        """
+        Returns the price of the cheapest seat price
+        """
+        return min(
+            (psg.price for psg in self.performance_seat_groups.all()), default=None
+        )
+
     def __str__(self):
         if self.start is None:
             return f"Perforamce of {self.production.name}"

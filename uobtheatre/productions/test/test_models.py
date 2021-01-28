@@ -15,9 +15,9 @@ from uobtheatre.bookings.test.factories import (
 from uobtheatre.productions.test.factories import (
     CastMemberFactory,
     CrewMemberFactory,
-    ProductionTeamMemberFactory,
     PerformanceFactory,
     ProductionFactory,
+    ProductionTeamMemberFactory,
     WarningFactory,
 )
 from uobtheatre.venues.test.factories import SeatGroupFactory
@@ -199,10 +199,12 @@ def test_str_crew_member():
     crew_member = CrewMemberFactory()
     assert str(crew_member) == crew_member.name
 
+
 @pytest.mark.django_db
 def test_str_production_team_memeber():
     production_team_memeber = ProductionTeamMemberFactory()
     assert str(production_team_memeber) == production_team_memeber.name
+
 
 @pytest.mark.django_db
 def test_production_slug_is_unique():
@@ -307,3 +309,14 @@ def test_performance_str(name, start, string):
     performance = PerformanceFactory(production=production, start=start_date)
 
     assert str(performance) == string
+
+
+@pytest.mark.django_db
+def test_performance_min_price():
+
+    performance = PerformanceFactory()
+    PerformanceSeatingFactory(performance=performance, price=30)
+    PerformanceSeatingFactory(performance=performance, price=10)
+    PerformanceSeatingFactory(performance=performance, price=20)
+
+    assert performance.min_seat_price() == 10

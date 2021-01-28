@@ -63,13 +63,13 @@ class ProductionNode(GrapheneImageMixin, DjangoObjectType):
     cast = DjangoListField(CastMemberNode)
     production_team = DjangoListField(ProductionTeamMemberNode)
 
-    start_date = graphene.DateTime()
-    end_date = graphene.DateTime()
+    start = graphene.DateTime()
+    end = graphene.DateTime()
 
-    def resolve_start_date(self, info):
+    def resolve_start(self, info):
         return self.start_date()
 
-    def resolve_end_date(self, info):
+    def resolve_end(self, info):
         return self.end_date()
 
     class Meta:
@@ -122,6 +122,7 @@ class PerformanceSeatGroupNode(DjangoObjectType):
 class PerformanceNode(DjangoObjectType):
     capacity_remaining = graphene.Int()
     ticket_options = graphene.List(PerformanceSeatGroupNode)
+    min_seat_price = graphene.Int()
 
     def resolve_ticket_options(self, info, **kwargs):
         return self.performance_seat_groups.all()
@@ -129,26 +130,16 @@ class PerformanceNode(DjangoObjectType):
     def resolve_capacity_remaining(self, info):
         return self.capacity_remaining()
 
+    def resolve_min_seat_price(self, info):
+        return self.min_seat_price()
+
     class Meta:
         model = Performance
         filter_fields = {
             "id": ("exact",),
             "start": ("exact", "year__gt"),
         }
-        fields = (
-            "id",
-            "capacity",
-            "description",
-            "disabled",
-            "doors_open",
-            "end",
-            "extra_information",
-            "production",
-            "start",
-            "capacity_remaining",
-            "ticket_options",
-            "venue",
-        )
+        exclude = ("performance_seat_groups", "bookings")
         interfaces = (relay.Node,)
 
 
