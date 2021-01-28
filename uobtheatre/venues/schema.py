@@ -1,8 +1,10 @@
 import graphene
 from graphene import relay
 from graphene_django import DjangoObjectType
+from graphene_django.fields import DjangoConnectionField
 from graphene_django.filter import DjangoFilterConnectionField
 
+from uobtheatre.productions.schema import ProductionNode
 from uobtheatre.utils.schema import (
     GrapheneImageField,
     GrapheneImageFieldNode,
@@ -19,13 +21,10 @@ class SeatGroupNode(DjangoObjectType):
 
 class VenueNode(GrapheneImageMixin, DjangoObjectType):
     image = GrapheneImageField(GrapheneImageFieldNode)
-
-    # from uobtheatre.productions.schema import ProductionNode
-
-    # productions = DjangoFilterConnectionField(ProductionNode)
+    productions = DjangoConnectionField(ProductionNode)
 
     def resolve_productions(self, info):
-        self.productions()
+        return self.get_productions()
 
     class Meta:
         model = Venue

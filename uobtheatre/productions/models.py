@@ -69,7 +69,7 @@ class Production(models.Model, TimeStampedMixin):
             if performance.start
         )
 
-    def end_date(self) -> Optional[datetime.datetime]:
+    def end_date(self):
         """
         Return when the last performance ends.
         """
@@ -78,7 +78,7 @@ class Production(models.Model, TimeStampedMixin):
             return None
         return max(performance.end for performance in performances)
 
-    def start_date(self) -> Optional[datetime.datetime]:
+    def start_date(self):
         """
         Return when the first performance starts.
         """
@@ -203,13 +203,13 @@ class Performance(models.Model, TimeStampedMixin):
             )
         )
 
-    def duration(self) -> datetime.timedelta:
+    def duration(self):
         """
         Returns the duration of the show as a datetime object
         """
         return self.end - self.start
 
-    def get_single_discounts(self) -> List["Discount"]:
+    def get_single_discounts(self) -> List:
         """ Returns all discounts that apply to a single ticket """
         return [
             discount

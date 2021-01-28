@@ -24,8 +24,12 @@ class Venue(models.Model, TimeStampedMixin):
 
     slug = AutoSlugField(populate_from="name", unique=True, blank=True)
 
-    def productions(self):
-        return list(set(production for production in self.performances.all()))
+    def get_productions(self):
+        productions = list(
+            set(performance.production for performance in self.performances.all())
+        )
+        productions.sort(key=lambda prod: prod.id)
+        return productions
 
     def __str__(self):
         return self.name

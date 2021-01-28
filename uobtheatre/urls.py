@@ -17,6 +17,8 @@ from uobtheatre.societies.views import SocietyViewSet
 from uobtheatre.users.views import UserCreateViewSet, UserViewSet
 from uobtheatre.venues.views import VenueViewSet
 
+# GraphQLView.graphiql_template = "graphene_graphiql_explorer/graphiql.html"
+
 # Documentation setup
 schema_view = get_schema_view(
     openapi.Info(

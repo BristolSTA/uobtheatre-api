@@ -43,6 +43,13 @@ def test_venues_schema(gql_client, gql_id):
                     }
                   }
                 }
+                productions {
+                  edges {
+                    node {
+                      id
+                    }
+                  }
+                }
               }
             }
           }
@@ -83,6 +90,18 @@ def test_venues_schema(gql_client, gql_id):
                                         }
                                     }
                                     for performance in venue_performances[index]
+                                ]
+                            },
+                            "productions": {
+                                "edges": [
+                                    {
+                                        "node": {
+                                            "id": gql_id(
+                                                production.id, "ProductionNode"
+                                            )
+                                        }
+                                    }
+                                    for production in venue.get_productions()
                                 ]
                             },
                         }
