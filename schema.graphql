@@ -83,9 +83,20 @@ type CrewMemberNodeEdge {
   cursor: String!
 }
 
+enum CrewRoleDepartment {
+  LIGHTING
+  SOUND
+  AV
+  STAGE_MANAGEMENT
+  PRYO
+  SET
+  MISC
+}
+
 type CrewRoleNode implements Node {
   id: ID!
   name: String!
+  department: CrewRoleDepartment!
   crewMembers(offset: Int, before: String, after: String, first: Int, last: Int): CrewMemberNodeConnection!
 }
 
@@ -122,7 +133,9 @@ type PerformanceNode implements Node {
   doorsOpen: DateTime
   start: DateTime
   end: DateTime
+  description: String
   extraInformation: String
+  disabled: Boolean!
   capacity: Int
   capacityRemaining: Int
   ticketOptions: [PerformanceSeatGroupNode]

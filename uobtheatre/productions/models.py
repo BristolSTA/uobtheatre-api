@@ -14,8 +14,20 @@ from uobtheatre.venues.models import SeatGroup, Venue
 
 class CrewRole(models.Model):
     """Crew role"""
-
+    class Department(models.TextChoices):
+        LX = "lighting", "Lighting"
+        SND = "sound", "Sound"
+        AV = "av", "AV"
+        SM = "stage_management", "Stage Management"
+        PYRO = "pryo", "Pyrotechnics"
+        SET = "set", "Set"
+        MISC = "misc", "Miscellaneous"
     name = models.CharField(max_length=255)
+    department = models.CharField(
+        max_length=20,
+        choices=Department.choices,
+        default=Department.MISC,
+    )
 
     def __str__(self):
         return self.name

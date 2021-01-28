@@ -85,6 +85,7 @@ def test_productions_schema(gql_client, gql_id):
                       role {
                         id
                         name
+                        department
                       }
                     }
                   }
@@ -180,6 +181,7 @@ def test_productions_schema(gql_client, gql_id):
                                                     crew_member.role.id, "CrewRoleNode"
                                                 ),
                                                 "name": crew_member.role.name,
+                                                "department": str(crew_member.role.department).upper(),
                                             },
                                         }
                                     }
