@@ -1,17 +1,17 @@
 import graphene
 from graphene import relay
-from graphene_django import DjangoObjectType
+from graphene_django import DjangoListField, DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
 
 from uobtheatre.bookings.schema import ConcessionTypeNode
 from uobtheatre.productions.models import (
     CastMember,
-    ProductionTeamMember,
     CrewMember,
     CrewRole,
     Performance,
     PerformanceSeatGroup,
     Production,
+    ProductionTeamMember,
     Warning,
 )
 from uobtheatre.utils.schema import (
@@ -57,6 +57,11 @@ class ProductionNode(GrapheneImageMixin, DjangoObjectType):
     cover_image = GrapheneImageField(GrapheneImageFieldNode)
     featured_image = GrapheneImageField(GrapheneImageFieldNode)
     poster_image = GrapheneImageField(GrapheneImageFieldNode)
+
+    warnings = DjangoListField(WarningNode)
+    crew = DjangoListField(CrewMemberNode)
+    cast = DjangoListField(CastMemberNode)
+    production_team = DjangoListField(ProductionTeamMemberNode)
 
     start_date = graphene.DateTime()
     end_date = graphene.DateTime()

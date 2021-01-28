@@ -10,9 +10,9 @@ from uobtheatre.bookings.test.factories import (
 from uobtheatre.productions.test.factories import (
     CastMemberFactory,
     CrewMemberFactory,
-    ProductionTeamMemberFactory,
     PerformanceFactory,
     ProductionFactory,
+    ProductionTeamMemberFactory,
     WarningFactory,
 )
 
@@ -28,7 +28,9 @@ def test_productions_schema(gql_client, gql_id):
 
     cast = [CastMemberFactory(production=production) for i in range(10)]
     crew = [CrewMemberFactory(production=production) for i in range(10)]
-    production_team = [ProductionTeamMemberFactory(production=production) for i in range(10)]
+    production_team = [
+        ProductionTeamMemberFactory(production=production) for i in range(10)
+    ]
 
     response = gql_client.execute(
         """
@@ -62,55 +64,39 @@ def test_productions_schema(gql_client, gql_id):
                 startDate
                 endDate
                 cast {
-                  edges {
-                    node {
-                      id
-                      name
-                      profilePicture {
-                        url
-                      }
-                      role
-                      production {
-                        id
-                      }
-                    }
+                  id
+                  name
+                  profilePicture {
+                    url
+                  }
+                  role
+                  production {
+                    id
                   }
                 }
                 crew {
-                  edges {
-                    node {
-                      id
-                      name
-                      production {
-                        id
-                      }
-                      role {
-                        id
-                        name
-                        department
-                      }
-                    }
+                  id
+                  name
+                  production {
+                    id
+                  }
+                  role {
+                    id
+                    name
+                    department
                   }
                 }
                 productionTeam {
-                  edges {
-                    node {
-                      id
-                      name
-                      role
-                      production {
-                        id
-                      }
-                    }
+                  id
+                  name
+                  role
+                  production {
+                    id
                   }
                 }
                 warnings {
-                  edges {
-                    node {
-                      id
-                      warning
-                    }
-                  }
+                  id
+                  warning
                 }
               }
             }
@@ -153,85 +139,62 @@ def test_productions_schema(gql_client, gql_id):
                             },
                             "startDate": production.start_date().isoformat(),
                             "endDate": production.end_date().isoformat(),
-                            "cast": {
-                                "edges": [
-                                    {
-                                        "node": {
-                                            "id": gql_id(
-                                                cast_member.id, "CastMemberNode"
-                                            ),
-                                            "name": cast_member.name,
-                                            "profilePicture": {
-                                                "url": cast_member.profile_picture.url
-                                            }
-                                            if cast_member.profile_picture
-                                            else None,
-                                            "role": cast_member.role,
-                                            "production": {
-                                                "id": gql_id(
-                                                    production.id, "ProductionNode"
-                                                )
-                                            },
-                                        }
+                            "cast": [
+                                {
+                                    "id": gql_id(cast_member.id, "CastMemberNode"),
+                                    "name": cast_member.name,
+                                    "profilePicture": {
+                                        "url": cast_member.profile_picture.url
                                     }
-                                    for cast_member in cast
-                                ]
-                            },
-                            "crew": {
-                                "edges": [
-                                    {
-                                        "node": {
-                                            "id": gql_id(
-                                                crew_member.id, "CrewMemberNode"
-                                            ),
-                                            "name": crew_member.name,
-                                            "production": {
-                                                "id": gql_id(
-                                                    production.id, "ProductionNode"
-                                                )
-                                            },
-                                            "role": {
-                                                "id": gql_id(
-                                                    crew_member.role.id, "CrewRoleNode"
-                                                ),
-                                                "name": crew_member.role.name,
-                                                "department": str(crew_member.role.department).upper(),
-                                            },
-                                        }
-                                    }
-                                    for crew_member in crew
-                                ]
-                            },
-                            "productionTeam": {
-                                "edges": [
-                                    {
-                                        "node": {
-                                            "id": gql_id(
-                                                production_team_member.id, "ProductionTeamMemberNode"
-                                            ),
-                                            "name": production_team_member.name,
-                                            "role": production_team_member.role,
-                                            "production": {
-                                                "id": gql_id(
-                                                    production.id, "ProductionNode"
-                                                )
-                                            },
-                                        }
-                                    }
-                                    for production_team_member in production_team
-                                ]
-                            },
-                            "warnings": {
-                                "edges": [
-                                    {
-                                        "node": {
-                                            "id": gql_id(warning.id, "WarningNode"),
-                                            "warning": warning.warning,
-                                        }
-                                    }
-                                    for warning in warnings
-                                ]
-                            },
+                                    if cast_member.profile_picture
+                                    else None,
+                                    "role": cast_member.role,
+                                    "production": {
+                                        "id": gql_id(production.id, "ProductionNode")
+                                    },
+                                }
+                                for cast_member in cast
+                            ],
+                            "crew": [
+                                {
+                                    "id": gql_id(crew_member.id, "CrewMemberNode"),
+                                    "name": crew_member.name,
+                                    "production": {
+                                        "id": gql_id(production.id, "ProductionNode")
+                                    },
+                                    "role": {
+                                        "id": gql_id(
+                                            crew_member.role.id, "CrewRoleNode"
+                                        ),
+                                        "name": crew_member.role.name,
+                                        "department": str(
+                                            crew_member.role.department
+                                        ).upper(),
+                                    },
+                                }
+                                for crew_member in crew
+                            ],
+                            "productionTeam": [
+                                {
+                                    "id": gql_id(
+                                        production_team_member.id,
+                                        "ProductionTeamMemberNode",
+                                    ),
+                                    "name": production_team_member.name,
+                                    "role": production_team_member.role,
+                                    "production": {
+                                        "id": gql_id(production.id, "ProductionNode")
+                                    },
+                                }
+                                for production_team_member in production_team
+                            ],
+                            "warnings": [
+                                {
+                                    "id": gql_id(warning.id, "WarningNode"),
+                                    "warning": warning.warning,
+                                }
+                                for warning in warnings
+                            ],
                         }
                     }
                 ]
