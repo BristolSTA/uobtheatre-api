@@ -19,7 +19,11 @@ def test_societies_schema(gql_client, gql_id):
               node {
                 id
             	name
+                description
                 logo {
+                  url
+                }
+                banner {
                   url
                 }
                 productions {
@@ -44,7 +48,13 @@ def test_societies_schema(gql_client, gql_id):
                         "node": {
                             "id": gql_id(society.id, "SocietyNode"),
                             "name": society.name,
-                            "logo": None,
+                            "description": society.description,
+                            "logo": {
+                                "url": society.logo.url,
+                            },
+                            "banner": {
+                                "url": society.banner.url,
+                            },
                             "productions": {
                                 "edges": [
                                     {

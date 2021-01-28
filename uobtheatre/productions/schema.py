@@ -6,6 +6,7 @@ from graphene_django.filter import DjangoFilterConnectionField
 from uobtheatre.bookings.schema import ConcessionTypeNode
 from uobtheatre.productions.models import (
     CastMember,
+    ProductionTeamMember,
     CrewMember,
     CrewRole,
     Performance,
@@ -31,6 +32,12 @@ class CastMemberNode(GrapheneImageMixin, DjangoObjectType):
 
     class Meta:
         model = CastMember
+        interfaces = (relay.Node,)
+
+
+class ProductionTeamMemberNode(DjangoObjectType):
+    class Meta:
+        model = ProductionTeamMember
         interfaces = (relay.Node,)
 
 
@@ -126,6 +133,8 @@ class PerformanceNode(DjangoObjectType):
         fields = (
             "id",
             "capacity",
+            "description",
+            "disabled",
             "doors_open",
             "end",
             "extra_information",

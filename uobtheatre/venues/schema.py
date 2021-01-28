@@ -4,6 +4,7 @@ from graphene_django import DjangoObjectType
 from graphene_django.fields import DjangoConnectionField
 from graphene_django.filter import DjangoFilterConnectionField
 
+from uobtheatre.addresses.schema import AddressNode  # noqa
 from uobtheatre.productions.schema import ProductionNode
 from uobtheatre.utils.schema import (
     GrapheneImageField,
@@ -32,6 +33,7 @@ class VenueNode(GrapheneImageMixin, DjangoObjectType):
         filter_fields = {
             "id": ("exact",),
             "name": ("exact",),
+            "slug": ("exact",),
         }
 
 

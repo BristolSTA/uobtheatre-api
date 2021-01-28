@@ -15,7 +15,21 @@ from uobtheatre.venues.models import SeatGroup, Venue
 class CrewRole(models.Model):
     """Crew role"""
 
+    class Department(models.TextChoices):
+        LX = "lighting", "Lighting"
+        SND = "sound", "Sound"
+        AV = "av", "AV"
+        SM = "stage_management", "Stage Management"
+        PYRO = "pryo", "Pyrotechnics"
+        SET = "set", "Set"
+        MISC = "misc", "Miscellaneous"
+
     name = models.CharField(max_length=255)
+    department = models.CharField(
+        max_length=20,
+        choices=Department.choices,
+        default=Department.MISC,
+    )
 
     def __str__(self):
         return self.name
@@ -117,6 +131,22 @@ class CastMember(models.Model):
         ordering = ["id"]
 
 
+class ProductionTeamMember(models.Model):
+    """Member of production prod team"""
+
+    name = models.CharField(max_length=255)
+    role = models.CharField(max_length=255, null=True)
+    production = models.ForeignKey(
+        Production, on_delete=models.CASCADE, related_name="production_team"
+    )
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ["id"]
+
+
 class CrewMember(models.Model):
     """Member of production crew"""
 
@@ -155,7 +185,10 @@ class Performance(models.Model, TimeStampedMixin):
     start = models.DateTimeField(null=True)
     end = models.DateTimeField(null=True)
 
+    description = models.TextField(null=True, blank=True)
     extra_information = models.TextField(null=True, blank=True)
+
+    disabled = models.BooleanField(default=True)
 
     seat_groups = models.ManyToManyField(SeatGroup, through="PerformanceSeatGroup")
 

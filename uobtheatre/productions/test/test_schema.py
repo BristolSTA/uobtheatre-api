@@ -10,6 +10,7 @@ from uobtheatre.bookings.test.factories import (
 from uobtheatre.productions.test.factories import (
     CastMemberFactory,
     CrewMemberFactory,
+    ProductionTeamMemberFactory,
     PerformanceFactory,
     ProductionFactory,
     WarningFactory,
@@ -27,6 +28,7 @@ def test_productions_schema(gql_client, gql_id):
 
     cast = [CastMemberFactory(production=production) for i in range(10)]
     crew = [CrewMemberFactory(production=production) for i in range(10)]
+    production_team = [ProductionTeamMemberFactory(production=production) for i in range(10)]
 
     response = gql_client.execute(
         """
@@ -85,6 +87,19 @@ def test_productions_schema(gql_client, gql_id):
                       role {
                         id
                         name
+                        department
+                      }
+                    }
+                  }
+                }
+                productionTeam {
+                  edges {
+                    node {
+                      id
+                      name
+                      role
+                      production {
+                        id
                       }
                     }
                   }
@@ -180,10 +195,30 @@ def test_productions_schema(gql_client, gql_id):
                                                     crew_member.role.id, "CrewRoleNode"
                                                 ),
                                                 "name": crew_member.role.name,
+                                                "department": str(crew_member.role.department).upper(),
                                             },
                                         }
                                     }
                                     for crew_member in crew
+                                ]
+                            },
+                            "productionTeam": {
+                                "edges": [
+                                    {
+                                        "node": {
+                                            "id": gql_id(
+                                                production_team_member.id, "ProductionTeamMemberNode"
+                                            ),
+                                            "name": production_team_member.name,
+                                            "role": production_team_member.role,
+                                            "production": {
+                                                "id": gql_id(
+                                                    production.id, "ProductionNode"
+                                                )
+                                            },
+                                        }
+                                    }
+                                    for production_team_member in production_team
                                 ]
                             },
                             "warnings": {
@@ -254,6 +289,13 @@ def test_productions_filter(factories, requests, gql_client):
         assert len(response["data"]["productions"]["edges"]) == expected_number
 
 
+@pytest.mark.skip(reason="JamesToDO")
+@pytest.mark.django_db
+def test_performance_excludes(gql_client, gql_id):
+    # excludes performance seat groups
+    assert False
+
+
 @pytest.mark.django_db
 def test_performance_schema(gql_client, gql_id):
     performances = [PerformanceFactory() for i in range(1)]
@@ -265,6 +307,8 @@ def test_performance_schema(gql_client, gql_id):
             edges {
               node {
                 capacity
+                description
+                disabled
                 doorsOpen
                 end
                 extraInformation
@@ -291,6 +335,8 @@ def test_performance_schema(gql_client, gql_id):
                     {
                         "node": {
                             "capacity": performance.capacity,
+                            "description": performance.description,
+                            "disabled": performance.disabled,
                             "doorsOpen": performance.doors_open.isoformat(),
                             "end": performance.end.isoformat(),
                             "extraInformation": performance.extra_information,
