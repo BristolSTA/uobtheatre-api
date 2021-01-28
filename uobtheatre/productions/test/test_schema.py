@@ -7,7 +7,14 @@ from uobtheatre.bookings.test.factories import (
     DiscountRequirementFactory,
     PerformanceSeatingFactory,
 )
-from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
+from uobtheatre.productions.test.factories import (
+    CastMemberFactory,
+    CrewMemberFactory,
+    PerformanceFactory,
+    ProductionFactory,
+    ProductionTeamMemberFactory,
+    WarningFactory,
+)
 
 
 @pytest.mark.django_db
@@ -15,6 +22,15 @@ def test_productions_schema(gql_client, gql_id):
 
     production = ProductionFactory()
     performances = [PerformanceFactory(production=production) for i in range(2)]
+
+    warnings = [WarningFactory() for i in range(3)]
+    production.warnings.set(warnings)
+
+    cast = [CastMemberFactory(production=production) for i in range(10)]
+    crew = [CrewMemberFactory(production=production) for i in range(10)]
+    production_team = [
+        ProductionTeamMemberFactory(production=production) for i in range(10)
+    ]
 
     response = gql_client.execute(
         """
@@ -44,6 +60,43 @@ def test_productions_schema(gql_client, gql_id):
                       id
                     }
                   }
+                }
+                start
+                end
+                cast {
+                  id
+                  name
+                  profilePicture {
+                    url
+                  }
+                  role
+                  production {
+                    id
+                  }
+                }
+                crew {
+                  id
+                  name
+                  production {
+                    id
+                  }
+                  role {
+                    id
+                    name
+                    department
+                  }
+                }
+                productionTeam {
+                  id
+                  name
+                  role
+                  production {
+                    id
+                  }
+                }
+                warnings {
+                  id
+                  warning
                 }
               }
             }
@@ -84,6 +137,64 @@ def test_productions_schema(gql_client, gql_id):
                                     for performance in performances
                                 ],
                             },
+                            "start": production.start_date().isoformat(),
+                            "end": production.end_date().isoformat(),
+                            "cast": [
+                                {
+                                    "id": gql_id(cast_member.id, "CastMemberNode"),
+                                    "name": cast_member.name,
+                                    "profilePicture": {
+                                        "url": cast_member.profile_picture.url
+                                    }
+                                    if cast_member.profile_picture
+                                    else None,
+                                    "role": cast_member.role,
+                                    "production": {
+                                        "id": gql_id(production.id, "ProductionNode")
+                                    },
+                                }
+                                for cast_member in cast
+                            ],
+                            "crew": [
+                                {
+                                    "id": gql_id(crew_member.id, "CrewMemberNode"),
+                                    "name": crew_member.name,
+                                    "production": {
+                                        "id": gql_id(production.id, "ProductionNode")
+                                    },
+                                    "role": {
+                                        "id": gql_id(
+                                            crew_member.role.id, "CrewRoleNode"
+                                        ),
+                                        "name": crew_member.role.name,
+                                        "department": str(
+                                            crew_member.role.department
+                                        ).upper(),
+                                    },
+                                }
+                                for crew_member in crew
+                            ],
+                            "productionTeam": [
+                                {
+                                    "id": gql_id(
+                                        production_team_member.id,
+                                        "ProductionTeamMemberNode",
+                                    ),
+                                    "name": production_team_member.name,
+                                    "role": production_team_member.role,
+                                    "production": {
+                                        "id": gql_id(production.id, "ProductionNode")
+                                    },
+                                }
+                                for production_team_member in production_team
+                            ],
+                            "warnings": [
+                                {
+                                    "id": gql_id(warning.id, "WarningNode"),
+                                    "warning": warning.warning,
+                                }
+                                for warning in warnings
+                            ],
                         }
                     }
                 ]
@@ -141,6 +252,13 @@ def test_productions_filter(factories, requests, gql_client):
         assert len(response["data"]["productions"]["edges"]) == expected_number
 
 
+@pytest.mark.skip(reason="JamesToDO")
+@pytest.mark.django_db
+def test_performance_excludes(gql_client, gql_id):
+    # excludes performance seat groups
+    assert False
+
+
 @pytest.mark.django_db
 def test_performance_schema(gql_client, gql_id):
     performances = [PerformanceFactory() for i in range(1)]
@@ -152,6 +270,8 @@ def test_performance_schema(gql_client, gql_id):
             edges {
               node {
                 capacity
+                description
+                disabled
                 doorsOpen
                 end
                 extraInformation
@@ -164,6 +284,7 @@ def test_performance_schema(gql_client, gql_id):
                 venue {
                   id
                 }
+                minSeatPrice
               }
             }
           }
@@ -178,6 +299,8 @@ def test_performance_schema(gql_client, gql_id):
                     {
                         "node": {
                             "capacity": performance.capacity,
+                            "description": performance.description,
+                            "disabled": performance.disabled,
                             "doorsOpen": performance.doors_open.isoformat(),
                             "end": performance.end.isoformat(),
                             "extraInformation": performance.extra_information,
@@ -190,6 +313,7 @@ def test_performance_schema(gql_client, gql_id):
                             "start": performance.start.isoformat(),
                             "capacityRemaining": performance.capacity_remaining(),
                             "venue": {"id": gql_id(performance.venue.id, "VenueNode")},
+                            "minSeatPrice": performance.min_seat_price(),
                         }
                     }
                     for performance in performances

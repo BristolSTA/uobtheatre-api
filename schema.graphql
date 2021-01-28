@@ -36,6 +36,14 @@ enum BookingStatus {
   PAID
 }
 
+type CastMemberNode implements Node {
+  id: ID!
+  name: String!
+  profilePicture: GrapheneImageFieldNode
+  role: String
+  production: ProductionNode!
+}
+
 type ConcessionTypeBookingType {
   concession: ConcessionTypeNode
   price: Int
@@ -46,6 +54,40 @@ type ConcessionTypeNode implements Node {
   id: ID!
   name: String!
   description: String
+}
+
+type CrewMemberNode implements Node {
+  id: ID!
+  name: String!
+  role: CrewRoleNode
+  production: ProductionNode!
+}
+
+type CrewMemberNodeConnection {
+  pageInfo: PageInfo!
+  edges: [CrewMemberNodeEdge]!
+}
+
+type CrewMemberNodeEdge {
+  node: CrewMemberNode
+  cursor: String!
+}
+
+enum CrewRoleDepartment {
+  LIGHTING
+  SOUND
+  AV
+  STAGE_MANAGEMENT
+  PRYO
+  SET
+  MISC
+}
+
+type CrewRoleNode implements Node {
+  id: ID!
+  name: String!
+  department: CrewRoleDepartment!
+  crewMembers(offset: Int, before: String, after: String, first: Int, last: Int): CrewMemberNodeConnection!
 }
 
 scalar DateTime
@@ -81,10 +123,14 @@ type PerformanceNode implements Node {
   doorsOpen: DateTime
   start: DateTime
   end: DateTime
+  description: String
   extraInformation: String
+  disabled: Boolean!
+  seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
   capacity: Int
   capacityRemaining: Int
   ticketOptions: [PerformanceSeatGroupNode]
+  minSeatPrice: Int
 }
 
 type PerformanceNodeConnection {
@@ -137,8 +183,14 @@ type ProductionNode implements Node {
   coverImage: GrapheneImageFieldNode
   ageRating: Int
   facebookEvent: String
+  warnings: [WarningNode!]
   slug: String!
+  cast: [CastMemberNode!]
+  productionTeam: [ProductionTeamMemberNode!]
+  crew: [CrewMemberNode!]
   performances(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, start: DateTime, start_Year_Gt: DateTime): PerformanceNodeConnection!
+  start: DateTime
+  end: DateTime
 }
 
 type ProductionNodeConnection {
@@ -151,12 +203,19 @@ type ProductionNodeEdge {
   cursor: String!
 }
 
+type ProductionTeamMemberNode implements Node {
+  id: ID!
+  name: String!
+  role: String
+  production: ProductionNode!
+}
+
 type Query {
   societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String): SocietyNodeConnection
   bookings(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, bookingReference: UUID): BookingNodeConnection
   productions(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, slug: String): ProductionNodeConnection
   performances(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, start: DateTime, start_Year_Gt: DateTime): PerformanceNodeConnection
-  venues(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String): VenueNodeConnection
+  venues(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String): VenueNodeConnection
 }
 
 type SeatGroupNode implements Node {
@@ -220,6 +279,7 @@ type VenueNode implements Node {
   slug: String!
   seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
   performances(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, start: DateTime, start_Year_Gt: DateTime): PerformanceNodeConnection!
+  productions(offset: Int, before: String, after: String, first: Int, last: Int): ProductionNodeConnection
 }
 
 type VenueNodeConnection {
@@ -230,4 +290,10 @@ type VenueNodeConnection {
 type VenueNodeEdge {
   node: VenueNode
   cursor: String!
+}
+
+type WarningNode implements Node {
+  id: ID!
+  warning: String!
+  productionSet(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, slug: String): ProductionNodeConnection!
 }

@@ -35,7 +35,8 @@
           "venue": 1,
           "doors_open": "2020-11-11T12:04:32+0000",
           "start": "2020-11-11T12:24:32+0000",
-          "end": "2020-11-11T14:24:32+0000"
+          "end": "2020-11-11T14:24:32+0000",
+          "disabled": false
         }
     },
     {
@@ -46,7 +47,8 @@
           "venue": 1,
           "doors_open": "2020-11-12T12:04:32+0000",
           "start": "2020-11-12T12:24:32+0000",
-          "end": "2020-11-12T14:24:32+0000"
+          "end": "2020-11-12T14:24:32+0000",
+          "disabled": false
         }
     },
     {
@@ -57,7 +59,8 @@
           "venue": 2,
           "doors_open": "2020-11-13T12:04:32+0000",
           "start": "2020-11-13T12:24:32+0000",
-          "end": "2020-11-13T14:24:32+0000"
+          "end": "2020-11-13T14:24:32+0000",
+          "disabled": false
         }
     },
     {
@@ -76,6 +79,15 @@
           "production": 1
         }
     },
+    {
+      "model": "productions.productionteammember",
+      "pk": 1,
+      "fields": {
+        "name": "James",
+        "role": "director",
+        "production": 1
+      }
+  },
     {
         "model": "productions.castmember",
         "pk": 1,
