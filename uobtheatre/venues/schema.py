@@ -35,6 +35,7 @@ class VenueNode(GrapheneImageMixin, DjangoObjectType):
         filter_fields = {
             "id": ("exact",),
             "name": ("exact",),
+            "slug": ("exact",),
         }
 
 
