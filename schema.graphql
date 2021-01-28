@@ -44,16 +44,6 @@ type CastMemberNode implements Node {
   production: ProductionNode!
 }
 
-type CastMemberNodeConnection {
-  pageInfo: PageInfo!
-  edges: [CastMemberNodeEdge]!
-}
-
-type CastMemberNodeEdge {
-  node: CastMemberNode
-  cursor: String!
-}
-
 type ConcessionTypeBookingType {
   concession: ConcessionTypeNode
   price: Int
@@ -191,10 +181,11 @@ type ProductionNode implements Node {
   coverImage: GrapheneImageFieldNode
   ageRating: Int
   facebookEvent: String
-  warnings(offset: Int, before: String, after: String, first: Int, last: Int): WarningNodeConnection!
+  warnings: [WarningNode!]
   slug: String!
-  cast(offset: Int, before: String, after: String, first: Int, last: Int): CastMemberNodeConnection!
-  crew(offset: Int, before: String, after: String, first: Int, last: Int): CrewMemberNodeConnection!
+  cast: [CastMemberNode!]
+  productionTeam: [ProductionTeamMemberNode!]
+  crew: [CrewMemberNode!]
   performances(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, start: DateTime, start_Year_Gt: DateTime): PerformanceNodeConnection!
   startDate: DateTime
   endDate: DateTime
@@ -210,12 +201,19 @@ type ProductionNodeEdge {
   cursor: String!
 }
 
+type ProductionTeamMemberNode implements Node {
+  id: ID!
+  name: String!
+  role: String
+  production: ProductionNode!
+}
+
 type Query {
   societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String): SocietyNodeConnection
   bookings(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, bookingReference: UUID): BookingNodeConnection
   productions(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, slug: String): ProductionNodeConnection
   performances(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, start: DateTime, start_Year_Gt: DateTime): PerformanceNodeConnection
-  venues(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String): VenueNodeConnection
+  venues(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String): VenueNodeConnection
 }
 
 type SeatGroupNode implements Node {
@@ -279,6 +277,7 @@ type VenueNode implements Node {
   slug: String!
   seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
   performances(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, start: DateTime, start_Year_Gt: DateTime): PerformanceNodeConnection!
+  productions(offset: Int, before: String, after: String, first: Int, last: Int): ProductionNodeConnection
 }
 
 type VenueNodeConnection {
@@ -295,14 +294,4 @@ type WarningNode implements Node {
   id: ID!
   warning: String!
   productionSet(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, slug: String): ProductionNodeConnection!
-}
-
-type WarningNodeConnection {
-  pageInfo: PageInfo!
-  edges: [WarningNodeEdge]!
-}
-
-type WarningNodeEdge {
-  node: WarningNode
-  cursor: String!
 }
