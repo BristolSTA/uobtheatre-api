@@ -126,6 +126,8 @@ class PerformanceNode(DjangoObjectType):
         fields = (
             "id",
             "capacity",
+            "description",
+            "disabled",
             "doors_open",
             "end",
             "extra_information",

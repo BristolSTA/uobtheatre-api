@@ -254,6 +254,13 @@ def test_productions_filter(factories, requests, gql_client):
         assert len(response["data"]["productions"]["edges"]) == expected_number
 
 
+@pytest.mark.skip(reason="JamesToDO")
+@pytest.mark.django_db
+def test_performance_excludes(gql_client, gql_id):
+    # excludes performance seat groups
+    assert False
+
+
 @pytest.mark.django_db
 def test_performance_schema(gql_client, gql_id):
     performances = [PerformanceFactory() for i in range(1)]
@@ -265,6 +272,8 @@ def test_performance_schema(gql_client, gql_id):
             edges {
               node {
                 capacity
+                description
+                disabled
                 doorsOpen
                 end
                 extraInformation
@@ -291,6 +300,8 @@ def test_performance_schema(gql_client, gql_id):
                     {
                         "node": {
                             "capacity": performance.capacity,
+                            "description": performance.description,
+                            "disabled": performance.disabled,
                             "doorsOpen": performance.doors_open.isoformat(),
                             "end": performance.end.isoformat(),
                             "extraInformation": performance.extra_information,

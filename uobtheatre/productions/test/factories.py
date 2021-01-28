@@ -41,6 +41,8 @@ class PerformanceFactory(factory.django.DjangoModelFactory):
     start = factory.Faker("date_time", tzinfo=timezone.get_current_timezone())
     end = factory.Faker("date_time", tzinfo=timezone.get_current_timezone())
     extra_information = factory.Faker("sentence")
+    description = factory.Faker("sentence")
+    disabled = factory.Faker("boolean")
     production = factory.SubFactory(ProductionFactory)
     venue = factory.SubFactory(VenueFactory)
 

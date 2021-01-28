@@ -155,7 +155,10 @@ class Performance(models.Model, TimeStampedMixin):
     start = models.DateTimeField(null=True)
     end = models.DateTimeField(null=True)
 
+    description = models.TextField(null=True, blank=True)
     extra_information = models.TextField(null=True, blank=True)
+
+    disabled = models.BooleanField(default=True)
 
     seat_groups = models.ManyToManyField(SeatGroup, through="PerformanceSeatGroup")
 
