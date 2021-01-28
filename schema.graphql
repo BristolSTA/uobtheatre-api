@@ -126,9 +126,11 @@ type PerformanceNode implements Node {
   description: String
   extraInformation: String
   disabled: Boolean!
+  seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
   capacity: Int
   capacityRemaining: Int
   ticketOptions: [PerformanceSeatGroupNode]
+  minSeatPrice: Int
 }
 
 type PerformanceNodeConnection {
@@ -187,8 +189,8 @@ type ProductionNode implements Node {
   productionTeam: [ProductionTeamMemberNode!]
   crew: [CrewMemberNode!]
   performances(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, start: DateTime, start_Year_Gt: DateTime): PerformanceNodeConnection!
-  startDate: DateTime
-  endDate: DateTime
+  start: DateTime
+  end: DateTime
 }
 
 type ProductionNodeConnection {
