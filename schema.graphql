@@ -2,6 +2,17 @@ schema {
   query: Query
 }
 
+type AddressNode implements Node {
+  buildingName: String
+  buildingNumber: String
+  street: String!
+  city: String!
+  postcode: String!
+  latitude: Float
+  longitude: Float
+  id: ID!
+}
+
 type BookingNode implements Node {
   id: ID!
   bookingReference: UUID!
@@ -203,6 +214,7 @@ type VenueNode implements Node {
   name: String!
   internalCapacity: Int!
   description: String
+  address: AddressNode
   image: GrapheneImageFieldNode
   publiclyListed: Boolean!
   slug: String!
