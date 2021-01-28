@@ -129,6 +129,22 @@ class CastMember(models.Model):
         ordering = ["id"]
 
 
+class ProductionTeamMember(models.Model):
+    """Member of production prod team"""
+
+    name = models.CharField(max_length=255)
+    role = models.CharField(max_length=255, null=True)
+    production = models.ForeignKey(
+        Production, on_delete=models.CASCADE, related_name="production_team"
+    )
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ["id"]
+
+
 class CrewMember(models.Model):
     """Member of production crew"""
 

@@ -10,6 +10,7 @@ from uobtheatre.bookings.test.factories import (
 from uobtheatre.productions.test.factories import (
     CastMemberFactory,
     CrewMemberFactory,
+    ProductionTeamMemberFactory,
     PerformanceFactory,
     ProductionFactory,
     WarningFactory,
@@ -27,6 +28,7 @@ def test_productions_schema(gql_client, gql_id):
 
     cast = [CastMemberFactory(production=production) for i in range(10)]
     crew = [CrewMemberFactory(production=production) for i in range(10)]
+    production_team = [ProductionTeamMemberFactory(production=production) for i in range(10)]
 
     response = gql_client.execute(
         """
@@ -86,6 +88,18 @@ def test_productions_schema(gql_client, gql_id):
                         id
                         name
                         department
+                      }
+                    }
+                  }
+                }
+                productionTeam {
+                  edges {
+                    node {
+                      id
+                      name
+                      role
+                      production {
+                        id
                       }
                     }
                   }
@@ -186,6 +200,25 @@ def test_productions_schema(gql_client, gql_id):
                                         }
                                     }
                                     for crew_member in crew
+                                ]
+                            },
+                            "productionTeam": {
+                                "edges": [
+                                    {
+                                        "node": {
+                                            "id": gql_id(
+                                                production_team_member.id, "ProductionTeamMemberNode"
+                                            ),
+                                            "name": production_team_member.name,
+                                            "role": production_team_member.role,
+                                            "production": {
+                                                "id": gql_id(
+                                                    production.id, "ProductionNode"
+                                                )
+                                            },
+                                        }
+                                    }
+                                    for production_team_member in production_team
                                 ]
                             },
                             "warnings": {

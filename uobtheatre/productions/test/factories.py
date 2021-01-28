@@ -4,6 +4,7 @@ from django.utils import timezone
 from uobtheatre.productions.models import (
     CastMember,
     CrewMember,
+    ProductionTeamMember,
     CrewRole,
     Performance,
     Production,
@@ -65,6 +66,13 @@ class CrewMemberFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = CrewMember
 
+class ProductionTeamMemberFactory(factory.django.DjangoModelFactory):
+    name = factory.Faker("sentence", nb_words=3)
+    role = factory.Faker("sentence", nb_words=3)
+    production = factory.SubFactory(ProductionFactory)
+
+    class Meta:
+        model = ProductionTeamMember
 
 class CastMemberFactory(factory.django.DjangoModelFactory):
     name = factory.Faker("sentence", nb_words=3)

@@ -80,6 +80,15 @@
         }
     },
     {
+      "model": "productions.productionteammember",
+      "pk": 1,
+      "fields": {
+        "name": "James",
+        "role": "director",
+        "production": 1
+      }
+  },
+    {
         "model": "productions.castmember",
         "pk": 1,
         "fields": {
