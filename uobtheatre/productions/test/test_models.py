@@ -15,6 +15,7 @@ from uobtheatre.bookings.test.factories import (
 from uobtheatre.productions.test.factories import (
     CastMemberFactory,
     CrewMemberFactory,
+    ProductionTeamMemberFactory,
     PerformanceFactory,
     ProductionFactory,
     WarningFactory,
@@ -198,6 +199,10 @@ def test_str_crew_member():
     crew_member = CrewMemberFactory()
     assert str(crew_member) == crew_member.name
 
+@pytest.mark.django_db
+def test_str_production_team_memeber():
+    production_team_memeber = ProductionTeamMemberFactory()
+    assert str(production_team_memeber) == production_team_memeber.name
 
 @pytest.mark.django_db
 def test_production_slug_is_unique():
