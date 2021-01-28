@@ -1,0 +1,5 @@
+nav:
+    - 'index.md'
+    - 'api/apps.md'
+    - 'api/authentication.md'
+    - 'api/users.md'

@@ -6,9 +6,9 @@ from uobtheatre.societies.test.factories import SocietyFactory
 
 @pytest.mark.django_db
 def test_societies_schema(gql_client, gql_id):
-    societies = [SocietyFactory() for i in range(3)]
+    societies = [SocietyFactory() for i in range(2)]
     society_productions = [
-        [ProductionFactory(society=society) for i in range(10)] for society in societies
+        [ProductionFactory(society=society) for i in range(2)] for society in societies
     ]
 
     response = gql_client.execute(
@@ -19,7 +19,11 @@ def test_societies_schema(gql_client, gql_id):
               node {
                 id
             	name
+                description
                 logo {
+                  url
+                }
+                banner {
                   url
                 }
                 productions {
@@ -44,7 +48,13 @@ def test_societies_schema(gql_client, gql_id):
                         "node": {
                             "id": gql_id(society.id, "SocietyNode"),
                             "name": society.name,
-                            "logo": None,
+                            "description": society.description,
+                            "logo": {
+                                "url": society.logo.url,
+                            },
+                            "banner": {
+                                "url": society.banner.url,
+                            },
                             "productions": {
                                 "edges": [
                                     {

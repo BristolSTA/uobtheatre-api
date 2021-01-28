@@ -13,6 +13,7 @@ from uobtheatre.utils.schema import (
 
 class SocietyNode(GrapheneImageMixin, DjangoObjectType):
     logo = GrapheneImageField(GrapheneImageFieldNode)
+    banner = GrapheneImageField(GrapheneImageFieldNode)
 
     class Meta:
         model = Society
