@@ -1,19 +1,23 @@
 import graphene
 
-import uobtheatre.bookings.schema as bookings_schema
-import uobtheatre.productions.schema as productions_schema
-import uobtheatre.societies.schema as societies_schema
-import uobtheatre.venues.schema as venues_schema
+import uobtheatre.bookings.schema
+import uobtheatre.productions.schema
+import uobtheatre.societies.schema
+import uobtheatre.venues.schema
 
 
 class Query(
-    venues_schema.Query,
-    productions_schema.Query,
-    bookings_schema.Query,
-    societies_schema.Query,
+    uobtheatre.venues.schema.Query,
+    uobtheatre.productions.schema.Query,
+    uobtheatre.bookings.schema.Query,
+    uobtheatre.societies.schema.Query,
     graphene.ObjectType,
 ):
     pass
 
 
-schema = graphene.Schema(query=Query)
+class Mutation(uobtheatre.bookings.schema.Mutation, graphene.ObjectType):
+    pass
+
+
+schema = graphene.Schema(query=Query, mutation=Mutation)

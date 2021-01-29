@@ -4,8 +4,10 @@ import graphene
 from graphene import relay
 from graphene_django import DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
+from graphql import GraphQLError
 
 from uobtheatre.bookings.models import Booking, ConcessionType, MiscCost
+from uobtheatre.productions.models import Performance
 
 
 class ConcessionTypeNode(DjangoObjectType):
@@ -123,6 +125,32 @@ class BookingNode(DjangoObjectType):
         }
 
 
+class CreateBooking(graphene.Mutation):
+    booking = graphene.Field(BookingNode)
+
+    class Arguments:
+        performance_id = graphene.Int(required=True)
+
+    def mutate(self, info, performance_id):
+        if not info.context.user.is_authenticated:
+            raise GraphQLError("You must be logged in to create a booking")
+
+        # If performance does not exist throw an error
+        performance = Performance.objects.get(id=performance_id)
+
+        # If draft booking(s) already exists remove the bookings
+        Booking.objects.filter(
+            status=Booking.BookingStatus.INPROGRESS, performance_id=performance_id
+        ).delete()
+
+        # Create the booking
+        booking = Booking.objects.create(
+            user=info.context.user, performance=performance
+        )
+
+        return CreateBooking(booking=booking)
+
+
 class Query(graphene.ObjectType):
     bookings = DjangoFilterConnectionField(BookingNode)
 
@@ -132,3 +160,8 @@ class Query(graphene.ObjectType):
             return Booking.objects.none()
         # Otherwise return only the user's bookings
         return Booking.objects.filter(user=info.context.user)
+
+
+class Mutation(graphene.ObjectType):
+    # booking = BookingMutation.Field()
+    create_booking = CreateBooking.Field()
