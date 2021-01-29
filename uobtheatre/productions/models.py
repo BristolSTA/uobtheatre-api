@@ -194,6 +194,14 @@ class Performance(models.Model, TimeStampedMixin):
 
     capacity = models.IntegerField(null=True, blank=True)
 
+    default_concession_type = models.ForeignKey(
+        "bookings.ConcessionType",
+        # TODO make sure this is always an adult
+        # TODO Add this defaulty concession type to the list of concessions
+        default=1,
+        on_delete=models.RESTRICT,
+    )
+
     def tickets(self, seat_group=None):
         """ Get all tickets for this performance """
         filters = {}
