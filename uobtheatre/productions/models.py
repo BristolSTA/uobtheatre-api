@@ -293,6 +293,44 @@ class Performance(models.Model, TimeStampedMixin):
             (psg.price for psg in self.performance_seat_groups.all()), default=None
         )
 
+    def check_capacity(self, tickets):
+        """
+        Given a list of ticket objects, checks there are enough tickets
+        available for the booking. If not return a string.
+        TODO return a custom exception not a string
+        """
+
+        # Get the number of each seat group
+        seat_group_counts = {}
+        for ticket in tickets:
+            # If a SeatGroup with this id does not exist an error will the thrown
+            seat_group = ticket.seat_group
+            seat_group_count = seat_group_counts.get(seat_group)
+            seat_group_counts[seat_group] = (seat_group_count or 0) + 1
+
+        # Check each seat group is in the performance
+        seat_groups_not_in_perfromance = [
+            seat_group.name
+            for seat_group in seat_group_counts.keys()
+            if seat_group not in self.seat_groups.all()
+        ]
+
+        # If any of the seat_groups are not assigned to this performance then throw an error
+        if len(seat_groups_not_in_perfromance) != 0:
+            return f"You cannot book a seat group that is not assigned to this performance, you have booked {', '.join(seat_groups_not_in_perfromance)} but the performance only has {', '.join([seat_group.name for seat_group in self.seat_groups.all()])}"
+
+        # Check that each seat group has enough capacity
+        for seat_group, number_booked in seat_group_counts.items():
+            seat_group_remaining_capacity = self.capacity_remaining(
+                seat_group=seat_group
+            )
+            if seat_group_remaining_capacity < number_booked:
+                return f"There are only {seat_group_remaining_capacity} seats reamining in {seat_group} but you have booked {number_booked}. Please updated your seat selections and try again."
+
+        # Also check total capacity
+        if self.capacity_remaining() < len(tickets):
+            return f"There are only {self.capacity_remaining()} seats available for this performance. You attempted to book {len(tickets)}. Please remove some tickets and try again or select a different performance."
+
     def __str__(self):
         if self.start is None:
             return f"Perforamce of {self.production.name}"

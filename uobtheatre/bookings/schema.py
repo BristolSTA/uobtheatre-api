@@ -6,8 +6,10 @@ from graphene_django import DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
 from graphql import GraphQLError
 
-from uobtheatre.bookings.models import Booking, ConcessionType, MiscCost
+from uobtheatre.bookings.models import Booking, ConcessionType, MiscCost, Ticket
 from uobtheatre.productions.models import Performance
+from uobtheatre.utils.schema import RelayIdMutationMixin
+from uobtheatre.venues.models import SeatGroup
 
 
 class ConcessionTypeNode(DjangoObjectType):
@@ -125,18 +127,45 @@ class BookingNode(DjangoObjectType):
         }
 
 
-class CreateBooking(graphene.Mutation):
+class CreateTicketInput(graphene.InputObjectType):
+    # seat_group_id = graphene.String(required=True)
+    seat_group_id = relay.node.GlobalID(SeatGroup, required=True)
+    concession_type_id = relay.node.GlobalID(ConcessionType, required=True)
+
+    def to_ticket(self):
+        return Ticket(
+            seat_group=SeatGroup.objects.get(id=self.seat_group_id),
+            concession_type=ConcessionType.objects.get(id=self.concession_type_id),
+        )
+
+
+class CreateBooking(RelayIdMutationMixin, relay.ClientIDMutation):
     booking = graphene.Field(BookingNode)
 
-    class Arguments:
-        performance_id = graphene.Int(required=True)
+    class Input:
+        performance_id = relay.node.GlobalID(Performance, required=True)
+        tickets = graphene.List(CreateTicketInput, required=False)
 
-    def mutate(self, info, performance_id):
+    @classmethod
+    def mutate_and_get_payload(
+        self, root, info, performance_id, performance_local_id, tickets
+    ):
+        print("Helloooo 2")
         if not info.context.user.is_authenticated:
             raise GraphQLError("You must be logged in to create a booking")
 
-        # If performance does not exist throw an error
-        performance = Performance.objects.get(id=performance_id)
+        # Get the performance and if it doesn't exist throw an error
+        performance = Performance.objects.get(id=performance_local_id)
+
+        # Covert the given tickets to ticket objects
+        # If any of the gets throw an error (cant find the id) this will be handled by graphene
+        # e.g. "ConcessionType matching query does not exist."
+        ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))
+
+        # Check the capacity of the show and its seat_groups
+        err = performance.check_capacity(ticket_objects)
+        if err:
+            raise GraphQLError(err)
 
         # If draft booking(s) already exists remove the bookings
         Booking.objects.filter(
@@ -147,6 +176,11 @@ class CreateBooking(graphene.Mutation):
         booking = Booking.objects.create(
             user=info.context.user, performance=performance
         )
+
+        # Save all the validated tickets
+        for ticket in ticket_objects:
+            ticket.booking = booking
+            ticket.save()
 
         return CreateBooking(booking=booking)
 
