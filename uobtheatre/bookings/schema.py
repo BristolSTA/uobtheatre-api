@@ -8,7 +8,7 @@ from graphql import GraphQLError
 
 from uobtheatre.bookings.models import Booking, ConcessionType, MiscCost, Ticket
 from uobtheatre.productions.models import Performance
-from uobtheatre.utils.schema import RelayIdMutationMixin
+from uobtheatre.utils.schema import IdInputField
 from uobtheatre.venues.models import SeatGroup
 
 
@@ -129,8 +129,8 @@ class BookingNode(DjangoObjectType):
 
 class CreateTicketInput(graphene.InputObjectType):
     # seat_group_id = graphene.String(required=True)
-    seat_group_id = relay.node.GlobalID(SeatGroup, required=True)
-    concession_type_id = relay.node.GlobalID(ConcessionType, required=True)
+    seat_group_id = IdInputField(required=True)
+    concession_type_id = IdInputField(required=True)
 
     def to_ticket(self):
         return Ticket(
@@ -139,23 +139,24 @@ class CreateTicketInput(graphene.InputObjectType):
         )
 
 
-class CreateBooking(RelayIdMutationMixin, relay.ClientIDMutation):
+class CreateBooking(graphene.Mutation):
     booking = graphene.Field(BookingNode)
 
-    class Input:
-        performance_id = relay.node.GlobalID(Performance, required=True)
+    class Arguments:
+        performance_id = IdInputField()
         tickets = graphene.List(CreateTicketInput, required=False)
 
     @classmethod
-    def mutate_and_get_payload(
-        self, root, info, performance_id, performance_local_id, tickets
-    ):
-        print("Helloooo 2")
+    def mutate(self, root, info, performance_id, tickets):
         if not info.context.user.is_authenticated:
             raise GraphQLError("You must be logged in to create a booking")
 
         # Get the performance and if it doesn't exist throw an error
-        performance = Performance.objects.get(id=performance_local_id)
+        # performance.to_obj()
+        print("In the hting")
+        print(performance_id)
+        performance = Performance.objects.get(id=performance_id)
+        print("Hello")
 
         # Covert the given tickets to ticket objects
         # If any of the gets throw an error (cant find the id) this will be handled by graphene
