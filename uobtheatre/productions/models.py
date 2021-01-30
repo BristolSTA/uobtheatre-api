@@ -328,7 +328,7 @@ class Performance(models.Model, TimeStampedMixin):
                 return f"There are only {seat_group_remaining_capacity} seats reamining in {seat_group} but you have booked {number_booked}. Please updated your seat selections and try again."
 
         # Also check total capacity
-        if self.capacity_remaining() < len(tickets):
+        if self.capacity_remaining() < len(tickets) - len(deleted_tickets):
             return f"There are only {self.capacity_remaining()} seats available for this performance. You attempted to book {len(tickets)}. Please remove some tickets and try again or select a different performance."
 
     def __str__(self):
