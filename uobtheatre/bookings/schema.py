@@ -128,7 +128,6 @@ class BookingNode(DjangoObjectType):
 
 
 class CreateTicketInput(graphene.InputObjectType):
-    # seat_group_id = graphene.String(required=True)
     seat_group_id = IdInputField(required=True)
     concession_type_id = IdInputField(required=True)
 
@@ -152,11 +151,7 @@ class CreateBooking(graphene.Mutation):
             raise GraphQLError("You must be logged in to create a booking")
 
         # Get the performance and if it doesn't exist throw an error
-        # performance.to_obj()
-        print("In the hting")
-        print(performance_id)
         performance = Performance.objects.get(id=performance_id)
-        print("Hello")
 
         # Covert the given tickets to ticket objects
         # If any of the gets throw an error (cant find the id) this will be handled by graphene
@@ -186,6 +181,49 @@ class CreateBooking(graphene.Mutation):
         return CreateBooking(booking=booking)
 
 
+class UpdateBooking(graphene.Mutation):
+    booking = graphene.Field(BookingNode)
+
+    class Arguments:
+        booking_id = IdInputField()
+        tickets = graphene.List(CreateTicketInput, required=False)
+
+    @classmethod
+    def mutate(self, root, info, performance_id, tickets):
+        if not info.context.user.is_authenticated:
+            raise GraphQLError("You must be logged in to update a booking")
+
+        booking = Booking.objects.get(id=id, user=info.context.user)
+
+        # Covert the given tickets to ticket objects
+        ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))
+
+        # Find the diff between the current tickets and the given tickets
+        # TODO handle negatives
+        # ticket_diff = booking.get_ticket_diff(ticket_objects)
+
+        # Find tickets which I can happily delete
+        # Get the tickets hwich can be deleted and remove them
+
+        # performance = Performance(capacity=4)
+        # Booking(performance=performance) -> Ticket(1), Ticket(2)
+        # Update Booking -> Ticket(3)
+        # performance.check_capacity(1,2,3)
+        # performance only has capacity 4
+
+        # Check the capacity of the show and its seat_groups
+        err = booking.performance.check_capacity(ticket_objects)
+        if err:
+            raise GraphQLError(err)
+
+        # Save all the validated tickets
+        for ticket in ticket_objects:
+            ticket.booking = booking
+            ticket.save()
+
+        return UpdateBooking(booking=booking)
+
+
 class Query(graphene.ObjectType):
     bookings = DjangoFilterConnectionField(BookingNode)
 
@@ -200,3 +238,4 @@ class Query(graphene.ObjectType):
 class Mutation(graphene.ObjectType):
     # booking = BookingMutation.Field()
     create_booking = CreateBooking.Field()
+    update_booking = UpdateBooking.Field()

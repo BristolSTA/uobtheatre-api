@@ -7,6 +7,7 @@ from uobtheatre.bookings.models import (
     DiscountCombination,
     DiscountRequirement,
     MiscCost,
+    Ticket,
     combinations,
 )
 from uobtheatre.bookings.test.factories import (
@@ -480,3 +481,19 @@ def test_misc_cost_constraints(value, percentage, error):
     else:
         with pytest.raises(IntegrityError):
             MiscCost.objects.create(**args)
+
+
+@pytest.mark.django_db
+def test_ticket_diff():
+    booking = BookingFactory()
+    booking_tickets = [TicketFactory(booking=booking) for _ in range(10)]
+    tickets = [
+        Ticket(
+            booking=booking,
+            seat_group=ticket.seat_group,
+            concession_type=ticket.concession_type,
+        )
+        for ticket in booking_tickets
+    ]
+
+    assert booking.get_ticket_diff(tickets) == []

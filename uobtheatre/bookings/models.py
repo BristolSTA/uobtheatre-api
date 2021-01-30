@@ -1,6 +1,7 @@
 import itertools
 import math
 import uuid
+from collections import Counter
 from typing import Dict, List, Optional, Set, Tuple
 
 from django.db import models
@@ -299,6 +300,14 @@ class Booking(models.Model, TimeStampedMixin):
         """
         return math.ceil(self.subtotal() + self.misc_costs_value())
 
+    def get_ticket_diff(self, tickets):
+        """
+        Given a list of tickets return the tickets which need to be created a
+        deleted.
+        """
+        diff = Counter(self.tickets.all()) - Counter(tickets)
+        return list(diff)
+
 
 class Ticket(models.Model):
     """A booking of a single seat (from a seat group)"""
@@ -315,3 +324,17 @@ class Ticket(models.Model):
         related_name="seat_bookings",
     )
     seat = models.ForeignKey(Seat, on_delete=models.RESTRICT, null=True, blank=True)
+
+    def __eq__(self, other):
+        """
+        Two tickets are equal if the following match:
+        - seat_group
+        - concession_type
+        - seat
+        """
+        # Attributes required to match
+        attributes = ["seat_group", "concession_type", "seat"]
+        return all(
+            getattr(self, attribute) == getattr(other, attribute)
+            for attribute in attributes
+        )

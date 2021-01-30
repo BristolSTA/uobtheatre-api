@@ -293,7 +293,7 @@ class Performance(models.Model, TimeStampedMixin):
             (psg.price for psg in self.performance_seat_groups.all()), default=None
         )
 
-    def check_capacity(self, tickets):
+    def check_capacity(self, tickets, deleted_tickets=[]):
         """
         Given a list of ticket objects, checks there are enough tickets
         available for the booking. If not return a string.
