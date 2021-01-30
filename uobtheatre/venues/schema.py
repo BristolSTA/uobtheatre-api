@@ -11,12 +11,18 @@ from uobtheatre.utils.schema import (
     GrapheneImageFieldNode,
     GrapheneImageMixin,
 )
-from uobtheatre.venues.models import SeatGroup, Venue
+from uobtheatre.venues.models import SeatGroup, Venue, VenueLayout
 
 
 class SeatGroupNode(DjangoObjectType):
     class Meta:
         model = SeatGroup
+        interfaces = (relay.Node,)
+
+
+class VenueLayoutNode(DjangoObjectType):
+    class Meta:
+        model = VenueLayout
         interfaces = (relay.Node,)
 
 

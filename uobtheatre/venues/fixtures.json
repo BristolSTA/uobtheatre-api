@@ -36,8 +36,16 @@
         "pk": 1,
         "fields": {
             "name": "Generic seating",
-            "venue": 1,
+            "venue_layout": 1,
             "capacity": 204
+        }
+    },
+    {
+        "model": "venues.venuelayout",
+        "pk": 1,
+        "fields": {
+            "name": "defualt seat layout",
+            "venue": 1
         }
     }
 ]
