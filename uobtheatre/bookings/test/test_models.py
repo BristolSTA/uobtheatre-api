@@ -22,7 +22,7 @@ from uobtheatre.bookings.test.factories import (
 )
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
-from uobtheatre.venues.test.factories import SeatGroupFactory, VenueFactory
+from uobtheatre.venues.test.factories import SeatFactory, SeatGroupFactory, VenueFactory
 
 
 @pytest.mark.parametrize(
@@ -484,16 +484,88 @@ def test_misc_cost_constraints(value, percentage, error):
 
 
 @pytest.mark.django_db
-def test_ticket_diff():
-    booking = BookingFactory()
-    booking_tickets = [TicketFactory(booking=booking) for _ in range(10)]
-    tickets = [
-        Ticket(
-            booking=booking,
-            seat_group=ticket.seat_group,
-            concession_type=ticket.concession_type,
-        )
-        for ticket in booking_tickets
-    ]
+@pytest.mark.parametrize(
+    "ticket1, ticket2, eq",
+    [
+        (
+            {
+                "seat_group_id": 1,
+                "concession_type_id": 1,
+                "seat_id": 1,
+            },
+            {
+                "seat_group_id": 1,
+                "concession_type_id": 1,
+                "seat_id": 1,
+            },
+            True,
+        ),
+        (
+            # Check not eq with different seat_group
+            {
+                "seat_group_id": 2,
+                "concession_type_id": 1,
+                "seat_id": 1,
+            },
+            {
+                "seat_group_id": 1,
+                "concession_type_id": 1,
+                "seat_id": 1,
+            },
+            False,
+        ),
+        (
+            # Check not eq with different concession_type
+            {
+                "seat_group_id": 1,
+                "concession_type_id": 1,
+                "seat_id": 1,
+            },
+            {
+                "seat_group_id": 1,
+                "concession_type_id": 2,
+                "seat_id": 1,
+            },
+            False,
+        ),
+        (
+            # Check not eq with different seat
+            {
+                "seat_group_id": 1,
+                "concession_type_id": 1,
+                "seat_id": 2,
+            },
+            {
+                "seat_group_id": 1,
+                "concession_type_id": 1,
+                "seat_id": 1,
+            },
+            False,
+        ),
+    ],
+)
+def test_ticket_eq(ticket1, ticket2, eq):
+    SeatGroupFactory(id=1)
+    SeatGroupFactory(id=2)
+    ConcessionTypeFactory(id=1)
+    ConcessionTypeFactory(id=2)
+    SeatFactory(id=1)
+    SeatFactory(id=2)
 
-    assert booking.get_ticket_diff(tickets) == []
+    assert (Ticket(**ticket1) == Ticket(**ticket2)) == eq
+
+
+# @pytest.mark.django_db
+# def test_ticket_diff():
+#     booking = BookingFactory()
+#     booking_tickets = [TicketFactory(booking=booking) for _ in range(10)]
+#     tickets = [
+#         Ticket(
+#             booking=booking,
+#             seat_group=ticket.seat_group,
+#             concession_type=ticket.concession_type,
+#         )
+#         for ticket in booking_tickets
+#     ]
+#
+#     assert booking.get_ticket_diff(tickets) == []
