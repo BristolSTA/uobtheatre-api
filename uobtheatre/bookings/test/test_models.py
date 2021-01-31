@@ -555,6 +555,15 @@ def test_ticket_eq(ticket1, ticket2, eq):
     assert (Ticket(**ticket1) == Ticket(**ticket2)) == eq
 
 
+@pytest.mark.django_db
+def test_create_booking_serializer_seat_group_is_from_performance_validation():
+    user = UserFactory(id=1)
+    performance = PerformanceFactory(id=1, capacity=10)
+    sg_1 = SeatGroupFactory(id=1)
+    sg_2 = SeatGroupFactory(id=2)
+    ConcessionTypeFactory(id=1)
+
+
 # @pytest.mark.django_db
 # def test_ticket_diff():
 #     booking = BookingFactory()
