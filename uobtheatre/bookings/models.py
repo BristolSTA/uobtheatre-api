@@ -7,6 +7,7 @@ from django.db import models
 from uobtheatre.productions.models import Performance
 from uobtheatre.users.models import User
 from uobtheatre.utils.models import TimeStampedMixin, validate_percentage
+from uobtheatre.utils.utils import create_short_uuid
 from uobtheatre.venues.models import Seat, SeatGroup
 
 
@@ -151,7 +152,9 @@ class Booking(models.Model, TimeStampedMixin):
             )
         ]
 
-    booking_reference = models.CharField(max_length=12, unique=True)
+    booking_reference = models.CharField(
+        default=create_short_uuid, editable=False, max_length=12
+    )
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bookings")
     performance = models.ForeignKey(
         Performance,

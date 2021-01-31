@@ -47,6 +47,7 @@ coveralls = "*"
 django-url-filter = "*"
 graphene-django = "*"
 graphene-graphiql-explorer = "*"
+shortuuid = "*"
 
 [dev-packages]
 rope = "*"

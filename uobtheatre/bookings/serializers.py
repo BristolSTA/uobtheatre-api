@@ -12,7 +12,6 @@ from uobtheatre.bookings.models import (
 )
 from uobtheatre.productions.serializers import PerformanceSerializer
 from uobtheatre.utils.serializers import AppendIdSerializerMixin, UserIdSerializer
-from uobtheatre.utils.utils import create_random_ref
 from uobtheatre.venues.models import SeatGroup
 from uobtheatre.venues.serializers import SeatGroupSerializer, ShortSeatGroupSerializer
 
@@ -231,22 +230,7 @@ class CreateBookingSerialiser(AppendIdSerializerMixin, serializers.ModelSerializ
         tickets = validated_data.pop("tickets", [])
 
         # Create the booking
-        booking_reference = create_random_ref()
-        unique = False
-        while not unique:
-            if not Booking.objects.get(booking_reference=booking_reference):
-                unique = True
-            else:
-                booking_reference = create_random_ref()
-
-        try:
-            booking = Booking.objects.create(
-                user=self.context["user"],
-                booking_reference=booking_reference,
-                **validated_data,
-            )
-        except IntegrityError as excption:
-            raise serializers.ValidationError(excption)
+        booking = Booking.objects.create(user=self.context["user"], **validated_data)
 
         # Create all the seat bookings
         for ticket in tickets:

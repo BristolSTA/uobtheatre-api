@@ -1,6 +1,5 @@
-import uuid
-
 import factory
+import shortuuid
 
 from uobtheatre.bookings.models import (
     Booking,
@@ -62,7 +61,7 @@ class DiscountRequirementFactory(factory.django.DjangoModelFactory):
 
 class BookingFactory(factory.django.DjangoModelFactory):
 
-    booking_reference = uuid.uuid4()
+    booking_reference = shortuuid.ShortUUID().random(length=12)
     user = factory.SubFactory(UserFactory)
     performance = factory.SubFactory(PerformanceFactory)
     status = Booking.BookingStatus.PAID

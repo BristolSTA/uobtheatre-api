@@ -1,6 +1,5 @@
-import random
-import string
+import shortuuid
 
 
-def create_random_ref(length=12):
-    return "".join(random.choices(string.ascii_uppercase + string.digits, k=N))
+def create_short_uuid():
+    return shortuuid.ShortUUID().random(length=12)
