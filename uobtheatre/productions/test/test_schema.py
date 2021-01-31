@@ -507,3 +507,28 @@ def test_ticket_options(gql_client, gql_id):
             }
         },
     }
+
+
+@pytest.mark.django_db
+def test_slug_single_schema(gql_client, gql_id):
+    productions = [ProductionFactory() for i in range(2)]
+
+    request = """
+        query {
+	  production(slug:"%s") {
+            id
+          }
+        }
+
+        """
+    response = gql_client.execute(request % "")
+
+    assert (
+        response["errors"][0]["message"] == "Production matching query does not exist."
+    )
+    assert response["data"] == {"production": None}
+
+    response = gql_client.execute(request % productions[0].slug)
+    assert response["data"] == {
+        "production": {"id": gql_id(productions[0].id, "ProductionNode")}
+    }
