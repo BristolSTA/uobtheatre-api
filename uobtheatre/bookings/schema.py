@@ -146,7 +146,7 @@ class CreateBooking(graphene.Mutation):
         tickets = graphene.List(CreateTicketInput, required=False)
 
     @classmethod
-    def mutate(self, root, info, performance_id, tickets):
+    def mutate(self, root, info, performance_id, tickets=[]):
         if not info.context.user.is_authenticated:
             raise GraphQLError("You must be logged in to create a booking")
 

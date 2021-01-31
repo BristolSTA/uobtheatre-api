@@ -11,6 +11,7 @@ from uobtheatre.bookings.test.factories import (
     TicketFactory,
     ValueMiscCostFactory,
 )
+from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory
 
 
@@ -214,3 +215,155 @@ def test_bookings_price_break_down(gql_client_flexible, gql_id):
         "miscCostsValue": int(booking.misc_costs_value()),
         "totalPrice": booking.total(),
     }
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "data, seat_group_capacity, performance_capacity, is_valid",
+    [
+        # Check performance is required to create booking
+        (
+            """
+            tickets: [
+                {
+                    seatGroupId: "U2VhdEdyb3VwTm9kZTox"
+                    concessionTypeId: "Q29uY2Vzc2lvblR5cGVOb2RlOjE="
+                }
+            ]
+            """,
+            10,
+            10,
+            False,
+        ),
+        # Assert seat group is required for each seat booking
+        (
+            """
+            performanceId: "UGVyZm9ybWFuY2VOb2RlOjE="
+            tickets: [
+                {
+                    concessionTypeId: "Q29uY2Vzc2lvblR5cGVOb2RlOjE="
+                }
+            ]
+            """,
+            10,
+            10,
+            False,
+        ),
+        # Check concession type is not required (default to adult)
+        # TODO write test to check default to adult
+        # TODO For now concession type is required as there is no default
+        # (
+        #     """
+        #     performanceId: "UGVyZm9ybWFuY2VOb2RlOjE="
+        #     tickets: [
+        #         {
+        #             seatGroupId: "U2VhdEdyb3VwTm9kZTox"
+        #         }
+        #     ]
+        #     """,
+        #     10,
+        #     10,
+        #     True,
+        # ),
+        # Check seat booking is not required
+        (
+            """
+            performanceId: "UGVyZm9ybWFuY2VOb2RlOjE="
+            """,
+            10,
+            10,
+            True,
+        ),
+        (
+            # Check booking with all data is valid
+            """
+            performanceId: "UGVyZm9ybWFuY2VOb2RlOjE="
+            tickets: [
+                {
+                    seatGroupId: "U2VhdEdyb3VwTm9kZTox"
+                    concessionTypeId: "Q29uY2Vzc2lvblR5cGVOb2RlOjE="
+                }
+            ]
+            """,
+            10,
+            10,
+            True,
+        ),
+        (
+            # Check if there is not enough performance capcaity it is not valid
+            """
+            performanceId: "UGVyZm9ybWFuY2VOb2RlOjE="
+            tickets: [
+                {
+                    seatGroupId: "U2VhdEdyb3VwTm9kZTox"
+                    concessionTypeId: "Q29uY2Vzc2lvblR5cGVOb2RlOjE="
+                }
+                {
+                    seatGroupId: "U2VhdEdyb3VwTm9kZTox"
+                    concessionTypeId: "Q29uY2Vzc2lvblR5cGVOb2RlOjE="
+                }
+                {
+                    seatGroupId: "U2VhdEdyb3VwTm9kZTox"
+                    concessionTypeId: "Q29uY2Vzc2lvblR5cGVOb2RlOjE="
+                }
+            ]
+            """,
+            10,
+            2,
+            False,
+        ),
+        (
+            # Check if there is not enough seat_group capcaity it is not valid
+            """
+            performanceId: "UGVyZm9ybWFuY2VOb2RlOjE="
+            tickets: [
+                {
+                    seatGroupId: "U2VhdEdyb3VwTm9kZTox"
+                    concessionTypeId: "Q29uY2Vzc2lvblR5cGVOb2RlOjE="
+                }
+                {
+                    seatGroupId: "U2VhdEdyb3VwTm9kZTox",
+                    concessionTypeId: "Q29uY2Vzc2lvblR5cGVOb2RlOjE="
+                }
+                {
+                    seatGroupId: "U2VhdEdyb3VwTm9kZTox"
+                    concessionTypeId: "Q29uY2Vzc2lvblR5cGVOb2RlOjE="
+                }
+            ],
+            """,
+            2,
+            10,
+            False,
+        ),
+    ],
+)
+def test_create_booking_mutation(
+    data, seat_group_capacity, performance_capacity, is_valid, gql_client_flexible
+):
+
+    performance = PerformanceFactory(id=1, capacity=performance_capacity)
+    seat_group = SeatGroupFactory(id=1)
+    PerformanceSeatingFactory(
+        performance=performance, seat_group=seat_group, capacity=seat_group_capacity
+    )
+    ConcessionTypeFactory(id=1)
+    request = """
+        mutation {
+          createBooking(
+            %s
+          ) {
+            booking {
+              id
+            }
+         }
+        }
+    """
+
+    client = gql_client_flexible
+    print(request % data)
+    response = client.execute(request % data)
+
+    if not is_valid:
+        assert response.get("errors")
+    else:
+        assert not response.get("errors")
