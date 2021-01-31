@@ -1,13 +1,12 @@
 import itertools
 import math
-from typing import List, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from django.db import models
-from django.db.models import Q, UniqueConstraint
 
 from uobtheatre.productions.models import Performance
 from uobtheatre.users.models import User
-from uobtheatre.utils.models import TimeStampedMixin
+from uobtheatre.utils.models import TimeStampedMixin, validate_percentage
 from uobtheatre.venues.models import Seat, SeatGroup
 
 
@@ -19,36 +18,52 @@ class MiscCost(models.Model):
 
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
+    percentage = models.FloatField(
+        null=True, blank=True, validators=[validate_percentage]
+    )
+    value = models.FloatField(null=True, blank=True)
 
-    class Meta:
-        abstract = True
-
-
-class PercentageMiscCost(MiscCost):
-    percentage = models.FloatField()
-
-    def value(self, booking) -> int:
+    def get_value(self, booking) -> float:
         """
         Calculate the value of the misc cost given a booking
+        This will always return an value (not optional) as the model is
+        required to either have a non null percentage or a non null value
         """
-        return booking.subtotal() * self.percentage
+        if self.percentage is not None:
+            return booking.subtotal() * self.percentage
+        return self.value  # type: ignore
 
-
-class ValueMiscCost(MiscCost):
-    value = models.FloatField()
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                name="percentage_or_value_must_be_set_on_misc_cost",
+                check=(
+                    models.Q(
+                        percentage__isnull=True,
+                        value__isnull=False,
+                    )
+                    | models.Q(
+                        percentage__isnull=False,
+                        value__isnull=True,
+                    )
+                ),
+            )
+        ]
 
 
 class Discount(models.Model):
     name = models.CharField(max_length=255)
     discount = models.FloatField()
     performances = models.ManyToManyField(
-        Performance, blank=True, related_name="discounts"
+        Performance,
+        blank=True,
+        related_name="discounts",
     )
     seat_group = models.ForeignKey(
         SeatGroup, on_delete=models.CASCADE, null=True, blank=True
     )
 
-    def is_single_discount(self):
+    def is_single_discount(self) -> bool:
         """
         Retruns True if this discount applys to a single ticket.
         """
@@ -57,7 +72,7 @@ class Discount(models.Model):
             == 1
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.discount * 100}% off for {self.name}"
 
 
@@ -70,7 +85,7 @@ class ConcessionType(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
 
@@ -82,7 +97,7 @@ class DiscountRequirement(models.Model):
     concession_type = models.ForeignKey(ConcessionType, on_delete=models.CASCADE)
 
 
-def combinations(iterable: List, max_length: int) -> List[Tuple]:
+def combinations(iterable: List, max_length: int) -> Set[Tuple]:
     """ Given a list give all the combinations of that list up to a given length """
 
     return set(
@@ -96,23 +111,23 @@ class DiscountCombination:
     def __init__(self, discount_combination):
         self.discount_combination = discount_combination
 
-    def __eq__(self, obj):
+    def __eq__(self, obj) -> bool:
         return (
             isinstance(obj, DiscountCombination)
             and obj.discount_combination == self.discount_combination
         )
 
-    def get_requirements(self):
+    def get_requirements(self) -> List[DiscountRequirement]:
         return [
             requirement
             for discount in self.discount_combination
             for requirement in discount.discount_requirements.all()
         ]
 
-    def get_concession_map(self):
+    def get_concession_map(self) -> Dict:
         """Return a map of how many of each concession type are rquired for
         this discount combination"""
-        concession_requirements = {}
+        concession_requirements: Dict["ConcessionType", int] = {}
         for requirement in self.get_requirements():
             if not requirement.concession_type in concession_requirements.keys():
                 concession_requirements[requirement.concession_type] = 0
@@ -129,9 +144,9 @@ class Booking(models.Model, TimeStampedMixin):
 
     class Meta:
         constraints = [
-            UniqueConstraint(
+            models.UniqueConstraint(
                 fields=["status", "performance"],
-                condition=Q(status="in_progress"),
+                condition=models.Q(status="in_progress"),
                 name="one_in_progress_booking_per_user_per_performance",
             )
         ]
@@ -152,9 +167,9 @@ class Booking(models.Model, TimeStampedMixin):
     def __str__(self):
         return str(self.booking_reference)
 
-    def get_concession_map(self):
+    def get_concession_map(self) -> Dict:
         """ Return the number of each type of concession in this booking """
-        booking_concessions = {}
+        booking_concessions: Dict = {}
         for ticket in self.tickets.all():
             if not ticket.concession_type in booking_concessions.keys():
                 booking_concessions[ticket.concession_type] = 0
@@ -170,7 +185,7 @@ class Booking(models.Model, TimeStampedMixin):
             for requirement in concession_requirements.keys()
         )
 
-    def get_valid_discounts(self) -> List[Discount]:
+    def get_valid_discounts(self) -> List[DiscountCombination]:
         return [
             DiscountCombination(discounts)
             for discounts in combinations(
@@ -216,7 +231,8 @@ class Booking(models.Model, TimeStampedMixin):
             concession_map = discount.get_concession_map()
             for concession_type in concession_map.keys():
                 for _ in range(concession_map[concession_type]):
-                    ticket = next(
+                    # Skipped coverage here as there is no way that the next could not get an item (hopefully)
+                    ticket = next(  # pragma: no cover
                         ticket
                         for ticket in tickets_available_to_discount
                         if ticket.concession_type == concession_type
@@ -231,27 +247,29 @@ class Booking(models.Model, TimeStampedMixin):
         # For each type of concession
         return self.get_price() - discount_total
 
-    def get_best_discount_combination(self):
+    def get_best_discount_combination(self) -> Optional[DiscountCombination]:
         """
         Returns the discount combination applied to the discount to get the
         subtotal. This is the discount combination with the greatest value.
         """
         return self.get_best_discount_combination_with_price()[0]
 
-    def subtotal(self):
+    def subtotal(self) -> float:
         """
         Returns the subtotal of the booking. This is the total value including
         single and group discounts before any misc costs are applied.
         """
         return self.get_best_discount_combination_with_price()[1]
 
-    def get_best_discount_combination_with_price(self):
+    def get_best_discount_combination_with_price(
+        self,
+    ) -> Tuple[Optional[DiscountCombination], float]:
         """
         Returns the discounted price (subtotal) and the discount combination
         used to create that price.
         """
         best_price = self.get_price()
-        best_discount = None
+        best_discount: Optional[DiscountCombination] = None
         for discount_combo in self.get_valid_discounts():
             discount_combo_price = self.get_price_with_discount_combination(
                 discount_combo
@@ -262,25 +280,19 @@ class Booking(models.Model, TimeStampedMixin):
 
         return best_discount, best_price
 
-    def discount_value(self):
+    def discount_value(self) -> float:
         """
         Returns the value of the group discounts applied in pence
         """
         return self.tickets_price() - self.subtotal()
 
-    def misc_costs_value(self):
+    def misc_costs_value(self) -> float:
         """
         Returns the value of the misc costs applied in pence
         """
-        percentage_misc_costs_value = sum(
-            misc_cost.value(self) for misc_cost in PercentageMiscCost.objects.all()
-        )
-        value_misc_cost_value = sum(
-            misc_cost.value for misc_cost in ValueMiscCost.objects.all()
-        )
-        return percentage_misc_costs_value + value_misc_cost_value
+        return sum(misc_cost.get_value(self) for misc_cost in MiscCost.objects.all())
 
-    def total(self) -> int:
+    def total(self) -> float:
         """
         The final price of the booking with all dicounts and misc costs applied.
         """
@@ -294,12 +306,11 @@ class Ticket(models.Model):
         SeatGroup, on_delete=models.RESTRICT, related_name="tickets"
     )
     booking = models.ForeignKey(
-        Booking, on_delete=models.PROTECT, related_name="tickets"
+        Booking, on_delete=models.CASCADE, related_name="tickets"
     )
     concession_type = models.ForeignKey(
         ConcessionType,
-        on_delete=models.SET_NULL,
+        on_delete=models.RESTRICT,
         related_name="seat_bookings",
-        null=True,
     )
     seat = models.ForeignKey(Seat, on_delete=models.RESTRICT, null=True, blank=True)

@@ -1,5 +1,6 @@
+import datetime
 import math
-from typing import List
+from typing import List, Optional
 
 from autoslug import AutoSlugField
 from django.db import models
@@ -14,7 +15,21 @@ from uobtheatre.venues.models import SeatGroup, Venue
 class CrewRole(models.Model):
     """Crew role"""
 
+    class Department(models.TextChoices):
+        LX = "lighting", "Lighting"
+        SND = "sound", "Sound"
+        AV = "av", "AV"
+        SM = "stage_management", "Stage Management"
+        PYRO = "pryo", "Pyrotechnics"
+        SET = "set", "Set"
+        MISC = "misc", "Miscellaneous"
+
     name = models.CharField(max_length=255)
+    department = models.CharField(
+        max_length=20,
+        choices=Department.choices,
+        default=Department.MISC,
+    )
 
     def __str__(self):
         return self.name
@@ -38,7 +53,9 @@ class Production(models.Model, TimeStampedMixin):
     subtitle = models.CharField(max_length=255, null=True)
     description = models.TextField(null=True)
 
-    society = models.ForeignKey(Society, on_delete=models.SET_NULL, null=True)
+    society = models.ForeignKey(
+        Society, on_delete=models.SET_NULL, null=True, related_name="productions"
+    )
 
     poster_image = models.ImageField(null=True)
     featured_image = models.ImageField(null=True)
@@ -60,7 +77,11 @@ class Production(models.Model, TimeStampedMixin):
         productions (not ended) then it is not upcoming.
         """
         performances = self.performances.all()
-        return any(performance.start > timezone.now() for performance in performances)
+        return any(
+            performance.start > timezone.now()
+            for performance in performances
+            if performance.start
+        )
 
     def end_date(self):
         """
@@ -80,7 +101,7 @@ class Production(models.Model, TimeStampedMixin):
             return None
         return min(performance.start for performance in performances)
 
-    def duration(self):
+    def duration(self) -> Optional[datetime.timedelta]:
         """
         Returns the duration of the shortest show as a datetime object.
         """
@@ -88,6 +109,9 @@ class Production(models.Model, TimeStampedMixin):
         if not performances:
             return None
         return min(performance.duration() for performance in performances)
+
+    class Meta:
+        ordering = ["id"]
 
 
 class CastMember(models.Model):
@@ -103,18 +127,42 @@ class CastMember(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        ordering = ["id"]
+
+
+class ProductionTeamMember(models.Model):
+    """Member of production prod team"""
+
+    name = models.CharField(max_length=255)
+    role = models.CharField(max_length=255, null=True)
+    production = models.ForeignKey(
+        Production, on_delete=models.CASCADE, related_name="production_team"
+    )
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ["id"]
+
 
 class CrewMember(models.Model):
     """Member of production crew"""
 
     name = models.CharField(max_length=255)
-    role = models.ForeignKey(CrewRole, null=True, on_delete=models.SET_NULL)
+    role = models.ForeignKey(
+        CrewRole, null=True, on_delete=models.SET_NULL, related_name="crew_members"
+    )
     production = models.ForeignKey(
         Production, on_delete=models.CASCADE, related_name="crew"
     )
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        ordering = ["id"]
 
 
 class Performance(models.Model, TimeStampedMixin):
@@ -124,16 +172,27 @@ class Performance(models.Model, TimeStampedMixin):
     """
 
     production = models.ForeignKey(
-        Production, on_delete=models.CASCADE, related_name="performances"
+        Production,
+        on_delete=models.CASCADE,
+        related_name="performances",
     )
 
-    venue = models.ForeignKey(Venue, on_delete=models.SET_NULL, null=True)
+    venue = models.ForeignKey(
+        Venue, on_delete=models.SET_NULL, null=True, related_name="performances"
+    )
+
+    doors_open = models.DateTimeField(null=True)
     start = models.DateTimeField(null=True)
     end = models.DateTimeField(null=True)
 
+    description = models.TextField(null=True, blank=True)
     extra_information = models.TextField(null=True, blank=True)
 
+    disabled = models.BooleanField(default=True)
+
     seat_groups = models.ManyToManyField(SeatGroup, through="PerformanceSeatGroup")
+
+    capacity = models.IntegerField(null=True, blank=True)
 
     def tickets(self, seat_group=None):
         """ Get all tickets for this performance """
@@ -164,9 +223,17 @@ class Performance(models.Model, TimeStampedMixin):
             return self.total_capacity(seat_group=seat_group) - len(
                 self.tickets(seat_group=seat_group)
             )
-        return sum(
+
+        seat_groups_remaining_capacity = sum(
             self.capacity_remaining(seat_group=performance_seat_group.seat_group)
             for performance_seat_group in self.performance_seat_groups.all()
+        )
+        return (
+            seat_groups_remaining_capacity
+            if not self.capacity
+            else min(
+                self.capacity - len(self.tickets()), seat_groups_remaining_capacity
+            )
         )
 
     def duration(self):
@@ -175,7 +242,7 @@ class Performance(models.Model, TimeStampedMixin):
         """
         return self.end - self.start
 
-    def get_single_discounts(self):
+    def get_single_discounts(self) -> List:
         """ Returns all discounts that apply to a single ticket """
         return [
             discount
@@ -218,10 +285,21 @@ class Performance(models.Model, TimeStampedMixin):
         concession_list.sort(key=lambda concession: concession.id)
         return concession_list
 
+    def min_seat_price(self) -> Optional[int]:
+        """
+        Returns the price of the cheapest seat price
+        """
+        return min(
+            (psg.price for psg in self.performance_seat_groups.all()), default=None
+        )
+
     def __str__(self):
         if self.start is None:
             return f"Perforamce of {self.production.name}"
         return f"Perforamce of {self.production.name} at {self.start.strftime('%H:%M')} on {self.start.strftime('%d/%m/%Y')}"
+
+    class Meta:
+        ordering = ["id"]
 
 
 class PerformanceSeatGroup(models.Model):

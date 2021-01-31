@@ -30,3 +30,9 @@ class SeatGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = SeatGroup
         fields = "__all__"
+
+
+class ShortSeatGroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SeatGroup
+        fields = ("id", "name", "description")

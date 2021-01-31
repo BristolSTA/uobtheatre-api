@@ -6,6 +6,7 @@ from uobtheatre.bookings.models import (
     Discount,
     DiscountCombination,
     DiscountRequirement,
+    MiscCost,
     combinations,
 )
 from uobtheatre.bookings.test.factories import (
@@ -240,36 +241,6 @@ def test_get_price():
     )
 
 
-@pytest.mark.skip(reason="This needs implementing")
-@pytest.mark.django_db
-def test_graceful_response_to_no_price():
-    venue = VenueFactory()
-    performance = PerformanceFactory(venue=venue)
-    booking = BookingFactory(performance=performance)
-
-    seat_group = SeatGroupFactory(venue=venue)
-
-    """
-    Inorder to set the price of the seat_group the user is about to book we
-    would need to use the PerformanceSeatingFactory as below:
-
-    ```
-    seat_price = PerformanceSeatingFactory(performance=performance)
-    seat_price.seat_groups.set([seat_group])
-    ```
-
-    If we do not do this no price will be found for the booked seat and bad
-    things will happen.
-
-    Most importantly a user should not be able to book a seat if this is the
-    case as that means this seat has not been asigned for the show yet...
-    """
-
-    # Create a seat booking
-    TicketFactory(booking=booking, seat_group=seat_group)
-    assert booking.get_price() == seat_price.price
-
-
 @pytest.mark.django_db
 def test_get_price_with_discount_combination():
     venue = VenueFactory()
@@ -440,7 +411,7 @@ def test_percentage_misc_cost_value():
     psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
     ticket = TicketFactory(booking=booking, seat_group=psg.seat_group)
 
-    assert misc_cost.value(booking) == 240
+    assert misc_cost.get_value(booking) == 240
 
 
 @pytest.mark.django_db
@@ -486,3 +457,26 @@ def test_draft_uniqueness():
     BookingFactory(**args)
     with pytest.raises(IntegrityError):
         BookingFactory(**args)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "value, percentage, error",
+    [(None, None, True), (None, 1, False), (1, None, False), (1, 1, True)],
+)
+def test_misc_cost_constraints(value, percentage, error):
+    """
+    Check a when creating a misc cost you must have either a value or a
+    percentage but not both.
+    """
+    args = {
+        "name": "Some misc cost",
+        "value": value,
+        "percentage": percentage,
+    }
+
+    if not error:
+        MiscCost.objects.create(**args)
+    else:
+        with pytest.raises(IntegrityError):
+            MiscCost.objects.create(**args)

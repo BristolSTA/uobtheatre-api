@@ -6,14 +6,12 @@ from uobtheatre.bookings.models import (
     ConcessionType,
     Discount,
     DiscountRequirement,
-    PercentageMiscCost,
+    MiscCost,
     Ticket,
-    ValueMiscCost,
 )
 
 admin.site.register(ConcessionType)
-admin.site.register(PercentageMiscCost)
-admin.site.register(ValueMiscCost)
+admin.site.register(MiscCost)
 
 
 class DiscountRequirementInline(admin.StackedInline):
@@ -46,5 +44,6 @@ class BookingAdmin(admin.ModelAdmin):
             "<p> {} </p>", booking.get_best_discount_combination_with_price()[1]
         )
 
-    view_price.short_description = "Price"
-    view_price_with_discount.short_description = "Discounted Price"
+    view_price.short_description = "Price"  # type: ignore
+
+    view_price_with_discount.short_description = "Discounted Price"  # type: ignore

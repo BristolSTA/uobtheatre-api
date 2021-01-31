@@ -8,6 +8,9 @@ class UserIdSerializer(serializers.UUIDField):
 
 # Add _id to releated fields
 # https://stackoverflow.com/a/37908893
+# Ive simplieifed for our use case (no many realtedfields but if that becomes
+# need then check this)
+
 # class IdManyRelatedField(relations.ManyRelatedField):
 #     field_name_suffix = "_ids"
 #
@@ -31,11 +34,8 @@ class IdPrimaryKeyRelatedField(relations.PrimaryKeyRelatedField):
         Changes the source  so that the original field name is used (removes
         the _id suffix).
         """
-        # This used to be in if statement but we dont use this atm so its
-        # commented out, if things start to break then probably add it back in
-
-        if field_name:
-            self.source = field_name[: -len(self.field_name_suffix)]
+        # if field_name:
+        self.source = field_name[: -len(self.field_name_suffix)]
         super(IdPrimaryKeyRelatedField, self).bind(field_name, parent)
 
 
@@ -45,7 +45,7 @@ class AppendIdSerializerMixin(object):
     https://gist.github.com/ostcar/eb78515a41ab41d1755b
     """
 
-    serializer_related_field = IdPrimaryKeyRelatedField
+    serializer_related_field: relations.RelatedField = IdPrimaryKeyRelatedField  # type: ignore
 
     def get_fields(self):
         fields = super(AppendIdSerializerMixin, self).get_fields()

@@ -30,6 +30,7 @@ INSTALLED_APPS = (
     "rest_framework_extensions",  # Extensions including nested views
     "autoslug",  # Auto slug
     "url_filter",
+    "graphene_django",  # Graphql
     # Your apps
     "uobtheatre.users",
     "uobtheatre.productions",
@@ -228,6 +229,7 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.TokenAuthentication",
     ),
     "DEFAULT_FILTER_BACKENDS": ["url_filter.integrations.drf.DjangoFilterBackend"],
+    "EXCEPTION_HANDLER": "uobtheatre.utils.exceptions.custom_exception_handler",
 }
 
 
@@ -235,3 +237,9 @@ REST_FRAMEWORK = {
 SWAGGER_SETTINGS = {
     "DEFAULT_API_URL": "https://api.uobtheatre.com",
 }
+
+NON_FIELD_ERRORS_KEY = "non_field_errors"
+FIELD_ERRORS_KEY = "field_errors"
+
+# GraphQL
+GRAPHENE = {"SCHEMA": "uobtheatre.schema.schema"}

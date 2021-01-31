@@ -14,7 +14,7 @@ from uobtheatre.venues.serializers import VenueSerializer
 
 
 class CrewMemberSerialzier(serializers.ModelSerializer):
-    role = serializers.StringRelatedField()
+    role: serializers.StringRelatedField = serializers.StringRelatedField()
 
     class Meta:
         model = CrewMember
@@ -35,18 +35,28 @@ class WarningSerializer(serializers.ModelSerializer):
 
 class PerformanceSerializer(AppendIdSerializerMixin, serializers.ModelSerializer):
     venue = VenueSerializer()
+
+    doors_open = serializers.DateTimeField()
     start = serializers.DateTimeField()
     end = serializers.DateTimeField()
 
     class Meta:
         model = Performance
-        fields = ("id", "production", "venue", "start", "end", "extra_information")
+        fields = (
+            "id",
+            "production",
+            "venue",
+            "doors_open",
+            "start",
+            "end",
+            "extra_information",
+        )
 
 
 class ProductionSerializer(AppendIdSerializerMixin, serializers.ModelSerializer):
     society = SocietySerializer()
     performances = PerformanceSerializer(many=True)
-    warnings = serializers.StringRelatedField(many=True)
+    warnings: serializers.StringRelatedField = serializers.StringRelatedField(many=True)
     crew = CrewMemberSerialzier(many=True)
     cast = CastMemberSerialzier(many=True)
     start_date = serializers.DateTimeField()
@@ -61,11 +71,16 @@ class ProductionSerializer(AppendIdSerializerMixin, serializers.ModelSerializer)
 class PerformanceTicketTypesSerializer(serializers.ModelSerializer):
     def to_representation(self, performance):
         return {
+            "capacity_remaining": performance.capacity_remaining(),
             "ticket_types": [
                 {
                     "seat_group": {
-                        "name": performance_seat_group.seat_group.name,
                         "id": performance_seat_group.seat_group.id,
+                        "name": performance_seat_group.seat_group.name,
+                        "description": performance_seat_group.seat_group.description,
+                        "capacity_remaining": performance.capacity_remaining(
+                            performance_seat_group.seat_group
+                        ),
                     },
                     "concession_types": [
                         {
@@ -90,5 +105,5 @@ class PerformanceTicketTypesSerializer(serializers.ModelSerializer):
                 for performance_seat_group in performance.performance_seat_groups.order_by(
                     "id"
                 )
-            ]
+            ],
         }

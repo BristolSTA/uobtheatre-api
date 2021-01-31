@@ -65,7 +65,11 @@ def test_production_serializer(date_format):
         "society": {
             "id": production.society.id,
             "name": production.society.name,
+            "description": production.society.description,
             "logo": production.society.logo.url if production.society.logo else None,
+            "banner": production.society.banner.url
+            if production.society.banner
+            else None,
         },
         "poster_image": production.poster_image.url,
         "featured_image": production.featured_image.url,
@@ -96,6 +100,7 @@ def test_production_serializer(date_format):
                 "slug": performance.venue.slug,
             },
             "extra_information": performance.extra_information,
+            "doors_open": performance.doors_open.strftime(date_format),
             "start": performance.start.strftime(date_format),
             "end": performance.end.strftime(date_format),
         }
@@ -131,6 +136,7 @@ def test_performance_serializer(date_format):
             "slug": performance.venue.slug,
         },
         "extra_information": performance.extra_information,
+        "doors_open": performance.doors_open.strftime(date_format),
         "start": performance.start.strftime(date_format),
         "end": performance.end.strftime(date_format),
     }
@@ -182,11 +188,16 @@ def test_performance_ticket_types_serializer():
     serialized_ticket_types = PerformanceTicketTypesSerializer(performance)
 
     assert serialized_ticket_types.data == {
+        "capacity_remaining": performance.capacity_remaining(),
         "ticket_types": [
             {
                 "seat_group": {
-                    "name": performance_seat_group_1.seat_group.name,
                     "id": performance_seat_group_1.seat_group.id,
+                    "name": performance_seat_group_1.seat_group.name,
+                    "description": performance_seat_group_1.seat_group.description,
+                    "capacity_remaining": performance.capacity_remaining(
+                        performance_seat_group_1.seat_group
+                    ),
                 },
                 "concession_types": [
                     {
@@ -211,8 +222,12 @@ def test_performance_ticket_types_serializer():
             },
             {
                 "seat_group": {
-                    "name": performance_seat_group_2.seat_group.name,
                     "id": performance_seat_group_2.seat_group.id,
+                    "name": performance_seat_group_2.seat_group.name,
+                    "description": performance_seat_group_1.seat_group.description,
+                    "capacity_remaining": performance.capacity_remaining(
+                        performance_seat_group_2.seat_group
+                    ),
                 },
                 "concession_types": [
                     {

@@ -1,0 +1,299 @@
+schema {
+  query: Query
+}
+
+type AddressNode implements Node {
+  buildingName: String
+  buildingNumber: String
+  street: String!
+  city: String!
+  postcode: String!
+  latitude: Float
+  longitude: Float
+  id: ID!
+}
+
+type BookingNode implements Node {
+  id: ID!
+  bookingReference: UUID!
+  performance: PerformanceNode!
+  status: BookingStatus!
+  priceBreakdown: PriceBreakdownNode
+}
+
+type BookingNodeConnection {
+  pageInfo: PageInfo!
+  edges: [BookingNodeEdge]!
+}
+
+type BookingNodeEdge {
+  node: BookingNode
+  cursor: String!
+}
+
+enum BookingStatus {
+  IN_PROGRESS
+  PAID
+}
+
+type CastMemberNode implements Node {
+  id: ID!
+  name: String!
+  profilePicture: GrapheneImageFieldNode
+  role: String
+  production: ProductionNode!
+}
+
+type ConcessionTypeBookingType {
+  concession: ConcessionTypeNode
+  price: Int
+  pricePounds: String
+}
+
+type ConcessionTypeNode implements Node {
+  id: ID!
+  name: String!
+  description: String
+}
+
+type CrewMemberNode implements Node {
+  id: ID!
+  name: String!
+  role: CrewRoleNode
+  production: ProductionNode!
+}
+
+type CrewMemberNodeConnection {
+  pageInfo: PageInfo!
+  edges: [CrewMemberNodeEdge]!
+}
+
+type CrewMemberNodeEdge {
+  node: CrewMemberNode
+  cursor: String!
+}
+
+enum CrewRoleDepartment {
+  LIGHTING
+  SOUND
+  AV
+  STAGE_MANAGEMENT
+  PRYO
+  SET
+  MISC
+}
+
+type CrewRoleNode implements Node {
+  id: ID!
+  name: String!
+  department: CrewRoleDepartment!
+  crewMembers(offset: Int, before: String, after: String, first: Int, last: Int): CrewMemberNodeConnection!
+}
+
+scalar DateTime
+
+type GrapheneImageFieldNode {
+  url: String
+  name: String
+}
+
+type MiscCostNode implements Node {
+  id: ID!
+  name: String!
+  description: String
+  percentage: Float
+  value: Float
+}
+
+interface Node {
+  id: ID!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+type PerformanceNode implements Node {
+  id: ID!
+  production: ProductionNode!
+  venue: VenueNode
+  doorsOpen: DateTime
+  start: DateTime
+  end: DateTime
+  description: String
+  extraInformation: String
+  disabled: Boolean!
+  seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
+  capacity: Int
+  capacityRemaining: Int
+  ticketOptions: [PerformanceSeatGroupNode]
+  minSeatPrice: Int
+}
+
+type PerformanceNodeConnection {
+  pageInfo: PageInfo!
+  edges: [PerformanceNodeEdge]!
+}
+
+type PerformanceNodeEdge {
+  node: PerformanceNode
+  cursor: String!
+}
+
+type PerformanceSeatGroupNode implements Node {
+  seatGroup: SeatGroupNode!
+  capacity: Int!
+  id: ID!
+  capacityRemaining: Int
+  concessionTypes: [ConcessionTypeBookingType]
+}
+
+type PerformanceSeatGroupNodeConnection {
+  pageInfo: PageInfo!
+  edges: [PerformanceSeatGroupNodeEdge]!
+}
+
+type PerformanceSeatGroupNodeEdge {
+  node: PerformanceSeatGroupNode
+  cursor: String!
+}
+
+type PriceBreakdownNode implements Node {
+  id: ID!
+  tickets: [TicketNode]
+  ticketsPrice: Int
+  discountsValue: Int
+  miscCosts: [MiscCostNode]
+  subtotalPrice: Int
+  miscCostsValue: Int
+  totalPrice: Int
+}
+
+type ProductionNode implements Node {
+  id: ID!
+  name: String!
+  subtitle: String
+  description: String
+  society: SocietyNode
+  posterImage: GrapheneImageFieldNode
+  featuredImage: GrapheneImageFieldNode
+  coverImage: GrapheneImageFieldNode
+  ageRating: Int
+  facebookEvent: String
+  warnings: [WarningNode!]
+  slug: String!
+  cast: [CastMemberNode!]
+  productionTeam: [ProductionTeamMemberNode!]
+  crew: [CrewMemberNode!]
+  performances(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, start: DateTime, start_Year_Gt: DateTime): PerformanceNodeConnection!
+  start: DateTime
+  end: DateTime
+}
+
+type ProductionNodeConnection {
+  pageInfo: PageInfo!
+  edges: [ProductionNodeEdge]!
+}
+
+type ProductionNodeEdge {
+  node: ProductionNode
+  cursor: String!
+}
+
+type ProductionTeamMemberNode implements Node {
+  id: ID!
+  name: String!
+  role: String
+  production: ProductionNode!
+}
+
+type Query {
+  societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String): SocietyNodeConnection
+  bookings(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, bookingReference: UUID): BookingNodeConnection
+  productions(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, slug: String): ProductionNodeConnection
+  performances(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, start: DateTime, start_Year_Gt: DateTime): PerformanceNodeConnection
+  venues(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String): VenueNodeConnection
+}
+
+type SeatGroupNode implements Node {
+  id: ID!
+  name: String
+  description: String
+  venue: VenueNode!
+  capacity: Int
+  isInternal: Boolean!
+  performanceSet(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, start: DateTime, start_Year_Gt: DateTime): PerformanceNodeConnection!
+  performanceseatgroupSet(offset: Int, before: String, after: String, first: Int, last: Int): PerformanceSeatGroupNodeConnection!
+}
+
+type SeatGroupNodeConnection {
+  pageInfo: PageInfo!
+  edges: [SeatGroupNodeEdge]!
+}
+
+type SeatGroupNodeEdge {
+  node: SeatGroupNode
+  cursor: String!
+}
+
+type SocietyNode implements Node {
+  id: ID!
+  name: String!
+  description: String!
+  logo: GrapheneImageFieldNode
+  banner: GrapheneImageFieldNode
+  productions(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, slug: String): ProductionNodeConnection!
+}
+
+type SocietyNodeConnection {
+  pageInfo: PageInfo!
+  edges: [SocietyNodeEdge]!
+}
+
+type SocietyNodeEdge {
+  node: SocietyNode
+  cursor: String!
+}
+
+type TicketNode {
+  ticketPrice: Int
+  number: Int
+  seatGroup: SeatGroupNode
+  concession: ConcessionTypeNode
+  totalPrice: Int
+}
+
+scalar UUID
+
+type VenueNode implements Node {
+  id: ID!
+  name: String!
+  internalCapacity: Int!
+  description: String
+  address: AddressNode
+  image: GrapheneImageFieldNode
+  publiclyListed: Boolean!
+  slug: String!
+  seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
+  performances(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, start: DateTime, start_Year_Gt: DateTime): PerformanceNodeConnection!
+  productions(offset: Int, before: String, after: String, first: Int, last: Int): ProductionNodeConnection
+}
+
+type VenueNodeConnection {
+  pageInfo: PageInfo!
+  edges: [VenueNodeEdge]!
+}
+
+type VenueNodeEdge {
+  node: VenueNode
+  cursor: String!
+}
+
+type WarningNode implements Node {
+  id: ID!
+  warning: String!
+  productionSet(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, slug: String): ProductionNodeConnection!
+}

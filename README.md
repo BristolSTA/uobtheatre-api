@@ -98,3 +98,13 @@ and to run a single test
 ```
 docker-compose run --rm api pytest --cov uobtheatre -vv -s uobtheatre/bookings/test/test_views.py -k 'test_name'
 ```
+
+## Packages :package:
+
+When adding a package run
+
+`pipenv install package-name`
+
+This will add the package to the pipenv environemnt. However it will not update the docker image. This means you will need to remove the current image with `make clean` and rebuild with `make up`.
+
+This also means when starting work on a new branch which has a new package you will also need to clean and rebuild.
