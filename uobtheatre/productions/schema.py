@@ -146,3 +146,8 @@ class PerformanceNode(DjangoObjectType):
 class Query(graphene.ObjectType):
     productions = DjangoFilterConnectionField(ProductionNode)
     performances = DjangoFilterConnectionField(PerformanceNode)
+
+    production = graphene.Field(ProductionNode, slug=graphene.String(required=True))
+
+    def resolve_production(self, info, slug):
+        return Production.objects.get(slug=slug)

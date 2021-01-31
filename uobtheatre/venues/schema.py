@@ -39,6 +39,7 @@ class VenueNode(GrapheneImageMixin, DjangoObjectType):
 
 class Query(graphene.ObjectType):
     venues = DjangoFilterConnectionField(VenueNode)
+    venue = graphene.Field(VenueNode, slug=graphene.String(required=True))
 
-    def resolve_venues(self, info, **kwargs):
-        return Venue.objects.all()
+    def resolve_venue(self, info, slug):
+        return Venue.objects.get(slug=slug)
