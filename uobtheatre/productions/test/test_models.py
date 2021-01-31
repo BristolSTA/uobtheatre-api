@@ -1,9 +1,12 @@
 import datetime
+import math
+import random
 
 import pytest
 from dateutil import parser
 from django.utils import timezone
 
+from uobtheatre.bookings.models import Ticket
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
     ConcessionTypeFactory,
@@ -320,3 +323,122 @@ def test_performance_min_price():
     PerformanceSeatingFactory(performance=performance, price=20)
 
     assert performance.min_seat_price() == 10
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "seat_groups, performance_capacity, is_valid",
+    [
+        (
+            [
+                {
+                    "number_of_tickets": 2,
+                    "number_of_existing_tickets": 2,
+                    "capacity": 4,
+                }
+            ],
+            20,
+            True,
+        ),
+        (
+            [
+                {
+                    "number_of_tickets": 2,
+                    "number_of_existing_tickets": 2,
+                    "capacity": 4,
+                },
+                {
+                    "number_of_tickets": 5,
+                    "number_of_existing_tickets": 11,
+                    "capacity": 20,
+                },
+            ],
+            20,
+            True,
+        ),
+        (
+            # Check error when not enough performance capacity
+            [
+                {
+                    "number_of_tickets": 2,
+                    "number_of_existing_tickets": 2,
+                    "capacity": 4,
+                },
+                {
+                    "number_of_tickets": 5,
+                    "number_of_existing_tickets": 11,
+                    "capacity": 20,
+                },
+            ],
+            15,
+            False,
+        ),
+        (
+            # Check error when not enough seat_group capacity
+            [
+                {
+                    "number_of_tickets": 2,
+                    "number_of_existing_tickets": 2,
+                    "capacity": 4,
+                },
+                {
+                    "number_of_tickets": 5,
+                    "number_of_existing_tickets": 11,
+                    "capacity": 14,
+                },
+            ],
+            20,
+            False,
+        ),
+        (
+            # Check error when both
+            [
+                {
+                    "number_of_tickets": 2,
+                    "number_of_existing_tickets": 2,
+                    "capacity": 4,
+                },
+                {
+                    "number_of_tickets": 5,
+                    "number_of_existing_tickets": 11,
+                    "capacity": 14,
+                },
+            ],
+            15,
+            False,
+        ),
+    ],
+)
+def test_performance_check_capacity(seat_groups, performance_capacity, is_valid):
+    performance = PerformanceFactory(capacity=performance_capacity)
+    tickets_to_book = []
+
+    for seat_group in seat_groups:
+        performance_seat_group = PerformanceSeatingFactory(
+            performance=performance, capacity=seat_group["capacity"]
+        )
+
+        # Create some bookings which create the existing tickets
+        number_of_existing_tickets = seat_group["number_of_existing_tickets"]
+        bookings = [
+            BookingFactory(performance=performance)
+            for i in range(math.ceil(number_of_existing_tickets / 2))
+        ]
+        [
+            TicketFactory(
+                booking=random.choice(bookings),
+                seat_group=performance_seat_group.seat_group,
+            )
+            for _ in range(number_of_existing_tickets)
+        ]
+
+        # Create the ticket which are being checked
+        tickets_to_book.extend(
+            [
+                Ticket(seat_group=performance_seat_group.seat_group)
+                for i in range(seat_group["number_of_tickets"])
+            ]
+        )
+
+    # If valid this should be none if not it should return something
+    assert (performance.check_capacity(tickets_to_book) == None) == is_valid

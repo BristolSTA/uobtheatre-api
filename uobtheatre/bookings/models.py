@@ -1,7 +1,6 @@
 import itertools
 import math
 import uuid
-from collections import Counter
 from typing import Dict, List, Optional, Set, Tuple
 
 from django.db import models
@@ -300,13 +299,13 @@ class Booking(models.Model, TimeStampedMixin):
         """
         return math.ceil(self.subtotal() + self.misc_costs_value())
 
-    def get_ticket_diff(self, tickets):
+    def get_ticket_diff(self, tickets) -> Tuple[List["Ticket"], List["Ticket"]]:
         """
         Given a list of tickets return the tickets which need to be created a
-        deleted.
+        deleted, in two lists.
         """
-        diff = Counter(self.tickets.all()) - Counter(tickets)
-        return list(diff)
+        self.tickets.all()
+        return [], []
 
 
 class Ticket(models.Model):

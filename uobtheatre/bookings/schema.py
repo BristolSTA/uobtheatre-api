@@ -156,6 +156,9 @@ class CreateBooking(graphene.Mutation):
         # Covert the given tickets to ticket objects
         # If any of the gets throw an error (cant find the id) this will be handled by graphene
         # e.g. "ConcessionType matching query does not exist."
+
+        # booking.get_ticket_diff() -> return 2 lists, ticket to add, ticket to remove
+
         ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))
 
         # Check the capacity of the show and its seat_groups
