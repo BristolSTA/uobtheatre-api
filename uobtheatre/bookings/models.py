@@ -317,3 +317,11 @@ class Ticket(models.Model):
         related_name="seat_bookings",
     )
     seat = models.ForeignKey(Seat, on_delete=models.RESTRICT, null=True, blank=True)
+
+    def price(self):
+        return self.booking.performance.price_with_concession(
+            self.concession_type,
+            self.booking.performance.performance_seat_groups.get(
+                seat_group=self.seat_group
+            ).price,
+        )
