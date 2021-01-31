@@ -1,5 +1,4 @@
 import factory
-import shortuuid
 
 from uobtheatre.bookings.models import (
     Booking,
@@ -12,6 +11,7 @@ from uobtheatre.bookings.models import (
 from uobtheatre.productions.models import PerformanceSeatGroup
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
+from uobtheatre.utils.utils import create_short_uuid
 from uobtheatre.venues.test.factories import SeatGroupFactory
 
 
@@ -61,7 +61,7 @@ class DiscountRequirementFactory(factory.django.DjangoModelFactory):
 
 class BookingFactory(factory.django.DjangoModelFactory):
 
-    booking_reference = shortuuid.ShortUUID().random(length=12)
+    booking_reference = create_short_uuid()
     user = factory.SubFactory(UserFactory)
     performance = factory.SubFactory(PerformanceFactory)
     status = Booking.BookingStatus.PAID
