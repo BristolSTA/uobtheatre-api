@@ -66,7 +66,7 @@ class ProductionNode(GrapheneImageMixin, DjangoObjectType):
     start = graphene.DateTime()
     end = graphene.DateTime()
 
-    is_bookable = graphene.Boolean()
+    is_bookable = graphene.Boolean(required=True)
 
     def resolve_start(self, info):
         return self.start_date()
