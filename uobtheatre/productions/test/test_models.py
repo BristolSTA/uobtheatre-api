@@ -334,6 +334,14 @@ def test_performance_is_bookable(performance_disabled, expected):
 
 
 @pytest.mark.django_db
+def test_performance_is_not_bookable_with_no_performances():
+    production = ProductionFactory()
+    production.performances.set([])
+
+    assert production.is_bookable() == False
+
+
+@pytest.mark.django_db
 def test_performance_min_price():
 
     performance = PerformanceFactory()
