@@ -64,6 +64,7 @@ def test_productions_schema(gql_client, gql_id):
                 }
                 start
                 end
+                minSeatPrice
                 cast {
                   id
                   name
@@ -141,6 +142,7 @@ def test_productions_schema(gql_client, gql_id):
                             },
                             "start": production.start_date().isoformat(),
                             "end": production.end_date().isoformat(),
+                            "minSeatPrice": production.min_seat_price(),
                             "cast": [
                                 {
                                     "id": gql_id(cast_member.id, "CastMemberNode"),

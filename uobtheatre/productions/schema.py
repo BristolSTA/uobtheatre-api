@@ -67,6 +67,7 @@ class ProductionNode(GrapheneImageMixin, DjangoObjectType):
     end = graphene.DateTime()
 
     is_bookable = graphene.Boolean(required=True)
+    min_seat_price = graphene.Int()
 
     def resolve_start(self, info):
         return self.start_date()
@@ -76,6 +77,9 @@ class ProductionNode(GrapheneImageMixin, DjangoObjectType):
 
     def resolve_is_bookable(self, info):
         return self.is_bookable()
+
+    def resolve_min_seat_price(self, info):
+        return self.min_seat_price()
 
     class Meta:
         model = Production
