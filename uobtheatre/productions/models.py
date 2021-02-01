@@ -113,15 +113,15 @@ class Production(models.Model, TimeStampedMixin):
         Return the minimum seatgroup ticket price for each performance.
         """
         performances = self.performances.all()
-        allMinSeatPrices = [
+        all_min_seat_prices = [
             performance.min_seat_price() for performance in performances
         ]
 
         return min(
             (
-                minSeatPrice
-                for minSeatPrice in allMinSeatPrices
-                if minSeatPrice is not None
+                min_seat_prices
+                for min_seat_prices in all_min_seat_prices
+                if min_seat_prices is not None
             ),
             default=None,
         )

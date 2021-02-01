@@ -248,6 +248,26 @@ def test_production_is_not_bookable_with_no_performances():
 
 
 @pytest.mark.django_db
+def test_production_min_price():
+    production = ProductionFactory()
+    performances = [PerformanceFactory() for i in range(3)]
+
+    for i in range(3):
+        PerformanceSeatingFactory(performance=performances[i], price=10 * (i + 1))
+
+    production.performances.set(performances)
+
+    assert production.min_seat_price() == 10
+
+
+@pytest.mark.django_db
+def test_production_min_price_no_perfs():
+    production = ProductionFactory()
+
+    assert production.min_seat_price() == None
+
+
+@pytest.mark.django_db
 def test_performance_seat_bookings():
 
     prod = ProductionFactory()
@@ -339,26 +359,6 @@ def test_performance_str(name, start, string):
     performance = PerformanceFactory(production=production, start=start_date)
 
     assert str(performance) == string
-
-
-@pytest.mark.django_db
-def test_production_min_price():
-    production = ProductionFactory()
-    performances = [PerformanceFactory() for i in range(3)]
-
-    for i in range(3):
-        PerformanceSeatingFactory(performance=performances[i], price=10 * (i + 1))
-
-    production.performances.set(performances)
-
-    assert production.min_seat_price() == 10
-
-
-@pytest.mark.django_db
-def test_production_min_price_no_perfs():
-    production = ProductionFactory()
-
-    assert production.min_seat_price() == None
 
 
 @pytest.mark.django_db
