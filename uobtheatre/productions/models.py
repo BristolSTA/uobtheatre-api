@@ -108,6 +108,24 @@ class Production(models.Model, TimeStampedMixin):
             return None
         return min(performance.start for performance in performances)
 
+    def min_seat_price(self) -> Optional[int]:
+        """
+        Return the minimum seatgroup ticket price for each performance.
+        """
+        performances = self.performances.all()
+        allMinSeatPrices = [
+            performance.min_seat_price() for performance in performances
+        ]
+
+        return min(
+            (
+                minSeatPrice
+                for minSeatPrice in allMinSeatPrices
+                if minSeatPrice is not None
+            ),
+            default=None,
+        )
+
     def duration(self) -> Optional[datetime.timedelta]:
         """
         Returns the duration of the shortest show as a datetime object.
