@@ -6,7 +6,8 @@
           "name": "STA",
           "description": "tech",
           "logo": "media/example.jpg",
-          "banner": "media/example.jpg"
+          "banner": "media/example.jpg",
+          "slug": "sta"
         }
     },
     {
@@ -15,7 +16,8 @@
         "fields": {
           "name": "MTB",
           "description": "musical theatre",
-          "logo": "media/example.jpg"
+          "logo": "media/example.jpg",
+          "slug": "mtb"
         }
     },
     {
@@ -25,7 +27,8 @@
           "name": "Dramsoc",
           "description": "drama",
           "logo": "media/example.jpg",
-          "banner": "media/example.jpg"
+          "banner": "media/example.jpg",
+          "slug": "dramsoc"
         }
     }
 ]

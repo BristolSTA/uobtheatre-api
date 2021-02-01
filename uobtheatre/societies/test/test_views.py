@@ -19,6 +19,7 @@ def test_society_view_get(api_client):
             "banner": "http://testserver" + socTest.banner.url
             if socTest.banner
             else None,
+            "slug": socTest.slug,
         },
     ]
 

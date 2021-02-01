@@ -20,6 +20,7 @@ def test_societies_schema(gql_client, gql_id):
                 id
             	name
                 description
+                slug
                 logo {
                   url
                 }
@@ -49,6 +50,7 @@ def test_societies_schema(gql_client, gql_id):
                             "id": gql_id(society.id, "SocietyNode"),
                             "name": society.name,
                             "description": society.description,
+                            "slug": society.slug,
                             "logo": {
                                 "url": society.logo.url,
                             },
@@ -73,4 +75,27 @@ def test_societies_schema(gql_client, gql_id):
                 ]
             }
         }
+    }
+
+
+@pytest.mark.django_db
+def test_slug_single_schema(gql_client, gql_id):
+    societies = [SocietyFactory() for i in range(2)]
+
+    request = """
+        query {
+	  society(slug:"%s") {
+            id
+          }
+        }
+
+        """
+    response = gql_client.execute(request % "")
+
+    assert response["errors"][0]["message"] == "Society matching query does not exist."
+    assert response["data"] == {"society": None}
+
+    response = gql_client.execute(request % societies[0].slug)
+    assert response["data"] == {
+        "society": {"id": gql_id(societies[0].id, "SocietyNode")}
     }
