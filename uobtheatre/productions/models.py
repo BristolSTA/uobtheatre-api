@@ -1,5 +1,6 @@
+import datetime
 import math
-from typing import List
+from typing import List, Optional
 
 from autoslug import AutoSlugField
 from django.db import models
@@ -14,7 +15,21 @@ from uobtheatre.venues.models import SeatGroup, Venue
 class CrewRole(models.Model):
     """Crew role"""
 
+    class Department(models.TextChoices):
+        LX = "lighting", "Lighting"
+        SND = "sound", "Sound"
+        AV = "av", "AV"
+        SM = "stage_management", "Stage Management"
+        PYRO = "pryo", "Pyrotechnics"
+        SET = "set", "Set"
+        MISC = "misc", "Miscellaneous"
+
     name = models.CharField(max_length=255)
+    department = models.CharField(
+        max_length=20,
+        choices=Department.choices,
+        default=Department.MISC,
+    )
 
     def __str__(self):
         return self.name
@@ -86,7 +101,7 @@ class Production(models.Model, TimeStampedMixin):
             return None
         return min(performance.start for performance in performances)
 
-    def duration(self):
+    def duration(self) -> Optional[datetime.timedelta]:
         """
         Returns the duration of the shortest show as a datetime object.
         """
@@ -112,18 +127,42 @@ class CastMember(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        ordering = ["id"]
+
+
+class ProductionTeamMember(models.Model):
+    """Member of production prod team"""
+
+    name = models.CharField(max_length=255)
+    role = models.CharField(max_length=255, null=True)
+    production = models.ForeignKey(
+        Production, on_delete=models.CASCADE, related_name="production_team"
+    )
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ["id"]
+
 
 class CrewMember(models.Model):
     """Member of production crew"""
 
     name = models.CharField(max_length=255)
-    role = models.ForeignKey(CrewRole, null=True, on_delete=models.SET_NULL)
+    role = models.ForeignKey(
+        CrewRole, null=True, on_delete=models.SET_NULL, related_name="crew_members"
+    )
     production = models.ForeignKey(
         Production, on_delete=models.CASCADE, related_name="crew"
     )
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        ordering = ["id"]
 
 
 class Performance(models.Model, TimeStampedMixin):
@@ -146,7 +185,10 @@ class Performance(models.Model, TimeStampedMixin):
     start = models.DateTimeField(null=True)
     end = models.DateTimeField(null=True)
 
+    description = models.TextField(null=True, blank=True)
     extra_information = models.TextField(null=True, blank=True)
+
+    disabled = models.BooleanField(default=True)
 
     seat_groups = models.ManyToManyField(SeatGroup, through="PerformanceSeatGroup")
 
@@ -200,7 +242,7 @@ class Performance(models.Model, TimeStampedMixin):
         """
         return self.end - self.start
 
-    def get_single_discounts(self):
+    def get_single_discounts(self) -> List:
         """ Returns all discounts that apply to a single ticket """
         return [
             discount
@@ -242,6 +284,14 @@ class Performance(models.Model, TimeStampedMixin):
         )
         concession_list.sort(key=lambda concession: concession.id)
         return concession_list
+
+    def min_seat_price(self) -> Optional[int]:
+        """
+        Returns the price of the cheapest seat price
+        """
+        return min(
+            (psg.price for psg in self.performance_seat_groups.all()), default=None
+        )
 
     def __str__(self):
         if self.start is None:

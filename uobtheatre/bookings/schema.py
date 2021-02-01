@@ -6,7 +6,6 @@ from graphene_django import DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
 
 from uobtheatre.bookings.models import Booking, ConcessionType, MiscCost
-from uobtheatre.venues.schema import SeatGroupNode
 
 
 class ConcessionTypeNode(DjangoObjectType):
@@ -24,8 +23,8 @@ class MiscCostNode(DjangoObjectType):
 class TicketNode(graphene.ObjectType):
     ticket_price = graphene.Int()
     number = graphene.Int()
-    seat_group = graphene.Field(SeatGroupNode)
-    concession = graphene.Field(ConcessionTypeNode)
+    seat_group = graphene.Field("uobtheatre.venues.schema.SeatGroupNode")
+    concession = graphene.Field("uobtheatre.bookings.schema.ConcessionTypeNode")
     total_price = graphene.Int()
 
     def resolve_total_price(self, info):

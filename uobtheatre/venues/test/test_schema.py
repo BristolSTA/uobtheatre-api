@@ -22,6 +22,9 @@ def test_venues_schema(gql_client, gql_id):
               node {
                 id
                 name
+                address {
+                  id
+                }
                 internalCapacity
                 description
                 image {
@@ -43,6 +46,13 @@ def test_venues_schema(gql_client, gql_id):
                     }
                   }
                 }
+                productions {
+                  edges {
+                    node {
+                      id
+                    }
+                  }
+                }
               }
             }
           }
@@ -58,6 +68,9 @@ def test_venues_schema(gql_client, gql_id):
                         "node": {
                             "id": gql_id(venue.id, "VenueNode"),
                             "name": venue.name,
+                            "address": {
+                                "id": gql_id(venue.address.id, "AddressNode"),
+                            },
                             "internalCapacity": venue.internal_capacity,
                             "description": venue.description,
                             "image": {"url": venue.image.url},
@@ -85,6 +98,18 @@ def test_venues_schema(gql_client, gql_id):
                                     for performance in venue_performances[index]
                                 ]
                             },
+                            "productions": {
+                                "edges": [
+                                    {
+                                        "node": {
+                                            "id": gql_id(
+                                                production.id, "ProductionNode"
+                                            )
+                                        }
+                                    }
+                                    for production in venue.get_productions()
+                                ]
+                            },
                         }
                     }
                     for index, venue in enumerate(venues)
@@ -92,3 +117,24 @@ def test_venues_schema(gql_client, gql_id):
             }
         }
     }
+
+
+@pytest.mark.django_db
+def test_slug_single_schema(gql_client, gql_id):
+    venues = [VenueFactory() for i in range(2)]
+
+    request = """
+        query {
+	  venue(slug:"%s") {
+            id
+          }
+        }
+
+        """
+    response = gql_client.execute(request % "")
+
+    assert response["errors"][0]["message"] == "Venue matching query does not exist."
+    assert response["data"] == {"venue": None}
+
+    response = gql_client.execute(request % venues[0].slug)
+    assert response["data"] == {"venue": {"id": gql_id(venues[0].id, "VenueNode")}}

@@ -1,8 +1,11 @@
 import graphene
 from graphene import relay
 from graphene_django import DjangoObjectType
+from graphene_django.fields import DjangoConnectionField
 from graphene_django.filter import DjangoFilterConnectionField
 
+from uobtheatre.addresses.schema import AddressNode  # noqa
+from uobtheatre.productions.schema import ProductionNode
 from uobtheatre.utils.schema import (
     GrapheneImageField,
     GrapheneImageFieldNode,
@@ -19,6 +22,10 @@ class SeatGroupNode(DjangoObjectType):
 
 class VenueNode(GrapheneImageMixin, DjangoObjectType):
     image = GrapheneImageField(GrapheneImageFieldNode)
+    productions = DjangoConnectionField(ProductionNode)
+
+    def resolve_productions(self, info):
+        return self.get_productions()
 
     class Meta:
         model = Venue
@@ -26,11 +33,13 @@ class VenueNode(GrapheneImageMixin, DjangoObjectType):
         filter_fields = {
             "id": ("exact",),
             "name": ("exact",),
+            "slug": ("exact",),
         }
 
 
 class Query(graphene.ObjectType):
     venues = DjangoFilterConnectionField(VenueNode)
+    venue = graphene.Field(VenueNode, slug=graphene.String(required=True))
 
-    def resolve_venues(self, info, **kwargs):
-        return Venue.objects.all()
+    def resolve_venue(self, info, slug):
+        return Venue.objects.get(slug=slug)
