@@ -20,6 +20,7 @@ def test_societies_schema(gql_client, gql_id):
                 id
             	name
                 description
+                slug
                 logo {
                   url
                 }
@@ -49,6 +50,7 @@ def test_societies_schema(gql_client, gql_id):
                             "id": gql_id(society.id, "SocietyNode"),
                             "name": society.name,
                             "description": society.description,
+                            "slug": society.slug,
                             "logo": {
                                 "url": society.logo.url,
                             },

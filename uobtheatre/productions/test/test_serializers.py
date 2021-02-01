@@ -70,6 +70,7 @@ def test_production_serializer(date_format):
             "banner": production.society.banner.url
             if production.society.banner
             else None,
+            "slug": production.society.slug,
         },
         "poster_image": production.poster_image.url,
         "featured_image": production.featured_image.url,
