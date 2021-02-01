@@ -191,6 +191,7 @@ type ProductionNode implements Node {
   performances(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, start: DateTime, start_Year_Gt: DateTime): PerformanceNodeConnection!
   start: DateTime
   end: DateTime
+  isBookable: Boolean!
 }
 
 type ProductionNodeConnection {
