@@ -48,6 +48,7 @@ def test_productions_schema(gql_client, gql_id):
                   url
                 }
                 id
+                isBookable
                 name
                 posterImage {
                   url
@@ -119,6 +120,7 @@ def test_productions_schema(gql_client, gql_id):
                                 "url": production.featured_image.url,
                             },
                             "id": gql_id(production.id, "ProductionNode"),
+                            "isBookable": production.is_bookable(),
                             "name": production.name,
                             "posterImage": {
                                 "url": production.poster_image.url,

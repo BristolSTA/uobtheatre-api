@@ -83,6 +83,13 @@ class Production(models.Model, TimeStampedMixin):
             if performance.start
         )
 
+    def is_bookable(self) -> bool:
+        """
+        Returns if the show is bookable, based on if it has enabled
+        performances
+        """
+        return self.performances.filter(disabled=False).count() != 0
+
     def end_date(self):
         """
         Return when the last performance ends.

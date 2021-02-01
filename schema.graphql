@@ -191,6 +191,7 @@ type ProductionNode implements Node {
   performances(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, start: DateTime, start_Year_Gt: DateTime): PerformanceNodeConnection!
   start: DateTime
   end: DateTime
+  isBookable: Boolean
 }
 
 type ProductionNodeConnection {
@@ -215,7 +216,9 @@ type Query {
   bookings(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, bookingReference: UUID): BookingNodeConnection
   productions(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, slug: String): ProductionNodeConnection
   performances(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, start: DateTime, start_Year_Gt: DateTime): PerformanceNodeConnection
+  production(slug: String!): ProductionNode
   venues(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String): VenueNodeConnection
+  venue(slug: String!): VenueNode
 }
 
 type SeatGroupNode implements Node {

@@ -312,6 +312,28 @@ def test_performance_str(name, start, string):
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    "performance_disabled, expected",
+    [
+        ([False, False, False], True),
+        ([True, False, False], True),
+        ([True, False, True], True),
+        ([True, True, True], False),
+    ],
+)
+def test_performance_is_bookable(performance_disabled, expected):
+    production = ProductionFactory()
+    production.performances.set(
+        [
+            PerformanceFactory(disabled=performance_disabled[perf])
+            for perf in performance_disabled
+        ]
+    )
+
+    assert production.is_bookable() == expected
+
+
+@pytest.mark.django_db
 def test_performance_min_price():
 
     performance = PerformanceFactory()
