@@ -80,6 +80,7 @@ def test_production_view_get(api_client, date_format):
                     "banner": prod1.society.banner.url
                     if prod1.society.banner
                     else None,
+                    "slug": prod1.society.slug,
                 },
                 "poster_image": "http://testserver" + prod1.poster_image.url,
                 "featured_image": "http://testserver" + prod1.featured_image.url,

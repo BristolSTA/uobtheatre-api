@@ -17,4 +17,5 @@ def test_society_serializer():
         "description": society.description,
         "logo": society.logo.url if society.logo else None,
         "banner": society.banner.url if society.banner else None,
+        "slug": society.slug,
     }

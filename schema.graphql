@@ -211,11 +211,14 @@ type ProductionTeamMemberNode implements Node {
 }
 
 type Query {
-  societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String): SocietyNodeConnection
+  societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String): SocietyNodeConnection
+  society(slug: String!): SocietyNode
   bookings(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, bookingReference: UUID): BookingNodeConnection
   productions(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, slug: String): ProductionNodeConnection
   performances(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, start: DateTime, start_Year_Gt: DateTime): PerformanceNodeConnection
+  production(slug: String!): ProductionNode
   venues(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String): VenueNodeConnection
+  venue(slug: String!): VenueNode
 }
 
 type SeatGroupNode implements Node {
@@ -245,6 +248,7 @@ type SocietyNode implements Node {
   description: String!
   logo: GrapheneImageFieldNode
   banner: GrapheneImageFieldNode
+  slug: String!
   productions(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, slug: String): ProductionNodeConnection!
 }
 

@@ -21,8 +21,13 @@ class SocietyNode(GrapheneImageMixin, DjangoObjectType):
         filter_fields = {
             "id": ("exact",),
             "name": ("exact",),
+            "slug": ("exact",),
         }
 
 
 class Query(graphene.ObjectType):
     societies = DjangoFilterConnectionField(SocietyNode)
+    society = graphene.Field(SocietyNode, slug=graphene.String(required=True))
+
+    def resolve_society(self, info, slug):
+        return Society.objects.get(slug=slug)
