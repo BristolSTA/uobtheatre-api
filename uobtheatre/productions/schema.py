@@ -1,7 +1,12 @@
+import django_filters
 import graphene
 from graphene import relay
 from graphene_django import DjangoListField, DjangoObjectType
-from graphene_django.filter import DjangoFilterConnectionField
+from graphene_django.filter import (
+    DjangoFilterConnectionField,
+    GlobalIDFilter,
+    GlobalIDMultipleChoiceFilter,
+)
 
 from uobtheatre.bookings.schema import ConcessionTypeNode
 from uobtheatre.productions.models import (
@@ -53,6 +58,18 @@ class WarningNode(DjangoObjectType):
         interfaces = (relay.Node,)
 
 
+class ProductionFilter(django_filters.FilterSet):
+
+    start = django_filters.DateTimeFilter(method="start_filter")
+    id = GlobalIDFilter()
+
+    class Meta:
+        model = Production
+        exclude = ("poster_image", "featured_image", "cover_image")
+
+    order_by = django_filters.OrderingFilter(fields=(("start"),))
+
+
 class ProductionNode(GrapheneImageMixin, DjangoObjectType):
     cover_image = GrapheneImageField(GrapheneImageFieldNode)
     featured_image = GrapheneImageField(GrapheneImageFieldNode)
@@ -79,11 +96,7 @@ class ProductionNode(GrapheneImageMixin, DjangoObjectType):
 
     class Meta:
         model = Production
-        filter_fields = {
-            "id": ("exact",),
-            "slug": ("exact",),
-        }
-        fields = "__all__"
+        filterset_class = ProductionFilter
         interfaces = (relay.Node,)
 
 
@@ -124,6 +137,17 @@ class PerformanceSeatGroupNode(DjangoObjectType):
         interfaces = (relay.Node,)
 
 
+class PerformanceFilter(django_filters.FilterSet):
+
+    id = GlobalIDFilter()
+
+    class Meta:
+        model = Performance
+        exclude = ("performance_seat_groups", "bookings")
+
+    order_by = django_filters.OrderingFilter(fields=(("start"),))
+
+
 class PerformanceNode(DjangoObjectType):
     capacity_remaining = graphene.Int()
     ticket_options = graphene.List(PerformanceSeatGroupNode)
@@ -140,12 +164,9 @@ class PerformanceNode(DjangoObjectType):
 
     class Meta:
         model = Performance
-        filter_fields = {
-            "id": ("exact",),
-            "start": ("exact", "year__gt"),
-        }
-        exclude = ("performance_seat_groups", "bookings")
+        filterset_class = PerformanceFilter
         interfaces = (relay.Node,)
+        exclude = ("performance_seat_groups", "bookings")
 
 
 class Query(graphene.ObjectType):
