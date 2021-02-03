@@ -20,6 +20,7 @@ def test_bookings_schema(gql_client_flexible, gql_id):
     booking = BookingFactory(status=Booking.BookingStatus.INPROGRESS)
     # Create a booking that is not owned by the same user
     BookingFactory(status=Booking.BookingStatus.INPROGRESS)
+    tickets = [TicketFactory(booking=booking) for _ in range(10)]
 
     request_query = """
         {
@@ -27,6 +28,9 @@ def test_bookings_schema(gql_client_flexible, gql_id):
             edges {
               node {
                 id
+                tickets {
+                  id
+                }
                 bookingReference
                 performance {
                   id
@@ -54,6 +58,10 @@ def test_bookings_schema(gql_client_flexible, gql_id):
                     {
                         "node": {
                             "id": gql_id(booking.id, "BookingNode"),
+                            "tickets": [
+                                {"id": gql_id(ticket.id, "TicketNode")}
+                                for ticket in tickets
+                            ],
                             "bookingReference": str(booking.booking_reference),
                             "performance": {
                                 "id": gql_id(booking.performance.id, "PerformanceNode")

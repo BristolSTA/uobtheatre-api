@@ -1,4 +1,6 @@
+import django_filters
 import graphene
+from graphene_django.filter import GlobalIDFilter
 
 
 class GrapheneImageField(graphene.Field):
@@ -40,3 +42,7 @@ class GrapheneImageMixin:
         for name, type in self._meta.fields.items():
             if isinstance(type, GrapheneImageField):
                 setattr(self, f"resolve_{name}", generate_resolver(name))
+
+
+class FilterSet(django_filters.FilterSet):
+    id = GlobalIDFilter()
