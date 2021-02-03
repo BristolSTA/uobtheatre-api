@@ -20,6 +20,7 @@ from uobtheatre.productions.models import (
     Warning,
 )
 from uobtheatre.utils.schema import (
+    FilterSet,
     GrapheneImageField,
     GrapheneImageFieldNode,
     GrapheneImageMixin,
@@ -58,10 +59,9 @@ class WarningNode(DjangoObjectType):
         interfaces = (relay.Node,)
 
 
-class ProductionFilter(django_filters.FilterSet):
+class ProductionFilter(FilterSet):
 
     start = django_filters.DateTimeFilter(method="start_filter")
-    id = GlobalIDFilter()
 
     class Meta:
         model = Production
@@ -137,10 +137,7 @@ class PerformanceSeatGroupNode(DjangoObjectType):
         interfaces = (relay.Node,)
 
 
-class PerformanceFilter(django_filters.FilterSet):
-
-    id = GlobalIDFilter()
-
+class PerformanceFilter(FilterSet):
     class Meta:
         model = Performance
         exclude = ("performance_seat_groups", "bookings")
