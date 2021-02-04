@@ -1,4 +1,6 @@
+import django_filters
 import graphene
+from graphene_django.filter import GlobalIDFilter
 from graphql.language.ast import IntValue, StringValue
 from graphql_relay.node.node import from_global_id
 
@@ -49,3 +51,7 @@ class IdInputField(graphene.ID):
     def parse_literal(id):
         if isinstance(id, (StringValue, IntValue)):
             return from_global_id(id.value)[1]
+
+
+class FilterSet(django_filters.FilterSet):
+    id = GlobalIDFilter()

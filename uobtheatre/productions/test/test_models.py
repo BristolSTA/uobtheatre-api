@@ -221,6 +221,56 @@ def test_production_slug_is_unique():
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    "performance_disabled, expected",
+    [
+        ([False, False, False], True),
+        ([True, False, False], True),
+        ([True, False, True], True),
+        ([True, True, True], False),
+    ],
+)
+def test_production_is_bookable(performance_disabled, expected):
+    production = ProductionFactory()
+    production.performances.set(
+        [
+            PerformanceFactory(disabled=performance_disabled[perf])
+            for perf in performance_disabled
+        ]
+    )
+
+    assert production.is_bookable() == expected
+
+
+@pytest.mark.django_db
+def test_production_is_not_bookable_with_no_performances():
+    production = ProductionFactory()
+    production.performances.set([])
+
+    assert production.is_bookable() == False
+
+
+@pytest.mark.django_db
+def test_production_min_price():
+    production = ProductionFactory()
+    performances = [PerformanceFactory() for i in range(3)]
+
+    for i in range(3):
+        PerformanceSeatingFactory(performance=performances[i], price=10 * (i + 1))
+
+    production.performances.set(performances)
+
+    assert production.min_seat_price() == 10
+
+
+@pytest.mark.django_db
+def test_production_min_price_no_perfs():
+    production = ProductionFactory()
+
+    assert production.min_seat_price() == None
+
+
+@pytest.mark.django_db
 def test_performance_seat_bookings():
 
     prod = ProductionFactory()

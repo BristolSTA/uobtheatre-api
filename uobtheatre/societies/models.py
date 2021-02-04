@@ -1,3 +1,4 @@
+from autoslug import AutoSlugField
 from django.db import models
 
 from uobtheatre.utils.models import TimeStampedMixin
@@ -10,6 +11,8 @@ class Society(models.Model, TimeStampedMixin):
     description = models.TextField()
     logo = models.ImageField()
     banner = models.ImageField()
+
+    slug = AutoSlugField(populate_from="name", unique=True, blank=True)
 
     def __str__(self):
         return self.name

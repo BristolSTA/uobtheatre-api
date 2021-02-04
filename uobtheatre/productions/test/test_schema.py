@@ -48,6 +48,7 @@ def test_productions_schema(gql_client, gql_id):
                   url
                 }
                 id
+                isBookable
                 name
                 posterImage {
                   url
@@ -63,6 +64,7 @@ def test_productions_schema(gql_client, gql_id):
                 }
                 start
                 end
+                minSeatPrice
                 cast {
                   id
                   name
@@ -119,6 +121,7 @@ def test_productions_schema(gql_client, gql_id):
                                 "url": production.featured_image.url,
                             },
                             "id": gql_id(production.id, "ProductionNode"),
+                            "isBookable": production.is_bookable(),
                             "name": production.name,
                             "posterImage": {
                                 "url": production.poster_image.url,
@@ -139,6 +142,7 @@ def test_productions_schema(gql_client, gql_id):
                             },
                             "start": production.start_date().isoformat(),
                             "end": production.end_date().isoformat(),
+                            "minSeatPrice": production.min_seat_price(),
                             "cast": [
                                 {
                                     "id": gql_id(cast_member.id, "CastMemberNode"),
@@ -506,4 +510,29 @@ def test_ticket_options(gql_client, gql_id):
                 ]
             }
         },
+    }
+
+
+@pytest.mark.django_db
+def test_slug_single_schema(gql_client, gql_id):
+    productions = [ProductionFactory() for i in range(2)]
+
+    request = """
+        query {
+	  production(slug:"%s") {
+            id
+          }
+        }
+
+        """
+    response = gql_client.execute(request % "")
+
+    assert (
+        response["errors"][0]["message"] == "Production matching query does not exist."
+    )
+    assert response["data"] == {"production": None}
+
+    response = gql_client.execute(request % productions[0].slug)
+    assert response["data"] == {
+        "production": {"id": gql_id(productions[0].id, "ProductionNode")}
     }

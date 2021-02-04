@@ -18,6 +18,7 @@ type BookingNode implements Node {
   bookingReference: UUID!
   performance: PerformanceNode!
   status: BookingStatus!
+  tickets: [TicketNode!]
   priceBreakdown: PriceBreakdownNode
 }
 
@@ -54,6 +55,7 @@ type ConcessionTypeNode implements Node {
   id: ID!
   name: String!
   description: String
+  seatBookings(offset: Int, before: String, after: String, first: Int, last: Int): TicketNodeConnection!
 }
 
 type CrewMemberNode implements Node {
@@ -163,12 +165,20 @@ type PerformanceSeatGroupNodeEdge {
 
 type PriceBreakdownNode implements Node {
   id: ID!
-  tickets: [TicketNode]
+  tickets: [PriceBreakdownTicketNode]
   ticketsPrice: Int
   discountsValue: Int
   miscCosts: [MiscCostNode]
   subtotalPrice: Int
   miscCostsValue: Int
+  totalPrice: Int
+}
+
+type PriceBreakdownTicketNode {
+  ticketPrice: Int
+  number: Int
+  seatGroup: SeatGroupNode
+  concession: ConcessionTypeNode
   totalPrice: Int
 }
 
@@ -188,9 +198,11 @@ type ProductionNode implements Node {
   cast: [CastMemberNode!]
   productionTeam: [ProductionTeamMemberNode!]
   crew: [CrewMemberNode!]
-  performances(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, start: DateTime, start_Year_Gt: DateTime): PerformanceNodeConnection!
+  performances(offset: Int, before: String, after: String, first: Int, last: Int, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, orderBy: String): PerformanceNodeConnection!
   start: DateTime
   end: DateTime
+  isBookable: Boolean!
+  minSeatPrice: Int
 }
 
 type ProductionNodeConnection {
@@ -211,11 +223,14 @@ type ProductionTeamMemberNode implements Node {
 }
 
 type Query {
-  societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String): SocietyNodeConnection
+  societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String): SocietyNodeConnection
+  society(slug: String!): SocietyNode
   bookings(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, bookingReference: UUID): BookingNodeConnection
-  productions(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, slug: String): ProductionNodeConnection
-  performances(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, start: DateTime, start_Year_Gt: DateTime): PerformanceNodeConnection
+  productions(offset: Int, before: String, after: String, first: Int, last: Int, name: String, subtitle: String, description: String, society: ID, ageRating: Int, facebookEvent: String, warnings: [ID], slug: String, start: DateTime, id: ID, orderBy: String): ProductionNodeConnection
+  performances(offset: Int, before: String, after: String, first: Int, last: Int, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, orderBy: String): PerformanceNodeConnection
+  production(slug: String!): ProductionNode
   venues(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String): VenueNodeConnection
+  venue(slug: String!): VenueNode
 }
 
 type SeatGroupNode implements Node {
@@ -225,8 +240,9 @@ type SeatGroupNode implements Node {
   venue: VenueNode!
   capacity: Int
   isInternal: Boolean!
-  performanceSet(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, start: DateTime, start_Year_Gt: DateTime): PerformanceNodeConnection!
+  performanceSet(offset: Int, before: String, after: String, first: Int, last: Int, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, orderBy: String): PerformanceNodeConnection!
   performanceseatgroupSet(offset: Int, before: String, after: String, first: Int, last: Int): PerformanceSeatGroupNodeConnection!
+  tickets(offset: Int, before: String, after: String, first: Int, last: Int): TicketNodeConnection!
 }
 
 type SeatGroupNodeConnection {
@@ -245,7 +261,8 @@ type SocietyNode implements Node {
   description: String!
   logo: GrapheneImageFieldNode
   banner: GrapheneImageFieldNode
-  productions(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, slug: String): ProductionNodeConnection!
+  slug: String!
+  productions(offset: Int, before: String, after: String, first: Int, last: Int, name: String, subtitle: String, description: String, society: ID, ageRating: Int, facebookEvent: String, warnings: [ID], slug: String, start: DateTime, id: ID, orderBy: String): ProductionNodeConnection!
 }
 
 type SocietyNodeConnection {
@@ -258,12 +275,21 @@ type SocietyNodeEdge {
   cursor: String!
 }
 
-type TicketNode {
-  ticketPrice: Int
-  number: Int
-  seatGroup: SeatGroupNode
-  concession: ConcessionTypeNode
-  totalPrice: Int
+type TicketNode implements Node {
+  id: ID!
+  seatGroup: SeatGroupNode!
+  booking: BookingNode!
+  concessionType: ConcessionTypeNode!
+}
+
+type TicketNodeConnection {
+  pageInfo: PageInfo!
+  edges: [TicketNodeEdge]!
+}
+
+type TicketNodeEdge {
+  node: TicketNode
+  cursor: String!
 }
 
 scalar UUID
@@ -278,7 +304,7 @@ type VenueNode implements Node {
   publiclyListed: Boolean!
   slug: String!
   seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
-  performances(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, start: DateTime, start_Year_Gt: DateTime): PerformanceNodeConnection!
+  performances(offset: Int, before: String, after: String, first: Int, last: Int, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, orderBy: String): PerformanceNodeConnection!
   productions(offset: Int, before: String, after: String, first: Int, last: Int): ProductionNodeConnection
 }
 
@@ -295,5 +321,5 @@ type VenueNodeEdge {
 type WarningNode implements Node {
   id: ID!
   warning: String!
-  productionSet(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, slug: String): ProductionNodeConnection!
+  productionSet(offset: Int, before: String, after: String, first: Int, last: Int, name: String, subtitle: String, description: String, society: ID, ageRating: Int, facebookEvent: String, warnings: [ID], slug: String, start: DateTime, id: ID, orderBy: String): ProductionNodeConnection!
 }

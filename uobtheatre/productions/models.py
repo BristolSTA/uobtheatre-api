@@ -83,6 +83,13 @@ class Production(models.Model, TimeStampedMixin):
             if performance.start
         )
 
+    def is_bookable(self) -> bool:
+        """
+        Returns if the show is bookable, based on if it has enabled
+        performances
+        """
+        return self.performances.filter(disabled=False).count() != 0
+
     def end_date(self):
         """
         Return when the last performance ends.
@@ -100,6 +107,24 @@ class Production(models.Model, TimeStampedMixin):
         if not performances:
             return None
         return min(performance.start for performance in performances)
+
+    def min_seat_price(self) -> Optional[int]:
+        """
+        Return the minimum seatgroup ticket price for each performance.
+        """
+        performances = self.performances.all()
+        all_min_seat_prices = [
+            performance.min_seat_price() for performance in performances
+        ]
+
+        return min(
+            (
+                min_seat_prices
+                for min_seat_prices in all_min_seat_prices
+                if min_seat_prices is not None
+            ),
+            default=None,
+        )
 
     def duration(self) -> Optional[datetime.timedelta]:
         """

@@ -2,7 +2,7 @@ import itertools
 
 import graphene
 from graphene import relay
-from graphene_django import DjangoObjectType
+from graphene_django import DjangoListField, DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
 from graphql import GraphQLError
 
@@ -24,7 +24,13 @@ class MiscCostNode(DjangoObjectType):
         interfaces = (relay.Node,)
 
 
-class TicketNode(graphene.ObjectType):
+class TicketNode(DjangoObjectType):
+    class Meta:
+        model = Ticket
+        interfaces = (relay.Node,)
+
+
+class PriceBreakdownTicketNode(graphene.ObjectType):
     ticket_price = graphene.Int()
     number = graphene.Int()
     seat_group = graphene.Field("uobtheatre.venues.schema.SeatGroupNode")
@@ -36,7 +42,7 @@ class TicketNode(graphene.ObjectType):
 
 
 class PriceBreakdownNode(DjangoObjectType):
-    tickets = graphene.List(TicketNode)
+    tickets = graphene.List(PriceBreakdownTicketNode)
     tickets_price = graphene.Int()
     discounts_value = graphene.Int()
     misc_costs = graphene.List(MiscCostNode)
@@ -71,7 +77,7 @@ class PriceBreakdownNode(DjangoObjectType):
         )
 
         return [
-            TicketNode(
+            PriceBreakdownTicketNode(
                 ticket_price=self.performance.price_with_concession(
                     ticket_group[1],
                     self.performance.performance_seat_groups.get(
@@ -114,6 +120,7 @@ class PriceBreakdownNode(DjangoObjectType):
 
 class BookingNode(DjangoObjectType):
     price_breakdown = graphene.Field(PriceBreakdownNode)
+    tickets = DjangoListField(TicketNode)
 
     def resolve_price_breakdown(self, info):
         return self
