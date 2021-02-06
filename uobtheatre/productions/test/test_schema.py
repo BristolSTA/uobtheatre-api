@@ -514,7 +514,7 @@ def test_ticket_options(gql_client, gql_id):
 
 
 @pytest.mark.django_db
-def test_slug_single_schema(gql_client, gql_id):
+def test_production_single_slug(gql_client, gql_id):
     productions = [ProductionFactory() for i in range(2)]
 
     request = """
@@ -535,4 +535,30 @@ def test_slug_single_schema(gql_client, gql_id):
     response = gql_client.execute(request % productions[0].slug)
     assert response["data"] == {
         "production": {"id": gql_id(productions[0].id, "ProductionNode")}
+    }
+
+
+@pytest.mark.django_db
+def test_performance_single_id(gql_client, gql_id):
+    performances = [PerformanceFactory() for i in range(2)]
+
+    request = """
+        query {
+	  performance(id: "%s") {
+            id
+          }
+        }
+
+        """
+
+    # Ask for nothing and check you get nothing
+    response = gql_client.execute(request % "")
+    assert response["data"]["performance"] == None
+
+    # Ask for first performance and check you get it
+    response = gql_client.execute(
+        request % gql_id(performances[0].id, "PerformanceNode")
+    )
+    assert response["data"] == {
+        "performance": {"id": gql_id(performances[0].id, "PerformanceNode")}
     }
