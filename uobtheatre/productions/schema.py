@@ -101,7 +101,7 @@ class ProductionNode(GrapheneImageMixin, DjangoObjectType):
 
 
 class ConcessionTypeBookingType(graphene.ObjectType):
-    concession = graphene.Field(ConcessionTypeNode)
+    concession_type = graphene.Field(ConcessionTypeNode)
     price = graphene.Int()
     price_pounds = graphene.String()
 
@@ -116,7 +116,7 @@ class PerformanceSeatGroupNode(DjangoObjectType):
     def resolve_concession_types(self, info):
         return [
             ConcessionTypeBookingType(
-                concession=concession,
+                concession_type=concession,
                 price=self.performance.price_with_concession(concession, self.price),
             )
             for concession in self.performance.concessions()

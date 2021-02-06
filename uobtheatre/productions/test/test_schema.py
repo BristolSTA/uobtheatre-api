@@ -386,7 +386,7 @@ def test_ticket_options(gql_client, gql_id):
                   concessionTypes {
                     price
                     pricePounds
-                    concession {
+                    concessionType {
                       id
                     }
                   }
@@ -410,7 +410,7 @@ def test_ticket_options(gql_client, gql_id):
                                     ),
                                     "concessionTypes": [
                                         {
-                                            "concession": {
+                                            "concessionType": {
                                                 "id": gql_id(
                                                     discount_requirement_1.concession_type.id,
                                                     "ConcessionTypeNode",
@@ -428,7 +428,7 @@ def test_ticket_options(gql_client, gql_id):
                                             ),
                                         },
                                         {
-                                            "concession": {
+                                            "concessionType": {
                                                 "id": gql_id(
                                                     discount_requirement_2.concession_type.id,
                                                     "ConcessionTypeNode",
@@ -459,7 +459,7 @@ def test_ticket_options(gql_client, gql_id):
                                     ),
                                     "concessionTypes": [
                                         {
-                                            "concession": {
+                                            "concessionType": {
                                                 "id": gql_id(
                                                     discount_requirement_1.concession_type.id,
                                                     "ConcessionTypeNode",
@@ -477,7 +477,7 @@ def test_ticket_options(gql_client, gql_id):
                                             ),
                                         },
                                         {
-                                            "concession": {
+                                            "concessionType": {
                                                 "id": gql_id(
                                                     discount_requirement_2.concession_type.id,
                                                     "ConcessionTypeNode",
