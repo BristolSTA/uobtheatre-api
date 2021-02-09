@@ -299,13 +299,34 @@ class Booking(models.Model, TimeStampedMixin):
         """
         return math.ceil(self.subtotal() + self.misc_costs_value())
 
-    def get_ticket_diff(self, tickets) -> Tuple[List["Ticket"], List["Ticket"]]:
+    def get_ticket_diff(self, tickets):
         """
         Given a list of tickets return the tickets which need to be created a
         deleted, in two lists.
         """
-        self.tickets.all()
-        return [], []
+
+        addTickets = []
+        deleteTickets = []
+        newTickets = {}
+
+        for ticket in tickets:
+
+            if ticket.id is not None:
+                addTickets.append(ticket)
+            else:
+                newTickets[ticket.id] = (True, ticket)
+
+        for ticket in self.tickets.all():
+
+            if not newTickets[ticket.id][0]:
+                deleteTickets.append(ticket)
+            else:
+                newTickets.pop(ticket.id, None)
+
+        for ticketObj in newTickets:
+            addTickets.append(ticketObj[1])
+
+        return addTickets, deleteTickets
 
 
 class Ticket(models.Model):
