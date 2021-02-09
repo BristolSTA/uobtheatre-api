@@ -375,3 +375,54 @@ def test_create_booking_mutation(
         assert response.get("errors")
     else:
         assert not response.get("errors")
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "tickets_in_booking, ticket_to_delete"
+    [
+        ([
+            {"concession_type": 1}
+        ])
+    ]
+)
+def test_booing_diff():
+    seat_group1 = SeatGroupFactory()
+    seat_group2 = SeatGroupFactory()
+
+    len(SeatGroup.objects.all()) == 2
+
+    tickets = [
+        Ticket(
+            id = 1,
+            seat_group = seat_group1
+            concession_type = concession_type
+        ),
+        Ticket(
+            id = 2,
+            seat_group = seat_group2
+            concession_type = concession_type
+        ),
+        Ticket(
+            seat_group = seat_group1
+            concession_type = concession_type1
+        ),
+    ]
+
+
+    booking = BookingFactory()
+    [
+        TicketFactory(
+            booking = booking
+            id = 1,
+            seat_group = seat_group1
+            concession_type = concession_type
+        ),
+        TicketFactory(
+            booking = booking
+            id = 2,
+            seat_group = seat_group2
+            concession_type = concession_type
+        ),
+    ]
+    booking.ticket_diff(tickets) == ([Ticket(seat_group1, concession_type1)], [])
