@@ -1,5 +1,6 @@
 import django_filters
 import graphene
+from django.db.models import Min, OuterRef, Subquery
 from graphene import relay
 from graphene_django import DjangoListField, DjangoObjectType
 from graphene_django.filter import (
@@ -59,15 +60,39 @@ class WarningNode(DjangoObjectType):
         interfaces = (relay.Node,)
 
 
+class ProductionByMethodOrderingFilter(django_filters.OrderingFilter):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.extra["choices"] += [
+            ("start", "Start"),
+            ("-start", "Start (descending)"),
+        ]
+
+    def filter(self, qs, value):
+        if value and "start" in value:
+            print("value is start")
+            production_performances = Performance.objects.filter(
+                production=OuterRef("pk"),
+            ).values("start")
+
+            qs.annotate(
+                performances__start_date=Subquery(
+                    production_performances.aggregate(min=Min("start")).values("min")
+                )  # Annotate the proudction query with the start time
+            ).order_by("performances__start_date")
+            return qs.order_by("performances__start")
+        # if value and "-start" in value:
+        #     return qs.order_by("-performances__start")
+
+        return super().filter(qs, value)
+
+
 class ProductionFilter(FilterSet):
-
-    start = django_filters.DateTimeFilter(method="start_filter")
-
     class Meta:
         model = Production
         exclude = ("poster_image", "featured_image", "cover_image")
 
-    order_by = django_filters.OrderingFilter(fields=(("start"),))
+    order_by = ProductionByMethodOrderingFilter()
 
 
 class ProductionNode(GrapheneImageMixin, DjangoObjectType):
@@ -142,6 +167,9 @@ class PerformanceSeatGroupNode(DjangoObjectType):
 
 
 class PerformanceFilter(FilterSet):
+
+    start = django_filters.DateTimeFilter(method="start_filter")
+
     class Meta:
         model = Performance
         exclude = ("performance_seat_groups", "bookings")
