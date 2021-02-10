@@ -160,12 +160,6 @@ class CreateBooking(graphene.Mutation):
         # Get the performance and if it doesn't exist throw an error
         performance = Performance.objects.get(id=performance_id)
 
-        # Covert the given tickets to ticket objects
-        # If any of the gets throw an error (cant find the id) this will be handled by graphene
-        # e.g. "ConcessionType matching query does not exist."
-
-        # booking.get_ticket_diff() -> return 2 lists, ticket to add, ticket to remove
-
         ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))
 
         # Check the capacity of the show and its seat_groups
@@ -207,19 +201,6 @@ class UpdateBooking(graphene.Mutation):
 
         # Covert the given tickets to ticket objects
         ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))
-
-        # Find the diff between the current tickets and the given tickets
-        # TODO handle negatives
-        # ticket_diff = booking.get_ticket_diff(ticket_objects)
-
-        # Find tickets which I can happily delete
-        # Get the tickets hwich can be deleted and remove them
-
-        # performance = Performance(capacity=4)
-        # Booking(performance=performance) -> Ticket(1), Ticket(2)
-        # Update Booking -> Ticket(3)
-        # performance.check_capacity(1,2,3)
-        # performance only has capacity 4
 
         # Check the capacity of the show and its seat_groups
         err = booking.performance.check_capacity(ticket_objects)

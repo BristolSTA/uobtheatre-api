@@ -377,52 +377,45 @@ def test_create_booking_mutation(
         assert not response.get("errors")
 
 
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    "tickets_in_booking, ticket_to_delete"
-    [
-        ([
-            {"concession_type": 1}
-        ])
-    ]
-)
-def test_booing_diff():
-    seat_group1 = SeatGroupFactory()
-    seat_group2 = SeatGroupFactory()
+# @pytest.mark.django_db
+# def test_booing_diff():
+#     seat_group1 = SeatGroupFactory()
+#     seat_group2 = SeatGroupFactory()
+#     concession_type1 = ConcessionTypeFactory()
+#     concession_type2 = ConcessionTypeFactory()
+#     concession_type3 = ConcessionTypeFactory()
 
-    len(SeatGroup.objects.all()) == 2
-
-    tickets = [
-        Ticket(
-            id = 1,
-            seat_group = seat_group1
-            concession_type = concession_type
-        ),
-        Ticket(
-            id = 2,
-            seat_group = seat_group2
-            concession_type = concession_type
-        ),
-        Ticket(
-            seat_group = seat_group1
-            concession_type = concession_type1
-        ),
-    ]
+#     tickets = [
+#         Ticket(
+#             id = 1,
+#             seat_group = seat_group1,
+#             concession_type = concession_type1
+#         ),
+#         Ticket(
+#             id = 2,
+#             seat_group = seat_group2,
+#             concession_type = concession_type2
+#         ),
+#         Ticket(
+#             seat_group = seat_group1,
+#             concession_type = concession_type3
+#         ),
+#     ]
 
 
-    booking = BookingFactory()
-    [
-        TicketFactory(
-            booking = booking
-            id = 1,
-            seat_group = seat_group1
-            concession_type = concession_type
-        ),
-        TicketFactory(
-            booking = booking
-            id = 2,
-            seat_group = seat_group2
-            concession_type = concession_type
-        ),
-    ]
-    booking.ticket_diff(tickets) == ([Ticket(seat_group1, concession_type1)], [])
+#     booking = BookingFactory()
+#     [
+#         TicketFactory(
+#             id = 1,
+#             booking = booking,
+#             seat_group = seat_group1,
+#             concession_type = concession_type1
+#         ),
+#         TicketFactory(
+#             id = 2,
+#             booking = booking,
+#             seat_group = seat_group2,
+#             concession_type = concession_type2
+#         ),
+#     ]
+#     assert booking.ticket_diff(tickets) == ([Ticket(seat_group = seat_group1, concession_type = concession_type3)], [])
