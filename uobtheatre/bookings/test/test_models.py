@@ -576,5 +576,40 @@ def test_create_booking_serializer_seat_group_is_from_performance_validation():
 #         )
 #         for ticket in booking_tickets
 #     ]
-#
+
 #     assert booking.get_ticket_diff(tickets) == []
+
+
+@pytest.mark.django_db
+def test_booking_diff():
+    seat_group1 = SeatGroupFactory()
+    seat_group2 = SeatGroupFactory()
+    concession_type1 = ConcessionTypeFactory()
+    concession_type2 = ConcessionTypeFactory()
+    concession_type3 = ConcessionTypeFactory()
+
+    tickets = [
+        Ticket(id=1, seat_group=seat_group1, concession_type=concession_type1),
+        Ticket(id=2, seat_group=seat_group2, concession_type=concession_type2),
+        Ticket(seat_group=seat_group1, concession_type=concession_type3),
+    ]
+
+    booking = BookingFactory()
+    [
+        TicketFactory(
+            id=1,
+            booking=booking,
+            seat_group=seat_group1,
+            concession_type=concession_type1,
+        ),
+        TicketFactory(
+            id=2,
+            booking=booking,
+            seat_group=seat_group2,
+            concession_type=concession_type2,
+        ),
+    ]
+    assert booking.get_ticket_diff(tickets) == (
+        [Ticket(seat_group=seat_group1, concession_type=concession_type3)],
+        [],
+    )

@@ -311,20 +311,19 @@ class Booking(models.Model, TimeStampedMixin):
 
         for ticket in tickets:
 
-            if ticket.id is not None:
+            if ticket.id is None:
                 addTickets.append(ticket)
             else:
-                newTickets[ticket.id] = (True, ticket)
+                newTickets[ticket.id] = ticket
 
         for ticket in self.tickets.all():
 
-            if not newTickets[ticket.id][0]:
-                deleteTickets.append(ticket)
-            else:
+            if newTickets.get(ticket.id):
                 newTickets.pop(ticket.id, None)
+            else:
+                deleteTickets.append(ticket)
 
-        for ticketObj in newTickets:
-            addTickets.append(ticketObj[1])
+        addTickets += newTickets.values()
 
         return addTickets, deleteTickets
 
