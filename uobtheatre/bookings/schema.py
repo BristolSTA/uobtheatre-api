@@ -6,6 +6,7 @@ from graphene_django import DjangoListField, DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
 
 from uobtheatre.bookings.models import Booking, ConcessionType, MiscCost, Ticket
+from uobtheatre.utils.schema import FilterSet
 
 
 class ConcessionTypeNode(DjangoObjectType):
@@ -114,6 +115,17 @@ class PriceBreakdownNode(DjangoObjectType):
         )
 
 
+class BookingFilter(FilterSet):
+    @property
+    def qs(self):
+        # The query context can be found in self.request.
+        return super(BookingFilter, self).qs.filter(user=self.request.user)
+
+    class Meta:
+        model = Booking
+        exclude = ("user",)
+
+
 class BookingNode(DjangoObjectType):
     price_breakdown = graphene.Field(PriceBreakdownNode)
     tickets = DjangoListField(TicketNode)
@@ -123,19 +135,16 @@ class BookingNode(DjangoObjectType):
 
     class Meta:
         model = Booking
+        filterset_class = BookingFilter
         interfaces = (relay.Node,)
-        filter_fields = {
-            "id": ("exact",),
-            "booking_reference": ("exact",),
-        }
 
 
 class Query(graphene.ObjectType):
     bookings = DjangoFilterConnectionField(BookingNode)
 
-    def resolve_bookings(self, info):
-        # If the user is not authenticated then return none
-        if not info.context.user.is_authenticated:
-            return Booking.objects.none()
-        # Otherwise return only the user's bookings
-        return Booking.objects.filter(user=info.context.user)
+    # def resolve_bookings(self, info):
+    #     # If the user is not authenticated then return none
+    #     if not info.context.user.is_authenticated:
+    #         return Booking.objects.none()
+    #     # Otherwise return only the user's bookings
+    #     return Booking.objects.filter(user=info.context.user)
