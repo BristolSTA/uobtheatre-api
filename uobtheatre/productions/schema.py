@@ -1,6 +1,6 @@
 import django_filters
 import graphene
-from django.db.models import Min, OuterRef, Subquery
+from django.db.models import Min
 from graphene import relay
 from graphene_django import DjangoListField, DjangoObjectType
 from graphene_django.filter import (
@@ -69,20 +69,11 @@ class ProductionByMethodOrderingFilter(django_filters.OrderingFilter):
         ]
 
     def filter(self, qs, value):
+        print(f"Value is: {value}")
         if value and "start" in value:
-            print("value is start")
-            production_performances = Performance.objects.filter(
-                production=OuterRef("pk"),
-            ).values("start")
-
-            qs.annotate(
-                performances__start_date=Subquery(
-                    production_performances.aggregate(min=Min("start")).values("min")
-                )  # Annotate the proudction query with the start time
-            ).order_by("performances__start_date")
-            return qs.order_by("performances__start")
-        # if value and "-start" in value:
-        #     return qs.order_by("-performances__start")
+            return qs.annotate(start=Min("performances__start")).order_by("start")
+        if value and "-start" in value:
+            return qs.annotate(start=Min("performances__start")).order_by("-start")
 
         return super().filter(qs, value)
 
