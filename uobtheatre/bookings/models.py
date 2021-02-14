@@ -147,7 +147,7 @@ class Booking(models.Model, TimeStampedMixin):
         constraints = [
             models.UniqueConstraint(
                 fields=["status", "performance"],
-                condition=models.Q(status="in_progress"),
+                condition=models.Q(status="INPROGRESS"),
                 name="one_in_progress_booking_per_user_per_performance",
             )
         ]

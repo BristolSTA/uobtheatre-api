@@ -11,6 +11,8 @@ from uobtheatre.bookings.test.factories import (
     TicketFactory,
     ValueMiscCostFactory,
 )
+from uobtheatre.productions.test.factories import PerformanceFactory
+from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory
 
 
@@ -66,7 +68,7 @@ def test_bookings_schema(gql_client_flexible, gql_id):
                             "performance": {
                                 "id": gql_id(booking.performance.id, "PerformanceNode")
                             },
-                            "status": "IN_PROGRESS",
+                            "status": "INPROGRESS",
                         }
                     }
                 ]
@@ -222,3 +224,36 @@ def test_bookings_price_break_down(gql_client_flexible, gql_id):
         "miscCostsValue": int(booking.misc_costs_value()),
         "totalPrice": booking.total(),
     }
+
+
+def test_booking_inprogress():
+    """
+    We will often want to get an "inprogress" booking for a given booking and user.
+        bookings(performance: "UGVyZm9ybWFuY2VOb2RlOjE=", status: "INPROGRESS")
+    """
+    user = UserFactory()
+    performance = PerformanceFactory(id=1)
+    _ = [
+        BookingFactory(user=user, status=Booking.BookingStatus.PAID) for i in range(10)
+    ]
+    booking = BookingFactory(user=user, status=Booking.BookingStatus.INPROGRESS)
+
+    request_query = """
+    {
+        bookings(performance: "UGVyZm9ybWFuY2VOb2RlOjE=", status: "INPROGRESS") {
+          edges {
+            node {
+              id
+              performance {
+                id
+              }
+              status
+            }
+          }
+        }
+    }
+    """
+
+
+def test_booking_upcoming():
+    pass

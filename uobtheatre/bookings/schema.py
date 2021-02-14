@@ -123,7 +123,10 @@ class BookingFilter(FilterSet):
     @property
     def qs(self):
         # Restrict the filterset to only return user bookings
-        return super(BookingFilter, self).qs.filter(user=self.request.user)
+        if self.request.user.is_authenticated:
+            return super(BookingFilter, self).qs.filter(user=self.request.user)
+        else:
+            return Booking.objects.none()
 
 
 BookingStatusSchema = graphene.Enum.from_enum(Booking.BookingStatus)
