@@ -226,17 +226,26 @@ def test_bookings_price_break_down(gql_client_flexible, gql_id):
     }
 
 
-def test_booking_inprogress():
+@pytest.mark.django_db
+def test_booking_inprogress(gql_client_flexible, gql_id):
     """
     We will often want to get an "inprogress" booking for a given booking and user.
         bookings(performance: "UGVyZm9ybWFuY2VOb2RlOjE=", status: "INPROGRESS")
     """
     user = UserFactory()
     performance = PerformanceFactory(id=1)
+    # Create some completed bookings for the same performance
     _ = [
-        BookingFactory(user=user, status=Booking.BookingStatus.PAID) for i in range(10)
+        BookingFactory(
+            user=user, performance=performance, status=Booking.BookingStatus.PAID
+        )
+        for i in range(10)
     ]
-    booking = BookingFactory(user=user, status=Booking.BookingStatus.INPROGRESS)
+    # Create some bookings for dfferent performances
+    _ = [BookingFactory(user=user) for i in range(10)]
+    booking = BookingFactory(
+        user=user, performance=performance, status=Booking.BookingStatus.INPROGRESS
+    )
 
     request_query = """
     {
@@ -244,16 +253,25 @@ def test_booking_inprogress():
           edges {
             node {
               id
-              performance {
-                id
-              }
-              status
             }
           }
         }
     }
     """
 
+    gql_client_flexible.set_user(user)
+    response = gql_client_flexible.execute(request_query)
 
-def test_booking_upcoming():
-    pass
+    assert response == {
+        "data": {
+            "bookings": {
+                "edges": [
+                    {
+                        "node": {
+                            "id": gql_id(booking.id, "BookingNode"),
+                        }
+                    },
+                ]
+            }
+        }
+    }
