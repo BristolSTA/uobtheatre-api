@@ -1,6 +1,5 @@
 import django_filters
 import graphene
-from django.db.models import Min
 from graphene import relay
 from graphene_django import DjangoListField, DjangoObjectType
 from graphene_django.filter import (
@@ -19,6 +18,7 @@ from uobtheatre.productions.models import (
     Production,
     ProductionTeamMember,
     Warning,
+    append_production_qs,
 )
 from uobtheatre.utils.schema import (
     FilterSet,
@@ -66,19 +66,39 @@ class ProductionByMethodOrderingFilter(django_filters.OrderingFilter):
         self.extra["choices"] += [
             ("start", "Start"),
             ("-start", "Start (descending)"),
+            ("end", "End"),
+            ("-end", "End (descending)"),
         ]
 
     def filter(self, qs, value):
-        print(f"Value is: {value}")
         if value and "start" in value:
-            return qs.annotate(start=Min("performances__start")).order_by("start")
+            return append_production_qs(qs, start=True).order_by("start")
         if value and "-start" in value:
-            return qs.annotate(start=Min("performances__start")).order_by("-start")
+            return append_production_qs(qs, start=True).order_by("-start")
+
+        if value and "end" in value:
+            return append_production_qs(qs, end=True).order_by("end")
+        if value and "-end" in value:
+            return append_production_qs(qs, end=True).order_by("-end")
 
         return super().filter(qs, value)
 
 
 class ProductionFilter(FilterSet):
+    start = django_filters.DateTimeFilter(method="start_filter")
+    start__gte = django_filters.DateTimeFilter(method="start_filter")
+    start__lte = django_filters.DateTimeFilter(method="start_filter")
+
+    end = django_filters.DateTimeFilter(method="end_filter")
+    end__gte = django_filters.DateTimeFilter(method="end_filter")
+    end__lte = django_filters.DateTimeFilter(method="end_filter")
+
+    def start_filter(self, qs, value, date=None):
+        return append_production_qs(qs, start=True).filter(**{value: date})
+
+    def end_filter(self, qs, value, date=None):
+        return append_production_qs(qs, end=True).filter(**{value: date})
+
     class Meta:
         model = Production
         exclude = ("poster_image", "featured_image", "cover_image")
