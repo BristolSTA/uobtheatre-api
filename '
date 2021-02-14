@@ -3,7 +3,10 @@ import itertools
 import graphene
 from graphene import relay
 from graphene_django import DjangoListField, DjangoObjectType
-from graphene_django.filter import DjangoFilterConnectionField
+from graphene_django.filter import (
+    DjangoFilterConnectionField,
+    GlobalIDFilter,
+)
 
 from uobtheatre.bookings.models import Booking, ConcessionType, MiscCost, Ticket
 from uobtheatre.utils.schema import FilterSet
@@ -115,32 +118,29 @@ class PriceBreakdownNode(DjangoObjectType):
         )
 
 
-class BookingFilter(FilterSet):
-    class Meta:
-        model = Booking
-        fields = "__all__"
-
-    @property
-    def qs(self):
-        # Restrict the filterset to only return user bookings
-        return super(BookingFilter, self).qs.filter(user=self.request.user)
-
-
-BookingStatusSchema = graphene.Enum.from_enum(Booking.BookingStatus)
+# class BookingFilter(FilterSet):
+#    class Meta:
+#        model = Booking
+#        fields = {
+#            "performance__id": ["exact"],
+#        }
 
 
 class BookingNode(DjangoObjectType):
     price_breakdown = graphene.Field(PriceBreakdownNode)
     tickets = DjangoListField(TicketNode)
-    status = BookingStatusSchema()
 
     def resolve_price_breakdown(self, info):
         return self
 
     class Meta:
         model = Booking
-        filterset_class = BookingFilter
+        # filterset_class = BookingFilter
         interfaces = (relay.Node,)
+        fields = "__all__"  # TODO exclude users
+        fileter_fields = {
+            "performance__id": ["exact"],
+        }
 
 
 class Query(graphene.ObjectType):
