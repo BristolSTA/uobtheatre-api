@@ -1,6 +1,8 @@
+import datetime
 import math
 
 import pytest
+from django.utils import timezone
 
 from uobtheatre.bookings.test.factories import (
     DiscountFactory,
@@ -561,4 +563,53 @@ def test_performance_single_id(gql_client, gql_id):
     )
     assert response["data"] == {
         "performance": {"id": gql_id(performances[0].id, "PerformanceNode")}
+    }
+
+
+@pytest.mark.django_db
+def test_upcoming_productions(gql_client, gql_id):
+    def create_production(start, end):
+        production = ProductionFactory()
+        diff = end - start
+        for i in range(5):
+            time = start + (diff / 5) * i
+            PerformanceFactory(start=time, end=time, production=production)
+        return production
+
+    current_time = timezone.now()
+    # Create some producitons in the past
+    for _ in range(10):
+        create_production(
+            start=current_time - datetime.timedelta(days=11),
+            end=current_time - datetime.timedelta(days=1),
+        )
+
+    # Create some prodcution going on right now
+    productions = [
+        create_production(
+            start=current_time - datetime.timedelta(days=i),
+            end=current_time + datetime.timedelta(days=i),
+        )
+        for i in range(1, 11)
+    ]
+
+    # Check we get 6 of the upcoming productions back in the right order
+    request = """
+        {
+          productions(end_Gte: "%s", first: 6, orderBy: "end") {
+            edges {
+              node {
+                end
+              }
+            }
+          }
+        }
+        """
+
+    # Ask for nothing and check you get nothing
+    response = gql_client.execute(request % current_time.isoformat())
+    assert response["data"]["productions"] == {
+        "edges": [
+            {"node": {"end": productions[i].end_date().isoformat()}} for i in range(6)
+        ]
     }
