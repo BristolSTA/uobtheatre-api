@@ -16,6 +16,7 @@ from uobtheatre.productions.test.factories import (
     ProductionFactory,
     ProductionTeamMemberFactory,
     WarningFactory,
+    create_production,
 )
 
 
@@ -613,3 +614,121 @@ def test_upcoming_productions(gql_client, gql_id):
             {"node": {"end": productions[i].end_date().isoformat()}} for i in range(6)
         ]
     }
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "order_by, expected_order",
+    [
+        ("start", [0, 1, 2, 3]),
+        ("-start", [3, 2, 1, 0]),
+        ("end", [0, 1, 3, 2]),
+        ("-end", [2, 3, 1, 0]),
+    ],
+)
+def test_productions_orderby(order_by, expected_order, gql_client, gql_id):
+    current_time = timezone.now()
+
+    productions = [
+        create_production(
+            start=current_time + datetime.timedelta(days=1),
+            end=current_time + datetime.timedelta(days=1),
+            production_id=0,
+        ),
+        create_production(
+            start=current_time + datetime.timedelta(days=2),
+            end=current_time + datetime.timedelta(days=2),
+            production_id=1,
+        ),
+        create_production(
+            start=current_time + datetime.timedelta(days=3),
+            end=current_time + datetime.timedelta(days=6),
+            production_id=2,
+        ),
+        create_production(
+            start=current_time + datetime.timedelta(days=4),
+            end=current_time + datetime.timedelta(days=5),
+            production_id=3,
+        ),
+    ]
+    request = """
+        {
+          productions(orderBy: "%s") {
+            edges {
+              node {
+                end
+              }
+            }
+          }
+        }
+        """
+
+    # Ask for nothing and check you get nothing
+    response = gql_client.execute(request % order_by)
+    assert response["data"]["productions"]["edges"] == [
+        {"node": {"end": productions[i].end_date().isoformat()}} for i in expected_order
+    ]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "filter_name, value_days, expected_outputs",
+    [
+        ("start_Gte", 2, [2, 3]),
+        ("start_Lte", 2, [0, 1, 2]),
+        ("end_Gte", 2, [2, 3]),
+        ("end_Lte", 2, [0, 1]),
+    ],
+)
+def test_production_filters(
+    filter_name, value_days, expected_outputs, gql_client, gql_id
+):
+    current_time = timezone.now()
+
+    productions = [
+        create_production(
+            start=current_time + datetime.timedelta(days=0),
+            end=current_time + datetime.timedelta(days=0),
+            production_id=0,
+        ),
+        create_production(
+            start=current_time + datetime.timedelta(days=1),
+            end=current_time + datetime.timedelta(days=1),
+            production_id=1,
+        ),
+        create_production(
+            start=current_time + datetime.timedelta(days=2),
+            end=current_time + datetime.timedelta(days=5),
+            production_id=2,
+        ),
+        create_production(
+            start=current_time + datetime.timedelta(days=3),
+            end=current_time + datetime.timedelta(days=4),
+            production_id=3,
+        ),
+    ]
+    # Check we get 6 of the upcoming productions back in the right order
+    request = """
+        {
+          productions(%s: "%s") {
+            edges {
+              node {
+                end
+              }
+            }
+          }
+        }
+        """
+
+    # Ask for nothing and check you get nothing
+    response = gql_client.execute(
+        request
+        % (
+            filter_name,
+            (current_time + datetime.timedelta(days=value_days)).isoformat(),
+        )
+    )
+    assert response["data"]["productions"]["edges"] == [
+        {"node": {"end": productions[i].end_date().isoformat()}}
+        for i in expected_outputs
+    ]
