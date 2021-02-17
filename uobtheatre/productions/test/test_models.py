@@ -370,3 +370,35 @@ def test_performance_min_price():
     PerformanceSeatingFactory(performance=performance, price=20)
 
     assert performance.min_seat_price() == 10
+
+
+@pytest.mark.django_db
+def test_production_start_and_end_date():
+    current_time = timezone.now()
+
+    production = ProductionFactory()
+
+    # Test result with no performances
+    assert production.end_date() is None
+    assert production.start_date() is None
+
+    performances = [
+        PerformanceFactory(
+            start=current_time + datetime.timedelta(days=1),
+            end=current_time + datetime.timedelta(days=1),
+            production=production,
+        ),
+        PerformanceFactory(
+            start=current_time + datetime.timedelta(days=2),
+            end=current_time + datetime.timedelta(days=2),
+            production=production,
+        ),
+        PerformanceFactory(
+            start=current_time + datetime.timedelta(days=3),
+            end=current_time + datetime.timedelta(days=3),
+            production=production,
+        ),
+    ]
+
+    assert production.end_date() == current_time + datetime.timedelta(days=3)
+    assert production.start_date() == current_time + datetime.timedelta(days=1)

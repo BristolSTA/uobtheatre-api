@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from autoslug import AutoSlugField
 from django.db import models
-from django.db.models import Sum
+from django.db.models import Max, Min, Sum
 from django.utils import timezone
 
 from uobtheatre.societies.models import Society
@@ -42,6 +42,19 @@ class Warning(models.Model):
 
     def __str__(self):
         return self.warning
+
+
+def append_production_qs(queryset, start=False, end=False):
+    """
+    Given a booking queryset append extra fields. Field options are:
+    - start
+    - end
+    """
+    if start:
+        queryset = queryset.annotate(start=Min("performances__start"))
+    if end:
+        queryset = queryset.annotate(end=Max("performances__end"))
+    return queryset
 
 
 class Production(models.Model, TimeStampedMixin):
@@ -94,19 +107,13 @@ class Production(models.Model, TimeStampedMixin):
         """
         Return when the last performance ends.
         """
-        performances = self.performances.all()
-        if not performances:
-            return None
-        return max(performance.end for performance in performances)
+        return self.performances.all().aggregate(Max("end"))["end__max"]
 
     def start_date(self):
         """
         Return when the first performance starts.
         """
-        performances = self.performances.all()
-        if not performances:
-            return None
-        return min(performance.start for performance in performances)
+        return self.performances.all().aggregate(Min("start"))["start__min"]
 
     def min_seat_price(self) -> Optional[int]:
         """

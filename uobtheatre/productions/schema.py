@@ -18,6 +18,7 @@ from uobtheatre.productions.models import (
     Production,
     ProductionTeamMember,
     Warning,
+    append_production_qs,
 )
 from uobtheatre.utils.schema import (
     FilterSet,
@@ -59,15 +60,50 @@ class WarningNode(DjangoObjectType):
         interfaces = (relay.Node,)
 
 
-class ProductionFilter(FilterSet):
+class ProductionByMethodOrderingFilter(django_filters.OrderingFilter):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.extra["choices"] += [
+            ("start", "Start"),
+            ("-start", "Start (descending)"),
+            ("end", "End"),
+            ("-end", "End (descending)"),
+        ]
 
+    def filter(self, qs, value):
+        if value and "start" in value:
+            return append_production_qs(qs, start=True).order_by("start")
+        if value and "-start" in value:
+            return append_production_qs(qs, start=True).order_by("-start")
+
+        if value and "end" in value:
+            return append_production_qs(qs, end=True).order_by("end")
+        if value and "-end" in value:
+            return append_production_qs(qs, end=True).order_by("-end")
+
+        return super().filter(qs, value)
+
+
+class ProductionFilter(FilterSet):
     start = django_filters.DateTimeFilter(method="start_filter")
+    start__gte = django_filters.DateTimeFilter(method="start_filter")
+    start__lte = django_filters.DateTimeFilter(method="start_filter")
+
+    end = django_filters.DateTimeFilter(method="end_filter")
+    end__gte = django_filters.DateTimeFilter(method="end_filter")
+    end__lte = django_filters.DateTimeFilter(method="end_filter")
+
+    def start_filter(self, qs, value, date=None):
+        return append_production_qs(qs, start=True).filter(**{value: date})
+
+    def end_filter(self, qs, value, date=None):
+        return append_production_qs(qs, end=True).filter(**{value: date})
 
     class Meta:
         model = Production
         exclude = ("poster_image", "featured_image", "cover_image")
 
-    order_by = django_filters.OrderingFilter(fields=(("start"),))
+    order_by = ProductionByMethodOrderingFilter()
 
 
 class ProductionNode(GrapheneImageMixin, DjangoObjectType):
@@ -142,6 +178,9 @@ class PerformanceSeatGroupNode(DjangoObjectType):
 
 
 class PerformanceFilter(FilterSet):
+
+    start = django_filters.DateTimeFilter(method="start_filter")
+
     class Meta:
         model = Performance
         exclude = ("performance_seat_groups", "bookings")
@@ -167,7 +206,7 @@ class PerformanceNode(DjangoObjectType):
         model = Performance
         filterset_class = PerformanceFilter
         interfaces = (relay.Node,)
-        exclude = ("performance_seat_groups", "bookings")
+        exclude = ("performance_seat_groups",)
 
 
 class Query(graphene.ObjectType):
