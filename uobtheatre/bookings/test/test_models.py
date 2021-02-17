@@ -772,7 +772,7 @@ def test_create_booking_serializer_seat_group_is_from_performance_validation():
         ),
     ],
 )
-def test_booking_diff(existingList, newList, addList, deleteList):
+def test_booking_ticket_diff(existingList, newList, addList, deleteList):
     SeatGroupFactory(id=1)
     SeatGroupFactory(id=2)
     ConcessionTypeFactory(id=1)
