@@ -58,3 +58,19 @@ def test_user_schema(gql_client_flexible, gql_id):
             }
         }
     }
+
+
+@pytest.mark.django_db
+def test_user_schema_unauthenticated(gql_client_flexible):
+    gql_client_flexible.logout()
+    response = gql_client_flexible.execute(
+        """
+        {
+	  authUser {
+            username
+          }
+        }
+        """
+    )
+
+    assert response == {"data": {"authUser": None}}
