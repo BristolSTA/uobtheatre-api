@@ -6,6 +6,15 @@ from uobtheatre.bookings.test.factories import BookingFactory
 @pytest.mark.django_db
 def test_user_schema(gql_client_flexible, gql_id):
 
+    user = gql_client_flexible.request_factory.user
+
+    # Create some booking
+    bookings = [BookingFactory(user=user) for i in range(4)]
+
+    # Create an irrelevant user with some bookings
+    # irrelevant_user = UserFactory()
+    # _ = [BookingFactory(user=irrelevant_user) for i in range(4)]
+
     response = gql_client_flexible.execute(
         """
         {
@@ -28,15 +37,6 @@ def test_user_schema(gql_client_flexible, gql_id):
         }
         """
     )
-
-    user = gql_client_flexible.request_factory.user
-
-    # Create some booking
-    bookings = [BookingFactory(user=user) for i in range(4)]
-
-    # Create an irrelevant user with some bookings
-    # irrelevant_user = UserFactory()
-    # _ = [BookingFactory(user=irrelevant_user) for i in range(4)]
 
     assert list(user.bookings.all()) == bookings
     assert response == {
