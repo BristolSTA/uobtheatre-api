@@ -564,52 +564,227 @@ def test_create_booking_serializer_seat_group_is_from_performance_validation():
     ConcessionTypeFactory(id=1)
 
 
-# @pytest.mark.django_db
-# def test_ticket_diff():
-#     booking = BookingFactory()
-#     booking_tickets = [TicketFactory(booking=booking) for _ in range(10)]
-#     tickets = [
-#         Ticket(
-#             booking=booking,
-#             seat_group=ticket.seat_group,
-#             concession_type=ticket.concession_type,
-#         )
-#         for ticket in booking_tickets
-#     ]
-
-#     assert booking.get_ticket_diff(tickets) == []
-
-
 @pytest.mark.django_db
-def test_booking_diff():
-    seat_group1 = SeatGroupFactory()
-    seat_group2 = SeatGroupFactory()
-    concession_type1 = ConcessionTypeFactory()
-    concession_type2 = ConcessionTypeFactory()
-    concession_type3 = ConcessionTypeFactory()
-
-    tickets = [
-        Ticket(id=1, seat_group=seat_group1, concession_type=concession_type1),
-        Ticket(id=2, seat_group=seat_group2, concession_type=concession_type2),
-        Ticket(seat_group=seat_group1, concession_type=concession_type3),
-    ]
+@pytest.mark.parametrize(
+    "existingList, newList, addList, deleteList",
+    [
+        # SAME, SAME, null, null  - SAME
+        (
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 2,
+                },
+            ],
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 2,
+                },
+            ],
+            [],
+            [],
+        ),
+        # 1&2, 1, null, 2 - DELETE 1
+        (
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 2,
+                },
+            ],
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+            ],
+            [],
+            [
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 2,
+                }
+            ],
+        ),
+        # 1, 1&2, 2, null - ADD 1
+        (
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+            ],
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 2,
+                },
+            ],
+            [
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 2,
+                }
+            ],
+            [],
+        ),
+        # 1&2, null, null, 1&2 - DELETE ALL
+        (
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 2,
+                },
+            ],
+            [],
+            [],
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 2,
+                },
+            ],
+        ),
+        # null, 1&2, 1&2, null - ADD ALL
+        (
+            [],
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 2,
+                },
+            ],
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 2,
+                },
+            ],
+            [],
+        ),
+        # 1, 2, 2, 1 - SWAP
+        (
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+            ],
+            [
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 2,
+                }
+            ],
+            [
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 2,
+                }
+            ],
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+            ],
+        ),
+    ],
+)
+def test_booking_diff(existingList, newList, addList, deleteList):
+    SeatGroupFactory(id=1)
+    SeatGroupFactory(id=2)
+    ConcessionTypeFactory(id=1)
+    ConcessionTypeFactory(id=2)
+    SeatFactory(id=1)
+    SeatFactory(id=2)
 
     booking = BookingFactory()
-    [
-        TicketFactory(
-            id=1,
-            booking=booking,
-            seat_group=seat_group1,
-            concession_type=concession_type1,
-        ),
-        TicketFactory(
-            id=2,
-            booking=booking,
-            seat_group=seat_group2,
-            concession_type=concession_type2,
-        ),
-    ]
-    assert booking.get_ticket_diff(tickets) == (
-        [Ticket(seat_group=seat_group1, concession_type=concession_type3)],
-        [],
-    )
+
+    _ = [TicketFactory(booking=booking, **ticket) for ticket in existingList]
+    newTickets = [Ticket(**ticket) for ticket in newList]
+    addTickets = [Ticket(**ticket) for ticket in addList]
+    deleteTickets = [Ticket(**ticket) for ticket in deleteList]
+
+    assert booking.get_ticket_diff(newTickets) == (addTickets, deleteTickets)
