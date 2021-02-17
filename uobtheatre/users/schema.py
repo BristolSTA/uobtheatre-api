@@ -1,3 +1,4 @@
+import graphene
 from graphene import relay
 from graphene_django import DjangoObjectType
 
@@ -9,3 +10,11 @@ class UserNode(DjangoObjectType):
         model = User
         interfaces = (relay.Node,)
         exclude = ("password",)
+
+
+class Query(graphene.ObjectType):
+    auth_user = graphene.Field(UserNode)
+
+    def resolve_auth_user(self, info):
+        if info.context.user.is_authenticated:
+            return info.context.user
