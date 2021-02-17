@@ -206,7 +206,7 @@ class PerformanceNode(DjangoObjectType):
         model = Performance
         filterset_class = PerformanceFilter
         interfaces = (relay.Node,)
-        exclude = ("performance_seat_groups", "bookings")
+        exclude = ("performance_seat_groups",)
 
 
 class Query(graphene.ObjectType):

@@ -26,18 +26,20 @@ def test_bookings_schema(gql_client_flexible, gql_id):
 
     request_query = """
         {
-          bookings {
-            edges {
-              node {
-                id
-                tickets {
+          authUser {
+            bookings {
+              edges {
+                node {
                   id
+                  tickets {
+                    id
+                  }
+                  bookingReference
+                  performance {
+                    id
+                  }
+                  status
                 }
-                bookingReference
-                performance {
-                  id
-                }
-                status
               }
             }
           }
@@ -48,30 +50,34 @@ def test_bookings_schema(gql_client_flexible, gql_id):
     # When there is no user expect no bookings
     client.logout()
     response = client.execute(request_query)
-    assert response == {"data": {"bookings": {"edges": []}}}
+    assert response == {"data": {"authUser": None}}
 
     # When we are logged in expect only the user's bookings
     client.set_user(booking.user)
     response = client.execute(request_query)
     assert response == {
         "data": {
-            "bookings": {
-                "edges": [
-                    {
-                        "node": {
-                            "id": gql_id(booking.id, "BookingNode"),
-                            "tickets": [
-                                {"id": gql_id(ticket.id, "TicketNode")}
-                                for ticket in tickets
-                            ],
-                            "bookingReference": str(booking.booking_reference),
-                            "performance": {
-                                "id": gql_id(booking.performance.id, "PerformanceNode")
-                            },
-                            "status": "INPROGRESS",
+            "authUser": {
+                "bookings": {
+                    "edges": [
+                        {
+                            "node": {
+                                "id": gql_id(booking.id, "BookingNode"),
+                                "tickets": [
+                                    {"id": gql_id(ticket.id, "TicketNode")}
+                                    for ticket in tickets
+                                ],
+                                "bookingReference": str(booking.booking_reference),
+                                "performance": {
+                                    "id": gql_id(
+                                        booking.performance.id, "PerformanceNode"
+                                    )
+                                },
+                                "status": "INPROGRESS",
+                            }
                         }
-                    }
-                ]
+                    ]
+                }
             }
         }
     }
@@ -154,31 +160,33 @@ def test_bookings_price_break_down(gql_client_flexible, gql_id):
 
     request_query = """
         {
-          bookings {
-            edges {
-              node {
-                priceBreakdown {
-                  ticketsPrice
-                  discountsValue
-                  subtotalPrice
-                  miscCostsValue
-                  totalPrice
-                  tickets {
-                    ticketPrice
-                    number
+          authUser {
+            bookings {
+              edges {
+                node {
+                  priceBreakdown {
+                    ticketsPrice
+                    discountsValue
+                    subtotalPrice
+                    miscCostsValue
                     totalPrice
-                    seatGroup {
-                      id
+                    tickets {
+                      ticketPrice
+                      number
+                      totalPrice
+                      seatGroup {
+                        id
+                      }
+                      concession {
+                        id
+                      }
                     }
-                    concession {
-                      id
+                    miscCosts {
+                      value
+                      percentage
+                      description
+                      name
                     }
-                  }
-                  miscCosts {
-                    value
-                    percentage
-                    description
-                    name
                   }
                 }
               }
@@ -191,9 +199,9 @@ def test_bookings_price_break_down(gql_client_flexible, gql_id):
     client.set_user(booking.user)
     response = client.execute(request_query)
 
-    response_booking_price_break_down = response["data"]["bookings"]["edges"][0][
-        "node"
-    ]["priceBreakdown"]
+    response_booking_price_break_down = response["data"]["authUser"]["bookings"][
+        "edges"
+    ][0]["node"]["priceBreakdown"]
     assert response_booking_price_break_down.pop("tickets") == [
         {
             "ticketPrice": ticket_group["price"],
@@ -249,6 +257,7 @@ def test_booking_inprogress(gql_client_flexible, gql_id):
 
     request_query = """
     {
+      authUser {
         bookings(performance: "UGVyZm9ybWFuY2VOb2RlOjE=", status: "INPROGRESS") {
           edges {
             node {
@@ -256,6 +265,7 @@ def test_booking_inprogress(gql_client_flexible, gql_id):
             }
           }
         }
+      }
     }
     """
 
@@ -264,14 +274,61 @@ def test_booking_inprogress(gql_client_flexible, gql_id):
 
     assert response == {
         "data": {
-            "bookings": {
-                "edges": [
-                    {
-                        "node": {
-                            "id": gql_id(booking.id, "BookingNode"),
-                        }
-                    },
-                ]
+            "authUser": {
+                "bookings": {
+                    "edges": [
+                        {
+                            "node": {
+                                "id": gql_id(booking.id, "BookingNode"),
+                            }
+                        },
+                    ]
+                }
             }
         }
     }
+
+
+@pytest.mark.django_db
+def test_bookings_auth(gql_client_flexible):
+    user = gql_client_flexible.request_factory.user
+    BookingFactory(user=user)
+
+    request_query = """
+    {
+      performances {
+        edges {
+          node {
+            bookings {
+              edges {
+                node {
+                  id
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    """
+
+    # When we are logged in expect 1 booking
+    response = gql_client_flexible.execute(request_query)
+    assert (
+        len(response["data"]["performances"]["edges"][0]["node"]["bookings"]["edges"])
+        == 1
+    )
+
+    # When we are logged out expect 0 booking
+    gql_client_flexible.logout()
+    response = gql_client_flexible.execute(request_query)
+    assert (
+        response["data"]["performances"]["edges"][0]["node"]["bookings"]["edges"] == []
+    )
+
+    # When we are logged in as a different user expect 0 booking
+    user2 = UserFactory()
+    gql_client_flexible.set_user(user2)
+    assert (
+        response["data"]["performances"]["edges"][0]["node"]["bookings"]["edges"] == []
+    )

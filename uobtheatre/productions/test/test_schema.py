@@ -330,6 +330,9 @@ def test_performance_schema(gql_client, gql_id):
     }
 
 
+@pytest.mark.skip(
+    "TODO, start adding tests like this to check things that should be blocked"
+)
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "attribute, is_obj",
