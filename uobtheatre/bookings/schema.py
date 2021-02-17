@@ -199,8 +199,10 @@ class UpdateBooking(graphene.Mutation):
 
         booking = Booking.objects.get(id=id, user=info.context.user)
 
-        # Covert the given tickets to ticket objects
+        # Conert the given tickets to ticket objects
         ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))
+
+        addTickets, deleteTickets = booking.get_ticket_diff(ticket_objects)
 
         # Check the capacity of the show and its seat_groups
         err = booking.performance.check_capacity(ticket_objects)
@@ -208,9 +210,12 @@ class UpdateBooking(graphene.Mutation):
             raise GraphQLError(err)
 
         # Save all the validated tickets
-        for ticket in ticket_objects:
+        for ticket in addTickets:
             ticket.booking = booking
             ticket.save()
+
+        for ticket in deleteTickets:
+            ticket.delete()
 
         return UpdateBooking(booking=booking)
 
