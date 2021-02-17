@@ -107,23 +107,13 @@ class Production(models.Model, TimeStampedMixin):
         """
         Return when the last performance ends.
         """
-        performances = self.performances.all()
-        if not performances:
-            return None
-        return max(performance.end for performance in performances)
-        # TODO swap to this
-        # return self.performances.all().aggregate(Max("end"))
+        return self.performances.all().aggregate(Max("end"))["end__max"]
 
     def start_date(self):
         """
         Return when the first performance starts.
         """
-        performances = self.performances.all()
-        if not performances:
-            return None
-        return min(performance.start for performance in performances)
-        # TODO swap to this
-        # return self.performances.all().aggregate(Min("start"))
+        return self.performances.all().aggregate(Min("start"))["start__min"]
 
     def min_seat_price(self) -> Optional[int]:
         """
