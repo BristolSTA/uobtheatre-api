@@ -10,7 +10,7 @@ from uobtheatre.bookings.serializers import (
 from uobtheatre.utils.views import ReadWriteSerializerMixin
 
 
-class BookingViewSet(
+class BookingViewSet(  # type: ignore
     ReadWriteSerializerMixin,
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,

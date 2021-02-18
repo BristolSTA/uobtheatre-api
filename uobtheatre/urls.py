@@ -48,13 +48,13 @@ router.register(r"bookings", BookingViewSet, basename="Booking")
 
 
 urlpatterns = [
+    path("graphql/", csrf_exempt(GraphQLView.as_view(graphiql=True))),
     path("admin/", admin.site.urls),
     path("docs/", include_docs_urls(title="UOB Theatre")),
-    path("graphql/", csrf_exempt(GraphQLView.as_view(graphiql=True))),
     path("api/v1/", include(router.urls)),
     # Authentication
-    path("api/v1/auth/", include("rest_auth.urls")),
-    path("api/v1/auth/registration/", include("rest_auth.registration.urls")),
+    # path("api/v1/auth/", include("rest_auth.urls")),
+    # path("api/v1/auth/registration/", include("rest_auth.registration.urls")),
     # the 'api-root' from django rest-frameworks default router
     # http://www.django-rest-framework.org/api-guide/routers/#defaultrouter
     re_path(r"^$", RedirectView.as_view(url=reverse_lazy("api-root"), permanent=False)),
