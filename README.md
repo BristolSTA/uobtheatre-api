@@ -99,6 +99,14 @@ and to run a single test
 docker-compose run --rm api pytest --cov uobtheatre -vv -s uobtheatre/bookings/test/test_views.py -k 'test_name'
 ```
 
+## Seeding
+
+There are a load of fixtures save in fixture.json in all the moduels. These can be loaded into the database with make seed.
+Most notably this will add an admin users called with the following details:
+
+email: admin@email.com
+password: strongpassword
+
 ## Packages :package:
 
 When adding a package run
