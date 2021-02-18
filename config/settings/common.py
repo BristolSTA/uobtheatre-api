@@ -203,6 +203,7 @@ LOGGING = {
 # Custom user app
 AUTH_USER_MODEL = "users.User"
 GRAPHQL_AUTH = {
+    "CUSTOM_ERROR_TYPE": "uobtheatre.utils.exceptions.CustomErrorType",
     "LOGIN_ALLOWED_FIELDS": ["email"],
     "USER_NODE_EXCLUDE_FIELDS": ["password"],
     "USER_NODE_FILTER_FIELDS": {

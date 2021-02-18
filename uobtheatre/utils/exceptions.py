@@ -1,3 +1,9 @@
+import graphene
+from graphene_django.utils import camelize
+from graphene_django.views import GraphQLView
+from graphql.error import GraphQLSyntaxError
+from graphql.error import format_error as format_graphql_error
+from graphql.error.located_error import GraphQLLocatedError
 from rest_framework.serializers import ValidationError
 from rest_framework.views import exception_handler
 
@@ -40,3 +46,104 @@ def custom_exception_handler(exception, context):
 
     response.data = custom_response_data
     return response
+
+
+class GQLListError(Exception):
+    def __init__(self, message=None, errors=[]):
+        super().__init__()
+        self.message = message
+        self.errors = errors
+
+
+class GQLFieldError(Exception):
+    def __init__(self, message, field=None, code=None, params=None):
+        super().__init__()
+        self.message = str(message)
+        self.code = code
+        self.params = params
+        self.field = field
+
+
+class CustomErrorType(graphene.Scalar):
+    class Meta:
+        description = """
+    Errors messages and codes mapped to
+    fields or non fields errors.
+    Example:
+    {
+        field_name: [
+            {
+                "message": "error message",
+                "code": "error_code"
+            }
+        ],
+        other_field: [
+            {
+                "message": "error message",
+                "code": "error_code"
+            }
+        ],
+        nonFieldErrors: [
+            {
+                "message": "error message",
+                "code": "error_code"
+            }
+        ]
+    }
+    """
+
+    @staticmethod
+    def serialize(errors):
+        raise GQLListError(errors=errors)
+
+
+def format_field_error(error):
+    return {
+        error.field: {
+            "message": error.message,
+            "code": error.code,
+        }
+    }
+
+
+def format_list_error(error):
+    errors = error.errors
+    if isinstance(errors, dict):
+        if errors.get("__all__", False):
+            errors["non_field_errors"] = errors.pop("__all__")
+        return camelize(errors)
+    elif isinstance(errors, list):
+        return {"nonFieldErrors": errors}
+    raise Exception
+
+
+def format_internal_error(error: Exception):
+    return {
+        "message": "Internal error",
+        "code": 500,
+    }
+
+
+def format_located_error(error):
+    if isinstance(error.original_error, GraphQLLocatedError):
+        return format_located_error(error.original_error)
+    if isinstance(error.original_error, GQLFieldError):
+        return format_field_error(error.original_error)
+    if isinstance(error.original_error, GQLListError):
+        return format_list_error(error.original_error)
+    return format_internal_error(error.original_error)
+
+
+class SafeGraphQLView(GraphQLView):
+    @staticmethod
+    def format_error(error):
+        try:
+            if isinstance(error, GraphQLLocatedError):
+                return format_located_error(error)
+            if isinstance(error, GraphQLSyntaxError):
+                return format_graphql_error(error)
+            if isinstance(error, GQLListError):
+                return format_list_error(error)
+        except Exception:
+            return format_internal_error(error.original_error)
+            print("NO NO NO")
