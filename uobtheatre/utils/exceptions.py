@@ -1,5 +1,6 @@
 import graphene
-from graphene_django.utils import camelize
+from graphene_django.constants import MUTATION_ERRORS_FLAG
+from graphene_django.utils.utils import set_rollback
 from graphene_django.views import GraphQLView
 from graphql.error import GraphQLSyntaxError
 from graphql.error import format_error as format_graphql_error
@@ -48,20 +49,60 @@ def custom_exception_handler(exception, context):
     return response
 
 
-class GQLListError(Exception):
-    def __init__(self, message=None, errors=[]):
+class GQLAuthError(Exception):
+    def __init__(self, errors):
         super().__init__()
-        self.message = message
         self.errors = errors
 
 
+class GQLListError(Exception):
+    """
+    List or Dict of GQL errors
+    """
+
+    def __init__(self, message=None, field_errors=[], non_field_errors=[]):
+        super().__init__()
+        self.message = message
+        self.field_errors = field_errors
+        self.non_field_errors = non_field_errors
+
+
+# class GQLFieldError(Exception):
+#     """
+#     A single GQL Field error
+#     """
+#
+#     def __init__(self, message, field=None, code=None, params=None):
+#         super().__init__()
+#         self.message = str(message)
+#         self.code = code
+#         self.params = params
+#         self.field = field
+
+# https://gist.github.com/smmoosavi/033deffe834e6417ed6bb55188a05c88
+
+
 class GQLFieldError(Exception):
-    def __init__(self, message, field=None, code=None, params=None):
+    """
+    A single GQL Field error
+    """
+
+    def __init__(self, message, field=None, code=None):
         super().__init__()
         self.message = str(message)
         self.code = code
-        self.params = params
         self.field = field
+
+
+class GQLNonFieldError(Exception):
+    """
+    A single GQL Field error
+    """
+
+    def __init__(self, message, code=None):
+        super().__init__()
+        self.message = str(message)
+        self.code = code
 
 
 class CustomErrorType(graphene.Scalar):
@@ -94,27 +135,52 @@ class CustomErrorType(graphene.Scalar):
 
     @staticmethod
     def serialize(errors):
-        raise GQLListError(errors=errors)
+        # TODO Create GQLListError with a list of error or FieldErrors and Non field erorr
+        # Raise gqlautherror maybe so we can handle customly
+        if isinstance(errors, dict):
+            print(errors)
+            non_field_errors = [
+                GQLNonFieldError(error.message, code=error.code)
+                for error in errors.pop("__all__", [])
+            ]
+            field_errors = [
+                GQLFieldError(value[0]["message"], field=key)
+                for key, value in errors.items()
+            ]
+            raise GQLListError(
+                non_field_errors=non_field_errors, field_errors=field_errors
+            )
+
+        elif isinstance(errors, list):
+            raise GQLListError(
+                non_field_errors=[
+                    GQLNonFieldError(message=error.message, code=error.code)
+                    for error in errors
+                ]
+            )
+        raise Exception
 
 
 def format_field_error(error):
+    print("Formatting field error")
     return {
-        error.field: {
-            "message": error.message,
-            "code": error.code,
-        }
+        "message": error.message,
+        "code": error.code,
+        "field": error.field,
     }
 
 
-def format_list_error(error):
-    errors = error.errors
-    if isinstance(errors, dict):
-        if errors.get("__all__", False):
-            errors["non_field_errors"] = errors.pop("__all__")
-        return camelize(errors)
-    elif isinstance(errors, list):
-        return {"nonFieldErrors": errors}
-    raise Exception
+def format_non_field_error(error):
+    return {
+        "message": error.message,
+        "code": error.code,
+    }
+
+
+def format_list_error(error: GQLListError):
+    return [format_field_error(err) for err in error.field_errors] + [
+        format_non_field_error(err) for err in error.non_field_errors
+    ]
 
 
 def format_internal_error(error: Exception):
@@ -125,6 +191,7 @@ def format_internal_error(error: Exception):
 
 
 def format_located_error(error):
+    print("Formatting")
     if isinstance(error.original_error, GraphQLLocatedError):
         return format_located_error(error.original_error)
     if isinstance(error.original_error, GQLFieldError):
@@ -137,6 +204,7 @@ def format_located_error(error):
 class SafeGraphQLView(GraphQLView):
     @staticmethod
     def format_error(error):
+        print("In format error")
         try:
             if isinstance(error, GraphQLLocatedError):
                 return format_located_error(error)
@@ -146,4 +214,46 @@ class SafeGraphQLView(GraphQLView):
                 return format_list_error(error)
         except Exception:
             return format_internal_error(error.original_error)
-            print("NO NO NO")
+
+    def get_response(self, request, data, show_graphiql=False):
+
+        query, variables, operation_name, id = self.get_graphql_params(request, data)
+
+        execution_result = self.execute_graphql_request(
+            request, data, query, variables, operation_name, show_graphiql
+        )
+
+        if getattr(request, MUTATION_ERRORS_FLAG, False) is True:
+            set_rollback()
+
+        status_code = 200
+        if execution_result:
+            response = {}
+
+            if execution_result.errors:
+                set_rollback()
+                response["errors"] = [
+                    self.format_error(e) for e in execution_result.errors
+                ]
+                new_errors = []
+                for error in response["errors"]:
+                    if isinstance(error, list):
+                        new_errors.extend(error)
+                    else:
+                        new_errors.append(error)
+                response["errors"] = new_errors
+
+            if execution_result.invalid:
+                status_code = 400
+            else:
+                response["data"] = execution_result.data
+
+            if self.batch:
+                response["id"] = id
+                response["status"] = status_code
+
+            result = self.json_encode(request, response, pretty=show_graphiql)
+        else:
+            result = None
+
+        return result, status_code
