@@ -4,7 +4,7 @@ import uobtheatre.productions.schema as productions_schema
 import uobtheatre.societies.schema as societies_schema
 import uobtheatre.users.schema as users_schema
 import uobtheatre.venues.schema as venues_schema
-from uobtheatre.utils.exceptions import GQLFieldError
+from uobtheatre.utils.exceptions import FieldError, MutationResult
 
 
 class Query(
@@ -17,15 +17,21 @@ class Query(
     pass
 
 
-class CreateBooking(graphene.Mutation):
-    ok = graphene.String()
+class CreateBooking(MutationResult, graphene.Mutation):
+
+    some_output = graphene.String()
 
     class Arguments:
         input = graphene.String()
 
     @classmethod
     def mutate(self, root, info, input):
-        raise GQLFieldError("Uhoh there is an error", code=400, field="booking")
+        return self(
+            some_output=input,
+            success=True,
+            errors=[FieldError("Uhoh there is an error", code=400, field="booking")],
+        )
+        # raise GQLFieldError("Uhoh there is an error", code=400, field="booking")
 
 
 class BookingMutation(graphene.ObjectType):
