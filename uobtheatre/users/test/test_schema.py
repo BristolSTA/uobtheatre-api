@@ -18,7 +18,7 @@ def test_user_schema(gql_client_flexible, gql_id):
     response = gql_client_flexible.execute(
         """
         {
-	  authUser {
+	  me {
             firstName
             lastName
             email
@@ -40,8 +40,7 @@ def test_user_schema(gql_client_flexible, gql_id):
     assert list(user.bookings.all()) == bookings
     assert response == {
         "data": {
-            "authUser": {
-                "username": user.username,
+            "me": {
                 "firstName": user.first_name,
                 "lastName": user.last_name,
                 "email": user.email,
@@ -65,11 +64,11 @@ def test_user_schema_unauthenticated(gql_client_flexible):
     response = gql_client_flexible.execute(
         """
         {
-	  authUser {
-            username
+	  me {
+            email
           }
         }
         """
     )
 
-    assert response == {"data": {"authUser": None}}
+    assert response == {"data": {"me": None}}
