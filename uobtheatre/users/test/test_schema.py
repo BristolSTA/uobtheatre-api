@@ -19,7 +19,6 @@ def test_user_schema(gql_client_flexible, gql_id):
         """
         {
 	  authUser {
-            username
             firstName
             lastName
             email
