@@ -47,4 +47,4 @@ repos:
     rev: v0.790
     hooks:
       - id: mypy
-        additional_dependencies: [django-stubs,djangorestframework-stubs,dj-database-url,djangorestframework,django-rest-auth,django-allauth,django-filter,drf_yasg,django-cors-headers,drf-extensions,django-autoslug,django-url-filter,graphene-django,psycopg2-binary,django-graphql-auth]
+        additional_dependencies: [django-stubs,dj-database-url,django-filter,django-cors-headers,django-autoslug,graphene-django,psycopg2-binary,django-graphql-auth]
