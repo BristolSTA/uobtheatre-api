@@ -69,4 +69,4 @@ class AuthOutput(MutationResult):
                 for error in errors
             ]
             return non_field_errors + field_errors
-        return None
+        raise Exception("Internal error")
