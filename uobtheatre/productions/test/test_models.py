@@ -15,6 +15,7 @@ from uobtheatre.bookings.test.factories import (
 from uobtheatre.productions.test.factories import (
     CastMemberFactory,
     CrewMemberFactory,
+    CrewRoleFactory,
     PerformanceFactory,
     ProductionFactory,
     ProductionTeamMemberFactory,
@@ -180,6 +181,12 @@ def test_price_with_concession():
 def test_str_warning():
     warning = WarningFactory()
     assert str(warning) == warning.warning
+
+
+@pytest.mark.django_db
+def test_str_crew_role():
+    crew_role = CrewRoleFactory()
+    assert str(crew_role) == crew_role.name
 
 
 @pytest.mark.django_db
@@ -402,3 +409,24 @@ def test_production_start_and_end_date():
 
     assert production.end_date() == current_time + datetime.timedelta(days=3)
     assert production.start_date() == current_time + datetime.timedelta(days=1)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "performances_start_deltas, is_upcoming",
+    [
+        ([datetime.timedelta(days=1), datetime.timedelta(days=-1)], True),
+        ([datetime.timedelta(hours=1), datetime.timedelta(hours=-1)], True),
+        ([datetime.timedelta(days=-1), datetime.timedelta(hours=-1)], False),
+        ([datetime.timedelta(hours=-2), datetime.timedelta(hours=-1)], False),
+        ([datetime.timedelta(hours=2), datetime.timedelta(hours=1)], True),
+    ],
+)
+def test_is_upcoming_production(performances_start_deltas, is_upcoming):
+    now = timezone.now()
+    production = ProductionFactory()
+    _ = [
+        PerformanceFactory(production=production, start=now + start_delta)
+        for start_delta in performances_start_deltas
+    ]
+    assert production.is_upcoming() == is_upcoming

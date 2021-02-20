@@ -16,16 +16,12 @@ INSTALLED_APPS = (
     "django.contrib.staticfiles",
     "django.contrib.sites",
     # Third party apps
-    "rest_framework",  # utilities for rest apis
     # Authentiaction
     "graphql_auth",  # Graphql authentication (user setup)
     ##
     "django_filters",  # for filtering rest endpoints
-    "drf_yasg",  # Swagger documentation
     "corsheaders",  # CORS
-    "rest_framework_extensions",  # Extensions including nested views
     "autoslug",  # Auto slug
-    "url_filter",
     "graphene_django",  # Graphql
     # Your apps
     "uobtheatre.users",
@@ -231,31 +227,6 @@ GRAPHQL_JWT = {
         "graphql_auth.mutations.VerifySecondaryEmail",
     ],
 }
-
-# Django Rest Framework
-REST_FRAMEWORK = {
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": int(os.getenv("DJANGO_PAGINATION_LIMIT", "10")),
-    "DATETIME_FORMAT": "%Y-%m-%dT%H:%M:%SZ",
-    "DEFAULT_RENDERER_CLASSES": (
-        "rest_framework.renderers.JSONRenderer",
-        "rest_framework.renderers.BrowsableAPIRenderer",
-    ),
-    "DEFAULT_PERMISSION_CLASSES": [],
-    "DEFAULT_FILTER_BACKENDS": ["url_filter.integrations.drf.DjangoFilterBackend"],
-    "EXCEPTION_HANDLER": "uobtheatre.utils.exceptions.custom_exception_handler",
-}
-
-
-# Documentation settings
-SWAGGER_SETTINGS = {
-    "DEFAULT_API_URL": "https://api.uobtheatre.com",
-}
-
-NON_FIELD_ERRORS_KEY = "non_field_errors"
-FIELD_ERRORS_KEY = "field_errors"
-
-# GraphQL
 GRAPHENE = {
     "SCHEMA": "uobtheatre.schema.schema",
     "MIDDLEWARE": [
