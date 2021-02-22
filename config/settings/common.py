@@ -208,9 +208,8 @@ GRAPHQL_AUTH = {
         "status__verified": ["exact"],
         "status__secondary_email": ["exact"],
     },
-    "REGISTER_MUTATION_FIELDS": {
-        "email": "String",
-    },
+    "REGISTER_MUTATION_FIELDS": ["email"],
+    "REGISTER_MUTATION_FIELDS_OPTIONAL": ["first_name", "last_name"],
 }
 GRAPHQL_JWT = {
     "JWT_VERIFY_EXPIRATION": True,

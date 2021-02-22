@@ -1,7 +1,9 @@
 import graphene
 
 # https://gist.github.com/smmoosavi/033deffe834e6417ed6bb55188a05c88
-# TODO We should probably raise these error instead and then format for you in the mutation, ie in mutation mixin wrap the mutation funciton in a try and handle errors there
+# TODO We should probably raise these error instead and then format for you in
+# the mutation, ie in mutation mixin wrap the mutation funciton in a try and
+# handle errors there
 # class GQLFieldError(Exception):
 #     """
 #     A single GQL Field error
@@ -52,6 +54,9 @@ class AuthOutput(MutationResult):
     """
 
     def resolve_errors(self, info):
+        if self.errors is None:
+            return
+
         if isinstance(self.errors, list):
             non_field_errors = [
                 NonFieldError(error["message"], code=error["code"])
@@ -69,4 +74,5 @@ class AuthOutput(MutationResult):
                 for error in errors
             ]
             return non_field_errors + field_errors
+
         raise Exception("Internal error")
