@@ -92,3 +92,6 @@ schema: ## Dumps graphql schema in schema.json
 pr: ## Runs everything required (that is not included in precommit) for a pr
 	make schema
 	make test
+
+build:
+	docker-compose build api
