@@ -26,8 +26,24 @@ from uobtheatre.venues.test.factories import SeatGroupFactory
 
 @pytest.mark.django_db
 def test_performance_duration():
-    start = datetime.datetime(day=2, month=3, year=2020, hour=12, minute=0, second=10)
-    end = datetime.datetime(day=3, month=4, year=2021, hour=13, minute=1, second=11)
+    start = datetime.datetime(
+        day=2,
+        month=3,
+        year=2020,
+        hour=12,
+        minute=0,
+        second=10,
+        tzinfo=timezone.get_current_timezone(),
+    )
+    end = datetime.datetime(
+        day=3,
+        month=4,
+        year=2021,
+        hour=13,
+        minute=1,
+        second=11,
+        tzinfo=timezone.get_current_timezone(),
+    )
     performance = PerformanceFactory(start=start, end=end)
 
     assert performance.duration().total_seconds() == 34304461.0

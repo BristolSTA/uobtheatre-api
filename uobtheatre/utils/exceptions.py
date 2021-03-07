@@ -47,15 +47,6 @@ class MutationResult:
     errors = graphene.List(GQLErrorUnion)
 
 
-# TODO add errors to sentry
-class ErrorMiddleware(object):
-    def on_error(self, error):
-        raise error
-
-    def resolve(self, next, root, info, **args):
-        return next(root, info, **args).catch(self.on_error)
-
-
 class AuthOutput(MutationResult):
     """
     Overwrites the output class used in graphql_auth. This allows for custom

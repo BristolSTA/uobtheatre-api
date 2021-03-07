@@ -6,14 +6,12 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import RedirectView
 from graphene_django.views import GraphQLView
 
-from uobtheatre.utils.exceptions import ErrorMiddleware
-
 # GraphQLView.graphiql_template = "graphene_graphiql_explorer/graphiql.html"
 
 urlpatterns = [
     path(
         "graphql/",
-        csrf_exempt(GraphQLView.as_view(graphiql=True, middleware=[ErrorMiddleware()])),
+        csrf_exempt(GraphQLView.as_view(graphiql=True)),
     ),
     path("admin/", admin.site.urls),
     # path("docs/", include_docs_urls(title="UOB Theatre")),
