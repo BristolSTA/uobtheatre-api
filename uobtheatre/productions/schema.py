@@ -217,4 +217,7 @@ class Query(graphene.ObjectType):
     performance = relay.Node.Field(PerformanceNode)
 
     def resolve_production(self, info, slug):
-        return Production.objects.get(slug=slug)
+        try:
+            return Production.objects.get(slug=slug)
+        except Production.DoesNotExist:
+            return None

@@ -128,7 +128,7 @@ def test_user_wrong_credentials(gql_client_flexible):
     response = gql_client_flexible.execute(
         """
         mutation {
-          tokenAuth(email:"fakeaccount@email.com", password:"strongpassword"){
+          login(email:"fakeaccount@email.com", password:"strongpassword"){
             token
             success
             errors {
@@ -148,7 +148,7 @@ def test_user_wrong_credentials(gql_client_flexible):
     )
     assert response == {
         "data": {
-            "tokenAuth": {
+            "login": {
                 "token": None,
                 "success": False,
                 "errors": [
@@ -160,3 +160,57 @@ def test_user_wrong_credentials(gql_client_flexible):
             }
         }
     }
+
+
+@pytest.mark.django_db
+def test_user_register(gql_client_flexible):
+    # Create an account
+    gql_client_flexible.execute(
+        """
+        mutation {
+          register(
+            email: "test@email.com"
+            password1: "strongpassword"
+            password2: "strongpassword"
+            firstName: "James"
+          ) {
+            success,
+            token
+          }
+        }
+        """
+    )
+
+    # Now check we can login to it
+    response = gql_client_flexible.execute(
+        """
+        mutation {
+          login(email:"test@email.com", password:"strongpassword"){
+            token
+            success
+            errors {
+              __typename
+            }
+            user {
+              firstName
+            }
+          }
+        }
+        """
+    )
+
+    response_data = response["data"]["login"]
+    # Assert no errors
+    assert all(
+        [
+            not response.get("errors", None),
+            not response_data["errors"],
+            response_data["success"] is True,
+        ]
+    )
+
+    # Check the token is valid
+    assert isinstance(response_data["token"], str) and len(response_data["token"]) > 150
+
+    # Check user is correct
+    assert response_data["user"]["firstName"] == "James"

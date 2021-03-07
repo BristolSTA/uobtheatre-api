@@ -23,8 +23,8 @@ type BookingNode implements Node {
   id: ID!
   bookingReference: UUID!
   performance: PerformanceNode!
-  status: BookingStatus
-  tickets: [TicketNode!]
+  status: BookingStatus!
+  tickets(offset: Int, before: String, after: String, first: Int, last: Int): TicketNodeConnection!
   priceBreakdown: PriceBreakdownNode
 }
 
