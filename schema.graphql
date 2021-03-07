@@ -24,7 +24,7 @@ type BookingNode implements Node {
   bookingReference: UUID!
   performance: PerformanceNode!
   status: BookingStatus!
-  tickets(offset: Int, before: String, after: String, first: Int, last: Int): TicketNodeConnection!
+  tickets: [TicketNode!]
   priceBreakdown: PriceBreakdownNode
 }
 
@@ -129,7 +129,7 @@ type MiscCostNode implements Node {
 }
 
 type Mutation {
-  register(firstName: String, lastName: String, email: String!, password1: String!, password2: String!): Register
+  register(email: String!, firstName: String!, lastName: String!, password1: String!, password2: String!): Register
   verifyAccount(token: String!): VerifyAccount
   resendActivationEmail(email: String!): ResendActivationEmail
   sendPasswordResetEmail(email: String!): SendPasswordResetEmail
@@ -143,7 +143,7 @@ type Mutation {
   verifySecondaryEmail(token: String!): VerifySecondaryEmail
   swapEmails(password: String!): SwapEmails
   removeSecondaryEmail(password: String!): RemoveSecondaryEmail
-  tokenAuth(password: String!, email: String): ObtainJSONWebToken
+  login(password: String!, email: String): ObtainJSONWebToken
   verifyToken(token: String!): VerifyToken
   refreshToken(token: String!): RefreshToken
   revokeToken(refreshToken: String!): RevokeToken

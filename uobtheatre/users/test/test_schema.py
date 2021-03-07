@@ -85,6 +85,8 @@ def test_user_field_error(gql_client_flexible):
             email: "test@email.com"
             password1: "strongpassword"
             password2: "notsostrongpassword"
+            firstName: "Tom"
+            lastName: "Streuli"
           ) {
             success,
             errors {
@@ -173,6 +175,7 @@ def test_user_register(gql_client_flexible):
             password1: "strongpassword"
             password2: "strongpassword"
             firstName: "James"
+            lastName: "Tooof"
           ) {
             success,
             token
