@@ -7,8 +7,9 @@ API for uobtheatre. Check out the project's [documentation](http://BristolSTA.gi
 
 # Prerequisites
 
+- Python 3.8
 - [Docker](https://docs.docker.com/get-docker/)
-- [Pipenv](https://pypi.org/project/pipenv/)
+- [virtualenv](https://virtualenv.pypa.io/en/latest/installation.html)
 
 Create a virtualenv and use it
 
