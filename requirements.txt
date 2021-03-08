@@ -1,0 +1,31 @@
+# Configure database with just url
+# TODO probably get rid of this
+dj-database-url==0.5.0
+django-configurations==2.2
+django-cors-headers==3.7.0
+
+# Generate slugs
+django-autoslug==1.9.8
+
+# Filtering
+django-filter==2.4.0
+
+# Auth
+django-graphql-auth==0.3.15
+
+# These are apparently a package deal atm so we need both
+django-graphql-jwt==0.3.0
+PyJWT==1.7.0
+
+# Something to do with images
+Pillow>=8.1.2
+
+# Django core
+django==3.1.7
+psycopg2>=2.8.6
+
+# Gql core
+graphene==2.1.8
+graphene-django==2.15.0
+
+pytz==2021.1

@@ -3,12 +3,11 @@ import itertools
 import graphene
 from graphene import relay
 from graphene_django import DjangoListField, DjangoObjectType
-from graphene_django.filter import DjangoFilterConnectionField
 from graphql import GraphQLError
 
 from uobtheatre.bookings.models import Booking, ConcessionType, MiscCost, Ticket
 from uobtheatre.productions.models import Performance
-from uobtheatre.utils.schema import IdInputField
+from uobtheatre.utils.schema import FilterSet, IdInputField
 from uobtheatre.venues.models import SeatGroup
 
 
@@ -118,6 +117,25 @@ class PriceBreakdownNode(DjangoObjectType):
         )
 
 
+class BookingFilter(FilterSet):
+    class Meta:
+        model = Booking
+        fields = "__all__"
+
+    # TODO When we add back in Bookings endpoint only admin users should be
+    # able to get all bookings otherwise we should return only user bookings.
+    @property
+    def qs(self):
+        # Restrict the filterset to only return user bookings
+        if self.request.user.is_authenticated:
+            return super(BookingFilter, self).qs.filter(user=self.request.user)
+        else:
+            return Booking.objects.none()
+
+
+BookingStatusSchema = graphene.Enum.from_enum(Booking.BookingStatus)
+
+
 class BookingNode(DjangoObjectType):
     price_breakdown = graphene.Field(PriceBreakdownNode)
     tickets = DjangoListField(TicketNode)
@@ -127,11 +145,8 @@ class BookingNode(DjangoObjectType):
 
     class Meta:
         model = Booking
+        filterset_class = BookingFilter
         interfaces = (relay.Node,)
-        filter_fields = {
-            "id": ("exact",),
-            "booking_reference": ("exact",),
-        }
 
 
 class CreateTicketInput(graphene.InputObjectType):
@@ -218,17 +233,6 @@ class UpdateBooking(graphene.Mutation):
             ticket.delete()
 
         return UpdateBooking(booking=booking)
-
-
-class Query(graphene.ObjectType):
-    bookings = DjangoFilterConnectionField(BookingNode)
-
-    def resolve_bookings(self, info):
-        # If the user is not authenticated then return none
-        if not info.context.user.is_authenticated:
-            return Booking.objects.none()
-        # Otherwise return only the user's bookings
-        return Booking.objects.filter(user=info.context.user)
 
 
 class Mutation(graphene.ObjectType):

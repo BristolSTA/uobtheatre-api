@@ -4,10 +4,10 @@ from django.utils import timezone
 from uobtheatre.productions.models import (
     CastMember,
     CrewMember,
-    ProductionTeamMember,
     CrewRole,
     Performance,
     Production,
+    ProductionTeamMember,
     Society,
     Venue,
     Warning,
@@ -66,6 +66,7 @@ class CrewMemberFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = CrewMember
 
+
 class ProductionTeamMemberFactory(factory.django.DjangoModelFactory):
     name = factory.Faker("sentence", nb_words=3)
     role = factory.Faker("sentence", nb_words=3)
@@ -73,6 +74,7 @@ class ProductionTeamMemberFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = ProductionTeamMember
+
 
 class CastMemberFactory(factory.django.DjangoModelFactory):
     name = factory.Faker("sentence", nb_words=3)
@@ -89,3 +91,15 @@ class WarningFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = Warning
+
+
+def create_production(start, end, production_id=None):
+    if production_id is None:
+        production = ProductionFactory()
+    else:
+        production = ProductionFactory(id=production_id)
+    diff = end - start
+    for i in range(5):
+        time = start + (diff / 5) * i
+        PerformanceFactory(start=time, end=time, production=production)
+    return production

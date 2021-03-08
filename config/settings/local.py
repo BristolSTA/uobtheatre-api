@@ -1,22 +1,11 @@
 import os
 
-from .common import *
+from .common import *  # noqa: F403,F401
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 DEBUG = True
-
-# Testing
-INSTALLED_APPS += ("django_nose",)
-NOSE_ARGS = [
-    BASE_DIR,
-    "-s",
-    "--nologcapture",
-    "--with-coverage",
-    "--with-progressive",
-    "--cover-package=uobtheatre-api",
-]
 
 # Mail
 EMAIL_HOST = "localhost"

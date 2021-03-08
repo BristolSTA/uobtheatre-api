@@ -18,6 +18,7 @@ from uobtheatre.bookings.test.factories import (
 from uobtheatre.productions.test.factories import (
     CastMemberFactory,
     CrewMemberFactory,
+    CrewRoleFactory,
     PerformanceFactory,
     ProductionFactory,
     ProductionTeamMemberFactory,
@@ -28,8 +29,24 @@ from uobtheatre.venues.test.factories import SeatGroupFactory
 
 @pytest.mark.django_db
 def test_performance_duration():
-    start = datetime.datetime(day=2, month=3, year=2020, hour=12, minute=0, second=10)
-    end = datetime.datetime(day=3, month=4, year=2021, hour=13, minute=1, second=11)
+    start = datetime.datetime(
+        day=2,
+        month=3,
+        year=2020,
+        hour=12,
+        minute=0,
+        second=10,
+        tzinfo=timezone.get_current_timezone(),
+    )
+    end = datetime.datetime(
+        day=3,
+        month=4,
+        year=2021,
+        hour=13,
+        minute=1,
+        second=11,
+        tzinfo=timezone.get_current_timezone(),
+    )
     performance = PerformanceFactory(start=start, end=end)
 
     assert performance.duration().total_seconds() == 34304461.0
@@ -183,6 +200,12 @@ def test_price_with_concession():
 def test_str_warning():
     warning = WarningFactory()
     assert str(warning) == warning.warning
+
+
+@pytest.mark.django_db
+def test_str_crew_role():
+    crew_role = CrewRoleFactory()
+    assert str(crew_role) == crew_role.name
 
 
 @pytest.mark.django_db
@@ -492,3 +515,56 @@ def test_performance_check_capacity(seat_groups, performance_capacity, is_valid)
 
     # If valid this should be none if not it should return something
     assert (performance.check_capacity(tickets_to_book) == None) == is_valid
+
+
+@pytest.mark.django_db
+def test_production_start_and_end_date():
+    current_time = timezone.now()
+
+    production = ProductionFactory()
+
+    # Test result with no performances
+    assert production.end_date() is None
+    assert production.start_date() is None
+
+    performances = [
+        PerformanceFactory(
+            start=current_time + datetime.timedelta(days=1),
+            end=current_time + datetime.timedelta(days=1),
+            production=production,
+        ),
+        PerformanceFactory(
+            start=current_time + datetime.timedelta(days=2),
+            end=current_time + datetime.timedelta(days=2),
+            production=production,
+        ),
+        PerformanceFactory(
+            start=current_time + datetime.timedelta(days=3),
+            end=current_time + datetime.timedelta(days=3),
+            production=production,
+        ),
+    ]
+
+    assert production.end_date() == current_time + datetime.timedelta(days=3)
+    assert production.start_date() == current_time + datetime.timedelta(days=1)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "performances_start_deltas, is_upcoming",
+    [
+        ([datetime.timedelta(days=1), datetime.timedelta(days=-1)], True),
+        ([datetime.timedelta(hours=1), datetime.timedelta(hours=-1)], True),
+        ([datetime.timedelta(days=-1), datetime.timedelta(hours=-1)], False),
+        ([datetime.timedelta(hours=-2), datetime.timedelta(hours=-1)], False),
+        ([datetime.timedelta(hours=2), datetime.timedelta(hours=1)], True),
+    ],
+)
+def test_is_upcoming_production(performances_start_deltas, is_upcoming):
+    now = timezone.now()
+    production = ProductionFactory()
+    _ = [
+        PerformanceFactory(production=production, start=now + start_delta)
+        for start_delta in performances_start_deltas
+    ]
+    assert production.is_upcoming() == is_upcoming

@@ -1,6 +1,8 @@
+import datetime
 import math
 
 import pytest
+from django.utils import timezone
 
 from uobtheatre.bookings.test.factories import (
     DiscountFactory,
@@ -14,6 +16,7 @@ from uobtheatre.productions.test.factories import (
     ProductionFactory,
     ProductionTeamMemberFactory,
     WarningFactory,
+    create_production,
 )
 
 
@@ -327,6 +330,9 @@ def test_performance_schema(gql_client, gql_id):
     }
 
 
+@pytest.mark.skip(
+    "TODO, start adding tests like this to check things that should be blocked"
+)
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "attribute, is_obj",
@@ -388,7 +394,7 @@ def test_ticket_options(gql_client, gql_id):
                   concessionTypes {
                     price
                     pricePounds
-                    concession {
+                    concessionType {
                       id
                     }
                   }
@@ -412,7 +418,7 @@ def test_ticket_options(gql_client, gql_id):
                                     ),
                                     "concessionTypes": [
                                         {
-                                            "concession": {
+                                            "concessionType": {
                                                 "id": gql_id(
                                                     discount_requirement_1.concession_type.id,
                                                     "ConcessionTypeNode",
@@ -430,7 +436,7 @@ def test_ticket_options(gql_client, gql_id):
                                             ),
                                         },
                                         {
-                                            "concession": {
+                                            "concessionType": {
                                                 "id": gql_id(
                                                     discount_requirement_2.concession_type.id,
                                                     "ConcessionTypeNode",
@@ -461,7 +467,7 @@ def test_ticket_options(gql_client, gql_id):
                                     ),
                                     "concessionTypes": [
                                         {
-                                            "concession": {
+                                            "concessionType": {
                                                 "id": gql_id(
                                                     discount_requirement_1.concession_type.id,
                                                     "ConcessionTypeNode",
@@ -479,7 +485,7 @@ def test_ticket_options(gql_client, gql_id):
                                             ),
                                         },
                                         {
-                                            "concession": {
+                                            "concessionType": {
                                                 "id": gql_id(
                                                     discount_requirement_2.concession_type.id,
                                                     "ConcessionTypeNode",
@@ -514,7 +520,7 @@ def test_ticket_options(gql_client, gql_id):
 
 
 @pytest.mark.django_db
-def test_slug_single_schema(gql_client, gql_id):
+def test_production_single_slug(gql_client, gql_id):
     productions = [ProductionFactory() for i in range(2)]
 
     request = """
@@ -527,12 +533,203 @@ def test_slug_single_schema(gql_client, gql_id):
         """
     response = gql_client.execute(request % "")
 
-    assert (
-        response["errors"][0]["message"] == "Production matching query does not exist."
-    )
+    assert not response.get("errors", None)
     assert response["data"] == {"production": None}
 
     response = gql_client.execute(request % productions[0].slug)
     assert response["data"] == {
         "production": {"id": gql_id(productions[0].id, "ProductionNode")}
     }
+
+
+@pytest.mark.django_db
+def test_performance_single_id(gql_client, gql_id):
+    performances = [PerformanceFactory() for i in range(2)]
+
+    request = """
+        query {
+	  performance(id: "%s") {
+            id
+          }
+        }
+
+        """
+
+    # Ask for nothing and check you get nothing
+    response = gql_client.execute(request % "")
+    assert response["data"]["performance"] is None
+
+    # Ask for first performance and check you get it
+    response = gql_client.execute(
+        request % gql_id(performances[0].id, "PerformanceNode")
+    )
+    assert response["data"] == {
+        "performance": {"id": gql_id(performances[0].id, "PerformanceNode")}
+    }
+
+
+@pytest.mark.django_db
+def test_upcoming_productions(gql_client, gql_id):
+    def create_production(start, end):
+        production = ProductionFactory()
+        diff = end - start
+        for i in range(5):
+            time = start + (diff / 5) * i
+            PerformanceFactory(start=time, end=time, production=production)
+        return production
+
+    current_time = timezone.now()
+    # Create some producitons in the past
+    for _ in range(10):
+        create_production(
+            start=current_time - datetime.timedelta(days=11),
+            end=current_time - datetime.timedelta(days=1),
+        )
+
+    # Create some prodcution going on right now
+    productions = [
+        create_production(
+            start=current_time - datetime.timedelta(days=i),
+            end=current_time + datetime.timedelta(days=i),
+        )
+        for i in range(1, 11)
+    ]
+
+    # Check we get 6 of the upcoming productions back in the right order
+    request = """
+        {
+          productions(end_Gte: "%s", first: 6, orderBy: "end") {
+            edges {
+              node {
+                end
+              }
+            }
+          }
+        }
+        """
+
+    # Ask for nothing and check you get nothing
+    response = gql_client.execute(request % current_time.isoformat())
+    assert response["data"]["productions"] == {
+        "edges": [
+            {"node": {"end": productions[i].end_date().isoformat()}} for i in range(6)
+        ]
+    }
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "order_by, expected_order",
+    [
+        ("start", [0, 1, 2, 3]),
+        ("-start", [3, 2, 1, 0]),
+        ("end", [0, 1, 3, 2]),
+        ("-end", [2, 3, 1, 0]),
+    ],
+)
+def test_productions_orderby(order_by, expected_order, gql_client, gql_id):
+    current_time = timezone.now()
+
+    productions = [
+        create_production(
+            start=current_time + datetime.timedelta(days=1),
+            end=current_time + datetime.timedelta(days=1),
+            production_id=0,
+        ),
+        create_production(
+            start=current_time + datetime.timedelta(days=2),
+            end=current_time + datetime.timedelta(days=2),
+            production_id=1,
+        ),
+        create_production(
+            start=current_time + datetime.timedelta(days=3),
+            end=current_time + datetime.timedelta(days=6),
+            production_id=2,
+        ),
+        create_production(
+            start=current_time + datetime.timedelta(days=4),
+            end=current_time + datetime.timedelta(days=5),
+            production_id=3,
+        ),
+    ]
+    request = """
+        {
+          productions(orderBy: "%s") {
+            edges {
+              node {
+                end
+              }
+            }
+          }
+        }
+        """
+
+    # Ask for nothing and check you get nothing
+    response = gql_client.execute(request % order_by)
+    assert response["data"]["productions"]["edges"] == [
+        {"node": {"end": productions[i].end_date().isoformat()}} for i in expected_order
+    ]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "filter_name, value_days, expected_outputs",
+    [
+        ("start_Gte", 2, [2, 3]),
+        ("start_Lte", 2, [0, 1, 2]),
+        ("end_Gte", 2, [2, 3]),
+        ("end_Lte", 2, [0, 1]),
+    ],
+)
+def test_production_filters(
+    filter_name, value_days, expected_outputs, gql_client, gql_id
+):
+    current_time = timezone.now()
+
+    productions = [
+        create_production(
+            start=current_time + datetime.timedelta(days=0),
+            end=current_time + datetime.timedelta(days=0),
+            production_id=0,
+        ),
+        create_production(
+            start=current_time + datetime.timedelta(days=1),
+            end=current_time + datetime.timedelta(days=1),
+            production_id=1,
+        ),
+        create_production(
+            start=current_time + datetime.timedelta(days=2),
+            end=current_time + datetime.timedelta(days=5),
+            production_id=2,
+        ),
+        create_production(
+            start=current_time + datetime.timedelta(days=3),
+            end=current_time + datetime.timedelta(days=4),
+            production_id=3,
+        ),
+    ]
+    # Check we get 6 of the upcoming productions back in the right order
+    request = """
+        {
+          productions(%s: "%s") {
+            edges {
+              node {
+                end
+              }
+            }
+          }
+        }
+        """
+
+    # Ask for nothing and check you get nothing
+    response = gql_client.execute(
+        request
+        % (
+            filter_name,
+            (current_time + datetime.timedelta(days=value_days)).isoformat(),
+        )
+    )
+    assert response["data"]["productions"]["edges"] == [
+        {"node": {"end": productions[i].end_date().isoformat()}}
+        for i in expected_outputs
+    ]
