@@ -1,4 +1,5 @@
 import pytest
+from graphql_relay.node.node import to_global_id
 
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import (
@@ -13,7 +14,7 @@ from uobtheatre.bookings.test.factories import (
 )
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
-from uobtheatre.venues.test.factories import SeatGroupFactory
+from uobtheatre.venues.test.factories import SeatFactory, SeatGroupFactory
 
 
 @pytest.mark.django_db
@@ -484,3 +485,92 @@ def test_bookings_auth(gql_client_flexible):
     assert (
         response["data"]["performances"]["edges"][0]["node"]["bookings"]["edges"] == []
     )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "currentTickets, plannedTickets",
+    [
+        (
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 2,
+                },
+            ],
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 2,
+                },
+            ],
+        ),
+    ],
+)
+def test_booking_ticket_diff(currentTickets, plannedTickets):
+
+    SeatGroupFactory(id=1)
+    SeatGroupFactory(id=2)
+    ConcessionTypeFactory(id=1)
+    ConcessionTypeFactory(id=2)
+    SeatFactory(id=1)
+    SeatFactory(id=2)
+
+    booking = BookingFactory()
+    request_query = """
+    {
+        mutation {
+            createBooking (
+                performanceId: UHJvZHVjdGlvbk5vZGU6MQ==,
+                tickets: [
+                    {
+                        seatGroupId:UHJvZHVjdGlvbk5vZGU6MQ
+                        concessionTypeId: UHJvZHVjdGlvbk5vZGU6MQ
+                    }
+                ]
+            ){
+                booking{
+                    id
+                }
+            }
+        }
+    }
+    """
+    _ = [TicketFactory(booking=booking, **ticket) for ticket in currentTickets]
+    for ticket in plannedTickets:
+        queryStr = (
+            """
+                    {
+                        id: %s
+                        seatId
+                        seatGroupId:%s
+                        concessionTypeId: %s
+                    }
+                    """
+            % ()
+        )
+    _ = [
+        print(to_global_id("TicketNode", ticket.get("id"))) for ticket in plannedTickets
+    ]
+    _ = [print(ticket.id) for ticket in booking.tickets.all()]
+    # newTickets = [Ticket(**ticket) for ticket in newList]
+    # addTickets = [Ticket(**ticket) for ticket in addList]
+    # deleteTickets = [Ticket(**ticket) for ticket in deleteList]
+
+    assert True

@@ -8,7 +8,7 @@ from graphql import GraphQLError
 from uobtheatre.bookings.models import Booking, ConcessionType, MiscCost, Ticket
 from uobtheatre.productions.models import Performance
 from uobtheatre.utils.schema import FilterSet, IdInputField
-from uobtheatre.venues.models import SeatGroup
+from uobtheatre.venues.models import Seat, SeatGroup
 
 
 class ConcessionTypeNode(DjangoObjectType):
@@ -157,6 +157,21 @@ class CreateTicketInput(graphene.InputObjectType):
         return Ticket(
             seat_group=SeatGroup.objects.get(id=self.seat_group_id),
             concession_type=ConcessionType.objects.get(id=self.concession_type_id),
+        )
+
+
+class UpdateTicketInput(graphene.InputObjectType):
+    seat_group_id = IdInputField(required=True)
+    concession_type_id = IdInputField(required=True)
+    seat_id = IdInputField(required=False)
+    id_ = IdInputField(required=False)
+
+    def to_ticket(self):
+        return Ticket(
+            seat_group=SeatGroup.objects.get(id=self.seat_group_id),
+            concession_type=ConcessionType.objects.get(id=self.concession_type_id),
+            seat=Seat.objects.get(id=self.seat_id),
+            id=self.id_,
         )
 
 
