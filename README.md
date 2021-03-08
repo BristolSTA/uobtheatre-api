@@ -10,12 +10,12 @@ API for uobtheatre. Check out the project's [documentation](http://BristolSTA.gi
 - [Docker](https://docs.docker.com/get-docker/)
 - [Pipenv](https://pypi.org/project/pipenv/)
 
-Create a pipenv environment and use it
+Create a virtualenv and use it
 
 ```
-pipenv --python 3.8
-pipenv install --dev
-pipenv shell
+virtualenv -p python3.8 .venv
+source .venv/bin/activate
+pip install -r requirements.txt dev-requirements.txt
 ```
 
 If you need to use a python thing locally (not in docker) go into pipenv with `pipenv shell`.
@@ -98,6 +98,14 @@ and to run a single test
 ```
 docker-compose run --rm api pytest --cov uobtheatre -vv -s uobtheatre/bookings/test/test_views.py -k 'test_name'
 ```
+
+## Seeding
+
+There are a load of fixtures save in fixture.json in all the moduels. These can be loaded into the database with make seed.
+Most notably this will add an admin users called with the following details:
+
+email: admin@email.com
+password: strongpassword
 
 ## Packages :package:
 

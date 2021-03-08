@@ -37,6 +37,13 @@ repos:
     - id: black
       language_version: python3.8
 
+  # Flake8 checks what errors there are and gives code
+  # - repo: https://gitlab.com/pycqa/flake8
+  #   rev: 3.8.4
+  #   hooks:
+  #   - id: flake8
+
+  # Autoflake will fix the above errors
   - repo: https://github.com/humitos/mirrors-autoflake.git
     rev: v1.1
     hooks:
@@ -47,4 +54,4 @@ repos:
     rev: v0.790
     hooks:
       - id: mypy
-        additional_dependencies: [django-stubs,djangorestframework-stubs,dj-database-url,djangorestframework,django-rest-auth,django-allauth,django-filter,drf_yasg,django-cors-headers,drf-extensions,django-autoslug,django-url-filter,graphene-django,psycopg2-binary]
+        additional_dependencies: [django-stubs,dj-database-url,django-filter,django-cors-headers,django-autoslug,graphene-django,psycopg2-binary,django-graphql-auth]

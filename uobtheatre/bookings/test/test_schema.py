@@ -26,7 +26,7 @@ def test_bookings_schema(gql_client_flexible, gql_id):
 
     request_query = """
         {
-          authUser {
+          me {
             bookings {
               edges {
                 node {
@@ -50,14 +50,14 @@ def test_bookings_schema(gql_client_flexible, gql_id):
     # When there is no user expect no bookings
     client.logout()
     response = client.execute(request_query)
-    assert response == {"data": {"authUser": None}}
+    assert response == {"data": {"me": None}}
 
     # When we are logged in expect only the user's bookings
     client.set_user(booking.user)
     response = client.execute(request_query)
     assert response == {
         "data": {
-            "authUser": {
+            "me": {
                 "bookings": {
                     "edges": [
                         {
@@ -160,7 +160,7 @@ def test_bookings_price_break_down(gql_client_flexible, gql_id):
 
     request_query = """
         {
-          authUser {
+          me {
             bookings {
               edges {
                 node {
@@ -199,9 +199,9 @@ def test_bookings_price_break_down(gql_client_flexible, gql_id):
     client.set_user(booking.user)
     response = client.execute(request_query)
 
-    response_booking_price_break_down = response["data"]["authUser"]["bookings"][
-        "edges"
-    ][0]["node"]["priceBreakdown"]
+    response_booking_price_break_down = response["data"]["me"]["bookings"]["edges"][0][
+        "node"
+    ]["priceBreakdown"]
     assert response_booking_price_break_down.pop("tickets") == [
         {
             "ticketPrice": ticket_group["price"],
@@ -257,7 +257,7 @@ def test_booking_inprogress(gql_client_flexible, gql_id):
 
     request_query = """
     {
-      authUser {
+      me {
         bookings(performance: "UGVyZm9ybWFuY2VOb2RlOjE=", status: "INPROGRESS") {
           edges {
             node {
@@ -274,7 +274,7 @@ def test_booking_inprogress(gql_client_flexible, gql_id):
 
     assert response == {
         "data": {
-            "authUser": {
+            "me": {
                 "bookings": {
                     "edges": [
                         {

@@ -1,5 +1,6 @@
 schema {
   query: Query
+  mutation: Mutation
 }
 
 type AddressNode implements Node {
@@ -13,12 +14,16 @@ type AddressNode implements Node {
   id: ID!
 }
 
+type ArchiveAccount {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
 type BookingNode implements Node {
   id: ID!
   bookingReference: UUID!
-  user: UserNode!
   performance: PerformanceNode!
-  status: BookingStatus
+  status: BookingStatus!
   tickets: [TicketNode!]
   priceBreakdown: PriceBreakdownNode
 }
@@ -95,6 +100,21 @@ type CrewRoleNode implements Node {
 
 scalar DateTime
 
+type DeleteAccount {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type FieldError {
+  message: String
+  field: String
+  code: String
+}
+
+union GQLErrorUnion = FieldError | NonFieldError
+
+scalar GenericScalar
+
 type GrapheneImageFieldNode {
   url: String
   name: String
@@ -108,8 +128,42 @@ type MiscCostNode implements Node {
   value: Float
 }
 
+type Mutation {
+  register(email: String!, firstName: String!, lastName: String!, password1: String!, password2: String!): Register
+  verifyAccount(token: String!): VerifyAccount
+  resendActivationEmail(email: String!): ResendActivationEmail
+  sendPasswordResetEmail(email: String!): SendPasswordResetEmail
+  passwordReset(token: String!, newPassword1: String!, newPassword2: String!): PasswordReset
+  passwordSet(token: String!, newPassword1: String!, newPassword2: String!): PasswordSet
+  passwordChange(oldPassword: String!, newPassword1: String!, newPassword2: String!): PasswordChange
+  updateAccount(firstName: String, lastName: String): UpdateAccount
+  archiveAccount(password: String!): ArchiveAccount
+  deleteAccount(password: String!): DeleteAccount
+  sendSecondaryEmailActivation(email: String!, password: String!): SendSecondaryEmailActivation
+  verifySecondaryEmail(token: String!): VerifySecondaryEmail
+  swapEmails(password: String!): SwapEmails
+  removeSecondaryEmail(password: String!): RemoveSecondaryEmail
+  login(password: String!, email: String): ObtainJSONWebToken
+  verifyToken(token: String!): VerifyToken
+  refreshToken(token: String!): RefreshToken
+  revokeToken(refreshToken: String!): RevokeToken
+}
+
 interface Node {
   id: ID!
+}
+
+type NonFieldError {
+  message: String
+  code: String
+}
+
+type ObtainJSONWebToken {
+  token: String
+  success: Boolean
+  errors: [GQLErrorUnion]
+  user: UserNode
+  unarchiving: Boolean
 }
 
 type PageInfo {
@@ -117,6 +171,22 @@ type PageInfo {
   hasPreviousPage: Boolean!
   startCursor: String
   endCursor: String
+}
+
+type PasswordChange {
+  success: Boolean
+  errors: [GQLErrorUnion]
+  token: String
+}
+
+type PasswordReset {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type PasswordSet {
+  success: Boolean
+  errors: [GQLErrorUnion]
 }
 
 type PerformanceNode implements Node {
@@ -225,7 +295,9 @@ type ProductionTeamMemberNode implements Node {
 }
 
 type Query {
-  authUser: UserNode
+  me: UserNode
+  user(id: ID!): UserNode
+  users(offset: Int, before: String, after: String, first: Int, last: Int, email: String, email_Icontains: String, email_Istartswith: String, isActive: Boolean, status_Archived: Boolean, status_Verified: Boolean, status_SecondaryEmail: String): UserNodeConnection
   societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String): SocietyNodeConnection
   society(slug: String!): SocietyNode
   productions(offset: Int, before: String, after: String, first: Int, last: Int, name: String, subtitle: String, description: String, society: ID, ageRating: Int, facebookEvent: String, warnings: [ID], slug: String, id: ID, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, orderBy: String): ProductionNodeConnection
@@ -234,6 +306,35 @@ type Query {
   performance(id: ID!): PerformanceNode
   venues(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String): VenueNodeConnection
   venue(slug: String!): VenueNode
+}
+
+type RefreshToken {
+  token: String
+  payload: GenericScalar
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type Register {
+  success: Boolean
+  errors: [GQLErrorUnion]
+  token: String
+}
+
+type RemoveSecondaryEmail {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type ResendActivationEmail {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type RevokeToken {
+  revoked: Int
+  success: Boolean
+  errors: [GQLErrorUnion]
 }
 
 type SeatGroupNode implements Node {
@@ -258,6 +359,16 @@ type SeatGroupNodeEdge {
   cursor: String!
 }
 
+type SendPasswordResetEmail {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type SendSecondaryEmailActivation {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
 type SocietyNode implements Node {
   id: ID!
   name: String!
@@ -276,6 +387,11 @@ type SocietyNodeConnection {
 type SocietyNodeEdge {
   node: SocietyNode
   cursor: String!
+}
+
+type SwapEmails {
+  success: Boolean
+  errors: [GQLErrorUnion]
 }
 
 type TicketNode implements Node {
@@ -297,18 +413,36 @@ type TicketNodeEdge {
 
 scalar UUID
 
+type UpdateAccount {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
 type UserNode implements Node {
   lastLogin: DateTime
   isSuperuser: Boolean!
-  username: String!
   firstName: String!
   lastName: String!
-  email: String!
   isStaff: Boolean!
   isActive: Boolean!
   dateJoined: DateTime!
   id: ID!
+  email: String!
   bookings(offset: Int, before: String, after: String, first: Int, last: Int, bookingReference: UUID, user: ID, performance: ID, status: String, id: ID): BookingNodeConnection!
+  pk: Int
+  archived: Boolean
+  verified: Boolean
+  secondaryEmail: String
+}
+
+type UserNodeConnection {
+  pageInfo: PageInfo!
+  edges: [UserNodeEdge]!
+}
+
+type UserNodeEdge {
+  node: UserNode
+  cursor: String!
 }
 
 type VenueNode implements Node {
@@ -333,6 +467,22 @@ type VenueNodeConnection {
 type VenueNodeEdge {
   node: VenueNode
   cursor: String!
+}
+
+type VerifyAccount {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type VerifySecondaryEmail {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type VerifyToken {
+  payload: GenericScalar
+  success: Boolean
+  errors: [GQLErrorUnion]
 }
 
 type WarningNode implements Node {

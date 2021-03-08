@@ -33,5 +33,11 @@ services:
     ports:
       - "8001:8001"
 
+  adminer:
+    image: adminer
+    restart: on-failure
+    ports:
+      - 8002:8080
+
 volumes:
   postgres_data:

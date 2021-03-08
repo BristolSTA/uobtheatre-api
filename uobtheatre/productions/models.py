@@ -89,12 +89,13 @@ class Production(models.Model, TimeStampedMixin):
         Returns if the show is upcoming. If the show has no upcoming
         productions (not ended) then it is not upcoming.
         """
-        performances = self.performances.all()
-        return any(
-            performance.start > timezone.now()
-            for performance in performances
-            if performance.start
-        )
+        return self.performances.filter(start__gte=timezone.now()).count() != 0
+        # performances = self.performances.all()
+        # return any(
+        #     performance.start > timezone.now()
+        #     for performance in performances
+        #     if performance.start
+        # )
 
     def is_bookable(self) -> bool:
         """

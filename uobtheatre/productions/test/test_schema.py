@@ -533,9 +533,7 @@ def test_production_single_slug(gql_client, gql_id):
         """
     response = gql_client.execute(request % "")
 
-    assert (
-        response["errors"][0]["message"] == "Production matching query does not exist."
-    )
+    assert not response.get("errors", None)
     assert response["data"] == {"production": None}
 
     response = gql_client.execute(request % productions[0].slug)
@@ -559,7 +557,7 @@ def test_performance_single_id(gql_client, gql_id):
 
     # Ask for nothing and check you get nothing
     response = gql_client.execute(request % "")
-    assert response["data"]["performance"] == None
+    assert response["data"]["performance"] is None
 
     # Ask for first performance and check you get it
     response = gql_client.execute(
