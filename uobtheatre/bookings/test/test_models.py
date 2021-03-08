@@ -788,3 +788,14 @@ def test_booking_ticket_diff(existingList, newList, addList, deleteList):
     deleteTickets = [Ticket(**ticket) for ticket in deleteList]
 
     assert booking.get_ticket_diff(newTickets) == (addTickets, deleteTickets)
+
+
+@pytest.mark.django_db
+def test_booking_pay():
+    booking = BookingFactory()
+    psg = PerformanceSeatingFactory(performance=booking.performance)
+    ticket = TicketFactory(booking=booking, seat_group=psg.seat_group)
+
+    booking.pay("cnon:card-nonce-ok")
+
+    assert booking.status == Booking.BookingStatus.PAID

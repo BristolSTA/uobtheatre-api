@@ -5,6 +5,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 from django.db import models
 
+from uobtheatre.payments.square import PaymentProvider
 from uobtheatre.productions.models import Performance
 from uobtheatre.users.models import User
 from uobtheatre.utils.models import TimeStampedMixin, validate_percentage
@@ -326,6 +327,14 @@ class Booking(models.Model, TimeStampedMixin):
         addTickets += newTickets.values()
 
         return addTickets, deleteTickets
+
+    def pay(self, nonce):
+        pp = PaymentProvider()
+        response = pp.create_payment(self.total(), str(self.booking_reference), nonce)
+
+        if response.is_success():
+            self.status = self.BookingStatus.PAID
+            self.save()
 
 
 class Ticket(models.Model):

@@ -29,3 +29,6 @@ graphene==2.1.8
 graphene-django==2.15.0
 
 pytz==2021.1
+
+# Payments
+squareup>=9.0.0.20210226
