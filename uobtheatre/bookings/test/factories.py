@@ -61,7 +61,7 @@ class DiscountRequirementFactory(factory.django.DjangoModelFactory):
 
 class BookingFactory(factory.django.DjangoModelFactory):
 
-    booking_reference = create_short_uuid()
+    reference = create_short_uuid()
     user = factory.SubFactory(UserFactory)
     performance = factory.SubFactory(PerformanceFactory)
     status = Booking.BookingStatus.PAID

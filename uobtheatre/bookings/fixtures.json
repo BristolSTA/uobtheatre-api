@@ -56,17 +56,17 @@
     {
         "model": "bookings.booking",
         "pk": 1,
-        "fields": {"user": 1, "performance": 1, "status": "INPROGRESS", "booking_reference": "5yARDV8p6giN"}
+        "fields": {"user": 1, "performance": 1, "status": "INPROGRESS", "reference": "5yARDV8p6giN"}
     },
     {
         "model": "bookings.booking",
         "pk": 2,
-        "fields": {"user": 1, "performance": 2, "status": "INPROGRESS", "booking_reference": "3e73M4gUQVbK"}
+        "fields": {"user": 1, "performance": 2, "status": "INPROGRESS", "reference": "3e73M4gUQVbK"}
     },
     {
         "model": "bookings.booking",
         "pk": 3,
-        "fields": {"user": 1, "performance": 1, "status": "PAID", "booking_reference": "Ufx5CLtNrxiN"}
+        "fields": {"user": 1, "performance": 1, "status": "PAID", "reference": "Ufx5CLtNrxiN"}
     },
     {
         "model": "bookings.ticket",

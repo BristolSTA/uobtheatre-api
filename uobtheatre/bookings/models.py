@@ -152,7 +152,7 @@ class Booking(models.Model, TimeStampedMixin):
             )
         ]
 
-    booking_reference = models.CharField(
+    reference = models.CharField(
         default=create_short_uuid, editable=False, max_length=12
     )
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bookings")
@@ -168,7 +168,7 @@ class Booking(models.Model, TimeStampedMixin):
     )
 
     def __str__(self):
-        return str(self.booking_reference)
+        return str(self.reference)
 
     def get_concession_map(self) -> Dict:
         """ Return the number of each type of concession in this booking """
