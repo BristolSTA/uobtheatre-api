@@ -1,3 +1,5 @@
+import math
+
 import pytest
 from django.db.utils import IntegrityError
 
@@ -218,8 +220,7 @@ def test_get_valid_discounts():
 
 @pytest.mark.django_db
 def test_get_price():
-    venue = VenueFactory()
-    performance = PerformanceFactory(venue=venue)
+    performance = PerformanceFactory()
     booking = BookingFactory(performance=performance)
 
     # Set seat type price for performance
@@ -238,6 +239,48 @@ def test_get_price():
     assert (
         booking.get_price()
         == performance_seat_group.price * 2 + performance_seat_group_2.price
+    )
+
+
+@pytest.mark.django_db
+def test_ticket_price():
+    performance = PerformanceFactory()
+    booking = BookingFactory(performance=performance)
+
+    # Set seat type price for performance
+    performance_seat_group = PerformanceSeatingFactory(performance=performance)
+
+    # Create a seat booking
+    ticket = TicketFactory(
+        booking=booking, seat_group=performance_seat_group.seat_group
+    )
+
+    assert ticket.price() == performance_seat_group.price
+
+
+@pytest.mark.django_db
+def test_ticket_discounted_price():
+    performance = PerformanceFactory()
+    booking = BookingFactory(performance=performance)
+
+    concession_type_student = ConcessionTypeFactory(name="Student")
+    discount_student = DiscountFactory(name="Student", discount=0.2)
+    discount_student.performances.set([performance])
+    DiscountRequirementFactory(
+        concession_type=concession_type_student, number=1, discount=discount_student
+    )
+    # Set seat type price for performance
+    performance_seat_group = PerformanceSeatingFactory(performance=performance)
+
+    # Create a seat booking
+    ticket = TicketFactory(
+        booking=booking,
+        concession_type=concession_type_student,
+        seat_group=performance_seat_group.seat_group,
+    )
+
+    assert ticket.discounted_price() == math.ceil(
+        performance_seat_group.price * (1 - discount_student.discount)
     )
 
 

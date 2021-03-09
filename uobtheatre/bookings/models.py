@@ -199,27 +199,17 @@ class Booking(models.Model, TimeStampedMixin):
         ]
 
     def get_price(self) -> float:
-        return sum(
-            self.performance.performance_seat_groups.get(
-                seat_group=ticket.seat_group.pk
-            ).price
-            for ticket in self.tickets.all()
-        )
+        """
+        Get the price of the booking with no discounts applied.
+        """
+        return sum(ticket.price() for ticket in self.tickets.all())
 
     def tickets_price(self) -> float:
         """
         Get the price of the booking if only single discounts (those applying
         to only one ticket) applied.
         """
-        return sum(
-            self.performance.price_with_concession(
-                ticket.concession_type,
-                self.performance.performance_seat_groups.get(
-                    seat_group=ticket.seat_group.pk
-                ).price,
-            )
-            for ticket in self.tickets.all()
-        )
+        return sum(ticket.discounted_price() for ticket in self.tickets.all())
 
     def get_price_with_discount_combination(
         self, discounts: DiscountCombination
@@ -318,10 +308,22 @@ class Ticket(models.Model):
     )
     seat = models.ForeignKey(Seat, on_delete=models.RESTRICT, null=True, blank=True)
 
-    def price(self):
+    def discounted_price(self):
+        """
+        Get the price of the ticket if only single discounts (those applying
+        to only one ticket) applied.
+        """
         return self.booking.performance.price_with_concession(
             self.concession_type,
             self.booking.performance.performance_seat_groups.get(
                 seat_group=self.seat_group
             ).price,
         )
+
+    def price(self):
+        """
+        Get the price of the ticket with no discounts applied.
+        """
+        return self.booking.performance.performance_seat_groups.get(
+            seat_group=self.seat_group
+        ).price
