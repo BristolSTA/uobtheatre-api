@@ -1,6 +1,5 @@
 import itertools
 import math
-import uuid
 from typing import Dict, List, Optional, Set, Tuple
 
 from django.db import models
@@ -8,6 +7,7 @@ from django.db import models
 from uobtheatre.productions.models import Performance
 from uobtheatre.users.models import User
 from uobtheatre.utils.models import TimeStampedMixin, validate_percentage
+from uobtheatre.utils.utils import create_short_uuid
 from uobtheatre.venues.models import Seat, SeatGroup
 
 
@@ -152,7 +152,9 @@ class Booking(models.Model, TimeStampedMixin):
             )
         ]
 
-    booking_reference = models.UUIDField(default=uuid.uuid4, editable=False)
+    reference = models.CharField(
+        default=create_short_uuid, editable=False, max_length=12
+    )
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bookings")
     performance = models.ForeignKey(
         Performance,
@@ -166,7 +168,7 @@ class Booking(models.Model, TimeStampedMixin):
     )
 
     def __str__(self):
-        return str(self.booking_reference)
+        return str(self.reference)
 
     def get_concession_map(self) -> Dict:
         """ Return the number of each type of concession in this booking """
@@ -197,27 +199,17 @@ class Booking(models.Model, TimeStampedMixin):
         ]
 
     def get_price(self) -> float:
-        return sum(
-            self.performance.performance_seat_groups.get(
-                seat_group=ticket.seat_group.pk
-            ).price
-            for ticket in self.tickets.all()
-        )
+        """
+        Get the price of the booking with no discounts applied.
+        """
+        return sum(ticket.seat_price() for ticket in self.tickets.all())
 
     def tickets_price(self) -> float:
         """
         Get the price of the booking if only single discounts (those applying
         to only one ticket) applied.
         """
-        return sum(
-            self.performance.price_with_concession(
-                ticket.concession_type,
-                self.performance.performance_seat_groups.get(
-                    seat_group=ticket.seat_group.pk
-                ).price,
-            )
-            for ticket in self.tickets.all()
-        )
+        return sum(ticket.discounted_price() for ticket in self.tickets.all())
 
     def get_price_with_discount_combination(
         self, discounts: DiscountCombination
@@ -315,3 +307,23 @@ class Ticket(models.Model):
         related_name="seat_bookings",
     )
     seat = models.ForeignKey(Seat, on_delete=models.RESTRICT, null=True, blank=True)
+
+    def discounted_price(self):
+        """
+        Get the price of the ticket if only single discounts (those applying
+        to only one ticket) applied.
+        """
+        return self.booking.performance.price_with_concession(
+            self.concession_type,
+            self.booking.performance.performance_seat_groups.get(
+                seat_group=self.seat_group
+            ).price,
+        )
+
+    def seat_price(self):
+        """
+        Get the price of the ticket with no discounts applied.
+        """
+        return self.booking.performance.performance_seat_groups.get(
+            seat_group=self.seat_group
+        ).price
