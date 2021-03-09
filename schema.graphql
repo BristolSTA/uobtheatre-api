@@ -21,7 +21,7 @@ type ArchiveAccount {
 
 type BookingNode implements Node {
   id: ID!
-  reference: UUID!
+  reference: String!
   performance: PerformanceNode!
   status: BookingStatus!
   tickets: [TicketNode!]
@@ -201,7 +201,7 @@ type PerformanceNode implements Node {
   disabled: Boolean!
   seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
   capacity: Int
-  bookings(offset: Int, before: String, after: String, first: Int, last: Int, reference: UUID, user: ID, performance: ID, status: String, id: ID): BookingNodeConnection!
+  bookings(offset: Int, before: String, after: String, first: Int, last: Int, reference: String, user: ID, performance: ID, status: String, id: ID): BookingNodeConnection!
   capacityRemaining: Int
   ticketOptions: [PerformanceSeatGroupNode]
   minSeatPrice: Int
@@ -411,8 +411,6 @@ type TicketNodeEdge {
   cursor: String!
 }
 
-scalar UUID
-
 type UpdateAccount {
   success: Boolean
   errors: [GQLErrorUnion]
@@ -428,7 +426,7 @@ type UserNode implements Node {
   dateJoined: DateTime!
   id: ID!
   email: String!
-  bookings(offset: Int, before: String, after: String, first: Int, last: Int, reference: UUID, user: ID, performance: ID, status: String, id: ID): BookingNodeConnection!
+  bookings(offset: Int, before: String, after: String, first: Int, last: Int, reference: String, user: ID, performance: ID, status: String, id: ID): BookingNodeConnection!
   pk: Int
   archived: Boolean
   verified: Boolean
