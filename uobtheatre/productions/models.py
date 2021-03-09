@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from autoslug import AutoSlugField
 from django.db import models
-from django.db.models import Sum
+from django.db.models import Max, Min, Sum
 from django.utils import timezone
 
 from uobtheatre.societies.models import Society
@@ -44,6 +44,19 @@ class Warning(models.Model):
         return self.warning
 
 
+def append_production_qs(queryset, start=False, end=False):
+    """
+    Given a booking queryset append extra fields. Field options are:
+    - start
+    - end
+    """
+    if start:
+        queryset = queryset.annotate(start=Min("performances__start"))
+    if end:
+        queryset = queryset.annotate(end=Max("performances__end"))
+    return queryset
+
+
 class Production(models.Model, TimeStampedMixin):
     """A production is a show (like the 2 weeks things) and can have many
     performaces (these are like the nights).
@@ -76,30 +89,50 @@ class Production(models.Model, TimeStampedMixin):
         Returns if the show is upcoming. If the show has no upcoming
         productions (not ended) then it is not upcoming.
         """
-        performances = self.performances.all()
-        return any(
-            performance.start > timezone.now()
-            for performance in performances
-            if performance.start
-        )
+        return self.performances.filter(start__gte=timezone.now()).count() != 0
+        # performances = self.performances.all()
+        # return any(
+        #     performance.start > timezone.now()
+        #     for performance in performances
+        #     if performance.start
+        # )
+
+    def is_bookable(self) -> bool:
+        """
+        Returns if the show is bookable, based on if it has enabled
+        performances
+        """
+        return self.performances.filter(disabled=False).count() != 0
 
     def end_date(self):
         """
         Return when the last performance ends.
         """
-        performances = self.performances.all()
-        if not performances:
-            return None
-        return max(performance.end for performance in performances)
+        return self.performances.all().aggregate(Max("end"))["end__max"]
 
     def start_date(self):
         """
         Return when the first performance starts.
         """
+        return self.performances.all().aggregate(Min("start"))["start__min"]
+
+    def min_seat_price(self) -> Optional[int]:
+        """
+        Return the minimum seatgroup ticket price for each performance.
+        """
         performances = self.performances.all()
-        if not performances:
-            return None
-        return min(performance.start for performance in performances)
+        all_min_seat_prices = [
+            performance.min_seat_price() for performance in performances
+        ]
+
+        return min(
+            (
+                min_seat_prices
+                for min_seat_prices in all_min_seat_prices
+                if min_seat_prices is not None
+            ),
+            default=None,
+        )
 
     def duration(self) -> Optional[datetime.timedelta]:
         """

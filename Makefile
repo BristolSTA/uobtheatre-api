@@ -12,12 +12,6 @@ up-v: ## Run api with logs
 down: ## Bring down api
 	docker-compose down
 
-superuser: ## Create a superuser in django
-	docker-compose run api python manage.py createsuperuser
-
-admin-superuser: ## Create a superuser in django
-	docker-compose run api python manage.py createsuperusernoargs --username admin --password admin --noinput --email 'blank@email.com'
-
 migrations: ## Make the migrations
 	docker-compose run --rm api python manage.py makemigrations
 
@@ -29,7 +23,6 @@ migrate: ## Do the migrations
 
 seed: ## Seed the db with some example data
 	docker-compose run api python manage.py loaddata uobtheatre/addresses/fixtures.json uobtheatre/users/fixtures.json uobtheatre/venues/fixtures.json uobtheatre/societies/fixtures.json uobtheatre/productions/fixtures.json uobtheatre/bookings/fixtures.json
-	make admin-superuser
 
 psql: ## Do the migrations
 	docker-compose exec postgres psql -d postgres -U postgres
@@ -92,3 +85,6 @@ schema: ## Dumps graphql schema in schema.json
 pr: ## Runs everything required (that is not included in precommit) for a pr
 	make schema
 	make test
+
+build:
+	docker-compose build api

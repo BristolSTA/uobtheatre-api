@@ -117,3 +117,24 @@ def test_venues_schema(gql_client, gql_id):
             }
         }
     }
+
+
+@pytest.mark.django_db
+def test_slug_single_schema(gql_client, gql_id):
+    venues = [VenueFactory() for i in range(2)]
+
+    request = """
+        query {
+	  venue(slug:"%s") {
+            id
+          }
+        }
+
+        """
+    response = gql_client.execute(request % "")
+
+    assert response["errors"][0]["message"] == "Venue matching query does not exist."
+    assert response["data"] == {"venue": None}
+
+    response = gql_client.execute(request % venues[0].slug)
+    assert response["data"] == {"venue": {"id": gql_id(venues[0].id, "VenueNode")}}

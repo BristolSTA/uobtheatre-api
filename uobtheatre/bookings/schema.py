@@ -2,10 +2,10 @@ import itertools
 
 import graphene
 from graphene import relay
-from graphene_django import DjangoObjectType
-from graphene_django.filter import DjangoFilterConnectionField
+from graphene_django import DjangoListField, DjangoObjectType
 
-from uobtheatre.bookings.models import Booking, ConcessionType, MiscCost
+from uobtheatre.bookings.models import Booking, ConcessionType, MiscCost, Ticket
+from uobtheatre.utils.schema import FilterSet
 
 
 class ConcessionTypeNode(DjangoObjectType):
@@ -20,7 +20,13 @@ class MiscCostNode(DjangoObjectType):
         interfaces = (relay.Node,)
 
 
-class TicketNode(graphene.ObjectType):
+class TicketNode(DjangoObjectType):
+    class Meta:
+        model = Ticket
+        interfaces = (relay.Node,)
+
+
+class PriceBreakdownTicketNode(graphene.ObjectType):
     ticket_price = graphene.Int()
     number = graphene.Int()
     seat_group = graphene.Field("uobtheatre.venues.schema.SeatGroupNode")
@@ -32,7 +38,7 @@ class TicketNode(graphene.ObjectType):
 
 
 class PriceBreakdownNode(DjangoObjectType):
-    tickets = graphene.List(TicketNode)
+    tickets = graphene.List(PriceBreakdownTicketNode)
     tickets_price = graphene.Int()
     discounts_value = graphene.Int()
     misc_costs = graphene.List(MiscCostNode)
@@ -67,7 +73,7 @@ class PriceBreakdownNode(DjangoObjectType):
         )
 
         return [
-            TicketNode(
+            PriceBreakdownTicketNode(
                 ticket_price=self.performance.price_with_concession(
                     ticket_group[1],
                     self.performance.performance_seat_groups.get(
@@ -108,27 +114,33 @@ class PriceBreakdownNode(DjangoObjectType):
         )
 
 
+class BookingFilter(FilterSet):
+    class Meta:
+        model = Booking
+        fields = "__all__"
+
+    # TODO When we add back in Bookings endpoint only admin users should be
+    # able to get all bookings otherwise we should return only user bookings.
+    @property
+    def qs(self):
+        # Restrict the filterset to only return user bookings
+        if self.request.user.is_authenticated:
+            return super(BookingFilter, self).qs.filter(user=self.request.user)
+        else:
+            return Booking.objects.none()
+
+
+BookingStatusSchema = graphene.Enum.from_enum(Booking.BookingStatus)
+
+
 class BookingNode(DjangoObjectType):
     price_breakdown = graphene.Field(PriceBreakdownNode)
+    tickets = DjangoListField(TicketNode)
 
     def resolve_price_breakdown(self, info):
         return self
 
     class Meta:
         model = Booking
+        filterset_class = BookingFilter
         interfaces = (relay.Node,)
-        filter_fields = {
-            "id": ("exact",),
-            "booking_reference": ("exact",),
-        }
-
-
-class Query(graphene.ObjectType):
-    bookings = DjangoFilterConnectionField(BookingNode)
-
-    def resolve_bookings(self, info):
-        # If the user is not authenticated then return none
-        if not info.context.user.is_authenticated:
-            return Booking.objects.none()
-        # Otherwise return only the user's bookings
-        return Booking.objects.filter(user=info.context.user)

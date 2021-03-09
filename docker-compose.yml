@@ -24,14 +24,20 @@ services:
     depends_on:
       - postgres
 
-  documentation:
+  # documentation:
+  #   restart: on-failure
+  #   build: ./
+  #   command: "mkdocs serve"
+  #   volumes:
+  #     - ./:/code
+  #   ports:
+  #     - "8001:8001"
+
+  adminer:
+    image: adminer
     restart: on-failure
-    build: ./
-    command: "mkdocs serve"
-    volumes:
-      - ./:/code
     ports:
-      - "8001:8001"
+      - 8002:8080
 
 volumes:
   postgres_data:
