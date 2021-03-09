@@ -202,7 +202,7 @@ class Booking(models.Model, TimeStampedMixin):
         """
         Get the price of the booking with no discounts applied.
         """
-        return sum(ticket.price() for ticket in self.tickets.all())
+        return sum(ticket.seat_price() for ticket in self.tickets.all())
 
     def tickets_price(self) -> float:
         """
@@ -320,7 +320,7 @@ class Ticket(models.Model):
             ).price,
         )
 
-    def price(self):
+    def seat_price(self):
         """
         Get the price of the ticket with no discounts applied.
         """

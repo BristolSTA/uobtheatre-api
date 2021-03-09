@@ -253,15 +253,7 @@ def test_ticket_price():
         booking=booking, seat_group=performance_seat_group.seat_group
     )
 
-    assert ticket.price() == performance_seat_group.price
-
-
-# @pytest.mark.django_db
-# @pytest.mark.parametrize(
-#     "value, percentage, error",
-#     [(None, None, True), (None, 1, False), (1, None, False), (1, 1, True)],
-# )
-# def test_misc_cost_constraints(value, percentage, error):
+    assert ticket.seat_price() == performance_seat_group.price
 
 
 @pytest.mark.django_db
