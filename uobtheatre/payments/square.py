@@ -16,10 +16,11 @@ class PaymentProvider:
     """
 
     @classmethod
-    def create_payment(self, value, idempotency_key, nonce):
+    def create_payment(cls, value, idempotency_key, nonce):
+        pp = cls()
         body = {
             "idempotency_key": idempotency_key,
             "source_id": nonce,
             "amount_money": {"amount": value, "currency": "GBP"},
         }
-        return self.client.payments.create_payment(body)
+        return pp.client.payments.create_payment(body)

@@ -20,6 +20,7 @@ from uobtheatre.bookings.test.factories import (
     TicketFactory,
     ValueMiscCostFactory,
 )
+from uobtheatre.payments.models import Payment
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.venues.test.factories import SeatFactory, SeatGroupFactory, VenueFactory
@@ -790,26 +791,25 @@ def test_booking_ticket_diff(existingList, newList, addList, deleteList):
     assert booking.get_ticket_diff(newTickets) == (addTickets, deleteTickets)
 
 
-# @pytest.mark.django_db
-# def test_booking_pay_integration():
-#     """
-#     Test paying a booking with square
-#     """
-#     booking = BookingFactory()
-#     psg = PerformanceSeatingFactory(performance=booking.performance)
-#     ticket = TicketFactory(booking=booking, seat_group=psg.seat_group)
-#
-#     booking.pay("cnon:card-nonce-ok")
-#
-#     assert booking.status == Booking.BookingStatus.PAID
-#
-#     # Assert a payment of the correct type is created
-#     payment = Payment.objects.first()
-#     assert payment.pay_object == booking
-#     assert payment.value == booking.total()
-#     assert payment.currency == "GBP"
-#     assert isinstance(payment.card_brand, str)
-#     assert isinstance(payment.last_4, str) and len(payment.last_4) == 4
-#     assert isinstance(payment.provider_payment_id, str)
-#     assert payment.provider == Payment.PaymentProvider.SQUARE_ONLINE
-#     assert payment.type, Payment.PaymentType.PURCHASE
+@pytest.mark.django_db
+def test_booking_pay_integration():
+    """
+    Test paying a booking with square
+    """
+    booking = BookingFactory()
+    psg = PerformanceSeatingFactory(performance=booking.performance)
+    ticket = TicketFactory(booking=booking, seat_group=psg.seat_group)
+
+    booking.pay("cnon:card-nonce-ok")
+
+    assert booking.status == Booking.BookingStatus.PAID
+    # Assert a payment of the correct type is created
+    payment = booking.payments.first()
+    assert payment.pay_object == booking
+    assert payment.value == booking.total()
+    assert payment.currency == "GBP"
+    assert isinstance(payment.card_brand, str)
+    assert isinstance(payment.last_4, str) and len(payment.last_4) == 4
+    assert isinstance(payment.provider_payment_id, str)
+    assert payment.provider == Payment.PaymentProvider.SQUARE_ONLINE
+    assert payment.type, Payment.PaymentType.PURCHASE

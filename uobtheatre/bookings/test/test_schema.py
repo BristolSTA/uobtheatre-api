@@ -621,3 +621,142 @@ def test_pay_booking_square_error(monkeypatch, gql_client_flexible, gql_id):
             }
         }
     }
+
+
+@pytest.mark.django_db
+def test_pay_booking_mutation_payed_booking(gql_client_flexible, gql_id):
+    booking = BookingFactory(status=Booking.BookingStatus.PAID)
+    client = gql_client_flexible
+
+    request_query = """
+    mutation {
+	payBooking(
+            bookingId: "%s"
+            price: 0
+            nonce: "cnon:card-nonce-ok"
+        ) {
+            success
+            errors {
+              __typename
+              ... on NonFieldError {
+                message
+                code
+              }
+            }
+          }
+        }
+    """
+    response = client.execute(request_query % gql_id(booking.id, "BookingNode"))
+    assert response == {
+        "data": {
+            "payBooking": {
+                "success": False,
+                "errors": [
+                    {
+                        "__typename": "NonFieldError",
+                        "message": "The booking is not in progress",
+                        "code": None,
+                    }
+                ],
+            }
+        }
+    }
+
+
+@pytest.mark.django_db
+def test_pay_booking_success(monkeypatch, gql_client_flexible, gql_id):
+    booking = BookingFactory(status=Booking.BookingStatus.INPROGRESS)
+    client = gql_client_flexible
+
+    request_query = """
+    mutation {
+	payBooking(
+            bookingId: "%s"
+            price: 0
+            nonce: "cnon:card-nonce-ok"
+        ) {
+            success
+            errors {
+              __typename
+            }
+
+            booking {
+              status
+              payments {
+                edges {
+                  node {
+                    id
+                  }
+                }
+              }
+            }
+
+            payment {
+              last4
+              cardBrand
+              provider
+              currency
+              value
+            }
+          }
+        }
+    """
+
+    class MockApiResponse:
+        def __init__(self):
+            self.body = {
+                "payment": {
+                    "id": "abc",
+                    "card_details": {
+                        "card": {
+                            "card_brand": "VISA",
+                            "last_4": "1111",
+                        }
+                    },
+                    "amount_money": {
+                        "currency": "GBP",
+                        "amount": 0,
+                    },
+                }
+            }
+
+        def is_success(self):
+            return True
+
+    def mock_create_payment(value, indeptency_key, nonce):
+        return MockApiResponse()
+
+    monkeypatch.setattr(
+        "uobtheatre.bookings.models.PaymentProvider.create_payment", mock_create_payment
+    )
+
+    response = client.execute(request_query % gql_id(booking.id, "BookingNode"))
+    assert response == {
+        "data": {
+            "payBooking": {
+                "booking": {
+                    "status": "PAID",
+                    "payments": {
+                        "edges": [
+                            {
+                                "node": {
+                                    "id": gql_id(
+                                        booking.payments.first().id, "PaymentNode"
+                                    )
+                                }
+                            }
+                        ]
+                    },
+                },
+                "payment": {
+                    "last4": "1111",
+                    "cardBrand": "VISA",
+                    "provider": "SQUAREONLINE",
+                    "currency": "GBP",
+                    "value": 0,
+                },
+                "success": True,
+                "errors": None,
+            }
+        }
+    }
