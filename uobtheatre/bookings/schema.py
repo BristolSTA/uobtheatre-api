@@ -164,15 +164,18 @@ class UpdateTicketInput(graphene.InputObjectType):
     seat_group_id = IdInputField(required=True)
     concession_type_id = IdInputField(required=True)
     seat_id = IdInputField(required=False)
-    id_ = IdInputField(required=False)
+    id = IdInputField(required=False)
 
     def to_ticket(self):
-        return Ticket(
-            seat_group=SeatGroup.objects.get(id=self.seat_group_id),
-            concession_type=ConcessionType.objects.get(id=self.concession_type_id),
-            seat=Seat.objects.get(id=self.seat_id),
-            id=self.id_,
-        )
+
+        if self.id is not None:
+            return Ticket.objects.get(id=self.id)
+        else:
+            return Ticket(
+                seat_group=SeatGroup.objects.get(id=self.seat_group_id),
+                concession_type=ConcessionType.objects.get(id=self.concession_type_id),
+                seat=Seat.objects.get(id=self.seat_id),
+            )
 
 
 class CreateBooking(graphene.Mutation):
@@ -220,14 +223,14 @@ class UpdateBooking(graphene.Mutation):
 
     class Arguments:
         booking_id = IdInputField()
-        tickets = graphene.List(CreateTicketInput, required=False)
+        tickets = graphene.List(UpdateTicketInput, required=False)
 
     @classmethod
-    def mutate(self, root, info, performance_id, tickets):
+    def mutate(self, root, info, booking_id, tickets):
         if not info.context.user.is_authenticated:
             raise GraphQLError("You must be logged in to update a booking")
 
-        booking = Booking.objects.get(id=id, user=info.context.user)
+        booking = Booking.objects.get(id=booking_id, user=info.context.user)
 
         # Conert the given tickets to ticket objects
         ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))

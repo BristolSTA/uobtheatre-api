@@ -1,5 +1,5 @@
 import pytest
-from graphql_relay.node.node import to_global_id
+from graphql_relay.node.node import from_global_id, to_global_id
 
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import (
@@ -489,9 +489,23 @@ def test_bookings_auth(gql_client_flexible):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "currentTickets, plannedTickets",
+    "currentTickets, plannedTickets, expectedTickets",
     [
         (
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 2,
+                },
+            ],
             [
                 {
                     "seat_group_id": 2,
@@ -523,17 +537,22 @@ def test_bookings_auth(gql_client_flexible):
         ),
     ],
 )
-def test_booking_ticket_diff(currentTickets, plannedTickets, gql_client_flexible):
+def test_update_booking(
+    currentTickets, plannedTickets, expectedTickets, gql_client_flexible
+):
 
-    SeatGroupFactory(id=1)
-    SeatGroupFactory(id=2)
+    seat_group_1 = SeatGroupFactory(id=1)
+    seat_group_2 = SeatGroupFactory(id=2)
     ConcessionTypeFactory(id=1)
     ConcessionTypeFactory(id=2)
     SeatFactory(id=1)
     SeatFactory(id=2)
+    performance = PerformanceFactory()
+    PerformanceSeatingFactory(performance=performance, seat_group=seat_group_1)
+    PerformanceSeatingFactory(performance=performance, seat_group=seat_group_2)
 
     # Create booking with current tickets
-    booking = BookingFactory()
+    booking = BookingFactory(performance=performance)
     _ = [TicketFactory(booking=booking, **ticket) for ticket in currentTickets]
 
     # Generate mutation query from input data
@@ -542,23 +561,23 @@ def test_booking_ticket_diff(currentTickets, plannedTickets, gql_client_flexible
     for ticket in plannedTickets:
         queryStr = """
                     {
-                        id: %s
-                        seatId: %s
-                        seatGroupId:%s
-                        concessionTypeId: %s
+                        id: "%s"
+                        seatId: "%s"
+                        seatGroupId: "%s"
+                        concessionTypeId: "%s"
                     }
                     """ % (
             to_global_id("TicketNode", ticket.get("id")),
-            to_global_id("TicketNode", ticket.get("id")),
-            to_global_id("SeatGroupNode", ticket.get("id")),
-            to_global_id("SeatNode", ticket.get("id")),
+            to_global_id("SeatNode", ticket.get("seat_id")),
+            to_global_id("SeatGroupNode", ticket.get("seat_group_id")),
+            to_global_id("ConcessionTypeNode", ticket.get("concession_type_id")),
         )
         ticketQueries += queryStr
 
     request_query = """
         mutation {
-            createBooking (
-                performanceId: UHJvZHVjdGlvbk5vZGU6MQ==,
+            updateBooking (
+                bookingId: "%s"
                 tickets: [
                     %s
                 ]
@@ -569,19 +588,36 @@ def test_booking_ticket_diff(currentTickets, plannedTickets, gql_client_flexible
             }
         }
         """ % (
-        ticketQueries
+        to_global_id("BookingNode", booking.id),
+        ticketQueries,
     )
 
-    print(request_query)
     gql_client_flexible.set_user(booking.user)
     response = gql_client_flexible.execute(request_query)
-    print(response)
-    # _ = [
-    #     print(to_global_id("TicketNode", ticket.get("id"))) for ticket in plannedTickets
-    # ]
-    # _ = [print(ticket.id) for ticket in booking.tickets.all()]
-    # newTickets = [Ticket(**ticket) for ticket in newList]
-    # addTickets = [Ticket(**ticket) for ticket in addList]
-    # deleteTickets = [Ticket(**ticket) for ticket in deleteList]
 
-    assert True
+    return_booking_id = response["data"]["updateBooking"]["booking"]["id"]
+    local_booking_id = int(from_global_id(return_booking_id)[1])
+
+    returned_booking = Booking.objects.get(id=local_booking_id)
+
+    expected_booking_tickets = {}
+    for ticket in expectedTickets:
+        ticketKey = (
+            ticket.get("seat_group_id"),
+            ticket.get("concession_type_id"),
+            ticket.get("seat_id"),
+        )
+        if ticketKey not in expected_booking_tickets:
+            expected_booking_tickets[ticketKey] = 1
+        else:
+            expected_booking_tickets[ticketKey] += 1
+
+    updated_booking_tickets = {}
+    for ticket in returned_booking.tickets.all():
+        ticketKey = (ticket.seat_group.id, ticket.concession_type.id, ticket.seat.id)
+        if ticketKey not in updated_booking_tickets:
+            updated_booking_tickets[ticketKey] = 1
+        else:
+            updated_booking_tickets[ticketKey] += 1
+
+    assert updated_booking_tickets == expected_booking_tickets
