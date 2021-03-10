@@ -554,21 +554,24 @@ def test_booking_ticket_diff(currentTickets, plannedTickets):
     """
     _ = [TicketFactory(booking=booking, **ticket) for ticket in currentTickets]
     for ticket in plannedTickets:
-        queryStr = (
-            """
+        queryStr = """
                     {
                         id: %s
-                        seatId
+                        seatId: %s
                         seatGroupId:%s
                         concessionTypeId: %s
                     }
-                    """
-            % ()
+                """ % (
+            to_global_id("TicketNode", ticket.get("id")),
+            to_global_id("TicketNode", ticket.get("id")),
+            to_global_id("SeatGroupNode", ticket.get("id")),
+            to_global_id("ConcessionTypeNode", ticket.get("id")),
         )
-    _ = [
-        print(to_global_id("TicketNode", ticket.get("id"))) for ticket in plannedTickets
-    ]
-    _ = [print(ticket.id) for ticket in booking.tickets.all()]
+
+    # _ = [
+    #     print(to_global_id("TicketNode", ticket.get("id"))) for ticket in plannedTickets
+    # ]
+    # _ = [print(ticket.id) for ticket in booking.tickets.all()]
     # newTickets = [Ticket(**ticket) for ticket in newList]
     # addTickets = [Ticket(**ticket) for ticket in addList]
     # deleteTickets = [Ticket(**ticket) for ticket in deleteList]
