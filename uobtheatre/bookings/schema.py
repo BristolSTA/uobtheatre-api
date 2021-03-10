@@ -3,10 +3,17 @@ import itertools
 import graphene
 from graphene import relay
 from graphene_django import DjangoListField, DjangoObjectType
+from graphene_django.filter import DjangoFilterConnectionField
 from graphql import GraphQLError
 
 from uobtheatre.bookings.models import Booking, ConcessionType, MiscCost, Ticket
+from uobtheatre.payments.schema import PaymentNode
 from uobtheatre.productions.models import Performance
+from uobtheatre.utils.exceptions import (
+    GQLFieldException,
+    GQLNonFieldException,
+    SafeMutation,
+)
 from uobtheatre.utils.schema import FilterSet, IdInputField
 from uobtheatre.venues.models import SeatGroup
 
@@ -139,9 +146,13 @@ BookingStatusSchema = graphene.Enum.from_enum(Booking.BookingStatus)
 class BookingNode(DjangoObjectType):
     price_breakdown = graphene.Field(PriceBreakdownNode)
     tickets = DjangoListField(TicketNode)
+    payments = DjangoFilterConnectionField(PaymentNode)
 
     def resolve_price_breakdown(self, info):
         return self
+
+    def resolve_payments(self, info):
+        return self.payments.all()
 
     class Meta:
         model = Booking
@@ -235,8 +246,9 @@ class UpdateBooking(graphene.Mutation):
         return UpdateBooking(booking=booking)
 
 
-class PayBooking(graphene.Mutation):
+class PayBooking(SafeMutation):
     booking = graphene.Field(BookingNode)
+    payment = graphene.Field(PaymentNode)
 
     class Arguments:
         booking_id = IdInputField(required=True)
@@ -244,20 +256,25 @@ class PayBooking(graphene.Mutation):
         nonce = graphene.String(required=True)
 
     @classmethod
-    def mutate(self, root, info, booking_id, price, nonce):
+    def resolve_mutation(self, root, info, booking_id, price, nonce):
         if not info.context.user.is_authenticated:
-            raise GraphQLError("You must be logged in to pay for a booking")
+            raise GQLNonFieldException(
+                message="You must be logged in to pay for a booking"
+            )
 
         # Get the performance and if it doesn't exist throw an error
         booking = Booking.objects.get(id=booking_id)
 
         if booking.total() != price:
-            raise GraphQLError("The booking price does not match the expected price")
+            raise GQLNonFieldException(
+                message="The booking price does not match the expected price"
+            )
 
         if booking.status != Booking.BookingStatus.INPROGRESS:
-            raise GraphQLError("The booking is not in progress")
-        booking.pay(nonce)
-        return PayBooking(booking=booking)
+            raise GQLNonFieldException(message="The booking is not in progress")
+
+        payment = booking.pay(nonce)
+        return PayBooking(booking=booking, payment=payment)
 
 
 class Mutation(graphene.ObjectType):

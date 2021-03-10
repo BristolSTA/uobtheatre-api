@@ -377,7 +377,6 @@ def test_create_booking_mutation(
     """
 
     client = gql_client_flexible
-    print(request % data)
     response = client.execute(request % data)
 
     if not is_valid:
@@ -484,3 +483,141 @@ def test_bookings_auth(gql_client_flexible):
     assert (
         response["data"]["performances"]["edges"][0]["node"]["bookings"]["edges"] == []
     )
+
+
+@pytest.mark.django_db
+def test_pay_booking_mutation_wrong_price(gql_client_flexible, gql_id):
+    booking = BookingFactory()
+
+    request_query = """
+    mutation {
+	payBooking(
+            bookingId: "%s"
+            price: 102
+            nonce: "cnon:card-nonce-ok"
+        ) {
+            success
+            errors {
+              __typename
+              ... on NonFieldError {
+                message
+                code
+              }
+            }
+          }
+        }
+    """
+    response = gql_client_flexible.execute(
+        request_query % gql_id(booking.id, "BookingNode")
+    )
+    assert response == {
+        "data": {
+            "payBooking": {
+                "success": False,
+                "errors": [
+                    {
+                        "__typename": "NonFieldError",
+                        "message": "The booking price does not match the expected price",
+                        "code": None,
+                    }
+                ],
+            }
+        }
+    }
+
+
+@pytest.mark.django_db
+def test_pay_booking_mutation_loggedout(gql_client_flexible, gql_id):
+    booking = BookingFactory()
+    client = gql_client_flexible
+    client.logout()
+
+    request_query = """
+    mutation {
+	payBooking(
+            bookingId: "%s"
+            price: 102
+            nonce: "cnon:card-nonce-ok"
+        ) {
+            success
+            errors {
+              __typename
+              ... on NonFieldError {
+                message
+                code
+              }
+            }
+          }
+        }
+    """
+    response = client.execute(request_query % gql_id(booking.id, "BookingNode"))
+    assert response == {
+        "data": {
+            "payBooking": {
+                "success": False,
+                "errors": [
+                    {
+                        "__typename": "NonFieldError",
+                        "message": "You must be logged in to pay for a booking",
+                        "code": None,
+                    }
+                ],
+            }
+        }
+    }
+
+
+@pytest.mark.django_db
+def test_pay_booking_square_error(monkeypatch, gql_client_flexible, gql_id):
+    booking = BookingFactory(status=Booking.BookingStatus.INPROGRESS)
+    client = gql_client_flexible
+
+    request_query = """
+    mutation {
+	payBooking(
+            bookingId: "%s"
+            price: 0
+            nonce: "cnon:card-nonce-ok"
+        ) {
+            success
+            errors {
+              __typename
+              ... on NonFieldError {
+                message
+                code
+              }
+            }
+          }
+        }
+    """
+
+    class MockApiResponse:
+        def __init__(self):
+            self.reason_phrase = "Some phrase"
+            self.status_code = 400
+
+        def is_success(self):
+            return False
+
+    def mock_create_payment(value, indeptency_key, nonce):
+        return MockApiResponse()
+
+    monkeypatch.setattr(
+        "uobtheatre.bookings.models.PaymentProvider.create_payment", mock_create_payment
+    )
+
+    response = client.execute(request_query % gql_id(booking.id, "BookingNode"))
+    assert response == {
+        "data": {
+            "payBooking": {
+                "success": False,
+                "errors": [
+                    {
+                        "__typename": "NonFieldError",
+                        "message": "Some phrase",
+                        "code": "400",
+                    }
+                ],
+            }
+        }
+    }

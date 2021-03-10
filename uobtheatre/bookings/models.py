@@ -3,11 +3,14 @@ import math
 import uuid
 from typing import Dict, List, Optional, Set, Tuple
 
+from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 
+from uobtheatre.payments.models import Payment
 from uobtheatre.payments.square import PaymentProvider
 from uobtheatre.productions.models import Performance
 from uobtheatre.users.models import User
+from uobtheatre.utils.exceptions import SquareException
 from uobtheatre.utils.models import TimeStampedMixin, validate_percentage
 from uobtheatre.venues.models import Seat, SeatGroup
 
@@ -164,6 +167,10 @@ class Booking(models.Model, TimeStampedMixin):
         max_length=20,
         choices=BookingStatus.choices,
         default=BookingStatus.INPROGRESS,
+    )
+
+    payments = GenericRelation(
+        Payment, object_id_field="pay_object_id", content_type_field="pay_object_type"
     )
 
     def __str__(self):
@@ -329,12 +336,32 @@ class Booking(models.Model, TimeStampedMixin):
         return addTickets, deleteTickets
 
     def pay(self, nonce):
-        pp = PaymentProvider()
-        response = pp.create_payment(self.total(), str(self.booking_reference), nonce)
+        response = PaymentProvider.create_payment(
+            self.total(), str(self.booking_reference), nonce
+        )
 
         if response.is_success():
+            # Set the booking as paid
             self.status = self.BookingStatus.PAID
             self.save()
+
+            # Create a payment for this transaction
+            card_details = response.body["payment"]["card_details"]["card"]
+            amount_details = response.body["payment"]["amount_money"]
+            return Payment.objects.create(
+                pay_object=self,
+                card_brand=card_details["card_brand"],
+                last_4=card_details["last_4"],
+                provider=Payment.PaymentProvider.SQUARE_ONLINE,
+                type=Payment.PaymentType.PURCHASE,
+                provider_payment_id=response.body["payment"]["id"],
+                value=amount_details["amount"],
+                currency=amount_details["currency"],
+            )
+
+        else:
+            # If the square transaction failed then raise an exception
+            raise SquareException(response)
 
 
 class Ticket(models.Model):
