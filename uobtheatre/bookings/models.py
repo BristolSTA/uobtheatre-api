@@ -307,23 +307,31 @@ class Booking(models.Model, TimeStampedMixin):
 
         addTickets = []
         deleteTickets = []
-        newTickets = {}
+        existingTickets = {}
 
+        # find tickets to add
         for ticket in tickets:
-
+            # splits requested tickets into id'd and no id'd
             if ticket.id is None:
+                # if they have no id, they must be new
                 addTickets.append(ticket)
             else:
-                newTickets[ticket.id] = ticket
+                # if they have an id, they must have existed at some point
+                existingTickets[ticket.id] = ticket
 
+        # find tickets to delete
         for ticket in self.tickets.all():
 
-            if newTickets.get(ticket.id):
-                newTickets.pop(ticket.id, None)
+            if existingTickets.get(ticket.id):
+                # if a given booking ticket is in the requested tickets - you keep it -
+                existingTickets.pop(ticket.id, None)
             else:
+                # if the ticket exists in the booking, but not in the requested tickets - delete it.
                 deleteTickets.append(ticket)
 
-        addTickets += newTickets.values()
+        # existing tickets should be empty at this point
+        # To.Do. May need exception??
+        addTickets += existingTickets.values()
 
         return addTickets, deleteTickets
 
