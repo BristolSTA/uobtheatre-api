@@ -326,6 +326,9 @@ class Performance(models.Model, TimeStampedMixin):
             (psg.price for psg in self.performance_seat_groups.all()), default=None
         )
 
+    def is_sold_out(self) -> bool:
+        return self.capacity_remaining() == 0
+
     def __str__(self):
         if self.start is None:
             return f"Perforamce of {self.production.name}"

@@ -205,6 +205,10 @@ type PerformanceNode implements Node {
   capacityRemaining: Int
   ticketOptions: [PerformanceSeatGroupNode]
   minSeatPrice: Int
+  durationMins: Int
+  isInperson: Boolean!
+  isOnline: Boolean!
+  soldOut: Boolean!
 }
 
 type PerformanceNodeConnection {
@@ -238,19 +242,19 @@ type PerformanceSeatGroupNodeEdge {
 type PriceBreakdownNode implements Node {
   id: ID!
   tickets: [PriceBreakdownTicketNode]
-  ticketsPrice: Int
-  discountsValue: Int
+  ticketsPrice: Int!
+  discountsValue: Int!
   miscCosts: [MiscCostNode]
-  subtotalPrice: Int
-  miscCostsValue: Int
-  totalPrice: Int
+  subtotalPrice: Int!
+  miscCostsValue: Int!
+  totalPrice: Int!
 }
 
 type PriceBreakdownTicketNode {
-  ticketPrice: Int
-  number: Int
+  ticketPrice: Int!
+  number: Int!
   seatGroup: SeatGroupNode
-  concession: ConcessionTypeNode
+  concessionType: ConcessionTypeNode
   totalPrice: Int
 }
 

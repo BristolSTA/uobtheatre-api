@@ -27,10 +27,10 @@ class TicketNode(DjangoObjectType):
 
 
 class PriceBreakdownTicketNode(graphene.ObjectType):
-    ticket_price = graphene.Int()
-    number = graphene.Int()
+    ticket_price = graphene.Int(required=True)
+    number = graphene.Int(required=True)
     seat_group = graphene.Field("uobtheatre.venues.schema.SeatGroupNode")
-    concession = graphene.Field("uobtheatre.bookings.schema.ConcessionTypeNode")
+    concession_type = graphene.Field("uobtheatre.bookings.schema.ConcessionTypeNode")
     total_price = graphene.Int()
 
     def resolve_total_price(self, info):
@@ -39,12 +39,12 @@ class PriceBreakdownTicketNode(graphene.ObjectType):
 
 class PriceBreakdownNode(DjangoObjectType):
     tickets = graphene.List(PriceBreakdownTicketNode)
-    tickets_price = graphene.Int()
-    discounts_value = graphene.Int()
+    tickets_price = graphene.Int(required=True)
+    discounts_value = graphene.Int(required=True)
     misc_costs = graphene.List(MiscCostNode)
-    subtotal_price = graphene.Int()
-    misc_costs_value = graphene.Int()
-    total_price = graphene.Int()
+    subtotal_price = graphene.Int(required=True)
+    misc_costs_value = graphene.Int(required=True)
+    total_price = graphene.Int(required=True)
 
     def resolve_tickets_price(self, info):
         return self.tickets_price()
@@ -83,7 +83,7 @@ class PriceBreakdownNode(DjangoObjectType):
                 ),
                 number=len(list(group)),
                 seat_group=ticket_group[0],
-                concession=ticket_group[1],
+                concession_type=ticket_group[1],
             )
             for ticket_group, group in groups
         ]

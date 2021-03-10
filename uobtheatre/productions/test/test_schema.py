@@ -280,9 +280,12 @@ def test_performance_schema(gql_client, gql_id):
                 description
                 disabled
                 doorsOpen
+                durationMins
                 end
                 extraInformation
                 id
+                isOnline
+                isInperson
                 production {
                   id
                 }
@@ -292,6 +295,7 @@ def test_performance_schema(gql_client, gql_id):
                   id
                 }
                 minSeatPrice
+                soldOut
               }
             }
           }
@@ -309,9 +313,12 @@ def test_performance_schema(gql_client, gql_id):
                             "description": performance.description,
                             "disabled": performance.disabled,
                             "doorsOpen": performance.doors_open.isoformat(),
+                            "durationMins": performance.duration().seconds // 60,
                             "end": performance.end.isoformat(),
                             "extraInformation": performance.extra_information,
                             "id": gql_id(performance.id, "PerformanceNode"),
+                            "isOnline": False,
+                            "isInperson": True,
                             "production": {
                                 "id": gql_id(
                                     performance.production.id, "ProductionNode"
@@ -321,6 +328,7 @@ def test_performance_schema(gql_client, gql_id):
                             "capacityRemaining": performance.capacity_remaining(),
                             "venue": {"id": gql_id(performance.venue.id, "VenueNode")},
                             "minSeatPrice": performance.min_seat_price(),
+                            "soldOut": performance.is_sold_out(),
                         }
                     }
                     for performance in performances

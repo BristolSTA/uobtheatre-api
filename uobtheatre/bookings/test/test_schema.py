@@ -177,7 +177,7 @@ def test_bookings_price_break_down(gql_client_flexible, gql_id):
                       seatGroup {
                         id
                       }
-                      concession {
+                      concessionType {
                         id
                       }
                     }
@@ -212,7 +212,7 @@ def test_bookings_price_break_down(gql_client_flexible, gql_id):
                     "SeatGroupNode",
                 ),
             },
-            "concession": {
+            "concessionType": {
                 "id": gql_id(
                     ticket_group["concession_type"].id,
                     "ConcessionTypeNode",

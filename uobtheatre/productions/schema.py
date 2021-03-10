@@ -192,6 +192,10 @@ class PerformanceNode(DjangoObjectType):
     capacity_remaining = graphene.Int()
     ticket_options = graphene.List(PerformanceSeatGroupNode)
     min_seat_price = graphene.Int()
+    duration_mins = graphene.Int()
+    is_inperson = graphene.Boolean(required=True)
+    is_online = graphene.Boolean(required=True)
+    sold_out = graphene.Boolean(required=True)
 
     def resolve_ticket_options(self, info, **kwargs):
         return self.performance_seat_groups.all()
@@ -201,6 +205,18 @@ class PerformanceNode(DjangoObjectType):
 
     def resolve_min_seat_price(self, info):
         return self.min_seat_price()
+
+    def resolve_is_inperson(self, info):
+        return True
+
+    def resolve_is_online(self, info):
+        return False
+
+    def resolve_duration_mins(self, info):
+        return self.duration().seconds // 60
+
+    def resolve_sold_out(self, info):
+        return self.is_sold_out()
 
     class Meta:
         model = Performance
