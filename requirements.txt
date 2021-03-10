@@ -15,7 +15,7 @@ django-graphql-auth==0.3.15
 
 # These are apparently a package deal atm so we need both
 django-graphql-jwt==0.3.0
-PyJWT==1.7.0
+PyJWT==2.0.1
 
 # Something to do with images
 Pillow>=8.1.2
