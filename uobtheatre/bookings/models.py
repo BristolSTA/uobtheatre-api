@@ -304,7 +304,6 @@ class Booking(models.Model, TimeStampedMixin):
         Given a list of tickets return the tickets which need to be created a
         deleted, in two lists.
         """
-
         addTickets = []
         deleteTickets = []
         existingTickets = {}
@@ -332,7 +331,6 @@ class Booking(models.Model, TimeStampedMixin):
         # existing tickets should be empty at this point
         # To.Do. May need exception??
         addTickets += existingTickets.values()
-
         return addTickets, deleteTickets
 
 
@@ -351,17 +349,3 @@ class Ticket(models.Model):
         related_name="seat_bookings",
     )
     seat = models.ForeignKey(Seat, on_delete=models.RESTRICT, null=True, blank=True)
-
-    def __eq__(self, other):
-        """
-        Two tickets are equal if the following match:
-        - seat_group
-        - concession_type
-        - seat
-        """
-        # Attributes required to match
-        attributes = ["seat_group", "concession_type", "seat"]
-        return all(
-            getattr(self, attribute) == getattr(other, attribute)
-            for attribute in attributes
-        )
