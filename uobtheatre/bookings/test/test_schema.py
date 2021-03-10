@@ -523,7 +523,7 @@ def test_bookings_auth(gql_client_flexible):
         ),
     ],
 )
-def test_booking_ticket_diff(currentTickets, plannedTickets):
+def test_booking_ticket_diff(currentTickets, plannedTickets, gql_client_flexible):
 
     SeatGroupFactory(id=1)
     SeatGroupFactory(id=2)
@@ -532,27 +532,13 @@ def test_booking_ticket_diff(currentTickets, plannedTickets):
     SeatFactory(id=1)
     SeatFactory(id=2)
 
+    # Create booking with current tickets
     booking = BookingFactory()
-    request_query = """
-    {
-        mutation {
-            createBooking (
-                performanceId: UHJvZHVjdGlvbk5vZGU6MQ==,
-                tickets: [
-                    {
-                        seatGroupId:UHJvZHVjdGlvbk5vZGU6MQ
-                        concessionTypeId: UHJvZHVjdGlvbk5vZGU6MQ
-                    }
-                ]
-            ){
-                booking{
-                    id
-                }
-            }
-        }
-    }
-    """
     _ = [TicketFactory(booking=booking, **ticket) for ticket in currentTickets]
+
+    # Generate mutation query from input data
+
+    ticketQueries = ""
     for ticket in plannedTickets:
         queryStr = """
                     {
@@ -561,13 +547,35 @@ def test_booking_ticket_diff(currentTickets, plannedTickets):
                         seatGroupId:%s
                         concessionTypeId: %s
                     }
-                """ % (
+                    """ % (
             to_global_id("TicketNode", ticket.get("id")),
             to_global_id("TicketNode", ticket.get("id")),
             to_global_id("SeatGroupNode", ticket.get("id")),
-            to_global_id("ConcessionTypeNode", ticket.get("id")),
+            to_global_id("SeatNode", ticket.get("id")),
         )
+        ticketQueries += queryStr
 
+    request_query = """
+        mutation {
+            createBooking (
+                performanceId: UHJvZHVjdGlvbk5vZGU6MQ==,
+                tickets: [
+                    %s
+                ]
+            ){
+                booking{
+                    id
+                }
+            }
+        }
+        """ % (
+        ticketQueries
+    )
+
+    print(request_query)
+    gql_client_flexible.set_user(booking.user)
+    response = gql_client_flexible.execute(request_query)
+    print(response)
     # _ = [
     #     print(to_global_id("TicketNode", ticket.get("id"))) for ticket in plannedTickets
     # ]
