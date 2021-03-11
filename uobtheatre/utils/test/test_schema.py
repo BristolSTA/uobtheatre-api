@@ -1,5 +1,6 @@
 import pytest
 
+from uobtheatre.utils.schema import IdInputField
 from uobtheatre.venues.test.factories import VenueFactory
 
 
@@ -43,3 +44,8 @@ def test_graphene_image_mixin(gql_client, gql_id):
             }
         }
     }
+
+
+@pytest.mark.django_db
+def test_id_input_field_wrong_thing(gql_client, gql_id):
+    assert IdInputField.parse_literal(1.2) is None

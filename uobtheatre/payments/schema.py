@@ -2,7 +2,6 @@ import graphene
 from graphene import relay
 from graphene_django import DjangoObjectType
 
-from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.schema import BookingNode
 from uobtheatre.payments.models import Payment
 from uobtheatre.utils.schema import FilterSet
@@ -25,10 +24,6 @@ class PaymentNode(DjangoObjectType):
 
     def resolve_url(self, info):
         return self.url()
-
-    def resolve_pay_object(self, info):
-        if isinstance(self.pay_object, Booking):
-            return self.pay_object
 
     class Meta:
         model = Payment
