@@ -3,10 +3,16 @@ import itertools
 import graphene
 from graphene import relay
 from graphene_django import DjangoListField, DjangoObjectType
+from graphene_django.filter import DjangoFilterConnectionField
 from graphql import GraphQLError
 
 from uobtheatre.bookings.models import Booking, ConcessionType, MiscCost, Ticket
 from uobtheatre.productions.models import Performance
+from uobtheatre.utils.exceptions import (
+    GQLFieldException,
+    GQLNonFieldException,
+    SafeMutation,
+)
 from uobtheatre.utils.schema import FilterSet, IdInputField
 from uobtheatre.venues.models import Seat, SeatGroup
 
@@ -139,6 +145,7 @@ BookingStatusSchema = graphene.Enum.from_enum(Booking.BookingStatus)
 class BookingNode(DjangoObjectType):
     price_breakdown = graphene.Field(PriceBreakdownNode)
     tickets = DjangoListField(TicketNode)
+    payments = DjangoFilterConnectionField("uobtheatre.payments.schema.PaymentNode")
 
     def resolve_price_breakdown(self, info):
         return self
@@ -252,7 +259,39 @@ class UpdateBooking(graphene.Mutation):
         return UpdateBooking(booking=booking)
 
 
+class PayBooking(SafeMutation):
+    booking = graphene.Field(BookingNode)
+    payment = graphene.Field("uobtheatre.payments.schema.PaymentNode")
+
+    class Arguments:
+        booking_id = IdInputField(required=True)
+        price = graphene.Int(required=True)
+        nonce = graphene.String(required=True)
+
+    @classmethod
+    def resolve_mutation(self, root, info, booking_id, price, nonce):
+        if not info.context.user.is_authenticated:
+            raise GQLNonFieldException(
+                message="You must be logged in to pay for a booking"
+            )
+
+        # Get the performance and if it doesn't exist throw an error
+        booking = Booking.objects.get(id=booking_id)
+
+        if booking.total() != price:
+            raise GQLNonFieldException(
+                message="The booking price does not match the expected price"
+            )
+
+        if booking.status != Booking.BookingStatus.INPROGRESS:
+            raise GQLNonFieldException(message="The booking is not in progress")
+
+        payment = booking.pay(nonce)
+        return PayBooking(booking=booking, payment=payment)
+
+
 class Mutation(graphene.ObjectType):
     # booking = BookingMutation.Field()
     create_booking = CreateBooking.Field()
     update_booking = UpdateBooking.Field()
+    pay_booking = PayBooking.Field()

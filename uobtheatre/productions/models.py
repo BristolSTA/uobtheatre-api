@@ -57,7 +57,7 @@ def append_production_qs(queryset, start=False, end=False):
     return queryset
 
 
-class Production(models.Model, TimeStampedMixin):
+class Production(TimeStampedMixin, models.Model):
     """A production is a show (like the 2 weeks things) and can have many
     performaces (these are like the nights).
     """
@@ -198,7 +198,7 @@ class CrewMember(models.Model):
         ordering = ["id"]
 
 
-class Performance(models.Model, TimeStampedMixin):
+class Performance(TimeStampedMixin, models.Model):
     """
     A performance is a discrete event when the show takes place eg 7pm on
     Tuesday.

@@ -1,29 +1,12 @@
+from typing import List, Union
+
 import graphene
+from django.db import transaction
 
 # https://gist.github.com/smmoosavi/033deffe834e6417ed6bb55188a05c88
 # TODO We should probably raise these error instead and then format for you in
 # the mutation, ie in mutation mixin wrap the mutation funciton in a try and
 # handle errors there
-# class GQLFieldError(Exception):
-#     """
-#     A single GQL Field error
-#     """
-#
-#     def __init__(self, message, field=None, code=None, params=None):
-#         super().__init__()
-#         self.message = str(message)
-#         self.code = code
-#         self.params = params
-#         self.field = field
-# class GQLNonFieldError(Exception):
-#     """
-#     A single GQL Field error
-#     """
-#
-#     def __init__(self, message, code=None):
-#         super().__init__()
-#         self.message = str(message)
-#         self.code = code
 
 
 class NonFieldError(graphene.ObjectType):
@@ -76,3 +59,60 @@ class AuthOutput(MutationResult):
             return non_field_errors + field_errors
 
         raise Exception("Internal error")
+
+
+class MutationException(Exception):
+    pass
+
+
+class GQLFieldException(MutationException):
+    """
+    A single GQL Field error
+    """
+
+    def __init__(self, message, field=None, code=None, params=None):
+        super().__init__()
+        self.message = str(message)
+        self.code = code
+        self.params = params
+        self.field = field
+
+    def resolve(self) -> List[Union[FieldError, NonFieldError]]:
+        return [FieldError(message=self.message, code=self.code, field=self.field)]
+
+
+class GQLNonFieldException(MutationException):
+    """
+    A single GQL Field error
+    """
+
+    def __init__(self, message, code=None):
+        super().__init__()
+        self.message = str(message)
+        self.code = code
+
+    def resolve(self) -> List[Union[FieldError, NonFieldError]]:
+        return [NonFieldError(message=self.message, code=self.code)]
+
+
+class SquareException(GQLNonFieldException):
+    def __init__(self, square_response):
+        super().__init__(square_response.reason_phrase, square_response.status_code)
+
+
+class SafeMutation(MutationResult, graphene.Mutation):
+    class Meta:
+        abstract = True
+
+    @classmethod
+    def mutate(cls, root, info, **input):
+        try:
+            with transaction.atomic():
+                return cls.resolve_mutation(root, info, **input)
+
+        except Exception as exception:
+            # These are our custom exceptions
+            if isinstance(exception, MutationException):
+                return cls(errors=exception.resolve(), success=False)
+
+            raise exception

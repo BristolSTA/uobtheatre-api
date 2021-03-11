@@ -32,6 +32,8 @@ def test_bookings_schema(gql_client_flexible, gql_id):
               edges {
                 node {
                   id
+                  createdAt
+                  updatedAt
                   tickets {
                     id
                   }
@@ -64,6 +66,8 @@ def test_bookings_schema(gql_client_flexible, gql_id):
                         {
                             "node": {
                                 "id": gql_id(booking.id, "BookingNode"),
+                                "createdAt": booking.created_at.isoformat(),
+                                "updatedAt": booking.updated_at.isoformat(),
                                 "tickets": [
                                     {"id": gql_id(ticket.id, "TicketNode")}
                                     for ticket in tickets
@@ -378,7 +382,6 @@ def test_create_booking_mutation(
     """
 
     client = gql_client_flexible
-    print(request % data)
     response = client.execute(request % data)
 
     if not is_valid:
@@ -775,3 +778,257 @@ def test_update_booking(
             updated_booking_tickets[ticketKey] += 1
 
     assert updated_booking_tickets == expected_booking_tickets
+
+
+def test_pay_booking_mutation_wrong_price(gql_client_flexible, gql_id):
+    booking = BookingFactory()
+
+    request_query = """
+    mutation {
+	payBooking(
+            bookingId: "%s"
+            price: 102
+            nonce: "cnon:card-nonce-ok"
+        ) {
+            success
+            errors {
+              __typename
+              ... on NonFieldError {
+                message
+                code
+              }
+            }
+          }
+        }
+    """
+    response = gql_client_flexible.execute(
+        request_query % gql_id(booking.id, "BookingNode")
+    )
+    assert response == {
+        "data": {
+            "payBooking": {
+                "success": False,
+                "errors": [
+                    {
+                        "__typename": "NonFieldError",
+                        "message": "The booking price does not match the expected price",
+                        "code": None,
+                    }
+                ],
+            }
+        }
+    }
+
+
+@pytest.mark.django_db
+def test_pay_booking_mutation_loggedout(gql_client_flexible, gql_id):
+    booking = BookingFactory()
+    client = gql_client_flexible
+    client.logout()
+
+    request_query = """
+    mutation {
+	payBooking(
+            bookingId: "%s"
+            price: 102
+            nonce: "cnon:card-nonce-ok"
+        ) {
+            success
+            errors {
+              __typename
+              ... on NonFieldError {
+                message
+                code
+              }
+            }
+          }
+        }
+    """
+    response = client.execute(request_query % gql_id(booking.id, "BookingNode"))
+    assert response == {
+        "data": {
+            "payBooking": {
+                "success": False,
+                "errors": [
+                    {
+                        "__typename": "NonFieldError",
+                        "message": "You must be logged in to pay for a booking",
+                        "code": None,
+                    }
+                ],
+            }
+        }
+    }
+
+
+@pytest.mark.django_db
+def test_pay_booking_square_error(mock_square, gql_client_flexible, gql_id):
+    booking = BookingFactory(status=Booking.BookingStatus.INPROGRESS)
+    client = gql_client_flexible
+
+    request_query = """
+    mutation {
+	payBooking(
+            bookingId: "%s"
+            price: 0
+            nonce: "cnon:card-nonce-ok"
+        ) {
+            success
+            errors {
+              __typename
+              ... on NonFieldError {
+                message
+                code
+              }
+            }
+          }
+        }
+    """
+
+    mock_square.reason_phrase = "Some phrase"
+    mock_square.status_code = 400
+    mock_square.success = False
+
+    response = client.execute(request_query % gql_id(booking.id, "BookingNode"))
+    assert response == {
+        "data": {
+            "payBooking": {
+                "success": False,
+                "errors": [
+                    {
+                        "__typename": "NonFieldError",
+                        "message": "Some phrase",
+                        "code": "400",
+                    }
+                ],
+            }
+        }
+    }
+
+
+@pytest.mark.django_db
+def test_pay_booking_mutation_payed_booking(gql_client_flexible, gql_id):
+    booking = BookingFactory(status=Booking.BookingStatus.PAID)
+    client = gql_client_flexible
+
+    request_query = """
+    mutation {
+	payBooking(
+            bookingId: "%s"
+            price: 0
+            nonce: "cnon:card-nonce-ok"
+        ) {
+            success
+            errors {
+              __typename
+              ... on NonFieldError {
+                message
+                code
+              }
+            }
+          }
+        }
+    """
+    response = client.execute(request_query % gql_id(booking.id, "BookingNode"))
+    assert response == {
+        "data": {
+            "payBooking": {
+                "success": False,
+                "errors": [
+                    {
+                        "__typename": "NonFieldError",
+                        "message": "The booking is not in progress",
+                        "code": None,
+                    }
+                ],
+            }
+        }
+    }
+
+
+@pytest.mark.django_db
+def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
+    booking = BookingFactory(status=Booking.BookingStatus.INPROGRESS)
+    client = gql_client_flexible
+
+    request_query = """
+    mutation {
+	payBooking(
+            bookingId: "%s"
+            price: 0
+            nonce: "cnon:card-nonce-ok"
+        ) {
+            success
+            errors {
+              __typename
+            }
+
+            booking {
+              status
+              payments {
+                edges {
+                  node {
+                    id
+                  }
+                }
+              }
+            }
+
+            payment {
+              last4
+              cardBrand
+              provider
+              currency
+              value
+            }
+          }
+        }
+    """
+
+    mock_square.body = {
+        "payment": {
+            "id": "abc",
+            "card_details": {
+                "card": {
+                    "card_brand": "VISA",
+                    "last_4": "1111",
+                }
+            },
+            "amount_money": {
+                "currency": "GBP",
+                "amount": 0,
+            },
+        }
+    }
+    mock_square.success = True
+
+    response = client.execute(request_query % gql_id(booking.id, "BookingNode"))
+    assert response == {
+        "data": {
+            "payBooking": {
+                "booking": {
+                    "status": "PAID",
+                    "payments": {
+                        "edges": [
+                            {
+                                "node": {
+                                    "id": gql_id(
+                                        booking.payments.first().id, "PaymentNode"
+                                    )
+                                }
+                            }
+                        ]
+                    },
+                },
+                "payment": {
+                    "last4": "1111",
+                    "cardBrand": "VISA",
+                    "provider": "SQUAREONLINE",
+                    "currency": "GBP",
+                    "value": 0,
+                },
+                "success": True,
+                "errors": None,
+            }
+        }
+    }

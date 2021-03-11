@@ -12,7 +12,7 @@ class Seat(models.Model):
     number = models.CharField(max_length=5, null=True, blank=True)
 
 
-class Venue(models.Model, TimeStampedMixin):
+class Venue(TimeStampedMixin, models.Model):
     """A venue is a space often where shows take place"""
 
     name = models.CharField(max_length=255)
