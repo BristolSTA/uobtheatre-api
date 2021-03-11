@@ -26,6 +26,7 @@ type BookingNode implements Node {
   status: BookingStatus!
   tickets: [TicketNode!]
   priceBreakdown: PriceBreakdownNode
+  payments(offset: Int, before: String, after: String, first: Int, last: Int, payObjectType: ID, payObjectId: Int, type: String, providerPaymentId: String, provider: String, value: Int, currency: String, cardBrand: String, last4: String, id: ID): PaymentNodeConnection
 }
 
 type BookingNodeConnection {
@@ -62,6 +63,15 @@ type ConcessionTypeNode implements Node {
   name: String!
   description: String
   seatBookings(offset: Int, before: String, after: String, first: Int, last: Int): TicketNodeConnection!
+}
+
+type CreateBooking {
+  booking: BookingNode
+}
+
+input CreateTicketInput {
+  seatGroupId: IdInputField!
+  concessionTypeId: IdInputField!
 }
 
 type CrewMemberNode implements Node {
@@ -120,6 +130,8 @@ type GrapheneImageFieldNode {
   name: String
 }
 
+scalar IdInputField
+
 type MiscCostNode implements Node {
   id: ID!
   name: String!
@@ -129,6 +141,9 @@ type MiscCostNode implements Node {
 }
 
 type Mutation {
+  createBooking(performanceId: IdInputField, tickets: [CreateTicketInput]): CreateBooking
+  updateBooking(bookingId: IdInputField, tickets: [CreateTicketInput]): UpdateBooking
+  payBooking(bookingId: IdInputField!, nonce: String!, price: Int!): PayBooking
   register(email: String!, firstName: String!, lastName: String!, password1: String!, password2: String!): Register
   verifyAccount(token: String!): VerifyAccount
   resendActivationEmail(email: String!): ResendActivationEmail
@@ -187,6 +202,49 @@ type PasswordReset {
 type PasswordSet {
   success: Boolean
   errors: [GQLErrorUnion]
+}
+
+type PayBooking {
+  success: Boolean
+  errors: [GQLErrorUnion]
+  booking: BookingNode
+  payment: PaymentNode
+}
+
+union PayObjectUnion = BookingNode
+
+type PaymentNode implements Node {
+  id: ID!
+  type: PaymentType!
+  providerPaymentId: String
+  provider: PaymentProvider!
+  value: Int!
+  currency: String!
+  cardBrand: String
+  last4: String
+  url: String
+  payObject: PayObjectUnion
+}
+
+type PaymentNodeConnection {
+  pageInfo: PageInfo!
+  edges: [PaymentNodeEdge]!
+}
+
+type PaymentNodeEdge {
+  node: PaymentNode
+  cursor: String!
+}
+
+enum PaymentProvider {
+  CASH
+  SQUAREONLINE
+  SQUAREPOS
+}
+
+enum PaymentType {
+  PURCHASE
+  REFUND
 }
 
 type PerformanceNode implements Node {
@@ -339,7 +397,7 @@ type RevokeToken {
 
 type SeatGroupNode implements Node {
   id: ID!
-  name: String
+  name: String!
   description: String
   venue: VenueNode!
   capacity: Int
@@ -416,6 +474,10 @@ scalar UUID
 type UpdateAccount {
   success: Boolean
   errors: [GQLErrorUnion]
+}
+
+type UpdateBooking {
+  booking: BookingNode
 }
 
 type UserNode implements Node {
