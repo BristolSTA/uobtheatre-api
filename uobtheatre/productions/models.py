@@ -35,6 +35,39 @@ class CrewRole(models.Model):
         return self.name
 
 
+class ProductionTeamRole(models.Model):
+    """Production team role"""
+
+    class Department(models.TextChoices):
+        DIR = "director", "Director"
+        ASDIR = "assistant_director", "Assistant Director"
+        CHOREO = "choreographer", "Choreographer"
+        MD = "musical_director", "Musical Director"
+        ASMD = "assistant_musical_director", "Assistant Musical Director"
+        PROD = "producer", "Producer"
+        ASPROD = "assistant_producer", "Assistant Producer"
+        MARK = "marketing", "Marketing"
+        PHOTO = "photographer", "Photographer"
+        VOX = "vocal_coach", "Vocal Coach"
+        REMIX = "remix", "Remix"
+        COS = "costume", "Costume"
+        CA = "creative_assistant", "Creative Assistant"
+        HMAK = "hair_makeup", "Hair & Makeup"
+        PROPS = "props", "Props Manager"
+        COSMGR = "costume_manager", "Costume Manager"
+        MISC = "miscellaneous", "Miscellaneous"
+
+    name = models.CharField(max_length=255)
+    department = models.CharField(
+        max_length=20,
+        choices=Department.choices,
+        default=Department.MISC,
+    )
+
+    def __str__(self):
+        return self.name
+
+
 class Warning(models.Model):
     """A venue is a space often where shows take place"""
 
@@ -168,7 +201,12 @@ class ProductionTeamMember(models.Model):
     """Member of production prod team"""
 
     name = models.CharField(max_length=255)
-    role = models.CharField(max_length=255, null=True)
+    role = models.ForeignKey(
+        ProductionTeamRole,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="production_team_members",
+    )
     production = models.ForeignKey(
         Production, on_delete=models.CASCADE, related_name="production_team"
     )
