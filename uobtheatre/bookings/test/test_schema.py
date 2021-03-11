@@ -568,7 +568,7 @@ def test_pay_booking_mutation_loggedout(gql_client_flexible, gql_id):
 
 
 @pytest.mark.django_db
-def test_pay_booking_square_error(monkeypatch, gql_client_flexible, gql_id):
+def test_pay_booking_square_error(mock_square, gql_client_flexible, gql_id):
     booking = BookingFactory(status=Booking.BookingStatus.INPROGRESS)
     client = gql_client_flexible
 
@@ -591,20 +591,9 @@ def test_pay_booking_square_error(monkeypatch, gql_client_flexible, gql_id):
         }
     """
 
-    class MockApiResponse:
-        def __init__(self):
-            self.reason_phrase = "Some phrase"
-            self.status_code = 400
-
-        def is_success(self):
-            return False
-
-    def mock_create_payment(value, indeptency_key, nonce):
-        return MockApiResponse()
-
-    monkeypatch.setattr(
-        "uobtheatre.bookings.models.PaymentProvider.create_payment", mock_create_payment
-    )
+    mock_square.reason_phrase = "Some phrase"
+    mock_square.status_code = 400
+    mock_square.success = False
 
     response = client.execute(request_query % gql_id(booking.id, "BookingNode"))
     assert response == {
@@ -664,7 +653,7 @@ def test_pay_booking_mutation_payed_booking(gql_client_flexible, gql_id):
 
 
 @pytest.mark.django_db
-def test_pay_booking_success(monkeypatch, gql_client_flexible, gql_id):
+def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
     booking = BookingFactory(status=Booking.BookingStatus.INPROGRESS)
     client = gql_client_flexible
 
@@ -702,33 +691,22 @@ def test_pay_booking_success(monkeypatch, gql_client_flexible, gql_id):
         }
     """
 
-    class MockApiResponse:
-        def __init__(self):
-            self.body = {
-                "payment": {
-                    "id": "abc",
-                    "card_details": {
-                        "card": {
-                            "card_brand": "VISA",
-                            "last_4": "1111",
-                        }
-                    },
-                    "amount_money": {
-                        "currency": "GBP",
-                        "amount": 0,
-                    },
+    mock_square.body = {
+        "payment": {
+            "id": "abc",
+            "card_details": {
+                "card": {
+                    "card_brand": "VISA",
+                    "last_4": "1111",
                 }
-            }
-
-        def is_success(self):
-            return True
-
-    def mock_create_payment(value, indeptency_key, nonce):
-        return MockApiResponse()
-
-    monkeypatch.setattr(
-        "uobtheatre.bookings.models.PaymentProvider.create_payment", mock_create_payment
-    )
+            },
+            "amount_money": {
+                "currency": "GBP",
+                "amount": 0,
+            },
+        }
+    }
+    mock_square.success = True
 
     response = client.execute(request_query % gql_id(booking.id, "BookingNode"))
     assert response == {

@@ -48,3 +48,26 @@ def gql_id():
     return lambda id, node: base64.b64encode(f"{node}:{id}".encode("ascii")).decode(
         "utf-8"
     )
+
+
+@pytest.fixture
+def mock_square(monkeypatch):
+    class MockApiResponse:
+        def __init__(self):
+            self.reason_phrase = "Some phrase"
+            self.status_code = 400
+            self.success = False
+            self.body = None
+
+        def is_success(self):
+            return self.success
+
+    def mock_create_payment(value, indeptency_key, nonce):
+        return mock_api_response
+
+    monkeypatch.setattr(
+        "uobtheatre.bookings.models.PaymentProvider.create_payment", mock_create_payment
+    )
+
+    mock_api_response = MockApiResponse()
+    return mock_api_response
