@@ -7,7 +7,6 @@ from graphene_django.filter import DjangoFilterConnectionField
 from graphql import GraphQLError
 
 from uobtheatre.bookings.models import Booking, ConcessionType, MiscCost, Ticket
-from uobtheatre.payments.schema import PaymentNode
 from uobtheatre.productions.models import Performance
 from uobtheatre.utils.exceptions import (
     GQLFieldException,
@@ -146,7 +145,7 @@ BookingStatusSchema = graphene.Enum.from_enum(Booking.BookingStatus)
 class BookingNode(DjangoObjectType):
     price_breakdown = graphene.Field(PriceBreakdownNode)
     tickets = DjangoListField(TicketNode)
-    payments = DjangoFilterConnectionField(PaymentNode)
+    payments = DjangoFilterConnectionField("uobtheatre.payments.schema.PaymentNode")
 
     def resolve_price_breakdown(self, info):
         return self
@@ -248,7 +247,7 @@ class UpdateBooking(graphene.Mutation):
 
 class PayBooking(SafeMutation):
     booking = graphene.Field(BookingNode)
-    payment = graphene.Field(PaymentNode)
+    payment = graphene.Field("uobtheatre.payments.schema.PaymentNode")
 
     class Arguments:
         booking_id = IdInputField(required=True)
