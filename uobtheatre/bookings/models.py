@@ -140,7 +140,7 @@ class DiscountCombination:
         return concession_requirements
 
 
-class Booking(models.Model, TimeStampedMixin):
+class Booking(TimeStampedMixin, models.Model):
     """A booking is for one performance and has many tickets"""
 
     class BookingStatus(models.TextChoices):

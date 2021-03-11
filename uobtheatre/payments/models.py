@@ -5,7 +5,7 @@ from django.db import models
 from uobtheatre.utils.models import TimeStampedMixin
 
 
-class Payment(models.Model, TimeStampedMixin):
+class Payment(TimeStampedMixin, models.Model):
     class PaymentProvider(models.TextChoices):
         CASH = "CASH", "Cash"
         SQUARE_ONLINE = "SQUAREONLINE", "Square online"

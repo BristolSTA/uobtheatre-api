@@ -20,6 +20,8 @@ def test_payment_schema(gql_client_flexible, gql_id):
                     edges {
                       node {
                         id
+                        createdAt
+                        updatedAt
                         type
                         providerPaymentId
                         value
@@ -56,6 +58,8 @@ def test_payment_schema(gql_client_flexible, gql_id):
                                         {
                                             "node": {
                                                 "id": gql_id(payment.id, "PaymentNode"),
+                                                "createdAt": payment.created_at.isoformat(),
+                                                "updatedAt": payment.updated_at.isoformat(),
                                                 "type": str(payment.type),
                                                 "providerPaymentId": payment.provider_payment_id,
                                                 "value": payment.value,

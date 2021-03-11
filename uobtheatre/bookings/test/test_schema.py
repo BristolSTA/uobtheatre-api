@@ -31,6 +31,8 @@ def test_bookings_schema(gql_client_flexible, gql_id):
               edges {
                 node {
                   id
+                  createdAt
+                  updatedAt
                   tickets {
                     id
                   }
@@ -63,6 +65,8 @@ def test_bookings_schema(gql_client_flexible, gql_id):
                         {
                             "node": {
                                 "id": gql_id(booking.id, "BookingNode"),
+                                "createdAt": booking.created_at.isoformat(),
+                                "updatedAt": booking.updated_at.isoformat(),
                                 "tickets": [
                                     {"id": gql_id(ticket.id, "TicketNode")}
                                     for ticket in tickets

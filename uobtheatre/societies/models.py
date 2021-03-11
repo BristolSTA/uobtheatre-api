@@ -4,7 +4,7 @@ from django.db import models
 from uobtheatre.utils.models import TimeStampedMixin
 
 
-class Society(models.Model, TimeStampedMixin):
+class Society(TimeStampedMixin, models.Model):
     """A society is a society"""
 
     name = models.CharField(max_length=255)
