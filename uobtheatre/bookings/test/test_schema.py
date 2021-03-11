@@ -491,6 +491,7 @@ def test_bookings_auth(gql_client_flexible):
 @pytest.mark.parametrize(
     "currentTickets, plannedTickets, expectedTickets",
     [
+        # No change in tickets
         (
             [
                 {
@@ -535,6 +536,145 @@ def test_bookings_auth(gql_client_flexible):
                 },
             ],
         ),
+        # Create a new ticket
+        (
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+            ],
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                },
+            ],
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                },
+            ],
+        ),
+        # Delete all tickets
+        (
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 2,
+                },
+            ],
+            [],
+            [],
+        ),
+        # All new tickets
+        (
+            [],
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                },
+            ],
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                },
+            ],
+        ),
+        # Add a similar ticket
+        (
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 2,
+                },
+            ],
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 2,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                },
+            ],
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 2,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                },
+            ],
+        ),
     ],
 )
 def test_update_booking(
@@ -559,19 +699,32 @@ def test_update_booking(
 
     ticketQueries = ""
     for ticket in plannedTickets:
-        queryStr = """
-                    {
-                        id: "%s"
-                        seatId: "%s"
-                        seatGroupId: "%s"
-                        concessionTypeId: "%s"
-                    }
-                    """ % (
-            to_global_id("TicketNode", ticket.get("id")),
-            to_global_id("SeatNode", ticket.get("seat_id")),
-            to_global_id("SeatGroupNode", ticket.get("seat_group_id")),
-            to_global_id("ConcessionTypeNode", ticket.get("concession_type_id")),
-        )
+        if ticket.get("id") is not None:
+            queryStr = """
+                        {
+                            id: "%s"
+                            seatId: "%s"
+                            seatGroupId: "%s"
+                            concessionTypeId: "%s"
+                        }
+                        """ % (
+                to_global_id("TicketNode", ticket.get("id")),
+                to_global_id("SeatNode", ticket.get("seat_id")),
+                to_global_id("SeatGroupNode", ticket.get("seat_group_id")),
+                to_global_id("ConcessionTypeNode", ticket.get("concession_type_id")),
+            )
+        else:
+            queryStr = """
+                        {
+                            seatId: "%s"
+                            seatGroupId: "%s"
+                            concessionTypeId: "%s"
+                        }
+                        """ % (
+                to_global_id("SeatNode", ticket.get("seat_id")),
+                to_global_id("SeatGroupNode", ticket.get("seat_group_id")),
+                to_global_id("ConcessionTypeNode", ticket.get("concession_type_id")),
+            )
         ticketQueries += queryStr
 
     request_query = """
@@ -596,6 +749,7 @@ def test_update_booking(
     response = gql_client_flexible.execute(request_query)
 
     return_booking_id = response["data"]["updateBooking"]["booking"]["id"]
+
     local_booking_id = int(from_global_id(return_booking_id)[1])
 
     returned_booking = Booking.objects.get(id=local_booking_id)

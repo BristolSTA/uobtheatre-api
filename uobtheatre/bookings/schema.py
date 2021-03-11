@@ -226,7 +226,7 @@ class UpdateBooking(graphene.Mutation):
         tickets = graphene.List(UpdateTicketInput, required=False)
 
     @classmethod
-    def mutate(self, root, info, booking_id, tickets):
+    def mutate(self, root, info, booking_id, tickets=[]):
         if not info.context.user.is_authenticated:
             raise GraphQLError("You must be logged in to update a booking")
 
@@ -236,7 +236,6 @@ class UpdateBooking(graphene.Mutation):
         ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))
 
         addTickets, deleteTickets = booking.get_ticket_diff(ticket_objects)
-
         # Check the capacity of the show and its seat_groups
         err = booking.performance.check_capacity(ticket_objects)
         if err:
