@@ -13,7 +13,7 @@ from uobtheatre.bookings.models import (
     MiscCost,
     Ticket,
 )
-from uobtheatre.utils.schema import FilterSet
+from uobtheatre.utils.schema import EnumNode, FilterSet
 
 
 class ConcessionTypeNode(DjangoObjectType):
@@ -175,6 +175,7 @@ class BookingNode(DjangoObjectType):
     price_breakdown = graphene.Field(PriceBreakdownNode)
     tickets = DjangoListField(TicketNode)
     user = graphene.Field(UserNode)
+    status = EnumNode()
 
     def resolve_price_breakdown(self, info):
         return self
