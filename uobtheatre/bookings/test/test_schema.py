@@ -245,7 +245,7 @@ def test_discounts_node(gql_client, gql_id):
     performance = PerformanceFactory()
 
     # Create a discount
-    discount = DiscountFactory(name="Family", discount=0.2)
+    discount = DiscountFactory(name="Family", percentage=0.2)
     discount.performances.set([performance])
     discount_requirements = [
         DiscountRequirementFactory(discount=discount, number=2),
@@ -253,7 +253,7 @@ def test_discounts_node(gql_client, gql_id):
     ]
 
     # Single discount - should not appear
-    discount_2 = DiscountFactory(name="Student", discount=0.3)
+    discount_2 = DiscountFactory(name="Student", percentage=0.3)
     discount_2.performances.set([performance])
     discount_requirement_2 = DiscountRequirementFactory(discount=discount_2, number=1)
 
@@ -265,7 +265,7 @@ def test_discounts_node(gql_client, gql_id):
               node {
                 discounts {
                   id
-                  discount
+                  percentage
                   name
                   seatGroup {
                     id
@@ -296,7 +296,7 @@ def test_discounts_node(gql_client, gql_id):
                             "discounts": [
                                 {
                                     "id": gql_id(discount.id, "DiscountNode"),
-                                    "discount": discount.discount,
+                                    "percentage": discount.percentage,
                                     "name": discount.name,
                                     "seatGroup": {
                                         gql_id(

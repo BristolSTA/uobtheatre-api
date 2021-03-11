@@ -109,7 +109,7 @@ type DeleteAccount {
 type DiscountNode implements Node {
   id: ID!
   name: String!
-  discount: Float!
+  percentage: Float!
   performances(offset: Int, before: String, after: String, first: Int, last: Int, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, orderBy: String): PerformanceNodeConnection!
   seatGroup: SeatGroupNode
   requirements: [DiscountRequirementNode!]

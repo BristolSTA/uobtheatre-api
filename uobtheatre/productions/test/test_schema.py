@@ -388,12 +388,12 @@ def test_ticket_options(gql_client, gql_id):
     performance_seat_group_2 = PerformanceSeatingFactory(performance=performance)
 
     # Create a discount
-    discount_1 = DiscountFactory(name="Family", discount=0.2)
+    discount_1 = DiscountFactory(name="Family", percentage=0.2)
     discount_1.performances.set([performance])
     discount_requirement_1 = DiscountRequirementFactory(discount=discount_1, number=1)
 
     # Create a different
-    discount_2 = DiscountFactory(name="Family 2", discount=0.3)
+    discount_2 = DiscountFactory(name="Family 2", percentage=0.3)
     discount_2.performances.set([performance])
     discount_requirement_2 = DiscountRequirementFactory(discount=discount_2, number=1)
 

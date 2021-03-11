@@ -296,7 +296,7 @@ class Performance(models.Model, TimeStampedMixin):
             ),
             None,
         )
-        return discount.discount if discount else 0
+        return discount.percentage if discount else 0
 
     def price_with_concession(self, concession, price) -> int:
         """

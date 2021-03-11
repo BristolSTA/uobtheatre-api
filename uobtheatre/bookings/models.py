@@ -54,7 +54,7 @@ class MiscCost(models.Model):
 
 class Discount(models.Model):
     name = models.CharField(max_length=255)
-    discount = models.FloatField()
+    percentage = models.FloatField()
     performances = models.ManyToManyField(
         Performance,
         blank=True,
@@ -71,7 +71,7 @@ class Discount(models.Model):
         return sum(requirement.number for requirement in self.requirements.all()) == 1
 
     def __str__(self) -> str:
-        return f"{self.discount * 100}% off for {self.name}"
+        return f"{self.percentage * 100}% off for {self.name}"
 
 
 class ConcessionType(models.Model):
@@ -231,7 +231,7 @@ class Booking(models.Model, TimeStampedMixin):
                         self.performance.performance_seat_groups.get(
                             seat_group=ticket.seat_group
                         ).price
-                        * discount_from_comb.discount
+                        * discount_from_comb.percentage
                     )
                     tickets_available_to_discount.remove(ticket)
         # For each type of concession

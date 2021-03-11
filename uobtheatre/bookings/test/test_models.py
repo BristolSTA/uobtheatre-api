@@ -165,7 +165,7 @@ def test_get_valid_discounts():
     concession_type_adult = ConcessionTypeFactory(name="Adult")
 
     # Create a family discount - 1 student ticket and 2 adults required
-    discount_family = DiscountFactory(name="Family", discount=0.2)
+    discount_family = DiscountFactory(name="Family", percentage=0.2)
     discount_family.performances.set([performance])
     DiscountRequirementFactory(
         concession_type=concession_type_student, number=1, discount=discount_family
@@ -175,7 +175,7 @@ def test_get_valid_discounts():
     )
 
     # Create a student discount - 1 student ticket required
-    discount_student = DiscountFactory(name="Student", discount=0.2)
+    discount_student = DiscountFactory(name="Student", percentage=0.2)
     discount_student.performances.set([performance])
     DiscountRequirementFactory(
         concession_type=concession_type_student, number=1, discount=discount_student
@@ -273,7 +273,7 @@ def test_ticket_discounted_price(
     booking = BookingFactory(performance=performance)
 
     test_concession_type = ConcessionTypeFactory(name="Student")
-    discount_student = DiscountFactory(name="Student", discount=discount_amount)
+    discount_student = DiscountFactory(name="Student", percentage=discount_amount)
     discount_student.performances.set([performance])
     DiscountRequirementFactory(
         concession_type=test_concession_type,
@@ -322,18 +322,18 @@ def test_get_price_with_discount_combination():
     # Check price without discount
     assert booking.get_price() == seating.price * 2
 
-    discount_student = DiscountFactory(name="Student", discount=0.2)
+    discount_student = DiscountFactory(name="Student", percentage=0.2)
     discount_student.performances.set([performance])
     DiscountRequirementFactory(
         concession_type=concession_type_student, number=1, discount=discount_student
     )
     discount_combination = DiscountCombination((discount_student,))
-    assert discount_student.discount == 0.2
+    assert discount_student.percentage == 0.2
     assert round(
         booking.get_price_with_discount_combination(discount_combination)
-    ) == round((seating.price * (1 - discount_student.discount)) + seating.price)
+    ) == round((seating.price * (1 - discount_student.percentage)) + seating.price)
 
-    discount_family = DiscountFactory(name="Family", discount=0.2)
+    discount_family = DiscountFactory(name="Family", percentage=0.2)
     discount_family.performances.set([performance])
     DiscountRequirementFactory(
         concession_type=concession_type_student, number=1, discount=discount_family
@@ -357,8 +357,8 @@ def test_get_price_with_discount_combination():
     assert round(
         booking.get_price_with_discount_combination(discount_combination)
     ) == round(
-        (seating.price * (1 - discount_student.discount))
-        + (seating.price * 3 * (1 - discount_family.discount))
+        (seating.price * (1 - discount_student.percentage))
+        + (seating.price * 3 * (1 - discount_family.percentage))
     )
 
 
@@ -378,7 +378,7 @@ def test_get_best_discount_combination():
     PerformanceSeatingFactory(performance=performance, seat_group=seat_group)
 
     # Create a family discount - 1 student ticket and 2 adults required
-    discount_family = DiscountFactory(name="Family", discount=0.2)
+    discount_family = DiscountFactory(name="Family", percentage=0.2)
     discount_family.performances.set([performance])
     DiscountRequirementFactory(
         concession_type=concession_type_student, number=1, discount=discount_family
@@ -388,7 +388,7 @@ def test_get_best_discount_combination():
     )
 
     # Create a student discount - 1 student ticket required
-    discount_student = DiscountFactory(name="Student", discount=0.2)
+    discount_student = DiscountFactory(name="Student", percentage=0.2)
     discount_student.performances.set([performance])
     DiscountRequirementFactory(
         concession_type=concession_type_student, number=1, discount=discount_student
@@ -410,7 +410,7 @@ def test_get_best_discount_combination():
     assert booking.performance.discounts.count() == 2
 
     assert booking.performance.discounts.first().name == "Family"
-    assert booking.performance.discounts.first().discount == 0.2
+    assert booking.performance.discounts.first().percentage == 0.2
     assert set(booking.get_best_discount_combination().discount_combination) == set(
         (
             discount_student,
@@ -440,7 +440,7 @@ def test_is_single_discount(students, adults, is_single):
 
 @pytest.mark.django_db
 def test_str_discount():
-    discount = DiscountFactory(discount=0.12, name="student")
+    discount = DiscountFactory(percentage=0.12, name="student")
     assert str(discount) == "12.0% off for student"
 
 
