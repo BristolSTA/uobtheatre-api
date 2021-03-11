@@ -46,3 +46,8 @@ class GrapheneImageMixin:
 
 class FilterSet(django_filters.FilterSet):
     id = GlobalIDFilter()
+
+
+class EnumNode(graphene.Field):
+    value = graphene.String()
+    description = graphene.String()
