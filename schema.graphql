@@ -62,7 +62,6 @@ type ConcessionTypeNode implements Node {
   id: ID!
   name: String!
   description: String
-  discountrequirementSet(offset: Int, before: String, after: String, first: Int, last: Int): DiscountRequirementNodeConnection!
   seatBookings(offset: Int, before: String, after: String, first: Int, last: Int): TicketNodeConnection!
 }
 
@@ -121,16 +120,6 @@ type DiscountRequirementNode implements Node {
   number: Int!
   discount: DiscountNode!
   concessionType: ConcessionTypeNode!
-}
-
-type DiscountRequirementNodeConnection {
-  pageInfo: PageInfo!
-  edges: [DiscountRequirementNodeEdge]!
-}
-
-type DiscountRequirementNodeEdge {
-  node: DiscountRequirementNode
-  cursor: String!
 }
 
 type FieldError {
