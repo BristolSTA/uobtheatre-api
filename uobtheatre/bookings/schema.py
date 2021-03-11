@@ -150,9 +150,6 @@ class BookingNode(DjangoObjectType):
     def resolve_price_breakdown(self, info):
         return self
 
-    def resolve_payments(self, info):
-        return self.payments.all()
-
     class Meta:
         model = Booking
         filterset_class = BookingFilter

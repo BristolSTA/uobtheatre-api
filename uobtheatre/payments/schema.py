@@ -10,7 +10,7 @@ from uobtheatre.utils.schema import FilterSet
 class PaymentFilter(FilterSet):
     class Meta:
         model = Payment
-        fields = "__all__"
+        fields = ("type", "provider", "created_at")
 
 
 class PayObjectUnion(graphene.Union):
