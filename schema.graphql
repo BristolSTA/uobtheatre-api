@@ -116,16 +116,6 @@ type DiscountNode implements Node {
   requirements: [DiscountRequirementNode!]
 }
 
-type DiscountNodeConnection {
-  pageInfo: PageInfo!
-  edges: [DiscountNodeEdge]!
-}
-
-type DiscountNodeEdge {
-  node: DiscountNode
-  cursor: String!
-}
-
 type DiscountRequirementNode implements Node {
   id: ID!
   number: Int!
@@ -239,7 +229,7 @@ type PerformanceNode implements Node {
   disabled: Boolean!
   seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
   capacity: Int
-  discounts(offset: Int, before: String, after: String, first: Int, last: Int): DiscountNodeConnection!
+  discounts: [DiscountNode!]
   bookings(offset: Int, before: String, after: String, first: Int, last: Int, reference: String, user: ID, performance: ID, status: String, id: ID): BookingNodeConnection!
   capacityRemaining: Int
   ticketOptions: [PerformanceSeatGroupNode]

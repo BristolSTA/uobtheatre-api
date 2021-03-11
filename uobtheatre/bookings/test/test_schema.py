@@ -245,7 +245,15 @@ def test_discounts_node(gql_client, gql_id):
     # Create a discount
     discount = DiscountFactory(name="Family", discount=0.2)
     discount.performances.set([performance])
-    discount_requirement = DiscountRequirementFactory(discount=discount, number=1)
+    discount_requirements = [
+        DiscountRequirementFactory(discount=discount, number=2),
+        DiscountRequirementFactory(discount=discount, number=1),
+    ]
+
+    # Single discount - should not appear
+    discount_2 = DiscountFactory(name="Student", discount=0.3)
+    discount_2.performances.set([performance])
+    discount_requirement_2 = DiscountRequirementFactory(discount=discount_2, number=1)
 
     response = gql_client.execute(
         """
@@ -254,24 +262,20 @@ def test_discounts_node(gql_client, gql_id):
             edges {
               node {
                 discounts {
-                  edges {
-                    node {
+                  id
+                  discount
+                  name
+                  seatGroup {
+                    id
+                  }
+                  requirements {
+                    id
+                    number
+                    discount {
                       id
-                      discount
-                      name
-                      seatGroup {
-                        id
-                      }
-                      requirements {
-                        id
-                        number
-                        discount {
-                          id
-                        }
-                        concessionType {
-                          id
-                        }
-                      }
+                    }
+                    concessionType {
+                      id
                     }
                   }
                 }
@@ -287,48 +291,43 @@ def test_discounts_node(gql_client, gql_id):
                 "edges": [
                     {
                         "node": {
-                            "discounts": {
-                                "edges": [
-                                    {
-                                        "node": {
-                                            "id": gql_id(discount.id, "DiscountNode"),
-                                            "discount": discount.discount,
-                                            "name": discount.name,
-                                            "seatGroup": {
-                                                gql_id(
-                                                    discount.seat_group.id,
-                                                    "SeatGroupNode",
-                                                )
-                                            }
-                                            if discount.seat_group
-                                            else None,
-                                            "requirements": [
-                                                {
-                                                    "id": gql_id(
-                                                        requirement.id,
-                                                        "DiscountRequirementNode",
-                                                    ),
-                                                    "number": requirement.number,
-                                                    "discount": {
-                                                        "id": gql_id(
-                                                            requirement.discount.id,
-                                                            "DiscountNode",
-                                                        )
-                                                    },
-                                                    "concessionType": {
-                                                        "id": gql_id(
-                                                            requirement.concession_type.id,
-                                                            "ConcessionTypeNode",
-                                                        )
-                                                    },
-                                                }
-                                                for requirement in discount.requirements.all()
-                                            ],
-                                        }
+                            "discounts": [
+                                {
+                                    "id": gql_id(discount.id, "DiscountNode"),
+                                    "discount": discount.discount,
+                                    "name": discount.name,
+                                    "seatGroup": {
+                                        gql_id(
+                                            discount.seat_group.id,
+                                            "SeatGroupNode",
+                                        )
                                     }
-                                    for discount in performance.discounts.all()
-                                ]
-                            }
+                                    if discount.seat_group
+                                    else None,
+                                    "requirements": [
+                                        {
+                                            "id": gql_id(
+                                                requirement.id,
+                                                "DiscountRequirementNode",
+                                            ),
+                                            "number": requirement.number,
+                                            "discount": {
+                                                "id": gql_id(
+                                                    requirement.discount.id,
+                                                    "DiscountNode",
+                                                )
+                                            },
+                                            "concessionType": {
+                                                "id": gql_id(
+                                                    requirement.concession_type.id,
+                                                    "ConcessionTypeNode",
+                                                )
+                                            },
+                                        }
+                                        for requirement in discount.requirements.all()
+                                    ],
+                                }
+                            ]
                         }
                     }
                 ]

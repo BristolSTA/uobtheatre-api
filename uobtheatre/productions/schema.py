@@ -8,7 +8,7 @@ from graphene_django.filter import (
     GlobalIDMultipleChoiceFilter,
 )
 
-from uobtheatre.bookings.schema import ConcessionTypeNode
+from uobtheatre.bookings.schema import ConcessionTypeNode, DiscountNodeMixin
 from uobtheatre.productions.models import (
     CastMember,
     CrewMember,
@@ -188,7 +188,7 @@ class PerformanceFilter(FilterSet):
     order_by = django_filters.OrderingFilter(fields=(("start"),))
 
 
-class PerformanceNode(DjangoObjectType):
+class PerformanceNode(DjangoObjectType, DiscountNodeMixin):
     capacity_remaining = graphene.Int()
     ticket_options = graphene.List(PerformanceSeatGroupNode)
     min_seat_price = graphene.Int()

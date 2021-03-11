@@ -48,6 +48,17 @@ class DiscountNode(DjangoObjectType):
         interfaces = (relay.Node,)
 
 
+class DiscountNodeMixin:
+    discounts = DjangoListField(DiscountNode)
+
+    def resolve_discounts(self, info):
+        return [
+            discount
+            for discount in self.discounts.all()
+            if not discount.is_single_discount()
+        ]
+
+
 class PriceBreakdownTicketNode(graphene.ObjectType):
     ticket_price = graphene.Int(required=True)
     number = graphene.Int(required=True)
