@@ -68,10 +68,7 @@ class Discount(models.Model):
         """
         Retruns True if this discount applys to a single ticket.
         """
-        return (
-            sum(requirement.number for requirement in self.discount_requirements.all())
-            == 1
-        )
+        return sum(requirement.number for requirement in self.requirements.all()) == 1
 
     def __str__(self) -> str:
         return f"{self.discount * 100}% off for {self.name}"
@@ -93,7 +90,7 @@ class ConcessionType(models.Model):
 class DiscountRequirement(models.Model):
     number = models.SmallIntegerField()
     discount = models.ForeignKey(
-        Discount, on_delete=models.CASCADE, related_name="discount_requirements"
+        Discount, on_delete=models.CASCADE, related_name="requirements"
     )
     concession_type = models.ForeignKey(ConcessionType, on_delete=models.CASCADE)
 
@@ -122,7 +119,7 @@ class DiscountCombination:
         return [
             requirement
             for discount in self.discount_combination
-            for requirement in discount.discount_requirements.all()
+            for requirement in discount.requirements.all()
         ]
 
     def get_concession_map(self) -> Dict:

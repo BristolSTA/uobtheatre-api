@@ -292,8 +292,7 @@ class Performance(models.Model, TimeStampedMixin):
             (
                 discount
                 for discount in self.get_single_discounts()
-                if discount.discount_requirements.first().concession_type
-                == concession_type
+                if discount.requirements.first().concession_type == concession_type
             ),
             None,
         )
@@ -312,7 +311,7 @@ class Performance(models.Model, TimeStampedMixin):
             set(
                 discounts_requirement.concession_type
                 for discount in self.discounts.all()
-                for discounts_requirement in discount.discount_requirements.all()
+                for discounts_requirement in discount.requirements.all()
             )
         )
         concession_list.sort(key=lambda concession: concession.id)

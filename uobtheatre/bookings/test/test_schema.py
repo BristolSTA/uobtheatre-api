@@ -235,6 +235,105 @@ def test_bookings_price_break_down(gql_client_flexible, gql_id):
 
 
 @pytest.mark.django_db
+def test_discounts_node(gql_client, gql_id):
+    performance = PerformanceFactory()
+
+    # Create a discount
+    discount = DiscountFactory(name="Family", discount=0.2)
+    discount.performances.set([performance])
+    discount_requirement = DiscountRequirementFactory(discount=discount, number=1)
+
+    response = gql_client.execute(
+        """
+        {
+          performances {
+            edges {
+              node {
+                discounts {
+                  edges {
+                    node {
+                      id
+                      discount
+                      name
+                      seatGroup {
+                        id
+                      }
+                      requirements {
+                        id
+                        number
+                        discount {
+                          id
+                        }
+                        concessionType {
+                          id
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        """
+    )
+    assert response == {
+        "data": {
+            "performances": {
+                "edges": [
+                    {
+                        "node": {
+                            "discounts": {
+                                "edges": [
+                                    {
+                                        "node": {
+                                            "id": gql_id(discount.id, "DiscountNode"),
+                                            "discount": discount.discount,
+                                            "name": discount.name,
+                                            "seatGroup": {
+                                                gql_id(
+                                                    discount.seat_group.id,
+                                                    "SeatGroupNode",
+                                                )
+                                            }
+                                            if discount.seat_group
+                                            else None,
+                                            "requirements": [
+                                                {
+                                                    "id": gql_id(
+                                                        requirement.id,
+                                                        "DiscountRequirementNode",
+                                                    ),
+                                                    "number": requirement.number,
+                                                    "discount": {
+                                                        "id": gql_id(
+                                                            requirement.discount.id,
+                                                            "DiscountNode",
+                                                        )
+                                                    },
+                                                    "concessionType": {
+                                                        "id": gql_id(
+                                                            requirement.concession_type.id,
+                                                            "ConcessionTypeNode",
+                                                        )
+                                                    },
+                                                }
+                                                for requirement in discount.requirements.all()
+                                            ],
+                                        }
+                                    }
+                                    for discount in performance.discounts.all()
+                                ]
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+    }
+
+
+@pytest.mark.django_db
 def test_booking_inprogress(gql_client_flexible, gql_id):
     """
     We will often want to get an "inprogress" booking for a given booking and user.

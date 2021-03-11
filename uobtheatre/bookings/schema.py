@@ -4,7 +4,14 @@ import graphene
 from graphene import relay
 from graphene_django import DjangoListField, DjangoObjectType
 
-from uobtheatre.bookings.models import Booking, ConcessionType, MiscCost, Ticket
+from uobtheatre.bookings.models import (
+    Booking,
+    ConcessionType,
+    Discount,
+    DiscountRequirement,
+    MiscCost,
+    Ticket,
+)
 from uobtheatre.utils.schema import FilterSet
 
 
@@ -23,6 +30,20 @@ class MiscCostNode(DjangoObjectType):
 class TicketNode(DjangoObjectType):
     class Meta:
         model = Ticket
+        interfaces = (relay.Node,)
+
+
+class DiscountRequirementNode(DjangoObjectType):
+    class Meta:
+        model = DiscountRequirement
+        interfaces = (relay.Node,)
+
+
+class DiscountNode(DjangoObjectType):
+    requirements = DjangoListField(DiscountRequirementNode)
+
+    class Meta:
+        model = Discount
         interfaces = (relay.Node,)
 
 

@@ -279,6 +279,13 @@ def test_performance_schema(gql_client, gql_id):
                 capacity
                 description
                 disabled
+                discounts {
+                    edges {
+                        node {
+                            id
+                        }
+                    }
+                }
                 doorsOpen
                 durationMins
                 end
@@ -312,6 +319,14 @@ def test_performance_schema(gql_client, gql_id):
                             "capacity": performance.capacity,
                             "description": performance.description,
                             "disabled": performance.disabled,
+                            "discounts": {
+                                "edges": [
+                                    {
+                                        "node": gql_id(discount.id, "DiscountNode"),
+                                    }
+                                    for discount in performance.discounts.all()
+                                ]
+                            },
                             "doorsOpen": performance.doors_open.isoformat(),
                             "durationMins": performance.duration().seconds // 60,
                             "end": performance.end.isoformat(),

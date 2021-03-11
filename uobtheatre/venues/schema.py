@@ -18,6 +18,7 @@ class SeatGroupNode(DjangoObjectType):
     class Meta:
         model = SeatGroup
         interfaces = (relay.Node,)
+        exclude = ("performance_set", "performanceseatgroup_set", "discount_set")
 
 
 class VenueNode(GrapheneImageMixin, DjangoObjectType):

@@ -61,6 +61,7 @@ type ConcessionTypeNode implements Node {
   id: ID!
   name: String!
   description: String
+  discountrequirementSet(offset: Int, before: String, after: String, first: Int, last: Int): DiscountRequirementNodeConnection!
   seatBookings(offset: Int, before: String, after: String, first: Int, last: Int): TicketNodeConnection!
 }
 
@@ -103,6 +104,42 @@ scalar DateTime
 type DeleteAccount {
   success: Boolean
   errors: [GQLErrorUnion]
+}
+
+type DiscountNode implements Node {
+  id: ID!
+  name: String!
+  discount: Float!
+  performances(offset: Int, before: String, after: String, first: Int, last: Int, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, orderBy: String): PerformanceNodeConnection!
+  seatGroup: SeatGroupNode
+  requirements: [DiscountRequirementNode!]
+}
+
+type DiscountNodeConnection {
+  pageInfo: PageInfo!
+  edges: [DiscountNodeEdge]!
+}
+
+type DiscountNodeEdge {
+  node: DiscountNode
+  cursor: String!
+}
+
+type DiscountRequirementNode implements Node {
+  id: ID!
+  number: Int!
+  discount: DiscountNode!
+  concessionType: ConcessionTypeNode!
+}
+
+type DiscountRequirementNodeConnection {
+  pageInfo: PageInfo!
+  edges: [DiscountRequirementNodeEdge]!
+}
+
+type DiscountRequirementNodeEdge {
+  node: DiscountRequirementNode
+  cursor: String!
 }
 
 type FieldError {
@@ -201,6 +238,7 @@ type PerformanceNode implements Node {
   disabled: Boolean!
   seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
   capacity: Int
+  discounts(offset: Int, before: String, after: String, first: Int, last: Int): DiscountNodeConnection!
   bookings(offset: Int, before: String, after: String, first: Int, last: Int, reference: String, user: ID, performance: ID, status: String, id: ID): BookingNodeConnection!
   capacityRemaining: Int
   ticketOptions: [PerformanceSeatGroupNode]
@@ -227,16 +265,6 @@ type PerformanceSeatGroupNode implements Node {
   id: ID!
   capacityRemaining: Int
   concessionTypes: [ConcessionTypeBookingType]
-}
-
-type PerformanceSeatGroupNodeConnection {
-  pageInfo: PageInfo!
-  edges: [PerformanceSeatGroupNodeEdge]!
-}
-
-type PerformanceSeatGroupNodeEdge {
-  node: PerformanceSeatGroupNode
-  cursor: String!
 }
 
 type PriceBreakdownNode implements Node {
@@ -348,8 +376,6 @@ type SeatGroupNode implements Node {
   venue: VenueNode!
   capacity: Int
   isInternal: Boolean!
-  performanceSet(offset: Int, before: String, after: String, first: Int, last: Int, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, orderBy: String): PerformanceNodeConnection!
-  performanceseatgroupSet(offset: Int, before: String, after: String, first: Int, last: Int): PerformanceSeatGroupNodeConnection!
   tickets(offset: Int, before: String, after: String, first: Int, last: Int): TicketNodeConnection!
 }
 
