@@ -22,6 +22,7 @@ type ArchiveAccount {
 type BookingNode implements Node {
   id: ID!
   reference: String!
+  user: UserNode
   performance: PerformanceNode!
   status: BookingStatus!
   tickets: [TicketNode!]

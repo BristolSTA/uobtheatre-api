@@ -39,6 +39,9 @@ def test_bookings_schema(gql_client_flexible, gql_id):
                     id
                   }
                   status
+                  user {
+                    id
+                  }
                 }
               }
             }
@@ -74,6 +77,7 @@ def test_bookings_schema(gql_client_flexible, gql_id):
                                     )
                                 },
                                 "status": "INPROGRESS",
+                                "user": {"id": gql_id(booking.user.id, "UserNode")},
                             }
                         }
                     ]

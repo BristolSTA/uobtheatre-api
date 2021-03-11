@@ -3,6 +3,7 @@ import itertools
 import graphene
 from graphene import relay
 from graphene_django import DjangoListField, DjangoObjectType
+from graphql_auth.schema import UserNode
 
 from uobtheatre.bookings.models import (
     Booking,
@@ -157,6 +158,7 @@ BookingStatusSchema = graphene.Enum.from_enum(Booking.BookingStatus)
 class BookingNode(DjangoObjectType):
     price_breakdown = graphene.Field(PriceBreakdownNode)
     tickets = DjangoListField(TicketNode)
+    user = graphene.Field(UserNode)
 
     def resolve_price_breakdown(self, info):
         return self
