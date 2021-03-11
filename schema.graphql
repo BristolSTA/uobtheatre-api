@@ -133,7 +133,7 @@ union GQLErrorUnion = FieldError | NonFieldError
 scalar GenericScalar
 
 type GrapheneImageFieldNode {
-  url: String
+  url: String!
   name: String
 }
 

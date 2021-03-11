@@ -8,7 +8,7 @@ class GrapheneImageField(graphene.Field):
 
 
 class GrapheneImageFieldNode(graphene.ObjectType):
-    url = graphene.String()
+    url = graphene.String(required=True)
     name = graphene.String()
 
 
