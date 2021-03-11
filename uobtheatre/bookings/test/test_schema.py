@@ -185,6 +185,7 @@ def test_bookings_price_break_down(gql_client_flexible, gql_id):
                         id
                       }
                     }
+                    ticketsDiscountedPrice
                     miscCosts {
                       value
                       percentage
@@ -235,6 +236,7 @@ def test_bookings_price_break_down(gql_client_flexible, gql_id):
         "subtotalPrice": booking.subtotal(),
         "miscCostsValue": int(booking.misc_costs_value()),
         "totalPrice": booking.total(),
+        "ticketsDiscountedPrice": booking.total(),
     }
 
 

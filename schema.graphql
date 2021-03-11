@@ -267,6 +267,7 @@ type PriceBreakdownNode implements Node {
   subtotalPrice: Int!
   miscCostsValue: Int!
   totalPrice: Int!
+  ticketsDiscountedPrice: Int!
 }
 
 type PriceBreakdownTicketNode {
@@ -274,7 +275,7 @@ type PriceBreakdownTicketNode {
   number: Int!
   seatGroup: SeatGroupNode
   concessionType: ConcessionTypeNode
-  totalPrice: Int
+  totalPrice: Int!
 }
 
 type ProductionNode implements Node {

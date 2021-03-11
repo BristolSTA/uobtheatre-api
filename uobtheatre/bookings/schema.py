@@ -64,7 +64,7 @@ class PriceBreakdownTicketNode(graphene.ObjectType):
     number = graphene.Int(required=True)
     seat_group = graphene.Field("uobtheatre.venues.schema.SeatGroupNode")
     concession_type = graphene.Field("uobtheatre.bookings.schema.ConcessionTypeNode")
-    total_price = graphene.Int()
+    total_price = graphene.Int(required=True)
 
     def resolve_total_price(self, info):
         return self.ticket_price * self.number
@@ -78,6 +78,7 @@ class PriceBreakdownNode(DjangoObjectType):
     subtotal_price = graphene.Int(required=True)
     misc_costs_value = graphene.Int(required=True)
     total_price = graphene.Int(required=True)
+    tickets_discounted_price = graphene.Int(required=True)
 
     def resolve_tickets_price(self, info):
         return self.tickets_price()
@@ -92,6 +93,9 @@ class PriceBreakdownNode(DjangoObjectType):
         return self.misc_costs_value()
 
     def resolve_total_price(self, info):
+        return self.total()
+
+    def resolve_tickets_discounted_price(self, info):
         return self.total()
 
     def resolve_tickets(self, info):
