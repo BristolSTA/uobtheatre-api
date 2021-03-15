@@ -14,6 +14,8 @@ INSTALLED_APPS = (
     "django.contrib.staticfiles",
     "django.contrib.sites",
     # Third party apps
+    # Hosting
+    "gunicorn",
     # Authentiaction
     "graphql_auth",  # Graphql authentication (user setup)
     ##
@@ -21,8 +23,6 @@ INSTALLED_APPS = (
     "corsheaders",  # CORS
     "autoslug",  # Auto slug
     "graphene_django",  # Graphql
-    # Logging
-    "gunicorn",
     # Your apps
     "uobtheatre.users",
     "uobtheatre.productions",
