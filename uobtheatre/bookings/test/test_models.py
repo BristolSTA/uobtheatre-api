@@ -446,7 +446,7 @@ def test_draft_uniqueness():
     args = {
         "user": UserFactory(),
         "performance": PerformanceFactory(),
-        "status": Booking.BookingStatus.INPROGRESS,
+        "status": Booking.BookingStatus.IN_PROGRESS,
     }
 
     # Check that can make more bookings that are no in_progress
@@ -797,7 +797,7 @@ def test_booking_pay_failure(mock_square):
     """
     Test paying a booking with square
     """
-    booking = BookingFactory(status=Booking.BookingStatus.INPROGRESS)
+    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
     psg = PerformanceSeatingFactory(performance=booking.performance)
     ticket = TicketFactory(booking=booking, seat_group=psg.seat_group)
 
@@ -809,7 +809,7 @@ def test_booking_pay_failure(mock_square):
         booking.pay("nonce")
 
     # Assert the booking is not paid
-    assert booking.status == Booking.BookingStatus.INPROGRESS
+    assert booking.status == Booking.BookingStatus.IN_PROGRESS
 
     # Assert no payments are created
     assert Payment.objects.count() == 0

@@ -144,14 +144,14 @@ class Booking(TimeStampedMixin, models.Model):
     """A booking is for one performance and has many tickets"""
 
     class BookingStatus(models.TextChoices):
-        INPROGRESS = "INPROGRESS", "In Progress"
+        IN_PROGRESS = "IN_PROGRESS", "In Progress"
         PAID = "PAID", "Paid"
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
                 fields=["status", "performance"],
-                condition=models.Q(status="INPROGRESS"),
+                condition=models.Q(status="IN_PROGRESS"),
                 name="one_in_progress_booking_per_user_per_performance",
             )
         ]
@@ -166,7 +166,7 @@ class Booking(TimeStampedMixin, models.Model):
     status = models.CharField(
         max_length=20,
         choices=BookingStatus.choices,
-        default=BookingStatus.INPROGRESS,
+        default=BookingStatus.IN_PROGRESS,
     )
 
     payments = GenericRelation(

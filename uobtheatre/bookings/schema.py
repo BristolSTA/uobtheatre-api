@@ -209,7 +209,7 @@ class CreateBooking(graphene.Mutation):
 
         # If draft booking(s) already exists remove the bookings
         Booking.objects.filter(
-            status=Booking.BookingStatus.INPROGRESS, performance_id=performance_id
+            status=Booking.BookingStatus.IN_PROGRESS, performance_id=performance_id
         ).delete()
 
         # Create the booking
@@ -283,7 +283,7 @@ class PayBooking(SafeMutation):
                 message="The booking price does not match the expected price"
             )
 
-        if booking.status != Booking.BookingStatus.INPROGRESS:
+        if booking.status != Booking.BookingStatus.IN_PROGRESS:
             raise GQLNonFieldException(message="The booking is not in progress")
 
         payment = booking.pay(nonce)

@@ -8,8 +8,8 @@ from uobtheatre.utils.models import TimeStampedMixin
 class Payment(TimeStampedMixin, models.Model):
     class PaymentProvider(models.TextChoices):
         CASH = "CASH", "Cash"
-        SQUARE_ONLINE = "SQUAREONLINE", "Square online"
-        SQUARE_POS = "SQUAREPOS", "Square point of sale"
+        SQUARE_ONLINE = "SQUARE_ONLINE", "Square online"
+        SQUARE_POS = "SQUARE_POS", "Square point of sale"
 
     class PaymentType(models.TextChoices):
         PURCHASE = "PURCHASE", "Purchase payment"

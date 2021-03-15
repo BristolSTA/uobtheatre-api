@@ -20,9 +20,9 @@ from uobtheatre.venues.test.factories import SeatFactory, SeatGroupFactory
 @pytest.mark.django_db
 def test_bookings_schema(gql_client_flexible, gql_id):
 
-    booking = BookingFactory(status=Booking.BookingStatus.INPROGRESS)
+    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
     # Create a booking that is not owned by the same user
-    BookingFactory(status=Booking.BookingStatus.INPROGRESS)
+    BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
     tickets = [TicketFactory(booking=booking) for _ in range(10)]
 
     request_query = """
@@ -78,7 +78,7 @@ def test_bookings_schema(gql_client_flexible, gql_id):
                                         booking.performance.id, "PerformanceNode"
                                     )
                                 },
-                                "status": "INPROGRESS",
+                                "status": "IN_PROGRESS",
                             }
                         }
                     ]
@@ -394,7 +394,7 @@ def test_create_booking_mutation(
 def test_booking_inprogress(gql_client_flexible, gql_id):
     """
     We will often want to get an "inprogress" booking for a given booking and user.
-        bookings(performance: "UGVyZm9ybWFuY2VOb2RlOjE=", status: "INPROGRESS")
+        bookings(performance: "UGVyZm9ybWFuY2VOb2RlOjE=", status: "IN_PROGRESS")
     """
     user = UserFactory()
     performance = PerformanceFactory(id=1)
@@ -408,13 +408,13 @@ def test_booking_inprogress(gql_client_flexible, gql_id):
     # Create some bookings for dfferent performances
     _ = [BookingFactory(user=user) for i in range(10)]
     booking = BookingFactory(
-        user=user, performance=performance, status=Booking.BookingStatus.INPROGRESS
+        user=user, performance=performance, status=Booking.BookingStatus.IN_PROGRESS
     )
 
     request_query = """
     {
       me {
-        bookings(performance: "UGVyZm9ybWFuY2VOb2RlOjE=", status: "INPROGRESS") {
+        bookings(performance: "UGVyZm9ybWFuY2VOb2RlOjE=", status: "IN_PROGRESS") {
           edges {
             node {
               id
@@ -863,7 +863,7 @@ def test_pay_booking_mutation_loggedout(gql_client_flexible, gql_id):
 
 @pytest.mark.django_db
 def test_pay_booking_square_error(mock_square, gql_client_flexible, gql_id):
-    booking = BookingFactory(status=Booking.BookingStatus.INPROGRESS)
+    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
     client = gql_client_flexible
 
     request_query = """
@@ -948,7 +948,7 @@ def test_pay_booking_mutation_payed_booking(gql_client_flexible, gql_id):
 
 @pytest.mark.django_db
 def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
-    booking = BookingFactory(status=Booking.BookingStatus.INPROGRESS)
+    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
     client = gql_client_flexible
 
     request_query = """
@@ -1023,7 +1023,7 @@ def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
                 "payment": {
                     "last4": "1111",
                     "cardBrand": "VISA",
-                    "provider": "SQUAREONLINE",
+                    "provider": "SQUARE_ONLINE",
                     "currency": "GBP",
                     "value": 0,
                 },
