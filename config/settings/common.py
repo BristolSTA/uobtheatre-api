@@ -3,8 +3,6 @@ from distutils.util import strtobool
 from os.path import join
 from typing import List
 
-import dj_database_url
-
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 INSTALLED_APPS = (
@@ -23,6 +21,8 @@ INSTALLED_APPS = (
     "corsheaders",  # CORS
     "autoslug",  # Auto slug
     "graphene_django",  # Graphql
+    # Logging
+    "gunicorn",
     # Your apps
     "uobtheatre.users",
     "uobtheatre.productions",
@@ -30,8 +30,9 @@ INSTALLED_APPS = (
     "uobtheatre.venues",
     "uobtheatre.bookings",
     "uobtheatre.societies",
-    "uobtheatre",
     "uobtheatre.addresses",
+    "uobtheatre.payments",
+    "uobtheatre",
 )
 
 # https://docs.djangoproject.com/en/2.0/topics/http/middleware/
@@ -62,12 +63,14 @@ ADMINS = (("Author", "webmaster@bristolsta.com"),)
 
 # Postgres
 DATABASES = {
-    "default": dj_database_url.config(
-        default=os.getenv(
-            "DATABASE_URL", default="postgres://postgres:@postgres:5432/postgres"
-        ),
-        conn_max_age=int(os.getenv("POSTGRES_CONN_MAX_AGE", "600")),
-    )
+    "default": {
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": os.getenv("DATABASE_NAME", default="postgres"),
+        "USER": os.getenv("DATABASE_USER", default="postgres"),
+        "PASSWORD": os.getenv("DATABASE_PASSWORD", default="postgres"),
+        "HOST": os.getenv("DATABASE_HOST", default="postgres"),
+        "PORT": os.getenv("DATABASE_PORT", default=5432),
+    }
 }
 
 # General
@@ -171,6 +174,7 @@ LOGGING = {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
             "formatter": "simple",
+            "filters": ["require_debug_true"],
         },
         "mail_admins": {
             "level": "ERROR",
@@ -231,4 +235,17 @@ GRAPHENE = {
     "MIDDLEWARE": [
         "graphql_jwt.middleware.JSONWebTokenMiddleware",
     ],
+}
+
+
+# Square payments
+SQUARE_SETTINGS = {
+    "SQUARE_ACCESS_TOKEN": os.getenv(
+        "SQUARE_ACCESS_TOKEN",
+        default="",
+    ),
+    "SQUARE_ENVIRONMENT": os.getenv(
+        "SQUARE_ENVIRONMENT",
+        default="sandbox",
+    ),
 }

@@ -1,6 +1,5 @@
 # Configure database with just url
 # TODO probably get rid of this
-dj-database-url==0.5.0
 django-configurations==2.2
 django-cors-headers==3.7.0
 
@@ -29,3 +28,9 @@ graphene==2.1.8
 graphene-django==2.15.0
 
 pytz==2021.1
+
+# Payments
+squareup>=9.0.0.20210226
+
+# Deployment
+gunicorn==20.0.4
