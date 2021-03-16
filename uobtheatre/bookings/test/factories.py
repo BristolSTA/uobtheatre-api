@@ -1,5 +1,3 @@
-import uuid
-
 import factory
 
 from uobtheatre.bookings.models import (
@@ -13,6 +11,7 @@ from uobtheatre.bookings.models import (
 from uobtheatre.productions.models import PerformanceSeatGroup
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
+from uobtheatre.utils.utils import create_short_uuid
 from uobtheatre.venues.test.factories import SeatGroupFactory
 
 
@@ -36,7 +35,7 @@ class ValueMiscCostFactory(factory.django.DjangoModelFactory):
 
 class DiscountFactory(factory.django.DjangoModelFactory):
 
-    name = factory.Faker("sentence")
+    name = factory.Faker("sentence", nb_words=2)
     discount = 0.2
 
     class Meta:
@@ -45,7 +44,7 @@ class DiscountFactory(factory.django.DjangoModelFactory):
 
 class ConcessionTypeFactory(factory.django.DjangoModelFactory):
 
-    name = factory.Faker("sentence")
+    name = factory.Faker("sentence", nb_words=2)
 
     class Meta:
         model = ConcessionType
@@ -62,7 +61,7 @@ class DiscountRequirementFactory(factory.django.DjangoModelFactory):
 
 class BookingFactory(factory.django.DjangoModelFactory):
 
-    booking_reference = uuid.uuid4()
+    reference = create_short_uuid()
     user = factory.SubFactory(UserFactory)
     performance = factory.SubFactory(PerformanceFactory)
     status = Booking.BookingStatus.PAID
