@@ -4,6 +4,8 @@ from graphene_django.filter import GlobalIDFilter
 from graphql.language.ast import IntValue, StringValue
 from graphql_relay.node.node import from_global_id
 
+from uobtheatre.utils.exceptions import AuthException, SafeMutation
+
 
 class GrapheneImageField(graphene.Field):
     pass
@@ -44,6 +46,16 @@ class GrapheneImageMixin:
         for name, type in self._meta.fields.items():
             if isinstance(type, GrapheneImageField):
                 setattr(self, f"resolve_{name}", generate_resolver(name))
+
+
+class AuthRequiredMixin(SafeMutation):
+    @classmethod
+    def mutate(cls, root, info, **input):
+        if not info.context.user.is_authenticated:
+            exception = AuthException()
+            return cls(errors=exception.resolve(), success=False)
+
+        return super().mutate(root, info, **input)
 
 
 class IdInputField(graphene.ID):

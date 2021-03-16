@@ -341,6 +341,16 @@ class Performance(TimeStampedMixin, models.Model):
             seat_group_count = seat_group_counts.get(seat_group)
             seat_group_counts[seat_group] = (seat_group_count or 0) + 1
 
+        # Then reduce the count if tickets are being deleted. This is because
+        # if we have booked a seat in the front row, and we then decide to
+        # delete that seat and book a new one in the same row we only need 1
+        # seat (i.e no more seats)
+        for ticket in deleted_tickets:
+            # If a SeatGroup with this id does not exist an error will the thrown
+            seat_group = ticket.seat_group
+            seat_group_count = seat_group_counts.get(seat_group)
+            seat_group_counts[seat_group] = (seat_group_count or 0) - 1
+
         # Check each seat group is in the performance
         seat_groups_not_in_perfromance: List[str] = [
             seat_group.name

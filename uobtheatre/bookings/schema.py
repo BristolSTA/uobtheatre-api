@@ -9,11 +9,12 @@ from graphql import GraphQLError
 from uobtheatre.bookings.models import Booking, ConcessionType, MiscCost, Ticket
 from uobtheatre.productions.models import Performance
 from uobtheatre.utils.exceptions import (
+    AuthException,
     GQLFieldException,
     GQLNonFieldException,
     SafeMutation,
 )
-from uobtheatre.utils.schema import FilterSet, IdInputField
+from uobtheatre.utils.schema import AuthRequiredMixin, FilterSet, IdInputField
 from uobtheatre.venues.models import Seat, SeatGroup
 
 
@@ -181,11 +182,13 @@ class UpdateTicketInput(graphene.InputObjectType):
             return Ticket(
                 seat_group=SeatGroup.objects.get(id=self.seat_group_id),
                 concession_type=ConcessionType.objects.get(id=self.concession_type_id),
-                seat=Seat.objects.get(id=self.seat_id),
+                seat=Seat.objects.get(id=self.seat_id)
+                if self.seat_id is not None
+                else None,
             )
 
 
-class CreateBooking(graphene.Mutation):
+class CreateBooking(AuthRequiredMixin, SafeMutation):
     booking = graphene.Field(BookingNode)
 
     class Arguments:
@@ -193,10 +196,7 @@ class CreateBooking(graphene.Mutation):
         tickets = graphene.List(CreateTicketInput, required=False)
 
     @classmethod
-    def mutate(self, root, info, performance_id, tickets=[]):
-        if not info.context.user.is_authenticated:
-            raise GraphQLError("You must be logged in to create a booking")
-
+    def resolve_mutation(self, root, info, performance_id, tickets=[]):
         # Get the performance and if it doesn't exist throw an error
         performance = Performance.objects.get(id=performance_id)
 
@@ -225,7 +225,7 @@ class CreateBooking(graphene.Mutation):
         return CreateBooking(booking=booking)
 
 
-class UpdateBooking(graphene.Mutation):
+class UpdateBooking(AuthRequiredMixin, SafeMutation):
     booking = graphene.Field(BookingNode)
 
     class Arguments:
@@ -233,10 +233,7 @@ class UpdateBooking(graphene.Mutation):
         tickets = graphene.List(UpdateTicketInput, required=False)
 
     @classmethod
-    def mutate(self, root, info, booking_id, tickets=[]):
-        if not info.context.user.is_authenticated:
-            raise GraphQLError("You must be logged in to update a booking")
-
+    def resolve_mutation(self, root, info, booking_id, tickets=[]):
         booking = Booking.objects.get(id=booking_id, user=info.context.user)
 
         # Conert the given tickets to ticket objects
@@ -246,7 +243,7 @@ class UpdateBooking(graphene.Mutation):
         # Check the capacity of the show and its seat_groups
         err = booking.performance.check_capacity(ticket_objects)
         if err:
-            raise GraphQLError(err)
+            raise GQLNonFieldException(message=err, code=400)
 
         # Save all the validated tickets
         for ticket in addTickets:
@@ -259,7 +256,7 @@ class UpdateBooking(graphene.Mutation):
         return UpdateBooking(booking=booking)
 
 
-class PayBooking(SafeMutation):
+class PayBooking(AuthRequiredMixin, SafeMutation):
     booking = graphene.Field(BookingNode)
     payment = graphene.Field("uobtheatre.payments.schema.PaymentNode")
 
@@ -270,11 +267,6 @@ class PayBooking(SafeMutation):
 
     @classmethod
     def resolve_mutation(self, root, info, booking_id, price, nonce):
-        if not info.context.user.is_authenticated:
-            raise GQLNonFieldException(
-                message="You must be logged in to pay for a booking"
-            )
-
         # Get the performance and if it doesn't exist throw an error
         booking = Booking.objects.get(id=booking_id)
 

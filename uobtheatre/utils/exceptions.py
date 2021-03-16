@@ -100,6 +100,11 @@ class SquareException(GQLNonFieldException):
         super().__init__(square_response.reason_phrase, square_response.status_code)
 
 
+class AuthException(GQLNonFieldException):
+    def __init__(self, message="Authentication Error"):
+        super().__init__(message, code=401)
+
+
 class SafeMutation(MutationResult, graphene.Mutation):
     class Meta:
         abstract = True

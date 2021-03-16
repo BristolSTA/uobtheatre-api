@@ -780,6 +780,62 @@ def test_update_booking(
     assert updated_booking_tickets == expected_booking_tickets
 
 
+@pytest.mark.django_db
+def test_update_booking_capacity_error(gql_client_flexible):
+
+    seat_group = SeatGroupFactory()
+    concession_type = ConcessionTypeFactory()
+    booking = BookingFactory(user=gql_client_flexible.get_user())
+    request_query = """
+        mutation {
+            updateBooking (
+                bookingId: "%s"
+                tickets: [
+                  {
+                    seatGroupId: "%s"
+                    concessionTypeId: "%s"
+                  }
+                ]
+            ){
+                booking{
+                    id
+                }
+                success
+                errors {
+                  __typename
+                  ... on NonFieldError {
+                    message
+                    code
+                  }
+                }
+            }
+        }
+        """ % (
+        to_global_id("BookingNode", booking.id),
+        to_global_id("SeatGroupNode", seat_group.id),
+        to_global_id("ConcessionTypeNode", concession_type.id),
+    )
+    response = gql_client_flexible.execute(request_query)
+
+    print(response)
+    assert response == {
+        "data": {
+            "updateBooking": {
+                "booking": None,
+                "success": False,
+                "errors": [
+                    {
+                        "__typename": "NonFieldError",
+                        "message": f"You cannot book a seat group that is not assigned to this performance, you have booked {seat_group} but the performance only has ",
+                        "code": "400",
+                    }
+                ],
+            }
+        }
+    }
+
+
+@pytest.mark.django_db
 def test_pay_booking_mutation_wrong_price(gql_client_flexible, gql_id):
     booking = BookingFactory()
 
@@ -812,47 +868,6 @@ def test_pay_booking_mutation_wrong_price(gql_client_flexible, gql_id):
                     {
                         "__typename": "NonFieldError",
                         "message": "The booking price does not match the expected price",
-                        "code": None,
-                    }
-                ],
-            }
-        }
-    }
-
-
-@pytest.mark.django_db
-def test_pay_booking_mutation_loggedout(gql_client_flexible, gql_id):
-    booking = BookingFactory()
-    client = gql_client_flexible
-    client.logout()
-
-    request_query = """
-    mutation {
-	payBooking(
-            bookingId: "%s"
-            price: 102
-            nonce: "cnon:card-nonce-ok"
-        ) {
-            success
-            errors {
-              __typename
-              ... on NonFieldError {
-                message
-                code
-              }
-            }
-          }
-        }
-    """
-    response = client.execute(request_query % gql_id(booking.id, "BookingNode"))
-    assert response == {
-        "data": {
-            "payBooking": {
-                "success": False,
-                "errors": [
-                    {
-                        "__typename": "NonFieldError",
-                        "message": "You must be logged in to pay for a booking",
                         "code": None,
                     }
                 ],
