@@ -23,7 +23,7 @@ type BookingNode implements Node {
   id: ID!
   createdAt: DateTime!
   updatedAt: DateTime!
-  bookingReference: UUID!
+  reference: String!
   performance: PerformanceNode!
   status: BookingStatus!
   tickets: [TicketNode!]
@@ -42,7 +42,7 @@ type BookingNodeEdge {
 }
 
 enum BookingStatus {
-  INPROGRESS
+  IN_PROGRESS
   PAID
 }
 
@@ -68,6 +68,8 @@ type ConcessionTypeNode implements Node {
 }
 
 type CreateBooking {
+  success: Boolean
+  errors: [GQLErrorUnion]
   booking: BookingNode
 }
 
@@ -144,7 +146,7 @@ type MiscCostNode implements Node {
 
 type Mutation {
   createBooking(performanceId: IdInputField, tickets: [CreateTicketInput]): CreateBooking
-  updateBooking(bookingId: IdInputField, tickets: [CreateTicketInput]): UpdateBooking
+  updateBooking(bookingId: IdInputField, tickets: [UpdateTicketInput]): UpdateBooking
   payBooking(bookingId: IdInputField!, nonce: String!, price: Int!): PayBooking
   register(email: String!, firstName: String!, lastName: String!, password1: String!, password2: String!): Register
   verifyAccount(token: String!): VerifyAccount
@@ -242,8 +244,8 @@ type PaymentNodeEdge {
 
 enum PaymentProvider {
   CASH
-  SQUAREONLINE
-  SQUAREPOS
+  SQUARE_ONLINE
+  SQUARE_POS
 }
 
 enum PaymentType {
@@ -265,7 +267,7 @@ type PerformanceNode implements Node {
   disabled: Boolean!
   seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
   capacity: Int
-  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, bookingReference: UUID, user: ID, performance: ID, status: String, id: ID): BookingNodeConnection!
+  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, reference: String, user: ID, performance: ID, status: String, id: ID): BookingNodeConnection!
   capacityRemaining: Int
   ticketOptions: [PerformanceSeatGroupNode]
   minSeatPrice: Int
@@ -409,6 +411,7 @@ type SeatGroupNode implements Node {
   description: String
   venue: VenueNode!
   capacity: Int
+  seats: SeatNode
   isInternal: Boolean!
   performanceSet(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, orderBy: String): PerformanceNodeConnection!
   performanceseatgroupSet(offset: Int, before: String, after: String, first: Int, last: Int): PerformanceSeatGroupNodeConnection!
@@ -423,6 +426,14 @@ type SeatGroupNodeConnection {
 type SeatGroupNodeEdge {
   node: SeatGroupNode
   cursor: String!
+}
+
+type SeatNode implements Node {
+  id: ID!
+  row: String
+  number: String
+  seatgroupSet(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
+  ticketSet(offset: Int, before: String, after: String, first: Int, last: Int): TicketNodeConnection!
 }
 
 type SendPasswordResetEmail {
@@ -467,6 +478,7 @@ type TicketNode implements Node {
   seatGroup: SeatGroupNode!
   booking: BookingNode!
   concessionType: ConcessionTypeNode!
+  seat: SeatNode
 }
 
 type TicketNodeConnection {
@@ -479,15 +491,22 @@ type TicketNodeEdge {
   cursor: String!
 }
 
-scalar UUID
-
 type UpdateAccount {
   success: Boolean
   errors: [GQLErrorUnion]
 }
 
 type UpdateBooking {
+  success: Boolean
+  errors: [GQLErrorUnion]
   booking: BookingNode
+}
+
+input UpdateTicketInput {
+  seatGroupId: IdInputField!
+  concessionTypeId: IdInputField!
+  seatId: IdInputField
+  id: IdInputField
 }
 
 type UserNode implements Node {
@@ -500,7 +519,7 @@ type UserNode implements Node {
   dateJoined: DateTime!
   id: ID!
   email: String!
-  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, bookingReference: UUID, user: ID, performance: ID, status: String, id: ID): BookingNodeConnection!
+  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, reference: String, user: ID, performance: ID, status: String, id: ID): BookingNodeConnection!
   pk: Int
   archived: Boolean
   verified: Boolean

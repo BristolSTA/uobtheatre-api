@@ -15,8 +15,8 @@
             "password": "pbkdf2_sha256$216000$WVaMk4Jsevp3$3yR+J4ug9WeJFvNuhdvj+mWbiwyNrSjMNeNTiSAPGNg=",
             "last_login": null,
             "is_superuser": true,
-            "first_name": "",
-            "last_name": "",
+            "first_name": "james",
+            "last_name": "jelgar",
             "email": "admin@email.com",
             "is_staff": true,
             "is_active": true

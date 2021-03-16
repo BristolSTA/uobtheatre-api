@@ -221,8 +221,7 @@ def test_get_valid_discounts():
 
 @pytest.mark.django_db
 def test_get_price():
-    venue = VenueFactory()
-    performance = PerformanceFactory(venue=venue)
+    performance = PerformanceFactory()
     booking = BookingFactory(performance=performance)
 
     # Set seat type price for performance
@@ -242,6 +241,61 @@ def test_get_price():
         booking.get_price()
         == performance_seat_group.price * 2 + performance_seat_group_2.price
     )
+
+
+@pytest.mark.django_db
+def test_ticket_price():
+    performance = PerformanceFactory()
+    booking = BookingFactory(performance=performance)
+
+    # Set seat type price for performance
+    performance_seat_group = PerformanceSeatingFactory(performance=performance)
+
+    # Create a seat booking
+    ticket = TicketFactory(
+        booking=booking, seat_group=performance_seat_group.seat_group
+    )
+
+    assert ticket.seat_price() == performance_seat_group.price
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "discount_amount, number_req, seat_group_price, discount_price",
+    [
+        (0.2, 1, 1200, 960),
+        (0.3, 1, 1300, 910),
+        (0, 1, 1200, 1200),
+        (0.2, 2, 1200, 1200),
+    ],
+)
+def test_ticket_discounted_price(
+    discount_amount, number_req, seat_group_price, discount_price
+):
+    performance = PerformanceFactory()
+    booking = BookingFactory(performance=performance)
+
+    test_concession_type = ConcessionTypeFactory(name="Student")
+    discount_student = DiscountFactory(name="Student", discount=discount_amount)
+    discount_student.performances.set([performance])
+    DiscountRequirementFactory(
+        concession_type=test_concession_type,
+        number=number_req,
+        discount=discount_student,
+    )
+    # Set seat type price for performance
+    performance_seat_group = PerformanceSeatingFactory(
+        performance=performance, price=seat_group_price
+    )
+
+    # Create a seat booking
+    ticket = TicketFactory(
+        booking=booking,
+        concession_type=test_concession_type,
+        seat_group=performance_seat_group.seat_group,
+    )
+
+    assert ticket.discounted_price() == discount_price
 
 
 @pytest.mark.django_db
@@ -396,7 +450,7 @@ def test_str_discount():
 @pytest.mark.django_db
 def test_str_booking():
     booking = BookingFactory()
-    assert str(booking) == str(booking.booking_reference)
+    assert str(booking) == str(booking.reference)
 
 
 @pytest.mark.django_db

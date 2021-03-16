@@ -37,7 +37,7 @@ def test_bookings_schema(gql_client_flexible, gql_id):
                   tickets {
                     id
                   }
-                  bookingReference
+                  reference
                   performance {
                     id
                   }
@@ -72,7 +72,7 @@ def test_bookings_schema(gql_client_flexible, gql_id):
                                     {"id": gql_id(ticket.id, "TicketNode")}
                                     for ticket in tickets
                                 ],
-                                "bookingReference": str(booking.booking_reference),
+                                "reference": str(booking.reference),
                                 "performance": {
                                     "id": gql_id(
                                         booking.performance.id, "PerformanceNode"

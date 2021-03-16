@@ -28,7 +28,11 @@ psycopg2>=2.8.6
 graphene==2.1.8
 graphene-django==2.15.0
 
+# timezone package
 pytz==2021.1
 
 # Payments
 squareup>=9.0.0.20210226
+
+# generates short UUID's for booking reference
+shortuuid>=1.0.1

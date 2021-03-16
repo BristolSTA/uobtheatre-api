@@ -34,7 +34,7 @@ class SeatBookingInline(admin.StackedInline):
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
     inlines = [SeatBookingInline]
-    list_display = ("booking_reference", "view_price", "view_price_with_discount")
+    list_display = ("reference", "view_price", "view_price_with_discount")
 
     def view_price(self, booking):
         return format_html("<p> {} </p>", booking.get_price())
