@@ -30,6 +30,13 @@ jobs:
 
 
     steps:
+    - uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
     - uses: actions/checkout@v2
 
     - name: set up python 3.8
@@ -37,30 +44,19 @@ jobs:
       with:
         python-version: "3.8"
 
-    - name: Install pipenv
-      run: |
-        sudo apt-get install libpq-dev -y
-        python -m pip install --upgrade pipenv wheel
-
-    - name: Cache Pipenv virtualenv
-      uses: actions/cache@v1
-      id: pipenv-cache
-      with:
-        path: ~/.pipenv
-        key: ${{ runner.os }}-pipenv-v2-${{ hashFiles('**/Pipfile.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-pipenv-v2-
-
     - name: Install dependencies
-      if: steps.pipenv-cache.outputs.cache-hit != 'true'
-      run: pipenv install --dev
+      run: pip install -r requirements.txt -r dev-requirements.txt
 
     - name: black - formatting
       run: |
-        pipenv run black uobtheatre
+        black uobtheatre
 
-    - name: pytest - check tests pass and coverage is above 99%
+    - name: isort - sort imports
       run: |
-        pipenv run pytest --cov uobtheatre --cov-fail-under 99
+        isort uobtheatre
+
+    - name: pytest - check tests pass and coverage is 100%
+      run: |
+        pytest --cov uobtheatre --cov-fail-under 100
       env:
         DATABASE_URL: postgres://postgres:postgres@0.0.0.0:5432/postgres

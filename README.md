@@ -7,27 +7,38 @@ API for uobtheatre. Check out the project's [documentation](http://BristolSTA.gi
 
 # Prerequisites
 
+- Python 3.8
 - [Docker](https://docs.docker.com/get-docker/)
-- [Pipenv](https://pypi.org/project/pipenv/)
+- [virtualenv](https://virtualenv.pypa.io/en/latest/installation.html)
 
-Create a pipenv environment and use it
+Create a virtualenv and use it
 
 ```
-pipenv --python 3.8
-pipenv install --dev
-pipenv shell
+virtualenv -p python3.8 .venv
+source .venv/bin/activate
+pip install -r requirements.txt dev-requirements.txt
 ```
 
 If you need to use a python thing locally (not in docker) go into pipenv with `pipenv shell`.
 
 ## Pre-commit
 
-Pre-commit runs everything required before a pr can be merged. It should
-already be installed for you in pipenv so just make sure you are in pipenv
+Pre-commit runs everything required before a pr can be merged.
+
+## Install in pipenv
+It should already be installed for you in pipenv so just make sure you are in pipenv
 shell (`pipenv shell`) before running `git commit`.
 
+Then run `pre-commit install`
+
+## Install locally
 If you don't want to live inside a pipenv shell then just install pre-commit
-locally `pip install pre-commit`.
+locally `pip install pre-commit` (or `python3 -m pip install pre-commit`).
+
+Then run `pre-commit install`
+
+## Visual studio dev container
+TODO if people care
 
 # Local Development :computer:
 
@@ -88,3 +99,21 @@ and to run a single test
 ```
 docker-compose run --rm api pytest --cov uobtheatre -vv -s uobtheatre/bookings/test/test_views.py -k 'test_name'
 ```
+
+## Seeding
+
+There are a load of fixtures save in fixture.json in all the moduels. These can be loaded into the database with make seed.
+Most notably this will add an admin users called with the following details:
+
+email: admin@email.com
+password: strongpassword
+
+## Packages :package:
+
+When adding a package run
+
+`pipenv install package-name`
+
+This will add the package to the pipenv environemnt. However it will not update the docker image. This means you will need to remove the current image with `make clean` and rebuild with `make up`.
+
+This also means when starting work on a new branch which has a new package you will also need to clean and rebuild.

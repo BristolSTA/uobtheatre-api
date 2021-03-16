@@ -26,6 +26,18 @@
           "slug": "example-show"
         }
     },
+    {
+        "model": "productions.production",
+        "pk": 2,
+        "fields": {
+          "name": "Example show 2",
+          "subtitle": "This is an example show",
+          "description": "The description of the example show",
+          "society": 1,
+          "warnings": [1],
+          "slug": "example-show-2"
+        }
+    },
 
     {
         "model": "productions.performance",
@@ -33,8 +45,10 @@
         "fields": {
           "production": 1,
           "venue": 1,
+          "doors_open": "2020-11-11T12:04:32+0000",
           "start": "2020-11-11T12:24:32+0000",
-          "end": "2020-11-11T14:24:32+0000"
+          "end": "2020-11-11T14:24:32+0000",
+          "disabled": true
         }
     },
     {
@@ -43,8 +57,10 @@
         "fields": {
           "production": 1,
           "venue": 1,
+          "doors_open": "2020-11-12T12:04:32+0000",
           "start": "2020-11-12T12:24:32+0000",
-          "end": "2020-11-12T14:24:32+0000"
+          "end": "2020-11-12T14:24:32+0000",
+          "disabled": false
         }
     },
     {
@@ -53,8 +69,22 @@
         "fields": {
           "production": 1,
           "venue": 2,
+          "doors_open": "2020-11-13T12:04:32+0000",
           "start": "2020-11-13T12:24:32+0000",
-          "end": "2020-11-13T14:24:32+0000"
+          "end": "2020-11-13T14:24:32+0000",
+          "disabled": false
+        }
+    },
+    {
+        "model": "productions.performance",
+        "pk": 4,
+        "fields": {
+          "production": 2,
+          "venue": 1,
+          "doors_open": "2020-11-11T12:04:32+0000",
+          "start": "2020-12-11T12:24:32+0000",
+          "end": "2020-12-11T14:24:32+0000",
+          "disabled": true
         }
     },
     {
@@ -73,6 +103,15 @@
           "production": 1
         }
     },
+    {
+      "model": "productions.productionteammember",
+      "pk": 1,
+      "fields": {
+        "name": "James",
+        "role": "director",
+        "production": 1
+      }
+  },
     {
         "model": "productions.castmember",
         "pk": 1,

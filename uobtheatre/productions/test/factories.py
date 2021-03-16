@@ -7,6 +7,7 @@ from uobtheatre.productions.models import (
     CrewRole,
     Performance,
     Production,
+    ProductionTeamMember,
     Society,
     Venue,
     Warning,
@@ -37,9 +38,12 @@ class ProductionFactory(factory.django.DjangoModelFactory):
 
 class PerformanceFactory(factory.django.DjangoModelFactory):
 
+    doors_open = factory.Faker("date_time", tzinfo=timezone.get_current_timezone())
     start = factory.Faker("date_time", tzinfo=timezone.get_current_timezone())
     end = factory.Faker("date_time", tzinfo=timezone.get_current_timezone())
     extra_information = factory.Faker("sentence")
+    description = factory.Faker("sentence")
+    disabled = factory.Faker("boolean")
     production = factory.SubFactory(ProductionFactory)
     venue = factory.SubFactory(VenueFactory)
 
@@ -63,6 +67,15 @@ class CrewMemberFactory(factory.django.DjangoModelFactory):
         model = CrewMember
 
 
+class ProductionTeamMemberFactory(factory.django.DjangoModelFactory):
+    name = factory.Faker("sentence", nb_words=3)
+    role = factory.Faker("sentence", nb_words=3)
+    production = factory.SubFactory(ProductionFactory)
+
+    class Meta:
+        model = ProductionTeamMember
+
+
 class CastMemberFactory(factory.django.DjangoModelFactory):
     name = factory.Faker("sentence", nb_words=3)
     role = factory.Faker("sentence", nb_words=3)
@@ -78,3 +91,15 @@ class WarningFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = Warning
+
+
+def create_production(start, end, production_id=None):
+    if production_id is None:
+        production = ProductionFactory()
+    else:
+        production = ProductionFactory(id=production_id)
+    diff = end - start
+    for i in range(5):
+        time = start + (diff / 5) * i
+        PerformanceFactory(start=time, end=time, production=production)
+    return production

@@ -1,1 +1,25 @@
-[{"model": "users.user", "pk": 1, "fields": {"username": "Jelgar", "email": "james.elgar@bristolsta.com", "password": "somelongpassword"}}]
+[
+    {
+        "model": "graphql_auth.userstatus",
+        "pk": 1,
+        "fields": {
+            "user": 1,
+            "verified": true,
+            "archived": false
+        }
+    },
+    {
+        "model": "users.user",
+        "pk": 1,
+        "fields": {
+            "password": "pbkdf2_sha256$216000$WVaMk4Jsevp3$3yR+J4ug9WeJFvNuhdvj+mWbiwyNrSjMNeNTiSAPGNg=",
+            "last_login": null,
+            "is_superuser": true,
+            "first_name": "james",
+            "last_name": "jelgar",
+            "email": "admin@email.com",
+            "is_staff": true,
+            "is_active": true
+        }
+    }
+]

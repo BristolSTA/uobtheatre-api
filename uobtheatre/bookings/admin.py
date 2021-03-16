@@ -6,14 +6,12 @@ from uobtheatre.bookings.models import (
     ConcessionType,
     Discount,
     DiscountRequirement,
-    PercentageMiscCost,
+    MiscCost,
     Ticket,
-    ValueMiscCost,
 )
 
 admin.site.register(ConcessionType)
-admin.site.register(PercentageMiscCost)
-admin.site.register(ValueMiscCost)
+admin.site.register(MiscCost)
 
 
 class DiscountRequirementInline(admin.StackedInline):
@@ -36,7 +34,7 @@ class SeatBookingInline(admin.StackedInline):
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
     inlines = [SeatBookingInline]
-    list_display = ("booking_reference", "view_price", "view_price_with_discount")
+    list_display = ("reference", "view_price", "view_price_with_discount")
 
     def view_price(self, booking):
         return format_html("<p> {} </p>", booking.get_price())
@@ -46,5 +44,6 @@ class BookingAdmin(admin.ModelAdmin):
             "<p> {} </p>", booking.get_best_discount_combination_with_price()[1]
         )
 
-    view_price.short_description = "Price"
-    view_price_with_discount.short_description = "Discounted Price"
+    view_price.short_description = "Price"  # type: ignore
+
+    view_price_with_discount.short_description = "Discounted Price"  # type: ignore

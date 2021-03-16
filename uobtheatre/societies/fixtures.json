@@ -4,7 +4,10 @@
         "pk": 1,
         "fields": {
           "name": "STA",
-          "logo": "media/example.jpg"
+          "description": "tech",
+          "logo": "media/example.jpg",
+          "banner": "media/example.jpg",
+          "slug": "sta"
         }
     },
     {
@@ -12,7 +15,9 @@
         "pk": 2,
         "fields": {
           "name": "MTB",
-          "logo": "media/example.jpg"
+          "description": "musical theatre",
+          "logo": "media/example.jpg",
+          "slug": "mtb"
         }
     },
     {
@@ -20,7 +25,10 @@
         "pk": 3,
         "fields": {
           "name": "Dramsoc",
-          "logo": "media/example.jpg"
+          "description": "drama",
+          "logo": "media/example.jpg",
+          "banner": "media/example.jpg",
+          "slug": "dramsoc"
         }
     }
 ]

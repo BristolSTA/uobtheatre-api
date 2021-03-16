@@ -1,18 +1,10 @@
-"""
-With these settings, tests run faster.
-"""
+import tempfile
 
-from .base import *  # noqa
-from .base import env
+from .local import *  # noqa: F403,F401
 
 # GENERAL
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#secret-key
-SECRET_KEY = env(
-    "DJANGO_SECRET_KEY",
-    default="xZ3eyZiG712SaSylJh4GCnlon0k7q4nmO0uSAlHJQk6x7m75IAFQRXzZUfydc82y",
-)
-# https://docs.djangoproject.com/en/dev/ref/settings/#test-runner
 TEST_RUNNER = "django.test.runner.DiscoverRunner"
 
 # CACHES
@@ -32,6 +24,7 @@ PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
 # TEMPLATES
 # ------------------------------------------------------------------------------
+TEMPLATES[-1]["APP_DIRS"] = False  # type: ignore[index] # noqa F405
 TEMPLATES[-1]["OPTIONS"]["loaders"] = [  # type: ignore[index] # noqa F405
     (
         "django.template.loaders.cached.Loader",
@@ -47,5 +40,6 @@ TEMPLATES[-1]["OPTIONS"]["loaders"] = [  # type: ignore[index] # noqa F405
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-backend
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 
-# Your stuff...
+# MEDIA
 # ------------------------------------------------------------------------------
+MEDIA_ROOT = tempfile.mkdtemp()

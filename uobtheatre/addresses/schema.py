@@ -1,12 +1,14 @@
-from rest_framework import serializers
+from graphene import relay
+from graphene_django import DjangoObjectType
 
 from uobtheatre.addresses.models import Address
 
 
-class AddressSerializer(serializers.ModelSerializer):
+class AddressNode(DjangoObjectType):
     class Meta:
         model = Address
-        fields = [
+        interfaces = (relay.Node,)
+        fields = (
             "building_name",
             "building_number",
             "street",
@@ -14,4 +16,4 @@ class AddressSerializer(serializers.ModelSerializer):
             "postcode",
             "latitude",
             "longitude",
-        ]
+        )
