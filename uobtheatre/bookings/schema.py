@@ -282,7 +282,6 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
 
 
 class Mutation(graphene.ObjectType):
-    # booking = BookingMutation.Field()
     create_booking = CreateBooking.Field()
     update_booking = UpdateBooking.Field()
     pay_booking = PayBooking.Field()
