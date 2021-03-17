@@ -57,6 +57,6 @@ jobs:
 
     - name: pytest - check tests pass and coverage is 100%
       run: |
-        pytest --cov uobtheatre --cov-fail-under 100
+        pytest --cov uobtheatre --cov-fail-under 100 -m "not square_integration"
       env:
         DATABASE_URL: postgres://postgres:postgres@0.0.0.0:5432/postgres

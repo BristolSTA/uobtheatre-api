@@ -1,7 +1,7 @@
 import factory
 
 from uobtheatre.addresses.test.factories import AddressFactory
-from uobtheatre.venues.models import SeatGroup, Venue
+from uobtheatre.venues.models import Seat, SeatGroup, Venue
 
 
 class VenueFactory(factory.django.DjangoModelFactory):
@@ -24,3 +24,11 @@ class SeatGroupFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = SeatGroup
+
+
+class SeatFactory(factory.django.DjangoModelFactory):
+    row = factory.Faker("bothify", text="???")
+    number = factory.Faker("bothify", text="###")
+
+    class Meta:
+        model = Seat
