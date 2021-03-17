@@ -640,7 +640,6 @@ def test_create_booking_serializer_seat_group_is_from_performance_validation():
                     "seat_group_id": 1,
                     "concession_type_id": 1,
                     "seat_id": 1,
-                    "id": 2,
                 },
             ],
             [
@@ -648,7 +647,6 @@ def test_create_booking_serializer_seat_group_is_from_performance_validation():
                     "seat_group_id": 1,
                     "concession_type_id": 1,
                     "seat_id": 1,
-                    "id": 2,
                 }
             ],
             [],
@@ -694,13 +692,11 @@ def test_create_booking_serializer_seat_group_is_from_performance_validation():
                     "seat_group_id": 2,
                     "concession_type_id": 1,
                     "seat_id": 1,
-                    "id": 1,
                 },
                 {
                     "seat_group_id": 1,
                     "concession_type_id": 1,
                     "seat_id": 1,
-                    "id": 2,
                 },
             ],
             [
@@ -708,13 +704,11 @@ def test_create_booking_serializer_seat_group_is_from_performance_validation():
                     "seat_group_id": 2,
                     "concession_type_id": 1,
                     "seat_id": 1,
-                    "id": 1,
                 },
                 {
                     "seat_group_id": 1,
                     "concession_type_id": 1,
                     "seat_id": 1,
-                    "id": 2,
                 },
             ],
             [],
@@ -734,7 +728,6 @@ def test_create_booking_serializer_seat_group_is_from_performance_validation():
                     "seat_group_id": 1,
                     "concession_type_id": 1,
                     "seat_id": 1,
-                    "id": 2,
                 }
             ],
             [
@@ -742,7 +735,6 @@ def test_create_booking_serializer_seat_group_is_from_performance_validation():
                     "seat_group_id": 1,
                     "concession_type_id": 1,
                     "seat_id": 1,
-                    "id": 2,
                 }
             ],
             [
@@ -861,3 +853,75 @@ def test_booking_pay_integration():
     assert isinstance(payment.provider_payment_id, str)
     assert payment.provider == Payment.PaymentProvider.SQUARE_ONLINE
     assert payment.type, Payment.PaymentType.PURCHASE
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "ticket1, ticket2, eq",
+    [
+        (
+            {
+                "seat_group_id": 1,
+                "concession_type_id": 1,
+                "seat_id": 1,
+            },
+            {
+                "seat_group_id": 1,
+                "concession_type_id": 1,
+                "seat_id": 1,
+            },
+            True,
+        ),
+        (
+            # Check not eq with different seat_group
+            {
+                "seat_group_id": 2,
+                "concession_type_id": 1,
+                "seat_id": 1,
+            },
+            {
+                "seat_group_id": 1,
+                "concession_type_id": 1,
+                "seat_id": 1,
+            },
+            False,
+        ),
+        (
+            # Check not eq with different concession_type
+            {
+                "seat_group_id": 1,
+                "concession_type_id": 1,
+                "seat_id": 1,
+            },
+            {
+                "seat_group_id": 1,
+                "concession_type_id": 2,
+                "seat_id": 1,
+            },
+            False,
+        ),
+        (
+            # Check not eq with different seat
+            {
+                "seat_group_id": 1,
+                "concession_type_id": 1,
+                "seat_id": 2,
+            },
+            {
+                "seat_group_id": 1,
+                "concession_type_id": 1,
+                "seat_id": 1,
+            },
+            False,
+        ),
+    ],
+)
+def test_ticket_eq(ticket1, ticket2, eq):
+    SeatGroupFactory(id=1)
+    SeatGroupFactory(id=2)
+    ConcessionTypeFactory(id=1)
+    ConcessionTypeFactory(id=2)
+    SeatFactory(id=1)
+    SeatFactory(id=2)
+
+    assert (Ticket(**ticket1) == Ticket(**ticket2)) == eq

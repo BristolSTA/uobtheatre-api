@@ -328,9 +328,6 @@ class Booking(TimeStampedMixin, models.Model):
                 # if the ticket exists in the booking, but not in the requested tickets - delete it.
                 deleteTickets.append(ticket)
 
-        # existing tickets should be empty at this point
-        # To.Do. May need exception??
-        addTickets += existingTickets.values()
         return addTickets, deleteTickets
 
     def pay(self, nonce):
@@ -397,3 +394,41 @@ class Ticket(models.Model):
         return self.booking.performance.performance_seat_groups.get(
             seat_group=self.seat_group
         ).price
+
+    def __hash__(self):
+        """
+        Not sure about this one.
+        I think we have to be very careful to ensure the Ticket is not change
+        (when it is being hashed) as any change would change its hash.
+        What I think this means is we should treat tickets as immutable when
+        hashing them.
+        """
+        return hash(
+            (
+                self.id,
+                self.seat_group.id,
+                self.seat.id,
+                self.booking.id,
+                self.concession_type.id,
+            )
+        )
+
+    def __eq__(self, other):
+        """
+        If a ticket has an id then we can use the super's eq else
+
+        if two tickets are equal if the following match:
+        - seat_group
+        - concession_type
+        - seat
+        """
+        # If either of the tickets have an id
+        if self.id is not None or other.id is not None:
+            return super().__eq__(other)
+
+        # Attributes required to match
+        attributes = ["seat_group", "concession_type", "seat"]
+        return all(
+            getattr(self, attribute) == getattr(other, attribute)
+            for attribute in attributes
+        )
