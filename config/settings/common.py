@@ -179,23 +179,40 @@ LOGGING = {
             "level": "ERROR",
             "class": "django.utils.log.AdminEmailHandler",
         },
+        "file": {
+            "level": "DEBUG",
+            "class": "logging.FileHandler",
+            "filename": "debug.log",
+        },
+        "allfile": {
+            "level": "DEBUG",
+            "class": "logging.FileHandler",
+            "filename": "debugall.log",
+        },
     },
     "loggers": {
+        "": {"handlers": ["allfile"], "level": "DEBUG", "propagate": True},
         "django": {
-            "handlers": ["console"],
+            "handlers": ["console", "file"],
             "propagate": True,
         },
         "django.server": {
-            "handlers": ["django.server"],
+            "handlers": ["django.server", "file"],
             "level": "INFO",
-            "propagate": False,
+            "propagate": True,
         },
         "django.request": {
-            "handlers": ["mail_admins", "console"],
+            "handlers": ["mail_admins", "console", "file"],
             "level": "ERROR",
-            "propagate": False,
+            "propagate": True,
         },
-        "django.db.backends": {"handlers": ["console"], "level": "INFO"},
+        "django.db.backends": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": True,
+        },
+        "uobtheatre": {"handlers": ["file"], "level": "INFO", "propagate": True},
+        "psycopg2": {"handlers": ["file"], "level": "INFO", "propagate": True},
     },
 }
 

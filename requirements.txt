@@ -42,6 +42,10 @@ PyJWT==1.7.0
 
 squareup>=9.0.0.20210226
 
+#=== Logging ===#
+
+sentry-sdk==1.0.0
+
 #=== Deployment ===#
 
 gunicorn==20.0.4

@@ -8,6 +8,7 @@ from graphene_django.views import GraphQLView
 
 # GraphQLView.graphiql_template = "graphene_graphiql_explorer/graphiql.html"
 
+
 urlpatterns = [
     path(
         "graphql/",
