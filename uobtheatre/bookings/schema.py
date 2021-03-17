@@ -4,7 +4,6 @@ import graphene
 from graphene import relay
 from graphene_django import DjangoListField, DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
-from graphql import GraphQLError
 
 from uobtheatre.bookings.models import Booking, ConcessionType, MiscCost, Ticket
 from uobtheatre.productions.models import Performance
@@ -205,7 +204,7 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
         # Check the capacity of the show and its seat_groups
         err = performance.check_capacity(ticket_objects)
         if err:
-            raise GraphQLError(err)
+            raise GQLNonFieldException(message=err, code=400)
 
         # If draft booking(s) already exists remove the bookings
         Booking.objects.filter(

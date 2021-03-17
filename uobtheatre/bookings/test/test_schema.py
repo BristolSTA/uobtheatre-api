@@ -377,6 +377,14 @@ def test_create_booking_mutation(
             booking {
               id
             }
+            success
+            errors {
+              __typename
+              ... on NonFieldError {
+                message
+                code
+              }
+            }
          }
         }
     """
@@ -385,9 +393,16 @@ def test_create_booking_mutation(
     response = client.execute(request % data)
 
     if not is_valid:
-        assert response.get("errors")
+        assert response.get("errors") or (
+            response["data"]["createBooking"]["errors"]
+            and not response["data"]["createBooking"]["success"]
+        )
     else:
-        assert not response.get("errors")
+        assert (
+            not response.get("errors")
+            and response["data"]["createBooking"]["success"]
+            and response["data"]["createBooking"]["errors"] is None
+        )
 
 
 @pytest.mark.django_db
@@ -821,6 +836,61 @@ def test_update_booking_capacity_error(gql_client_flexible):
     assert response == {
         "data": {
             "updateBooking": {
+                "booking": None,
+                "success": False,
+                "errors": [
+                    {
+                        "__typename": "NonFieldError",
+                        "message": f"You cannot book a seat group that is not assigned to this performance, you have booked {seat_group} but the performance only has ",
+                        "code": "400",
+                    }
+                ],
+            }
+        }
+    }
+
+
+@pytest.mark.django_db
+def test_create_booking_capacity_error(gql_client_flexible):
+
+    seat_group = SeatGroupFactory()
+    concession_type = ConcessionTypeFactory()
+    booking = BookingFactory(user=gql_client_flexible.get_user())
+    request_query = """
+        mutation {
+            createBooking (
+                performanceId: "%s"
+                tickets: [
+                  {
+                    seatGroupId: "%s"
+                    concessionTypeId: "%s"
+                  }
+                ]
+            ){
+                booking{
+                    id
+                }
+                success
+                errors {
+                  __typename
+                  ... on NonFieldError {
+                    message
+                    code
+                  }
+                }
+            }
+        }
+        """ % (
+        to_global_id("PerformanceNode", booking.performance.id),
+        to_global_id("SeatGroupNode", seat_group.id),
+        to_global_id("ConcessionTypeNode", concession_type.id),
+    )
+    response = gql_client_flexible.execute(request_query)
+
+    print(response)
+    assert response == {
+        "data": {
+            "createBooking": {
                 "booking": None,
                 "success": False,
                 "errors": [
