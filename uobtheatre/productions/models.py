@@ -1,6 +1,6 @@
 import datetime
 import math
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from autoslug import AutoSlugField
 from django.db import models
@@ -57,7 +57,7 @@ def append_production_qs(queryset, start=False, end=False):
     return queryset
 
 
-class Production(models.Model, TimeStampedMixin):
+class Production(TimeStampedMixin, models.Model):
     """A production is a show (like the 2 weeks things) and can have many
     performaces (these are like the nights).
     """
@@ -198,7 +198,7 @@ class CrewMember(models.Model):
         ordering = ["id"]
 
 
-class Performance(models.Model, TimeStampedMixin):
+class Performance(TimeStampedMixin, models.Model):
     """
     A performance is a discrete event when the show takes place eg 7pm on
     Tuesday.
@@ -327,6 +327,62 @@ class Performance(models.Model, TimeStampedMixin):
 
     def is_sold_out(self) -> bool:
         return self.capacity_remaining() == 0
+
+    def check_capacity(self, tickets, deleted_tickets=[]) -> Optional[str]:
+        """
+        Given a list of ticket objects, checks there are enough tickets
+        available for the booking. If not return a string.
+        TODO return a custom exception not a string
+        """
+
+        # Get the number of each seat group
+        seat_group_counts: Dict[SeatGroup, int] = {}
+        for ticket in tickets:
+            # If a SeatGroup with this id does not exist an error will the thrown
+            seat_group = ticket.seat_group
+            seat_group_count = seat_group_counts.get(seat_group)
+            seat_group_counts[seat_group] = (seat_group_count or 0) + 1
+
+        # Then reduce the count if tickets are being deleted. This is because
+        # if we have booked a seat in the front row, and we then decide to
+        # delete that seat and book a new one in the same row we only need 1
+        # seat (i.e no more seats)
+        for ticket in deleted_tickets:
+            # If a SeatGroup with this id does not exist an error will the thrown
+            seat_group = ticket.seat_group
+            seat_group_count = seat_group_counts.get(seat_group)
+            seat_group_counts[seat_group] = (seat_group_count or 0) - 1
+
+        # Check each seat group is in the performance
+        seat_groups_not_in_perfromance: List[str] = [
+            seat_group.name
+            for seat_group in seat_group_counts.keys()
+            if seat_group not in self.seat_groups.all()
+        ]
+
+        # If any of the seat_groups are not assigned to this performance then throw an error
+        if len(seat_groups_not_in_perfromance) != 0:
+            seat_groups_not_in_perfromance_str = ", ".join(
+                seat_groups_not_in_perfromance
+            )
+            performance_seat_groups_str = ", ".join(
+                [seat_group.name for seat_group in self.seat_groups.all()]
+            )
+            return f"You cannot book a seat group that is not assigned to this performance, you have booked {seat_groups_not_in_perfromance_str} but the performance only has {performance_seat_groups_str}"
+
+        # Check that each seat group has enough capacity
+        for seat_group, number_booked in seat_group_counts.items():
+            seat_group_remaining_capacity = self.capacity_remaining(
+                seat_group=seat_group
+            )
+            if seat_group_remaining_capacity < number_booked:
+                return f"There are only {seat_group_remaining_capacity} seats reamining in {seat_group} but you have booked {number_booked}. Please updated your seat selections and try again."
+
+        # Also check total capacity
+        if self.capacity_remaining() < len(tickets) - len(deleted_tickets):
+            return f"There are only {self.capacity_remaining()} seats available for this performance. You attempted to book {len(tickets)}. Please remove some tickets and try again or select a different performance."
+
+        return None
 
     def __str__(self):
         if self.start is None:

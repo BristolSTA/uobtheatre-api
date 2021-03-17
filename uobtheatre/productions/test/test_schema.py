@@ -41,6 +41,8 @@ def test_productions_schema(gql_client, gql_id):
 	  productions {
             edges {
               node {
+                createdAt
+                updatedAt
                 ageRating
                 coverImage {
                   url
@@ -116,6 +118,8 @@ def test_productions_schema(gql_client, gql_id):
                 "edges": [
                     {
                         "node": {
+                            "createdAt": production.created_at.isoformat(),
+                            "updatedAt": production.updated_at.isoformat(),
                             "ageRating": production.age_rating,
                             "coverImage": {"url": production.cover_image.url},
                             "description": production.description,
@@ -276,6 +280,8 @@ def test_performance_schema(gql_client, gql_id):
 	  performances {
             edges {
               node {
+                createdAt
+                updatedAt
                 capacity
                 description
                 disabled
@@ -312,6 +318,8 @@ def test_performance_schema(gql_client, gql_id):
                 "edges": [
                     {
                         "node": {
+                            "createdAt": performance.created_at.isoformat(),
+                            "updatedAt": performance.updated_at.isoformat(),
                             "capacity": performance.capacity,
                             "description": performance.description,
                             "disabled": performance.disabled,

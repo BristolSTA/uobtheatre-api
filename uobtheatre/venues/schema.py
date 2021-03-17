@@ -11,7 +11,7 @@ from uobtheatre.utils.schema import (
     GrapheneImageFieldNode,
     GrapheneImageMixin,
 )
-from uobtheatre.venues.models import SeatGroup, Venue
+from uobtheatre.venues.models import Seat, SeatGroup, Venue
 
 
 class SeatGroupNode(DjangoObjectType):
@@ -19,6 +19,12 @@ class SeatGroupNode(DjangoObjectType):
         model = SeatGroup
         interfaces = (relay.Node,)
         exclude = ("performance_set", "performanceseatgroup_set", "discount_set")
+
+
+class SeatNode(DjangoObjectType):
+    class Meta:
+        model = Seat
+        interfaces = (relay.Node,)
 
 
 class VenueNode(GrapheneImageMixin, DjangoObjectType):

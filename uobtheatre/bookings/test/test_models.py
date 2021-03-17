@@ -7,6 +7,7 @@ from uobtheatre.bookings.models import (
     DiscountCombination,
     DiscountRequirement,
     MiscCost,
+    Ticket,
     combinations,
 )
 from uobtheatre.bookings.test.factories import (
@@ -19,9 +20,11 @@ from uobtheatre.bookings.test.factories import (
     TicketFactory,
     ValueMiscCostFactory,
 )
+from uobtheatre.payments.models import Payment
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
-from uobtheatre.venues.test.factories import SeatGroupFactory, VenueFactory
+from uobtheatre.utils.exceptions import SquareException
+from uobtheatre.venues.test.factories import SeatFactory, SeatGroupFactory, VenueFactory
 
 
 @pytest.mark.parametrize(
@@ -497,7 +500,7 @@ def test_draft_uniqueness():
     args = {
         "user": UserFactory(),
         "performance": PerformanceFactory(),
-        "status": Booking.BookingStatus.INPROGRESS,
+        "status": Booking.BookingStatus.IN_PROGRESS,
     }
 
     # Check that can make more bookings that are no in_progress
@@ -534,3 +537,391 @@ def test_misc_cost_constraints(value, percentage, error):
     else:
         with pytest.raises(IntegrityError):
             MiscCost.objects.create(**args)
+
+
+@pytest.mark.django_db
+def test_create_booking_serializer_seat_group_is_from_performance_validation():
+    user = UserFactory(id=1)
+    performance = PerformanceFactory(id=1, capacity=10)
+    sg_1 = SeatGroupFactory(id=1)
+    sg_2 = SeatGroupFactory(id=2)
+    ConcessionTypeFactory(id=1)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "existingList, newList, addList, deleteList",
+    [
+        # SAME, SAME, null, null  - SAME
+        (
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 2,
+                },
+            ],
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 2,
+                },
+            ],
+            [],
+            [],
+        ),
+        # 1&2, 1, null, 2 - DELETE 1
+        (
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 2,
+                },
+            ],
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+            ],
+            [],
+            [
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 2,
+                }
+            ],
+        ),
+        # 1, 1&2, 2, null - ADD 1
+        (
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+            ],
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                },
+            ],
+            [
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                }
+            ],
+            [],
+        ),
+        # 1&2, null, null, 1&2 - DELETE ALL
+        (
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 2,
+                },
+            ],
+            [],
+            [],
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 2,
+                },
+            ],
+        ),
+        # null, 1&2, 1&2, null - ADD ALL
+        (
+            [],
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                },
+            ],
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                },
+            ],
+            [],
+        ),
+        # 1, 2, 2, 1 - SWAP
+        (
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+            ],
+            [
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                }
+            ],
+            [
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                }
+            ],
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+            ],
+        ),
+    ],
+)
+def test_booking_ticket_diff(existingList, newList, addList, deleteList):
+    SeatGroupFactory(id=1)
+    SeatGroupFactory(id=2)
+    ConcessionTypeFactory(id=1)
+    ConcessionTypeFactory(id=2)
+    SeatFactory(id=1)
+    SeatFactory(id=2)
+
+    booking = BookingFactory()
+
+    _ = [TicketFactory(booking=booking, **ticket) for ticket in existingList]
+    newTickets = [Ticket(**ticket) for ticket in newList]
+    addTickets = [Ticket(**ticket) for ticket in addList]
+    deleteTickets = [Ticket(**ticket) for ticket in deleteList]
+
+    assert booking.get_ticket_diff(newTickets) == (addTickets, deleteTickets)
+
+
+@pytest.mark.django_db
+def test_booking_pay_failure(mock_square):
+    """
+    Test paying a booking with square
+    """
+    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    psg = PerformanceSeatingFactory(performance=booking.performance)
+    ticket = TicketFactory(booking=booking, seat_group=psg.seat_group)
+
+    mock_square.reason_phrase = "Some phrase"
+    mock_square.status_code = 400
+    mock_square.success = False
+
+    with pytest.raises(SquareException):
+        booking.pay("nonce")
+
+    # Assert the booking is not paid
+    assert booking.status == Booking.BookingStatus.IN_PROGRESS
+
+    # Assert no payments are created
+    assert Payment.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_booking_pay_success(mock_square):
+    """
+    Test paying a booking with square
+    """
+    booking = BookingFactory()
+    psg = PerformanceSeatingFactory(performance=booking.performance)
+    ticket = TicketFactory(booking=booking, seat_group=psg.seat_group)
+
+    mock_square.success = True
+    mock_square.body = {
+        "payment": {
+            "id": "abc",
+            "card_details": {
+                "card": {
+                    "card_brand": "MASTERCARD",
+                    "last_4": "1234",
+                }
+            },
+            "amount_money": {
+                "currency": "GBP",
+                "amount": 0,
+            },
+        }
+    }
+
+    booking.pay("nonce")
+
+    assert booking.status == Booking.BookingStatus.PAID
+    # Assert a payment of the correct type is created
+    payment = booking.payments.first()
+    assert payment.pay_object == booking
+    assert payment.value == 0
+    assert payment.currency == "GBP"
+    assert payment.card_brand == "MASTERCARD"
+    assert payment.last_4 == "1234"
+    assert payment.provider_payment_id == "abc"
+    assert payment.provider == Payment.PaymentProvider.SQUARE_ONLINE
+    assert payment.type == Payment.PaymentType.PURCHASE
+
+
+@pytest.mark.django_db
+@pytest.mark.square_integration
+def test_booking_pay_integration():
+    """
+    Test paying a booking with square
+    """
+    booking = BookingFactory()
+    psg = PerformanceSeatingFactory(performance=booking.performance)
+    TicketFactory(booking=booking, seat_group=psg.seat_group)
+
+    booking.pay("cnon:card-nonce-ok")
+
+    assert booking.status == Booking.BookingStatus.PAID
+    # Assert a payment of the correct type is created
+    payment = booking.payments.first()
+    assert payment.pay_object == booking
+    assert payment.value == booking.total()
+    assert payment.currency == "GBP"
+    assert isinstance(payment.card_brand, str)
+    assert isinstance(payment.last_4, str) and len(payment.last_4) == 4
+    assert isinstance(payment.provider_payment_id, str)
+    assert payment.provider == Payment.PaymentProvider.SQUARE_ONLINE
+    assert payment.type, Payment.PaymentType.PURCHASE
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "ticket1, ticket2, eq",
+    [
+        (
+            {
+                "seat_group_id": 1,
+                "concession_type_id": 1,
+                "seat_id": 1,
+            },
+            {
+                "seat_group_id": 1,
+                "concession_type_id": 1,
+                "seat_id": 1,
+            },
+            True,
+        ),
+        (
+            # Check not eq with different seat_group
+            {
+                "seat_group_id": 2,
+                "concession_type_id": 1,
+                "seat_id": 1,
+            },
+            {
+                "seat_group_id": 1,
+                "concession_type_id": 1,
+                "seat_id": 1,
+            },
+            False,
+        ),
+        (
+            # Check not eq with different concession_type
+            {
+                "seat_group_id": 1,
+                "concession_type_id": 1,
+                "seat_id": 1,
+            },
+            {
+                "seat_group_id": 1,
+                "concession_type_id": 2,
+                "seat_id": 1,
+            },
+            False,
+        ),
+        (
+            # Check not eq with different seat
+            {
+                "seat_group_id": 1,
+                "concession_type_id": 1,
+                "seat_id": 2,
+            },
+            {
+                "seat_group_id": 1,
+                "concession_type_id": 1,
+                "seat_id": 1,
+            },
+            False,
+        ),
+    ],
+)
+def test_ticket_eq(ticket1, ticket2, eq):
+    SeatGroupFactory(id=1)
+    SeatGroupFactory(id=2)
+    ConcessionTypeFactory(id=1)
+    ConcessionTypeFactory(id=2)
+    SeatFactory(id=1)
+    SeatFactory(id=2)
+
+    assert (Ticket(**ticket1) == Ticket(**ticket2)) == eq

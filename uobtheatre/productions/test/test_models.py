@@ -1,9 +1,12 @@
 import datetime
+import math
+import random
 
 import pytest
 from dateutil import parser
 from django.utils import timezone
 
+from uobtheatre.bookings.models import Ticket
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
     ConcessionTypeFactory,
@@ -393,6 +396,194 @@ def test_performance_min_price():
     PerformanceSeatingFactory(performance=performance, price=20)
 
     assert performance.min_seat_price() == 10
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "seat_groups, performance_capacity, is_valid",
+    [
+        (
+            [
+                {
+                    "number_of_tickets": 2,
+                    "number_of_existing_tickets": 2,
+                    "capacity": 4,
+                }
+            ],
+            20,
+            True,
+        ),
+        (
+            [
+                {
+                    "number_of_tickets": 2,
+                    "number_of_existing_tickets": 2,
+                    "capacity": 4,
+                },
+                {
+                    "number_of_tickets": 5,
+                    "number_of_existing_tickets": 11,
+                    "capacity": 20,
+                },
+            ],
+            20,
+            True,
+        ),
+        (
+            # Check error when not enough performance capacity
+            [
+                {
+                    "number_of_tickets": 2,
+                    "number_of_existing_tickets": 2,
+                    "capacity": 4,
+                },
+                {
+                    "number_of_tickets": 5,
+                    "number_of_existing_tickets": 11,
+                    "capacity": 20,
+                },
+            ],
+            15,
+            False,
+        ),
+        (
+            # Check error when not enough seat_group capacity
+            [
+                {
+                    "number_of_tickets": 2,
+                    "number_of_existing_tickets": 2,
+                    "capacity": 4,
+                },
+                {
+                    "number_of_tickets": 5,
+                    "number_of_existing_tickets": 11,
+                    "capacity": 14,
+                },
+            ],
+            20,
+            False,
+        ),
+        (
+            # Check error when both
+            [
+                {
+                    "number_of_tickets": 2,
+                    "number_of_existing_tickets": 2,
+                    "capacity": 4,
+                },
+                {
+                    "number_of_tickets": 5,
+                    "number_of_existing_tickets": 11,
+                    "capacity": 14,
+                },
+            ],
+            15,
+            False,
+        ),
+        (
+            # Check ok when not deleted tickets mean enough performance capacity
+            [
+                {
+                    "number_of_tickets": 2,
+                    "number_of_existing_tickets": 2,
+                    "capacity": 4,
+                },
+                {
+                    "number_of_tickets": 5,
+                    "number_of_existing_tickets": 11,
+                    "number_of_tickets_to_delete": 10,
+                    "capacity": 20,
+                },
+            ],
+            15,
+            True,
+        ),
+        (
+            # Check ok when enough seat_group capacity because deleted tickets
+            [
+                {
+                    "number_of_tickets": 2,
+                    "number_of_existing_tickets": 2,
+                    "capacity": 4,
+                },
+                {
+                    "number_of_tickets": 5,
+                    "number_of_existing_tickets": 11,
+                    "number_of_tickets_to_delete": 2,
+                    "capacity": 14,
+                },
+            ],
+            20,
+            True,
+        ),
+    ],
+)
+def test_performance_check_capacity(seat_groups, performance_capacity, is_valid):
+    performance = PerformanceFactory(capacity=performance_capacity)
+    tickets_to_book = []
+    tickets_to_delete = []
+
+    for seat_group in seat_groups:
+        performance_seat_group = PerformanceSeatingFactory(
+            performance=performance, capacity=seat_group["capacity"]
+        )
+
+        # Create some bookings which create the existing tickets
+        number_of_existing_tickets = seat_group["number_of_existing_tickets"]
+        bookings = [
+            BookingFactory(performance=performance)
+            for i in range(math.ceil(number_of_existing_tickets / 2))
+        ]
+        [
+            TicketFactory(
+                booking=random.choice(bookings),
+                seat_group=performance_seat_group.seat_group,
+            )
+            for _ in range(number_of_existing_tickets)
+        ]
+
+        # Create the ticket which are being checked
+        tickets_to_book.extend(
+            [
+                Ticket(seat_group=performance_seat_group.seat_group)
+                for i in range(seat_group["number_of_tickets"])
+            ]
+        )
+
+        tickets_to_delete.extend(
+            [
+                Ticket(seat_group=performance_seat_group.seat_group)
+                for i in range(seat_group.get("number_of_tickets_to_delete", 0))
+            ]
+        )
+
+    print(
+        performance.check_capacity(tickets_to_book, deleted_tickets=tickets_to_delete)
+    )
+    print(len(tickets_to_delete))
+    # If valid this should be none if not it should return something
+    assert (
+        performance.check_capacity(tickets_to_book, deleted_tickets=tickets_to_delete)
+        == None
+    ) == is_valid
+
+
+@pytest.mark.django_db
+def test_performance_check_capacity_seat_group_not_in_perforamnce():
+    seat_group = SeatGroupFactory()
+
+    # Set up some seat groups for a performance
+    psg = PerformanceSeatingFactory(capacity=100)
+    psg2 = PerformanceSeatingFactory(capacity=100, performance=psg.performance)
+    booking = BookingFactory(performance=psg.performance)
+
+    # But then try and book a seat group that is not assigned to the performance
+    tickets = [Ticket(seat_group=seat_group, booking=booking)]
+
+    assert (
+        psg.performance.check_capacity(tickets=tickets)
+        == f"You cannot book a seat group that is not assigned to this performance, you have booked {seat_group} but the performance only has {psg.seat_group}, {psg2.seat_group}"
+    )
 
 
 @pytest.mark.django_db
