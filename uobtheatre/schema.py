@@ -1,5 +1,6 @@
 import graphene
 
+import uobtheatre.bookings.schema as bookings_schema
 import uobtheatre.productions.schema as productions_schema
 import uobtheatre.societies.schema as societies_schema
 import uobtheatre.users.schema as users_schema
@@ -16,7 +17,7 @@ class Query(
     pass
 
 
-class Mutation(users_schema.Mutation, graphene.ObjectType):
+class Mutation(users_schema.Mutation, bookings_schema.Mutation, graphene.ObjectType):
     pass
 
 

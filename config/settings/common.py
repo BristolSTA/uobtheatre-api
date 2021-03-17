@@ -31,6 +31,7 @@ INSTALLED_APPS = (
     "uobtheatre.bookings",
     "uobtheatre.societies",
     "uobtheatre.addresses",
+    "uobtheatre.payments",
     "uobtheatre",
 )
 
@@ -251,4 +252,17 @@ GRAPHENE = {
     "MIDDLEWARE": [
         "graphql_jwt.middleware.JSONWebTokenMiddleware",
     ],
+}
+
+
+# Square payments
+SQUARE_SETTINGS = {
+    "SQUARE_ACCESS_TOKEN": os.getenv(
+        "SQUARE_ACCESS_TOKEN",
+        default="",
+    ),
+    "SQUARE_ENVIRONMENT": os.getenv(
+        "SQUARE_ENVIRONMENT",
+        default="sandbox",
+    ),
 }
