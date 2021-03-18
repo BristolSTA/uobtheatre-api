@@ -12,7 +12,7 @@ class Seat(models.Model):
     number = models.CharField(max_length=5, null=True, blank=True)
 
 
-class Venue(models.Model, TimeStampedMixin):
+class Venue(TimeStampedMixin, models.Model):
     """A venue is a space often where shows take place"""
 
     name = models.CharField(max_length=255)
@@ -42,7 +42,7 @@ class SeatGroup(models.Model):
     """A seat group is a collection of seats, it can contains many seats or
     just be a generic area eg front row or stading section"""
 
-    name = models.CharField(max_length=255, null=True, blank=True)
+    name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
     venue = models.ForeignKey(
         Venue, on_delete=models.CASCADE, related_name="seat_groups"

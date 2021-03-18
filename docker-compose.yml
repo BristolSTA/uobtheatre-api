@@ -9,6 +9,8 @@ services:
 
   api:
     restart: on-failure
+    env_file:
+      .env
     environment:
       - DJANGO_SECRET_KEY=local
     image: web
@@ -24,14 +26,14 @@ services:
     depends_on:
       - postgres
 
-  documentation:
-    restart: on-failure
-    build: ./
-    command: "mkdocs serve"
-    volumes:
-      - ./:/code
-    ports:
-      - "8001:8001"
+        # documentation:
+        #   restart: on-failure
+        #   build: ./
+        #   command: "mkdocs serve"
+        #   volumes:
+        #     - ./:/code
+        #   ports:
+        #     - "8001:8001"
 
   adminer:
     image: adminer
