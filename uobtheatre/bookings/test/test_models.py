@@ -24,6 +24,7 @@ from uobtheatre.payments.models import Payment
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.utils.exceptions import SquareException
+from uobtheatre.utils.test_utils import ticketDictListDictGen, ticketListDictGen
 from uobtheatre.venues.test.factories import SeatFactory, SeatGroupFactory, VenueFactory
 
 
@@ -763,7 +764,24 @@ def test_booking_ticket_diff(existingList, newList, addList, deleteList):
     addTickets = [Ticket(**ticket) for ticket in addList]
     deleteTickets = [Ticket(**ticket) for ticket in deleteList]
 
-    assert booking.get_ticket_diff(newTickets) == (addTickets, deleteTickets)
+    addTickets, deleteTickets = booking.get_ticket_diff(newTickets)
+    expAddTicketDict, expDeleteTicketDict = map(
+        ticketDictListDictGen,
+        [
+            addList,
+            deleteList,
+        ],
+    )
+    actAddTicketDict, actDeleteTicketDict = map(
+        ticketListDictGen,
+        [
+            addTickets,
+            deleteTickets,
+        ],
+    )
+
+    assert expAddTicketDict == actAddTicketDict
+    assert expDeleteTicketDict == actDeleteTicketDict
 
 
 @pytest.mark.django_db
