@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name="Address",
+            name="Image",
             fields=[
                 (
                     "id",
@@ -22,13 +22,8 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("building_name", models.CharField(max_length=255, null=True)),
-                ("building_number", models.CharField(max_length=10, null=True)),
-                ("street", models.CharField(max_length=255)),
-                ("city", models.CharField(max_length=255)),
-                ("postcode", models.CharField(max_length=9)),
-                ("latitude", models.FloatField(blank=True, null=True)),
-                ("longitude", models.FloatField(blank=True, null=True)),
+                ("file", models.ImageField(upload_to="")),
+                ("alt_text", models.CharField(blank=True, max_length=50, null=True)),
             ],
         ),
     ]

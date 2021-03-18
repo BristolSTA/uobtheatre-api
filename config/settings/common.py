@@ -5,6 +5,7 @@ from typing import List
 
 import dj_database_url
 
+BASE_URL = "http://localhost:8000"
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 INSTALLED_APPS = (
@@ -32,6 +33,7 @@ INSTALLED_APPS = (
     "uobtheatre.societies",
     "uobtheatre.addresses",
     "uobtheatre.payments",
+    "uobtheatre.images",
     "uobtheatre",
 )
 
@@ -94,7 +96,8 @@ STATICFILES_FINDERS = (
 
 # Media files
 MEDIA_ROOT = join(os.path.dirname(BASE_DIR), "media")
-MEDIA_URL = "/media/"
+MEDIA_PATH = "/media/"
+MEDIA_URL = f"{BASE_URL}{MEDIA_PATH}"
 
 TEMPLATES = [
     {
