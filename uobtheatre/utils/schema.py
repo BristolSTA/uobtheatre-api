@@ -64,6 +64,10 @@ class IdInputField(graphene.ID):
         if isinstance(id, (StringValue, IntValue)):
             return from_global_id(id.value)[1]
 
+    @staticmethod
+    def parse_value(ast):
+        return from_global_id(ast)[1]
+
 
 class FilterSet(django_filters.FilterSet):
     id = GlobalIDFilter()
