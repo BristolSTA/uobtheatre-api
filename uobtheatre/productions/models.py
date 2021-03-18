@@ -77,7 +77,7 @@ class Production(TimeStampedMixin, models.Model):
     age_rating = models.SmallIntegerField(null=True)
     facebook_event = models.CharField(max_length=255, null=True)
 
-    warnings = models.ManyToManyField(Warning)
+    warnings = models.ManyToManyField(Warning, blank=True)
 
     slug = AutoSlugField(populate_from="name", unique=True, blank=True)
 

@@ -1,6 +1,7 @@
 import itertools
 
 import graphene
+from django_filters import OrderingFilter
 from graphene import relay
 from graphene_django import DjangoListField, DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
@@ -175,6 +176,8 @@ class BookingFilter(FilterSet):
             return super(BookingFilter, self).qs.filter(user=self.request.user)
         else:
             return Booking.objects.none()
+
+    order_by = OrderingFilter(fields=("created_at",))
 
 
 BookingStatusSchema = graphene.Enum.from_enum(Booking.BookingStatus)
