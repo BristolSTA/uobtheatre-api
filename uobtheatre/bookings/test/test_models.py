@@ -1,3 +1,5 @@
+import math
+
 import pytest
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
@@ -334,9 +336,9 @@ def test_get_price_with_discount_combination():
     )
     discount_combination = DiscountCombination((discount_student,))
     assert discount_student.discount == 0.2
-    assert booking.get_price_with_discount_combination(discount_combination) == round(
-        (seating.price * (1 - discount_student.discount)) + seating.price
-    )
+    assert booking.get_price_with_discount_combination(
+        discount_combination
+    ) == math.ceil((seating.price * (1 - discount_student.discount)) + seating.price)
 
     discount_family = DiscountFactory(name="Family", discount=0.2)
     discount_family.performances.set([performance])
@@ -359,11 +361,12 @@ def test_get_price_with_discount_combination():
     )
 
     discount_combination = DiscountCombination((discount_student, discount_family))
-    assert round(
+    assert (
         booking.get_price_with_discount_combination(discount_combination)
-    ) == round(
-        (seating.price * (1 - discount_student.discount))
-        + (seating.price * 3 * (1 - discount_family.discount))
+        # Price is calculated a ticket level so each ticket price should be rounded individually
+        == math.ceil(seating.price * (1 - discount_student.discount))
+        # TODO This isnt right - each seat needs to be ceiled individually
+        + (3 * math.ceil(seating.price * (1 - discount_family.discount)))
     )
 
 
