@@ -6,6 +6,12 @@ services:
     image: postgres:11.6
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "8004:5432"
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
 
   api:
     restart: on-failure

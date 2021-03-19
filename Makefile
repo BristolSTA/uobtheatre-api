@@ -1,15 +1,36 @@
+## Defines the app varaible. This reference the module which is being used
+APP=$(if $(app),uobtheatre/$(app)/test,)
+export APP
+
+## Defines the test path:
+## If 		the varaible test_path is secified test_path is used
+## else if 	the app varaible is specified the apps test path is used
+## else  	it is set to none
+TEST_PATH=$(if $(path),$(path),$(if $(APP),$(APP),))
+export TEST_PATH
+
+## Defines the test varaible
+## This allows the users to specify a list of tests to run
+TEST=$(if $(test),-k '$(test)',)
+export TEST
+
+ifneq (,$(findstring a,  $(MAKEFLAGS)))
+  VERBOSE=1
+  export VERBOSE
+endif
+
 PONY: help
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-up: ## Run api
+up: ## Run background
 	docker-compose up -d
 
-up-v: ## Run api with logs
+up-v: ## Run verbose
 	docker-compose up
 
-down: ## Bring down api
+down: ## Down
 	docker-compose down
 
 dump: ## dumps databse objects into fixture
@@ -40,10 +61,10 @@ clean: ## Remove all the things
 	docker-compose down --volumes --rmi all || true
 
 test: ## Run unit tests in docker container
-	docker-compose run --rm api pytest --cov uobtheatre --cov-fail-under 100 --cov-report term-missing
+	docker-compose run --rm api pytest --cov uobtheatre --cov-fail-under 100 --cov-report term-missing $(TEST_PATH) $(TEST)
 
-test-v: ## Run verbose unit tests in docker container
-	docker-compose run --rm api coverage run -m pytest -s -vv
+test-v: ## Run verbose unit tests in docker container, use test_path to specify a test file/directory, app to specify a module and test to specify specific tests to be run.
+	docker-compose run --rm api coverage run -m pytest -s -vv $(TEST_PATH) $(TEST)
 
 coverage: ## Generate test coverage report
 	docker-compose run --rm api coverage run --source=uobtheatre -m pytest

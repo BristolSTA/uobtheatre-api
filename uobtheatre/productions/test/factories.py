@@ -12,14 +12,8 @@ from uobtheatre.productions.models import (
     Venue,
     Warning,
 )
+from uobtheatre.societies.test.factories import SocietyFactory
 from uobtheatre.venues.test.factories import VenueFactory
-
-
-class SocietyFactory(factory.django.DjangoModelFactory):
-    name = factory.Faker("sentence", nb_words=3)
-
-    class Meta:
-        model = Society
 
 
 class ProductionFactory(factory.django.DjangoModelFactory):

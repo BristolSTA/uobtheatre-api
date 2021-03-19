@@ -1,4 +1,7 @@
+import math
+
 import pytest
+from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
 
 from uobtheatre.bookings.models import (
@@ -24,6 +27,7 @@ from uobtheatre.payments.models import Payment
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.utils.exceptions import SquareException
+from uobtheatre.utils.test_utils import ticketDictListDictGen, ticketListDictGen
 from uobtheatre.venues.test.factories import SeatFactory, SeatGroupFactory, VenueFactory
 
 
@@ -331,10 +335,10 @@ def test_get_price_with_discount_combination():
         concession_type=concession_type_student, number=1, discount=discount_student
     )
     discount_combination = DiscountCombination((discount_student,))
-    assert discount_student.percentage == 0.2
-    assert round(
-        booking.get_price_with_discount_combination(discount_combination)
-    ) == round((seating.price * (1 - discount_student.percentage)) + seating.price)
+    assert discount_student.discount == 0.2
+    assert booking.get_price_with_discount_combination(
+        discount_combination
+    ) == math.ceil((seating.price * (1 - discount_student.discount)) + seating.price)
 
     discount_family = DiscountFactory(name="Family", percentage=0.2)
     discount_family.performances.set([performance])
@@ -357,11 +361,12 @@ def test_get_price_with_discount_combination():
     )
 
     discount_combination = DiscountCombination((discount_student, discount_family))
-    assert round(
+    assert (
         booking.get_price_with_discount_combination(discount_combination)
-    ) == round(
-        (seating.price * (1 - discount_student.percentage))
-        + (seating.price * 3 * (1 - discount_family.percentage))
+        # Price is calculated a ticket level so each ticket price should be rounded individually
+        == math.ceil(seating.price * (1 - discount_student.discount))
+        # TODO This isnt right - each seat needs to be ceiled individually
+        + (3 * math.ceil(seating.price * (1 - discount_family.discount)))
     )
 
 
@@ -514,6 +519,35 @@ def test_draft_uniqueness():
     BookingFactory(**args)
     with pytest.raises(IntegrityError):
         BookingFactory(**args)
+
+
+@pytest.mark.django_db
+def test_cannot_create_2_discounts_with_the_same_requirements():
+    dis_1 = DiscountFactory()
+    dis_2 = DiscountFactory()
+
+    requirement_1 = DiscountRequirementFactory(discount=dis_1)
+
+    # Assert when discount 1 has these requirements it is unique
+    dis_1.validate_unique()
+
+    DiscountRequirementFactory(
+        discount=dis_2,
+        concession_type=requirement_1.concession_type,
+        number=requirement_1.number,
+    )
+
+    with pytest.raises(ValidationError):
+        dis_1.validate_unique()
+
+
+@pytest.mark.django_db
+def test_discount_with_same_requirements_is_not_unique():
+    DiscountFactory()
+    dis_2 = Discount()
+
+    with pytest.raises(ValidationError):
+        dis_2.validate_unique()
 
 
 @pytest.mark.django_db
@@ -763,7 +797,24 @@ def test_booking_ticket_diff(existingList, newList, addList, deleteList):
     addTickets = [Ticket(**ticket) for ticket in addList]
     deleteTickets = [Ticket(**ticket) for ticket in deleteList]
 
-    assert booking.get_ticket_diff(newTickets) == (addTickets, deleteTickets)
+    addTickets, deleteTickets = booking.get_ticket_diff(newTickets)
+    expAddTicketDict, expDeleteTicketDict = map(
+        ticketDictListDictGen,
+        [
+            addList,
+            deleteList,
+        ],
+    )
+    actAddTicketDict, actDeleteTicketDict = map(
+        ticketListDictGen,
+        [
+            addTickets,
+            deleteTickets,
+        ],
+    )
+
+    assert expAddTicketDict == actAddTicketDict
+    assert expDeleteTicketDict == actDeleteTicketDict
 
 
 @pytest.mark.django_db
@@ -853,75 +904,3 @@ def test_booking_pay_integration():
     assert isinstance(payment.provider_payment_id, str)
     assert payment.provider == Payment.PaymentProvider.SQUARE_ONLINE
     assert payment.type, Payment.PaymentType.PURCHASE
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    "ticket1, ticket2, eq",
-    [
-        (
-            {
-                "seat_group_id": 1,
-                "concession_type_id": 1,
-                "seat_id": 1,
-            },
-            {
-                "seat_group_id": 1,
-                "concession_type_id": 1,
-                "seat_id": 1,
-            },
-            True,
-        ),
-        (
-            # Check not eq with different seat_group
-            {
-                "seat_group_id": 2,
-                "concession_type_id": 1,
-                "seat_id": 1,
-            },
-            {
-                "seat_group_id": 1,
-                "concession_type_id": 1,
-                "seat_id": 1,
-            },
-            False,
-        ),
-        (
-            # Check not eq with different concession_type
-            {
-                "seat_group_id": 1,
-                "concession_type_id": 1,
-                "seat_id": 1,
-            },
-            {
-                "seat_group_id": 1,
-                "concession_type_id": 2,
-                "seat_id": 1,
-            },
-            False,
-        ),
-        (
-            # Check not eq with different seat
-            {
-                "seat_group_id": 1,
-                "concession_type_id": 1,
-                "seat_id": 2,
-            },
-            {
-                "seat_group_id": 1,
-                "concession_type_id": 1,
-                "seat_id": 1,
-            },
-            False,
-        ),
-    ],
-)
-def test_ticket_eq(ticket1, ticket2, eq):
-    SeatGroupFactory(id=1)
-    SeatGroupFactory(id=2)
-    ConcessionTypeFactory(id=1)
-    ConcessionTypeFactory(id=2)
-    SeatFactory(id=1)
-    SeatFactory(id=2)
-
-    assert (Ticket(**ticket1) == Ticket(**ticket2)) == eq

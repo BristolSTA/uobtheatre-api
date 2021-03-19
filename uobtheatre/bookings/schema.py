@@ -277,7 +277,7 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
     def resolve_mutation(self, root, info, booking_id, tickets=[]):
         booking = Booking.objects.get(id=booking_id, user=info.context.user)
 
-        # Conert the given tickets to ticket objects
+        # Convert the given tickets to ticket objects
         ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))
 
         addTickets, deleteTickets = booking.get_ticket_diff(ticket_objects)

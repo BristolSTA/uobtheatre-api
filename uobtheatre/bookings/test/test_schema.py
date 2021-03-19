@@ -14,6 +14,7 @@ from uobtheatre.bookings.test.factories import (
 )
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
+from uobtheatre.utils.test_utils import ticketDictListDictGen, ticketListDictGen
 from uobtheatre.venues.test.factories import SeatFactory, SeatGroupFactory
 
 
@@ -816,7 +817,6 @@ def test_update_booking(
     # Create booking with current tickets
     booking = BookingFactory(performance=performance)
     _ = [TicketFactory(booking=booking, **ticket) for ticket in currentTickets]
-
     # Generate mutation query from input data
 
     ticketQueries = ""
@@ -876,25 +876,8 @@ def test_update_booking(
 
     returned_booking = Booking.objects.get(id=local_booking_id)
 
-    expected_booking_tickets = {}
-    for ticket in expectedTickets:
-        ticketKey = (
-            ticket.get("seat_group_id"),
-            ticket.get("concession_type_id"),
-            ticket.get("seat_id"),
-        )
-        if ticketKey not in expected_booking_tickets:
-            expected_booking_tickets[ticketKey] = 1
-        else:
-            expected_booking_tickets[ticketKey] += 1
-
-    updated_booking_tickets = {}
-    for ticket in returned_booking.tickets.all():
-        ticketKey = (ticket.seat_group.id, ticket.concession_type.id, ticket.seat.id)
-        if ticketKey not in updated_booking_tickets:
-            updated_booking_tickets[ticketKey] = 1
-        else:
-            updated_booking_tickets[ticketKey] += 1
+    expected_booking_tickets = ticketDictListDictGen(expectedTickets)
+    updated_booking_tickets = ticketListDictGen(returned_booking.tickets.all())
 
     assert updated_booking_tickets == expected_booking_tickets
 

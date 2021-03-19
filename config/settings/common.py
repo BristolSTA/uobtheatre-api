@@ -3,9 +3,6 @@ from distutils.util import strtobool
 from os.path import join
 from typing import List
 
-import dj_database_url
-
-BASE_URL = "http://localhost:8000"
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 INSTALLED_APPS = (
@@ -17,6 +14,8 @@ INSTALLED_APPS = (
     "django.contrib.staticfiles",
     "django.contrib.sites",
     # Third party apps
+    # Hosting
+    "gunicorn",
     # Authentiaction
     "graphql_auth",  # Graphql authentication (user setup)
     ##
@@ -65,12 +64,14 @@ ADMINS = (("Author", "webmaster@bristolsta.com"),)
 
 # Postgres
 DATABASES = {
-    "default": dj_database_url.config(
-        default=os.getenv(
-            "DATABASE_URL", default="postgres://postgres:@postgres:5432/postgres"
-        ),
-        conn_max_age=int(os.getenv("POSTGRES_CONN_MAX_AGE", "600")),
-    )
+    "default": {
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": os.getenv("DATABASE_NAME", default="postgres"),
+        "USER": os.getenv("DATABASE_USER", default="postgres"),
+        "PASSWORD": os.getenv("DATABASE_PASSWORD", default="postgres"),
+        "HOST": os.getenv("DATABASE_HOST", default="postgres"),
+        "PORT": os.getenv("DATABASE_PORT", default=5432),
+    }
 }
 
 # General
@@ -97,7 +98,6 @@ STATICFILES_FINDERS = (
 # Media files
 MEDIA_ROOT = join(os.path.dirname(BASE_DIR), "media")
 MEDIA_PATH = "/media/"
-MEDIA_URL = f"{BASE_URL}{MEDIA_PATH}"
 
 TEMPLATES = [
     {
@@ -175,28 +175,46 @@ LOGGING = {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
             "formatter": "simple",
+            "filters": ["require_debug_true"],
         },
         "mail_admins": {
             "level": "ERROR",
             "class": "django.utils.log.AdminEmailHandler",
         },
+        "file": {
+            "level": "DEBUG",
+            "class": "logging.FileHandler",
+            "filename": "debug.log",
+        },
+        "allfile": {
+            "level": "DEBUG",
+            "class": "logging.FileHandler",
+            "filename": "debugall.log",
+        },
     },
     "loggers": {
+        "": {"handlers": ["allfile"], "level": "DEBUG", "propagate": True},
         "django": {
-            "handlers": ["console"],
+            "handlers": ["console", "file"],
             "propagate": True,
         },
         "django.server": {
-            "handlers": ["django.server"],
+            "handlers": ["django.server", "file"],
             "level": "INFO",
-            "propagate": False,
+            "propagate": True,
         },
         "django.request": {
-            "handlers": ["mail_admins", "console"],
+            "handlers": ["mail_admins", "console", "file"],
             "level": "ERROR",
-            "propagate": False,
+            "propagate": True,
         },
-        "django.db.backends": {"handlers": ["console"], "level": "INFO"},
+        "django.db.backends": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": True,
+        },
+        "uobtheatre": {"handlers": ["file"], "level": "INFO", "propagate": True},
+        "psycopg2": {"handlers": ["file"], "level": "INFO", "propagate": True},
     },
 }
 
