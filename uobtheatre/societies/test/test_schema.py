@@ -18,6 +18,8 @@ def test_societies_schema(gql_client, gql_id):
             edges {
               node {
                 id
+                createdAt
+                updatedAt
             	name
                 description
                 slug
@@ -48,6 +50,8 @@ def test_societies_schema(gql_client, gql_id):
                     {
                         "node": {
                             "id": gql_id(society.id, "SocietyNode"),
+                            "createdAt": society.created_at.isoformat(),
+                            "updatedAt": society.updated_at.isoformat(),
                             "name": society.name,
                             "description": society.description,
                             "slug": society.slug,

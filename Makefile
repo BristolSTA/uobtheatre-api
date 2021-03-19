@@ -31,7 +31,7 @@ clean: ## Remove all the things
 	docker-compose down --volumes --rmi all || true
 
 test: ## Run unit tests in docker container
-	docker-compose run --rm api pytest --cov uobtheatre --cov-fail-under 100
+	docker-compose run --rm api pytest --cov uobtheatre --cov-fail-under 100 --cov-report term-missing
 
 test-v: ## Run verbose unit tests in docker container
 	docker-compose run --rm api coverage run -m pytest -s -vv

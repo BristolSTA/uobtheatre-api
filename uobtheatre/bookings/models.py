@@ -1,12 +1,16 @@
 import itertools
 import math
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple, TypeVar
 
+from django.contrib.contenttypes.fields import GenericRelation
 from django.core.exceptions import ValidationError
 from django.db import models
 
+from uobtheatre.payments.models import Payment
+from uobtheatre.payments.square import PaymentProvider
 from uobtheatre.productions.models import Performance
 from uobtheatre.users.models import User
+from uobtheatre.utils.exceptions import SquareException
 from uobtheatre.utils.models import TimeStampedMixin, validate_percentage
 from uobtheatre.utils.utils import create_short_uuid
 from uobtheatre.venues.models import Seat, SeatGroup
@@ -53,12 +57,14 @@ class MiscCost(models.Model):
         ]
 
 
-def get_concession_map(requirements: List) -> Dict[ConcessionType, int]:
+def get_concession_map(
+    requirements: List["DiscountRequirement"],
+) -> Dict["ConcessionType", int]:
     """
     Given a list of DiscountRequirements return a dict with the number of each
     concession type required.
     """
-    concession_requirements = {}
+    concession_requirements: Dict["ConcessionType", int] = {}
     for requirement in requirements:
         if not requirement.concession_type in concession_requirements.keys():
             concession_requirements[requirement.concession_type] = 0
@@ -112,12 +118,14 @@ class Discount(models.Model):
             == 1
         )
 
-    def get_concession_map(self) -> Dict[ConcessionType, int]:
+    def get_concession_map(
+        self,
+    ) -> Dict["ConcessionType", int]:
         """
         Return a map of how many of each concession type are rquired for
         this discount combination
         """
-        return get_concession_map(self.discount_requirements.all())
+        return get_concession_map(list(self.discount_requirements.all()))
 
     def __str__(self) -> str:
         return f"{self.discount * 100}% off for {self.name}"
@@ -144,7 +152,10 @@ class DiscountRequirement(models.Model):
     concession_type = models.ForeignKey(ConcessionType, on_delete=models.CASCADE)
 
 
-def combinations(iterable: List, max_length: int) -> Set[Tuple]:
+T = TypeVar("T")
+
+
+def combinations(iterable: List[T], max_length: int) -> Set[Tuple[T, ...]]:
     """ Given a list give all the combinations of that list up to a given length """
 
     return set(
@@ -155,7 +166,7 @@ def combinations(iterable: List, max_length: int) -> Set[Tuple]:
 
 
 class DiscountCombination:
-    def __init__(self, discount_combination: Tuple[Discount]):
+    def __init__(self, discount_combination: Tuple[Discount, ...]):
         self.discount_combination = discount_combination
 
     def __eq__(self, obj) -> bool:
@@ -179,18 +190,18 @@ class DiscountCombination:
         return get_concession_map(self.get_requirements())
 
 
-class Booking(models.Model, TimeStampedMixin):
+class Booking(TimeStampedMixin, models.Model):
     """A booking is for one performance and has many tickets"""
 
     class BookingStatus(models.TextChoices):
-        INPROGRESS = "INPROGRESS", "In Progress"
+        IN_PROGRESS = "IN_PROGRESS", "In Progress"
         PAID = "PAID", "Paid"
 
     class Meta:
         constraints = [
             models.UniqueConstraint(
                 fields=["status", "performance"],
-                condition=models.Q(status="INPROGRESS"),
+                condition=models.Q(status="IN_PROGRESS"),
                 name="one_in_progress_booking_per_user_per_performance",
             )
         ]
@@ -207,7 +218,11 @@ class Booking(models.Model, TimeStampedMixin):
     status = models.CharField(
         max_length=20,
         choices=BookingStatus.choices,
-        default=BookingStatus.INPROGRESS,
+        default=BookingStatus.IN_PROGRESS,
+    )
+
+    payments = GenericRelation(
+        Payment, object_id_field="pay_object_id", content_type_field="pay_object_type"
     )
 
     def __str__(self):
@@ -260,7 +275,7 @@ class Booking(models.Model, TimeStampedMixin):
         """
         Given a discount combination work out the new subtotal of the booking
         """
-        discount_total = 0
+        discount_total: float = 0
         tickets_available_to_discount = [ticket for ticket in self.tickets.all()]
         for discount_from_comb in discounts.discount_combination:
             discount = DiscountCombination((discount_from_comb,))
@@ -281,7 +296,7 @@ class Booking(models.Model, TimeStampedMixin):
                     )
                     tickets_available_to_discount.remove(ticket)
         # For each type of concession
-        return self.get_price() - discount_total
+        return self.get_price() - math.ceil(discount_total)
 
     def get_best_discount_combination(self) -> Optional[DiscountCombination]:
         """
@@ -334,6 +349,65 @@ class Booking(models.Model, TimeStampedMixin):
         """
         return math.ceil(self.subtotal() + self.misc_costs_value())
 
+    def get_ticket_diff(self, tickets):
+        """
+        Given a list of tickets return the tickets which need to be created a
+        deleted, in two lists.
+        """
+        addTickets = []
+        deleteTickets = []
+        existingTickets = {}
+
+        # find tickets to add
+        for ticket in tickets:
+            # splits requested tickets into id'd and no id'd
+            if ticket.id is None:
+                # if they have no id, they must be new
+                addTickets.append(ticket)
+            else:
+                # if they have an id, they must have existed at some point
+                existingTickets[ticket.id] = ticket
+
+        # find tickets to delete
+        for ticket in self.tickets.all():
+
+            if existingTickets.get(ticket.id):
+                # if a given booking ticket is in the requested tickets - you keep it -
+                existingTickets.pop(ticket.id, None)
+            else:
+                # if the ticket exists in the booking, but not in the requested tickets - delete it.
+                deleteTickets.append(ticket)
+
+        return addTickets, deleteTickets
+
+    def pay(self, nonce):
+        response = PaymentProvider.create_payment(
+            self.total(), str(self.reference), nonce
+        )
+
+        if response.is_success():
+            # Set the booking as paid
+            self.status = self.BookingStatus.PAID
+            self.save()
+
+            # Create a payment for this transaction
+            card_details = response.body["payment"]["card_details"]["card"]
+            amount_details = response.body["payment"]["amount_money"]
+            return Payment.objects.create(
+                pay_object=self,
+                card_brand=card_details["card_brand"],
+                last_4=card_details["last_4"],
+                provider=Payment.PaymentProvider.SQUARE_ONLINE,
+                type=Payment.PaymentType.PURCHASE,
+                provider_payment_id=response.body["payment"]["id"],
+                value=amount_details["amount"],
+                currency=amount_details["currency"],
+            )
+
+        else:
+            # If the square transaction failed then raise an exception
+            raise SquareException(response)
+
 
 class Ticket(models.Model):
     """A booking of a single seat (from a seat group)"""
@@ -370,3 +444,41 @@ class Ticket(models.Model):
         return self.booking.performance.performance_seat_groups.get(
             seat_group=self.seat_group
         ).price
+
+    def __hash__(self):
+        """
+        Not sure about this one.
+        I think we have to be very careful to ensure the Ticket is not change
+        (when it is being hashed) as any change would change its hash.
+        What I think this means is we should treat tickets as immutable when
+        hashing them.
+        """
+        return hash(
+            (
+                self.id,
+                self.seat_group.id,
+                self.seat.id,
+                self.booking.id,
+                self.concession_type.id,
+            )
+        )
+
+    def __eq__(self, other):
+        """
+        If a ticket has an id then we can use the super's eq else
+
+        if two tickets are equal if the following match:
+        - seat_group
+        - concession_type
+        - seat
+        """
+        # If either of the tickets have an id
+        if self.id is not None or other.id is not None:
+            return super().__eq__(other)
+
+        # Attributes required to match
+        attributes = ["seat_group", "concession_type", "seat"]
+        return all(
+            getattr(self, attribute) == getattr(other, attribute)
+            for attribute in attributes
+        )

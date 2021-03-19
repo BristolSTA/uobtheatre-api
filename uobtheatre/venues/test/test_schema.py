@@ -21,6 +21,8 @@ def test_venues_schema(gql_client, gql_id):
             edges {
               node {
                 id
+                createdAt
+                updatedAt
                 name
                 address {
                   id
@@ -67,6 +69,8 @@ def test_venues_schema(gql_client, gql_id):
                     {
                         "node": {
                             "id": gql_id(venue.id, "VenueNode"),
+                            "createdAt": venue.created_at.isoformat(),
+                            "updatedAt": venue.updated_at.isoformat(),
                             "name": venue.name,
                             "address": {
                                 "id": gql_id(venue.address.id, "AddressNode"),
