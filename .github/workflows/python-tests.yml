@@ -59,4 +59,4 @@ jobs:
       run: |
         pytest --cov uobtheatre --cov-fail-under 100 -m "not square_integration"
       env:
-        DATABASE_URL: postgres://postgres:postgres@0.0.0.0:5432/postgres
+        DATABASE_HOST: 0.0.0.0
