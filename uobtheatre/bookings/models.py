@@ -256,13 +256,13 @@ class Booking(TimeStampedMixin, models.Model):
             if self.is_valid_discount_combination(DiscountCombination(discounts))
         ]
 
-    def get_price(self) -> float:
+    def get_price(self) -> int:
         """
         Get the price of the booking with no discounts applied.
         """
         return sum(ticket.seat_price() for ticket in self.tickets.all())
 
-    def tickets_price(self) -> float:
+    def tickets_price(self) -> int:
         """
         Get the price of the booking if only single discounts (those applying
         to only one ticket) applied.
@@ -271,11 +271,11 @@ class Booking(TimeStampedMixin, models.Model):
 
     def get_price_with_discount_combination(
         self, discounts: DiscountCombination
-    ) -> float:
+    ) -> int:
         """
         Given a discount combination work out the new subtotal of the booking
         """
-        discount_total: float = 0
+        discount_total: int = 0
         tickets_available_to_discount = [ticket for ticket in self.tickets.all()]
         for discount_from_comb in discounts.discount_combination:
             discount = DiscountCombination((discount_from_comb,))
@@ -288,7 +288,7 @@ class Booking(TimeStampedMixin, models.Model):
                         for ticket in tickets_available_to_discount
                         if ticket.concession_type == concession_type
                     )
-                    discount_total += (
+                    discount_total += math.floor(
                         self.performance.performance_seat_groups.get(
                             seat_group=ticket.seat_group
                         ).price
@@ -296,7 +296,7 @@ class Booking(TimeStampedMixin, models.Model):
                     )
                     tickets_available_to_discount.remove(ticket)
         # For each type of concession
-        return self.get_price() - math.ceil(discount_total)
+        return self.get_price() - discount_total
 
     def get_best_discount_combination(self) -> Optional[DiscountCombination]:
         """
@@ -425,7 +425,7 @@ class Ticket(models.Model):
     )
     seat = models.ForeignKey(Seat, on_delete=models.RESTRICT, null=True, blank=True)
 
-    def discounted_price(self):
+    def discounted_price(self) -> int:
         """
         Get the price of the ticket if only single discounts (those applying
         to only one ticket) applied.
@@ -437,7 +437,7 @@ class Ticket(models.Model):
             ).price,
         )
 
-    def seat_price(self):
+    def seat_price(self) -> int:
         """
         Get the price of the ticket with no discounts applied.
         """

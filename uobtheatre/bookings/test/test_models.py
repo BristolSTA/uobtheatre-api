@@ -333,9 +333,9 @@ def test_get_price_with_discount_combination():
     )
     discount_combination = DiscountCombination((discount_student,))
     assert discount_student.discount == 0.2
-    assert round(
-        booking.get_price_with_discount_combination(discount_combination)
-    ) == round((seating.price * (1 - discount_student.discount)) + seating.price)
+    assert booking.get_price_with_discount_combination(discount_combination) == round(
+        (seating.price * (1 - discount_student.discount)) + seating.price
+    )
 
     discount_family = DiscountFactory(name="Family", discount=0.2)
     discount_family.performances.set([performance])
