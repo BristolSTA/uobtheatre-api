@@ -29,14 +29,14 @@ class MiscCost(models.Model):
     )
     value = models.FloatField(null=True, blank=True)
 
-    def get_value(self, booking) -> float:
+    def get_value(self, booking) -> int:
         """
         Calculate the value of the misc cost given a booking
         This will always return an value (not optional) as the model is
         required to either have a non null percentage or a non null value
         """
         if self.percentage is not None:
-            return booking.subtotal() * self.percentage
+            return math.ceil(booking.subtotal() * self.percentage)
         return self.value  # type: ignore
 
     class Meta:
@@ -305,7 +305,7 @@ class Booking(TimeStampedMixin, models.Model):
         """
         return self.get_best_discount_combination_with_price()[0]
 
-    def subtotal(self) -> float:
+    def subtotal(self) -> int:
         """
         Returns the subtotal of the booking. This is the total value including
         single and group discounts before any misc costs are applied.
@@ -314,7 +314,7 @@ class Booking(TimeStampedMixin, models.Model):
 
     def get_best_discount_combination_with_price(
         self,
-    ) -> Tuple[Optional[DiscountCombination], float]:
+    ) -> Tuple[Optional[DiscountCombination], int]:
         """
         Returns the discounted price (subtotal) and the discount combination
         used to create that price.
@@ -331,56 +331,58 @@ class Booking(TimeStampedMixin, models.Model):
 
         return best_discount, best_price
 
-    def discount_value(self) -> float:
+    def discount_value(self) -> int:
         """
         Returns the value of the group discounts applied in pence
         """
         return self.tickets_price() - self.subtotal()
 
-    def misc_costs_value(self) -> float:
+    def misc_costs_value(self) -> int:
         """
         Returns the value of the misc costs applied in pence
         """
         return sum(misc_cost.get_value(self) for misc_cost in MiscCost.objects.all())
 
-    def total(self) -> float:
+    def total(self) -> int:
         """
         The final price of the booking with all dicounts and misc costs applied.
         """
         return math.ceil(self.subtotal() + self.misc_costs_value())
 
-    def get_ticket_diff(self, tickets):
+    def get_ticket_diff(
+        self, tickets: List["Ticket"]
+    ) -> Tuple[List["Ticket"], List["Ticket"]]:
         """
         Given a list of tickets return the tickets which need to be created a
         deleted, in two lists.
         """
-        addTickets = []
-        deleteTickets = []
-        existingTickets = {}
+        add_tickets: List["Ticket"] = []
+        delete_tickets: List["Ticket"] = []
+        existing_tickets: Dict[int, "Ticket"] = {}
 
         # find tickets to add
         for ticket in tickets:
             # splits requested tickets into id'd and no id'd
             if ticket.id is None:
                 # if they have no id, they must be new
-                addTickets.append(ticket)
+                add_tickets.append(ticket)
             else:
                 # if they have an id, they must have existed at some point
-                existingTickets[ticket.id] = ticket
+                existing_tickets[ticket.id] = ticket
 
         # find tickets to delete
         for ticket in self.tickets.all():
 
-            if existingTickets.get(ticket.id):
+            if existing_tickets.get(ticket.id):
                 # if a given booking ticket is in the requested tickets - you keep it -
-                existingTickets.pop(ticket.id, None)
+                existing_tickets.pop(ticket.id, None)
             else:
                 # if the ticket exists in the booking, but not in the requested tickets - delete it.
-                deleteTickets.append(ticket)
+                delete_tickets.append(ticket)
 
-        return addTickets, deleteTickets
+        return add_tickets, delete_tickets
 
-    def pay(self, nonce):
+    def pay(self, nonce: str):
         response = PaymentProvider.create_payment(
             self.total(), str(self.reference), nonce
         )
