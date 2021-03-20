@@ -157,8 +157,7 @@ class PerformanceSeatGroupNode(DjangoObjectType):
         return [
             ConcessionTypeBookingType(
                 concession_type=concession,
-                price=self.performance.price_with_concession(
-                    concession, self.price),
+                price=self.performance.price_with_concession(concession, self.price),
             )
             for concession in self.performance.concessions()
         ]
@@ -230,8 +229,7 @@ class Query(graphene.ObjectType):
     productions = DjangoFilterConnectionField(ProductionNode)
     performances = DjangoFilterConnectionField(PerformanceNode)
 
-    production = graphene.Field(
-        ProductionNode, slug=graphene.String(required=True))
+    production = graphene.Field(ProductionNode, slug=graphene.String(required=True))
     performance = relay.Node.Field(PerformanceNode)
 
     def resolve_production(self, info, slug):

@@ -261,8 +261,7 @@ class Performance(models.Model, TimeStampedMixin):
 
     disabled = models.BooleanField(default=True)
 
-    seat_groups = models.ManyToManyField(
-        SeatGroup, through="PerformanceSeatGroup")
+    seat_groups = models.ManyToManyField(SeatGroup, through="PerformanceSeatGroup")
 
     capacity = models.IntegerField(null=True, blank=True)
 
@@ -297,16 +296,14 @@ class Performance(models.Model, TimeStampedMixin):
             )
 
         seat_groups_remaining_capacity = sum(
-            self.capacity_remaining(
-                seat_group=performance_seat_group.seat_group)
+            self.capacity_remaining(seat_group=performance_seat_group.seat_group)
             for performance_seat_group in self.performance_seat_groups.all()
         )
         return (
             seat_groups_remaining_capacity
             if not self.capacity
             else min(
-                self.capacity -
-                len(self.tickets()), seat_groups_remaining_capacity
+                self.capacity - len(self.tickets()), seat_groups_remaining_capacity
             )
         )
 

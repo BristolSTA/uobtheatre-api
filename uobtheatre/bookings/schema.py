@@ -64,8 +64,7 @@ class PriceBreakdownTicketNode(graphene.ObjectType):
     ticket_price = graphene.Int(required=True)
     number = graphene.Int(required=True)
     seat_group = graphene.Field("uobtheatre.venues.schema.SeatGroupNode")
-    concession_type = graphene.Field(
-        "uobtheatre.bookings.schema.ConcessionTypeNode")
+    concession_type = graphene.Field("uobtheatre.bookings.schema.ConcessionTypeNode")
     total_price = graphene.Int(required=True)
 
     def resolve_total_price(self, info):
