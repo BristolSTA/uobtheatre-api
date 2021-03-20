@@ -16,7 +16,7 @@ Create a virtualenv and use it
 ```
 virtualenv -p python3.8 .venv
 source .venv/bin/activate
-pip install -r requirements.txt dev-requirements.txt
+pip install -r requirements.txt -r dev-requirements.txt
 ```
 
 If you need to use a python thing locally (not in docker) go into pipenv with `pipenv shell`.
