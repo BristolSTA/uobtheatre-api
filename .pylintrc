@@ -1,0 +1,4 @@
+[MESSAGES CONTROL]
+disable=C0301
+
+# C0301 - line length
