@@ -15,4 +15,4 @@ class ImageNode(DjangoObjectType):
     class Meta:
         model = Image
         interfaces = (relay.Node,)
-        exclude = ("file",)
+        fields = ("id", "url", "alt_text")

@@ -5,6 +5,7 @@ from graphene_django.fields import DjangoConnectionField
 from graphene_django.filter import DjangoFilterConnectionField
 
 from uobtheatre.addresses.schema import AddressNode  # noqa
+from uobtheatre.images.schema import ImageNode  # noqa
 from uobtheatre.productions.schema import ProductionNode
 from uobtheatre.venues.models import Seat, SeatGroup, Venue
 

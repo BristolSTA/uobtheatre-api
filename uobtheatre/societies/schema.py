@@ -3,6 +3,7 @@ from graphene import relay
 from graphene_django import DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
 
+from uobtheatre.images.schema import ImageNode  # noqa
 from uobtheatre.societies.models import Society
 
 

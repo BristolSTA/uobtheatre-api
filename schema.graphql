@@ -50,7 +50,7 @@ enum BookingStatus {
 type CastMemberNode implements Node {
   id: ID!
   name: String!
-  profilePicture: GrapheneImageFieldNode
+  profilePicture: ImageNode
   role: String
   production: ProductionNode!
 }
@@ -146,12 +146,13 @@ union GQLErrorUnion = FieldError | NonFieldError
 
 scalar GenericScalar
 
-type GrapheneImageFieldNode {
-  url: String!
-  name: String
-}
-
 scalar IdInputField
+
+type ImageNode implements Node {
+  id: ID!
+  altText: String
+  url: String
+}
 
 type MiscCostNode implements Node {
   id: ID!
@@ -341,9 +342,9 @@ type ProductionNode implements Node {
   subtitle: String
   description: String
   society: SocietyNode
-  posterImage: GrapheneImageFieldNode
-  featuredImage: GrapheneImageFieldNode
-  coverImage: GrapheneImageFieldNode
+  coverImage: ImageNode
+  posterImage: ImageNode
+  featuredImage: ImageNode
   ageRating: Int
   facebookEvent: String
   warnings: [WarningNode!]
@@ -463,8 +464,8 @@ type SocietyNode implements Node {
   id: ID!
   name: String!
   description: String!
-  logo: GrapheneImageFieldNode
-  banner: GrapheneImageFieldNode
+  logo: ImageNode!
+  banner: ImageNode!
   slug: String!
   productions(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, society: ID, ageRating: Int, facebookEvent: String, warnings: [ID], slug: String, id: ID, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, orderBy: String): ProductionNodeConnection!
 }
@@ -555,7 +556,7 @@ type VenueNode implements Node {
   internalCapacity: Int!
   description: String
   address: AddressNode
-  image: GrapheneImageFieldNode
+  image: ImageNode!
   publiclyListed: Boolean!
   slug: String!
   seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
