@@ -58,5 +58,7 @@ repos:
             graphene-django,
             psycopg2-binary,
             django-graphql-auth,
+            gunicorn,
             shortuuid,
+            squareup,
           ]
