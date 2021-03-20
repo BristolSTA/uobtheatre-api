@@ -572,11 +572,11 @@ def test_booking_IN_PROGress(gql_client_flexible, gql_id):
 @pytest.mark.parametrize(
     "order_by, expected_order",
     [
-        ("createdAt", [1, 0, 2]),
-        ("-createdAt", [2, 0, 1]),
+        ("createdAt", [0, 1, 2]),
+        ("-createdAt", [2, 1, 0]),
     ],
 )
-def test_booking_orderby(order_by, expected_order, gql_client_flexible, gql_id, freeze):
+def test_booking_orderby(order_by, expected_order, gql_client_flexible):
     """
     Test for the ordfering of a user's bookings
     """
@@ -584,13 +584,9 @@ def test_booking_orderby(order_by, expected_order, gql_client_flexible, gql_id, 
     user = UserFactory()
     bookings = []
 
-    for i in range(3):
-        freeze.freeze(datetime.datetime(2020, 1, i + 1))
-        bookings[i] = BookingFactory(user=user)
-
-    print(bookings[0].created_at)
-    print(bookings[1].created_at)
-    print(bookings[2].created_at)
+    # Create bookings in order, this first booking in the list is the first to be created
+    for _ in range(3):
+        bookings.append(BookingFactory(user=user))
 
     request = """
     {
