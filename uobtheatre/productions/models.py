@@ -171,7 +171,11 @@ class CastMember(models.Model):
 
     name = models.CharField(max_length=255)
     profile_picture = models.ForeignKey(
-        Image, on_delete=models.RESTRICT, related_name="cast_members"
+        Image,
+        on_delete=models.RESTRICT,
+        related_name="cast_members",
+        blank=True,
+        null=True,
     )
     role = models.CharField(max_length=255, null=True)
     production = models.ForeignKey(
