@@ -1,4 +1,5 @@
 [MESSAGES CONTROL]
-disable=C0301
+disable=C0301, C0114
 
 # C0301 - line length
+# C0114 - module docstrings
