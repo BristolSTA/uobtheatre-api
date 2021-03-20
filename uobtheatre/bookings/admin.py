@@ -41,7 +41,8 @@ class BookingAdmin(admin.ModelAdmin):
 
     def view_price_with_discount(self, booking):
         return format_html(
-            "<p> {} </p>", booking.get_best_discount_combination_with_price()[1]
+            "<p> {} </p>", booking.get_best_discount_combination_with_price()[
+                1]
         )
 
     view_price.short_description = "Price"  # type: ignore

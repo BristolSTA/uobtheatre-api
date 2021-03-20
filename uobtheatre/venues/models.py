@@ -48,7 +48,8 @@ class SeatGroup(models.Model):
         Venue, on_delete=models.CASCADE, related_name="seat_groups"
     )
     capacity = models.IntegerField(null=True)
-    seats = models.ForeignKey(Seat, on_delete=models.RESTRICT, null=True, blank=True)
+    seats = models.ForeignKey(
+        Seat, on_delete=models.RESTRICT, null=True, blank=True)
     is_internal = models.BooleanField(default=True)
 
     def __str__(self):

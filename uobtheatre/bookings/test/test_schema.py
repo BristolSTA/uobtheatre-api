@@ -228,7 +228,8 @@ def test_bookings_price_break_down(gql_client_flexible, gql_id):
         for ticket_group in expected_ticket_groups
     ]
 
-    assert response_booking_price_break_down.pop("miscCosts") == misc_cost_expected
+    assert response_booking_price_break_down.pop(
+        "miscCosts") == misc_cost_expected
 
     assert response_booking_price_break_down == {
         "ticketsPrice": booking.tickets_price(),
@@ -255,7 +256,8 @@ def test_discounts_node(gql_client, gql_id):
     # Single discount - should not appear
     discount_2 = DiscountFactory(name="Student", percentage=0.3)
     discount_2.performances.set([performance])
-    discount_requirement_2 = DiscountRequirementFactory(discount=discount_2, number=1)
+    discount_requirement_2 = DiscountRequirementFactory(
+        discount=discount_2, number=1)
 
     response = gql_client.execute(
         """
@@ -419,7 +421,8 @@ def test_bookings_auth(gql_client_flexible):
     # When we are logged in expect 1 booking
     response = gql_client_flexible.execute(request_query)
     assert (
-        len(response["data"]["performances"]["edges"][0]["node"]["bookings"]["edges"])
+        len(response["data"]["performances"]["edges"]
+            [0]["node"]["bookings"]["edges"])
         == 1
     )
 

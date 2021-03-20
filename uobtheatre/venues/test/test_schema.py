@@ -137,4 +137,5 @@ def test_slug_single_schema(gql_client, gql_id):
     assert response["data"] == {"venue": None}
 
     response = gql_client.execute(request % venues[0].slug)
-    assert response["data"] == {"venue": {"id": gql_id(venues[0].id, "VenueNode")}}
+    assert response["data"] == {
+        "venue": {"id": gql_id(venues[0].id, "VenueNode")}}

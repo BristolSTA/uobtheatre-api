@@ -25,7 +25,8 @@ class Command(createsuperuser.Command):
         super(Command, self).handle(*args, **options)
 
         if password:
-            user = self.UserModel._default_manager.db_manager(database).get(email=email)
+            user = self.UserModel._default_manager.db_manager(
+                database).get(email=email)
             user.set_password(password)
             user.verified = True
             user.save()

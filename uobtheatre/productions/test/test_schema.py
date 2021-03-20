@@ -24,7 +24,8 @@ from uobtheatre.productions.test.factories import (
 def test_productions_schema(gql_client, gql_id):
 
     production = ProductionFactory()
-    performances = [PerformanceFactory(production=production) for i in range(2)]
+    performances = [PerformanceFactory(
+        production=production) for i in range(2)]
 
     warnings = [WarningFactory() for i in range(3)]
     production.warnings.set(warnings)
@@ -253,7 +254,8 @@ def test_productions_filter(factories, requests, gql_client):
     for request in requests:
         filter_args, expected_number = request
 
-        query_string = "{ productions(" + filter_args + ") { edges { node { id } } } }"
+        query_string = "{ productions(" + filter_args + \
+            ") { edges { node { id } } } }"
         response = gql_client.execute(query_string)
 
         assert len(response["data"]["productions"]["edges"]) == expected_number
@@ -384,18 +386,22 @@ def test_ticket_options(gql_client, gql_id):
     performance = PerformanceFactory()
 
     # Create some seat groups for this performance
-    performance_seat_group_1 = PerformanceSeatingFactory(performance=performance)
-    performance_seat_group_2 = PerformanceSeatingFactory(performance=performance)
+    performance_seat_group_1 = PerformanceSeatingFactory(
+        performance=performance)
+    performance_seat_group_2 = PerformanceSeatingFactory(
+        performance=performance)
 
     # Create a discount
     discount_1 = DiscountFactory(name="Family", percentage=0.2)
     discount_1.performances.set([performance])
-    discount_requirement_1 = DiscountRequirementFactory(discount=discount_1, number=1)
+    discount_requirement_1 = DiscountRequirementFactory(
+        discount=discount_1, number=1)
 
     # Create a different
     discount_2 = DiscountFactory(name="Family 2", percentage=0.3)
     discount_2.performances.set([performance])
-    discount_requirement_2 = DiscountRequirementFactory(discount=discount_2, number=1)
+    discount_requirement_2 = DiscountRequirementFactory(
+        discount=discount_2, number=1)
 
     response = gql_client.execute(
         """

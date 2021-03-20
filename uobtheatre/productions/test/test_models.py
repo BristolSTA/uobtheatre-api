@@ -73,7 +73,8 @@ def test_production_duration():
         second=11,
         tzinfo=timezone.get_current_timezone(),
     )
-    performance_long = PerformanceFactory(start=start, end=end, production=production)
+    performance_long = PerformanceFactory(
+        start=start, end=end, production=production)
 
     # Create a performance with a short duration
     start = datetime.datetime(
@@ -94,7 +95,8 @@ def test_production_duration():
         second=10,
         tzinfo=timezone.get_current_timezone(),
     )
-    performance_short = PerformanceFactory(start=start, end=end, production=production)
+    performance_short = PerformanceFactory(
+        start=start, end=end, production=production)
 
     assert production.duration() == performance_short.duration()
 
@@ -276,7 +278,8 @@ def test_production_min_price():
     performances = [PerformanceFactory() for i in range(3)]
 
     for i in range(3):
-        PerformanceSeatingFactory(performance=performances[i], price=10 * (i + 1))
+        PerformanceSeatingFactory(
+            performance=performances[i], price=10 * (i + 1))
 
     production.performances.set(performances)
 
@@ -357,14 +360,16 @@ def test_performance_capacity_remaining():
 
     seating[0].seat_group = seat_group
     seating[0].save()
-    assert perf.capacity_remaining(seat_group) == perf.total_capacity(seat_group) != 0
+    assert perf.capacity_remaining(
+        seat_group) == perf.total_capacity(seat_group) != 0
 
     # Create some tickets for this performance
     booking_1 = BookingFactory(performance=perf)
     booking_2 = BookingFactory(performance=perf)
     [TicketFactory(booking=booking_1, seat_group=seat_group) for _ in range(3)]
     [TicketFactory(booking=booking_2, seat_group=seat_group) for _ in range(2)]
-    assert perf.capacity_remaining(seat_group) == perf.total_capacity(seat_group) - 5
+    assert perf.capacity_remaining(
+        seat_group) == perf.total_capacity(seat_group) - 5
     assert perf.capacity_remaining() == perf.total_capacity() - 5
 
 
@@ -373,7 +378,8 @@ def test_performance_capacity_remaining():
     "name, start, string",
     [
         ("TRASH", None, "Perforamce of TRASH"),
-        ("TRASH", "2020-12-27T11:17:43Z", "Perforamce of TRASH at 11:17 on 27/12/2020"),
+        ("TRASH", "2020-12-27T11:17:43Z",
+         "Perforamce of TRASH at 11:17 on 27/12/2020"),
     ],
 )
 def test_performance_str(name, start, string):

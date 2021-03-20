@@ -92,7 +92,8 @@ class DiscountRequirement(models.Model):
     discount = models.ForeignKey(
         Discount, on_delete=models.CASCADE, related_name="requirements"
     )
-    concession_type = models.ForeignKey(ConcessionType, on_delete=models.CASCADE)
+    concession_type = models.ForeignKey(
+        ConcessionType, on_delete=models.CASCADE)
 
 
 def combinations(iterable: List, max_length: int) -> Set[Tuple]:
@@ -152,7 +153,8 @@ class Booking(models.Model, TimeStampedMixin):
     reference = models.CharField(
         default=create_short_uuid, editable=False, max_length=12
     )
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bookings")
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="bookings")
     performance = models.ForeignKey(
         Performance,
         on_delete=models.RESTRICT,
@@ -215,7 +217,8 @@ class Booking(models.Model, TimeStampedMixin):
         Given a discount combination work out the new subtotal of the booking
         """
         discount_total = 0
-        tickets_available_to_discount = [ticket for ticket in self.tickets.all()]
+        tickets_available_to_discount = [
+            ticket for ticket in self.tickets.all()]
         for discount_from_comb in discounts.discount_combination:
             discount = DiscountCombination((discount_from_comb,))
             concession_map = discount.get_concession_map()
@@ -303,7 +306,8 @@ class Ticket(models.Model):
         on_delete=models.RESTRICT,
         related_name="seat_bookings",
     )
-    seat = models.ForeignKey(Seat, on_delete=models.RESTRICT, null=True, blank=True)
+    seat = models.ForeignKey(
+        Seat, on_delete=models.RESTRICT, null=True, blank=True)
 
     def discounted_price(self):
         """
