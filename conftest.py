@@ -73,3 +73,42 @@ def mock_square(monkeypatch):
 
     mock_api_response = MockApiResponse()
     return mock_api_response
+
+
+@pytest.fixture
+def freeze(monkeypatch):
+    """Now() manager patches datetime return a fixed, settable, value
+    (freezes time)
+    """
+    import datetime
+
+    original = datetime.datetime
+
+    class FreezeMeta(type):
+        def __instancecheck__(self, instance):
+            if type(instance) == original or type(instance) == Freeze:
+                return True
+
+    class Freeze(datetime.datetime):
+        __metaclass__ = FreezeMeta
+
+        @classmethod
+        def freeze(cls, val):
+            cls.frozen = val
+
+        @classmethod
+        def now(cls):
+            return cls.frozen
+
+        @classmethod
+        def delta(cls, timedelta=None, **kwargs):
+            """ Moves time fwd/bwd by the delta"""
+            from datetime import timedelta as td
+
+            if not timedelta:
+                timedelta = td(**kwargs)
+            cls.frozen += timedelta
+
+    monkeypatch.setattr(datetime, "datetime", Freeze)
+    Freeze.freeze(original.now())
+    return Freeze
