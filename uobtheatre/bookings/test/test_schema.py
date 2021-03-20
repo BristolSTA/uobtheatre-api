@@ -1,4 +1,7 @@
+import datetime
+
 import pytest
+from django.utils import timezone
 from graphql_relay.node.node import from_global_id, to_global_id
 
 from uobtheatre.bookings.models import Booking
@@ -556,6 +559,109 @@ def test_booking_IN_PROGress(gql_client_flexible, gql_id):
                         {
                             "node": {
                                 "id": gql_id(booking.id, "BookingNode"),
+                            }
+                        },
+                    ]
+                }
+            }
+        }
+    }
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "order_by, expected_order",
+    [
+        ("createdAt", [1, 0, 2]),
+        ("-createdAt", [2, 0, 1]),
+    ],
+)
+def test_booking_orderby(order_by, expected_order, gql_client_flexible, gql_id, freeze):
+    """
+    Test for the ordfering of a user's bookings
+    """
+    timezone.now()
+    user = UserFactory()
+    bookings = []
+
+    for i in range(3):
+        freeze.freeze(datetime.datetime(2020, 1, i + 1))
+        bookings[i] = BookingFactory(user=user)
+
+    print(bookings[0].created_at)
+    print(bookings[1].created_at)
+    print(bookings[2].created_at)
+
+    request = """
+    {
+      me {
+        bookings(orderBy: "%s") {
+          edges {
+            node {
+              createdAt
+            }
+          }
+        }
+      }
+    }
+    """
+    gql_client_flexible.set_user(user)
+    response = gql_client_flexible.execute(request % order_by)
+
+    assert response["data"]["me"]["bookings"]["edges"] == [
+        {"node": {"createdAt": bookings[i].created_at.isoformat()}}
+        for i in expected_order
+    ]
+
+
+@pytest.mark.django_db
+@pytest.mark.skip("z")
+def test_bookings_orderBy(gql_client_flexible, gql_id):
+    """
+    Test for the ordfering of a user's bookings
+    """
+    user = UserFactory()
+
+    current_time = timezone.now()
+
+    bookings = [
+        BookingFactory(user=user, created_at=current_time + datetime.timedelta(days=2)),
+        BookingFactory(user=user, created_at=current_time + datetime.timedelta(days=1)),
+    ]
+
+    request_query = """
+    {
+      me {
+        bookings(orderBy: "createdAt") {
+          edges {
+            node {
+              id
+              createdAt
+            }
+          }
+        }
+      }
+    }
+    """
+
+    gql_client_flexible.set_user(user)
+    response = gql_client_flexible.execute(request_query)
+
+    assert response == {
+        "data": {
+            "me": {
+                "bookings": {
+                    "edges": [
+                        {
+                            "node": {
+                                "id": gql_id(bookings[1].id, "BookingNode"),
+                                "createdAt": bookings[1].created_at.isoformat(),
+                            }
+                        },
+                        {
+                            "node": {
+                                "id": gql_id(bookings[0].id, "BookingNode"),
+                                "createdAt": bookings[0].created_at.isoformat(),
                             }
                         },
                     ]
