@@ -121,17 +121,17 @@ def test_productions_schema(gql_client, gql_id):
                             "createdAt": production.created_at.isoformat(),
                             "updatedAt": production.updated_at.isoformat(),
                             "ageRating": production.age_rating,
-                            "coverImage": {"url": production.cover_image.url},
+                            "coverImage": {"url": production.cover_image.file.url},
                             "description": production.description,
                             "facebookEvent": production.facebook_event,
                             "featuredImage": {
-                                "url": production.featured_image.url,
+                                "url": production.featured_image.file.url,
                             },
                             "id": gql_id(production.id, "ProductionNode"),
                             "isBookable": production.is_bookable(),
                             "name": production.name,
                             "posterImage": {
-                                "url": production.poster_image.url,
+                                "url": production.poster_image.file.url,
                             },
                             "slug": production.slug,
                             "subtitle": production.subtitle,
@@ -155,7 +155,7 @@ def test_productions_schema(gql_client, gql_id):
                                     "id": gql_id(cast_member.id, "CastMemberNode"),
                                     "name": cast_member.name,
                                     "profilePicture": {
-                                        "url": cast_member.profile_picture.url
+                                        "url": cast_member.profile_picture.file.url
                                     }
                                     if cast_member.profile_picture
                                     else None,

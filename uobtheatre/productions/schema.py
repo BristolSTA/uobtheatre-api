@@ -20,12 +20,7 @@ from uobtheatre.productions.models import (
     Warning,
     append_production_qs,
 )
-from uobtheatre.utils.schema import (
-    FilterSet,
-    GrapheneImageField,
-    GrapheneImageFieldNode,
-    GrapheneImageMixin,
-)
+from uobtheatre.utils.schema import FilterSet
 
 
 class CrewRoleNode(DjangoObjectType):
@@ -34,9 +29,7 @@ class CrewRoleNode(DjangoObjectType):
         interfaces = (relay.Node,)
 
 
-class CastMemberNode(GrapheneImageMixin, DjangoObjectType):
-    profile_picture = GrapheneImageField(GrapheneImageFieldNode)
-
+class CastMemberNode(DjangoObjectType):
     class Meta:
         model = CastMember
         interfaces = (relay.Node,)
@@ -106,11 +99,7 @@ class ProductionFilter(FilterSet):
     order_by = ProductionByMethodOrderingFilter()
 
 
-class ProductionNode(GrapheneImageMixin, DjangoObjectType):
-    cover_image = GrapheneImageField(GrapheneImageFieldNode)
-    featured_image = GrapheneImageField(GrapheneImageFieldNode)
-    poster_image = GrapheneImageField(GrapheneImageFieldNode)
-
+class ProductionNode(DjangoObjectType):
     warnings = DjangoListField(WarningNode)
     crew = DjangoListField(CrewMemberNode)
     cast = DjangoListField(CastMemberNode)

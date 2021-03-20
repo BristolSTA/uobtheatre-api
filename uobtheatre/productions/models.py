@@ -7,6 +7,7 @@ from django.db import models
 from django.db.models import Max, Min, Sum
 from django.utils import timezone
 
+from uobtheatre.images.models import Image
 from uobtheatre.societies.models import Society
 from uobtheatre.utils.models import TimeStampedMixin
 from uobtheatre.venues.models import SeatGroup, Venue
@@ -70,9 +71,27 @@ class Production(TimeStampedMixin, models.Model):
         Society, on_delete=models.SET_NULL, null=True, related_name="productions"
     )
 
-    poster_image = models.ImageField(null=True)
-    featured_image = models.ImageField(null=True)
-    cover_image = models.ImageField(null=True)
+    cover_image = models.ForeignKey(
+        Image,
+        on_delete=models.RESTRICT,
+        related_name="production_cover_images",
+        null=True,
+        blank=True,
+    )
+    poster_image = models.ForeignKey(
+        Image,
+        on_delete=models.RESTRICT,
+        related_name="production_poster_images",
+        null=True,
+        blank=True,
+    )
+    featured_image = models.ForeignKey(
+        Image,
+        on_delete=models.RESTRICT,
+        related_name="production_featured_images",
+        null=True,
+        blank=True,
+    )
 
     age_rating = models.SmallIntegerField(null=True)
     facebook_event = models.CharField(max_length=255, null=True)
@@ -151,7 +170,9 @@ class CastMember(models.Model):
     """Member of production cast"""
 
     name = models.CharField(max_length=255)
-    profile_picture = models.ImageField(null=True, blank=True)
+    profile_picture = models.ForeignKey(
+        Image, on_delete=models.RESTRICT, related_name="cast_members"
+    )
     role = models.CharField(max_length=255, null=True)
     production = models.ForeignKey(
         Production, on_delete=models.CASCADE, related_name="cast"

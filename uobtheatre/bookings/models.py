@@ -122,7 +122,7 @@ class Discount(models.Model):
         Return a map of how many of each concession type are rquired for
         this discount combination
         """
-        return get_concession_map(list(self.discount_requirements.all()))
+        return get_concession_map(list(self.requirements.all()))
 
     def __str__(self) -> str:
         return f"{self.percentage * 100}% off for {self.name}"

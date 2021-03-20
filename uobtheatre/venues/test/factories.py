@@ -1,6 +1,7 @@
 import factory
 
 from uobtheatre.addresses.test.factories import AddressFactory
+from uobtheatre.images.test.factories import ImageFactory
 from uobtheatre.venues.models import Seat, SeatGroup, Venue
 
 
@@ -10,7 +11,7 @@ class VenueFactory(factory.django.DjangoModelFactory):
     description = factory.Faker("paragraph", nb_sentences=3)
     internal_capacity = factory.Faker("pyint")
     address = factory.SubFactory(AddressFactory)
-    image = factory.django.ImageField(color="blue", use_url=True)
+    image = factory.SubFactory(ImageFactory)
 
     class Meta:
         model = Venue

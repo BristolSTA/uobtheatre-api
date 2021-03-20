@@ -335,10 +335,10 @@ def test_get_price_with_discount_combination():
         concession_type=concession_type_student, number=1, discount=discount_student
     )
     discount_combination = DiscountCombination((discount_student,))
-    assert discount_student.discount == 0.2
+    assert discount_student.percentage == 0.2
     assert booking.get_price_with_discount_combination(
         discount_combination
-    ) == math.ceil((seating.price * (1 - discount_student.discount)) + seating.price)
+    ) == math.ceil((seating.price * (1 - discount_student.percentage)) + seating.price)
 
     discount_family = DiscountFactory(name="Family", percentage=0.2)
     discount_family.performances.set([performance])
@@ -364,9 +364,9 @@ def test_get_price_with_discount_combination():
     assert (
         booking.get_price_with_discount_combination(discount_combination)
         # Price is calculated a ticket level so each ticket price should be rounded individually
-        == math.ceil(seating.price * (1 - discount_student.discount))
+        == math.ceil(seating.price * (1 - discount_student.percentage))
         # TODO This isnt right - each seat needs to be ceiled individually
-        + (3 * math.ceil(seating.price * (1 - discount_family.discount)))
+        + (3 * math.ceil(seating.price * (1 - discount_family.percentage)))
     )
 
 
