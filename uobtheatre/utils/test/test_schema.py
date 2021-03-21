@@ -79,7 +79,5 @@ def test_id_input_field_parse_value(gql_client_flexible):
         variable_values={"id": to_global_id("PerformanceNode", performance.id)},
     )
 
-    print(response)
-
     booking = Booking.objects.first()
     assert booking.performance == performance
