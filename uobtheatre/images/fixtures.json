@@ -1,0 +1,10 @@
+[
+    {
+        "model": "images.image",
+        "pk": 1,
+        "fields": {
+          "alt_text": "STA",
+          "file": "media/apple_PNG12405.png"
+        }
+    }
+]

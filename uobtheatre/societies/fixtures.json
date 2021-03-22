@@ -7,8 +7,8 @@
           "updated_at": "2020-11-11T12:24:32+0000",
           "name": "STA",
           "description": "tech",
-          "logo": "media/example.jpg",
-          "banner": "media/example.jpg",
+          "logo": 1,
+          "banner": 1,
           "slug": "sta"
         }
     },
@@ -20,7 +20,8 @@
           "updated_at": "2020-11-11T12:24:32+0000",
           "name": "MTB",
           "description": "musical theatre",
-          "logo": "media/example.jpg",
+          "logo": 1,
+          "banner": 1,
           "slug": "mtb"
         }
     },
@@ -32,8 +33,8 @@
           "updated_at": "2020-11-11T12:24:32+0000",
           "name": "Dramsoc",
           "description": "drama",
-          "logo": "media/example.jpg",
-          "banner": "media/example.jpg",
+          "logo": 1,
+          "banner": 1,
           "slug": "dramsoc"
         }
     }

@@ -121,17 +121,17 @@ def test_productions_schema(gql_client, gql_id):
                             "createdAt": production.created_at.isoformat(),
                             "updatedAt": production.updated_at.isoformat(),
                             "ageRating": production.age_rating,
-                            "coverImage": {"url": production.cover_image.url},
+                            "coverImage": {"url": production.cover_image.file.url},
                             "description": production.description,
                             "facebookEvent": production.facebook_event,
                             "featuredImage": {
-                                "url": production.featured_image.url,
+                                "url": production.featured_image.file.url,
                             },
                             "id": gql_id(production.id, "ProductionNode"),
                             "isBookable": production.is_bookable(),
                             "name": production.name,
                             "posterImage": {
-                                "url": production.poster_image.url,
+                                "url": production.poster_image.file.url,
                             },
                             "slug": production.slug,
                             "subtitle": production.subtitle,
@@ -155,7 +155,7 @@ def test_productions_schema(gql_client, gql_id):
                                     "id": gql_id(cast_member.id, "CastMemberNode"),
                                     "name": cast_member.name,
                                     "profilePicture": {
-                                        "url": cast_member.profile_picture.url
+                                        "url": cast_member.profile_picture.file.url
                                     }
                                     if cast_member.profile_picture
                                     else None,
@@ -285,10 +285,16 @@ def test_performance_schema(gql_client, gql_id):
                 capacity
                 description
                 disabled
+                discounts {
+                    id
+                }
                 doorsOpen
+                durationMins
                 end
                 extraInformation
                 id
+                isOnline
+                isInperson
                 production {
                   id
                 }
@@ -298,6 +304,7 @@ def test_performance_schema(gql_client, gql_id):
                   id
                 }
                 minSeatPrice
+                soldOut
               }
             }
           }
@@ -316,10 +323,19 @@ def test_performance_schema(gql_client, gql_id):
                             "capacity": performance.capacity,
                             "description": performance.description,
                             "disabled": performance.disabled,
+                            "discounts": [
+                                {
+                                    "id": gql_id(discount.id, "DiscountNode"),
+                                }
+                                for discount in performance.discounts.all()
+                            ],
                             "doorsOpen": performance.doors_open.isoformat(),
+                            "durationMins": performance.duration().seconds // 60,
                             "end": performance.end.isoformat(),
                             "extraInformation": performance.extra_information,
                             "id": gql_id(performance.id, "PerformanceNode"),
+                            "isOnline": False,
+                            "isInperson": True,
                             "production": {
                                 "id": gql_id(
                                     performance.production.id, "ProductionNode"
@@ -329,6 +345,7 @@ def test_performance_schema(gql_client, gql_id):
                             "capacityRemaining": performance.capacity_remaining(),
                             "venue": {"id": gql_id(performance.venue.id, "VenueNode")},
                             "minSeatPrice": performance.min_seat_price(),
+                            "soldOut": performance.is_sold_out(),
                         }
                     }
                     for performance in performances
@@ -379,12 +396,12 @@ def test_ticket_options(gql_client, gql_id):
     performance_seat_group_2 = PerformanceSeatingFactory(performance=performance)
 
     # Create a discount
-    discount_1 = DiscountFactory(name="Family", discount=0.2)
+    discount_1 = DiscountFactory(name="Family", percentage=0.2)
     discount_1.performances.set([performance])
     discount_requirement_1 = DiscountRequirementFactory(discount=discount_1, number=1)
 
     # Create a different
-    discount_2 = DiscountFactory(name="Family 2", discount=0.3)
+    discount_2 = DiscountFactory(name="Family 2", percentage=0.3)
     discount_2.performances.set([performance])
     discount_requirement_2 = DiscountRequirementFactory(discount=discount_2, number=1)
 

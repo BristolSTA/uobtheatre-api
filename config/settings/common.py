@@ -32,6 +32,7 @@ INSTALLED_APPS = (
     "uobtheatre.societies",
     "uobtheatre.addresses",
     "uobtheatre.payments",
+    "uobtheatre.images",
     "uobtheatre",
 )
 
@@ -96,7 +97,7 @@ STATICFILES_FINDERS = (
 
 # Media files
 MEDIA_ROOT = join(os.path.dirname(BASE_DIR), "media")
-MEDIA_URL = "/media/"
+MEDIA_PATH = "/media/"
 
 TEMPLATES = [
     {

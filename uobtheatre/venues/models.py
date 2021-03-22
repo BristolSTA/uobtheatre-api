@@ -2,6 +2,7 @@ from autoslug import AutoSlugField
 from django.db import models
 
 from uobtheatre.addresses.models import Address
+from uobtheatre.images.models import Image
 from uobtheatre.utils.models import TimeStampedMixin
 
 
@@ -19,7 +20,7 @@ class Venue(TimeStampedMixin, models.Model):
     internal_capacity = models.SmallIntegerField()
     description = models.TextField(null=True)
     address = models.ForeignKey(Address, on_delete=models.CASCADE, null=True)
-    image = models.ImageField(null=True)
+    image = models.ForeignKey(Image, on_delete=models.RESTRICT, related_name="venues")
     publicly_listed = models.BooleanField(default=True)
 
     slug = AutoSlugField(populate_from="name", unique=True, blank=True)

@@ -169,7 +169,7 @@ def test_get_concession_discount():
     # of that concession_type is required (and nothing else)
     assert (
         performance.get_concession_discount(concession_type)
-        == discount_requirement_3.discount.discount
+        == discount_requirement_3.discount.percentage
     )
 
 
@@ -185,7 +185,7 @@ def test_price_with_concession():
     )
     DiscountRequirementFactory(discount=discount_1, number=1)
 
-    discount_2 = DiscountFactory(name="Student", discount=0.1)
+    discount_2 = DiscountFactory(name="Student", percentage=0.1)
     discount_requirement_3 = DiscountRequirementFactory(
         discount=discount_2, number=1, concession_type=concession_type
     )

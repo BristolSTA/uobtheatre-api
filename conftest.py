@@ -34,8 +34,10 @@ class AuthenticateableGQLClient(GQLClient):
     def logout(self):
         self.request_factory.user = AnonymousUser()
 
-    def execute(self, query):
-        return super().execute(query, context_value=self.request_factory)
+    def execute(self, query, variable_values=None):
+        return super().execute(
+            query, context_value=self.request_factory, variable_values=variable_values
+        )
 
 
 @pytest.fixture

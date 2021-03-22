@@ -8,7 +8,7 @@ from graphene_django.filter import (
     GlobalIDMultipleChoiceFilter,
 )
 
-from uobtheatre.bookings.schema import ConcessionTypeNode
+from uobtheatre.bookings.schema import ConcessionTypeNode, DiscountNode
 from uobtheatre.productions.models import (
     CastMember,
     CrewMember,
@@ -20,12 +20,7 @@ from uobtheatre.productions.models import (
     Warning,
     append_production_qs,
 )
-from uobtheatre.utils.schema import (
-    FilterSet,
-    GrapheneImageField,
-    GrapheneImageFieldNode,
-    GrapheneImageMixin,
-)
+from uobtheatre.utils.schema import FilterSet
 
 
 class CrewRoleNode(DjangoObjectType):
@@ -34,9 +29,7 @@ class CrewRoleNode(DjangoObjectType):
         interfaces = (relay.Node,)
 
 
-class CastMemberNode(GrapheneImageMixin, DjangoObjectType):
-    profile_picture = GrapheneImageField(GrapheneImageFieldNode)
-
+class CastMemberNode(DjangoObjectType):
     class Meta:
         model = CastMember
         interfaces = (relay.Node,)
@@ -106,11 +99,7 @@ class ProductionFilter(FilterSet):
     order_by = ProductionByMethodOrderingFilter()
 
 
-class ProductionNode(GrapheneImageMixin, DjangoObjectType):
-    cover_image = GrapheneImageField(GrapheneImageFieldNode)
-    featured_image = GrapheneImageField(GrapheneImageFieldNode)
-    poster_image = GrapheneImageField(GrapheneImageFieldNode)
-
+class ProductionNode(DjangoObjectType):
     warnings = DjangoListField(WarningNode)
     crew = DjangoListField(CrewMemberNode)
     cast = DjangoListField(CastMemberNode)
@@ -192,6 +181,11 @@ class PerformanceNode(DjangoObjectType):
     capacity_remaining = graphene.Int()
     ticket_options = graphene.List(PerformanceSeatGroupNode)
     min_seat_price = graphene.Int()
+    duration_mins = graphene.Int()
+    is_inperson = graphene.Boolean(required=True)
+    is_online = graphene.Boolean(required=True)
+    sold_out = graphene.Boolean(required=True)
+    discounts = DjangoListField(DiscountNode)
 
     def resolve_ticket_options(self, info, **kwargs):
         return self.performance_seat_groups.all()
@@ -201,6 +195,18 @@ class PerformanceNode(DjangoObjectType):
 
     def resolve_min_seat_price(self, info):
         return self.min_seat_price()
+
+    def resolve_is_inperson(self, info):
+        return True
+
+    def resolve_is_online(self, info):
+        return False
+
+    def resolve_duration_mins(self, info):
+        return self.duration().seconds // 60
+
+    def resolve_sold_out(self, info):
+        return self.is_sold_out()
 
     class Meta:
         model = Performance

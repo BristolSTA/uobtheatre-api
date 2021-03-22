@@ -36,7 +36,7 @@ class ValueMiscCostFactory(factory.django.DjangoModelFactory):
 class DiscountFactory(factory.django.DjangoModelFactory):
 
     name = factory.Faker("sentence", nb_words=2)
-    discount = 0.2
+    percentage = 0.2
 
     class Meta:
         model = Discount

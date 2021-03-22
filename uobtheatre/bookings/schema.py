@@ -1,11 +1,21 @@
 import itertools
 
 import graphene
+from django.db.models import Count
+from django_filters import OrderingFilter
 from graphene import relay
 from graphene_django import DjangoListField, DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
+from graphql_auth.schema import UserNode
 
-from uobtheatre.bookings.models import Booking, ConcessionType, MiscCost, Ticket
+from uobtheatre.bookings.models import (
+    Booking,
+    ConcessionType,
+    Discount,
+    DiscountRequirement,
+    MiscCost,
+    Ticket,
+)
 from uobtheatre.productions.models import Performance
 from uobtheatre.utils.exceptions import (
     AuthException,
@@ -21,6 +31,7 @@ class ConcessionTypeNode(DjangoObjectType):
     class Meta:
         model = ConcessionType
         interfaces = (relay.Node,)
+        exclude = ("discountrequirement_set",)
 
 
 class MiscCostNode(DjangoObjectType):
@@ -35,12 +46,32 @@ class TicketNode(DjangoObjectType):
         interfaces = (relay.Node,)
 
 
+class DiscountRequirementNode(DjangoObjectType):
+    class Meta:
+        model = DiscountRequirement
+        interfaces = (relay.Node,)
+
+
+class DiscountNode(DjangoObjectType):
+    requirements = DjangoListField(DiscountRequirementNode)
+
+    @classmethod
+    def get_queryset(cls, queryset, info):
+        return queryset.annotate(
+            number_of_tickets_required=Count("requirements__number")
+        ).filter(number_of_tickets_required__gt=1)
+
+    class Meta:
+        model = Discount
+        interfaces = (relay.Node,)
+
+
 class PriceBreakdownTicketNode(graphene.ObjectType):
-    ticket_price = graphene.Int()
-    number = graphene.Int()
+    ticket_price = graphene.Int(required=True)
+    number = graphene.Int(required=True)
     seat_group = graphene.Field("uobtheatre.venues.schema.SeatGroupNode")
-    concession = graphene.Field("uobtheatre.bookings.schema.ConcessionTypeNode")
-    total_price = graphene.Int()
+    concession_type = graphene.Field("uobtheatre.bookings.schema.ConcessionTypeNode")
+    total_price = graphene.Int(required=True)
 
     def resolve_total_price(self, info):
         return self.ticket_price * self.number
@@ -48,12 +79,13 @@ class PriceBreakdownTicketNode(graphene.ObjectType):
 
 class PriceBreakdownNode(DjangoObjectType):
     tickets = graphene.List(PriceBreakdownTicketNode)
-    tickets_price = graphene.Int()
-    discounts_value = graphene.Int()
+    tickets_price = graphene.Int(required=True)
+    discounts_value = graphene.Int(required=True)
     misc_costs = graphene.List(MiscCostNode)
-    subtotal_price = graphene.Int()
-    misc_costs_value = graphene.Int()
-    total_price = graphene.Int()
+    subtotal_price = graphene.Int(required=True)
+    misc_costs_value = graphene.Int(required=True)
+    total_price = graphene.Int(required=True)
+    tickets_discounted_price = graphene.Int(required=True)
 
     def resolve_tickets_price(self, info):
         return self.tickets_price()
@@ -68,6 +100,9 @@ class PriceBreakdownNode(DjangoObjectType):
         return self.misc_costs_value()
 
     def resolve_total_price(self, info):
+        return self.total()
+
+    def resolve_tickets_discounted_price(self, info):
         return self.total()
 
     def resolve_tickets(self, info):
@@ -92,7 +127,7 @@ class PriceBreakdownNode(DjangoObjectType):
                 ),
                 number=len(list(group)),
                 seat_group=ticket_group[0],
-                concession=ticket_group[1],
+                concession_type=ticket_group[1],
             )
             for ticket_group, group in groups
         ]
@@ -130,6 +165,8 @@ class BookingFilter(FilterSet):
 
     # TODO When we add back in Bookings endpoint only admin users should be
     # able to get all bookings otherwise we should return only user bookings.
+    # Booings can be accessed from a performance, if this was not here then the
+    # users would be able all peoples bookings.
     @property
     def qs(self):
         # Restrict the filterset to only return user bookings
@@ -138,6 +175,8 @@ class BookingFilter(FilterSet):
         else:
             return Booking.objects.none()
 
+    order_by = OrderingFilter(fields=("created_at",))
+
 
 BookingStatusSchema = graphene.Enum.from_enum(Booking.BookingStatus)
 
@@ -145,6 +184,7 @@ BookingStatusSchema = graphene.Enum.from_enum(Booking.BookingStatus)
 class BookingNode(DjangoObjectType):
     price_breakdown = graphene.Field(PriceBreakdownNode)
     tickets = DjangoListField(TicketNode)
+    user = graphene.Field(UserNode)
     payments = DjangoFilterConnectionField("uobtheatre.payments.schema.PaymentNode")
 
     def resolve_price_breakdown(self, info):

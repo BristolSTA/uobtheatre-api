@@ -56,10 +56,10 @@ def test_societies_schema(gql_client, gql_id):
                             "description": society.description,
                             "slug": society.slug,
                             "logo": {
-                                "url": society.logo.url,
+                                "url": society.logo.file.url,
                             },
                             "banner": {
-                                "url": society.banner.url,
+                                "url": society.banner.file.url,
                             },
                             "productions": {
                                 "edges": [

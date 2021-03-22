@@ -77,7 +77,7 @@ def test_venues_schema(gql_client, gql_id):
                             },
                             "internalCapacity": venue.internal_capacity,
                             "description": venue.description,
-                            "image": {"url": venue.image.url},
+                            "image": {"url": venue.image.file.url},
                             "publiclyListed": venue.publicly_listed,
                             "slug": venue.slug,
                             "seatGroups": {

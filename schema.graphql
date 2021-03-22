@@ -24,6 +24,7 @@ type BookingNode implements Node {
   createdAt: DateTime!
   updatedAt: DateTime!
   reference: String!
+  user: UserNode
   performance: PerformanceNode!
   status: BookingStatus!
   tickets: [TicketNode!]
@@ -49,7 +50,7 @@ enum BookingStatus {
 type CastMemberNode implements Node {
   id: ID!
   name: String!
-  profilePicture: GrapheneImageFieldNode
+  profilePicture: ImageNode
   role: String
   production: ProductionNode!
 }
@@ -119,6 +120,22 @@ type DeleteAccount {
   errors: [GQLErrorUnion]
 }
 
+type DiscountNode implements Node {
+  id: ID!
+  name: String!
+  percentage: Float!
+  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, orderBy: String): PerformanceNodeConnection!
+  seatGroup: SeatGroupNode
+  requirements: [DiscountRequirementNode!]
+}
+
+type DiscountRequirementNode implements Node {
+  id: ID!
+  number: Int!
+  discount: DiscountNode!
+  concessionType: ConcessionTypeNode!
+}
+
 type FieldError {
   message: String
   field: String
@@ -129,12 +146,13 @@ union GQLErrorUnion = FieldError | NonFieldError
 
 scalar GenericScalar
 
-type GrapheneImageFieldNode {
-  url: String
-  name: String
-}
-
 scalar IdInputField
+
+type ImageNode implements Node {
+  id: ID!
+  altText: String
+  url: String
+}
 
 type MiscCostNode implements Node {
   id: ID!
@@ -267,10 +285,15 @@ type PerformanceNode implements Node {
   disabled: Boolean!
   seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
   capacity: Int
-  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, reference: String, user: ID, performance: ID, status: String, id: ID): BookingNodeConnection!
+  discounts: [DiscountNode!]
+  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, reference: String, user: ID, performance: ID, status: String, id: ID, orderBy: String): BookingNodeConnection!
   capacityRemaining: Int
   ticketOptions: [PerformanceSeatGroupNode]
   minSeatPrice: Int
+  durationMins: Int
+  isInperson: Boolean!
+  isOnline: Boolean!
+  soldOut: Boolean!
 }
 
 type PerformanceNodeConnection {
@@ -291,33 +314,24 @@ type PerformanceSeatGroupNode implements Node {
   concessionTypes: [ConcessionTypeBookingType]
 }
 
-type PerformanceSeatGroupNodeConnection {
-  pageInfo: PageInfo!
-  edges: [PerformanceSeatGroupNodeEdge]!
-}
-
-type PerformanceSeatGroupNodeEdge {
-  node: PerformanceSeatGroupNode
-  cursor: String!
-}
-
 type PriceBreakdownNode implements Node {
   id: ID!
   tickets: [PriceBreakdownTicketNode]
-  ticketsPrice: Int
-  discountsValue: Int
+  ticketsPrice: Int!
+  discountsValue: Int!
   miscCosts: [MiscCostNode]
-  subtotalPrice: Int
-  miscCostsValue: Int
-  totalPrice: Int
+  subtotalPrice: Int!
+  miscCostsValue: Int!
+  totalPrice: Int!
+  ticketsDiscountedPrice: Int!
 }
 
 type PriceBreakdownTicketNode {
-  ticketPrice: Int
-  number: Int
+  ticketPrice: Int!
+  number: Int!
   seatGroup: SeatGroupNode
-  concession: ConcessionTypeNode
-  totalPrice: Int
+  concessionType: ConcessionTypeNode
+  totalPrice: Int!
 }
 
 type ProductionNode implements Node {
@@ -328,9 +342,9 @@ type ProductionNode implements Node {
   subtitle: String
   description: String
   society: SocietyNode
-  posterImage: GrapheneImageFieldNode
-  featuredImage: GrapheneImageFieldNode
-  coverImage: GrapheneImageFieldNode
+  coverImage: ImageNode
+  posterImage: ImageNode
+  featuredImage: ImageNode
   ageRating: Int
   facebookEvent: String
   warnings: [WarningNode!]
@@ -413,8 +427,6 @@ type SeatGroupNode implements Node {
   capacity: Int
   seats: SeatNode
   isInternal: Boolean!
-  performanceSet(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, orderBy: String): PerformanceNodeConnection!
-  performanceseatgroupSet(offset: Int, before: String, after: String, first: Int, last: Int): PerformanceSeatGroupNodeConnection!
   tickets(offset: Int, before: String, after: String, first: Int, last: Int): TicketNodeConnection!
 }
 
@@ -452,8 +464,8 @@ type SocietyNode implements Node {
   id: ID!
   name: String!
   description: String!
-  logo: GrapheneImageFieldNode
-  banner: GrapheneImageFieldNode
+  logo: ImageNode!
+  banner: ImageNode!
   slug: String!
   productions(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, society: ID, ageRating: Int, facebookEvent: String, warnings: [ID], slug: String, id: ID, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, orderBy: String): ProductionNodeConnection!
 }
@@ -519,7 +531,7 @@ type UserNode implements Node {
   dateJoined: DateTime!
   id: ID!
   email: String!
-  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, reference: String, user: ID, performance: ID, status: String, id: ID): BookingNodeConnection!
+  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, reference: String, user: ID, performance: ID, status: String, id: ID, orderBy: String): BookingNodeConnection!
   pk: Int
   archived: Boolean
   verified: Boolean
@@ -544,7 +556,7 @@ type VenueNode implements Node {
   internalCapacity: Int!
   description: String
   address: AddressNode
-  image: GrapheneImageFieldNode
+  image: ImageNode!
   publiclyListed: Boolean!
   slug: String!
   seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
