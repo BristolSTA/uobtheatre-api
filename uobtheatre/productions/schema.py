@@ -8,7 +8,7 @@ from graphene_django.filter import (
     GlobalIDMultipleChoiceFilter,
 )
 
-from uobtheatre.bookings.schema import ConcessionTypeNode, DiscountNodeMixin
+from uobtheatre.bookings.schema import ConcessionTypeNode, DiscountNode
 from uobtheatre.productions.models import (
     CastMember,
     CrewMember,
@@ -177,7 +177,7 @@ class PerformanceFilter(FilterSet):
     order_by = django_filters.OrderingFilter(fields=(("start"),))
 
 
-class PerformanceNode(DjangoObjectType, DiscountNodeMixin):
+class PerformanceNode(DjangoObjectType):
     capacity_remaining = graphene.Int()
     ticket_options = graphene.List(PerformanceSeatGroupNode)
     min_seat_price = graphene.Int()
@@ -185,6 +185,7 @@ class PerformanceNode(DjangoObjectType, DiscountNodeMixin):
     is_inperson = graphene.Boolean(required=True)
     is_online = graphene.Boolean(required=True)
     sold_out = graphene.Boolean(required=True)
+    discounts = DjangoListField(DiscountNode)
 
     def resolve_ticket_options(self, info, **kwargs):
         return self.performance_seat_groups.all()

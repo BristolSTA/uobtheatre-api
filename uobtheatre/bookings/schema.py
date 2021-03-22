@@ -66,10 +66,6 @@ class DiscountNode(DjangoObjectType):
         interfaces = (relay.Node,)
 
 
-class DiscountNodeMixin:
-    discounts = DjangoListField(DiscountNode)
-
-
 class PriceBreakdownTicketNode(graphene.ObjectType):
     ticket_price = graphene.Int(required=True)
     number = graphene.Int(required=True)
