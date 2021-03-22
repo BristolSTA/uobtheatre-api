@@ -1,5 +1,3 @@
-import datetime
-
 import pytest
 from django.utils import timezone
 from graphql_relay.node.node import from_global_id, to_global_id
@@ -514,9 +512,9 @@ def test_create_booking_mutation(
 
 
 @pytest.mark.django_db
-def test_booking_IN_PROGress(gql_client_flexible, gql_id):
+def test_booking_in_progress(gql_client_flexible, gql_id):
     """
-    We will often want to get an "IN_PROGress" booking for a given booking and user.
+    We will often want to get an "in_progress" booking for a given booking and user.
         bookings(performance: "UGVyZm9ybWFuY2VOb2RlOjE=", status: "IN_PROGRESS")
     """
     user = UserFactory()
@@ -608,63 +606,6 @@ def test_booking_orderby(order_by, expected_order, gql_client_flexible):
         {"node": {"createdAt": bookings[i].created_at.isoformat()}}
         for i in expected_order
     ]
-
-
-@pytest.mark.django_db
-@pytest.mark.skip("z")
-def test_bookings_orderBy(gql_client_flexible, gql_id):
-    """
-    Test for the ordfering of a user's bookings
-    """
-    user = UserFactory()
-
-    current_time = timezone.now()
-
-    bookings = [
-        BookingFactory(user=user, created_at=current_time + datetime.timedelta(days=2)),
-        BookingFactory(user=user, created_at=current_time + datetime.timedelta(days=1)),
-    ]
-
-    request_query = """
-    {
-      me {
-        bookings(orderBy: "createdAt") {
-          edges {
-            node {
-              id
-              createdAt
-            }
-          }
-        }
-      }
-    }
-    """
-
-    gql_client_flexible.set_user(user)
-    response = gql_client_flexible.execute(request_query)
-
-    assert response == {
-        "data": {
-            "me": {
-                "bookings": {
-                    "edges": [
-                        {
-                            "node": {
-                                "id": gql_id(bookings[1].id, "BookingNode"),
-                                "createdAt": bookings[1].created_at.isoformat(),
-                            }
-                        },
-                        {
-                            "node": {
-                                "id": gql_id(bookings[0].id, "BookingNode"),
-                                "createdAt": bookings[0].created_at.isoformat(),
-                            }
-                        },
-                    ]
-                }
-            }
-        }
-    }
 
 
 @pytest.mark.django_db
