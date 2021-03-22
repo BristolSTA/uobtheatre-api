@@ -1,10 +1,11 @@
 import datetime
 import math
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from autoslug import AutoSlugField
 from django.db import models
 from django.db.models import Max, Min, Sum
+from django.db.models.query import QuerySet
 from django.utils import timezone
 
 from uobtheatre.images.models import Image
@@ -300,13 +301,11 @@ class Performance(TimeStampedMixin, models.Model):
         """
         return self.end - self.start
 
-    def get_single_discounts(self) -> List:
+    def get_single_discounts(self) -> QuerySet[Any]:
         """ Returns all discounts that apply to a single ticket """
-        return [
-            discount
-            for discount in self.discounts.all()
-            if discount.is_single_discount()
-        ]
+        return self.discounts.annotate(
+            number_of_tickets_required=Sum("requirements__number")
+        ).filter(number_of_tickets_required=1)
 
     def get_concession_discount(self, concession_type) -> float:
         """

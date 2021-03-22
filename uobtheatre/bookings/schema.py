@@ -1,6 +1,7 @@
 import itertools
 
 import graphene
+from django.db.models import Count
 from django_filters import OrderingFilter
 from graphene import relay
 from graphene_django import DjangoListField, DjangoObjectType
@@ -54,6 +55,12 @@ class DiscountRequirementNode(DjangoObjectType):
 class DiscountNode(DjangoObjectType):
     requirements = DjangoListField(DiscountRequirementNode)
 
+    @classmethod
+    def get_queryset(cls, queryset, info):
+        return queryset.annotate(
+            number_of_tickets_required=Count("requirements__number")
+        ).filter(number_of_tickets_required__gt=1)
+
     class Meta:
         model = Discount
         interfaces = (relay.Node,)
@@ -61,13 +68,6 @@ class DiscountNode(DjangoObjectType):
 
 class DiscountNodeMixin:
     discounts = DjangoListField(DiscountNode)
-
-    def resolve_discounts(self, info):
-        return [
-            discount
-            for discount in self.discounts.all()
-            if not discount.is_single_discount()
-        ]
 
 
 class PriceBreakdownTicketNode(graphene.ObjectType):
@@ -169,6 +169,8 @@ class BookingFilter(FilterSet):
 
     # TODO When we add back in Bookings endpoint only admin users should be
     # able to get all bookings otherwise we should return only user bookings.
+    # Booings can be accessed from a performance, if this was not here then the
+    # users would be able all peoples bookings.
     @property
     def qs(self):
         # Restrict the filterset to only return user bookings
