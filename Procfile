@@ -1,1 +1,1 @@
-web: gunicorn config.wsgi:application --log-file -
+web: gunicorn uobtheatre-api.config.wsgi --log-file -
