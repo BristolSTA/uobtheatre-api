@@ -427,6 +427,8 @@ class Ticket(models.Model):
     )
     seat = models.ForeignKey(Seat, on_delete=models.RESTRICT, null=True, blank=True)
 
+    checked_in = models.BooleanField(default=False)
+
     def discounted_price(self) -> int:
         """
         Get the price of the ticket if only single discounts (those applying
@@ -446,3 +448,11 @@ class Ticket(models.Model):
         return self.booking.performance.performance_seat_groups.get(
             seat_group=self.seat_group
         ).price
+
+    def check_in(self):
+        """
+        Check a ticket in
+        """
+        self.checked_in = True
+        self.save()
+        return self
