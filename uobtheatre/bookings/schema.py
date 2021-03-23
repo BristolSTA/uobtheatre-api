@@ -230,6 +230,14 @@ class UpdateTicketInput(graphene.InputObjectType):
             )
 
 
+class CheckInTicketInput(graphene.InputObjectType):
+    ticket_id = IdInputField(required=True)
+
+    def to_ticket(self):
+        if self.ticket_id is not None:
+            return Ticket.objects.get(id=self.ticket_id)
+
+
 class CreateBooking(AuthRequiredMixin, SafeMutation):
     booking = graphene.Field(BookingNode)
 
@@ -327,27 +335,23 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
 class CheckInBooking(AuthRequiredMixin, SafeMutation):
     performance = graphene.Field("uobtheatre.productions.schema.PerformanceNode")
     booking = graphene.Field(BookingNode)
-    ticket_list = graphene.List(graphene.Field(TicketNode))
+    ticket_objects = graphene.List(graphene.Field(TicketNode))
 
     class Arguments:
         booking_reference = graphene.String(required=True)
-        ticket_id_list = graphene.List(graphene.IdInputField(required=True))
-        performance_id = graphene.IdInputField(required=True)
+        tickets = graphene.List(CheckInTicketInput, required=True)
+        performance_id = IdInputField(required=True)
 
     @classmethod
-    def resolve_mutation(
-        self, root, info, booking_reference, ticket_id_list, performance_id
-    ):
+    def resolve_mutation(self, root, info, booking_reference, tickets, performance_id):
         performance = Performance.get(id=performance_id)
         booking = Booking.get(reference=booking_reference)
-        ticket_list = []
 
         # check if the booking pertains to the correct performance
         if booking.performance == performance:
+            ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))
             # loop through the ticket IDs given
-            for ticket_id in ticket_id_list:
-                ticket = Ticket.get(id=ticket_id)
-                ticket_list.append(ticket)
+            for ticket in ticket_objects:
                 # Check the ticket booking matches the given booking
                 if ticket.booking == booking:
                     ticket.check_in()
@@ -363,7 +367,7 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
             # raise booking performance does not match performance given
 
         return CheckInBooking(
-            booking=booking, performance=performance, ticket_list=ticket_list
+            booking=booking, performance=performance, ticket_objects=ticket_objects
         )
 
 
