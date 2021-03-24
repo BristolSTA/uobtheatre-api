@@ -379,3 +379,4 @@ class Mutation(graphene.ObjectType):
     create_booking = CreateBooking.Field()
     update_booking = UpdateBooking.Field()
     pay_booking = PayBooking.Field()
+    check_in_booking = CheckInBooking.Field()

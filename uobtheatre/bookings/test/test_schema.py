@@ -1107,7 +1107,9 @@ def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
     "performance_id, booking_id, ticket_id_list",
     [(1, 1, [1, 2, 3]), (1, 2, [1, 2, 3])],
 )
-def test_booking_check_in(performance_id, booking_id, ticket_id_list):
+def test_check_in_booking(
+    performance_id, booking_id, ticket_id_list, gql_client_flexible
+):
 
     performance = PerformanceFactory()
     booking = BookingFactory(id=booking_id, performance=performance)
@@ -1127,7 +1129,7 @@ def test_booking_check_in(performance_id, booking_id, ticket_id_list):
                         id: "%s"
                     }
                     """ % (
-            to_global_id("TicketNode", ticket.get("id")),
+            to_global_id("TicketNode", ticket.id),
         )
         ticketQueries += queryStr
 
@@ -1150,3 +1152,15 @@ def test_booking_check_in(performance_id, booking_id, ticket_id_list):
         to_global_id("PerformanceNode", performance.id),
         ticketQueries,
     )
+
+    gql_client_flexible.set_user(booking.user)
+    response = gql_client_flexible.execute(request_query)
+    print(response)
+    return_booking_id = response["data"]["updateBooking"]["booking"]["id"]
+
+    local_booking_id = int(from_global_id(return_booking_id)[1])
+
+    returned_booking = Booking.objects.get(id=local_booking_id)
+
+    for ticket in returned_booking.tickets.all():
+        assert ticket.checked_in == True
