@@ -27,7 +27,7 @@ from uobtheatre.payments.models import Payment
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.utils.exceptions import SquareException
-from uobtheatre.utils.test_utils import ticketDictListDictGen, ticketListDictGen
+from uobtheatre.utils.test_utils import ticket_dict_list_dict_gen, ticket_list_dict_gen
 from uobtheatre.venues.test.factories import SeatFactory, SeatGroupFactory, VenueFactory
 
 
@@ -113,7 +113,7 @@ def test_is_valid_single_discount():
 
     # Create a discount that requires one student
     concession_type_student = ConcessionTypeFactory(name="Student")
-    discount_requirements = DiscountRequirementFactory(
+    DiscountRequirementFactory(
         concession_type=concession_type_student, number=1, discount=discount
     )
 
@@ -121,13 +121,11 @@ def test_is_valid_single_discount():
     assert not booking.is_valid_discount_combination(DiscountCombination((discount,)))
 
     # When one non student seat is booked assert this discount cannot be applied
-    seat_booking = TicketFactory(booking=booking)
+    TicketFactory(booking=booking)
     assert not booking.is_valid_discount_combination(DiscountCombination((discount,)))
 
     # When a student seat is booked assert this discount can be applied
-    seat_booking = TicketFactory(
-        booking=booking, concession_type=concession_type_student
-    )
+    TicketFactory(booking=booking, concession_type=concession_type_student)
     assert booking.is_valid_discount_combination(DiscountCombination((discount,)))
 
 
@@ -140,10 +138,10 @@ def test_is_valid_multi_discount():
     # Create a discount that requires one student
     concession_type_student = ConcessionTypeFactory(name="Student")
     concession_type_adult = ConcessionTypeFactory(name="Adult")
-    discount_requirements = DiscountRequirementFactory(
+    DiscountRequirementFactory(
         concession_type=concession_type_student, number=2, discount=discount
     )
-    discount_requirements = DiscountRequirementFactory(
+    DiscountRequirementFactory(
         concession_type=concession_type_adult, number=1, discount=discount
     )
 
@@ -471,7 +469,7 @@ def test_percentage_misc_cost_value():
     # Create a booking costing £12
     booking = BookingFactory()
     psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
-    ticket = TicketFactory(booking=booking, seat_group=psg.seat_group)
+    TicketFactory(booking=booking, seat_group=psg.seat_group)
 
     assert misc_cost.get_value(booking) == 240
 
@@ -484,7 +482,7 @@ def test_misc_costs_value():
     # Create a booking costing £12
     booking = BookingFactory()
     psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
-    ticket = TicketFactory(booking=booking, seat_group=psg.seat_group)
+    TicketFactory(booking=booking, seat_group=psg.seat_group)
     assert booking.misc_costs_value() == 320
 
 
@@ -574,17 +572,8 @@ def test_misc_cost_constraints(value, percentage, error):
 
 
 @pytest.mark.django_db
-def test_create_booking_serializer_seat_group_is_from_performance_validation():
-    user = UserFactory(id=1)
-    performance = PerformanceFactory(id=1, capacity=10)
-    sg_1 = SeatGroupFactory(id=1)
-    sg_2 = SeatGroupFactory(id=2)
-    ConcessionTypeFactory(id=1)
-
-
-@pytest.mark.django_db
 @pytest.mark.parametrize(
-    "existingList, newList, addList, deleteList",
+    "existing_list, new_list, add_list, delete_list",
     [
         # SAME, SAME, null, null  - SAME
         (
@@ -782,7 +771,7 @@ def test_create_booking_serializer_seat_group_is_from_performance_validation():
         ),
     ],
 )
-def test_booking_ticket_diff(existingList, newList, addList, deleteList):
+def test_booking_ticket_diff(existing_list, new_list, add_list, delete_list):
     SeatGroupFactory(id=1)
     SeatGroupFactory(id=2)
     ConcessionTypeFactory(id=1)
@@ -792,29 +781,28 @@ def test_booking_ticket_diff(existingList, newList, addList, deleteList):
 
     booking = BookingFactory()
 
-    _ = [TicketFactory(booking=booking, **ticket) for ticket in existingList]
-    newTickets = [Ticket(**ticket) for ticket in newList]
-    addTickets = [Ticket(**ticket) for ticket in addList]
-    deleteTickets = [Ticket(**ticket) for ticket in deleteList]
+    _ = [TicketFactory(booking=booking, **ticket) for ticket in existing_list]
+    new_tickets = [Ticket(**ticket) for ticket in new_list]
+    add_tickets = [Ticket(**ticket) for ticket in add_list]
+    delete_tickets = [Ticket(**ticket) for ticket in delete_list]
 
-    addTickets, deleteTickets = booking.get_ticket_diff(newTickets)
-    expAddTicketDict, expDeleteTicketDict = map(
-        ticketDictListDictGen,
+    add_tickets, delete_tickets = booking.get_ticket_diff(new_tickets)
+    expected_add_tickets, expected_delete_tickets = map(
+        ticket_dict_list_dict_gen,
         [
-            addList,
-            deleteList,
+            add_list,
+            delete_list,
         ],
     )
-    actAddTicketDict, actDeleteTicketDict = map(
-        ticketListDictGen,
+    actual_add_tickets, actual_delete_tickets = map(
+        ticket_list_dict_gen,
         [
-            addTickets,
-            deleteTickets,
+            add_tickets,
+            delete_tickets,
         ],
     )
-
-    assert expAddTicketDict == actAddTicketDict
-    assert expDeleteTicketDict == actDeleteTicketDict
+    assert expected_add_tickets == actual_add_tickets
+    assert expected_delete_tickets == actual_delete_tickets
 
 
 @pytest.mark.django_db
@@ -824,7 +812,7 @@ def test_booking_pay_failure(mock_square):
     """
     booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
     psg = PerformanceSeatingFactory(performance=booking.performance)
-    ticket = TicketFactory(booking=booking, seat_group=psg.seat_group)
+    TicketFactory(booking=booking, seat_group=psg.seat_group)
 
     mock_square.reason_phrase = "Some phrase"
     mock_square.status_code = 400
@@ -847,7 +835,7 @@ def test_booking_pay_success(mock_square):
     """
     booking = BookingFactory()
     psg = PerformanceSeatingFactory(performance=booking.performance)
-    ticket = TicketFactory(booking=booking, seat_group=psg.seat_group)
+    TicketFactory(booking=booking, seat_group=psg.seat_group)
 
     mock_square.success = True
     mock_square.body = {

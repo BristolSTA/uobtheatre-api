@@ -1,12 +1,19 @@
+"""
+Defines exception handling for the api.
+For mutations:
+    - Inherit from SafeMutation
+    - Raise one of the MutationResult exceptions
+    - This will then be caught by SafeMutation and formatted into one of the
+      gql error fields (FieldError or NonFieldError) using resolve method.
+In general a mutation will also return MutationResult fields (success: bool and
+error: Union[FieldError, NonFieldError])
+"""
+
+
 from typing import List, Union
 
 import graphene
 from django.db import transaction
-
-# https://gist.github.com/smmoosavi/033deffe834e6417ed6bb55188a05c88
-# TODO We should probably raise these error instead and then format for you in
-# the mutation, ie in mutation mixin wrap the mutation funciton in a try and
-# handle errors there
 
 
 class NonFieldError(graphene.ObjectType):
@@ -38,7 +45,7 @@ class AuthOutput(MutationResult):
 
     def resolve_errors(self, info):
         if self.errors is None:
-            return
+            return None
 
         if isinstance(self.errors, list):
             non_field_errors = [
@@ -62,7 +69,8 @@ class AuthOutput(MutationResult):
 
 
 class MutationException(Exception):
-    pass
+    def resolve(self):
+        raise NotImplementedError
 
 
 class GQLFieldException(MutationException):
@@ -106,18 +114,25 @@ class AuthException(GQLNonFieldException):
 
 
 class SafeMutation(MutationResult, graphene.Mutation):
+    """
+    Extended graphene.Mutation.
+        - Adds errors and success fields
+        - Catches any MutationException and formats in errors field
+    """
+
     class Meta:
         abstract = True
 
     @classmethod
     def mutate(cls, root, info, **input):
+        """
+        Calls resolve_mutation, catches error and formats
+        """
         try:
             with transaction.atomic():
                 return cls.resolve_mutation(root, info, **input)
 
-        except Exception as exception:
+        except MutationException as exception:
             # These are our custom exceptions
             if isinstance(exception, MutationException):
                 return cls(errors=exception.resolve(), success=False)
-
-            raise exception

@@ -1,3 +1,7 @@
+"""
+Models for venues.
+"""
+
 from autoslug import AutoSlugField
 from django.db import models
 

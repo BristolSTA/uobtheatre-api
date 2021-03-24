@@ -15,7 +15,7 @@ from uobtheatre.bookings.test.factories import (
 )
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
-from uobtheatre.utils.test_utils import ticketDictListDictGen, ticketListDictGen
+from uobtheatre.utils.test_utils import ticket_dict_list_dict_gen, ticket_list_dict_gen
 from uobtheatre.venues.test.factories import SeatFactory, SeatGroupFactory
 
 
@@ -254,7 +254,7 @@ def test_discounts_node(gql_client, gql_id):
     # Create a discount
     discount = DiscountFactory(name="Family", percentage=0.2)
     discount.performances.set([performance])
-    discount_requirements = [
+    _ = [
         DiscountRequirementFactory(discount=discount, number=2),
         DiscountRequirementFactory(discount=discount, number=1),
     ]
@@ -262,7 +262,7 @@ def test_discounts_node(gql_client, gql_id):
     # Single discount - should not appear
     discount_2 = DiscountFactory(name="Student", percentage=0.3)
     discount_2.performances.set([performance])
-    discount_requirement_2 = DiscountRequirementFactory(discount=discount_2, number=1)
+    DiscountRequirementFactory(discount=discount_2, number=1)
 
     response = gql_client.execute(
         """
@@ -844,7 +844,7 @@ def test_bookings_auth(gql_client_flexible):
     ],
 )
 def test_update_booking(
-    currentTickets, plannedTickets, expectedTickets, gql_client_flexible
+    current_tickets, planned_tickets, expected_tickets, gql_client_flexible
 ):
 
     seat_group_1 = SeatGroupFactory(id=1)
@@ -859,13 +859,13 @@ def test_update_booking(
 
     # Create booking with current tickets
     booking = BookingFactory(performance=performance)
-    _ = [TicketFactory(booking=booking, **ticket) for ticket in currentTickets]
+    _ = [TicketFactory(booking=booking, **ticket) for ticket in current_tickets]
     # Generate mutation query from input data
 
-    ticketQueries = ""
-    for ticket in plannedTickets:
+    ticket_queries = ""
+    for ticket in planned_tickets:
         if ticket.get("id") is not None:
-            queryStr = """
+            query_str = """
                         {
                             id: "%s"
                             seatId: "%s"
@@ -879,7 +879,7 @@ def test_update_booking(
                 to_global_id("ConcessionTypeNode", ticket.get("concession_type_id")),
             )
         else:
-            queryStr = """
+            query_str = """
                         {
                             seatId: "%s"
                             seatGroupId: "%s"
@@ -890,7 +890,7 @@ def test_update_booking(
                 to_global_id("SeatGroupNode", ticket.get("seat_group_id")),
                 to_global_id("ConcessionTypeNode", ticket.get("concession_type_id")),
             )
-        ticketQueries += queryStr
+        ticket_queries += query_str
 
     request_query = """
         mutation {
@@ -907,7 +907,7 @@ def test_update_booking(
         }
         """ % (
         to_global_id("BookingNode", booking.id),
-        ticketQueries,
+        ticket_queries,
     )
 
     gql_client_flexible.set_user(booking.user)
@@ -919,8 +919,8 @@ def test_update_booking(
 
     returned_booking = Booking.objects.get(id=local_booking_id)
 
-    expected_booking_tickets = ticketDictListDictGen(expectedTickets)
-    updated_booking_tickets = ticketListDictGen(returned_booking.tickets.all())
+    expected_booking_tickets = ticket_dict_list_dict_gen(expected_tickets)
+    updated_booking_tickets = ticket_list_dict_gen(returned_booking.tickets.all())
 
     assert updated_booking_tickets == expected_booking_tickets
 
