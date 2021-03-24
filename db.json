@@ -17,23 +17,6 @@
   }
 },
 {
-  "model": "users.user",
-  "pk": "39ba60a2-e80d-48c4-9e17-0e8e84a74ad0",
-  "fields": {
-    "password": "pbkdf2_sha256$216000$mMtH0d984vii$5TlOLpRTdXb7ZeGKm0OjMX2zvFkf+YnPNCjYbTfRPUk=",
-    "last_login": null,
-    "is_superuser": false,
-    "first_name": "Tom",
-    "last_name": "Streuli",
-    "is_staff": false,
-    "is_active": true,
-    "date_joined": "2021-03-24T13:58:29.383Z",
-    "email": "tom.streuli@bristolsta.com",
-    "groups": [],
-    "user_permissions": []
-  }
-},
-{
   "model": "images.image",
   "pk": 1,
   "fields": {
