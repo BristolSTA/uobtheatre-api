@@ -1100,3 +1100,53 @@ def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
             }
         }
     }
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "performance_id, booking_id, ticket_id_list",
+    [(1, 1, [1, 2, 3]), (1, 2, [1, 2, 3])],
+)
+def test_booking_check_in(performance_id, booking_id, ticket_id_list):
+
+    performance = PerformanceFactory()
+    booking = BookingFactory(id=booking_id, performance=performance)
+    ticket_objects = []
+    for ticket_id in ticket_id_list:
+        ticket_objects.append(TicketFactory(id=ticket_id, booking=booking))
+
+    booking.reference
+
+    for ticket in ticket_objects:
+        assert ticket.checked_in == False
+
+    ticketQueries = ""
+    for ticket in ticket_objects:
+        queryStr = """
+                    {
+                        id: "%s"
+                    }
+                    """ % (
+            to_global_id("TicketNode", ticket.get("id")),
+        )
+        ticketQueries += queryStr
+
+    request_query = """
+        mutation {
+            CheckInBooking (
+                booking_reference: "%s"
+                performance_id: "%s"
+                tickets: [
+                    %s
+                ]
+            ){
+                booking{
+                    id
+                }
+            }
+        }
+        """ % (
+        booking.reference,
+        to_global_id("PerformanceNode", performance.id),
+        ticketQueries,
+    )

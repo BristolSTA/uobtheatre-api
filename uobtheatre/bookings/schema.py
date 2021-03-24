@@ -339,8 +339,8 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
 
     class Arguments:
         booking_reference = graphene.String(required=True)
-        tickets = graphene.List(CheckInTicketInput, required=True)
         performance_id = IdInputField(required=True)
+        tickets = graphene.List(CheckInTicketInput, required=True)
 
     @classmethod
     def resolve_mutation(self, root, info, booking_reference, tickets, performance_id):
