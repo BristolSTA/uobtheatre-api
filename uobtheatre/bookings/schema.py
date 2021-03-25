@@ -335,7 +335,6 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
 class CheckInBooking(AuthRequiredMixin, SafeMutation):
     performance = graphene.Field("uobtheatre.productions.schema.PerformanceNode")
     booking = graphene.Field(BookingNode)
-    ticket_objects = graphene.List(graphene.Field(TicketNode))
 
     class Arguments:
         booking_reference = graphene.String(required=True)
@@ -344,6 +343,7 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
 
     @classmethod
     def resolve_mutation(self, root, info, booking_reference, tickets, performance_id):
+        print("kit")
         performance = Performance.get(id=performance_id)
         booking = Booking.get(reference=booking_reference)
 
@@ -366,9 +366,7 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
             )
             # raise booking performance does not match performance given
 
-        return CheckInBooking(
-            booking=booking, performance=performance, ticket_objects=ticket_objects
-        )
+        return CheckInBooking(booking=booking, performance=performance)
 
 
 # Check in booking mutation ([ticket_id], performance_id, booking_reference) -> {performanceNode, bookingNode, [ticketNode]}
