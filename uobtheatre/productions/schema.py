@@ -20,10 +20,12 @@ from uobtheatre.productions.models import (
     Warning,
     append_production_qs,
 )
-from uobtheatre.utils.schema import FilterSet
+from uobtheatre.utils.schema import EnumNode, FilterSet, GrapheneEnumMixin
 
 
-class CrewRoleNode(DjangoObjectType):
+class CrewRoleNode(GrapheneEnumMixin, DjangoObjectType):
+    department = graphene.Field(EnumNode)
+
     class Meta:
         model = CrewRole
         interfaces = (relay.Node,)
