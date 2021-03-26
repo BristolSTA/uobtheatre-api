@@ -344,8 +344,8 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
     @classmethod
     def resolve_mutation(self, root, info, booking_reference, tickets, performance_id):
         print("kit")
-        performance = Performance.get(id=performance_id)
-        booking = Booking.get(reference=booking_reference)
+        performance = Performance.objects.get(id=performance_id)
+        booking = Booking.objects.get(reference=booking_reference)
 
         # check if the booking pertains to the correct performance
         if booking.performance == performance:

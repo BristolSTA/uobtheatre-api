@@ -1112,7 +1112,9 @@ def test_check_in_booking(
 ):
 
     performance = PerformanceFactory()
-    booking = BookingFactory(id=booking_id, performance=performance)
+    booking = BookingFactory(
+        id=booking_id, performance=performance, user=gql_client_flexible.get_user()
+    )
     ticket_objects = []
     for ticket_id in ticket_id_list:
         ticket_objects.append(TicketFactory(id=ticket_id, booking=booking))
@@ -1126,7 +1128,7 @@ def test_check_in_booking(
     for ticket in ticket_objects:
         queryStr = """
                     {
-                        id: "%s"
+                        ticketId: "%s"
                     }
                     """ % (
             to_global_id("TicketNode", ticket.id),
@@ -1135,9 +1137,9 @@ def test_check_in_booking(
 
     request_query = """
         mutation {
-            CheckInBooking (
-                booking_reference: "%s"
-                performance_id: "%s"
+            checkInBooking (
+                bookingReference: "%s"
+                performanceId: "%s"
                 tickets: [
                     %s
                 ]
@@ -1156,7 +1158,7 @@ def test_check_in_booking(
     gql_client_flexible.set_user(booking.user)
     response = gql_client_flexible.execute(request_query)
     print(response)
-    return_booking_id = response["data"]["updateBooking"]["booking"]["id"]
+    return_booking_id = response["data"]["checkInBooking"]["booking"]["id"]
 
     local_booking_id = int(from_global_id(return_booking_id)[1])
 
