@@ -124,7 +124,7 @@ type DiscountNode implements Node {
   id: ID!
   name: String!
   percentage: Float!
-  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, orderBy: String): PerformanceNodeConnection!
+  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], venueLayout: ID, capacity: Int, id: ID, orderBy: String): PerformanceNodeConnection!
   seatGroup: SeatGroupNode
   requirements: [DiscountRequirementNode!]
 }
@@ -276,7 +276,7 @@ type PerformanceNode implements Node {
   updatedAt: DateTime!
   id: ID!
   production: ProductionNode!
-  venue: VenueNode
+  venue: VenueNode!
   doorsOpen: DateTime
   start: DateTime
   end: DateTime
@@ -284,6 +284,7 @@ type PerformanceNode implements Node {
   extraInformation: String
   disabled: Boolean!
   seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
+  venueLayout: VenueLayoutNode!
   capacity: Int
   discounts: [DiscountNode!]
   bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, reference: String, user: ID, performance: ID, status: String, id: ID, orderBy: String): BookingNodeConnection!
@@ -352,7 +353,7 @@ type ProductionNode implements Node {
   cast: [CastMemberNode!]
   productionTeam: [ProductionTeamMemberNode!]
   crew: [CrewMemberNode!]
-  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, orderBy: String): PerformanceNodeConnection!
+  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], venueLayout: ID, capacity: Int, id: ID, orderBy: String): PerformanceNodeConnection!
   start: DateTime
   end: DateTime
   isBookable: Boolean!
@@ -383,7 +384,7 @@ type Query {
   societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String): SocietyNodeConnection
   society(slug: String!): SocietyNode
   productions(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, society: ID, ageRating: Int, facebookEvent: String, warnings: [ID], slug: String, id: ID, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, orderBy: String): ProductionNodeConnection
-  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, orderBy: String): PerformanceNodeConnection
+  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], venueLayout: ID, capacity: Int, id: ID, orderBy: String): PerformanceNodeConnection
   production(slug: String!): ProductionNode
   performance(id: ID!): PerformanceNode
   venues(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String): VenueNodeConnection
@@ -548,6 +549,15 @@ type UserNodeEdge {
   cursor: String!
 }
 
+type VenueLayoutNode implements Node {
+  id: ID!
+  name: String!
+  description: String
+  venue: VenueNode!
+  seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
+  venueLayouts(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], venueLayout: ID, capacity: Int, id: ID, orderBy: String): PerformanceNodeConnection!
+}
+
 type VenueNode implements Node {
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -560,7 +570,8 @@ type VenueNode implements Node {
   publiclyListed: Boolean!
   slug: String!
   seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
-  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, orderBy: String): PerformanceNodeConnection!
+  venueLayouts: [VenueLayoutNode!]
+  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], venueLayout: ID, capacity: Int, id: ID, orderBy: String): PerformanceNodeConnection!
   productions(offset: Int, before: String, after: String, first: Int, last: Int): ProductionNodeConnection
 }
 

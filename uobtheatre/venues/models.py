@@ -45,9 +45,6 @@ class SeatGroup(models.Model):
 
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
-    # venue_layout = models.ForeignKey(
-    #     VenueLayout, on_delete=models.CASCADE, related_name="seat_groups"
-    # )
     venue = models.ForeignKey(
         Venue, on_delete=models.CASCADE, related_name="seat_groups"
     )

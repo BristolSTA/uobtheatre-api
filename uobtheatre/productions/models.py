@@ -11,7 +11,7 @@ from django.utils import timezone
 from uobtheatre.images.models import Image
 from uobtheatre.societies.models import Society
 from uobtheatre.utils.models import TimeStampedMixin
-from uobtheatre.venues.models import SeatGroup, Venue
+from uobtheatre.venues.models import SeatGroup, Venue, VenueLayout
 
 
 class CrewRole(models.Model):
@@ -231,7 +231,7 @@ class Performance(TimeStampedMixin, models.Model):
     )
 
     venue = models.ForeignKey(
-        Venue, on_delete=models.SET_NULL, null=True, related_name="performances"
+        Venue, on_delete=models.RESTRICT, related_name="performances"
     )
 
     doors_open = models.DateTimeField(null=True)
@@ -244,7 +244,9 @@ class Performance(TimeStampedMixin, models.Model):
     disabled = models.BooleanField(default=True)
 
     seat_groups = models.ManyToManyField(SeatGroup, through="PerformanceSeatGroup")
-
+    venue_layout = models.ForeignKey(
+        VenueLayout, on_delete=models.RESTRICT, related_name="venue_layouts"
+    )
     capacity = models.IntegerField(null=True, blank=True)
 
     def tickets(self, seat_group=None):

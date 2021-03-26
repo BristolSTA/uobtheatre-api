@@ -1,6 +1,6 @@
 import graphene
 from graphene import relay
-from graphene_django import DjangoObjectType
+from graphene_django import DjangoListField, DjangoObjectType
 from graphene_django.fields import DjangoConnectionField
 from graphene_django.filter import DjangoFilterConnectionField
 
@@ -14,7 +14,12 @@ class SeatGroupNode(DjangoObjectType):
     class Meta:
         model = SeatGroup
         interfaces = (relay.Node,)
-        exclude = ("performance_set", "performanceseatgroup_set", "discount_set")
+        exclude = (
+            "performance_set",
+            "performanceseatgroup_set",
+            "discount_set",
+            "venuelayout_set",
+        )
 
 
 class VenueLayoutNode(DjangoObjectType):
@@ -30,6 +35,7 @@ class SeatNode(DjangoObjectType):
 
 
 class VenueNode(DjangoObjectType):
+    venue_layouts = DjangoListField(VenueLayoutNode)
     productions = DjangoConnectionField(ProductionNode)
 
     def resolve_productions(self, info):
