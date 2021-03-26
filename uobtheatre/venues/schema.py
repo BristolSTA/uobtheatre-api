@@ -7,7 +7,7 @@ from graphene_django.filter import DjangoFilterConnectionField
 from uobtheatre.addresses.schema import AddressNode  # noqa
 from uobtheatre.images.schema import ImageNode  # noqa
 from uobtheatre.productions.schema import ProductionNode
-from uobtheatre.venues.models import Seat, SeatGroup, Venue
+from uobtheatre.venues.models import Seat, SeatGroup, Venue, VenueLayout
 
 
 class SeatGroupNode(DjangoObjectType):
@@ -17,10 +17,10 @@ class SeatGroupNode(DjangoObjectType):
         exclude = ("performance_set", "performanceseatgroup_set", "discount_set")
 
 
-# class VenueLayoutNode(DjangoObjectType):
-#     class Meta:
-#         model = VenueLayout
-#         interfaces = (relay.Node,)
+class VenueLayoutNode(DjangoObjectType):
+    class Meta:
+        model = VenueLayout
+        interfaces = (relay.Node,)
 
 
 class SeatNode(DjangoObjectType):

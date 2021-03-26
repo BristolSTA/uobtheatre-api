@@ -36,6 +36,9 @@ down: ## Down
 dump: ## dumps databse objects into fixture
 	docker-compose run --rm api python manage.py dumpdata users images addresses venues societies productions bookings --indent 2 > db.json
 
+dump-temp: ## dumps databse objects into fixture
+	docker-compose run --rm api python manage.py dumpdata users images addresses venues societies productions bookings --indent 2 > db-temp.json
+
 migrations: ## Make the migrations
 	docker-compose run --rm api python manage.py makemigrations
 
@@ -48,7 +51,10 @@ migrate: ## Do the migrations
 seed: ## Seed the db with some example data
 	docker-compose run api python manage.py loaddata uobtheatre/images/fixtures.json uobtheatre/addresses/fixtures.json uobtheatre/users/fixtures.json uobtheatre/venues/fixtures.json uobtheatre/societies/fixtures.json uobtheatre/productions/fixtures.json uobtheatre/bookings/fixtures.json
 
-seed-testfixtures: ## Seed the data for e2e testing
+seed-temp: ## Seed the data for e2e testing
+	docker-compose run api python manage.py loaddata db-temp.json
+
+seed-e2e: ## Seed the data for e2e testing
 	docker-compose run api python manage.py loaddata db.json
 
 superuser: ## Seed the db with admin superuser

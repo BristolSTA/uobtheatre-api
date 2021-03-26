@@ -120,3 +120,4 @@ media/*
 .coveralls.yml
 
 bin/
+db-temp.json

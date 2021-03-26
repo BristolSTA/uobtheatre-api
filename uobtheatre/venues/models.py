@@ -39,32 +39,15 @@ class Venue(TimeStampedMixin, models.Model):
         ordering = ["id"]
 
 
-class VenueLayout(models.Model):
-    """ """
-
-    name = models.CharField(max_length=255, null=True, blank=True)
-    description = models.TextField(null=True, blank=True)
-    venue = models.ForeignKey(
-        Venue, on_delete=models.CASCADE, related_name="venue_layouts"
-    )
-    # seat_groups = models.ManyToManyField(SeatGroup)
-
-    def __str__(self):
-        return self.name
-
-    class Meta:
-        ordering = ["id"]
-
-
 class SeatGroup(models.Model):
-    """A seat group is a collection of seats, it can contains many seats or
+    """A seat group is a collection of seat s, it can contains many seats or
     just be a generic area eg front row or stading section"""
 
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
-    venue_layout = models.ForeignKey(
-        VenueLayout, on_delete=models.CASCADE, related_name="seat_groups"
-    )
+    # venue_layout = models.ForeignKey(
+    #     VenueLayout, on_delete=models.CASCADE, related_name="seat_groups"
+    # )
     venue = models.ForeignKey(
         Venue, on_delete=models.CASCADE, related_name="seat_groups"
     )
@@ -74,6 +57,23 @@ class SeatGroup(models.Model):
 
     def __str__(self):
         return self.name or str(self.id)
+
+    class Meta:
+        ordering = ["id"]
+
+
+class VenueLayout(models.Model):
+    """ """
+
+    name = models.CharField(max_length=255)
+    description = models.TextField(null=True, blank=True)
+    venue = models.ForeignKey(
+        Venue, on_delete=models.CASCADE, related_name="venue_layouts"
+    )
+    seat_groups = models.ManyToManyField(SeatGroup)
+
+    def __str__(self):
+        return self.name
 
     class Meta:
         ordering = ["id"]
