@@ -75,6 +75,7 @@ target/
 # pyenv and pipenv
 .python-version
 Pipfile.lock
+Pipfile
 
 # celery beat schedule file
 celerybeat-schedule
@@ -108,7 +109,9 @@ venv.bak/
 .mypy_cache/
 
 # media
-media/
+!media/
+media/*
+!media/e2eImages/
 
 # MacOS
 .DS_Store

@@ -3,22 +3,28 @@
         "model": "venues.venue",
         "pk": 1,
         "fields": {
+            "created_at": "2020-11-11T12:04:32+0000",
+            "updated_at": "2020-11-11T12:24:32+0000",
             "name": "The Winston Theatre",
             "internal_capacity": 209,
             "address": 1,
             "publicly_listed": true,
-            "slug": "winston-theatre"
+            "slug": "winston-theatre",
+            "image": 1
         }
     },
     {
         "model": "venues.venue",
         "pk": 2,
         "fields": {
+            "created_at": "2020-11-11T12:04:32+0000",
+            "updated_at": "2020-11-11T12:24:32+0000",
             "name": "The Pegg Theatre",
             "internal_capacity": 80,
             "address": 2,
             "publicly_listed": true,
-            "slug": "pegg-theatre"
+            "slug": "pegg-theatre",
+            "image": 1
         }
 
     },
@@ -26,9 +32,12 @@
         "model": "venues.venue",
         "pk": 3,
         "fields": {
+            "created_at": "2020-11-11T12:04:32+0000",
+            "updated_at": "2020-11-11T12:24:32+0000",
             "name": "The Anson Rooms",
             "internal_capacity": 1000,
-            "slug": "anson-rooms"
+            "slug": "anson-rooms",
+            "image": 1
         }
     },
     {

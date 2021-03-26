@@ -1,6 +1,9 @@
 import os
 
-from .common import Common
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+
+from uobtheatre.config.settings.common import Common
 
 INSTALLED_APPS = Common.INSTALLED_APPS
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
@@ -22,6 +25,20 @@ AWS_DEFAULT_ACL = "public-read"
 AWS_AUTO_CREATE_BUCKET = True
 AWS_QUERYSTRING_AUTH = False
 MEDIA_URL = f"https://s3.amazonaws.com/{AWS_STORAGE_BUCKET_NAME}/"
+
+
+if sentry_dns := os.getenv("SENTRY_DNS"):
+    sentry_sdk.init(
+        dsn=sentry_dns,
+        integrations=[DjangoIntegration()],
+        # Set traces_sample_rate to 1.0 to capture 100%
+        # of transactions for performance monitoring.
+        # We recommend adjusting this value in production.
+        traces_sample_rate=1.0,
+        # If you wish to associate users to errors (assuming you are using
+        # django.contrib.auth) you may enable sending PII data.
+        send_default_pii=True,
+    )
 
 # https://developers.google.com/web/fundamentals/performance/optimizing-content-efficiency/http-caching#cache-control
 # Response can be cached by browser and any intermediary caches (i.e. it is "public") for up to 1 day

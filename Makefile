@@ -1,22 +1,40 @@
+## Defines the app varaible. This reference the module which is being used
+APP=$(if $(app),uobtheatre/$(app)/test,)
+export APP
+
+## Defines the test path:
+## If 		the varaible test_path is secified test_path is used
+## else if 	the app varaible is specified the apps test path is used
+## else  	it is set to none
+TEST_PATH=$(if $(path),$(path),$(if $(APP),$(APP),))
+export TEST_PATH
+
+## Defines the test varaible
+## This allows the users to specify a list of tests to run
+TEST=$(if $(test),-k '$(test)',)
+export TEST
+
+ifneq (,$(findstring a,  $(MAKEFLAGS)))
+  VERBOSE=1
+  export VERBOSE
+endif
+
 PONY: help
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-up: ## Run api
+up: ## Run background
 	docker-compose up -d
 
-up-v: ## Run api with logs
+up-v: ## Run verbose
 	docker-compose up
 
-down: ## Bring down api
+down: ## Down
 	docker-compose down
 
-superuser: ## Create a superuser in django
-	docker-compose run api python manage.py createsuperuser
-
-admin-superuser: ## Create a superuser in django
-	docker-compose run api python manage.py createsuperusernoargs --username admin --password admin --noinput --email 'blank@email.com'
+dump: ## dumps databse objects into fixture
+	docker-compose run --rm api python manage.py dumpdata users images addresses venues societies productions bookings --indent 2 > db.json
 
 migrations: ## Make the migrations
 	docker-compose run --rm api python manage.py makemigrations
@@ -28,8 +46,13 @@ migrate: ## Do the migrations
 	docker-compose run api python manage.py migrate
 
 seed: ## Seed the db with some example data
-	docker-compose run api python manage.py loaddata uobtheatre/addresses/fixtures.json uobtheatre/users/fixtures.json uobtheatre/venues/fixtures.json uobtheatre/societies/fixtures.json uobtheatre/productions/fixtures.json uobtheatre/bookings/fixtures.json
-	make admin-superuser
+	docker-compose run api python manage.py loaddata uobtheatre/images/fixtures.json uobtheatre/addresses/fixtures.json uobtheatre/users/fixtures.json uobtheatre/venues/fixtures.json uobtheatre/societies/fixtures.json uobtheatre/productions/fixtures.json uobtheatre/bookings/fixtures.json
+
+seed-testfixtures: ## Seed the data for e2e testing
+	docker-compose run api python manage.py loaddata db.json
+
+superuser: ## Seed the db with admin superuser
+	docker-compose run api python manage.py loaddata uobtheatre/users/fixtures.json
 
 psql: ## Do the migrations
 	docker-compose exec postgres psql -d postgres -U postgres
@@ -38,10 +61,10 @@ clean: ## Remove all the things
 	docker-compose down --volumes --rmi all || true
 
 test: ## Run unit tests in docker container
-	docker-compose run --rm api pytest --cov uobtheatre --cov-fail-under 100
+	docker-compose run --rm api pytest --cov uobtheatre --cov-fail-under 100 --cov-report term-missing $(TEST_PATH) $(TEST)
 
-test-v: ## Run verbose unit tests in docker container
-	docker-compose run --rm api coverage run -m pytest -s -vv
+test-v: ## Run verbose unit tests in docker container, use test_path to specify a test file/directory, app to specify a module and test to specify specific tests to be run.
+	docker-compose run --rm api coverage run -m pytest -s -vv $(TEST_PATH) $(TEST)
 
 coverage: ## Generate test coverage report
 	docker-compose run --rm api coverage run --source=uobtheatre -m pytest
@@ -92,3 +115,6 @@ schema: ## Dumps graphql schema in schema.json
 pr: ## Runs everything required (that is not included in precommit) for a pr
 	make schema
 	make test
+
+build:
+	docker-compose build api

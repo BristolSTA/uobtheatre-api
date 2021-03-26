@@ -1,8 +1,7 @@
 import os
 from distutils.util import strtobool
 from os.path import join
-
-import dj_database_url
+from typing import List
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -15,21 +14,14 @@ INSTALLED_APPS = (
     "django.contrib.staticfiles",
     "django.contrib.sites",
     # Third party apps
-    "rest_framework",  # utilities for rest apis
+    # Hosting
+    "gunicorn",
     # Authentiaction
-    "rest_framework.authtoken",  # token authentication
-    "rest_auth",
-    "rest_auth.registration",
-    "allauth",
-    "allauth.account",
-    "allauth.socialaccount",
+    "graphql_auth",  # Graphql authentication (user setup)
     ##
     "django_filters",  # for filtering rest endpoints
-    "drf_yasg",  # Swagger documentation
     "corsheaders",  # CORS
-    "rest_framework_extensions",  # Extensions including nested views
     "autoslug",  # Auto slug
-    "url_filter",
     "graphene_django",  # Graphql
     # Your apps
     "uobtheatre.users",
@@ -38,8 +30,10 @@ INSTALLED_APPS = (
     "uobtheatre.venues",
     "uobtheatre.bookings",
     "uobtheatre.societies",
-    "uobtheatre",
     "uobtheatre.addresses",
+    "uobtheatre.payments",
+    "uobtheatre.images",
+    "uobtheatre",
 )
 
 # https://docs.djangoproject.com/en/2.0/topics/http/middleware/
@@ -48,11 +42,11 @@ MIDDLEWARE = (
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
 )
 
 ALLOWED_HOSTS = ["*"]
@@ -70,12 +64,14 @@ ADMINS = (("Author", "webmaster@bristolsta.com"),)
 
 # Postgres
 DATABASES = {
-    "default": dj_database_url.config(
-        default=os.getenv(
-            "DATABASE_URL", default="postgres://postgres:@postgres:5432/postgres"
-        ),
-        conn_max_age=int(os.getenv("POSTGRES_CONN_MAX_AGE", "600")),
-    )
+    "default": {
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": os.getenv("DATABASE_NAME", default="postgres"),
+        "USER": os.getenv("DATABASE_USER", default="postgres"),
+        "PASSWORD": os.getenv("DATABASE_PASSWORD", default="postgres"),
+        "HOST": os.getenv("DATABASE_HOST", default="postgres"),
+        "PORT": os.getenv("DATABASE_PORT", default=5432),
+    }
 }
 
 # General
@@ -92,7 +88,7 @@ LOGIN_REDIRECT_URL = "/"
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 STATIC_ROOT = os.path.normpath(join(os.path.dirname(BASE_DIR), "static"))
-STATICFILES_DIRS = []
+STATICFILES_DIRS: List[str] = []
 STATIC_URL = "/static/"
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
@@ -101,7 +97,7 @@ STATICFILES_FINDERS = (
 
 # Media files
 MEDIA_ROOT = join(os.path.dirname(BASE_DIR), "media")
-MEDIA_URL = "/media/"
+MEDIA_PATH = "/media/"
 
 TEMPLATES = [
     {
@@ -141,18 +137,11 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# Auth setup
-# Yoinked from https://dev.to/rajeshj3/email-authentication-in-django-rest-framework-5f6h
 SITE_ID = 1
-ACCOUNT_AUTHENTICATION_METHOD = "email"
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False
 
 AUTHENTICATION_BACKENDS = [
-    # Needed to login by username in Django admin, regardless of `allauth`
+    "graphql_auth.backends.GraphQLAuthBackend",
     "django.contrib.auth.backends.ModelBackend",
-    # `allauth` specific authentication methods, such as login by e-mail
-    "allauth.account.auth_backends.AuthenticationBackend",
 ]
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
@@ -186,60 +175,95 @@ LOGGING = {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
             "formatter": "simple",
+            "filters": ["require_debug_true"],
         },
         "mail_admins": {
             "level": "ERROR",
             "class": "django.utils.log.AdminEmailHandler",
         },
+        "file": {
+            "level": "DEBUG",
+            "class": "logging.FileHandler",
+            "filename": "debug.log",
+        },
+        "allfile": {
+            "level": "DEBUG",
+            "class": "logging.FileHandler",
+            "filename": "debugall.log",
+        },
     },
     "loggers": {
+        "": {"handlers": ["allfile"], "level": "DEBUG", "propagate": True},
         "django": {
-            "handlers": ["console"],
+            "handlers": ["console", "file"],
             "propagate": True,
         },
         "django.server": {
-            "handlers": ["django.server"],
+            "handlers": ["django.server", "file"],
             "level": "INFO",
-            "propagate": False,
+            "propagate": True,
         },
         "django.request": {
-            "handlers": ["mail_admins", "console"],
+            "handlers": ["mail_admins", "console", "file"],
             "level": "ERROR",
-            "propagate": False,
+            "propagate": True,
         },
-        "django.db.backends": {"handlers": ["console"], "level": "INFO"},
+        "django.db.backends": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": True,
+        },
+        "uobtheatre": {"handlers": ["file"], "level": "INFO", "propagate": True},
+        "psycopg2": {"handlers": ["file"], "level": "INFO", "propagate": True},
     },
 }
 
 # Custom user app
 AUTH_USER_MODEL = "users.User"
-
-# Django Rest Framework
-REST_FRAMEWORK = {
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": int(os.getenv("DJANGO_PAGINATION_LIMIT", "10")),
-    "DATETIME_FORMAT": "%Y-%m-%dT%H:%M:%SZ",
-    "DEFAULT_RENDERER_CLASSES": (
-        "rest_framework.renderers.JSONRenderer",
-        "rest_framework.renderers.BrowsableAPIRenderer",
-    ),
-    "DEFAULT_PERMISSION_CLASSES": [],
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework.authentication.SessionAuthentication",
-        "rest_framework.authentication.TokenAuthentication",
-    ),
-    "DEFAULT_FILTER_BACKENDS": ["url_filter.integrations.drf.DjangoFilterBackend"],
-    "EXCEPTION_HANDLER": "uobtheatre.utils.exceptions.custom_exception_handler",
+GRAPHQL_AUTH = {
+    "LOGIN_ALLOWED_FIELDS": ["email"],
+    "USER_NODE_EXCLUDE_FIELDS": ["password"],
+    "USER_NODE_FILTER_FIELDS": {
+        "email": ["exact", "icontains", "istartswith"],
+        "is_active": ["exact"],
+        "status__archived": ["exact"],
+        "status__verified": ["exact"],
+        "status__secondary_email": ["exact"],
+    },
+    "REGISTER_MUTATION_FIELDS": ["email", "first_name", "last_name"],
+    "REGISTER_MUTATION_FIELDS_OPTIONAL": [],
+}
+GRAPHQL_JWT = {
+    "JWT_VERIFY_EXPIRATION": True,
+    "JWT_ALLOW_ANY_CLASSES": [
+        "graphql_auth.mutations.Register",
+        "graphql_auth.mutations.VerifyAccount",
+        "graphql_auth.mutations.ResendActivationEmail",
+        "graphql_auth.mutations.SendPasswordResetEmail",
+        "graphql_auth.mutations.PasswordReset",
+        "graphql_auth.mutations.ObtainJSONWebToken",
+        "graphql_auth.mutations.VerifyToken",
+        "graphql_auth.mutations.RefreshToken",
+        "graphql_auth.mutations.RevokeToken",
+        "graphql_auth.mutations.VerifySecondaryEmail",
+    ],
+}
+GRAPHENE = {
+    "SCHEMA": "uobtheatre.schema.schema",
+    "MIDDLEWARE": [
+        "graphql_jwt.middleware.JSONWebTokenMiddleware",
+    ],
 }
 
 
-# Documentation settings
-SWAGGER_SETTINGS = {
-    "DEFAULT_API_URL": "https://api.uobtheatre.com",
+# Square payments
+SQUARE_SETTINGS = {
+    "SQUARE_ACCESS_TOKEN": os.getenv(
+        "SQUARE_ACCESS_TOKEN",
+        default="",
+    ),
+    "SQUARE_ENVIRONMENT": os.getenv(
+        "SQUARE_ENVIRONMENT",
+        default="sandbox",
+    ),
 }
-
-NON_FIELD_ERRORS_KEY = "non_field_errors"
-FIELD_ERRORS_KEY = "field_errors"
-
-# GraphQL
-GRAPHENE = {"SCHEMA": "uobtheatre.schema.schema"}

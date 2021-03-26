@@ -1,17 +1,37 @@
 import itertools
 
 import graphene
+from django.db.models import Count
+from django_filters import OrderingFilter
 from graphene import relay
-from graphene_django import DjangoObjectType
+from graphene_django import DjangoListField, DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
+from graphql_auth.schema import UserNode
 
-from uobtheatre.bookings.models import Booking, ConcessionType, MiscCost
+from uobtheatre.bookings.models import (
+    Booking,
+    ConcessionType,
+    Discount,
+    DiscountRequirement,
+    MiscCost,
+    Ticket,
+)
+from uobtheatre.productions.models import Performance
+from uobtheatre.utils.exceptions import (
+    AuthException,
+    GQLFieldException,
+    GQLNonFieldException,
+    SafeMutation,
+)
+from uobtheatre.utils.schema import AuthRequiredMixin, FilterSet, IdInputField
+from uobtheatre.venues.models import Seat, SeatGroup
 
 
 class ConcessionTypeNode(DjangoObjectType):
     class Meta:
         model = ConcessionType
         interfaces = (relay.Node,)
+        exclude = ("discountrequirement_set",)
 
 
 class MiscCostNode(DjangoObjectType):
@@ -20,25 +40,52 @@ class MiscCostNode(DjangoObjectType):
         interfaces = (relay.Node,)
 
 
-class TicketNode(graphene.ObjectType):
-    ticket_price = graphene.Int()
-    number = graphene.Int()
+class TicketNode(DjangoObjectType):
+    class Meta:
+        model = Ticket
+        interfaces = (relay.Node,)
+
+
+class DiscountRequirementNode(DjangoObjectType):
+    class Meta:
+        model = DiscountRequirement
+        interfaces = (relay.Node,)
+
+
+class DiscountNode(DjangoObjectType):
+    requirements = DjangoListField(DiscountRequirementNode)
+
+    @classmethod
+    def get_queryset(cls, queryset, info):
+        return queryset.annotate(
+            number_of_tickets_required=Count("requirements__number")
+        ).filter(number_of_tickets_required__gt=1)
+
+    class Meta:
+        model = Discount
+        interfaces = (relay.Node,)
+
+
+class PriceBreakdownTicketNode(graphene.ObjectType):
+    ticket_price = graphene.Int(required=True)
+    number = graphene.Int(required=True)
     seat_group = graphene.Field("uobtheatre.venues.schema.SeatGroupNode")
-    concession = graphene.Field("uobtheatre.bookings.schema.ConcessionTypeNode")
-    total_price = graphene.Int()
+    concession_type = graphene.Field("uobtheatre.bookings.schema.ConcessionTypeNode")
+    total_price = graphene.Int(required=True)
 
     def resolve_total_price(self, info):
         return self.ticket_price * self.number
 
 
 class PriceBreakdownNode(DjangoObjectType):
-    tickets = graphene.List(TicketNode)
-    tickets_price = graphene.Int()
-    discounts_value = graphene.Int()
+    tickets = graphene.List(PriceBreakdownTicketNode)
+    tickets_price = graphene.Int(required=True)
+    discounts_value = graphene.Int(required=True)
     misc_costs = graphene.List(MiscCostNode)
-    subtotal_price = graphene.Int()
-    misc_costs_value = graphene.Int()
-    total_price = graphene.Int()
+    subtotal_price = graphene.Int(required=True)
+    misc_costs_value = graphene.Int(required=True)
+    total_price = graphene.Int(required=True)
+    tickets_discounted_price = graphene.Int(required=True)
 
     def resolve_tickets_price(self, info):
         return self.tickets_price()
@@ -55,6 +102,9 @@ class PriceBreakdownNode(DjangoObjectType):
     def resolve_total_price(self, info):
         return self.total()
 
+    def resolve_tickets_discounted_price(self, info):
+        return self.total()
+
     def resolve_tickets(self, info):
 
         # Group the ticket together, this returns a list of tuples.
@@ -67,7 +117,7 @@ class PriceBreakdownNode(DjangoObjectType):
         )
 
         return [
-            TicketNode(
+            PriceBreakdownTicketNode(
                 ticket_price=self.performance.price_with_concession(
                     ticket_group[1],
                     self.performance.performance_seat_groups.get(
@@ -77,7 +127,7 @@ class PriceBreakdownNode(DjangoObjectType):
                 ),
                 number=len(list(group)),
                 seat_group=ticket_group[0],
-                concession=ticket_group[1],
+                concession_type=ticket_group[1],
             )
             for ticket_group, group in groups
         ]
@@ -108,27 +158,170 @@ class PriceBreakdownNode(DjangoObjectType):
         )
 
 
+class BookingFilter(FilterSet):
+    class Meta:
+        model = Booking
+        fields = "__all__"
+
+    # TODO When we add back in Bookings endpoint only admin users should be
+    # able to get all bookings otherwise we should return only user bookings.
+    # Booings can be accessed from a performance, if this was not here then the
+    # users would be able all peoples bookings.
+    @property
+    def qs(self):
+        # Restrict the filterset to only return user bookings
+        if self.request.user.is_authenticated:
+            return super(BookingFilter, self).qs.filter(user=self.request.user)
+        else:
+            return Booking.objects.none()
+
+    order_by = OrderingFilter(fields=("created_at",))
+
+
+BookingStatusSchema = graphene.Enum.from_enum(Booking.BookingStatus)
+
+
 class BookingNode(DjangoObjectType):
     price_breakdown = graphene.Field(PriceBreakdownNode)
+    tickets = DjangoListField(TicketNode)
+    user = graphene.Field(UserNode)
+    payments = DjangoFilterConnectionField("uobtheatre.payments.schema.PaymentNode")
 
     def resolve_price_breakdown(self, info):
         return self
 
     class Meta:
         model = Booking
+        filterset_class = BookingFilter
         interfaces = (relay.Node,)
-        filter_fields = {
-            "id": ("exact",),
-            "booking_reference": ("exact",),
-        }
 
 
-class Query(graphene.ObjectType):
-    bookings = DjangoFilterConnectionField(BookingNode)
+class CreateTicketInput(graphene.InputObjectType):
+    seat_group_id = IdInputField(required=True)
+    concession_type_id = IdInputField(required=True)
 
-    def resolve_bookings(self, info):
-        # If the user is not authenticated then return none
-        if not info.context.user.is_authenticated:
-            return Booking.objects.none()
-        # Otherwise return only the user's bookings
-        return Booking.objects.filter(user=info.context.user)
+    def to_ticket(self):
+        return Ticket(
+            seat_group=SeatGroup.objects.get(id=self.seat_group_id),
+            concession_type=ConcessionType.objects.get(id=self.concession_type_id),
+        )
+
+
+class UpdateTicketInput(graphene.InputObjectType):
+    seat_group_id = IdInputField(required=True)
+    concession_type_id = IdInputField(required=True)
+    seat_id = IdInputField(required=False)
+    id = IdInputField(required=False)
+
+    def to_ticket(self):
+
+        if self.id is not None:
+            return Ticket.objects.get(id=self.id)
+        else:
+            return Ticket(
+                seat_group=SeatGroup.objects.get(id=self.seat_group_id),
+                concession_type=ConcessionType.objects.get(id=self.concession_type_id),
+                seat=Seat.objects.get(id=self.seat_id)
+                if self.seat_id is not None
+                else None,
+            )
+
+
+class CreateBooking(AuthRequiredMixin, SafeMutation):
+    booking = graphene.Field(BookingNode)
+
+    class Arguments:
+        performance_id = IdInputField()
+        tickets = graphene.List(CreateTicketInput, required=False)
+
+    @classmethod
+    def resolve_mutation(self, root, info, performance_id, tickets=[]):
+        # Get the performance and if it doesn't exist throw an error
+        performance = Performance.objects.get(id=performance_id)
+
+        ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))
+
+        # Check the capacity of the show and its seat_groups
+        err = performance.check_capacity(ticket_objects)
+        if err:
+            raise GQLNonFieldException(message=err, code=400)
+
+        # If draft booking(s) already exists remove the bookings
+        Booking.objects.filter(
+            status=Booking.BookingStatus.IN_PROGRESS, performance_id=performance_id
+        ).delete()
+
+        # Create the booking
+        booking = Booking.objects.create(
+            user=info.context.user, performance=performance
+        )
+
+        # Save all the validated tickets
+        for ticket in ticket_objects:
+            ticket.booking = booking
+            ticket.save()
+
+        return CreateBooking(booking=booking)
+
+
+class UpdateBooking(AuthRequiredMixin, SafeMutation):
+    booking = graphene.Field(BookingNode)
+
+    class Arguments:
+        booking_id = IdInputField()
+        tickets = graphene.List(UpdateTicketInput, required=False)
+
+    @classmethod
+    def resolve_mutation(self, root, info, booking_id, tickets=[]):
+        booking = Booking.objects.get(id=booking_id, user=info.context.user)
+
+        # Convert the given tickets to ticket objects
+        ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))
+
+        addTickets, deleteTickets = booking.get_ticket_diff(ticket_objects)
+        # Check the capacity of the show and its seat_groups
+        err = booking.performance.check_capacity(ticket_objects)
+        if err:
+            raise GQLNonFieldException(message=err, code=400)
+
+        # Save all the validated tickets
+        for ticket in addTickets:
+            ticket.booking = booking
+            ticket.save()
+
+        for ticket in deleteTickets:
+            ticket.delete()
+
+        return UpdateBooking(booking=booking)
+
+
+class PayBooking(AuthRequiredMixin, SafeMutation):
+    booking = graphene.Field(BookingNode)
+    payment = graphene.Field("uobtheatre.payments.schema.PaymentNode")
+
+    class Arguments:
+        booking_id = IdInputField(required=True)
+        price = graphene.Int(required=True)
+        nonce = graphene.String(required=True)
+
+    @classmethod
+    def resolve_mutation(self, root, info, booking_id, price, nonce):
+        # Get the performance and if it doesn't exist throw an error
+        booking = Booking.objects.get(id=booking_id)
+
+        if booking.total() != price:
+            raise GQLNonFieldException(
+                message="The booking price does not match the expected price"
+            )
+
+        if booking.status != Booking.BookingStatus.IN_PROGRESS:
+            raise GQLNonFieldException(message="The booking is not in progress")
+
+        payment = booking.pay(nonce)
+        return PayBooking(booking=booking, payment=payment)
+
+
+class Mutation(graphene.ObjectType):
+    create_booking = CreateBooking.Field()
+    update_booking = UpdateBooking.Field()
+    pay_booking = PayBooking.Field()

@@ -1,4 +1,7 @@
+import math
+
 import pytest
+from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
 
 from uobtheatre.bookings.models import (
@@ -7,6 +10,7 @@ from uobtheatre.bookings.models import (
     DiscountCombination,
     DiscountRequirement,
     MiscCost,
+    Ticket,
     combinations,
 )
 from uobtheatre.bookings.test.factories import (
@@ -19,9 +23,12 @@ from uobtheatre.bookings.test.factories import (
     TicketFactory,
     ValueMiscCostFactory,
 )
+from uobtheatre.payments.models import Payment
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
-from uobtheatre.venues.test.factories import SeatGroupFactory, VenueFactory
+from uobtheatre.utils.exceptions import SquareException
+from uobtheatre.utils.test_utils import ticketDictListDictGen, ticketListDictGen
+from uobtheatre.venues.test.factories import SeatFactory, SeatGroupFactory, VenueFactory
 
 
 @pytest.mark.parametrize(
@@ -165,7 +172,7 @@ def test_get_valid_discounts():
     concession_type_adult = ConcessionTypeFactory(name="Adult")
 
     # Create a family discount - 1 student ticket and 2 adults required
-    discount_family = DiscountFactory(name="Family", discount=0.2)
+    discount_family = DiscountFactory(name="Family", percentage=0.2)
     discount_family.performances.set([performance])
     DiscountRequirementFactory(
         concession_type=concession_type_student, number=1, discount=discount_family
@@ -175,7 +182,7 @@ def test_get_valid_discounts():
     )
 
     # Create a student discount - 1 student ticket required
-    discount_student = DiscountFactory(name="Student", discount=0.2)
+    discount_student = DiscountFactory(name="Student", percentage=0.2)
     discount_student.performances.set([performance])
     DiscountRequirementFactory(
         concession_type=concession_type_student, number=1, discount=discount_student
@@ -218,8 +225,7 @@ def test_get_valid_discounts():
 
 @pytest.mark.django_db
 def test_get_price():
-    venue = VenueFactory()
-    performance = PerformanceFactory(venue=venue)
+    performance = PerformanceFactory()
     booking = BookingFactory(performance=performance)
 
     # Set seat type price for performance
@@ -239,6 +245,61 @@ def test_get_price():
         booking.get_price()
         == performance_seat_group.price * 2 + performance_seat_group_2.price
     )
+
+
+@pytest.mark.django_db
+def test_ticket_price():
+    performance = PerformanceFactory()
+    booking = BookingFactory(performance=performance)
+
+    # Set seat type price for performance
+    performance_seat_group = PerformanceSeatingFactory(performance=performance)
+
+    # Create a seat booking
+    ticket = TicketFactory(
+        booking=booking, seat_group=performance_seat_group.seat_group
+    )
+
+    assert ticket.seat_price() == performance_seat_group.price
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "discount_amount, number_req, seat_group_price, discount_price",
+    [
+        (0.2, 1, 1200, 960),
+        (0.3, 1, 1300, 910),
+        (0, 1, 1200, 1200),
+        (0.2, 2, 1200, 1200),
+    ],
+)
+def test_ticket_discounted_price(
+    discount_amount, number_req, seat_group_price, discount_price
+):
+    performance = PerformanceFactory()
+    booking = BookingFactory(performance=performance)
+
+    test_concession_type = ConcessionTypeFactory(name="Student")
+    discount_student = DiscountFactory(name="Student", percentage=discount_amount)
+    discount_student.performances.set([performance])
+    DiscountRequirementFactory(
+        concession_type=test_concession_type,
+        number=number_req,
+        discount=discount_student,
+    )
+    # Set seat type price for performance
+    performance_seat_group = PerformanceSeatingFactory(
+        performance=performance, price=seat_group_price
+    )
+
+    # Create a seat booking
+    ticket = TicketFactory(
+        booking=booking,
+        concession_type=test_concession_type,
+        seat_group=performance_seat_group.seat_group,
+    )
+
+    assert ticket.discounted_price() == discount_price
 
 
 @pytest.mark.django_db
@@ -268,18 +329,18 @@ def test_get_price_with_discount_combination():
     # Check price without discount
     assert booking.get_price() == seating.price * 2
 
-    discount_student = DiscountFactory(name="Student", discount=0.2)
+    discount_student = DiscountFactory(name="Student", percentage=0.2)
     discount_student.performances.set([performance])
     DiscountRequirementFactory(
         concession_type=concession_type_student, number=1, discount=discount_student
     )
     discount_combination = DiscountCombination((discount_student,))
-    assert discount_student.discount == 0.2
-    assert round(
-        booking.get_price_with_discount_combination(discount_combination)
-    ) == round((seating.price * (1 - discount_student.discount)) + seating.price)
+    assert discount_student.percentage == 0.2
+    assert booking.get_price_with_discount_combination(
+        discount_combination
+    ) == math.ceil((seating.price * (1 - discount_student.percentage)) + seating.price)
 
-    discount_family = DiscountFactory(name="Family", discount=0.2)
+    discount_family = DiscountFactory(name="Family", percentage=0.2)
     discount_family.performances.set([performance])
     DiscountRequirementFactory(
         concession_type=concession_type_student, number=1, discount=discount_family
@@ -300,11 +361,12 @@ def test_get_price_with_discount_combination():
     )
 
     discount_combination = DiscountCombination((discount_student, discount_family))
-    assert round(
+    assert (
         booking.get_price_with_discount_combination(discount_combination)
-    ) == round(
-        (seating.price * (1 - discount_student.discount))
-        + (seating.price * 3 * (1 - discount_family.discount))
+        # Price is calculated a ticket level so each ticket price should be rounded individually
+        == math.ceil(seating.price * (1 - discount_student.percentage))
+        # TODO This isnt right - each seat needs to be ceiled individually
+        + (3 * math.ceil(seating.price * (1 - discount_family.percentage)))
     )
 
 
@@ -324,7 +386,7 @@ def test_get_best_discount_combination():
     PerformanceSeatingFactory(performance=performance, seat_group=seat_group)
 
     # Create a family discount - 1 student ticket and 2 adults required
-    discount_family = DiscountFactory(name="Family", discount=0.2)
+    discount_family = DiscountFactory(name="Family", percentage=0.2)
     discount_family.performances.set([performance])
     DiscountRequirementFactory(
         concession_type=concession_type_student, number=1, discount=discount_family
@@ -334,7 +396,7 @@ def test_get_best_discount_combination():
     )
 
     # Create a student discount - 1 student ticket required
-    discount_student = DiscountFactory(name="Student", discount=0.2)
+    discount_student = DiscountFactory(name="Student", percentage=0.2)
     discount_student.performances.set([performance])
     DiscountRequirementFactory(
         concession_type=concession_type_student, number=1, discount=discount_student
@@ -356,7 +418,7 @@ def test_get_best_discount_combination():
     assert booking.performance.discounts.count() == 2
 
     assert booking.performance.discounts.first().name == "Family"
-    assert booking.performance.discounts.first().discount == 0.2
+    assert booking.performance.discounts.first().percentage == 0.2
     assert set(booking.get_best_discount_combination().discount_combination) == set(
         (
             discount_student,
@@ -386,14 +448,14 @@ def test_is_single_discount(students, adults, is_single):
 
 @pytest.mark.django_db
 def test_str_discount():
-    discount = DiscountFactory(discount=0.12, name="student")
+    discount = DiscountFactory(percentage=0.12, name="student")
     assert str(discount) == "12.0% off for student"
 
 
 @pytest.mark.django_db
 def test_str_booking():
     booking = BookingFactory()
-    assert str(booking) == str(booking.booking_reference)
+    assert str(booking) == str(booking.reference)
 
 
 @pytest.mark.django_db
@@ -443,7 +505,7 @@ def test_draft_uniqueness():
     args = {
         "user": UserFactory(),
         "performance": PerformanceFactory(),
-        "status": Booking.BookingStatus.INPROGRESS,
+        "status": Booking.BookingStatus.IN_PROGRESS,
     }
 
     # Check that can make more bookings that are no in_progress
@@ -457,6 +519,35 @@ def test_draft_uniqueness():
     BookingFactory(**args)
     with pytest.raises(IntegrityError):
         BookingFactory(**args)
+
+
+@pytest.mark.django_db
+def test_cannot_create_2_discounts_with_the_same_requirements():
+    dis_1 = DiscountFactory()
+    dis_2 = DiscountFactory()
+
+    requirement_1 = DiscountRequirementFactory(discount=dis_1)
+
+    # Assert when discount 1 has these requirements it is unique
+    dis_1.validate_unique()
+
+    DiscountRequirementFactory(
+        discount=dis_2,
+        concession_type=requirement_1.concession_type,
+        number=requirement_1.number,
+    )
+
+    with pytest.raises(ValidationError):
+        dis_1.validate_unique()
+
+
+@pytest.mark.django_db
+def test_discount_with_same_requirements_is_not_unique():
+    DiscountFactory()
+    dis_2 = Discount()
+
+    with pytest.raises(ValidationError):
+        dis_2.validate_unique()
 
 
 @pytest.mark.django_db
@@ -480,3 +571,336 @@ def test_misc_cost_constraints(value, percentage, error):
     else:
         with pytest.raises(IntegrityError):
             MiscCost.objects.create(**args)
+
+
+@pytest.mark.django_db
+def test_create_booking_serializer_seat_group_is_from_performance_validation():
+    user = UserFactory(id=1)
+    performance = PerformanceFactory(id=1, capacity=10)
+    sg_1 = SeatGroupFactory(id=1)
+    sg_2 = SeatGroupFactory(id=2)
+    ConcessionTypeFactory(id=1)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "existingList, newList, addList, deleteList",
+    [
+        # SAME, SAME, null, null  - SAME
+        (
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 2,
+                },
+            ],
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 2,
+                },
+            ],
+            [],
+            [],
+        ),
+        # 1&2, 1, null, 2 - DELETE 1
+        (
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 2,
+                },
+            ],
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+            ],
+            [],
+            [
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 2,
+                }
+            ],
+        ),
+        # 1, 1&2, 2, null - ADD 1
+        (
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+            ],
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                },
+            ],
+            [
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                }
+            ],
+            [],
+        ),
+        # 1&2, null, null, 1&2 - DELETE ALL
+        (
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 2,
+                },
+            ],
+            [],
+            [],
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 2,
+                },
+            ],
+        ),
+        # null, 1&2, 1&2, null - ADD ALL
+        (
+            [],
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                },
+            ],
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                },
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                },
+            ],
+            [],
+        ),
+        # 1, 2, 2, 1 - SWAP
+        (
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+            ],
+            [
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                }
+            ],
+            [
+                {
+                    "seat_group_id": 1,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                }
+            ],
+            [
+                {
+                    "seat_group_id": 2,
+                    "concession_type_id": 1,
+                    "seat_id": 1,
+                    "id": 1,
+                },
+            ],
+        ),
+    ],
+)
+def test_booking_ticket_diff(existingList, newList, addList, deleteList):
+    SeatGroupFactory(id=1)
+    SeatGroupFactory(id=2)
+    ConcessionTypeFactory(id=1)
+    ConcessionTypeFactory(id=2)
+    SeatFactory(id=1)
+    SeatFactory(id=2)
+
+    booking = BookingFactory()
+
+    _ = [TicketFactory(booking=booking, **ticket) for ticket in existingList]
+    newTickets = [Ticket(**ticket) for ticket in newList]
+    addTickets = [Ticket(**ticket) for ticket in addList]
+    deleteTickets = [Ticket(**ticket) for ticket in deleteList]
+
+    addTickets, deleteTickets = booking.get_ticket_diff(newTickets)
+    expAddTicketDict, expDeleteTicketDict = map(
+        ticketDictListDictGen,
+        [
+            addList,
+            deleteList,
+        ],
+    )
+    actAddTicketDict, actDeleteTicketDict = map(
+        ticketListDictGen,
+        [
+            addTickets,
+            deleteTickets,
+        ],
+    )
+
+    assert expAddTicketDict == actAddTicketDict
+    assert expDeleteTicketDict == actDeleteTicketDict
+
+
+@pytest.mark.django_db
+def test_booking_pay_failure(mock_square):
+    """
+    Test paying a booking with square
+    """
+    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    psg = PerformanceSeatingFactory(performance=booking.performance)
+    ticket = TicketFactory(booking=booking, seat_group=psg.seat_group)
+
+    mock_square.reason_phrase = "Some phrase"
+    mock_square.status_code = 400
+    mock_square.success = False
+
+    with pytest.raises(SquareException):
+        booking.pay("nonce")
+
+    # Assert the booking is not paid
+    assert booking.status == Booking.BookingStatus.IN_PROGRESS
+
+    # Assert no payments are created
+    assert Payment.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_booking_pay_success(mock_square):
+    """
+    Test paying a booking with square
+    """
+    booking = BookingFactory()
+    psg = PerformanceSeatingFactory(performance=booking.performance)
+    ticket = TicketFactory(booking=booking, seat_group=psg.seat_group)
+
+    mock_square.success = True
+    mock_square.body = {
+        "payment": {
+            "id": "abc",
+            "card_details": {
+                "card": {
+                    "card_brand": "MASTERCARD",
+                    "last_4": "1234",
+                }
+            },
+            "amount_money": {
+                "currency": "GBP",
+                "amount": 0,
+            },
+        }
+    }
+
+    booking.pay("nonce")
+
+    assert booking.status == Booking.BookingStatus.PAID
+    # Assert a payment of the correct type is created
+    payment = booking.payments.first()
+    assert payment.pay_object == booking
+    assert payment.value == 0
+    assert payment.currency == "GBP"
+    assert payment.card_brand == "MASTERCARD"
+    assert payment.last_4 == "1234"
+    assert payment.provider_payment_id == "abc"
+    assert payment.provider == Payment.PaymentProvider.SQUARE_ONLINE
+    assert payment.type == Payment.PaymentType.PURCHASE
+
+
+@pytest.mark.django_db
+@pytest.mark.square_integration
+def test_booking_pay_integration():
+    """
+    Test paying a booking with square
+    """
+    booking = BookingFactory()
+    psg = PerformanceSeatingFactory(performance=booking.performance)
+    TicketFactory(booking=booking, seat_group=psg.seat_group)
+
+    booking.pay("cnon:card-nonce-ok")
+
+    assert booking.status == Booking.BookingStatus.PAID
+    # Assert a payment of the correct type is created
+    payment = booking.payments.first()
+    assert payment.pay_object == booking
+    assert payment.value == booking.total()
+    assert payment.currency == "GBP"
+    assert isinstance(payment.card_brand, str)
+    assert isinstance(payment.last_4, str) and len(payment.last_4) == 4
+    assert isinstance(payment.provider_payment_id, str)
+    assert payment.provider == Payment.PaymentProvider.SQUARE_ONLINE
+    assert payment.type, Payment.PaymentType.PURCHASE

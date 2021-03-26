@@ -1,9 +1,14 @@
+import django_filters
 import graphene
 from graphene import relay
 from graphene_django import DjangoListField, DjangoObjectType
-from graphene_django.filter import DjangoFilterConnectionField
+from graphene_django.filter import (
+    DjangoFilterConnectionField,
+    GlobalIDFilter,
+    GlobalIDMultipleChoiceFilter,
+)
 
-from uobtheatre.bookings.schema import ConcessionTypeNode
+from uobtheatre.bookings.schema import ConcessionTypeNode, DiscountNode
 from uobtheatre.productions.models import (
     CastMember,
     CrewMember,
@@ -13,12 +18,9 @@ from uobtheatre.productions.models import (
     Production,
     ProductionTeamMember,
     Warning,
+    append_production_qs,
 )
-from uobtheatre.utils.schema import (
-    GrapheneImageField,
-    GrapheneImageFieldNode,
-    GrapheneImageMixin,
-)
+from uobtheatre.utils.schema import FilterSet
 
 
 class CrewRoleNode(DjangoObjectType):
@@ -27,9 +29,7 @@ class CrewRoleNode(DjangoObjectType):
         interfaces = (relay.Node,)
 
 
-class CastMemberNode(GrapheneImageMixin, DjangoObjectType):
-    profile_picture = GrapheneImageField(GrapheneImageFieldNode)
-
+class CastMemberNode(DjangoObjectType):
     class Meta:
         model = CastMember
         interfaces = (relay.Node,)
@@ -53,11 +53,53 @@ class WarningNode(DjangoObjectType):
         interfaces = (relay.Node,)
 
 
-class ProductionNode(GrapheneImageMixin, DjangoObjectType):
-    cover_image = GrapheneImageField(GrapheneImageFieldNode)
-    featured_image = GrapheneImageField(GrapheneImageFieldNode)
-    poster_image = GrapheneImageField(GrapheneImageFieldNode)
+class ProductionByMethodOrderingFilter(django_filters.OrderingFilter):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.extra["choices"] += [
+            ("start", "Start"),
+            ("-start", "Start (descending)"),
+            ("end", "End"),
+            ("-end", "End (descending)"),
+        ]
 
+    def filter(self, qs, value):
+        if value and "start" in value:
+            return append_production_qs(qs, start=True).order_by("start")
+        if value and "-start" in value:
+            return append_production_qs(qs, start=True).order_by("-start")
+
+        if value and "end" in value:
+            return append_production_qs(qs, end=True).order_by("end")
+        if value and "-end" in value:
+            return append_production_qs(qs, end=True).order_by("-end")
+
+        return super().filter(qs, value)
+
+
+class ProductionFilter(FilterSet):
+    start = django_filters.DateTimeFilter(method="start_filter")
+    start__gte = django_filters.DateTimeFilter(method="start_filter")
+    start__lte = django_filters.DateTimeFilter(method="start_filter")
+
+    end = django_filters.DateTimeFilter(method="end_filter")
+    end__gte = django_filters.DateTimeFilter(method="end_filter")
+    end__lte = django_filters.DateTimeFilter(method="end_filter")
+
+    def start_filter(self, qs, value, date=None):
+        return append_production_qs(qs, start=True).filter(**{value: date})
+
+    def end_filter(self, qs, value, date=None):
+        return append_production_qs(qs, end=True).filter(**{value: date})
+
+    class Meta:
+        model = Production
+        exclude = ("poster_image", "featured_image", "cover_image")
+
+    order_by = ProductionByMethodOrderingFilter()
+
+
+class ProductionNode(DjangoObjectType):
     warnings = DjangoListField(WarningNode)
     crew = DjangoListField(CrewMemberNode)
     cast = DjangoListField(CastMemberNode)
@@ -66,24 +108,29 @@ class ProductionNode(GrapheneImageMixin, DjangoObjectType):
     start = graphene.DateTime()
     end = graphene.DateTime()
 
+    is_bookable = graphene.Boolean(required=True)
+    min_seat_price = graphene.Int()
+
     def resolve_start(self, info):
         return self.start_date()
 
     def resolve_end(self, info):
         return self.end_date()
 
+    def resolve_is_bookable(self, info):
+        return self.is_bookable()
+
+    def resolve_min_seat_price(self, info):
+        return self.min_seat_price()
+
     class Meta:
         model = Production
-        filter_fields = {
-            "id": ("exact",),
-            "slug": ("exact",),
-        }
-        fields = "__all__"
+        filterset_class = ProductionFilter
         interfaces = (relay.Node,)
 
 
 class ConcessionTypeBookingType(graphene.ObjectType):
-    concession = graphene.Field(ConcessionTypeNode)
+    concession_type = graphene.Field(ConcessionTypeNode)
     price = graphene.Int()
     price_pounds = graphene.String()
 
@@ -98,7 +145,7 @@ class PerformanceSeatGroupNode(DjangoObjectType):
     def resolve_concession_types(self, info):
         return [
             ConcessionTypeBookingType(
-                concession=concession,
+                concession_type=concession,
                 price=self.performance.price_with_concession(concession, self.price),
             )
             for concession in self.performance.concessions()
@@ -119,10 +166,26 @@ class PerformanceSeatGroupNode(DjangoObjectType):
         interfaces = (relay.Node,)
 
 
+class PerformanceFilter(FilterSet):
+
+    start = django_filters.DateTimeFilter(method="start_filter")
+
+    class Meta:
+        model = Performance
+        exclude = ("performance_seat_groups", "bookings")
+
+    order_by = django_filters.OrderingFilter(fields=(("start"),))
+
+
 class PerformanceNode(DjangoObjectType):
     capacity_remaining = graphene.Int()
     ticket_options = graphene.List(PerformanceSeatGroupNode)
     min_seat_price = graphene.Int()
+    duration_mins = graphene.Int()
+    is_inperson = graphene.Boolean(required=True)
+    is_online = graphene.Boolean(required=True)
+    sold_out = graphene.Boolean(required=True)
+    discounts = DjangoListField(DiscountNode)
 
     def resolve_ticket_options(self, info, **kwargs):
         return self.performance_seat_groups.all()
@@ -133,16 +196,34 @@ class PerformanceNode(DjangoObjectType):
     def resolve_min_seat_price(self, info):
         return self.min_seat_price()
 
+    def resolve_is_inperson(self, info):
+        return True
+
+    def resolve_is_online(self, info):
+        return False
+
+    def resolve_duration_mins(self, info):
+        return self.duration().seconds // 60
+
+    def resolve_sold_out(self, info):
+        return self.is_sold_out()
+
     class Meta:
         model = Performance
-        filter_fields = {
-            "id": ("exact",),
-            "start": ("exact", "year__gt"),
-        }
-        exclude = ("performance_seat_groups", "bookings")
+        filterset_class = PerformanceFilter
         interfaces = (relay.Node,)
+        exclude = ("performance_seat_groups",)
 
 
 class Query(graphene.ObjectType):
     productions = DjangoFilterConnectionField(ProductionNode)
     performances = DjangoFilterConnectionField(PerformanceNode)
+
+    production = graphene.Field(ProductionNode, slug=graphene.String(required=True))
+    performance = relay.Node.Field(PerformanceNode)
+
+    def resolve_production(self, info, slug):
+        try:
+            return Production.objects.get(slug=slug)
+        except Production.DoesNotExist:
+            return None

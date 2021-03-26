@@ -6,4 +6,21 @@ from .models import User
 
 @admin.register(User)
 class UserAdmin(DjangoUserAdmin):
-    pass
+    ordering = ("email",)
+    exclude = ("username",)
+    fieldsets = (
+        ("Personal info", {"fields": ("first_name", "last_name", "email", "password")}),
+        ("Important dates", {"fields": ("last_login", "date_joined")}),
+        (
+            "Permissions",
+            {
+                "fields": (
+                    "is_active",
+                    "is_staff",
+                    "is_superuser",
+                    "groups",
+                    "user_permissions",
+                )
+            },
+        ),
+    )

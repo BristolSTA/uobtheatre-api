@@ -7,6 +7,7 @@ from uobtheatre.productions.models import (
     Performance,
     PerformanceSeatGroup,
     Production,
+    ProductionTeamMember,
     Society,
     Warning,
 )
@@ -19,3 +20,4 @@ admin.site.register(CrewMember)
 admin.site.register(CastMember)
 admin.site.register(CrewRole)
 admin.site.register(PerformanceSeatGroup)
+admin.site.register(ProductionTeamMember)

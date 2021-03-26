@@ -1,12 +1,14 @@
 import datetime
 import math
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from autoslug import AutoSlugField
 from django.db import models
-from django.db.models import Sum
+from django.db.models import Max, Min, Sum
+from django.db.models.query import QuerySet
 from django.utils import timezone
 
+from uobtheatre.images.models import Image
 from uobtheatre.societies.models import Society
 from uobtheatre.utils.models import TimeStampedMixin
 from uobtheatre.venues.models import SeatGroup, Venue
@@ -44,7 +46,20 @@ class Warning(models.Model):
         return self.warning
 
 
-class Production(models.Model, TimeStampedMixin):
+def append_production_qs(queryset, start=False, end=False):
+    """
+    Given a booking queryset append extra fields. Field options are:
+    - start
+    - end
+    """
+    if start:
+        queryset = queryset.annotate(start=Min("performances__start"))
+    if end:
+        queryset = queryset.annotate(end=Max("performances__end"))
+    return queryset
+
+
+class Production(TimeStampedMixin, models.Model):
     """A production is a show (like the 2 weeks things) and can have many
     performaces (these are like the nights).
     """
@@ -57,14 +72,32 @@ class Production(models.Model, TimeStampedMixin):
         Society, on_delete=models.SET_NULL, null=True, related_name="productions"
     )
 
-    poster_image = models.ImageField(null=True)
-    featured_image = models.ImageField(null=True)
-    cover_image = models.ImageField(null=True)
+    cover_image = models.ForeignKey(
+        Image,
+        on_delete=models.RESTRICT,
+        related_name="production_cover_images",
+        null=True,
+        blank=True,
+    )
+    poster_image = models.ForeignKey(
+        Image,
+        on_delete=models.RESTRICT,
+        related_name="production_poster_images",
+        null=True,
+        blank=True,
+    )
+    featured_image = models.ForeignKey(
+        Image,
+        on_delete=models.RESTRICT,
+        related_name="production_featured_images",
+        null=True,
+        blank=True,
+    )
 
     age_rating = models.SmallIntegerField(null=True)
     facebook_event = models.CharField(max_length=255, null=True)
 
-    warnings = models.ManyToManyField(Warning)
+    warnings = models.ManyToManyField(Warning, blank=True)
 
     slug = AutoSlugField(populate_from="name", unique=True, blank=True)
 
@@ -76,30 +109,44 @@ class Production(models.Model, TimeStampedMixin):
         Returns if the show is upcoming. If the show has no upcoming
         productions (not ended) then it is not upcoming.
         """
-        performances = self.performances.all()
-        return any(
-            performance.start > timezone.now()
-            for performance in performances
-            if performance.start
-        )
+        return self.performances.filter(start__gte=timezone.now()).count() != 0
+
+    def is_bookable(self) -> bool:
+        """
+        Returns if the show is bookable, based on if it has enabled
+        performances
+        """
+        return self.performances.filter(disabled=False).count() != 0
 
     def end_date(self):
         """
         Return when the last performance ends.
         """
-        performances = self.performances.all()
-        if not performances:
-            return None
-        return max(performance.end for performance in performances)
+        return self.performances.all().aggregate(Max("end"))["end__max"]
 
     def start_date(self):
         """
         Return when the first performance starts.
         """
+        return self.performances.all().aggregate(Min("start"))["start__min"]
+
+    def min_seat_price(self) -> Optional[int]:
+        """
+        Return the minimum seatgroup ticket price for each performance.
+        """
         performances = self.performances.all()
-        if not performances:
-            return None
-        return min(performance.start for performance in performances)
+        all_min_seat_prices = [
+            performance.min_seat_price() for performance in performances
+        ]
+
+        return min(
+            (
+                min_seat_prices
+                for min_seat_prices in all_min_seat_prices
+                if min_seat_prices is not None
+            ),
+            default=None,
+        )
 
     def duration(self) -> Optional[datetime.timedelta]:
         """
@@ -118,7 +165,13 @@ class CastMember(models.Model):
     """Member of production cast"""
 
     name = models.CharField(max_length=255)
-    profile_picture = models.ImageField(null=True, blank=True)
+    profile_picture = models.ForeignKey(
+        Image,
+        on_delete=models.RESTRICT,
+        related_name="cast_members",
+        blank=True,
+        null=True,
+    )
     role = models.CharField(max_length=255, null=True)
     production = models.ForeignKey(
         Production, on_delete=models.CASCADE, related_name="cast"
@@ -165,7 +218,7 @@ class CrewMember(models.Model):
         ordering = ["id"]
 
 
-class Performance(models.Model, TimeStampedMixin):
+class Performance(TimeStampedMixin, models.Model):
     """
     A performance is a discrete event when the show takes place eg 7pm on
     Tuesday.
@@ -242,13 +295,11 @@ class Performance(models.Model, TimeStampedMixin):
         """
         return self.end - self.start
 
-    def get_single_discounts(self) -> List:
+    def get_single_discounts(self) -> QuerySet[Any]:
         """ Returns all discounts that apply to a single ticket """
-        return [
-            discount
-            for discount in self.discounts.all()
-            if discount.is_single_discount()
-        ]
+        return self.discounts.annotate(
+            number_of_tickets_required=Sum("requirements__number")
+        ).filter(number_of_tickets_required=1)
 
     def get_concession_discount(self, concession_type) -> float:
         """
@@ -259,12 +310,11 @@ class Performance(models.Model, TimeStampedMixin):
             (
                 discount
                 for discount in self.get_single_discounts()
-                if discount.discount_requirements.first().concession_type
-                == concession_type
+                if discount.requirements.first().concession_type == concession_type
             ),
             None,
         )
-        return discount.discount if discount else 0
+        return discount.percentage if discount else 0
 
     def price_with_concession(self, concession, price) -> int:
         """
@@ -279,7 +329,7 @@ class Performance(models.Model, TimeStampedMixin):
             set(
                 discounts_requirement.concession_type
                 for discount in self.discounts.all()
-                for discounts_requirement in discount.discount_requirements.all()
+                for discounts_requirement in discount.requirements.all()
             )
         )
         concession_list.sort(key=lambda concession: concession.id)
@@ -292,6 +342,65 @@ class Performance(models.Model, TimeStampedMixin):
         return min(
             (psg.price for psg in self.performance_seat_groups.all()), default=None
         )
+
+    def is_sold_out(self) -> bool:
+        return self.capacity_remaining() == 0
+
+    def check_capacity(self, tickets, deleted_tickets=[]) -> Optional[str]:
+        """
+        Given a list of ticket objects, checks there are enough tickets
+        available for the booking. If not return a string.
+        TODO return a custom exception not a string
+        """
+
+        # Get the number of each seat group
+        seat_group_counts: Dict[SeatGroup, int] = {}
+        for ticket in tickets:
+            # If a SeatGroup with this id does not exist an error will the thrown
+            seat_group = ticket.seat_group
+            seat_group_count = seat_group_counts.get(seat_group)
+            seat_group_counts[seat_group] = (seat_group_count or 0) + 1
+
+        # Then reduce the count if tickets are being deleted. This is because
+        # if we have booked a seat in the front row, and we then decide to
+        # delete that seat and book a new one in the same row we only need 1
+        # seat (i.e no more seats)
+        for ticket in deleted_tickets:
+            # If a SeatGroup with this id does not exist an error will the thrown
+            seat_group = ticket.seat_group
+            seat_group_count = seat_group_counts.get(seat_group)
+            seat_group_counts[seat_group] = (seat_group_count or 0) - 1
+
+        # Check each seat group is in the performance
+        seat_groups_not_in_perfromance: List[str] = [
+            seat_group.name
+            for seat_group in seat_group_counts.keys()
+            if seat_group not in self.seat_groups.all()
+        ]
+
+        # If any of the seat_groups are not assigned to this performance then throw an error
+        if len(seat_groups_not_in_perfromance) != 0:
+            seat_groups_not_in_perfromance_str = ", ".join(
+                seat_groups_not_in_perfromance
+            )
+            performance_seat_groups_str = ", ".join(
+                [seat_group.name for seat_group in self.seat_groups.all()]
+            )
+            return f"You cannot book a seat group that is not assigned to this performance, you have booked {seat_groups_not_in_perfromance_str} but the performance only has {performance_seat_groups_str}"
+
+        # Check that each seat group has enough capacity
+        for seat_group, number_booked in seat_group_counts.items():
+            seat_group_remaining_capacity = self.capacity_remaining(
+                seat_group=seat_group
+            )
+            if seat_group_remaining_capacity < number_booked:
+                return f"There are only {seat_group_remaining_capacity} seats reamining in {seat_group} but you have booked {number_booked}. Please updated your seat selections and try again."
+
+        # Also check total capacity
+        if self.capacity_remaining() < len(tickets) - len(deleted_tickets):
+            return f"There are only {self.capacity_remaining()} seats available for this performance. You attempted to book {len(tickets)}. Please remove some tickets and try again or select a different performance."
+
+        return None
 
     def __str__(self):
         if self.start is None:

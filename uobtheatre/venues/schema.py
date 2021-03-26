@@ -5,29 +5,31 @@ from graphene_django.fields import DjangoConnectionField
 from graphene_django.filter import DjangoFilterConnectionField
 
 from uobtheatre.addresses.schema import AddressNode  # noqa
+from uobtheatre.images.schema import ImageNode  # noqa
 from uobtheatre.productions.schema import ProductionNode
-from uobtheatre.utils.schema import (
-    GrapheneImageField,
-    GrapheneImageFieldNode,
-    GrapheneImageMixin,
-)
-from uobtheatre.venues.models import SeatGroup, Venue, VenueLayout
+from uobtheatre.venues.models import Seat, SeatGroup, Venue
 
 
 class SeatGroupNode(DjangoObjectType):
     class Meta:
         model = SeatGroup
         interfaces = (relay.Node,)
+        exclude = ("performance_set", "performanceseatgroup_set", "discount_set")
 
 
-class VenueLayoutNode(DjangoObjectType):
+# class VenueLayoutNode(DjangoObjectType):
+#     class Meta:
+#         model = VenueLayout
+#         interfaces = (relay.Node,)
+
+
+class SeatNode(DjangoObjectType):
     class Meta:
-        model = VenueLayout
+        model = Seat
         interfaces = (relay.Node,)
 
 
-class VenueNode(GrapheneImageMixin, DjangoObjectType):
-    image = GrapheneImageField(GrapheneImageFieldNode)
+class VenueNode(DjangoObjectType):
     productions = DjangoConnectionField(ProductionNode)
 
     def resolve_productions(self, info):
@@ -45,6 +47,7 @@ class VenueNode(GrapheneImageMixin, DjangoObjectType):
 
 class Query(graphene.ObjectType):
     venues = DjangoFilterConnectionField(VenueNode)
+    venue = graphene.Field(VenueNode, slug=graphene.String(required=True))
 
-    def resolve_venues(self, info, **kwargs):
-        return Venue.objects.all()
+    def resolve_venue(self, info, slug):
+        return Venue.objects.get(slug=slug)

@@ -1,5 +1,6 @@
 schema {
   query: Query
+  mutation: Mutation
 }
 
 type AddressNode implements Node {
@@ -13,12 +14,22 @@ type AddressNode implements Node {
   id: ID!
 }
 
+type ArchiveAccount {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
 type BookingNode implements Node {
   id: ID!
-  bookingReference: UUID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  reference: String!
+  user: UserNode
   performance: PerformanceNode!
   status: BookingStatus!
+  tickets: [TicketNode!]
   priceBreakdown: PriceBreakdownNode
+  payments(offset: Int, before: String, after: String, first: Int, last: Int, type: String, provider: String, createdAt: DateTime, id: ID): PaymentNodeConnection
 }
 
 type BookingNodeConnection {
@@ -39,13 +50,13 @@ enum BookingStatus {
 type CastMemberNode implements Node {
   id: ID!
   name: String!
-  profilePicture: GrapheneImageFieldNode
+  profilePicture: ImageNode
   role: String
   production: ProductionNode!
 }
 
 type ConcessionTypeBookingType {
-  concession: ConcessionTypeNode
+  concessionType: ConcessionTypeNode
   price: Int
   pricePounds: String
 }
@@ -54,6 +65,18 @@ type ConcessionTypeNode implements Node {
   id: ID!
   name: String!
   description: String
+  seatBookings(offset: Int, before: String, after: String, first: Int, last: Int): TicketNodeConnection!
+}
+
+type CreateBooking {
+  success: Boolean
+  errors: [GQLErrorUnion]
+  booking: BookingNode
+}
+
+input CreateTicketInput {
+  seatGroupId: IdInputField!
+  concessionTypeId: IdInputField!
 }
 
 type CrewMemberNode implements Node {
@@ -92,9 +115,43 @@ type CrewRoleNode implements Node {
 
 scalar DateTime
 
-type GrapheneImageFieldNode {
+type DeleteAccount {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type DiscountNode implements Node {
+  id: ID!
+  name: String!
+  percentage: Float!
+  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, orderBy: String): PerformanceNodeConnection!
+  seatGroup: SeatGroupNode
+  requirements: [DiscountRequirementNode!]
+}
+
+type DiscountRequirementNode implements Node {
+  id: ID!
+  number: Int!
+  discount: DiscountNode!
+  concessionType: ConcessionTypeNode!
+}
+
+type FieldError {
+  message: String
+  field: String
+  code: String
+}
+
+union GQLErrorUnion = FieldError | NonFieldError
+
+scalar GenericScalar
+
+scalar IdInputField
+
+type ImageNode implements Node {
+  id: ID!
+  altText: String
   url: String
-  name: String
 }
 
 type MiscCostNode implements Node {
@@ -105,8 +162,45 @@ type MiscCostNode implements Node {
   value: Float
 }
 
+type Mutation {
+  createBooking(performanceId: IdInputField, tickets: [CreateTicketInput]): CreateBooking
+  updateBooking(bookingId: IdInputField, tickets: [UpdateTicketInput]): UpdateBooking
+  payBooking(bookingId: IdInputField!, nonce: String!, price: Int!): PayBooking
+  register(email: String!, firstName: String!, lastName: String!, password1: String!, password2: String!): Register
+  verifyAccount(token: String!): VerifyAccount
+  resendActivationEmail(email: String!): ResendActivationEmail
+  sendPasswordResetEmail(email: String!): SendPasswordResetEmail
+  passwordReset(token: String!, newPassword1: String!, newPassword2: String!): PasswordReset
+  passwordSet(token: String!, newPassword1: String!, newPassword2: String!): PasswordSet
+  passwordChange(oldPassword: String!, newPassword1: String!, newPassword2: String!): PasswordChange
+  updateAccount(firstName: String, lastName: String): UpdateAccount
+  archiveAccount(password: String!): ArchiveAccount
+  deleteAccount(password: String!): DeleteAccount
+  sendSecondaryEmailActivation(email: String!, password: String!): SendSecondaryEmailActivation
+  verifySecondaryEmail(token: String!): VerifySecondaryEmail
+  swapEmails(password: String!): SwapEmails
+  removeSecondaryEmail(password: String!): RemoveSecondaryEmail
+  login(password: String!, email: String): ObtainJSONWebToken
+  verifyToken(token: String!): VerifyToken
+  refreshToken(token: String!): RefreshToken
+  revokeToken(refreshToken: String!): RevokeToken
+}
+
 interface Node {
   id: ID!
+}
+
+type NonFieldError {
+  message: String
+  code: String
+}
+
+type ObtainJSONWebToken {
+  token: String
+  success: Boolean
+  errors: [GQLErrorUnion]
+  user: UserNode
+  unarchiving: Boolean
 }
 
 type PageInfo {
@@ -116,7 +210,70 @@ type PageInfo {
   endCursor: String
 }
 
+type PasswordChange {
+  success: Boolean
+  errors: [GQLErrorUnion]
+  token: String
+}
+
+type PasswordReset {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type PasswordSet {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type PayBooking {
+  success: Boolean
+  errors: [GQLErrorUnion]
+  booking: BookingNode
+  payment: PaymentNode
+}
+
+union PayObjectUnion = BookingNode
+
+type PaymentNode implements Node {
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  id: ID!
+  type: PaymentType!
+  providerPaymentId: String
+  provider: PaymentProvider!
+  value: Int!
+  currency: String!
+  cardBrand: String
+  last4: String
+  url: String
+  payObject: PayObjectUnion
+}
+
+type PaymentNodeConnection {
+  pageInfo: PageInfo!
+  edges: [PaymentNodeEdge]!
+}
+
+type PaymentNodeEdge {
+  node: PaymentNode
+  cursor: String!
+}
+
+enum PaymentProvider {
+  CASH
+  SQUARE_ONLINE
+  SQUARE_POS
+}
+
+enum PaymentType {
+  PURCHASE
+  REFUND
+}
+
 type PerformanceNode implements Node {
+  createdAt: DateTime!
+  updatedAt: DateTime!
   id: ID!
   production: ProductionNode!
   venue: VenueNode
@@ -128,9 +285,15 @@ type PerformanceNode implements Node {
   disabled: Boolean!
   seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
   capacity: Int
+  discounts: [DiscountNode!]
+  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, reference: String, user: ID, performance: ID, status: String, id: ID, orderBy: String): BookingNodeConnection!
   capacityRemaining: Int
   ticketOptions: [PerformanceSeatGroupNode]
   minSeatPrice: Int
+  durationMins: Int
+  isInperson: Boolean!
+  isOnline: Boolean!
+  soldOut: Boolean!
 }
 
 type PerformanceNodeConnection {
@@ -151,36 +314,37 @@ type PerformanceSeatGroupNode implements Node {
   concessionTypes: [ConcessionTypeBookingType]
 }
 
-type PerformanceSeatGroupNodeConnection {
-  pageInfo: PageInfo!
-  edges: [PerformanceSeatGroupNodeEdge]!
-}
-
-type PerformanceSeatGroupNodeEdge {
-  node: PerformanceSeatGroupNode
-  cursor: String!
-}
-
 type PriceBreakdownNode implements Node {
   id: ID!
-  tickets: [TicketNode]
-  ticketsPrice: Int
-  discountsValue: Int
+  tickets: [PriceBreakdownTicketNode]
+  ticketsPrice: Int!
+  discountsValue: Int!
   miscCosts: [MiscCostNode]
-  subtotalPrice: Int
-  miscCostsValue: Int
-  totalPrice: Int
+  subtotalPrice: Int!
+  miscCostsValue: Int!
+  totalPrice: Int!
+  ticketsDiscountedPrice: Int!
+}
+
+type PriceBreakdownTicketNode {
+  ticketPrice: Int!
+  number: Int!
+  seatGroup: SeatGroupNode
+  concessionType: ConcessionTypeNode
+  totalPrice: Int!
 }
 
 type ProductionNode implements Node {
+  createdAt: DateTime!
+  updatedAt: DateTime!
   id: ID!
   name: String!
   subtitle: String
   description: String
   society: SocietyNode
-  posterImage: GrapheneImageFieldNode
-  featuredImage: GrapheneImageFieldNode
-  coverImage: GrapheneImageFieldNode
+  coverImage: ImageNode
+  posterImage: ImageNode
+  featuredImage: ImageNode
   ageRating: Int
   facebookEvent: String
   warnings: [WarningNode!]
@@ -188,9 +352,11 @@ type ProductionNode implements Node {
   cast: [CastMemberNode!]
   productionTeam: [ProductionTeamMemberNode!]
   crew: [CrewMemberNode!]
-  performances(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, start: DateTime, start_Year_Gt: DateTime): PerformanceNodeConnection!
+  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, orderBy: String): PerformanceNodeConnection!
   start: DateTime
   end: DateTime
+  isBookable: Boolean!
+  minSeatPrice: Int
 }
 
 type ProductionNodeConnection {
@@ -211,22 +377,57 @@ type ProductionTeamMemberNode implements Node {
 }
 
 type Query {
-  societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String): SocietyNodeConnection
-  bookings(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, bookingReference: UUID): BookingNodeConnection
-  productions(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, slug: String): ProductionNodeConnection
-  performances(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, start: DateTime, start_Year_Gt: DateTime): PerformanceNodeConnection
+  me: UserNode
+  user(id: ID!): UserNode
+  users(offset: Int, before: String, after: String, first: Int, last: Int, email: String, email_Icontains: String, email_Istartswith: String, isActive: Boolean, status_Archived: Boolean, status_Verified: Boolean, status_SecondaryEmail: String): UserNodeConnection
+  societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String): SocietyNodeConnection
+  society(slug: String!): SocietyNode
+  productions(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, society: ID, ageRating: Int, facebookEvent: String, warnings: [ID], slug: String, id: ID, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, orderBy: String): ProductionNodeConnection
+  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, orderBy: String): PerformanceNodeConnection
+  production(slug: String!): ProductionNode
+  performance(id: ID!): PerformanceNode
   venues(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String): VenueNodeConnection
+  venue(slug: String!): VenueNode
+}
+
+type RefreshToken {
+  token: String
+  payload: GenericScalar
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type Register {
+  success: Boolean
+  errors: [GQLErrorUnion]
+  token: String
+}
+
+type RemoveSecondaryEmail {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type ResendActivationEmail {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type RevokeToken {
+  revoked: Int
+  success: Boolean
+  errors: [GQLErrorUnion]
 }
 
 type SeatGroupNode implements Node {
   id: ID!
-  name: String
+  name: String!
   description: String
   venue: VenueNode!
   capacity: Int
+  seats: SeatNode
   isInternal: Boolean!
-  performanceSet(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, start: DateTime, start_Year_Gt: DateTime): PerformanceNodeConnection!
-  performanceseatgroupSet(offset: Int, before: String, after: String, first: Int, last: Int): PerformanceSeatGroupNodeConnection!
+  tickets(offset: Int, before: String, after: String, first: Int, last: Int): TicketNodeConnection!
 }
 
 type SeatGroupNodeConnection {
@@ -239,13 +440,34 @@ type SeatGroupNodeEdge {
   cursor: String!
 }
 
+type SeatNode implements Node {
+  id: ID!
+  row: String
+  number: String
+  seatgroupSet(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
+  ticketSet(offset: Int, before: String, after: String, first: Int, last: Int): TicketNodeConnection!
+}
+
+type SendPasswordResetEmail {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type SendSecondaryEmailActivation {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
 type SocietyNode implements Node {
+  createdAt: DateTime!
+  updatedAt: DateTime!
   id: ID!
   name: String!
   description: String!
-  logo: GrapheneImageFieldNode
-  banner: GrapheneImageFieldNode
-  productions(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, slug: String): ProductionNodeConnection!
+  logo: ImageNode!
+  banner: ImageNode!
+  slug: String!
+  productions(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, society: ID, ageRating: Int, facebookEvent: String, warnings: [ID], slug: String, id: ID, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, orderBy: String): ProductionNodeConnection!
 }
 
 type SocietyNodeConnection {
@@ -258,27 +480,87 @@ type SocietyNodeEdge {
   cursor: String!
 }
 
-type TicketNode {
-  ticketPrice: Int
-  number: Int
-  seatGroup: SeatGroupNode
-  concession: ConcessionTypeNode
-  totalPrice: Int
+type SwapEmails {
+  success: Boolean
+  errors: [GQLErrorUnion]
 }
 
-scalar UUID
+type TicketNode implements Node {
+  id: ID!
+  seatGroup: SeatGroupNode!
+  booking: BookingNode!
+  concessionType: ConcessionTypeNode!
+  seat: SeatNode
+}
+
+type TicketNodeConnection {
+  pageInfo: PageInfo!
+  edges: [TicketNodeEdge]!
+}
+
+type TicketNodeEdge {
+  node: TicketNode
+  cursor: String!
+}
+
+type UpdateAccount {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type UpdateBooking {
+  success: Boolean
+  errors: [GQLErrorUnion]
+  booking: BookingNode
+}
+
+input UpdateTicketInput {
+  seatGroupId: IdInputField!
+  concessionTypeId: IdInputField!
+  seatId: IdInputField
+  id: IdInputField
+}
+
+type UserNode implements Node {
+  lastLogin: DateTime
+  isSuperuser: Boolean!
+  firstName: String!
+  lastName: String!
+  isStaff: Boolean!
+  isActive: Boolean!
+  dateJoined: DateTime!
+  id: ID!
+  email: String!
+  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, reference: String, user: ID, performance: ID, status: String, id: ID, orderBy: String): BookingNodeConnection!
+  pk: Int
+  archived: Boolean
+  verified: Boolean
+  secondaryEmail: String
+}
+
+type UserNodeConnection {
+  pageInfo: PageInfo!
+  edges: [UserNodeEdge]!
+}
+
+type UserNodeEdge {
+  node: UserNode
+  cursor: String!
+}
 
 type VenueNode implements Node {
+  createdAt: DateTime!
+  updatedAt: DateTime!
   id: ID!
   name: String!
   internalCapacity: Int!
   description: String
   address: AddressNode
-  image: GrapheneImageFieldNode
+  image: ImageNode!
   publiclyListed: Boolean!
   slug: String!
   seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
-  performances(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, start: DateTime, start_Year_Gt: DateTime): PerformanceNodeConnection!
+  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, orderBy: String): PerformanceNodeConnection!
   productions(offset: Int, before: String, after: String, first: Int, last: Int): ProductionNodeConnection
 }
 
@@ -292,8 +574,24 @@ type VenueNodeEdge {
   cursor: String!
 }
 
+type VerifyAccount {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type VerifySecondaryEmail {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type VerifyToken {
+  payload: GenericScalar
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
 type WarningNode implements Node {
   id: ID!
   warning: String!
-  productionSet(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, slug: String): ProductionNodeConnection!
+  productionSet(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, society: ID, ageRating: Int, facebookEvent: String, warnings: [ID], slug: String, id: ID, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, orderBy: String): ProductionNodeConnection!
 }

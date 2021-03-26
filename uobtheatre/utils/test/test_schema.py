@@ -1,45 +1,83 @@
 import pytest
+from graphql_relay.node.node import to_global_id
 
-from uobtheatre.venues.test.factories import VenueFactory
+from uobtheatre.bookings.models import Booking
+from uobtheatre.bookings.test.factories import BookingFactory
+from uobtheatre.productions.test.factories import PerformanceFactory
+from uobtheatre.utils.schema import IdInputField
 
 
 @pytest.mark.django_db
-def test_graphene_image_mixin(gql_client, gql_id):
-    venues = [VenueFactory() for i in range(2)]
+def test_id_input_field_wrong_thing(gql_client, gql_id):
+    assert IdInputField.parse_literal(1.2) is None
 
-    # Set one of the venues to have no image
-    venues[1].image = None
-    venues[1].save()
 
-    response = gql_client.execute(
-        """
-        {
-          venues {
-            edges {
-              node {
-                image {
-                  url
-                }
+@pytest.mark.django_db
+def test_auth_required_mixin(gql_client_flexible, gql_id):
+    booking = BookingFactory()
+    client = gql_client_flexible
+    client.logout()
+
+    request_query = """
+    mutation {
+	payBooking(
+            bookingId: "%s"
+            price: 102
+            nonce: "cnon:card-nonce-ok"
+        ) {
+            success
+            errors {
+              __typename
+              ... on NonFieldError {
+                message
+                code
               }
             }
           }
         }
-        """
-    )
-
+    """
+    response = client.execute(request_query % gql_id(booking.id, "BookingNode"))
     assert response == {
         "data": {
-            "venues": {
-                "edges": [
+            "payBooking": {
+                "success": False,
+                "errors": [
                     {
-                        "node": {
-                            "image": None
-                            if not venue.image
-                            else {"url": venue.image.url},
-                        }
+                        "__typename": "NonFieldError",
+                        "message": "Authentication Error",
+                        "code": "401",
                     }
-                    for venue in venues
-                ]
+                ],
             }
         }
     }
+
+
+@pytest.mark.django_db
+def test_id_input_field_parse_value(gql_client_flexible):
+    performance = PerformanceFactory()
+    response = gql_client_flexible.execute(
+        """
+        mutation($id: IdInputField!) {
+          createBooking(
+           performanceId: $id
+          ) {
+            booking {
+              id
+            }
+            success
+            errors {
+              __typename
+              ... on NonFieldError {
+                message
+                code
+              }
+            }
+         }
+        }
+        """,
+        variable_values={"id": to_global_id("PerformanceNode", performance.id)},
+    )
+
+    booking = Booking.objects.first()
+    assert booking.performance == performance

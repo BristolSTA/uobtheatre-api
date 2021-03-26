@@ -1,25 +1,20 @@
 import factory
 from django.utils import timezone
 
+from uobtheatre.images.test.factories import ImageFactory
 from uobtheatre.productions.models import (
     CastMember,
     CrewMember,
-    ProductionTeamMember,
     CrewRole,
     Performance,
     Production,
+    ProductionTeamMember,
     Society,
     Venue,
     Warning,
 )
+from uobtheatre.societies.test.factories import SocietyFactory
 from uobtheatre.venues.test.factories import VenueFactory
-
-
-class SocietyFactory(factory.django.DjangoModelFactory):
-    name = factory.Faker("sentence", nb_words=3)
-
-    class Meta:
-        model = Society
 
 
 class ProductionFactory(factory.django.DjangoModelFactory):
@@ -28,9 +23,9 @@ class ProductionFactory(factory.django.DjangoModelFactory):
     subtitle = factory.Faker("sentence", nb_words=6)
     description = factory.Faker("sentence", nb_words=20)
     society = factory.SubFactory(SocietyFactory)
-    poster_image = factory.django.ImageField(color="blue", use_url=True)
-    featured_image = factory.django.ImageField(color="blue", use_url=True)
-    cover_image = factory.django.ImageField(color="blue", use_url=True)
+    poster_image = factory.SubFactory(ImageFactory)
+    featured_image = factory.SubFactory(ImageFactory)
+    cover_image = factory.SubFactory(ImageFactory)
 
     class Meta:
         model = Production
@@ -66,6 +61,7 @@ class CrewMemberFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = CrewMember
 
+
 class ProductionTeamMemberFactory(factory.django.DjangoModelFactory):
     name = factory.Faker("sentence", nb_words=3)
     role = factory.Faker("sentence", nb_words=3)
@@ -74,10 +70,11 @@ class ProductionTeamMemberFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = ProductionTeamMember
 
+
 class CastMemberFactory(factory.django.DjangoModelFactory):
     name = factory.Faker("sentence", nb_words=3)
     role = factory.Faker("sentence", nb_words=3)
-    profile_picture = factory.django.ImageField(color="blue", use_url=True)
+    profile_picture = factory.SubFactory(ImageFactory)
     production = factory.SubFactory(ProductionFactory)
 
     class Meta:
@@ -89,3 +86,15 @@ class WarningFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = Warning
+
+
+def create_production(start, end, production_id=None):
+    if production_id is None:
+        production = ProductionFactory()
+    else:
+        production = ProductionFactory(id=production_id)
+    diff = end - start
+    for i in range(5):
+        time = start + (diff / 5) * i
+        PerformanceFactory(start=time, end=time, production=production)
+    return production

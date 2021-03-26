@@ -1,9 +1,12 @@
 import datetime
+import math
+import random
 
 import pytest
 from dateutil import parser
 from django.utils import timezone
 
+from uobtheatre.bookings.models import Ticket
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
     ConcessionTypeFactory,
@@ -15,6 +18,7 @@ from uobtheatre.bookings.test.factories import (
 from uobtheatre.productions.test.factories import (
     CastMemberFactory,
     CrewMemberFactory,
+    CrewRoleFactory,
     PerformanceFactory,
     ProductionFactory,
     ProductionTeamMemberFactory,
@@ -25,8 +29,24 @@ from uobtheatre.venues.test.factories import SeatGroupFactory
 
 @pytest.mark.django_db
 def test_performance_duration():
-    start = datetime.datetime(day=2, month=3, year=2020, hour=12, minute=0, second=10)
-    end = datetime.datetime(day=3, month=4, year=2021, hour=13, minute=1, second=11)
+    start = datetime.datetime(
+        day=2,
+        month=3,
+        year=2020,
+        hour=12,
+        minute=0,
+        second=10,
+        tzinfo=timezone.get_current_timezone(),
+    )
+    end = datetime.datetime(
+        day=3,
+        month=4,
+        year=2021,
+        hour=13,
+        minute=1,
+        second=11,
+        tzinfo=timezone.get_current_timezone(),
+    )
     performance = PerformanceFactory(start=start, end=end)
 
     assert performance.duration().total_seconds() == 34304461.0
@@ -149,7 +169,7 @@ def test_get_concession_discount():
     # of that concession_type is required (and nothing else)
     assert (
         performance.get_concession_discount(concession_type)
-        == discount_requirement_3.discount.discount
+        == discount_requirement_3.discount.percentage
     )
 
 
@@ -165,7 +185,7 @@ def test_price_with_concession():
     )
     DiscountRequirementFactory(discount=discount_1, number=1)
 
-    discount_2 = DiscountFactory(name="Student", discount=0.1)
+    discount_2 = DiscountFactory(name="Student", percentage=0.1)
     discount_requirement_3 = DiscountRequirementFactory(
         discount=discount_2, number=1, concession_type=concession_type
     )
@@ -180,6 +200,12 @@ def test_price_with_concession():
 def test_str_warning():
     warning = WarningFactory()
     assert str(warning) == warning.warning
+
+
+@pytest.mark.django_db
+def test_str_crew_role():
+    crew_role = CrewRoleFactory()
+    assert str(crew_role) == crew_role.name
 
 
 @pytest.mark.django_db
@@ -215,6 +241,56 @@ def test_production_slug_is_unique():
 
     # Assert the production slugs are different
     assert prod1.slug != prod2.slug
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "performance_disabled, expected",
+    [
+        ([False, False, False], True),
+        ([True, False, False], True),
+        ([True, False, True], True),
+        ([True, True, True], False),
+    ],
+)
+def test_production_is_bookable(performance_disabled, expected):
+    production = ProductionFactory()
+    production.performances.set(
+        [
+            PerformanceFactory(disabled=performance_disabled[perf])
+            for perf in performance_disabled
+        ]
+    )
+
+    assert production.is_bookable() == expected
+
+
+@pytest.mark.django_db
+def test_production_is_not_bookable_with_no_performances():
+    production = ProductionFactory()
+    production.performances.set([])
+
+    assert production.is_bookable() == False
+
+
+@pytest.mark.django_db
+def test_production_min_price():
+    production = ProductionFactory()
+    performances = [PerformanceFactory() for i in range(3)]
+
+    for i in range(3):
+        PerformanceSeatingFactory(performance=performances[i], price=10 * (i + 1))
+
+    production.performances.set(performances)
+
+    assert production.min_seat_price() == 10
+
+
+@pytest.mark.django_db
+def test_production_min_price_no_perfs():
+    production = ProductionFactory()
+
+    assert production.min_seat_price() == None
 
 
 @pytest.mark.django_db
@@ -320,3 +396,244 @@ def test_performance_min_price():
     PerformanceSeatingFactory(performance=performance, price=20)
 
     assert performance.min_seat_price() == 10
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "seat_groups, performance_capacity, is_valid",
+    [
+        (
+            [
+                {
+                    "number_of_tickets": 2,
+                    "number_of_existing_tickets": 2,
+                    "capacity": 4,
+                }
+            ],
+            20,
+            True,
+        ),
+        (
+            [
+                {
+                    "number_of_tickets": 2,
+                    "number_of_existing_tickets": 2,
+                    "capacity": 4,
+                },
+                {
+                    "number_of_tickets": 5,
+                    "number_of_existing_tickets": 11,
+                    "capacity": 20,
+                },
+            ],
+            20,
+            True,
+        ),
+        (
+            # Check error when not enough performance capacity
+            [
+                {
+                    "number_of_tickets": 2,
+                    "number_of_existing_tickets": 2,
+                    "capacity": 4,
+                },
+                {
+                    "number_of_tickets": 5,
+                    "number_of_existing_tickets": 11,
+                    "capacity": 20,
+                },
+            ],
+            15,
+            False,
+        ),
+        (
+            # Check error when not enough seat_group capacity
+            [
+                {
+                    "number_of_tickets": 2,
+                    "number_of_existing_tickets": 2,
+                    "capacity": 4,
+                },
+                {
+                    "number_of_tickets": 5,
+                    "number_of_existing_tickets": 11,
+                    "capacity": 14,
+                },
+            ],
+            20,
+            False,
+        ),
+        (
+            # Check error when both
+            [
+                {
+                    "number_of_tickets": 2,
+                    "number_of_existing_tickets": 2,
+                    "capacity": 4,
+                },
+                {
+                    "number_of_tickets": 5,
+                    "number_of_existing_tickets": 11,
+                    "capacity": 14,
+                },
+            ],
+            15,
+            False,
+        ),
+        (
+            # Check ok when not deleted tickets mean enough performance capacity
+            [
+                {
+                    "number_of_tickets": 2,
+                    "number_of_existing_tickets": 2,
+                    "capacity": 4,
+                },
+                {
+                    "number_of_tickets": 5,
+                    "number_of_existing_tickets": 11,
+                    "number_of_tickets_to_delete": 10,
+                    "capacity": 20,
+                },
+            ],
+            15,
+            True,
+        ),
+        (
+            # Check ok when enough seat_group capacity because deleted tickets
+            [
+                {
+                    "number_of_tickets": 2,
+                    "number_of_existing_tickets": 2,
+                    "capacity": 4,
+                },
+                {
+                    "number_of_tickets": 5,
+                    "number_of_existing_tickets": 11,
+                    "number_of_tickets_to_delete": 2,
+                    "capacity": 14,
+                },
+            ],
+            20,
+            True,
+        ),
+    ],
+)
+def test_performance_check_capacity(seat_groups, performance_capacity, is_valid):
+    performance = PerformanceFactory(capacity=performance_capacity)
+    tickets_to_book = []
+    tickets_to_delete = []
+
+    for seat_group in seat_groups:
+        performance_seat_group = PerformanceSeatingFactory(
+            performance=performance, capacity=seat_group["capacity"]
+        )
+
+        # Create some bookings which create the existing tickets
+        number_of_existing_tickets = seat_group["number_of_existing_tickets"]
+        bookings = [
+            BookingFactory(performance=performance)
+            for i in range(math.ceil(number_of_existing_tickets / 2))
+        ]
+        [
+            TicketFactory(
+                booking=random.choice(bookings),
+                seat_group=performance_seat_group.seat_group,
+            )
+            for _ in range(number_of_existing_tickets)
+        ]
+
+        # Create the ticket which are being checked
+        tickets_to_book.extend(
+            [
+                Ticket(seat_group=performance_seat_group.seat_group)
+                for i in range(seat_group["number_of_tickets"])
+            ]
+        )
+
+        tickets_to_delete.extend(
+            [
+                Ticket(seat_group=performance_seat_group.seat_group)
+                for i in range(seat_group.get("number_of_tickets_to_delete", 0))
+            ]
+        )
+
+    print(
+        performance.check_capacity(tickets_to_book, deleted_tickets=tickets_to_delete)
+    )
+    print(len(tickets_to_delete))
+    # If valid this should be none if not it should return something
+    assert (
+        performance.check_capacity(tickets_to_book, deleted_tickets=tickets_to_delete)
+        == None
+    ) == is_valid
+
+
+@pytest.mark.django_db
+def test_performance_check_capacity_seat_group_not_in_perforamnce():
+    seat_group = SeatGroupFactory()
+
+    # Set up some seat groups for a performance
+    psg = PerformanceSeatingFactory(capacity=100)
+    psg2 = PerformanceSeatingFactory(capacity=100, performance=psg.performance)
+    booking = BookingFactory(performance=psg.performance)
+
+    # But then try and book a seat group that is not assigned to the performance
+    tickets = [Ticket(seat_group=seat_group, booking=booking)]
+
+    assert (
+        psg.performance.check_capacity(tickets=tickets)
+        == f"You cannot book a seat group that is not assigned to this performance, you have booked {seat_group} but the performance only has {psg.seat_group}, {psg2.seat_group}"
+    )
+
+
+@pytest.mark.django_db
+def test_production_start_and_end_date():
+    current_time = timezone.now()
+
+    production = ProductionFactory()
+
+    # Test result with no performances
+    assert production.end_date() is None
+    assert production.start_date() is None
+
+    performances = [
+        PerformanceFactory(
+            start=current_time + datetime.timedelta(days=1),
+            end=current_time + datetime.timedelta(days=1),
+            production=production,
+        ),
+        PerformanceFactory(
+            start=current_time + datetime.timedelta(days=2),
+            end=current_time + datetime.timedelta(days=2),
+            production=production,
+        ),
+        PerformanceFactory(
+            start=current_time + datetime.timedelta(days=3),
+            end=current_time + datetime.timedelta(days=3),
+            production=production,
+        ),
+    ]
+
+    assert production.end_date() == current_time + datetime.timedelta(days=3)
+    assert production.start_date() == current_time + datetime.timedelta(days=1)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "performances_start_deltas, is_upcoming",
+    [
+        ([datetime.timedelta(days=1), datetime.timedelta(days=-1)], True),
+        ([datetime.timedelta(hours=1), datetime.timedelta(hours=-1)], True),
+        ([datetime.timedelta(days=-1), datetime.timedelta(hours=-1)], False),
+        ([datetime.timedelta(hours=-2), datetime.timedelta(hours=-1)], False),
+        ([datetime.timedelta(hours=2), datetime.timedelta(hours=1)], True),
+    ],
+)
+def test_is_upcoming_production(performances_start_deltas, is_upcoming):
+    now = timezone.now()
+    production = ProductionFactory()
+    _ = [
+        PerformanceFactory(production=production, start=now + start_delta)
+        for start_delta in performances_start_deltas
+    ]
+    assert production.is_upcoming() == is_upcoming
