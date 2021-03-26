@@ -23,7 +23,8 @@ from uobtheatre.utils.exceptions import (
     GQLNonFieldException,
     SafeMutation,
 )
-from uobtheatre.utils.schema import AuthRequiredMixin, FilterSet, IdInputField
+from uobtheatre.utils.filters import FilterSet
+from uobtheatre.utils.schema import AuthRequiredMixin, IdInputField
 from uobtheatre.venues.models import Seat, SeatGroup
 
 

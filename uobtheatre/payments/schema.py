@@ -4,7 +4,7 @@ from graphene_django import DjangoObjectType
 
 from uobtheatre.bookings.schema import BookingNode
 from uobtheatre.payments.models import Payment
-from uobtheatre.utils.schema import FilterSet
+from uobtheatre.utils.filters import FilterSet
 
 
 class PaymentFilter(FilterSet):
