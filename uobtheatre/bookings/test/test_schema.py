@@ -1104,28 +1104,75 @@ def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "performance_id, booking_id, ticket_id_list",
-    [(1, 1, [1, 2, 3]), (1, 2, [1, 2, 3])],
+    "performance_id, booking_obj, check_in_ticket_id_list, not_check_in_ticket_id_list, non_booking_ticket_id_list",
+    [
+        (1, {"booking_id": 1, "performance_id": 1}, [1, 2, 3], [4, 5, 6], []),
+        (1, {"booking_id": 2, "performance_id": 1}, [1, 2, 3], [], []),
+        (2, {"booking_id": 2, "performance_id": 1}, [1, 2, 3], [], []),
+    ],
 )
 def test_check_in_booking(
-    performance_id, booking_id, ticket_id_list, gql_client_flexible
+    performance_id,
+    booking_obj,
+    check_in_ticket_id_list,
+    not_check_in_ticket_id_list,
+    non_booking_ticket_id_list,
+    gql_client_flexible,
 ):
 
-    performance = PerformanceFactory()
-    booking = BookingFactory(
-        id=booking_id, performance=performance, user=gql_client_flexible.get_user()
+    # What are we testing?
+    # that only the expected tickets are checked in
+    # that incorrect ticket refs are not checked in
+
+    performance = PerformanceFactory(id=performance_id)
+
+    non_booking = BookingFactory(
+        id=0,
+        performance=performance,
+        user=gql_client_flexible.get_user(),
     )
-    ticket_objects = []
-    for ticket_id in ticket_id_list:
-        ticket_objects.append(TicketFactory(id=ticket_id, booking=booking))
+    booking = BookingFactory(
+        id=booking_obj.get("booking_id"),
+        performance=performance,
+        user=gql_client_flexible.get_user(),
+    )
 
-    booking.reference
+    # Expected to check in and pass
+    check_in_tickets = []
+    for ticket_id in check_in_ticket_id_list:
+        check_in_tickets.append(TicketFactory(id=ticket_id, booking=booking))
 
-    for ticket in ticket_objects:
+    # Tickets are not to be checked in, expect as much
+    not_check_in_tickets = []
+    for ticket_id in not_check_in_ticket_id_list:
+        not_check_in_tickets.append(TicketFactory(id=ticket_id, booking=booking))
+
+    # As these are not part of the correct booking expected to fail
+    non_booking_tickets = []
+    for ticket_id in non_booking_ticket_id_list:
+        non_booking_tickets.append(TicketFactory(id=ticket_id, booking=non_booking))
+
+    for ticket in check_in_tickets:
+        assert ticket.checked_in == False
+
+    for ticket in not_check_in_tickets:
+        assert ticket.checked_in == False
+
+    for ticket in non_booking_tickets:
         assert ticket.checked_in == False
 
     ticketQueries = ""
-    for ticket in ticket_objects:
+    for ticket in check_in_tickets:
+        queryStr = """
+                    {
+                        ticketId: "%s"
+                    }
+                    """ % (
+            to_global_id("TicketNode", ticket.id),
+        )
+        ticketQueries += queryStr
+
+    for ticket in non_booking_tickets:
         queryStr = """
                     {
                         ticketId: "%s"
@@ -1157,12 +1204,24 @@ def test_check_in_booking(
 
     gql_client_flexible.set_user(booking.user)
     response = gql_client_flexible.execute(request_query)
-    print(response)
-    return_booking_id = response["data"]["checkInBooking"]["booking"]["id"]
 
-    local_booking_id = int(from_global_id(return_booking_id)[1])
+    # If there are non wrong booking tickets - which are expected to fail
+    # validate that the booking is on the correct performance
+    if (
+        len(non_booking_tickets) == 0
+        and booking_obj.get("performance_id") == performance_id
+    ):
+        return_booking_id = response["data"]["checkInBooking"]["booking"]["id"]
+        local_booking_id = int(from_global_id(return_booking_id)[1])
+        assert local_booking_id == booking_obj.get("booking_id")
 
-    returned_booking = Booking.objects.get(id=local_booking_id)
+        for ticket in check_in_tickets:
+            assert ticket.checked_in == True
 
-    for ticket in returned_booking.tickets.all():
-        assert ticket.checked_in == True
+    # ToDo - this needs some work to test the cases where failure is expected
+
+    for ticket in not_check_in_tickets:
+        assert ticket.checked_in == False
+
+    for ticket in non_booking_tickets:
+        assert ticket.checked_in == False

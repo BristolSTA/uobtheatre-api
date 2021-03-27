@@ -343,7 +343,6 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
 
     @classmethod
     def resolve_mutation(self, root, info, booking_reference, tickets, performance_id):
-        print("kit")
         performance = Performance.objects.get(id=performance_id)
         booking = Booking.objects.get(reference=booking_reference)
 
