@@ -207,7 +207,7 @@ class Booking(TimeStampedMixin, models.Model):
         ]
 
     reference = models.CharField(
-        default=create_short_uuid, editable=False, max_length=12
+        default=create_short_uuid, editable=False, max_length=12, unique=True
     )
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bookings")
     performance = models.ForeignKey(

@@ -1,7 +1,7 @@
 import pytest
 from graphql_relay.node.node import from_global_id, to_global_id
 
-from uobtheatre.bookings.models import Booking
+from uobtheatre.bookings.models import Booking, Ticket
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
     ConcessionTypeFactory,
@@ -1107,8 +1107,8 @@ def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
     "performance_id, booking_obj, check_in_ticket_id_list, not_check_in_ticket_id_list, non_booking_ticket_id_list",
     [
         (1, {"booking_id": 1, "performance_id": 1}, [1, 2, 3], [4, 5, 6], []),
-        (1, {"booking_id": 2, "performance_id": 1}, [1, 2, 3], [], []),
-        (2, {"booking_id": 2, "performance_id": 1}, [1, 2, 3], [], []),
+        # (1, {"booking_id": 2, "performance_id": 1}, [1, 2, 3], [], []),
+        # (2, {"booking_id": 2, "performance_id": 1}, [1, 2, 3], [], []),
     ],
 )
 def test_check_in_booking(
@@ -1119,7 +1119,8 @@ def test_check_in_booking(
     non_booking_ticket_id_list,
     gql_client_flexible,
 ):
-
+    assert len(Booking.objects.all()) == 0
+    assert len(Ticket.objects.all()) == 0
     # What are we testing?
     # that only the expected tickets are checked in
     # that incorrect ticket refs are not checked in
@@ -1202,9 +1203,9 @@ def test_check_in_booking(
         ticketQueries,
     )
 
-    gql_client_flexible.set_user(booking.user)
     response = gql_client_flexible.execute(request_query)
 
+    print(response)
     # If there are non wrong booking tickets - which are expected to fail
     # validate that the booking is on the correct performance
     if (

@@ -356,7 +356,7 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
                     ticket.check_in()
                 else:
                     raise FieldError(
-                        mesage="The ticket booking does not match the booking."
+                        mesage="The ticket booking does not match the mutation booking."
                     )
                     # Raise ticket booking does not match the booking
         else:
