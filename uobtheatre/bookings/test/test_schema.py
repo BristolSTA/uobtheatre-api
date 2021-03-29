@@ -1107,8 +1107,9 @@ def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
     "performance_id, booking_obj, check_in_ticket_id_list, not_check_in_ticket_id_list, non_booking_ticket_id_list",
     [
         (1, {"booking_id": 1, "performance_id": 1}, [1, 2, 3], [4, 5, 6], []),
-        # (1, {"booking_id": 2, "performance_id": 1}, [1, 2, 3], [], []),
-        # (2, {"booking_id": 2, "performance_id": 1}, [1, 2, 3], [], []),
+        (1, {"booking_id": 2, "performance_id": 1}, [1, 2, 3], [], []),
+        (2, {"booking_id": 3, "performance_id": 1}, [1, 2, 3], [], []),
+        (1, {"booking_id": 4, "performance_id": 1}, [1, 2, 3], [], [4, 5, 6]),
     ],
 )
 def test_check_in_booking(
@@ -1217,12 +1218,15 @@ def test_check_in_booking(
         assert local_booking_id == booking_obj.get("booking_id")
 
         for ticket in check_in_tickets:
+            ticket.refresh_from_db()
             assert ticket.checked_in == True
 
     # ToDo - this needs some work to test the cases where failure is expected
 
     for ticket in not_check_in_tickets:
+        ticket.refresh_from_db()
         assert ticket.checked_in == False
 
     for ticket in non_booking_tickets:
+        ticket.refresh_from_db()
         assert ticket.checked_in == False
