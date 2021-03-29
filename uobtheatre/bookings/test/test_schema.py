@@ -1110,6 +1110,8 @@ def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
         (1, {"booking_id": 2, "performance_id": 1}, [1, 2, 3], [], []),
         (2, {"booking_id": 3, "performance_id": 1}, [1, 2, 3], [], []),
         (1, {"booking_id": 4, "performance_id": 1}, [1, 2, 3], [], [4, 5, 6]),
+        (1, {"booking_id": 4, "performance_id": 1}, [], [], [7, 8, 9]),
+        (1, {"booking_id": 4, "performance_id": 2}, [1, 2, 3], [], [4, 5, 6]),
     ],
 )
 def test_check_in_booking(
@@ -1126,15 +1128,23 @@ def test_check_in_booking(
     # that only the expected tickets are checked in
     # that incorrect ticket refs are not checked in
 
-    performance = PerformanceFactory(id=performance_id)
-
+    if booking_obj.get("performance_id") == performance_id:
+        performance = PerformanceFactory(id=performance_id)
+        booking = BookingFactory(
+            id=booking_obj.get("booking_id"),
+            performance=performance,
+            user=gql_client_flexible.get_user(),
+        )
+    else:
+        booking_performance = PerformanceFactory(id=booking_obj.get("performance_id"))
+        performance = PerformanceFactory(id=performance_id)
+        booking = BookingFactory(
+            id=booking_obj.get("booking_id"),
+            performance=booking_performance,
+            user=gql_client_flexible.get_user(),
+        )
     non_booking = BookingFactory(
         id=0,
-        performance=performance,
-        user=gql_client_flexible.get_user(),
-    )
-    booking = BookingFactory(
-        id=booking_obj.get("booking_id"),
         performance=performance,
         user=gql_client_flexible.get_user(),
     )
