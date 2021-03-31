@@ -1203,6 +1203,10 @@ def test_check_in_booking(
                     %s
                 ]
             ){
+                success
+                errors {
+                __typename
+                }
                 booking{
                     id
                 }
@@ -1216,13 +1220,16 @@ def test_check_in_booking(
 
     response = gql_client_flexible.execute(request_query)
 
-    print(response)
-    # If there are non wrong booking tickets - which are expected to fail
-    # validate that the booking is on the correct performance
+    # If there are no wrong booking tickets - and the booking performance matches the request performance
+    # we are expecting all check in tickets to be checked in and all other tickets to be left unchecked
     if (
         len(non_booking_tickets) == 0
         and booking_obj.get("performance_id") == performance_id
     ):
+        # In this instance we expect success and a correctly returned booking.
+        assert response["data"]["checkInBooking"]["success"] == True
+        assert response["data"]["checkInBooking"]["errors"] == None
+
         return_booking_id = response["data"]["checkInBooking"]["booking"]["id"]
         local_booking_id = int(from_global_id(return_booking_id)[1])
         assert local_booking_id == booking_obj.get("booking_id")
@@ -1230,9 +1237,23 @@ def test_check_in_booking(
         for ticket in check_in_tickets:
             ticket.refresh_from_db()
             assert ticket.checked_in == True
+    else:
+        # In the instance where the performance is not correct or there are tickets for the wrong booking we expect failure and a returned Field Error
+        assert response["data"]["checkInBooking"]["success"] == False
+        assert len(response["data"]["checkInBooking"]["errors"]) == 1
 
-    # ToDo - this needs some work to test the cases where failure is expected
+        assert (
+            response["data"]["checkInBooking"]["errors"][0]["__typename"]
+            == "FieldError"
+        )
 
+        assert response["data"]["checkInBooking"]["booking"] == None
+
+        for ticket in check_in_tickets:
+            ticket.refresh_from_db()
+            assert ticket.checked_in == False
+
+    # either way we expect no tickets from the non_check_in and non_booking lists to be changed
     for ticket in not_check_in_tickets:
         ticket.refresh_from_db()
         assert ticket.checked_in == False

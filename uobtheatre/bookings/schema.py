@@ -355,12 +355,12 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
                 if ticket.booking == booking:
                     ticket.check_in()
                 else:
-                    raise FieldError(
-                        mesage="The ticket booking does not match the mutation booking."
+                    raise GQLFieldException(
+                        message="The ticket booking does not match the mutation booking."
                     )
                     # Raise ticket booking does not match the booking
         else:
-            raise FieldError(
+            raise GQLFieldException(
                 message="The booking performance does not match the given performance."
             )
             # raise booking performance does not match performance given
