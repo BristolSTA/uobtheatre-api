@@ -347,23 +347,22 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
         booking = Booking.objects.get(reference=booking_reference)
 
         # check if the booking pertains to the correct performance
-        if booking.performance == performance:
-            ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))
-            # loop through the ticket IDs given
-            for ticket in ticket_objects:
-                # Check the ticket booking matches the given booking
-                if ticket.booking == booking:
-                    ticket.check_in()
-                else:
-                    raise GQLFieldException(
-                        message="The ticket booking does not match the mutation booking."
-                    )
-                    # Raise ticket booking does not match the booking
-        else:
+        if booking.performance != performance:
             raise GQLFieldException(
                 message="The booking performance does not match the given performance."
             )
             # raise booking performance does not match performance given
+        ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))
+        # loop through the ticket IDs given
+        for ticket in ticket_objects:
+            # Check the ticket booking matches the given booking
+            if ticket.booking == booking:
+                ticket.check_in()
+            else:
+                raise GQLFieldException(
+                    message="The ticket booking does not match the mutation booking."
+                )
+                # Raise ticket booking does not match the booking
 
         return CheckInBooking(booking=booking, performance=performance)
 

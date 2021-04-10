@@ -455,4 +455,3 @@ class Ticket(models.Model):
         """
         self.checked_in = True
         self.save()
-        return self

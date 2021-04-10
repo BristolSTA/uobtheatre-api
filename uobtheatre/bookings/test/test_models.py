@@ -916,11 +916,7 @@ def test_ticket_check_in(initialState, finalState):
     Test ticket check in method
     """
 
-    booking = BookingFactory()
-    psg = PerformanceSeatingFactory(performance=booking.performance)
-    ticket = TicketFactory(
-        booking=booking, seat_group=psg.seat_group, checked_in=initialState
-    )
+    ticket = TicketFactory(checked_in=initialState)
 
     assert ticket.checked_in == initialState
     ticket.check_in()

@@ -1,7 +1,7 @@
 import pytest
 from graphql_relay.node.node import from_global_id, to_global_id
 
-from uobtheatre.bookings.models import Booking, Ticket
+from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
     ConcessionTypeFactory,
@@ -1122,11 +1122,12 @@ def test_check_in_booking(
     non_booking_ticket_id_list,
     gql_client_flexible,
 ):
-    assert len(Booking.objects.all()) == 0
-    assert len(Ticket.objects.all()) == 0
-    # What are we testing?
-    # that only the expected tickets are checked in
-    # that incorrect ticket refs are not checked in
+
+    """
+    What are we testing?
+    that only the expected tickets are checked in
+    that incorrect ticket refs are not checked in
+    """
 
     if booking_obj.get("performance_id") == performance_id:
         performance = PerformanceFactory(id=performance_id)
