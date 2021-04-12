@@ -13,7 +13,7 @@ class GrapheneEnumMixin:
     - Sets the type of all enums to EnumNode
     - Adds resolver for each enum field
 
-    This results in enums being return as
+    This results in enums being returned as
     {
         value: "IN_PROGRESS"        <- Database representation (actual enum)
         description: "In progress"  <- The human readable value of the enum
@@ -23,7 +23,7 @@ class GrapheneEnumMixin:
     def _generate_enum_resolver(field_name):
         def resolver(cls, info):
             return EnumNode(
-                value=getattr(cls, field_name),
+                value=getattr(cls, field_name).upper(),
                 description=getattr(cls, f"get_{field_name}_display")(),
             )
 
@@ -53,7 +53,11 @@ class GrapheneEnumMixin:
         # For every EnumNode add a resolver, this resolver will return a enum
         # node with a description and value
         for name, field_type in cls._meta.fields.items():
-            if hasattr(field_type, "type"):
-                if field_type.type == EnumNode:
-                    print(f"{name} is an EnumNode")
-                    setattr(cls, f"resolve_{name}", cls._generate_enum_resolver(name))
+            # This doesnt work with certain imports, I think we might find out
+            # about the true pain of this in the future.
+            if (
+                type(field_type) is graphene.types.field.Field
+                and hasattr(field_type, "type")
+                and field_type.type == EnumNode
+            ):
+                setattr(cls, f"resolve_{name}", cls._generate_enum_resolver(name))

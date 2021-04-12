@@ -32,7 +32,10 @@ def test_payment_schema(gql_client_flexible, gql_id):
                         payObject {
                           ... on BookingNode {
                             id
-                            status
+                            status {
+                              value
+                              description
+                            }
                           }
                         }
                       }
@@ -72,9 +75,12 @@ def test_payment_schema(gql_client_flexible, gql_id):
                                                         payment.pay_object.id,
                                                         "BookingNode",
                                                     ),
-                                                    "status": str(
-                                                        payment.pay_object.status
-                                                    ),
+                                                    "status": {
+                                                        "value": str(
+                                                            payment.pay_object.status
+                                                        ),
+                                                        "description": payment.pay_object.get_status_display(),
+                                                    },
                                                 },
                                             }
                                         }

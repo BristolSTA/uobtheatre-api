@@ -17,6 +17,7 @@ from uobtheatre.bookings.models import (
     Ticket,
 )
 from uobtheatre.productions.models import Performance
+from uobtheatre.utils.enums import GrapheneEnumMixin
 from uobtheatre.utils.exceptions import (
     AuthException,
     GQLFieldException,
@@ -182,11 +183,14 @@ class BookingFilter(FilterSet):
 BookingStatusSchema = graphene.Enum.from_enum(Booking.BookingStatus)
 
 
-class BookingNode(DjangoObjectType):
+class BookingNode(GrapheneEnumMixin, DjangoObjectType):
     price_breakdown = graphene.Field(PriceBreakdownNode)
     tickets = DjangoListField(TicketNode)
     user = graphene.Field(UserNode)
     payments = DjangoFilterConnectionField("uobtheatre.payments.schema.PaymentNode")
+
+    def resolve_payments(self, info):
+        return self.payments.all()
 
     def resolve_price_breakdown(self, info):
         return self
