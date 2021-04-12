@@ -33,7 +33,7 @@ class GrapheneEnumMixin:
     def __init_subclass_with_meta__(cls, *args, **kwargs):
         """
         Overwrite the DjangoObjectType init to add in resolvers for every
-        GrapheneImageField.
+        EnumNode.
         """
 
         # Do the regular init
