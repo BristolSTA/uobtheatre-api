@@ -22,7 +22,14 @@ def test_payment_schema(gql_client_flexible, gql_id):
                         id
                         createdAt
                         updatedAt
-                        type
+                        type {
+                          value
+                          description
+                        }
+                        provider {
+                          value
+                          description
+                        }
                         providerPaymentId
                         value
                         currency
@@ -63,7 +70,16 @@ def test_payment_schema(gql_client_flexible, gql_id):
                                                 "id": gql_id(payment.id, "PaymentNode"),
                                                 "createdAt": payment.created_at.isoformat(),
                                                 "updatedAt": payment.updated_at.isoformat(),
-                                                "type": str(payment.type),
+                                                "type": {
+                                                    "value": str(payment.type).upper(),
+                                                    "description": payment.get_type_display(),
+                                                },
+                                                "provider": {
+                                                    "value": str(
+                                                        payment.provider
+                                                    ).upper(),
+                                                    "description": payment.get_provider_display(),
+                                                },
                                                 "providerPaymentId": payment.provider_payment_id,
                                                 "value": payment.value,
                                                 "currency": payment.currency,

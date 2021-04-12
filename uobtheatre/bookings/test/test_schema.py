@@ -1201,7 +1201,9 @@ def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
             payment {
               last4
               cardBrand
-              provider
+              provider {
+                value
+              }
               currency
               value
             }
@@ -1227,6 +1229,7 @@ def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
     mock_square.success = True
 
     response = client.execute(request_query % gql_id(booking.id, "BookingNode"))
+    print(response)
     assert response == {
         "data": {
             "payBooking": {
@@ -1250,7 +1253,9 @@ def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
                 "payment": {
                     "last4": "1111",
                     "cardBrand": "VISA",
-                    "provider": "SQUARE_ONLINE",
+                    "provider": {
+                        "value": "SQUARE_ONLINE",
+                    },
                     "currency": "GBP",
                     "value": 0,
                 },

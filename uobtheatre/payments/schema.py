@@ -4,6 +4,7 @@ from graphene_django import DjangoObjectType
 
 from uobtheatre.bookings.schema import BookingNode
 from uobtheatre.payments.models import Payment
+from uobtheatre.utils.enums import GrapheneEnumMixin
 from uobtheatre.utils.filters import FilterSet
 
 
@@ -18,7 +19,7 @@ class PayObjectUnion(graphene.Union):
         types = (BookingNode,)
 
 
-class PaymentNode(DjangoObjectType):
+class PaymentNode(GrapheneEnumMixin, DjangoObjectType):
     url = graphene.String(required=False)
     pay_object = PayObjectUnion()
 
