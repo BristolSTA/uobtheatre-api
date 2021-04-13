@@ -35,7 +35,7 @@ repos:
     rev: 20.8b1
     hooks:
     - id: black
-      language_version: python3.8
+      language_version: python3.9
 
   # Flake8 checks what errors there are and gives code
   # - repo: https://gitlab.com/pycqa/flake8

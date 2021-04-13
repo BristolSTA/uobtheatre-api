@@ -43,7 +43,10 @@ def test_bookings_schema(gql_client_flexible, gql_id):
                   performance {
                     id
                   }
-                  status
+                  status {
+                    value
+                    description
+                  }
                   user {
                     id
                   }
@@ -83,7 +86,10 @@ def test_bookings_schema(gql_client_flexible, gql_id):
                                         booking.performance.id, "PerformanceNode"
                                     )
                                 },
-                                "status": "IN_PROGRESS",
+                                "status": {
+                                    "value": "IN_PROGRESS",
+                                    "description": "In Progress",
+                                },
                                 "user": {"id": gql_id(booking.user.id, "UserNode")},
                             }
                         }
@@ -1179,7 +1185,10 @@ def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
             }
 
             booking {
-              status
+              status {
+                value
+                description
+              }
               payments {
                 edges {
                   node {
@@ -1192,7 +1201,9 @@ def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
             payment {
               last4
               cardBrand
-              provider
+              provider {
+                value
+              }
               currency
               value
             }
@@ -1222,7 +1233,10 @@ def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
         "data": {
             "payBooking": {
                 "booking": {
-                    "status": "PAID",
+                    "status": {
+                        "value": "PAID",
+                        "description": "Paid",
+                    },
                     "payments": {
                         "edges": [
                             {
@@ -1238,7 +1252,9 @@ def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
                 "payment": {
                     "last4": "1111",
                     "cardBrand": "VISA",
-                    "provider": "SQUARE_ONLINE",
+                    "provider": {
+                        "value": "SQUARE_ONLINE",
+                    },
                     "currency": "GBP",
                     "value": 0,
                 },
