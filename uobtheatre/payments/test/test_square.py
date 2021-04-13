@@ -2,8 +2,8 @@ from uobtheatre.payments.square import PaymentProvider
 
 
 def test_payment_provider(monkeypatch):
-    pp = PaymentProvider()
-    request_body: dict = {}
+    """Test payment_provider class with mocked square"""
+    payment_provider = PaymentProvider()
 
     class MockClient:
         class Payments:
@@ -20,7 +20,7 @@ def test_payment_provider(monkeypatch):
         "uobtheatre.bookings.models.PaymentProvider.__init__", mock_init
     )
 
-    pp.create_payment(10, "abc", "efg") == {
+    assert payment_provider.create_payment(10, "abc", "efg") == {
         "idempotency_key": "abc",
         "source_id": "efg",
         "amount_money": {"amount": 10, "currency": "GBP"},
