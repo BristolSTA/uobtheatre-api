@@ -69,17 +69,6 @@ class DiscountNode(DjangoObjectType):
         interfaces = (relay.Node,)
 
 
-class DiscountNodeMixin:
-    discounts = DjangoListField(DiscountNode)
-
-    def resolve_discounts(self, info):
-        return [
-            discount
-            for discount in self.discounts.all()
-            if not discount.is_single_discount()
-        ]
-
-
 class PriceBreakdownTicketNode(graphene.ObjectType):
     ticket_price = graphene.Int(required=True)
     number = graphene.Int(required=True)
@@ -248,8 +237,7 @@ class CheckInTicketInput(graphene.InputObjectType):
     ticket_id = IdInputField(required=True)
 
     def to_ticket(self):
-        if self.ticket_id is not None:
-            return Ticket.objects.get(id=self.ticket_id)
+        return Ticket.objects.get(id=self.ticket_id)
 
 
 class CreateBooking(AuthRequiredMixin, SafeMutation):
@@ -366,6 +354,8 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
                 message="The booking performance does not match the given performance."
             )
             # raise booking performance does not match performance given
+        ticket_objects = []
+
         ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))
         # loop through the ticket IDs given
         for ticket in ticket_objects:
