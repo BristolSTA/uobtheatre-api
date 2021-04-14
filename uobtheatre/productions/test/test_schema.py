@@ -263,13 +263,6 @@ def test_productions_filter(factories, requests, gql_client):
         assert len(response["data"]["productions"]["edges"]) == expected_number
 
 
-@pytest.mark.skip(reason="JamesToDO")
-@pytest.mark.django_db
-def test_performance_excludes(gql_client, gql_id):
-    # excludes performance seat groups
-    assert False
-
-
 @pytest.mark.django_db
 def test_performance_schema(gql_client, gql_id):
     performances = [PerformanceFactory() for i in range(1)]
@@ -594,8 +587,8 @@ def test_performance_single_id(gql_client, gql_id):
 
 
 @pytest.mark.django_db
-def test_upcoming_productions(gql_client, gql_id):
-    def create_production(start, end):
+def test_upcoming_productions(gql_client):
+    def create_prod(start, end):
         production = ProductionFactory()
         diff = end - start
         for i in range(5):
@@ -606,7 +599,7 @@ def test_upcoming_productions(gql_client, gql_id):
     current_time = timezone.now()
     # Create some producitons in the past
     for _ in range(10):
-        create_production(
+        create_prod(
             start=current_time - datetime.timedelta(days=11),
             end=current_time - datetime.timedelta(days=1),
         )
@@ -652,7 +645,7 @@ def test_upcoming_productions(gql_client, gql_id):
         ("-end", [2, 3, 1, 0]),
     ],
 )
-def test_productions_orderby(order_by, expected_order, gql_client, gql_id):
+def test_productions_orderby(order_by, expected_order, gql_client):
     current_time = timezone.now()
 
     productions = [
@@ -706,9 +699,7 @@ def test_productions_orderby(order_by, expected_order, gql_client, gql_id):
         ("end_Lte", 2, [0, 1]),
     ],
 )
-def test_production_filters(
-    filter_name, value_days, expected_outputs, gql_client, gql_id
-):
+def test_production_filters(filter_name, value_days, expected_outputs, gql_client):
     current_time = timezone.now()
 
     productions = [

@@ -54,6 +54,12 @@ class WarningNode(DjangoObjectType):
 
 
 class ProductionByMethodOrderingFilter(django_filters.OrderingFilter):
+    """Ordering filter for productions which adds start and end.
+
+    Extends the default implementation of OrderingFitler to include ordering
+    (ascending and descending) of production start and end time.
+    """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.extra["choices"] += [
@@ -63,18 +69,18 @@ class ProductionByMethodOrderingFilter(django_filters.OrderingFilter):
             ("-end", "End (descending)"),
         ]
 
-    def filter(self, qs, value):
+    def filter(self, query_set, value):
         if value and "start" in value:
-            return append_production_qs(qs, start=True).order_by("start")
+            return append_production_qs(query_set, start=True).order_by("start")
         if value and "-start" in value:
-            return append_production_qs(qs, start=True).order_by("-start")
+            return append_production_qs(query_set, start=True).order_by("-start")
 
         if value and "end" in value:
-            return append_production_qs(qs, end=True).order_by("end")
+            return append_production_qs(query_set, end=True).order_by("end")
         if value and "-end" in value:
-            return append_production_qs(qs, end=True).order_by("-end")
+            return append_production_qs(query_set, end=True).order_by("-end")
 
-        return super().filter(qs, value)
+        return super().filter(query_set, value)
 
 
 class ProductionFilter(FilterSet):
@@ -86,11 +92,11 @@ class ProductionFilter(FilterSet):
     end__gte = django_filters.DateTimeFilter(method="end_filter")
     end__lte = django_filters.DateTimeFilter(method="end_filter")
 
-    def start_filter(self, qs, value, date=None):
-        return append_production_qs(qs, start=True).filter(**{value: date})
+    def start_filter(self, query_set, value, date=None):
+        return append_production_qs(query_set, start=True).filter(**{value: date})
 
-    def end_filter(self, qs, value, date=None):
-        return append_production_qs(qs, end=True).filter(**{value: date})
+    def end_filter(self, query_set, value, date=None):
+        return append_production_qs(query_set, end=True).filter(**{value: date})
 
     class Meta:
         model = Production

@@ -384,28 +384,27 @@ class Booking(TimeStampedMixin, models.Model):
             self.total(), str(self.reference), nonce
         )
 
-        if response.is_success():
-            # Set the booking as paid
-            self.status = self.BookingStatus.PAID
-            self.save()
-
-            # Create a payment for this transaction
-            card_details = response.body["payment"]["card_details"]["card"]
-            amount_details = response.body["payment"]["amount_money"]
-            return Payment.objects.create(
-                pay_object=self,
-                card_brand=card_details["card_brand"],
-                last_4=card_details["last_4"],
-                provider=Payment.PaymentProvider.SQUARE_ONLINE,
-                type=Payment.PaymentType.PURCHASE,
-                provider_payment_id=response.body["payment"]["id"],
-                value=amount_details["amount"],
-                currency=amount_details["currency"],
-            )
-
-        else:
-            # If the square transaction failed then raise an exception
+        # If the square transaction failed then raise an exception
+        if not response.is_success():
             raise SquareException(response)
+
+        # Set the booking as paid
+        self.status = self.BookingStatus.PAID
+        self.save()
+
+        # Create a payment for this transaction
+        card_details = response.body["payment"]["card_details"]["card"]
+        amount_details = response.body["payment"]["amount_money"]
+        return Payment.objects.create(
+            pay_object=self,
+            card_brand=card_details["card_brand"],
+            last_4=card_details["last_4"],
+            provider=Payment.PaymentProvider.SQUARE_ONLINE,
+            type=Payment.PaymentType.PURCHASE,
+            provider_payment_id=response.body["payment"]["id"],
+            value=amount_details["amount"],
+            currency=amount_details["currency"],
+        )
 
 
 class Ticket(models.Model):

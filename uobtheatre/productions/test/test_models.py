@@ -76,7 +76,7 @@ def test_production_duration():
         second=11,
         tzinfo=timezone.get_current_timezone(),
     )
-    performance_long = PerformanceFactory(start=start, end=end, production=production)
+    PerformanceFactory(start=start, end=end, production=production)
 
     # Create a performance with a short duration
     start = datetime.datetime(
@@ -107,7 +107,7 @@ def test_production_duration_with_no_performances():
 
     # Create production with no performances
     production = ProductionFactory()
-    assert production.duration() == None
+    assert production.duration() is None
 
 
 @pytest.mark.django_db
@@ -129,12 +129,12 @@ def test_concessions():
     performance = PerformanceFactory()
     # Create a discount
     discount_1 = DiscountFactory(name="Student")
-    discounts_requirement_1 = DiscountRequirementFactory(discount=discount_1)
-    discounts_requirement_2 = DiscountRequirementFactory(discount=discount_1)
+    DiscountRequirementFactory(discount=discount_1)
+    DiscountRequirementFactory(discount=discount_1)
 
     discount_2 = DiscountFactory(name="Family")
-    discounts_requirement_3 = DiscountRequirementFactory(discount=discount_2)
-    discounts_requirement_4 = DiscountRequirementFactory(discount=discount_2)
+    DiscountRequirementFactory(discount=discount_2)
+    DiscountRequirementFactory(discount=discount_2)
 
     discount_1.performances.set([performance])
     discount_2.performances.set([performance])
@@ -148,7 +148,7 @@ def test_get_concession_discount():
     concession_type = ConcessionTypeFactory()
 
     # Before any discounts are create assert there is no discount
-    performance.get_concession_discount(concession_type) == 0
+    assert performance.get_concession_discount(concession_type) == 0
 
     # Create discounts
     discount_1 = DiscountFactory(name="Family")
@@ -186,7 +186,7 @@ def test_price_with_concession():
     DiscountRequirementFactory(discount=discount_1, number=1)
 
     discount_2 = DiscountFactory(name="Student", percentage=0.1)
-    discount_requirement_3 = DiscountRequirementFactory(
+    DiscountRequirementFactory(
         discount=discount_2, number=1, concession_type=concession_type
     )
 
@@ -270,7 +270,7 @@ def test_production_is_not_bookable_with_no_performances():
     production = ProductionFactory()
     production.performances.set([])
 
-    assert production.is_bookable() == False
+    assert not production.is_bookable()
 
 
 @pytest.mark.django_db
@@ -290,7 +290,7 @@ def test_production_min_price():
 def test_production_min_price_no_perfs():
     production = ProductionFactory()
 
-    assert production.min_seat_price() == None
+    assert production.min_seat_price() is None
 
 
 @pytest.mark.django_db
@@ -365,8 +365,8 @@ def test_performance_capacity_remaining():
     # Create some tickets for this performance
     booking_1 = BookingFactory(performance=perf)
     booking_2 = BookingFactory(performance=perf)
-    [TicketFactory(booking=booking_1, seat_group=seat_group) for _ in range(3)]
-    [TicketFactory(booking=booking_2, seat_group=seat_group) for _ in range(2)]
+    _ = [TicketFactory(booking=booking_1, seat_group=seat_group) for _ in range(3)]
+    _ = [TicketFactory(booking=booking_2, seat_group=seat_group) for _ in range(2)]
     assert perf.capacity_remaining(seat_group) == perf.total_capacity(seat_group) - 5
     assert perf.capacity_remaining() == perf.total_capacity() - 5
 
@@ -534,7 +534,7 @@ def test_performance_check_capacity(seat_groups, performance_capacity, is_valid)
             BookingFactory(performance=performance)
             for i in range(math.ceil(number_of_existing_tickets / 2))
         ]
-        [
+        _ = [
             TicketFactory(
                 booking=random.choice(bookings),
                 seat_group=performance_seat_group.seat_group,
@@ -564,7 +564,7 @@ def test_performance_check_capacity(seat_groups, performance_capacity, is_valid)
     # If valid this should be none if not it should return something
     assert (
         performance.check_capacity(tickets_to_book, deleted_tickets=tickets_to_delete)
-        == None
+        is None
     ) == is_valid
 
 
@@ -596,7 +596,7 @@ def test_production_start_and_end_date():
     assert production.end_date() is None
     assert production.start_date() is None
 
-    performances = [
+    _ = [
         PerformanceFactory(
             start=current_time + datetime.timedelta(days=1),
             end=current_time + datetime.timedelta(days=1),

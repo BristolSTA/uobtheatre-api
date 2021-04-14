@@ -124,15 +124,14 @@ class SafeMutation(MutationResult, graphene.Mutation):
         abstract = True
 
     @classmethod
-    def mutate(cls, root, info, **input):
+    def mutate(cls, root, info, **inputs):
         """
         Calls resolve_mutation, catches error and formats
         """
         try:
             with transaction.atomic():
-                return cls.resolve_mutation(root, info, **input)
+                return cls.resolve_mutation(root, info, **inputs)
 
         except MutationException as exception:
             # These are our custom exceptions
-            if isinstance(exception, MutationException):
-                return cls(errors=exception.resolve(), success=False)
+            return cls(errors=exception.resolve(), success=False)
