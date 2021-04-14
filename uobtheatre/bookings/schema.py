@@ -20,6 +20,7 @@ from uobtheatre.productions.models import Performance
 from uobtheatre.utils.enums import GrapheneEnumMixin
 from uobtheatre.utils.exceptions import (
     AuthException,
+    FieldError,
     GQLFieldException,
     GQLNonFieldException,
     SafeMutation,
@@ -232,6 +233,13 @@ class UpdateTicketInput(graphene.InputObjectType):
             )
 
 
+class CheckInTicketInput(graphene.InputObjectType):
+    ticket_id = IdInputField(required=True)
+
+    def to_ticket(self):
+        return Ticket.objects.get(id=self.ticket_id)
+
+
 class CreateBooking(AuthRequiredMixin, SafeMutation):
     booking = graphene.Field(BookingNode)
 
@@ -326,7 +334,49 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         return PayBooking(booking=booking, payment=payment)
 
 
+class CheckInBooking(AuthRequiredMixin, SafeMutation):
+    performance = graphene.Field("uobtheatre.productions.schema.PerformanceNode")
+    booking = graphene.Field(BookingNode)
+
+    class Arguments:
+        booking_reference = graphene.String(required=True)
+        performance_id = IdInputField(required=True)
+        tickets = graphene.List(CheckInTicketInput, required=True)
+
+    @classmethod
+    def resolve_mutation(self, root, info, booking_reference, tickets, performance_id):
+        performance = Performance.objects.get(id=performance_id)
+        booking = Booking.objects.get(reference=booking_reference)
+
+        # check if the booking pertains to the correct performance
+        if booking.performance != performance:
+            raise GQLFieldException(
+                message="The booking performance does not match the given performance."
+            )
+            # raise booking performance does not match performance given
+        ticket_objects = []
+
+        ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))
+        # loop through the ticket IDs given
+        for ticket in ticket_objects:
+            # Check the ticket booking matches the given booking
+            if ticket.booking != booking:
+                raise GQLFieldException(
+                    message="The ticket booking does not match the mutation booking."
+                )
+                
+            ticket.check_in()
+                # Raise ticket booking does not match the booking
+
+        return CheckInBooking(booking=booking, performance=performance)
+
+
+# Check in booking mutation ([ticket_id], performance_id, booking_reference) -> {performanceNode, bookingNode, [ticketNode]}
+# Check in Ticket Method on the model
+
+
 class Mutation(graphene.ObjectType):
     create_booking = CreateBooking.Field()
     update_booking = UpdateBooking.Field()
     pay_booking = PayBooking.Field()
+    check_in_booking = CheckInBooking.Field()
