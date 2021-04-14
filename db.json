@@ -1,0 +1,587 @@
+[
+{
+  "model": "users.user",
+  "pk": "00000000-0000-0000-0000-000000000001",
+  "fields": {
+    "password": "pbkdf2_sha256$216000$WVaMk4Jsevp3$3yR+J4ug9WeJFvNuhdvj+mWbiwyNrSjMNeNTiSAPGNg=",
+    "last_login": "2021-03-24T14:35:45.928Z",
+    "is_superuser": true,
+    "first_name": "james",
+    "last_name": "jelgar",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2021-03-17T21:02:47.543Z",
+    "email": "admin@email.com",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "images.image",
+  "pk": 1,
+  "fields": {
+    "file": "e2eImages/400x566.png",
+    "alt_text": "Poster"
+  }
+},
+{
+  "model": "images.image",
+  "pk": 2,
+  "fields": {
+    "file": "e2eImages/500x500.png",
+    "alt_text": "Logo"
+  }
+},
+{
+  "model": "images.image",
+  "pk": 3,
+  "fields": {
+    "file": "e2eImages/1920x960.png",
+    "alt_text": "Banner"
+  }
+},
+{
+  "model": "addresses.address",
+  "pk": 1,
+  "fields": {
+    "building_name": "The Richmond Building",
+    "building_number": "105",
+    "street": "Queens Road",
+    "city": "Bristol",
+    "postcode": "BS69 420",
+    "latitude": 51.4568702,
+    "longitude": -2.6130709
+  }
+},
+{
+  "model": "venues.venue",
+  "pk": 1,
+  "fields": {
+    "created_at": "2021-03-17T21:07:27.807Z",
+    "updated_at": "2021-03-24T14:17:41.897Z",
+    "name": "The Winston Theatre",
+    "internal_capacity": 207,
+    "description": "Where the STA drink, and have fun",
+    "address": 1,
+    "image": 3,
+    "publicly_listed": true,
+    "slug": "the-winston-theatre"
+  }
+},
+{
+  "model": "venues.venue",
+  "pk": 2,
+  "fields": {
+    "created_at": "2021-03-17T21:07:49.878Z",
+    "updated_at": "2021-03-24T14:17:48.120Z",
+    "name": "The Pegg Theatre",
+    "internal_capacity": 80,
+    "description": "pegggg",
+    "address": 1,
+    "image": 3,
+    "publicly_listed": true,
+    "slug": "the-pegg-theatre"
+  }
+},
+{
+  "model": "venues.seatgroup",
+  "pk": 1,
+  "fields": {
+    "name": "Best seats in the house",
+    "description": "The best seats obviously",
+    "venue": 1,
+    "capacity": 60,
+    "seats": null,
+    "is_internal": true
+  }
+},
+{
+  "model": "venues.seatgroup",
+  "pk": 2,
+  "fields": {
+    "name": "The Meh Seats",
+    "description": "",
+    "venue": 1,
+    "capacity": 147,
+    "seats": null,
+    "is_internal": true
+  }
+},
+{
+  "model": "venues.seatgroup",
+  "pk": 3,
+  "fields": {
+    "name": "Generic Seating",
+    "description": "",
+    "venue": 2,
+    "capacity": 80,
+    "seats": null,
+    "is_internal": true
+  }
+},
+{
+  "model": "societies.society",
+  "pk": 1,
+  "fields": {
+    "created_at": "2021-03-17T21:20:10.644Z",
+    "updated_at": "2021-03-24T14:18:10.339Z",
+    "name": "MTB",
+    "description": "Musical theatre neeks",
+    "logo": 2,
+    "banner": 3,
+    "slug": "mtb"
+  }
+},
+{
+  "model": "societies.society",
+  "pk": 2,
+  "fields": {
+    "created_at": "2021-03-17T21:20:23.098Z",
+    "updated_at": "2021-03-24T14:18:06.938Z",
+    "name": "Dramsoc",
+    "description": "Dramaaaaa",
+    "logo": 2,
+    "banner": 3,
+    "slug": "dramsoc"
+  }
+},
+{
+  "model": "societies.society",
+  "pk": 3,
+  "fields": {
+    "created_at": "2021-03-17T21:21:55.958Z",
+    "updated_at": "2021-03-24T14:18:03.557Z",
+    "name": "Joe Bloggs Productions",
+    "description": "joe bloggs",
+    "logo": 2,
+    "banner": 3,
+    "slug": "joe-bloggs-productions"
+  }
+},
+{
+  "model": "productions.crewrole",
+  "pk": 1,
+  "fields": {
+    "name": "CLX",
+    "department": "lighting"
+  }
+},
+{
+  "model": "productions.crewrole",
+  "pk": 2,
+  "fields": {
+    "name": "Stage Manager",
+    "department": "stage_management"
+  }
+},
+{
+  "model": "productions.crewrole",
+  "pk": 3,
+  "fields": {
+    "name": "Sound Designer",
+    "department": "sound"
+  }
+},
+{
+  "model": "productions.warning",
+  "pk": 1,
+  "fields": {
+    "warning": "Strobe Lighting"
+  }
+},
+{
+  "model": "productions.warning",
+  "pk": 2,
+  "fields": {
+    "warning": "Nudity"
+  }
+},
+{
+  "model": "productions.warning",
+  "pk": 3,
+  "fields": {
+    "warning": "Pyrotechnics"
+  }
+},
+{
+  "model": "productions.production",
+  "pk": 1,
+  "fields": {
+    "created_at": "2021-03-17T21:20:58.591Z",
+    "updated_at": "2021-03-24T14:18:21.722Z",
+    "name": "Legally Ginger",
+    "subtitle": "legally-ginger",
+    "description": "The description of the show.",
+    "society": 1,
+    "cover_image": 3,
+    "poster_image": 1,
+    "featured_image": 3,
+    "age_rating": 18,
+    "facebook_event": "https://facebook.com/legally-ginger",
+    "slug": "legally-ginger",
+    "warnings": [
+      1,
+      2
+    ]
+  }
+},
+{
+  "model": "productions.production",
+  "pk": 2,
+  "fields": {
+    "created_at": "2021-03-17T21:21:22.202Z",
+    "updated_at": "2021-03-24T14:18:26.160Z",
+    "name": "TRASh",
+    "subtitle": "trash",
+    "description": "literally trash...",
+    "society": 2,
+    "cover_image": 3,
+    "poster_image": 1,
+    "featured_image": 3,
+    "age_rating": 10,
+    "facebook_event": "https://facebook.com/trash",
+    "slug": "trash",
+    "warnings": []
+  }
+},
+{
+  "model": "productions.castmember",
+  "pk": 1,
+  "fields": {
+    "name": "Alex T",
+    "profile_picture": 2,
+    "role": "Good Guy",
+    "production": 1
+  }
+},
+{
+  "model": "productions.castmember",
+  "pk": 2,
+  "fields": {
+    "name": "Kit",
+    "profile_picture": null,
+    "role": "Crazy person",
+    "production": 1
+  }
+},
+{
+  "model": "productions.productionteammember",
+  "pk": 1,
+  "fields": {
+    "name": "James",
+    "role": "Producer",
+    "production": 1
+  }
+},
+{
+  "model": "productions.productionteammember",
+  "pk": 2,
+  "fields": {
+    "name": "Nicole",
+    "role": "Musical Director",
+    "production": 1
+  }
+},
+{
+  "model": "productions.crewmember",
+  "pk": 1,
+  "fields": {
+    "name": "Tom",
+    "role": 3,
+    "production": 1
+  }
+},
+{
+  "model": "productions.crewmember",
+  "pk": 2,
+  "fields": {
+    "name": "Millie",
+    "role": 1,
+    "production": 1
+  }
+},
+{
+  "model": "productions.performance",
+  "pk": 1,
+  "fields": {
+    "created_at": "2021-03-17T21:24:04.523Z",
+    "updated_at": "2021-03-17T21:24:04.523Z",
+    "production": 1,
+    "venue": 1,
+    "doors_open": "2021-01-14T17:35:00Z",
+    "start": "2021-01-14T17:55:27.554Z",
+    "end": "2021-01-14T20:55:27.554Z",
+    "description": "",
+    "extra_information": "",
+    "disabled": false,
+    "capacity": null
+  }
+},
+{
+  "model": "productions.performance",
+  "pk": 2,
+  "fields": {
+    "created_at": "2021-03-17T21:24:22.594Z",
+    "updated_at": "2021-03-17T21:24:22.594Z",
+    "production": 1,
+    "venue": 1,
+    "doors_open": "2021-03-09T22:48:30Z",
+    "start": "2021-03-09T22:58:32Z",
+    "end": "2021-03-09T23:58:33Z",
+    "description": "",
+    "extra_information": "",
+    "disabled": false,
+    "capacity": null
+  }
+},
+{
+  "model": "productions.performance",
+  "pk": 3,
+  "fields": {
+    "created_at": "2021-03-24T14:37:42.069Z",
+    "updated_at": "2021-03-24T14:37:42.069Z",
+    "production": 2,
+    "venue": 1,
+    "doors_open": "2021-03-24T14:30:26Z",
+    "start": "2021-03-24T14:37:27Z",
+    "end": "2021-03-24T15:37:28Z",
+    "description": "",
+    "extra_information": "",
+    "disabled": true,
+    "capacity": null
+  }
+},
+{
+  "model": "productions.performanceseatgroup",
+  "pk": 1,
+  "fields": {
+    "seat_group": 1,
+    "performance": 1,
+    "price": 1000,
+    "capacity": 60
+  }
+},
+{
+  "model": "productions.performanceseatgroup",
+  "pk": 2,
+  "fields": {
+    "seat_group": 2,
+    "performance": 1,
+    "price": 1000,
+    "capacity": 147
+  }
+},
+{
+  "model": "productions.performanceseatgroup",
+  "pk": 4,
+  "fields": {
+    "seat_group": 1,
+    "performance": 2,
+    "price": 1000,
+    "capacity": 60
+  }
+},
+{
+  "model": "productions.performanceseatgroup",
+  "pk": 5,
+  "fields": {
+    "seat_group": 2,
+    "performance": 2,
+    "price": 1000,
+    "capacity": 147
+  }
+},
+{
+  "model": "bookings.misccost",
+  "pk": 1,
+  "fields": {
+    "name": "Booking Fee",
+    "description": "",
+    "percentage": 0.05,
+    "value": null
+  }
+},
+{
+  "model": "bookings.discount",
+  "pk": 1,
+  "fields": {
+    "name": "Student",
+    "percentage": 0.2,
+    "seat_group": null,
+    "performances": [
+      1,
+      2
+    ]
+  }
+},
+{
+  "model": "bookings.discount",
+  "pk": 2,
+  "fields": {
+    "name": "Child",
+    "percentage": 0.3,
+    "seat_group": null,
+    "performances": [
+      1,
+      2
+    ]
+  }
+},
+{
+  "model": "bookings.discount",
+  "pk": 3,
+  "fields": {
+    "name": "Family Discount",
+    "percentage": 0.5,
+    "seat_group": null,
+    "performances": [
+      1,
+      2
+    ]
+  }
+},
+{
+  "model": "bookings.concessiontype",
+  "pk": 1,
+  "fields": {
+    "name": "Adult",
+    "description": "18+"
+  }
+},
+{
+  "model": "bookings.concessiontype",
+  "pk": 2,
+  "fields": {
+    "name": "Student",
+    "description": "Student ID required"
+  }
+},
+{
+  "model": "bookings.concessiontype",
+  "pk": 3,
+  "fields": {
+    "name": "Child",
+    "description": "under 16s"
+  }
+},
+{
+  "model": "bookings.discountrequirement",
+  "pk": 1,
+  "fields": {
+    "number": 1,
+    "discount": 1,
+    "concession_type": 2
+  }
+},
+{
+  "model": "bookings.discountrequirement",
+  "pk": 2,
+  "fields": {
+    "number": 1,
+    "discount": 2,
+    "concession_type": 3
+  }
+},
+{
+  "model": "bookings.discountrequirement",
+  "pk": 3,
+  "fields": {
+    "number": 1,
+    "discount": 3,
+    "concession_type": 1
+  }
+},
+{
+  "model": "bookings.discountrequirement",
+  "pk": 4,
+  "fields": {
+    "number": 2,
+    "discount": 3,
+    "concession_type": 2
+  }
+},
+{
+  "model": "bookings.booking",
+  "pk": 2,
+  "fields": {
+    "created_at": "2021-03-17T21:31:07.583Z",
+    "updated_at": "2021-03-17T21:31:07.583Z",
+    "reference": "5G5pAJbFRS8T",
+    "user": "00000000-0000-0000-0000-000000000001",
+    "performance": 2,
+    "status": "IN_PROGRESS"
+  }
+},
+{
+  "model": "bookings.booking",
+  "pk": 3,
+  "fields": {
+    "created_at": "2021-03-24T14:02:38.814Z",
+    "updated_at": "2021-03-24T14:03:02.383Z",
+    "reference": "3MDbAdjBUdp7",
+    "user": "00000000-0000-0000-0000-000000000001",
+    "performance": 1,
+    "status": "PAID"
+  }
+},
+{
+  "model": "bookings.ticket",
+  "pk": 5,
+  "fields": {
+    "seat_group": 1,
+    "booking": 2,
+    "concession_type": 1,
+    "seat": null
+  }
+},
+{
+  "model": "bookings.ticket",
+  "pk": 6,
+  "fields": {
+    "seat_group": 1,
+    "booking": 2,
+    "concession_type": 1,
+    "seat": null
+  }
+},
+{
+  "model": "bookings.ticket",
+  "pk": 7,
+  "fields": {
+    "seat_group": 1,
+    "booking": 3,
+    "concession_type": 1,
+    "seat": null
+  }
+},
+{
+  "model": "bookings.ticket",
+  "pk": 8,
+  "fields": {
+    "seat_group": 1,
+    "booking": 3,
+    "concession_type": 1,
+    "seat": null
+  }
+},
+{
+  "model": "bookings.ticket",
+  "pk": 12,
+  "fields": {
+    "seat_group": 2,
+    "booking": 2,
+    "concession_type": 3,
+    "seat": null
+  }
+},
+{
+  "model": "bookings.ticket",
+  "pk": 14,
+  "fields": {
+    "seat_group": 2,
+    "booking": 2,
+    "concession_type": 2,
+    "seat": null
+  }
+}
+]

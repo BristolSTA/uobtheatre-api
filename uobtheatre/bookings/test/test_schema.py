@@ -1,4 +1,5 @@
 import pytest
+from django.utils import timezone
 from graphql_relay.node.node import from_global_id, to_global_id
 
 from uobtheatre.bookings.models import Booking
@@ -42,7 +43,13 @@ def test_bookings_schema(gql_client_flexible, gql_id):
                   performance {
                     id
                   }
-                  status
+                  status {
+                    value
+                    description
+                  }
+                  user {
+                    id
+                  }
                 }
               }
             }
@@ -79,7 +86,11 @@ def test_bookings_schema(gql_client_flexible, gql_id):
                                         booking.performance.id, "PerformanceNode"
                                     )
                                 },
-                                "status": "IN_PROGRESS",
+                                "status": {
+                                    "value": "IN_PROGRESS",
+                                    "description": "In Progress",
+                                },
+                                "user": {"id": gql_id(booking.user.id, "UserNode")},
                             }
                         }
                     ]
@@ -183,10 +194,11 @@ def test_bookings_price_break_down(gql_client_flexible, gql_id):
                       seatGroup {
                         id
                       }
-                      concession {
+                      concessionType {
                         id
                       }
                     }
+                    ticketsDiscountedPrice
                     miscCosts {
                       value
                       percentage
@@ -218,7 +230,7 @@ def test_bookings_price_break_down(gql_client_flexible, gql_id):
                     "SeatGroupNode",
                 ),
             },
-            "concession": {
+            "concessionType": {
                 "id": gql_id(
                     ticket_group["concession_type"].id,
                     "ConcessionTypeNode",
@@ -237,6 +249,105 @@ def test_bookings_price_break_down(gql_client_flexible, gql_id):
         "subtotalPrice": booking.subtotal(),
         "miscCostsValue": int(booking.misc_costs_value()),
         "totalPrice": booking.total(),
+        "ticketsDiscountedPrice": booking.total(),
+    }
+
+
+@pytest.mark.django_db
+def test_discounts_node(gql_client, gql_id):
+    performance = PerformanceFactory()
+
+    # Create a discount
+    discount = DiscountFactory(name="Family", percentage=0.2)
+    discount.performances.set([performance])
+    discount_requirements = [
+        DiscountRequirementFactory(discount=discount, number=2),
+        DiscountRequirementFactory(discount=discount, number=1),
+    ]
+
+    # Single discount - should not appear
+    discount_2 = DiscountFactory(name="Student", percentage=0.3)
+    discount_2.performances.set([performance])
+    discount_requirement_2 = DiscountRequirementFactory(discount=discount_2, number=1)
+
+    response = gql_client.execute(
+        """
+        {
+          performances {
+            edges {
+              node {
+                discounts {
+                  id
+                  percentage
+                  name
+                  seatGroup {
+                    id
+                  }
+                  requirements {
+                    id
+                    number
+                    discount {
+                      id
+                    }
+                    concessionType {
+                      id
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        """
+    )
+    assert response == {
+        "data": {
+            "performances": {
+                "edges": [
+                    {
+                        "node": {
+                            "discounts": [
+                                {
+                                    "id": gql_id(discount.id, "DiscountNode"),
+                                    "percentage": discount.percentage,
+                                    "name": discount.name,
+                                    "seatGroup": {
+                                        gql_id(
+                                            discount.seat_group.id,
+                                            "SeatGroupNode",
+                                        )
+                                    }
+                                    if discount.seat_group
+                                    else None,
+                                    "requirements": [
+                                        {
+                                            "id": gql_id(
+                                                requirement.id,
+                                                "DiscountRequirementNode",
+                                            ),
+                                            "number": requirement.number,
+                                            "discount": {
+                                                "id": gql_id(
+                                                    requirement.discount.id,
+                                                    "DiscountNode",
+                                                )
+                                            },
+                                            "concessionType": {
+                                                "id": gql_id(
+                                                    requirement.concession_type.id,
+                                                    "ConcessionTypeNode",
+                                                )
+                                            },
+                                        }
+                                        for requirement in discount.requirements.all()
+                                    ],
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
     }
 
 
@@ -407,9 +518,9 @@ def test_create_booking_mutation(
 
 
 @pytest.mark.django_db
-def test_booking_inprogress(gql_client_flexible, gql_id):
+def test_booking_in_progress(gql_client_flexible, gql_id):
     """
-    We will often want to get an "inprogress" booking for a given booking and user.
+    We will often want to get an "in_progress" booking for a given booking and user.
         bookings(performance: "UGVyZm9ybWFuY2VOb2RlOjE=", status: "IN_PROGRESS")
     """
     user = UserFactory()
@@ -459,6 +570,48 @@ def test_booking_inprogress(gql_client_flexible, gql_id):
             }
         }
     }
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "order_by, expected_order",
+    [
+        ("createdAt", [0, 1, 2]),
+        ("-createdAt", [2, 1, 0]),
+    ],
+)
+def test_booking_orderby(order_by, expected_order, gql_client_flexible):
+    """
+    Test for the ordfering of a user's bookings
+    """
+    timezone.now()
+    user = UserFactory()
+    bookings = []
+
+    # Create bookings in order, this first booking in the list is the first to be created
+    for _ in range(3):
+        bookings.append(BookingFactory(user=user))
+
+    request = """
+    {
+      me {
+        bookings(orderBy: "%s") {
+          edges {
+            node {
+              createdAt
+            }
+          }
+        }
+      }
+    }
+    """
+    gql_client_flexible.set_user(user)
+    response = gql_client_flexible.execute(request % order_by)
+
+    assert response["data"]["me"]["bookings"]["edges"] == [
+        {"node": {"createdAt": bookings[i].created_at.isoformat()}}
+        for i in expected_order
+    ]
 
 
 @pytest.mark.django_db
@@ -1032,7 +1185,10 @@ def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
             }
 
             booking {
-              status
+              status {
+                value
+                description
+              }
               payments {
                 edges {
                   node {
@@ -1045,7 +1201,9 @@ def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
             payment {
               last4
               cardBrand
-              provider
+              provider {
+                value
+              }
               currency
               value
             }
@@ -1075,7 +1233,10 @@ def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
         "data": {
             "payBooking": {
                 "booking": {
-                    "status": "PAID",
+                    "status": {
+                        "value": "PAID",
+                        "description": "Paid",
+                    },
                     "payments": {
                         "edges": [
                             {
@@ -1091,7 +1252,9 @@ def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
                 "payment": {
                     "last4": "1111",
                     "cardBrand": "VISA",
-                    "provider": "SQUARE_ONLINE",
+                    "provider": {
+                        "value": "SQUARE_ONLINE",
+                    },
                     "currency": "GBP",
                     "value": 0,
                 },

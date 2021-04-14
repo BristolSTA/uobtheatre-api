@@ -1,12 +1,14 @@
 import datetime
 import math
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from autoslug import AutoSlugField
 from django.db import models
 from django.db.models import Max, Min, Sum
+from django.db.models.query import QuerySet
 from django.utils import timezone
 
+from uobtheatre.images.models import Image
 from uobtheatre.societies.models import Society
 from uobtheatre.utils.models import TimeStampedMixin
 from uobtheatre.venues.models import SeatGroup, Venue
@@ -70,14 +72,32 @@ class Production(TimeStampedMixin, models.Model):
         Society, on_delete=models.SET_NULL, null=True, related_name="productions"
     )
 
-    poster_image = models.ImageField(null=True)
-    featured_image = models.ImageField(null=True)
-    cover_image = models.ImageField(null=True)
+    cover_image = models.ForeignKey(
+        Image,
+        on_delete=models.RESTRICT,
+        related_name="production_cover_images",
+        null=True,
+        blank=True,
+    )
+    poster_image = models.ForeignKey(
+        Image,
+        on_delete=models.RESTRICT,
+        related_name="production_poster_images",
+        null=True,
+        blank=True,
+    )
+    featured_image = models.ForeignKey(
+        Image,
+        on_delete=models.RESTRICT,
+        related_name="production_featured_images",
+        null=True,
+        blank=True,
+    )
 
     age_rating = models.SmallIntegerField(null=True)
     facebook_event = models.CharField(max_length=255, null=True)
 
-    warnings = models.ManyToManyField(Warning)
+    warnings = models.ManyToManyField(Warning, blank=True)
 
     slug = AutoSlugField(populate_from="name", unique=True, blank=True)
 
@@ -90,12 +110,6 @@ class Production(TimeStampedMixin, models.Model):
         productions (not ended) then it is not upcoming.
         """
         return self.performances.filter(start__gte=timezone.now()).count() != 0
-        # performances = self.performances.all()
-        # return any(
-        #     performance.start > timezone.now()
-        #     for performance in performances
-        #     if performance.start
-        # )
 
     def is_bookable(self) -> bool:
         """
@@ -151,7 +165,13 @@ class CastMember(models.Model):
     """Member of production cast"""
 
     name = models.CharField(max_length=255)
-    profile_picture = models.ImageField(null=True, blank=True)
+    profile_picture = models.ForeignKey(
+        Image,
+        on_delete=models.RESTRICT,
+        related_name="cast_members",
+        blank=True,
+        null=True,
+    )
     role = models.CharField(max_length=255, null=True)
     production = models.ForeignKey(
         Production, on_delete=models.CASCADE, related_name="cast"
@@ -275,13 +295,11 @@ class Performance(TimeStampedMixin, models.Model):
         """
         return self.end - self.start
 
-    def get_single_discounts(self) -> List:
+    def get_single_discounts(self) -> QuerySet[Any]:
         """ Returns all discounts that apply to a single ticket """
-        return [
-            discount
-            for discount in self.discounts.all()
-            if discount.is_single_discount()
-        ]
+        return self.discounts.annotate(
+            number_of_tickets_required=Sum("requirements__number")
+        ).filter(number_of_tickets_required=1)
 
     def get_concession_discount(self, concession_type) -> float:
         """
@@ -292,12 +310,11 @@ class Performance(TimeStampedMixin, models.Model):
             (
                 discount
                 for discount in self.get_single_discounts()
-                if discount.discount_requirements.first().concession_type
-                == concession_type
+                if discount.requirements.first().concession_type == concession_type
             ),
             None,
         )
-        return discount.discount if discount else 0
+        return discount.percentage if discount else 0
 
     def price_with_concession(self, concession, price) -> int:
         """
@@ -312,7 +329,7 @@ class Performance(TimeStampedMixin, models.Model):
             set(
                 discounts_requirement.concession_type
                 for discount in self.discounts.all()
-                for discounts_requirement in discount.discount_requirements.all()
+                for discounts_requirement in discount.requirements.all()
             )
         )
         concession_list.sort(key=lambda concession: concession.id)
@@ -325,6 +342,9 @@ class Performance(TimeStampedMixin, models.Model):
         return min(
             (psg.price for psg in self.performance_seat_groups.all()), default=None
         )
+
+    def is_sold_out(self) -> bool:
+        return self.capacity_remaining() == 0
 
     def check_capacity(self, tickets, deleted_tickets=[]) -> Optional[str]:
         """

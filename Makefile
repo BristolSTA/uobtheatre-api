@@ -33,6 +33,9 @@ up-v: ## Run verbose
 down: ## Down
 	docker-compose down
 
+dump: ## dumps databse objects into fixture
+	docker-compose run --rm api python manage.py dumpdata users images addresses venues societies productions bookings --indent 2 > db.json
+
 migrations: ## Make the migrations
 	docker-compose run --rm api python manage.py makemigrations
 
@@ -43,7 +46,13 @@ migrate: ## Do the migrations
 	docker-compose run api python manage.py migrate
 
 seed: ## Seed the db with some example data
-	docker-compose run api python manage.py loaddata uobtheatre/addresses/fixtures.json uobtheatre/users/fixtures.json uobtheatre/venues/fixtures.json uobtheatre/societies/fixtures.json uobtheatre/productions/fixtures.json uobtheatre/bookings/fixtures.json
+	docker-compose run api python manage.py loaddata uobtheatre/images/fixtures.json uobtheatre/addresses/fixtures.json uobtheatre/users/fixtures.json uobtheatre/venues/fixtures.json uobtheatre/societies/fixtures.json uobtheatre/productions/fixtures.json uobtheatre/bookings/fixtures.json
+
+seed-testfixtures: ## Seed the data for e2e testing
+	docker-compose run api python manage.py loaddata db.json
+
+superuser: ## Seed the db with admin superuser
+	docker-compose run api python manage.py loaddata uobtheatre/users/fixtures.json
 
 psql: ## Do the migrations
 	docker-compose exec postgres psql -d postgres -U postgres

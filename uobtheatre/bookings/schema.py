@@ -1,6 +1,7 @@
 import itertools
 
 import graphene
+from django.db.models import Count
 from django_filters import OrderingFilter
 from graphene import relay
 from graphene_django import DjangoListField, DjangoObjectType
@@ -16,6 +17,7 @@ from uobtheatre.bookings.models import (
     Ticket,
 )
 from uobtheatre.productions.models import Performance
+from uobtheatre.utils.enums import GrapheneEnumMixin
 from uobtheatre.utils.exceptions import (
     AuthException,
     FieldError,
@@ -23,7 +25,8 @@ from uobtheatre.utils.exceptions import (
     GQLNonFieldException,
     SafeMutation,
 )
-from uobtheatre.utils.schema import AuthRequiredMixin, FilterSet, IdInputField
+from uobtheatre.utils.filters import FilterSet
+from uobtheatre.utils.schema import AuthRequiredMixin, IdInputField
 from uobtheatre.venues.models import Seat, SeatGroup
 
 
@@ -54,6 +57,12 @@ class DiscountRequirementNode(DjangoObjectType):
 
 class DiscountNode(DjangoObjectType):
     requirements = DjangoListField(DiscountRequirementNode)
+
+    @classmethod
+    def get_queryset(cls, queryset, info):
+        return queryset.annotate(
+            number_of_tickets_required=Count("requirements__number")
+        ).filter(number_of_tickets_required__gt=1)
 
     class Meta:
         model = Discount
@@ -170,6 +179,8 @@ class BookingFilter(FilterSet):
 
     # TODO When we add back in Bookings endpoint only admin users should be
     # able to get all bookings otherwise we should return only user bookings.
+    # Booings can be accessed from a performance, if this was not here then the
+    # users would be able all peoples bookings.
     @property
     def qs(self):
         # Restrict the filterset to only return user bookings
@@ -184,11 +195,14 @@ class BookingFilter(FilterSet):
 BookingStatusSchema = graphene.Enum.from_enum(Booking.BookingStatus)
 
 
-class BookingNode(DjangoObjectType):
+class BookingNode(GrapheneEnumMixin, DjangoObjectType):
     price_breakdown = graphene.Field(PriceBreakdownNode)
     tickets = DjangoListField(TicketNode)
     user = graphene.Field(UserNode)
     payments = DjangoFilterConnectionField("uobtheatre.payments.schema.PaymentNode")
+
+    def resolve_payments(self, info):
+        return self.payments.all()
 
     def resolve_price_breakdown(self, info):
         return self
