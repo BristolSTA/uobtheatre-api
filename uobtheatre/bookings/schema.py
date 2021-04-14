@@ -360,12 +360,12 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
         # loop through the ticket IDs given
         for ticket in ticket_objects:
             # Check the ticket booking matches the given booking
-            if ticket.booking == booking:
-                ticket.check_in()
-            else:
+            if ticket.booking != booking:
                 raise GQLFieldException(
                     message="The ticket booking does not match the mutation booking."
                 )
+                
+            ticket.check_in()
                 # Raise ticket booking does not match the booking
 
         return CheckInBooking(booking=booking, performance=performance)
