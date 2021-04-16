@@ -217,7 +217,18 @@ class DiscountRequirement(models.Model):
 
 T = TypeVar("T")
 def combinations(iterable: List[T], max_length: int) -> Set[Tuple[T, ...]]:
-    """ Given a list give all the combinations of that list up to a given length """
+    """Return all subsets of input list upto a max length.
+
+    Args:
+        iterable (list of Any): The list which is used to find all the subsets.
+        max_length (int): The maximum length of the sub sets to return, this
+            must be smaller than or equal to the size of the provided iterable.
+
+    Returns:
+        (list of tuples of Any): Returns a list containing all the subsets of
+            the input list.
+    """
+    assert max_length <= len(iterable)
 
     return set(
         combination
@@ -227,6 +238,12 @@ def combinations(iterable: List[T], max_length: int) -> Set[Tuple[T, ...]]:
 
 
 class DiscountCombination:
+    """A wrapper for a list of dicounts
+
+    When discounts are applied to a booking, the best discount combination is
+    selected (set of dicounts). A discount combination is simply a list of
+    discounts.
+    """
     def __init__(self, discount_combination: Tuple[Discount, ...]):
         self.discount_combination = discount_combination
 
@@ -237,6 +254,12 @@ class DiscountCombination:
         )
 
     def get_requirements(self) -> List[DiscountRequirement]:
+        """Get the requirments for all the discounts
+
+        Returns:
+            (list of DiscountRequirement): The list of requirements for all the
+                discounts in the discount combination.
+        """
         return [
             requirement
             for discount in self.discount_combination
