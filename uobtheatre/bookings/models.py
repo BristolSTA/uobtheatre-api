@@ -36,7 +36,7 @@ class MiscCost(models.Model):
     )
     value = models.FloatField(null=True, blank=True)
 
-    def get_value(self, booking: "bookings.Booking") -> int:
+    def get_value(self, booking: "Booking") -> int:
         """Calculate the value of the misc cost on a booking.
 
         Calculate the value of the misc cost given a booking. The value is
@@ -219,7 +219,7 @@ class DiscountRequirement(models.Model):
     concession_type = models.ForeignKey(ConcessionType, on_delete=models.CASCADE)
 
 
-IterableType = TypeVar("T")
+IterableType = TypeVar("IterableType")
 
 
 def combinations(
@@ -236,7 +236,8 @@ def combinations(
         (list of tuples of Any): Returns a list containing all the subsets of
             the input list.
     """
-    assert max_length <= len(iterable)
+    # TODO why not?
+    # assert max_length <= len(iterable)
 
     return set(
         combination

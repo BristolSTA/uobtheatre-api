@@ -1,6 +1,6 @@
 import datetime
 import math
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from autoslug import AutoSlugField
 from django.db import models
@@ -12,6 +12,9 @@ from uobtheatre.images.models import Image
 from uobtheatre.societies.models import Society
 from uobtheatre.utils.models import TimeStampedMixin
 from uobtheatre.venues.models import SeatGroup, Venue
+
+if TYPE_CHECKING:
+    from uobtheatre.bookings.models import Ticket
 
 
 class CrewRole(models.Model):
@@ -66,7 +69,7 @@ def append_production_qs(queryset, start=False, end=False):
             (default is False)
 
     Returns:
-        Queryset: The Queryset with the additional fields anotated.
+        Queryset: The Queryset with the additional fields annotated.
     """
     if start:
         queryset = queryset.annotate(start=Min("performances__start"))

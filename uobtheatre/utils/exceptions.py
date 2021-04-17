@@ -70,7 +70,7 @@ class AuthOutput(MutationResult):
 
 class MutationException(Exception):
     def resolve(self):
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: no cover
 
 
 class GQLFieldException(MutationException):
