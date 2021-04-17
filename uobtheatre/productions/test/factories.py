@@ -89,6 +89,19 @@ class WarningFactory(factory.django.DjangoModelFactory):
 
 
 def create_production(start, end, production_id=None):
+    """Create a production with some performances
+
+    Args:
+        start (datetime): When the Production (its first Performance) should
+            start.
+        end (datetime): When the Production (its last Performance) should end.
+        production_id (int): Sets the id of Production. If None then a random
+            id is created.
+            (default None)
+
+    Returns:
+        (Production): The generated Production.
+    """
     if production_id is None:
         production = ProductionFactory()
     else:

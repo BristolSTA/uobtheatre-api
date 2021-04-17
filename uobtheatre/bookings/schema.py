@@ -159,6 +159,12 @@ class PriceBreakdownNode(DjangoObjectType):
 
 
 class BookingFilter(FilterSet):
+    """Custom filter for BookingNode.
+
+    Restricts BookingNode to only return Bookings owned by the User. Adds
+    ordering filter for created_at.
+    """
+
     class Meta:
         model = Booking
         fields = "__all__"
@@ -169,11 +175,15 @@ class BookingFilter(FilterSet):
     # users would be able all peoples bookings.
     @property
     def qs(self):
-        # Restrict the filterset to only return user bookings
+        """Restrict the queryset to only return user bookings.
+
+        Returns:
+            Queryset: Booking queryset, filter with only user's bookings.
+
+        """
         if self.request.user.is_authenticated:
             return super(BookingFilter, self).qs.filter(user=self.request.user)
-        else:
-            return Booking.objects.none()
+        return Booking.objects.none()
 
     order_by = OrderingFilter(fields=("created_at",))
 
@@ -197,10 +207,22 @@ class BookingNode(DjangoObjectType):
 
 
 class CreateTicketInput(graphene.InputObjectType):
+    """Input for creating Tickets with mutations."""
+
     seat_group_id = IdInputField(required=True)
     concession_type_id = IdInputField(required=True)
 
     def to_ticket(self):
+        """Get Ticket object from input.
+
+        This creates a Ticket object based on the inputs to the mutation.
+
+        Note:
+            This is a Ticket object but has not yet been saved to the database.
+
+        Returns:
+            Ticket: The ticket to be created.
+        """
         return Ticket(
             seat_group=SeatGroup.objects.get(id=self.seat_group_id),
             concession_type=ConcessionType.objects.get(id=self.concession_type_id),
@@ -208,26 +230,38 @@ class CreateTicketInput(graphene.InputObjectType):
 
 
 class UpdateTicketInput(graphene.InputObjectType):
+    """Input to update existing Tickets or create new ones with a mutation."""
+
     seat_group_id = IdInputField(required=True)
     concession_type_id = IdInputField(required=True)
     seat_id = IdInputField(required=False)
     id = IdInputField(required=False)
 
     def to_ticket(self):
+        """Returns the Ticket object to be updated/created.
+
+        If a Ticket already exists it is the exisitng Ticket object (saved in
+        the database). If not a new Ticket object is created (and not yet saved
+        to the database).
+
+        Returns:
+            Ticket: The ticket to be updated/created.
+        """
 
         if self.id is not None:
             return Ticket.objects.get(id=self.id)
-        else:
-            return Ticket(
-                seat_group=SeatGroup.objects.get(id=self.seat_group_id),
-                concession_type=ConcessionType.objects.get(id=self.concession_type_id),
-                seat=Seat.objects.get(id=self.seat_id)
-                if self.seat_id is not None
-                else None,
-            )
+        return Ticket(
+            seat_group=SeatGroup.objects.get(id=self.seat_group_id),
+            concession_type=ConcessionType.objects.get(id=self.concession_type_id),
+            seat=Seat.objects.get(id=self.seat_id)
+            if self.seat_id is not None
+            else None,
+        )
 
 
 class CreateBooking(AuthRequiredMixin, SafeMutation):
+    """Mutation to create a Booking"""
+
     booking = graphene.Field(BookingNode)
 
     class Arguments:
@@ -265,6 +299,8 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
 
 
 class UpdateBooking(AuthRequiredMixin, SafeMutation):
+    """Mutation to updated an existing Booking"""
+
     booking = graphene.Field(BookingNode)
 
     class Arguments:

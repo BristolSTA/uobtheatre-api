@@ -103,11 +103,12 @@ class Discount(models.Model):
     """A discount which can be applied to a performance's booking.
 
     Discounts can be applied to a number of performances. They contain a
-    percentage, which is the percentage taken off the booking price. 
+    percentage, which is the percentage taken off the booking price.
 
     A Discount requires a list of DiscountRequiements to be met in order to be
     eligible for a given booking.
     """
+
     name = models.CharField(max_length=255)
     percentage = models.FloatField()
     performances = models.ManyToManyField(
@@ -121,7 +122,7 @@ class Discount(models.Model):
 
     def validate_unique(self, *args, **kwargs):
         """Check if another booking with same requirements exists
-        
+
         Extend validate_unique to ensure only 1 discount with the same set of
         requirements can be created.
 
@@ -131,7 +132,7 @@ class Discount(models.Model):
 
         super().validate_unique(*args, **kwargs)
 
-        discounts = self.__class__._default_manager.all()
+        discounts = self.__class__._default_manager.all()  # pylint: disable=W0212
         if not self._state.adding and self.pk is not None:
             discounts = discounts.exclude(pk=self.pk)
 
@@ -166,7 +167,7 @@ class Discount(models.Model):
     ) -> Dict["ConcessionType", int]:
         """Get number of each concession type required for this discount.
 
-        Returns: 
+        Returns:
             (dict of ConcessionType: int): The number of each ConcessionType
                 required by the discount.
         """
@@ -199,9 +200,9 @@ class DiscountRequirement(models.Model):
     requirements are met then the discount can be applied to the booking.
 
     For example:
-        - 2x adult 
+        - 2x adult
         - 1x student
-    are both valid discount requirements. 
+    are both valid discount requirements.
 
     A discount requirement only maps to a single concession type. For a
     discount to require multiple concession types, it must have multiple
@@ -218,8 +219,12 @@ class DiscountRequirement(models.Model):
     concession_type = models.ForeignKey(ConcessionType, on_delete=models.CASCADE)
 
 
-T = TypeVar("T")
-def combinations(iterable: List[T], max_length: int) -> Set[Tuple[T, ...]]:
+IterableType = TypeVar("T")
+
+
+def combinations(
+    iterable: List[IterableType], max_length: int
+) -> Set[Tuple[IterableType, ...]]:
     """Return all subsets of input list upto a max length.
 
     Args:
@@ -247,6 +252,7 @@ class DiscountCombination:
     selected (set of dicounts). A discount combination is simply a list of
     discounts.
     """
+
     def __init__(self, discount_combination: Tuple[Discount, ...]):
         self.discount_combination = discount_combination
 
@@ -324,10 +330,10 @@ class Booking(TimeStampedMixin, models.Model):
         return str(self.reference)
 
     def get_concession_map(self) -> Dict["ConcessionType", int]:
-        """Get map of number of concessions in this booking 
+        """Get map of number of concessions in this booking
 
         Returns:
-            (dict of ConcessionType: int): The number of each ConcessionType
+            dict of ConcessionType: int: The number of each ConcessionType
                 in this Booking.
         """
         booking_concessions: Dict = {}
@@ -364,7 +370,7 @@ class Booking(TimeStampedMixin, models.Model):
         """Return a list of valid discount combinations for the booking
 
         Returns:
-            (list of DiscountCombination): The list of valid
+            list of DiscountCombination: The list of valid
                 DiscountCombinations which can be applid to this Booking.
         """
         return [
@@ -382,18 +388,19 @@ class Booking(TimeStampedMixin, models.Model):
         Returns the price of the all the seats in the booking, with no
         discounts applied.
 
-        Returns (int): Price of all the Booking's seats in penies.
+        Returns:
+            int: Price of all the Booking's seats in penies.
         """
         return sum(ticket.seat_price() for ticket in self.tickets.all())
 
     def tickets_price(self) -> int:
         """Price of booking with single discounts applied.
-        
+
         Get the price of the booking with only single discounts (those applying
         to only one ticket) applied.
-        
+
         Returns:
-            (int): Price of the Booking with single discounts.
+            int: Price of the Booking with single discounts.
         """
         return sum(ticket.discounted_price() for ticket in self.tickets.all())
 
@@ -409,14 +416,14 @@ class Booking(TimeStampedMixin, models.Model):
         Args:
             (DiscountCombination): The discount combination to apply to the
                 Booking.
-        
-        Returns 
-            (int): Price of the Booking with given DiscountCombination applied.
+
+        Returns:
+            int: Price of the Booking with given DiscountCombination applied.
         """
         assert self.is_valid_discount_combination(discounts)
 
         discount_total: int = 0
-        tickets_available_to_discount = [ticket for ticket in self.tickets.all()]
+        tickets_available_to_discount = list(self.tickets.all())
         for discount_from_comb in discounts.discount_combination:
             discount = DiscountCombination((discount_from_comb,))
             concession_map = discount.get_concession_map()
@@ -491,7 +498,7 @@ class Booking(TimeStampedMixin, models.Model):
 
     def discount_value(self) -> int:
         """The value of group discounts on the booking.
-       
+
         When checking the subtotal of the booking (the price with all Discounts
         applied), check the value of the discounts. This value does not include
         single discounts. (i.e. if only single discounts were applied the
@@ -540,13 +547,13 @@ class Booking(TimeStampedMixin, models.Model):
         Tickets in the second list should be deleted.
 
         Args:
-            (list of Ticket): A list of tickets to compare with the Booking's
+            tickets (list of Ticket): A list of tickets to compare with the Booking's
                 tickets.
 
         Returns:
-            (list of Ticket): The tickets which are in the provided list but
+            list of Ticket: The tickets which are in the provided list but
                 not in the Booking.
-            (list of Ticket): The tickets which are in the booking but not in
+            list of Ticket: The tickets which are in the booking but not in
                 the provided list.
         """
         add_tickets: List["Ticket"] = []
@@ -586,10 +593,10 @@ class Booking(TimeStampedMixin, models.Model):
                 front end.
 
         Returns:
-            (Payment): The payment object created by paying for the Booking.
+            Payment: The payment object created by paying for the Booking.
 
         Raises:
-            (SquareError):  If the payment is unsucessful.
+            SquareException:  If the payment is unsucessful.
         """
         response = PaymentProvider.create_payment(
             self.total(), str(self.reference), nonce

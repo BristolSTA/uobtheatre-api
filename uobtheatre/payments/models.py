@@ -14,12 +14,14 @@ class Payment(TimeStampedMixin, models.Model):
 
     class PaymentProvider(models.TextChoices):
         """How the payment was made."""
+
         CASH = "CASH", "Cash"
         SQUARE_ONLINE = "SQUARE_ONLINE", "Square online"
         SQUARE_POS = "SQUARE_POS", "Square point of sale"
 
     class PaymentType(models.TextChoices):
         """Whether the payment was a refund or purchase."""
+
         PURCHASE = "PURCHASE", "Purchase payment"
         REFUND = "REFUND", "Refund payment"
 
@@ -60,9 +62,10 @@ class Payment(TimeStampedMixin, models.Model):
 
     def url(self):
         """Payment provider transaction link.
-    
+
         Returns:
-            (string): url to provider's payment reference
+            string, optional: url to provider's payment reference
         """
         if self.provider == self.PaymentProvider.SQUARE_ONLINE:
             return f"https://squareupsandbox.com/dashboard/sales/transactions/{self.provider_payment_id}"
+        return None

@@ -6,6 +6,8 @@ def test_payment_provider(monkeypatch):
     payment_provider = PaymentProvider()
 
     class MockClient:
+        """Mock square payment provider."""
+
         class Payments:
             def create_payment(self, body):
                 return body

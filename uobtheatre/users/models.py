@@ -11,6 +11,7 @@ class User(AbstractUser):
     A User is someone that uses the app (including admins). A user is
     identified by their email address (usernames are not used).
     """
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     username = None  # type: ignore
     email = models.EmailField(

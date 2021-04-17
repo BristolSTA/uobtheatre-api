@@ -19,6 +19,7 @@ class CrewRole(models.Model):
 
     class Department(models.TextChoices):
         """The department which the CrewRole is in."""
+
         LX = "lighting", "Lighting"
         SND = "sound", "Sound"
         AV = "av", "AV"
@@ -52,20 +53,20 @@ class Warning(models.Model):
 
 
 def append_production_qs(queryset, start=False, end=False):
-    """Given a booking queryset append extra fields. 
+    """Given a booking queryset append extra fields.
 
     The additional field which can be added are:
         - start
         - end
 
     Args:
-        start (bool): Whether the start field should be annotated. 
+        start (bool): Whether the start field should be annotated.
             (default is False)
-        end (bool): Whether the end field should be annotated. 
+        end (bool): Whether the end field should be annotated.
             (default is False)
 
     Returns:
-        (Queryset): The Queryset with the additional fields anotated.
+        Queryset: The Queryset with the additional fields anotated.
     """
     if start:
         queryset = queryset.annotate(start=Min("performances__start"))
@@ -123,11 +124,11 @@ class Production(TimeStampedMixin, models.Model):
 
     def is_upcoming(self) -> bool:
         """If the show has performances in the future.
-    
+
         A show is upcoming if it has a performance that has not ended.
 
         Returns:
-            (bool): If the proudction is upcoming
+            bool: If the proudction is upcoming
         """
         return self.performances.filter(start__gte=timezone.now()).count() != 0
 
@@ -138,7 +139,7 @@ class Production(TimeStampedMixin, models.Model):
         performances.
 
         Returns:
-            (bool): If the booking can be booked.
+            bool: If the booking can be booked.
         """
         return self.performances.filter(disabled=False).count() != 0
 
@@ -146,7 +147,7 @@ class Production(TimeStampedMixin, models.Model):
         """When the last Performance of the Production ends.
 
         Returns:
-            (datetime): The end datatime of the Production.
+            datetime: The end datatime of the Production.
         """
         return self.performances.all().aggregate(Max("end"))["end__max"]
 
@@ -154,7 +155,7 @@ class Production(TimeStampedMixin, models.Model):
         """When the first performance starts.
 
         Returns:
-            (datetime): The start datatime of the Production.
+            datetime: The start datatime of the Production.
         """
         return self.performances.all().aggregate(Min("start"))["start__min"]
 
@@ -165,7 +166,7 @@ class Production(TimeStampedMixin, models.Model):
         used to say "Tickets from £x".
 
         Returns:
-            (int, optional): The price of the cheapest seat in pennies. If no
+            int, optional: The price of the cheapest seat in pennies. If no
                 SeatGroups are added to this Booking then None is returned.
         """
         performances = self.performances.all()
@@ -186,7 +187,7 @@ class Production(TimeStampedMixin, models.Model):
         """The duration of the shortest show as a datetime object.
 
         Returns:
-            (datetime): The duration of the shortest production. 
+            datetime: The duration of the shortest production.
         """
         performances = self.performances.all()
         if not performances:
@@ -290,11 +291,11 @@ class Performance(TimeStampedMixin, models.Model):
         Args:
             seat_group (SeatGroup): A SeatGroup to filter the tickets by. If a
                 SeatGroup is supplied only tickets for that SeatGroup will be
-                returned. 
+                returned.
                 (default None)
 
         Returns:
-            (list of Tickets): The Ticket in the Booking. If SeatGroup supplied
+            list of Tickets: The Ticket in the Booking. If SeatGroup supplied
                 then only the Tickets in that SeatGroup.
         """
         filters = {}
@@ -312,17 +313,17 @@ class Performance(TimeStampedMixin, models.Model):
 
         The is the total number of seats (Tickets) which can be booked for this
         performance. This does not take into account any existing Bookings.
-        
+
         Note:
             The sum of the capacities of all the seat groups is not necessarily
             equal to that of the Performance (the performance may be less).
-        
+
         Args:
             seat_group (SeatGroup): If supplied the capacity of that SeatGroup is returned.
                 (default None)
 
         Returns:
-            (int): The capacity of the show (or SeatGroup if provided)
+            int: The capacity of the show (or SeatGroup if provided)
         """
         if seat_group:
             queryset = self.performance_seat_groups
@@ -343,14 +344,14 @@ class Performance(TimeStampedMixin, models.Model):
             The sum of the remaining capacities of all the seat groups is not
             necessarily equal to that of the Performance (the performance may
             be less).
-        
+
         Args:
             seat_group (SeatGroup): If supplied the remaining capacity of that
                 SeatGroup is returned.
                 (default None)
 
         Returns:
-            (int): The remaining capacity of the show (or SeatGroup if provided)
+            int: The remaining capacity of the show (or SeatGroup if provided)
         """
         if seat_group:
             return self.total_capacity(seat_group=seat_group) - len(
@@ -373,36 +374,36 @@ class Performance(TimeStampedMixin, models.Model):
         """The performances duration.
 
         Duration is measured from start time to end time.
-        
+
         Returns:
-            (datetime): Performance duration.
+            datetime: Performance duration.
         """
         return self.end - self.start
 
     def get_single_discounts(self) -> QuerySet[Any]:
         """QuerySet for single discounts available for this Performance.
-        
-        Returns: 
-            (QuerySet): This performances discount QuerySet filter to only
-                return single discounts. 
+
+        Returns:
+            QuerySet: This performances discount QuerySet filter to only
+                return single discounts.
         """
         return self.discounts.annotate(
             number_of_tickets_required=Sum("requirements__number")
         ).filter(number_of_tickets_required=1)
 
     def get_concession_discount(self, concession_type) -> float:
-        """Discount value for a concession type. 
+        """Discount value for a concession type.
 
         Given a concession type find the single discount which applies to that
         ConcessionType, if there is one. If there is return the percentage of
         the discount. If no single discount for that concession type is found
         return 0.
-           
+
         Args:
             (ConcessionType): The concession type for the discount.
 
         Returns:
-            (int): The value of the single discount on the concession type.
+            int: The value of the single discount on the concession type.
         """
         discount = next(
             (
@@ -420,24 +421,24 @@ class Performance(TimeStampedMixin, models.Model):
 
         Given a concession type and a price, returns the new price once the
         concession discount is applied.
-           
+
         Args:
             (ConcessionType): The concession type for the discount.
-            (int): current price in pennies (before discount). 
+            (int): current price in pennies (before discount).
 
         Returns:
-            (int): price in pennies once concession discount applied.
+            int: price in pennies once concession discount applied.
         """
         return math.ceil((1 - self.get_concession_discount(concession)) * price)
 
     def concessions(self) -> List:
         """Available concession types for this Performance.
-    
+
         Concession are only available to a Performance if they are in a related
         discount. This returns all the Performance's available Concessions
-    
+
         Returns:
-            (list of ConcessionType): The concessions available for this
+            list of ConcessionType: The concessions available for this
                 performance.
         """
 
@@ -455,7 +456,7 @@ class Performance(TimeStampedMixin, models.Model):
         """The cheapest seat in the Performance
 
         Returns:
-            (int): The price of the cheapest seat in the performance.
+            int: The price of the cheapest seat in the performance.
         """
         # TODO The query set should handle the min here
         return min(
@@ -466,13 +467,13 @@ class Performance(TimeStampedMixin, models.Model):
         """If the performance is sold out
 
         Returns:
-            (bool): if the performance is soldout.
+            bool: if the performance is soldout.
         """
         return self.capacity_remaining() == 0
 
     def check_capacity(self, tickets, deleted_tickets=[]) -> Optional[str]:
         """Check the capacity with ticket changes.
-    
+
         Used to check if an update to the Performances Tickets is possible with
         the Performance's (and its SeatGroups) capacity.
 
@@ -488,7 +489,7 @@ class Performance(TimeStampedMixin, models.Model):
                 (default: [])
 
         Returns:
-            (str, Optional): The reason why the new capacity (after ticket
+            str, Optional: The reason why the new capacity (after ticket
                 update) is not valid. If update is valid None is returned.
         """
         # TODO return a custom exception not a string
