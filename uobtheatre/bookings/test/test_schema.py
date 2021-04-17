@@ -655,7 +655,7 @@ def test_bookings_auth(gql_client_flexible):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "currentTickets, plannedTickets, expectedTickets",
+    "current_tickets, planned_tickets, expected_tickets",
     [
         # No change in tickets
         (

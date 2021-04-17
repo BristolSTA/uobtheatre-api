@@ -2,7 +2,7 @@ from django.db import models
 
 
 class Image(models.Model):
-    """Model for the images
+    """Model for images
 
     This model is a wrapper for ImageField, which adds some additional meta
     data.
