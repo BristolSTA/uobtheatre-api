@@ -6,7 +6,7 @@ from uobtheatre.utils.models import TimeStampedMixin
 
 
 class Society(TimeStampedMixin, models.Model):
-    """A society is a society"""
+    """Model for a group which puts on Productions."""
 
     name = models.CharField(max_length=255)
     description = models.TextField()

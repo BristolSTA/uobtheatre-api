@@ -11,14 +11,21 @@ from uobtheatre.utils.models import TimeStampedMixin
 
 
 class Seat(models.Model):
-    """ A seat which can be booked """
+    """The model for a seat
+
+    A seat is a single spot in a Venue which only one User can book per
+    performance. In most cases this is literally a seat.
+    """
 
     row = models.CharField(max_length=5, null=True, blank=True)
     number = models.CharField(max_length=5, null=True, blank=True)
 
 
 class Venue(TimeStampedMixin, models.Model):
-    """A venue is a space often where shows take place"""
+    """The model for a venue
+
+    A Venue is a place where Performances can take place.
+    """
 
     name = models.CharField(max_length=255)
     internal_capacity = models.SmallIntegerField()
@@ -30,6 +37,12 @@ class Venue(TimeStampedMixin, models.Model):
     slug = AutoSlugField(populate_from="name", unique=True, blank=True)
 
     def get_productions(self):
+        """The productions in this Venue
+
+        Returns:
+            (list of Production): A list of all the productions in this Venue.
+        """
+        # TODO This should be a single query
         productions = list(
             set(performance.production for performance in self.performances.all())
         )
@@ -44,8 +57,14 @@ class Venue(TimeStampedMixin, models.Model):
 
 
 class SeatGroup(models.Model):
-    """A seat group is a collection of seats, it can contains many seats or
-    just be a generic area eg front row or stading section"""
+    """The model for a region of a Venue.
+
+    A seat group is a region of a Venue, it can contains many seats or
+    just be a generic area. eg front row or standing section.
+
+    In order to book a SeatGroup for a performance, a PerformanceSeatGroup must
+    be created.
+    """
 
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)

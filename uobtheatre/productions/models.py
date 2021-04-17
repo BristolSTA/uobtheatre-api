@@ -473,7 +473,7 @@ class Performance(TimeStampedMixin, models.Model):
     def check_capacity(self, tickets, deleted_tickets=[]) -> Optional[str]:
         """Check the capacity with ticket changes.
     
-        Used to check if an update to the Performances tickets is possible with
+        Used to check if an update to the Performances Tickets is possible with
         the Performance's (and its SeatGroups) capacity.
 
         Given a list of ticket objects to create and a list of ticket object to
