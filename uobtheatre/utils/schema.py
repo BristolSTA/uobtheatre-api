@@ -37,7 +37,7 @@ class IdInputField(graphene.ID):
     """
 
     @staticmethod
-    def parse_literal(input_id):
+    def parse_literal(input_id):  # pylint: disable=W0221
         """Convert global id to local id.
 
         Given the global id provided in the mutation (directly as an argument)

@@ -33,6 +33,13 @@ class SeatBookingInline(admin.StackedInline):
 
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
+    """Admin for Booking model.
+
+    Extends admin to include:
+        - inline Tickets
+        - price and discounted_price in list view
+    """
+
     inlines = [SeatBookingInline]
     list_display = ("reference", "view_price", "view_price_with_discount")
 

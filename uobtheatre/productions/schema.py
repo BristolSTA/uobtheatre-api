@@ -69,7 +69,7 @@ class ProductionByMethodOrderingFilter(django_filters.OrderingFilter):
             ("-end", "End (descending)"),
         ]
 
-    def filter(self, query_set, value):
+    def filter(self, query_set, value):  # pylint: disable=arguments-differ
         if value and "start" in value:
             return append_production_qs(query_set, start=True).order_by("start")
         if value and "-start" in value:
@@ -84,6 +84,11 @@ class ProductionByMethodOrderingFilter(django_filters.OrderingFilter):
 
 
 class ProductionFilter(FilterSet):
+    """Filter for ProductionNode
+
+    Extends filterset to include start and end filters.
+    """
+
     start = django_filters.DateTimeFilter(method="start_filter")
     start__gte = django_filters.DateTimeFilter(method="start_filter")
     start__lte = django_filters.DateTimeFilter(method="start_filter")
@@ -136,6 +141,12 @@ class ProductionNode(DjangoObjectType):
 
 
 class ConcessionTypeBookingType(graphene.ObjectType):
+    """Node for ConcessionType which can be Booked.
+
+    This object gives the information about a ConcessionType for a given
+    production. It includes the concession type and its pricing.
+    """
+
     concession_type = graphene.Field(ConcessionTypeNode)
     price = graphene.Int()
     price_pounds = graphene.String()
@@ -173,6 +184,10 @@ class PerformanceSeatGroupNode(DjangoObjectType):
 
 
 class PerformanceFilter(FilterSet):
+    """Filter for PerformanceNode.
+
+    Extends filterset to include orderby start.
+    """
 
     start = django_filters.DateTimeFilter(method="start_filter")
 
@@ -193,7 +208,7 @@ class PerformanceNode(DjangoObjectType):
     sold_out = graphene.Boolean(required=True)
     discounts = DjangoListField(DiscountNode)
 
-    def resolve_ticket_options(self, info, **kwargs):
+    def resolve_ticket_options(self, info):
         return self.performance_seat_groups.all()
 
     def resolve_capacity_remaining(self, info):
@@ -222,6 +237,11 @@ class PerformanceNode(DjangoObjectType):
 
 
 class Query(graphene.ObjectType):
+    """Query for production module.
+
+    These queries are appended to the main schema Query.
+    """
+
     productions = DjangoFilterConnectionField(ProductionNode)
     performances = DjangoFilterConnectionField(PerformanceNode)
 

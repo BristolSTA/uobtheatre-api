@@ -40,7 +40,7 @@ class Venue(TimeStampedMixin, models.Model):
         """The productions in this Venue
 
         Returns:
-            (list of Production): A list of all the productions in this Venue.
+            list of Production: A list of all the productions in this Venue.
         """
         # TODO This should be a single query
         productions = list(
@@ -50,7 +50,7 @@ class Venue(TimeStampedMixin, models.Model):
         return productions
 
     def __str__(self):
-        return self.name
+        return str(self.name)
 
     class Meta:
         ordering = ["id"]
@@ -76,7 +76,7 @@ class SeatGroup(models.Model):
     is_internal = models.BooleanField(default=True)
 
     def __str__(self):
-        return self.name or str(self.id)
+        return str(self.name or self.id)
 
     class Meta:
         ordering = ["id"]

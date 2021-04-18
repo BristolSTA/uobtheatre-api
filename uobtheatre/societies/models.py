@@ -20,4 +20,4 @@ class Society(TimeStampedMixin, models.Model):
     slug = AutoSlugField(populate_from="name", unique=True, blank=True)
 
     def __str__(self):
-        return self.name
+        return str(self.name)

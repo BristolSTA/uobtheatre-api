@@ -50,7 +50,7 @@ class AuthOutput(MutationResult):
         if isinstance(self.errors, list):
             non_field_errors = [
                 NonFieldError(error["message"], code=error["code"])
-                for error in self.errors
+                for error in self.errors  # pylint: disable=E1133
             ]
             return non_field_errors
         if isinstance(self.errors, dict):

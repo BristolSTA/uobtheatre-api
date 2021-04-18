@@ -189,7 +189,7 @@ class ConcessionType(models.Model):
     description = models.TextField(null=True, blank=True)
 
     def __str__(self) -> str:
-        return self.name
+        return str(self.name)
 
 
 class DiscountRequirement(models.Model):
@@ -428,8 +428,8 @@ class Booking(TimeStampedMixin, models.Model):
         for discount_from_comb in discounts.discount_combination:
             discount = DiscountCombination((discount_from_comb,))
             concession_map = discount.get_concession_map()
-            for concession_type in concession_map.keys():
-                for _ in range(concession_map[concession_type]):
+            for concession_type, number in concession_map.items():
+                for _ in range(number):
                     # Skipped coverage here as there is no way that the next
                     # could not get an item (hopefully) given that the discount
                     # is valid.

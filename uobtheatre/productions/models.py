@@ -39,7 +39,7 @@ class CrewRole(models.Model):
     )
 
     def __str__(self):
-        return self.name
+        return str(self.name)
 
 
 class Warning(models.Model):
@@ -52,7 +52,7 @@ class Warning(models.Model):
     warning = models.CharField(max_length=255)
 
     def __str__(self):
-        return self.warning
+        return str(self.warning)
 
 
 def append_production_qs(queryset, start=False, end=False):
@@ -63,6 +63,7 @@ def append_production_qs(queryset, start=False, end=False):
         - end
 
     Args:
+        queryset (Queryset): The production queryset.
         start (bool): Whether the start field should be annotated.
             (default is False)
         end (bool): Whether the end field should be annotated.
@@ -123,7 +124,7 @@ class Production(TimeStampedMixin, models.Model):
     slug = AutoSlugField(populate_from="name", unique=True, blank=True)
 
     def __str__(self):
-        return self.name
+        return str(self.name)
 
     def is_upcoming(self) -> bool:
         """If the show has performances in the future.
@@ -218,7 +219,7 @@ class CastMember(models.Model):
     )
 
     def __str__(self):
-        return self.name
+        return str(self.name)
 
     class Meta:
         ordering = ["id"]
@@ -234,7 +235,7 @@ class ProductionTeamMember(models.Model):
     )
 
     def __str__(self):
-        return self.name
+        return str(self.name)
 
     class Meta:
         ordering = ["id"]
@@ -252,7 +253,7 @@ class CrewMember(models.Model):
     )
 
     def __str__(self):
-        return self.name
+        return str(self.name)
 
     class Meta:
         ordering = ["id"]
@@ -474,7 +475,7 @@ class Performance(TimeStampedMixin, models.Model):
         """
         return self.capacity_remaining() == 0
 
-    def check_capacity(self, tickets, deleted_tickets=[]) -> Optional[str]:
+    def check_capacity(self, tickets, deleted_tickets=None) -> Optional[str]:
         """Check the capacity with ticket changes.
 
         Used to check if an update to the Performances Tickets is possible with
@@ -495,6 +496,10 @@ class Performance(TimeStampedMixin, models.Model):
             str, Optional: The reason why the new capacity (after ticket
                 update) is not valid. If update is valid None is returned.
         """
+
+        if deleted_tickets is None:
+            deleted_tickets = []
+
         # TODO return a custom exception not a string
 
         # Get the number of each seat group
@@ -518,7 +523,7 @@ class Performance(TimeStampedMixin, models.Model):
         # Check each seat group is in the performance
         seat_groups_not_in_perfromance: List[str] = [
             seat_group.name
-            for seat_group in seat_group_counts.keys()
+            for seat_group in seat_group_counts.keys()  # pylint: disable=consider-iterating-dictionary
             if seat_group not in self.seat_groups.all()
         ]
 

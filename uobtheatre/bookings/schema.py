@@ -1,4 +1,5 @@
 import itertools
+from typing import List
 
 import graphene
 from django.db.models import Count
@@ -182,7 +183,7 @@ class BookingFilter(FilterSet):
 
         """
         if self.request.user.is_authenticated:
-            return super(BookingFilter, self).qs.filter(user=self.request.user)
+            return super().qs.filter(user=self.request.user)
         return Booking.objects.none()
 
     order_by = OrderingFilter(fields=("created_at",))
@@ -269,7 +270,11 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
         tickets = graphene.List(CreateTicketInput, required=False)
 
     @classmethod
-    def resolve_mutation(self, root, info, performance_id, tickets=[]):
+    def resolve_mutation(cls, _, info, performance_id, tickets: List[Ticket] = None):
+
+        if tickets is None:
+            tickets = []
+
         # Get the performance and if it doesn't exist throw an error
         performance = Performance.objects.get(id=performance_id)
 
@@ -308,30 +313,52 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
         tickets = graphene.List(UpdateTicketInput, required=False)
 
     @classmethod
-    def resolve_mutation(self, root, info, booking_id, tickets=[]):
+    def resolve_mutation(cls, _, info, booking_id, tickets=None):
+
+        if tickets is None:
+            tickets = []
+
         booking = Booking.objects.get(id=booking_id, user=info.context.user)
 
         # Convert the given tickets to ticket objects
         ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))
 
-        addTickets, deleteTickets = booking.get_ticket_diff(ticket_objects)
+        add_tickets, delete_tickets = booking.get_ticket_diff(ticket_objects)
         # Check the capacity of the show and its seat_groups
         err = booking.performance.check_capacity(ticket_objects)
         if err:
             raise GQLNonFieldException(message=err, code=400)
 
         # Save all the validated tickets
-        for ticket in addTickets:
+        for ticket in add_tickets:
             ticket.booking = booking
             ticket.save()
 
-        for ticket in deleteTickets:
+        for ticket in delete_tickets:
             ticket.delete()
 
         return UpdateBooking(booking=booking)
 
 
 class PayBooking(AuthRequiredMixin, SafeMutation):
+    """Mutation to pay for a Booking.
+
+    Args:
+        booking_id (str): The gloabl id of the Booking being paid for.
+        price (int): The expected price of the Booking. This must match the
+            actual price of the Booking. This is used to ensure the front end
+            is showing the true price which will be paid.
+        nonce (str): The Square payment form nonce.
+
+    Returns:
+        booking (BookingNode): The Booking which was paid for.
+        payment (PaymentNode): The Payment which was created by the
+            transaction.
+
+    Raises:
+        GQLNonFieldException: If the Payment was unsucessful.
+    """
+
     booking = graphene.Field(BookingNode)
     payment = graphene.Field("uobtheatre.payments.schema.PaymentNode")
 
@@ -341,7 +368,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         nonce = graphene.String(required=True)
 
     @classmethod
-    def resolve_mutation(self, root, info, booking_id, price, nonce):
+    def resolve_mutation(cls, _, info, booking_id, price, nonce):
         # Get the performance and if it doesn't exist throw an error
         booking = Booking.objects.get(id=booking_id)
 

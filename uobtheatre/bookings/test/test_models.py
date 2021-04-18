@@ -32,7 +32,7 @@ from uobtheatre.venues.test.factories import SeatFactory, SeatGroupFactory, Venu
 
 
 @pytest.mark.parametrize(
-    "input, length, output",
+    "inputs, length, output",
     [
         (
             [1, 2, 3],
@@ -99,8 +99,8 @@ from uobtheatre.venues.test.factories import SeatFactory, SeatGroupFactory, Venu
         ),
     ],
 )
-def test_combinations(input, length, output):
-    calculated_combinations = combinations(input, length)
+def test_combinations(inputs, length, output):
+    calculated_combinations = combinations(inputs, length)
     assert set(calculated_combinations) == set(output)
     assert len(calculated_combinations) == len(output)
 

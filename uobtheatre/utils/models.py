@@ -29,7 +29,7 @@ def validate_percentage(percentage):
         (float): The percentage value to validate
 
     Raises:
-        (ValidationError): If the value is not valid
+        ValidationError: If the value is not valid
     """
     if not 0 <= percentage <= 1:
         raise ValidationError(
