@@ -270,7 +270,9 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
         tickets = graphene.List(CreateTicketInput, required=False)
 
     @classmethod
-    def resolve_mutation(cls, _, info, performance_id, tickets: List[Ticket] = None):
+    def resolve_mutation(
+        cls, _, info, performance_id, tickets: List[CreateTicketInput] = None
+    ):
 
         if tickets is None:
             tickets = []

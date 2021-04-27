@@ -10,12 +10,12 @@ from uobtheatre.bookings.test.factories import (
     PerformanceSeatingFactory,
 )
 from uobtheatre.productions.test.factories import (
+    AudienceWarningFactory,
     CastMemberFactory,
     CrewMemberFactory,
     PerformanceFactory,
     ProductionFactory,
     ProductionTeamMemberFactory,
-    WarningFactory,
     create_production,
 )
 
@@ -26,7 +26,7 @@ def test_productions_schema(gql_client, gql_id):
     production = ProductionFactory()
     performances = [PerformanceFactory(production=production) for i in range(2)]
 
-    warnings = [WarningFactory() for i in range(3)]
+    warnings = [AudienceWarningFactory() for i in range(3)]
     production.warnings.set(warnings)
 
     cast = [CastMemberFactory(production=production) for i in range(10)]
@@ -103,7 +103,7 @@ def test_productions_schema(gql_client, gql_id):
                 }
                 warnings {
                   id
-                  warning
+                  description
                 }
               }
             }
@@ -202,7 +202,7 @@ def test_productions_schema(gql_client, gql_id):
                             "warnings": [
                                 {
                                     "id": gql_id(warning.id, "WarningNode"),
-                                    "warning": warning.warning,
+                                    "warning": warning.description,
                                 }
                                 for warning in warnings
                             ],

@@ -16,13 +16,13 @@ from uobtheatre.bookings.test.factories import (
     TicketFactory,
 )
 from uobtheatre.productions.test.factories import (
+    AudienceWarningFactory,
     CastMemberFactory,
     CrewMemberFactory,
     CrewRoleFactory,
     PerformanceFactory,
     ProductionFactory,
     ProductionTeamMemberFactory,
-    WarningFactory,
 )
 from uobtheatre.venues.test.factories import SeatGroupFactory
 
@@ -198,8 +198,8 @@ def test_price_with_concession():
 
 @pytest.mark.django_db
 def test_str_warning():
-    warning = WarningFactory()
-    assert str(warning) == warning.warning
+    warning = AudienceWarningFactory()
+    assert str(warning) == warning.description
 
 
 @pytest.mark.django_db

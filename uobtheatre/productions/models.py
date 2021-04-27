@@ -42,17 +42,17 @@ class CrewRole(models.Model):
         return str(self.name)
 
 
-class Warning(models.Model):
+class AudienceWarning(models.Model):
     """A warning about a Production.
 
     In many cases Productions have speciifc warnings which they wish to inform
     the audience about before they purchase tickets.
     """
 
-    warning = models.CharField(max_length=255)
+    description = models.CharField(max_length=255)
 
     def __str__(self):
-        return str(self.warning)
+        return str(self.description)
 
 
 def append_production_qs(queryset, start=False, end=False):
@@ -119,7 +119,7 @@ class Production(TimeStampedMixin, models.Model):
     age_rating = models.SmallIntegerField(null=True)
     facebook_event = models.CharField(max_length=255, null=True)
 
-    warnings = models.ManyToManyField(Warning, blank=True)
+    warnings = models.ManyToManyField(AudienceWarning, blank=True)
 
     slug = AutoSlugField(populate_from="name", unique=True, blank=True)
 

@@ -10,6 +10,7 @@ from graphene_django.filter import (
 
 from uobtheatre.bookings.schema import ConcessionTypeNode, DiscountNode
 from uobtheatre.productions.models import (
+    AudienceWarning,
     CastMember,
     CrewMember,
     CrewRole,
@@ -17,7 +18,6 @@ from uobtheatre.productions.models import (
     PerformanceSeatGroup,
     Production,
     ProductionTeamMember,
-    Warning,
     append_production_qs,
 )
 from uobtheatre.utils.schema import FilterSet
@@ -49,7 +49,7 @@ class CrewMemberNode(DjangoObjectType):
 
 class WarningNode(DjangoObjectType):
     class Meta:
-        model = Warning
+        model = AudienceWarning
         interfaces = (relay.Node,)
 
 

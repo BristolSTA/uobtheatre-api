@@ -3,6 +3,7 @@ from django.utils import timezone
 
 from uobtheatre.images.test.factories import ImageFactory
 from uobtheatre.productions.models import (
+    AudienceWarning,
     CastMember,
     CrewMember,
     CrewRole,
@@ -11,7 +12,6 @@ from uobtheatre.productions.models import (
     ProductionTeamMember,
     Society,
     Venue,
-    Warning,
 )
 from uobtheatre.societies.test.factories import SocietyFactory
 from uobtheatre.venues.test.factories import VenueFactory
@@ -81,11 +81,11 @@ class CastMemberFactory(factory.django.DjangoModelFactory):
         model = CastMember
 
 
-class WarningFactory(factory.django.DjangoModelFactory):
-    warning = factory.Faker("sentence", nb_words=3)
+class AudienceWarningFactory(factory.django.DjangoModelFactory):
+    description = factory.Faker("sentence", nb_words=3)
 
     class Meta:
-        model = Warning
+        model = AudienceWarning
 
 
 def create_production(start, end, production_id=None):
@@ -100,7 +100,7 @@ def create_production(start, end, production_id=None):
             (default None)
 
     Returns:
-        (Production): The generated Production.
+        Production: The generated Production.
     """
     if production_id is None:
         production = ProductionFactory()
