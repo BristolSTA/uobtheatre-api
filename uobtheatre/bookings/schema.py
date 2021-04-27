@@ -271,7 +271,7 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
 
     @classmethod
     def resolve_mutation(
-        cls, _, info, performance_id, tickets: List[CreateTicketInput] = None
+        cls, _, info, performance_id: int, tickets: List[CreateTicketInput] = None
     ):
 
         if tickets is None:
