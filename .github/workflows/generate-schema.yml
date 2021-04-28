@@ -29,11 +29,15 @@ jobs:
     - name: Install dependencies
       run: pip install -r requirements.txt -r dev-requirements.txt
 
+    # Generate schmea
     - name: Generate schema
       run: |
         ./manage.py graphql_schema --schema uobtheatre.schema.schema --out schema.graphql
 
-    - name: Commit & Push changes
-      uses: actions-js/push@master
+    # Push up the schema
+    - name: Commit schema
+      uses: EndBug/add-and-commit@v7.0.0
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        message: 'Updated schema'
+        author_name: github-actions
+        author_email: 41898282+github-actions[bot]@users.noreply.github.com
