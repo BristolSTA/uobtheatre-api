@@ -440,7 +440,7 @@ def test_update_booking(
         ticket_queries,
     )
 
-    gql_client_flexible.set_user(booking.user)
+    gql_client_flexible.user = booking.user
     response = gql_client_flexible.execute(request_query)
 
     return_booking_id = response["data"]["updateBooking"]["booking"]["id"]
@@ -456,11 +456,36 @@ def test_update_booking(
 
 
 @pytest.mark.django_db
+def test_update_booking_no_tickets(gql_client_flexible):
+    booking = BookingFactory(user=gql_client_flexible.user)
+    tickets = [TicketFactory(booking=booking) for _ in range(10)]
+
+    request_query = """
+        mutation {
+            updateBooking (
+                bookingId: "%s"
+            ){
+                booking{
+                    id
+                }
+            }
+        }
+        """ % (
+        to_global_id("BookingNode", booking.id),
+    )
+
+    gql_client_flexible.execute(request_query)
+
+    # Assert the bookings ticket have not changed
+    assert set(booking.tickets.all()) == set(tickets)
+
+
+@pytest.mark.django_db
 def test_update_booking_capacity_error(gql_client_flexible):
 
     seat_group = SeatGroupFactory()
     concession_type = ConcessionTypeFactory()
-    booking = BookingFactory(user=gql_client_flexible.get_user())
+    booking = BookingFactory(user=gql_client_flexible.user)
     request_query = """
         mutation {
             updateBooking (
@@ -515,7 +540,7 @@ def test_create_booking_capacity_error(gql_client_flexible):
 
     seat_group = SeatGroupFactory()
     concession_type = ConcessionTypeFactory()
-    booking = BookingFactory(user=gql_client_flexible.get_user())
+    booking = BookingFactory(user=gql_client_flexible.user)
     request_query = """
         mutation {
             createBooking (

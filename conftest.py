@@ -23,13 +23,15 @@ class AuthenticateableGQLClient(GQLClient):
         self.request_factory.user = user
         super().__init__(schema, format_error, **execute_options)
 
-    def set_user(self, user):
-        if not user:
-            self.logout()
-        self.request_factory.user = user
-
-    def get_user(self):
+    @property
+    def user(self):
         return self.request_factory.user
+
+    @user.setter
+    def user(self, new_user):
+        if not new_user:
+            self.logout()
+        self.request_factory.user = new_user
 
     def logout(self):
         self.request_factory.user = AnonymousUser()

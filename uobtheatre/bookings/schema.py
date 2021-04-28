@@ -306,7 +306,15 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
 
 
 class UpdateBooking(AuthRequiredMixin, SafeMutation):
-    """Mutation to updated an existing Booking"""
+    """Mutation to updated an existing Booking
+
+    Args:
+        booking_id (str): Global id of booking which is being updated
+        tickets (Ticket): The new set tickets which the booking should contain
+            after the update. If an empty list is provided all the bookings
+            tickets will be deleted. If no list is provided the bookings
+            tickets will not be changed.
+    """
 
     booking = graphene.Field(BookingNode)
 
@@ -317,10 +325,12 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
     @classmethod
     def resolve_mutation(cls, _, info, booking_id, tickets=None):
 
-        if tickets is None:
-            tickets = []
-
         booking = Booking.objects.get(id=booking_id, user=info.context.user)
+
+        # If no tickets are provided then we will not update the bookings
+        # tickets.
+        if tickets is None:
+            return UpdateBooking(booking=booking)
 
         # Convert the given tickets to ticket objects
         ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))

@@ -202,7 +202,7 @@ def test_productions_schema(gql_client, gql_id):
                             "warnings": [
                                 {
                                     "id": gql_id(warning.id, "WarningNode"),
-                                    "warning": warning.description,
+                                    "description": warning.description,
                                 }
                                 for warning in warnings
                             ],

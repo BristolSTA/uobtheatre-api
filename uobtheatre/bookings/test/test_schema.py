@@ -59,7 +59,7 @@ def test_bookings_schema(gql_client_flexible, gql_id):
     assert response == {"data": {"me": None}}
 
     # When we are logged in expect only the user's bookings
-    client.set_user(booking.user)
+    client.user = booking.user
     response = client.execute(request_query)
     assert response == {
         "data": {
@@ -208,7 +208,7 @@ def test_bookings_price_break_down(
         """
     # Login in client
     client = gql_client_flexible
-    client.set_user(booking.user)
+    client.user = booking.user
     response = client.execute(request_query)
 
     response_booking_price_break_down = response["data"]["me"]["bookings"]["edges"][0][
@@ -380,7 +380,7 @@ def test_booking_in_progress(gql_client_flexible, gql_id):
     }
     """
 
-    gql_client_flexible.set_user(user)
+    gql_client_flexible.user = user
     response = gql_client_flexible.execute(request_query)
 
     assert response == {
@@ -433,7 +433,7 @@ def test_booking_orderby(order_by, expected_order, gql_client_flexible):
       }
     }
     """
-    gql_client_flexible.set_user(user)
+    gql_client_flexible.user = user
     response = gql_client_flexible.execute(request % order_by)
 
     assert response["data"]["me"]["bookings"]["edges"] == [
@@ -481,7 +481,7 @@ def test_bookings_auth(gql_client_flexible):
 
     # When we are logged in as a different user expect 0 booking
     user2 = UserFactory()
-    gql_client_flexible.set_user(user2)
+    gql_client_flexible.user = user2
     assert (
         response["data"]["performances"]["edges"][0]["node"]["bookings"]["edges"] == []
     )
