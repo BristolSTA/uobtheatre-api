@@ -1,5 +1,6 @@
 import django_filters
 import graphene
+from django.apps import apps
 from graphene import relay
 from graphene_django import DjangoListField, DjangoObjectType
 from graphene_django.filter import (
@@ -8,7 +9,7 @@ from graphene_django.filter import (
     GlobalIDMultipleChoiceFilter,
 )
 
-from uobtheatre.bookings.schema import ConcessionTypeNode, DiscountNode
+from uobtheatre.bookings.schema import ConcessionTypeNode, DiscountNode, TicketUnion
 from uobtheatre.productions.models import (
     CastMember,
     CrewMember,
@@ -187,6 +188,22 @@ class PerformanceNode(DjangoObjectType):
     is_online = graphene.Boolean(required=True)
     sold_out = graphene.Boolean(required=True)
     discounts = DjangoListField(DiscountNode)
+    tickets = graphene.List(TicketUnion, ticket_type=graphene.String())
+
+    def resolve_tickets(self, info, ticket_type=None):
+        if ticket_type is not None:
+            try:
+                ticket_model = apps.get_model(
+                    "bookings", ticket_type.removesuffix("Node")
+                )
+            except LookupError as exception:
+                raise exception
+
+        return [
+            ticket.cast()
+            for ticket in self.tickets.all()
+            if ticket_type is None or type(ticket.cast()) == ticket_model
+        ]
 
     def resolve_ticket_options(self, info, **kwargs):
         return self.performance_seat_groups.all()

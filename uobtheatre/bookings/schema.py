@@ -10,11 +10,12 @@ from graphql_auth.schema import UserNode
 
 from uobtheatre.bookings.models import (
     Booking,
+    BookingTicket,
+    CompTicket,
     ConcessionType,
     Discount,
     DiscountRequirement,
     MiscCost,
-    Ticket,
 )
 from uobtheatre.productions.models import Performance
 from uobtheatre.utils.enums import GrapheneEnumMixin
@@ -43,10 +44,21 @@ class MiscCostNode(DjangoObjectType):
         interfaces = (relay.Node,)
 
 
-class TicketNode(DjangoObjectType):
+class BookingTicketNode(DjangoObjectType):
     class Meta:
-        model = Ticket
+        model = BookingTicket
         interfaces = (relay.Node,)
+
+
+class CompTicketNode(DjangoObjectType):
+    class Meta:
+        model = CompTicket
+        interfaces = (relay.Node,)
+
+
+class TicketUnion(graphene.Union):
+    class Meta:
+        types = (BookingTicketNode, CompTicketNode)
 
 
 class DiscountRequirementNode(DjangoObjectType):
@@ -186,7 +198,7 @@ BookingStatusSchema = graphene.Enum.from_enum(Booking.BookingStatus)
 
 class BookingNode(GrapheneEnumMixin, DjangoObjectType):
     price_breakdown = graphene.Field(PriceBreakdownNode)
-    tickets = DjangoListField(TicketNode)
+    tickets = DjangoListField(BookingTicketNode)
     user = graphene.Field(UserNode)
     payments = DjangoFilterConnectionField("uobtheatre.payments.schema.PaymentNode")
 
@@ -271,8 +283,7 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
 
         # Save all the validated tickets
         for ticket in ticket_objects:
-            ticket.booking = booking
-            ticket.save()
+            booking.add_ticket(ticket)
 
         return CreateBooking(booking=booking)
 
@@ -299,8 +310,7 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
 
         # Save all the validated tickets
         for ticket in addTickets:
-            ticket.booking = booking
-            ticket.save()
+            booking.add_ticket(ticket)
 
         for ticket in deleteTickets:
             ticket.delete()
@@ -364,9 +374,9 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
                 raise GQLFieldException(
                     message="The ticket booking does not match the mutation booking."
                 )
-                
+
             ticket.check_in()
-                # Raise ticket booking does not match the booking
+            # Raise ticket booking does not match the booking
 
         return CheckInBooking(booking=booking, performance=performance)
 

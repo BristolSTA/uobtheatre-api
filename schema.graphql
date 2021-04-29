@@ -27,7 +27,7 @@ type BookingNode implements Node {
   user: UserNode
   performance: PerformanceNode!
   status: EnumNode
-  tickets: [TicketNode!]
+  tickets: [BookingTicketNode!]
   priceBreakdown: PriceBreakdownNode
   payments(offset: Int, before: String, after: String, first: Int, last: Int, type: String, provider: String, createdAt: DateTime, id: ID): PaymentNodeConnection
 }
@@ -39,6 +39,26 @@ type BookingNodeConnection {
 
 type BookingNodeEdge {
   node: BookingNode
+  cursor: String!
+}
+
+type BookingTicketNode implements Node {
+  id: ID!
+  seatGroup: SeatGroupNode!
+  performance: PerformanceNode!
+  seat: SeatNode
+  checkedIn: Boolean!
+  booking: BookingNode!
+  concessionType: ConcessionTypeNode!
+}
+
+type BookingTicketNodeConnection {
+  pageInfo: PageInfo!
+  edges: [BookingTicketNodeEdge]!
+}
+
+type BookingTicketNodeEdge {
+  node: BookingTicketNode
   cursor: String!
 }
 
@@ -61,6 +81,16 @@ input CheckInTicketInput {
   ticketId: IdInputField!
 }
 
+type CompTicketNode implements Node {
+  id: ID!
+  seatGroup: SeatGroupNode!
+  performance: PerformanceNode!
+  seat: SeatNode
+  checkedIn: Boolean!
+  name: String!
+  description: String
+}
+
 type ConcessionTypeBookingType {
   concessionType: ConcessionTypeNode
   price: Int
@@ -71,7 +101,7 @@ type ConcessionTypeNode implements Node {
   id: ID!
   name: String!
   description: String
-  seatBookings(offset: Int, before: String, after: String, first: Int, last: Int): TicketNodeConnection!
+  seatBookings(offset: Int, before: String, after: String, first: Int, last: Int): BookingTicketNodeConnection!
 }
 
 type CreateBooking {
@@ -276,6 +306,7 @@ type PerformanceNode implements Node {
   disabled: Boolean!
   seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
   capacity: Int
+  tickets(ticketType: String): [TicketUnion]
   discounts: [DiscountNode!]
   bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, reference: String, user: ID, performance: ID, status: String, id: ID, orderBy: String): BookingNodeConnection!
   capacityRemaining: Int
@@ -418,7 +449,6 @@ type SeatGroupNode implements Node {
   capacity: Int
   seats: SeatNode
   isInternal: Boolean!
-  tickets(offset: Int, before: String, after: String, first: Int, last: Int): TicketNodeConnection!
 }
 
 type SeatGroupNodeConnection {
@@ -436,7 +466,6 @@ type SeatNode implements Node {
   row: String
   number: String
   seatgroupSet(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
-  ticketSet(offset: Int, before: String, after: String, first: Int, last: Int): TicketNodeConnection!
 }
 
 type SendPasswordResetEmail {
@@ -476,24 +505,7 @@ type SwapEmails {
   errors: [GQLErrorUnion]
 }
 
-type TicketNode implements Node {
-  id: ID!
-  seatGroup: SeatGroupNode!
-  booking: BookingNode!
-  concessionType: ConcessionTypeNode!
-  seat: SeatNode
-  checkedIn: Boolean!
-}
-
-type TicketNodeConnection {
-  pageInfo: PageInfo!
-  edges: [TicketNodeEdge]!
-}
-
-type TicketNodeEdge {
-  node: TicketNode
-  cursor: String!
-}
+union TicketUnion = BookingTicketNode | CompTicketNode
 
 type UpdateAccount {
   success: Boolean

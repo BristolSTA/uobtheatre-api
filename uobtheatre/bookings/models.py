@@ -11,7 +11,11 @@ from uobtheatre.payments.square import PaymentProvider
 from uobtheatre.productions.models import Performance
 from uobtheatre.users.models import User
 from uobtheatre.utils.exceptions import SquareException
-from uobtheatre.utils.models import TimeStampedMixin, validate_percentage
+from uobtheatre.utils.models import (
+    InheritanceCastModel,
+    TimeStampedMixin,
+    validate_percentage,
+)
 from uobtheatre.utils.utils import create_short_uuid
 from uobtheatre.venues.models import Seat, SeatGroup
 
@@ -153,7 +157,7 @@ T = TypeVar("T")
 
 
 def combinations(iterable: List[T], max_length: int) -> Set[Tuple[T, ...]]:
-    """ Given a list give all the combinations of that list up to a given length """
+    """Given a list give all the combinations of that list up to a given length"""
 
     return set(
         combination
@@ -226,7 +230,7 @@ class Booking(TimeStampedMixin, models.Model):
         return str(self.reference)
 
     def get_concession_map(self) -> Dict:
-        """ Return the number of each type of concession in this booking """
+        """Return the number of each type of concession in this booking"""
         booking_concessions: Dict = {}
         for ticket in self.tickets.all():
             if not ticket.concession_type in booking_concessions.keys():
@@ -347,15 +351,15 @@ class Booking(TimeStampedMixin, models.Model):
         return math.ceil(self.subtotal() + self.misc_costs_value())
 
     def get_ticket_diff(
-        self, tickets: List["Ticket"]
-    ) -> Tuple[List["Ticket"], List["Ticket"]]:
+        self, tickets: List["BookingTicket"]
+    ) -> Tuple[List["BookingTicket"], List["BookingTicket"]]:
         """
         Given a list of tickets return the tickets which need to be created a
         deleted, in two lists.
         """
-        add_tickets: List["Ticket"] = []
-        delete_tickets: List["Ticket"] = []
-        existing_tickets: Dict[int, "Ticket"] = {}
+        add_tickets: List["BookingTicket"] = []
+        delete_tickets: List["BookingTicket"] = []
+        existing_tickets: Dict[int, "BookingTicket"] = {}
 
         # find tickets to add
         for ticket in tickets:
@@ -407,13 +411,40 @@ class Booking(TimeStampedMixin, models.Model):
             # If the square transaction failed then raise an exception
             raise SquareException(response)
 
+    def add_ticket(self, ticket: "BookingTicket"):
+        ticket.booking = self
+        ticket.performance = self.performance
+        ticket.save()
 
-class Ticket(models.Model):
+
+class Ticket(InheritanceCastModel):
     """A booking of a single seat (from a seat group)"""
 
     seat_group = models.ForeignKey(
         SeatGroup, on_delete=models.RESTRICT, related_name="tickets"
     )
+
+    performance = models.ForeignKey(
+        Performance,
+        on_delete=models.RESTRICT,
+        related_name="tickets",
+    )
+
+    seat = models.ForeignKey(Seat, on_delete=models.RESTRICT, null=True, blank=True)
+
+    checked_in = models.BooleanField(default=False)
+
+    def check_in(self):
+        """
+        Check a ticket in
+        """
+        self.checked_in = True
+        self.save()
+
+
+class BookingTicket(Ticket):
+    """A booking of a single seat (from a seat group)"""
+
     booking = models.ForeignKey(
         Booking, on_delete=models.CASCADE, related_name="tickets"
     )
@@ -422,9 +453,6 @@ class Ticket(models.Model):
         on_delete=models.RESTRICT,
         related_name="seat_bookings",
     )
-    seat = models.ForeignKey(Seat, on_delete=models.RESTRICT, null=True, blank=True)
-
-    checked_in = models.BooleanField(default=False)
 
     def discounted_price(self) -> int:
         """
@@ -446,9 +474,9 @@ class Ticket(models.Model):
             seat_group=self.seat_group
         ).price
 
-    def check_in(self):
-        """
-        Check a ticket in
-        """
-        self.checked_in = True
-        self.save()
+
+class CompTicket(Ticket):
+    """A Complimentary Ticket"""
+
+    name = models.CharField(max_length=255)
+    description = models.TextField(null=True, blank=True)

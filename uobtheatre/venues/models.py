@@ -7,7 +7,7 @@ from uobtheatre.utils.models import TimeStampedMixin
 
 
 class Seat(models.Model):
-    """ A seat which can be booked """
+    """A seat which can be booked"""
 
     row = models.CharField(max_length=5, null=True, blank=True)
     number = models.CharField(max_length=5, null=True, blank=True)

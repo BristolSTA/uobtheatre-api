@@ -92,21 +92,35 @@
     {
         "model": "bookings.ticket",
         "pk": 1,
-        "fields": {"seat_group": 1, "booking": 1, "concession_type": 1}
-    },
+        "fields": {
+          "real_type": 26,
+          "seat_group": 1,
+          "performance": 1
+        }
+      },
     {
         "model": "bookings.ticket",
         "pk": 2,
-        "fields": {"seat_group": 1, "booking": 1, "concession_type": 1}
-    },
-    {
-        "model": "bookings.ticket",
-        "pk": 3,
-        "fields": {"seat_group": 1, "booking": 1, "concession_type": 2}
-    },
-    {
-        "model": "bookings.ticket",
-        "pk": 4,
-        "fields": {"seat_group": 1, "booking": 1, "concession_type": 2}
-    }
+        "fields": {
+          "real_type": 27,
+          "seat_group": 1,
+          "performance": 1
+        }
+      },
+      {
+        "model": "bookings.bookingticket",
+        "pk": 1,
+        "fields": {
+          "booking": 1,
+          "concession_type": 1
+        }
+      },
+      {
+        "model": "bookings.compticket",
+        "pk": 2,
+        "fields": {
+          "name": "james",
+          "description": ""
+        }
+      }
 ]

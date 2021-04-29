@@ -247,20 +247,8 @@ class Performance(TimeStampedMixin, models.Model):
 
     capacity = models.IntegerField(null=True, blank=True)
 
-    def tickets(self, seat_group=None):
-        """ Get all tickets for this performance """
-        filters = {}
-        if seat_group:
-            filters["seat_group"] = seat_group
-
-        return [
-            ticket
-            for booking in self.bookings.all()
-            for ticket in booking.tickets.filter(**filters)
-        ]
-
     def total_capacity(self, seat_group=None):
-        """ Returns the total capacity of show. """
+        """Returns the total capacity of show."""
         if seat_group:
             queryset = self.performance_seat_groups
             try:
@@ -271,10 +259,10 @@ class Performance(TimeStampedMixin, models.Model):
         return response["capacity__sum"] or 0
 
     def capacity_remaining(self, seat_group: SeatGroup = None):
-        """ Returns the capacity remaining.  """
+        """Returns the capacity remaining."""
         if seat_group:
             return self.total_capacity(seat_group=seat_group) - len(
-                self.tickets(seat_group=seat_group)
+                self.tickets.filter(seat_group=seat_group)
             )
 
         seat_groups_remaining_capacity = sum(
@@ -285,7 +273,7 @@ class Performance(TimeStampedMixin, models.Model):
             seat_groups_remaining_capacity
             if not self.capacity
             else min(
-                self.capacity - len(self.tickets()), seat_groups_remaining_capacity
+                self.capacity - len(self.tickets.all()), seat_groups_remaining_capacity
             )
         )
 
@@ -296,7 +284,7 @@ class Performance(TimeStampedMixin, models.Model):
         return self.end - self.start
 
     def get_single_discounts(self) -> QuerySet[Any]:
-        """ Returns all discounts that apply to a single ticket """
+        """Returns all discounts that apply to a single ticket"""
         return self.discounts.annotate(
             number_of_tickets_required=Sum("requirements__number")
         ).filter(number_of_tickets_required=1)
@@ -324,7 +312,7 @@ class Performance(TimeStampedMixin, models.Model):
         return math.ceil((1 - self.get_concession_discount(concession)) * price)
 
     def concessions(self) -> List:
-        """ Returns list of all concession types """
+        """Returns list of all concession types"""
         concession_list = list(
             set(
                 discounts_requirement.concession_type
@@ -412,7 +400,7 @@ class Performance(TimeStampedMixin, models.Model):
 
 
 class PerformanceSeatGroup(models.Model):
-    """ Storing the price and number of seats of each seat group for a show """
+    """Storing the price and number of seats of each seat group for a show"""
 
     seat_group = models.ForeignKey(SeatGroup, on_delete=models.RESTRICT)
     performance = models.ForeignKey(
