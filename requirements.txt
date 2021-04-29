@@ -36,7 +36,7 @@ graphene-django==2.15.0
 django-graphql-auth==0.3.16
 # These are apparently a package deal atm so we need both
 django-graphql-jwt==0.3.0
-PyJWT==1.7.0
+PyJWT==2.1.0
 
 #=== Payments ===#
 
