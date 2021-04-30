@@ -6,32 +6,6 @@ on:
   pull_request:
     branches: [ main, dev ]
 
-anchors:
-  # Set up python and pacakages
-  setup: &setup
-    # Set up cache for pip packages
-    - uses: actions/cache@v2
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-
-    # Checkout the code
-    - uses: actions/checkout@v2
-
-    # Setup python
-    - name: set up python 3.9
-      uses: actions/setup-python@v2
-      with:
-        python-version: "3.9"
-
-    # Install dependencies
-    - name: Install dependencies
-      run: pip install -r requirements.txt -r dev-requirements.txt
-
-
-
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -55,7 +29,26 @@ jobs:
 
 
     steps:
-    - *setup
+    # Set up cache for pip packages
+    - uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    # Checkout the code
+    - uses: actions/checkout@v2
+
+    # Setup python
+    - name: set up python 3.9
+      uses: actions/setup-python@v2
+      with:
+        python-version: "3.9"
+
+    # Install dependencies
+    - name: Install dependencies
+      run: pip install -r requirements.txt -r dev-requirements.txt
 
     - name: pytest - check tests pass and coverage is 100%
       run: |
@@ -66,7 +59,26 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-    - *setup
+    # Set up cache for pip packages
+    - uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    # Checkout the code
+    - uses: actions/checkout@v2
+
+    # Setup python
+    - name: set up python 3.9
+      uses: actions/setup-python@v2
+      with:
+        python-version: "3.9"
+
+    # Install dependencies
+    - name: Install dependencies
+      run: pip install -r requirements.txt -r dev-requirements.txt
 
     - name: black - formatting
       run: |
@@ -79,7 +91,26 @@ jobs:
   schema:
     runs-on: ubuntu-latest
     steps:
-    - *setup
+    # Set up cache for pip packages
+    - uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    # Checkout the code
+    - uses: actions/checkout@v2
+
+    # Setup python
+    - name: set up python 3.9
+      uses: actions/setup-python@v2
+      with:
+        python-version: "3.9"
+
+    # Install dependencies
+    - name: Install dependencies
+      run: pip install -r requirements.txt -r dev-requirements.txt
     # Generate schmea
     - name: Generate schema
       run: |
