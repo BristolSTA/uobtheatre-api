@@ -1,0 +1,43 @@
+name: Python package
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  generate-schema:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - uses: actions/checkout@v2
+
+    - name: set up python 3.9
+      uses: actions/setup-python@v2
+      with:
+        python-version: "3.9"
+
+    - name: Install dependencies
+      run: pip install -r requirements.txt -r dev-requirements.txt
+
+    # Generate schmea
+    - name: Generate schema
+      run: |
+        ./manage.py graphql_schema --schema uobtheatre.schema.schema --out schema.graphql
+
+    # Push up the schema
+    - name: Commit schema
+      uses: EndBug/add-and-commit@v7.0.0
+      with:
+        message: 'Updated schema'
+        author_name: github-actions
+        author_email: 41898282+github-actions[bot]@users.noreply.github.com
