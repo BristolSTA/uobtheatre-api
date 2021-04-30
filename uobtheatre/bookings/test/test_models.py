@@ -891,3 +891,20 @@ def test_booking_pay_integration():
     assert isinstance(payment.provider_payment_id, str)
     assert payment.provider == Payment.PaymentProvider.SQUARE_ONLINE
     assert payment.type, Payment.PaymentType.PURCHASE
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "initial_state, final_state",
+    [(True, True), (False, True)],
+)
+def test_ticket_check_in(initial_state, final_state):
+    """
+    Test ticket check in method
+    """
+
+    ticket = TicketFactory(checked_in=initial_state)
+
+    assert ticket.checked_in == initial_state
+    ticket.check_in()
+    assert ticket.checked_in == final_state

@@ -735,7 +735,9 @@ def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
             }
 
             booking {
-              status
+              status {
+                value
+              }
               payments {
                 edges {
                   node {
@@ -748,7 +750,9 @@ def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
             payment {
               last4
               cardBrand
-              provider
+              provider {
+                value
+              }
               currency
               value
             }
@@ -774,11 +778,14 @@ def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
     mock_square.success = True
 
     response = client.execute(request_query % gql_id(booking.id, "BookingNode"))
+    print(response)
     assert response == {
         "data": {
             "payBooking": {
                 "booking": {
-                    "status": "PAID",
+                    "status": {
+                        "value": "PAID",
+                    },
                     "payments": {
                         "edges": [
                             {
@@ -794,7 +801,9 @@ def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
                 "payment": {
                     "last4": "1111",
                     "cardBrand": "VISA",
-                    "provider": "SQUARE_ONLINE",
+                    "provider": {
+                        "value": "SQUARE_ONLINE",
+                    },
                     "currency": "GBP",
                     "value": 0,
                 },
@@ -803,3 +812,168 @@ def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
             }
         }
     }
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "performance_id, booking_obj, check_in_ticket_id_list, not_check_in_ticket_id_list, non_booking_ticket_id_list",
+    [
+        (1, {"booking_id": 1, "performance_id": 1}, [1, 2, 3], [4, 5, 6], []),
+        (1, {"booking_id": 2, "performance_id": 1}, [1, 2, 3], [], []),
+        (2, {"booking_id": 3, "performance_id": 1}, [1, 2, 3], [], []),
+        (1, {"booking_id": 4, "performance_id": 1}, [1, 2, 3], [], [4, 5, 6]),
+        (1, {"booking_id": 4, "performance_id": 1}, [], [], [7, 8, 9]),
+        (1, {"booking_id": 4, "performance_id": 2}, [1, 2, 3], [], [4, 5, 6]),
+    ],  # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
+)
+def test_check_in_booking(
+    performance_id,
+    booking_obj,
+    check_in_ticket_id_list,
+    not_check_in_ticket_id_list,
+    non_booking_ticket_id_list,
+    gql_client_flexible,
+):
+
+    """
+    What are we testing?
+    that only the expected tickets are checked in
+    that incorrect ticket refs are not checked in
+    """
+
+    if booking_obj.get("performance_id") == performance_id:
+        performance = PerformanceFactory(id=performance_id)
+        booking = BookingFactory(
+            id=booking_obj.get("booking_id"),
+            performance=performance,
+            user=gql_client_flexible.user,
+        )
+    else:
+        booking_performance = PerformanceFactory(id=booking_obj.get("performance_id"))
+        performance = PerformanceFactory(id=performance_id)
+        booking = BookingFactory(
+            id=booking_obj.get("booking_id"),
+            performance=booking_performance,
+            user=gql_client_flexible.user,
+        )
+    non_booking = BookingFactory(
+        id=0,
+        performance=performance,
+        user=gql_client_flexible.user,
+    )
+
+    # Expected to check in and pass
+    check_in_tickets = []
+    for ticket_id in check_in_ticket_id_list:
+        check_in_tickets.append(TicketFactory(id=ticket_id, booking=booking))
+
+    # Tickets are not to be checked in, expect as much
+    not_check_in_tickets = []
+    for ticket_id in not_check_in_ticket_id_list:
+        not_check_in_tickets.append(TicketFactory(id=ticket_id, booking=booking))
+
+    # As these are not part of the correct booking expected to fail
+    non_booking_tickets = []
+    for ticket_id in non_booking_ticket_id_list:
+        non_booking_tickets.append(TicketFactory(id=ticket_id, booking=non_booking))
+
+    for ticket in check_in_tickets:
+        assert not ticket.checked_in
+
+    for ticket in not_check_in_tickets:
+        assert not ticket.checked_in
+
+    for ticket in non_booking_tickets:
+        assert not ticket.checked_in
+
+    ticket_queries = ""
+    for ticket in check_in_tickets:
+        query_str = """
+                    {
+                        ticketId: "%s"
+                    }
+                    """ % (
+            to_global_id("TicketNode", ticket.id),
+        )
+        ticket_queries += query_str
+
+    for ticket in non_booking_tickets:
+        query_str = """
+                    {
+                        ticketId: "%s"
+                    }
+                    """ % (
+            to_global_id("TicketNode", ticket.id),
+        )
+        ticket_queries += query_str
+
+    request_query = """
+        mutation {
+            checkInBooking (
+                bookingReference: "%s"
+                performanceId: "%s"
+                tickets: [
+                    %s
+                ]
+            ){
+                success
+                errors {
+                __typename
+                }
+                booking{
+                    id
+                }
+            }
+        }
+        """ % (
+        booking.reference,
+        to_global_id("PerformanceNode", performance.id),
+        ticket_queries,
+    )
+
+    response = gql_client_flexible.execute(request_query)
+
+    # If there are no wrong booking tickets - and the booking performance
+    # matches the request performance we are expecting all check in tickets to
+    # be checked in and all other tickets to be left unchecked
+    if (
+        len(non_booking_tickets) == 0
+        and booking_obj.get("performance_id") == performance_id
+    ):
+        # In this instance we expect success and a correctly returned booking.
+        assert response["data"]["checkInBooking"]["success"]
+        assert response["data"]["checkInBooking"]["errors"] is None
+
+        return_booking_id = response["data"]["checkInBooking"]["booking"]["id"]
+        local_booking_id = int(from_global_id(return_booking_id)[1])
+        assert local_booking_id == booking_obj.get("booking_id")
+
+        for ticket in check_in_tickets:
+            ticket.refresh_from_db()
+            assert ticket.checked_in
+    else:
+        # In the instance where the performance is not correct or there are
+        # tickets for the wrong booking we expect failure and a returned Field
+        # Error
+        assert not response["data"]["checkInBooking"]["success"]
+        assert len(response["data"]["checkInBooking"]["errors"]) == 1
+
+        assert (
+            response["data"]["checkInBooking"]["errors"][0]["__typename"]
+            == "FieldError"
+        )
+
+        assert response["data"]["checkInBooking"]["booking"] is None
+
+        for ticket in check_in_tickets:
+            ticket.refresh_from_db()
+            assert not ticket.checked_in
+
+    # either way we expect no tickets from the non_check_in and non_booking lists to be changed
+    for ticket in not_check_in_tickets:
+        ticket.refresh_from_db()
+        assert not ticket.checked_in
+
+    for ticket in non_booking_tickets:
+        ticket.refresh_from_db()
+        assert not ticket.checked_in

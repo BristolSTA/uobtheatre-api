@@ -1,10 +1,15 @@
-import django_filters
 import graphene
-from graphene_django.filter import GlobalIDFilter
+from graphene_django import DjangoObjectType
 from graphql.language.ast import IntValue, StringValue
 from graphql_relay.node.node import from_global_id
 
+from uobtheatre.utils.enums import GrapheneEnumMixin
 from uobtheatre.utils.exceptions import AuthException, SafeMutation
+
+
+class CustomDjangoObjectType(GrapheneEnumMixin, DjangoObjectType):
+    class Meta:
+        abstract = True
 
 
 class AuthRequiredMixin(SafeMutation):
@@ -55,7 +60,3 @@ class IdInputField(graphene.ID):
         it to the local integer id.
         """
         return from_global_id(ast)[1]
-
-
-class FilterSet(django_filters.FilterSet):
-    id = GlobalIDFilter()

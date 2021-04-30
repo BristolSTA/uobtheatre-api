@@ -306,7 +306,7 @@ class Booking(TimeStampedMixin, models.Model):
         ]
 
     reference = models.CharField(
-        default=create_short_uuid, editable=False, max_length=12
+        default=create_short_uuid, editable=False, max_length=12, unique=True
     )
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bookings")
     performance = models.ForeignKey(
@@ -643,6 +643,8 @@ class Ticket(models.Model):
     )
     seat = models.ForeignKey(Seat, on_delete=models.RESTRICT, null=True, blank=True)
 
+    checked_in = models.BooleanField(default=False)
+
     def discounted_price(self) -> int:
         """Ticket price with single discounts
 
@@ -670,3 +672,10 @@ class Ticket(models.Model):
         return self.booking.performance.performance_seat_groups.get(
             seat_group=self.seat_group
         ).price
+
+    def check_in(self):
+        """
+        Check a ticket in
+        """
+        self.checked_in = True
+        self.save()

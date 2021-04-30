@@ -41,7 +41,10 @@ def test_bookings_schema(gql_client_flexible, gql_id):
                   performance {
                     id
                   }
-                  status
+                  status {
+                    value
+                    description
+                  }
                   user {
                     id
                   }
@@ -81,7 +84,10 @@ def test_bookings_schema(gql_client_flexible, gql_id):
                                         booking.performance.id, "PerformanceNode"
                                     )
                                 },
-                                "status": "IN_PROGRESS",
+                                "status": {
+                                    "value": "IN_PROGRESS",
+                                    "description": "In Progress",
+                                },
                                 "user": {"id": gql_id(booking.user.id, "UserNode")},
                             }
                         }

@@ -18,13 +18,16 @@ from uobtheatre.bookings.models import (
     Ticket,
 )
 from uobtheatre.productions.models import Performance
+from uobtheatre.utils.enums import GrapheneEnumMixin
 from uobtheatre.utils.exceptions import (
     AuthException,
+    FieldError,
     GQLFieldException,
     GQLNonFieldException,
     SafeMutation,
 )
-from uobtheatre.utils.schema import AuthRequiredMixin, FilterSet, IdInputField
+from uobtheatre.utils.filters import FilterSet
+from uobtheatre.utils.schema import AuthRequiredMixin, IdInputField
 from uobtheatre.venues.models import Seat, SeatGroup
 
 
@@ -191,11 +194,14 @@ class BookingFilter(FilterSet):
 BookingStatusSchema = graphene.Enum.from_enum(Booking.BookingStatus)
 
 
-class BookingNode(DjangoObjectType):
+class BookingNode(GrapheneEnumMixin, DjangoObjectType):
     price_breakdown = graphene.Field(PriceBreakdownNode)
     tickets = DjangoListField(TicketNode)
     user = graphene.Field(UserNode)
     payments = DjangoFilterConnectionField("uobtheatre.payments.schema.PaymentNode")
+
+    def resolve_payments(self, info):
+        return self.payments.all()
 
     def resolve_price_breakdown(self, info):
         return self
@@ -257,6 +263,13 @@ class UpdateTicketInput(graphene.InputObjectType):
             if self.seat_id is not None
             else None,
         )
+
+
+class CheckInTicketInput(graphene.InputObjectType):
+    ticket_id = IdInputField(required=True)
+
+    def to_ticket(self):
+        return Ticket.objects.get(id=self.ticket_id)
 
 
 class CreateBooking(AuthRequiredMixin, SafeMutation):
@@ -395,7 +408,68 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         return PayBooking(booking=booking, payment=payment)
 
 
+class CheckInBooking(AuthRequiredMixin, SafeMutation):
+    """Mutation to check in the tickets of a Booking.
+
+    Args:
+        booking_reference (str): The reference for the Booking being paid for.
+        performance_id (str): The id of the performance that the ticket is
+            being booked in for, this should match the performance of the
+            booking. If this is not the case an error will be thrown as the
+            Booking cannot be used for the Performance.
+
+
+    Returns:
+        booking (BookingNode): The Booking which was paid for.
+        payment (PaymentNode): The Payment which was created by the
+            transaction.
+
+    Raises:
+        GQLNonFieldException: If the Payment was unsucessful.
+    """
+
+    performance = graphene.Field("uobtheatre.productions.schema.PerformanceNode")
+    booking = graphene.Field(BookingNode)
+
+    class Arguments:
+        booking_reference = graphene.String(required=True)
+        performance_id = IdInputField(required=True)
+        tickets = graphene.List(CheckInTicketInput, required=True)
+
+    @classmethod
+    def resolve_mutation(cls, _, info, booking_reference, tickets, performance_id):
+        performance = Performance.objects.get(id=performance_id)
+        booking = Booking.objects.get(reference=booking_reference)
+
+        # check if the booking pertains to the correct performance
+        if booking.performance != performance:
+            raise GQLFieldException(
+                message="The booking performance does not match the given performance."
+            )
+            # raise booking performance does not match performance given
+        ticket_objects = []
+
+        ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))
+        # loop through the ticket IDs given
+        for ticket in ticket_objects:
+            # Check the ticket booking matches the given booking
+            if ticket.booking != booking:
+                raise GQLFieldException(
+                    message="The ticket booking does not match the mutation booking."
+                )
+
+            ticket.check_in()
+            # Raise ticket booking does not match the booking
+
+        return CheckInBooking(booking=booking, performance=performance)
+
+
+# Check in booking mutation ([ticket_id], performance_id, booking_reference) -> {performanceNode, bookingNode, [ticketNode]}
+# Check in Ticket Method on the model
+
+
 class Mutation(graphene.ObjectType):
     create_booking = CreateBooking.Field()
     update_booking = UpdateBooking.Field()
     pay_booking = PayBooking.Field()
+    check_in_booking = CheckInBooking.Field()

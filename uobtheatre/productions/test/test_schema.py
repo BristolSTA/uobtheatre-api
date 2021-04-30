@@ -90,7 +90,10 @@ def test_productions_schema(gql_client, gql_id):
                   role {
                     id
                     name
-                    department
+                    department {
+                      value
+                      description
+                    }
                   }
                 }
                 productionTeam {
@@ -178,9 +181,12 @@ def test_productions_schema(gql_client, gql_id):
                                             crew_member.role.id, "CrewRoleNode"
                                         ),
                                         "name": crew_member.role.name,
-                                        "department": str(
-                                            crew_member.role.department
-                                        ).upper(),
+                                        "department": {
+                                            "value": str(
+                                                crew_member.role.department
+                                            ).upper(),
+                                            "description": crew_member.role.get_department_display(),
+                                        },
                                     },
                                 }
                                 for crew_member in crew

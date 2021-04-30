@@ -1,7 +1,7 @@
 import django_filters
 import graphene
 from graphene import relay
-from graphene_django import DjangoListField, DjangoObjectType
+from graphene_django import DjangoListField
 from graphene_django.filter import (
     DjangoFilterConnectionField,
     GlobalIDFilter,
@@ -20,10 +20,11 @@ from uobtheatre.productions.models import (
     ProductionTeamMember,
     append_production_qs,
 )
-from uobtheatre.utils.schema import FilterSet
+from uobtheatre.utils.filters import FilterSet
+from uobtheatre.utils.schema import DjangoObjectType, GrapheneEnumMixin
 
 
-class CrewRoleNode(DjangoObjectType):
+class CrewRoleNode(GrapheneEnumMixin, DjangoObjectType):
     class Meta:
         model = CrewRole
         interfaces = (relay.Node,)
@@ -69,7 +70,22 @@ class ProductionByMethodOrderingFilter(django_filters.OrderingFilter):
             ("-end", "End (descending)"),
         ]
 
-    def filter(self, query_set, value):  # pylint: disable=arguments-differ
+    def filter(self, query_set, value: str):  # pylint: disable=arguments-differ
+        """Fitler for start and end of production
+
+        Adds following options:
+         - 'start'
+         - '-start' (Descending start)
+         - 'end'
+         - '-end' (Descending end)
+
+        Args:
+            query_set (QuerySet): The Queryset which is being filtered.
+            value (str): The choices s(eg 'start')
+
+        Returns:
+            Queryset: The filtered Queryset
+        """
         if value and "start" in value:
             return append_production_qs(query_set, start=True).order_by("start")
         if value and "-start" in value:
