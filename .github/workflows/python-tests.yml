@@ -1,4 +1,4 @@
-name: Python package
+name: CI CD
 
 on:
   push:
@@ -6,9 +6,34 @@ on:
   pull_request:
     branches: [ main, dev ]
 
+anchors:
+  # Set up python and pacakages
+  setup: &setup
+    # Set up cache for pip packages
+    - uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    # Checkout the code
+    - uses: actions/checkout@v2
+
+    # Setup python
+    - name: set up python 3.9
+      uses: actions/setup-python@v2
+      with:
+        python-version: "3.9"
+
+    # Install dependencies
+    - name: Install dependencies
+      run: pip install -r requirements.txt -r dev-requirements.txt
+
+
+
 jobs:
   test:
-
     runs-on: ubuntu-latest
 
     services:
@@ -30,22 +55,18 @@ jobs:
 
 
     steps:
-    - uses: actions/cache@v2
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
+    - *setup
 
-    - uses: actions/checkout@v2
+    - name: pytest - check tests pass and coverage is 100%
+      run: |
+        pytest --cov uobtheatre --cov-fail-under 100 -m "not square_integration"
+      env:
+        DATABASE_HOST: 0.0.0.0
 
-    - name: set up python 3.9
-      uses: actions/setup-python@v2
-      with:
-        python-version: "3.9"
-
-    - name: Install dependencies
-      run: pip install -r requirements.txt -r dev-requirements.txt
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - *setup
 
     - name: black - formatting
       run: |
@@ -55,8 +76,19 @@ jobs:
       run: |
         isort uobtheatre
 
-    - name: pytest - check tests pass and coverage is 100%
+  schema:
+    runs-on: ubuntu-latest
+    steps:
+    - *setup
+    # Generate schmea
+    - name: Generate schema
       run: |
-        pytest --cov uobtheatre --cov-fail-under 100 -m "not square_integration"
-      env:
-        DATABASE_HOST: 0.0.0.0
+        ./manage.py graphql_schema --schema uobtheatre.schema.schema --out schema.graphql
+
+    # Push up the schema
+    - name: Commit schema
+      uses: EndBug/add-and-commit@v7.0.0
+      with:
+        message: 'Updated schema'
+        author_name: github-actions
+        author_email: 41898282+github-actions[bot]@users.noreply.github.com
