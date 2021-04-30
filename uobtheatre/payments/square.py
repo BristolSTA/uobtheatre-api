@@ -46,8 +46,6 @@ class PaymentProvider:
             ApiResponse: Response object from Square
         """
 
-        # TODO all future payments using the Booking reference will be rejected
-        # atm. Could this not be bad
         payment_provider = cls()
         body = {
             "idempotency_key": idempotency_key,

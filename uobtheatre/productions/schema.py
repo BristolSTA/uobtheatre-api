@@ -163,7 +163,7 @@ class PerformanceSeatGroupNode(DjangoObjectType):
         return [
             ConcessionTypeBookingType(
                 concession_type=concession,
-                price=self.performance.price_with_concession(concession, self.price),
+                price=self.performance.price_with_concession(concession, self),
             )
             for concession in self.performance.concessions()
         ]

@@ -123,8 +123,7 @@ class PriceBreakdownNode(DjangoObjectType):
                     ticket_group[1],
                     self.performance.performance_seat_groups.get(
                         seat_group=ticket_group[0]
-                    ).price
-                    or 0,
+                    ),
                 ),
                 number=len(list(group)),
                 seat_group=ticket_group[0],
@@ -170,7 +169,7 @@ class BookingFilter(FilterSet):
         model = Booking
         fields = "__all__"
 
-    # TODO When we add back in Bookings endpoint only admin users should be
+    # NOTE: When we add back in Bookings endpoint only admin users should be
     # able to get all bookings otherwise we should return only user bookings.
     # Booings can be accessed from a performance, if this was not here then the
     # users would be able all peoples bookings.

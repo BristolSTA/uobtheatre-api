@@ -3,7 +3,6 @@ from graphql_auth import mutations
 from graphql_auth.schema import MeQuery, UserQuery
 
 
-# TODO Remove errors and status from response
 class AuthMutation(graphene.ObjectType):
     """User mutations
 

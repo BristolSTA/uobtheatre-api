@@ -3,6 +3,7 @@ Models for venues.
 """
 
 from autoslug import AutoSlugField
+from django.apps import apps
 from django.db import models
 
 from uobtheatre.addresses.models import Address
@@ -42,12 +43,8 @@ class Venue(TimeStampedMixin, models.Model):
         Returns:
             list of Production: A list of all the productions in this Venue.
         """
-        # TODO This should be a single query
-        productions = list(
-            set(performance.production for performance in self.performances.all())
-        )
-        productions.sort(key=lambda prod: prod.id)
-        return productions
+        production_model = apps.get_model("productions", "production")
+        return production_model.objects.filter(performances__venue=self)
 
     def __str__(self):
         return str(self.name)

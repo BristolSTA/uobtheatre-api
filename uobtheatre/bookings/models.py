@@ -659,7 +659,7 @@ class Ticket(models.Model):
             self.concession_type,
             self.booking.performance.performance_seat_groups.get(
                 seat_group=self.seat_group
-            ).price,
+            ),
         )
 
     def seat_price(self) -> int:

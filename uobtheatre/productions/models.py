@@ -14,7 +14,7 @@ from uobtheatre.utils.models import TimeStampedMixin
 from uobtheatre.venues.models import SeatGroup, Venue
 
 if TYPE_CHECKING:
-    from uobtheatre.bookings.models import Ticket
+    from uobtheatre.bookings.models import Ticket, ConcessionType
 
 
 class CrewRole(models.Model):
@@ -273,7 +273,10 @@ class Performance(TimeStampedMixin, models.Model):
     )
 
     venue = models.ForeignKey(
-        Venue, on_delete=models.SET_NULL, null=True, related_name="performances"
+        Venue,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="performances",
     )
 
     doors_open = models.DateTimeField(null=True)
@@ -419,8 +422,11 @@ class Performance(TimeStampedMixin, models.Model):
         )
         return discount.percentage if discount else 0
 
-    # TODO I hate this, why are we giving the price in here?
-    def price_with_concession(self, concession, price) -> int:
+    def price_with_concession(
+        self,
+        concession: "ConcessionType",
+        performance_seat_group: "PerformanceSeatGroup",
+    ) -> int:
         """Price with single concession applied.
 
         Given a concession type and a price, returns the new price once the
@@ -428,11 +434,13 @@ class Performance(TimeStampedMixin, models.Model):
 
         Args:
             (ConcessionType): The concession type for the discount.
-            (int): current price in pennies (before discount).
+            (PerformanceSeatGroup): The PerformanceSeatGroup which is being
+                discounted.
 
         Returns:
             int: price in pennies once concession discount applied.
         """
+        price = performance_seat_group.price if performance_seat_group else 0
         return math.ceil((1 - self.get_concession_discount(concession)) * price)
 
     def concessions(self) -> List:
@@ -462,10 +470,7 @@ class Performance(TimeStampedMixin, models.Model):
         Returns:
             int: The price of the cheapest seat in the performance.
         """
-        # TODO The query set should handle the min here
-        return min(
-            (psg.price for psg in self.performance_seat_groups.all()), default=None
-        )
+        return self.performance_seat_groups.aggregate(Min("price"))["price__min"]
 
     def is_sold_out(self) -> bool:
         """If the performance is sold out

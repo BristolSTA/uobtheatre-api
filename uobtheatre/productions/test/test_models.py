@@ -190,10 +190,12 @@ def test_price_with_concession():
         discount=discount_2, number=1, concession_type=concession_type
     )
 
+    psg = PerformanceSeatingFactory(performance=performance, price=20)
+
     discount_1.performances.set([performance])
     discount_2.performances.set([performance])
 
-    assert performance.price_with_concession(concession_type, 20) == 18
+    assert performance.price_with_concession(concession_type, psg) == 18
 
 
 @pytest.mark.django_db
