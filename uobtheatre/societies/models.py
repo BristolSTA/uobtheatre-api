@@ -6,7 +6,7 @@ from uobtheatre.utils.models import TimeStampedMixin
 
 
 class Society(TimeStampedMixin, models.Model):
-    """A society is a society"""
+    """Model for a group which puts on Productions."""
 
     name = models.CharField(max_length=255)
     description = models.TextField()
@@ -20,4 +20,4 @@ class Society(TimeStampedMixin, models.Model):
     slug = AutoSlugField(populate_from="name", unique=True, blank=True)
 
     def __str__(self):
-        return self.name
+        return str(self.name)

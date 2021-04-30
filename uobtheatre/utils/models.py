@@ -1,9 +1,16 @@
+"""
+Utils for uobtheatre modles
+"""
+
 from django.core.exceptions import ValidationError
 from django.db import models
 
 
 class TimeStampedMixin(models.Model):
-    """Adds created_at and updated_at to a model"""
+    """Adds created_at and updated_at to a model
+
+    Both created at and updated at are automatically set.
+    """
 
     created_at: models.DateTimeField = models.DateTimeField(auto_now_add=True)
     updated_at: models.DateTimeField = models.DateTimeField(auto_now=True)
@@ -13,7 +20,17 @@ class TimeStampedMixin(models.Model):
 
 
 def validate_percentage(percentage):
-    # If the percentage is not in the range of 0 to 1
+    """Validate a given percentage value
+
+    A percentage value can only be between 0 and 1. If this is not the case a
+    ValidationError is raised
+
+    Args:
+        (float): The percentage value to validate
+
+    Raises:
+        ValidationError: If the value is not valid
+    """
     if not 0 <= percentage <= 1:
         raise ValidationError(
             f"The percentage {percentage} is not in the required range [0, 1]"

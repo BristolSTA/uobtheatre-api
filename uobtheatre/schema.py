@@ -1,3 +1,7 @@
+"""
+Defines base schema for api
+"""
+
 import graphene
 
 import uobtheatre.bookings.schema as bookings_schema
@@ -14,11 +18,15 @@ class Query(
     users_schema.Query,
     graphene.ObjectType,
 ):
-    pass
+    """
+    Defines base Query for api
+    """
 
 
 class Mutation(users_schema.Mutation, bookings_schema.Mutation, graphene.ObjectType):
-    pass
+    """
+    Defines base Mutation for api
+    """
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)

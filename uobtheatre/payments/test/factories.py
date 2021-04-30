@@ -4,7 +4,7 @@ from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.payments.models import Payment
 
 
-class PaymentFactroy(factory.django.DjangoModelFactory):
+class PaymentFactory(factory.django.DjangoModelFactory):
 
     pay_object = factory.SubFactory(BookingFactory)
     type = Payment.PaymentType.PURCHASE

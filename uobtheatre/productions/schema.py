@@ -1,7 +1,7 @@
 import django_filters
 import graphene
 from graphene import relay
-from graphene_django import DjangoListField, DjangoObjectType
+from graphene_django import DjangoListField
 from graphene_django.filter import (
     DjangoFilterConnectionField,
     GlobalIDFilter,
@@ -10,6 +10,7 @@ from graphene_django.filter import (
 
 from uobtheatre.bookings.schema import ConcessionTypeNode, DiscountNode
 from uobtheatre.productions.models import (
+    AudienceWarning,
     CastMember,
     CrewMember,
     CrewRole,
@@ -17,7 +18,6 @@ from uobtheatre.productions.models import (
     PerformanceSeatGroup,
     Production,
     ProductionTeamMember,
-    Warning,
     append_production_qs,
 )
 from uobtheatre.utils.filters import FilterSet
@@ -50,11 +50,17 @@ class CrewMemberNode(DjangoObjectType):
 
 class WarningNode(DjangoObjectType):
     class Meta:
-        model = Warning
+        model = AudienceWarning
         interfaces = (relay.Node,)
 
 
 class ProductionByMethodOrderingFilter(django_filters.OrderingFilter):
+    """Ordering filter for productions which adds start and end.
+
+    Extends the default implementation of OrderingFitler to include ordering
+    (ascending and descending) of production start and end time.
+    """
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.extra["choices"] += [
@@ -64,21 +70,41 @@ class ProductionByMethodOrderingFilter(django_filters.OrderingFilter):
             ("-end", "End (descending)"),
         ]
 
-    def filter(self, qs, value):
+    def filter(self, query_set, value: str):  # pylint: disable=arguments-differ
+        """Fitler for start and end of production
+
+        Adds following options:
+         - 'start'
+         - '-start' (Descending start)
+         - 'end'
+         - '-end' (Descending end)
+
+        Args:
+            query_set (QuerySet): The Queryset which is being filtered.
+            value (str): The choices s(eg 'start')
+
+        Returns:
+            Queryset: The filtered Queryset
+        """
         if value and "start" in value:
-            return append_production_qs(qs, start=True).order_by("start")
+            return append_production_qs(query_set, start=True).order_by("start")
         if value and "-start" in value:
-            return append_production_qs(qs, start=True).order_by("-start")
+            return append_production_qs(query_set, start=True).order_by("-start")
 
         if value and "end" in value:
-            return append_production_qs(qs, end=True).order_by("end")
+            return append_production_qs(query_set, end=True).order_by("end")
         if value and "-end" in value:
-            return append_production_qs(qs, end=True).order_by("-end")
+            return append_production_qs(query_set, end=True).order_by("-end")
 
-        return super().filter(qs, value)
+        return super().filter(query_set, value)
 
 
 class ProductionFilter(FilterSet):
+    """Filter for ProductionNode
+
+    Extends filterset to include start and end filters.
+    """
+
     start = django_filters.DateTimeFilter(method="start_filter")
     start__gte = django_filters.DateTimeFilter(method="start_filter")
     start__lte = django_filters.DateTimeFilter(method="start_filter")
@@ -87,11 +113,11 @@ class ProductionFilter(FilterSet):
     end__gte = django_filters.DateTimeFilter(method="end_filter")
     end__lte = django_filters.DateTimeFilter(method="end_filter")
 
-    def start_filter(self, qs, value, date=None):
-        return append_production_qs(qs, start=True).filter(**{value: date})
+    def start_filter(self, query_set, value, date=None):
+        return append_production_qs(query_set, start=True).filter(**{value: date})
 
-    def end_filter(self, qs, value, date=None):
-        return append_production_qs(qs, end=True).filter(**{value: date})
+    def end_filter(self, query_set, value, date=None):
+        return append_production_qs(query_set, end=True).filter(**{value: date})
 
     class Meta:
         model = Production
@@ -131,6 +157,12 @@ class ProductionNode(DjangoObjectType):
 
 
 class ConcessionTypeBookingType(graphene.ObjectType):
+    """Node for ConcessionType which can be Booked.
+
+    This object gives the information about a ConcessionType for a given
+    production. It includes the concession type and its pricing.
+    """
+
     concession_type = graphene.Field(ConcessionTypeNode)
     price = graphene.Int()
     price_pounds = graphene.String()
@@ -147,7 +179,7 @@ class PerformanceSeatGroupNode(DjangoObjectType):
         return [
             ConcessionTypeBookingType(
                 concession_type=concession,
-                price=self.performance.price_with_concession(concession, self.price),
+                price=self.performance.price_with_concession(concession, self),
             )
             for concession in self.performance.concessions()
         ]
@@ -168,6 +200,10 @@ class PerformanceSeatGroupNode(DjangoObjectType):
 
 
 class PerformanceFilter(FilterSet):
+    """Filter for PerformanceNode.
+
+    Extends filterset to include orderby start.
+    """
 
     start = django_filters.DateTimeFilter(method="start_filter")
 
@@ -188,7 +224,7 @@ class PerformanceNode(DjangoObjectType):
     sold_out = graphene.Boolean(required=True)
     discounts = DjangoListField(DiscountNode)
 
-    def resolve_ticket_options(self, info, **kwargs):
+    def resolve_ticket_options(self, info):
         return self.performance_seat_groups.all()
 
     def resolve_capacity_remaining(self, info):
@@ -217,6 +253,11 @@ class PerformanceNode(DjangoObjectType):
 
 
 class Query(graphene.ObjectType):
+    """Query for production module.
+
+    These queries are appended to the main schema Query.
+    """
+
     productions = DjangoFilterConnectionField(ProductionNode)
     performances = DjangoFilterConnectionField(PerformanceNode)
 

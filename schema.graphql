@@ -584,6 +584,6 @@ type VerifyToken {
 
 type WarningNode implements Node {
   id: ID!
-  warning: String!
+  description: String!
   productionSet(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, society: ID, ageRating: Int, facebookEvent: String, warnings: [ID], slug: String, id: ID, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, orderBy: String): ProductionNodeConnection!
 }

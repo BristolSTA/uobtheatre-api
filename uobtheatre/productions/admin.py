@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from uobtheatre.productions.models import (
+    AudienceWarning,
     CastMember,
     CrewMember,
     CrewRole,
@@ -9,13 +10,12 @@ from uobtheatre.productions.models import (
     Production,
     ProductionTeamMember,
     Society,
-    Warning,
 )
 
 admin.site.register(Production)
 admin.site.register(Society)
 admin.site.register(Performance)
-admin.site.register(Warning)
+admin.site.register(AudienceWarning)
 admin.site.register(CrewMember)
 admin.site.register(CastMember)
 admin.site.register(CrewRole)

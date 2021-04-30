@@ -1,11 +1,11 @@
-FROM python:3.8
+FROM python:3.9
 ENV PYTHONUNBUFFERED 1
 
 # Adds our application code to the image
 COPY . code
 WORKDIR code
 
-RUN pip install -r requirements.txt -r dev-requirements.txt
+RUN pip install -r dev-requirements.txt
 
 EXPOSE 8000
 

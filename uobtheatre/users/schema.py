@@ -3,8 +3,12 @@ from graphql_auth import mutations
 from graphql_auth.schema import MeQuery, UserQuery
 
 
-# TODO Remove errors and status from response
 class AuthMutation(graphene.ObjectType):
+    """User mutations
+
+    Adds mutations to schema from graphql_auth package.
+    """
+
     register = mutations.Register.Field()
     verify_account = mutations.VerifyAccount.Field()
     resend_activation_email = mutations.ResendActivationEmail.Field()

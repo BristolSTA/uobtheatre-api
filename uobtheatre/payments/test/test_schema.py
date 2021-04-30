@@ -1,13 +1,13 @@
 import pytest
 
 from uobtheatre.bookings.test.factories import BookingFactory
-from uobtheatre.payments.test.factories import PaymentFactroy
+from uobtheatre.payments.test.factories import PaymentFactory
 
 
 @pytest.mark.django_db
 def test_payment_schema(gql_client_flexible, gql_id):
-    booking = BookingFactory(user=gql_client_flexible.get_user())
-    payment = PaymentFactroy(pay_object=booking)
+    booking = BookingFactory(user=gql_client_flexible.user)
+    payment = PaymentFactory(pay_object=booking)
 
     response = gql_client_flexible.execute(
         """

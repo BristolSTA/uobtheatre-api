@@ -9,3 +9,9 @@ omit = *migrations*,
        ./uobtheatre-api/wsgi.py,
        *__init__*
        ./uobtheatre/management/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    raise NotImplementedError
+    if TYPE_CHECKING

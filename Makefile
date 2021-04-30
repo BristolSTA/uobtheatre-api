@@ -74,11 +74,14 @@ coverage: ## Generate test coverage report
 coverage-nr: ## Generate test coverage report from last test run
 	docker-compose run --rm api coverage html
 
-black: ## Run verbose unit tests in docker container
+black: ## Run black linter
 	docker-compose run --rm api black .
 
-isort: ## Run verbose unit tests in docker container
+isort: ## Run isort to sort imports
 	docker-compose run --rm api isort .
+
+pylint: ## Run pylint to check uobtheatre code
+	docker-compose run --rm api pylint uobtheatre
 
 setup-pipenv: ## Setup pipenv locally
 	pipenv --python 3.8
