@@ -50,8 +50,9 @@ from uobtheatre.venues.test.factories import SeatFactory, SeatGroupFactory
             False,
         ),
         # Check concession type is not required (default to adult)
-        # TODO write test to check default to adult
-        # TODO For now concession type is required as there is no default
+        # TODO For now concession # pylint: disable=fixme
+        # type is required as there is no default, but when this is not the
+        # case we need to check adult is default.
         # (
         #     """
         #     performanceId: "UGVyZm9ybWFuY2VOb2RlOjE="

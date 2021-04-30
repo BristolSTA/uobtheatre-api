@@ -505,8 +505,6 @@ class Performance(TimeStampedMixin, models.Model):
         if deleted_tickets is None:
             deleted_tickets = []
 
-        # TODO return a custom exception not a string
-
         # Get the number of each seat group
         seat_group_counts: Dict[SeatGroup, int] = {}
         for ticket in tickets:
@@ -579,10 +577,15 @@ class PerformanceSeatGroup(models.Model):
         get_capacity and remaining_capacity methods.
     """
 
-    # TODO the capacity should default to the SeatGroup capacity.
     seat_group = models.ForeignKey(SeatGroup, on_delete=models.RESTRICT)
     performance = models.ForeignKey(
         Performance, on_delete=models.RESTRICT, related_name="performance_seat_groups"
     )
     price = models.IntegerField()
     capacity = models.SmallIntegerField(blank=True)
+
+    def save(self, *args, **kwargs):
+        if self._state.adding:
+            if self.capacity is None:
+                self.capacity = self.seat_group.capacity
+        super().save(*args, **kwargs)

@@ -236,9 +236,6 @@ def combinations(
         (list of tuples of Any): Returns a list containing all the subsets of
             the input list.
     """
-    # TODO why not?
-    # assert max_length <= len(iterable)
-
     return set(
         combination
         for i in range(1, max_length + 1)

@@ -1,4 +1,4 @@
-from uobtheatre.payments.square import PaymentProvider
+from uobtheatre.payments.square import PaymentProvider  # pylint: disable=cyclic-import
 
 
 def test_payment_provider(monkeypatch):

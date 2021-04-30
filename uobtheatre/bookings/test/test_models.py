@@ -363,7 +363,6 @@ def test_get_price_with_discount_combination():
         booking.get_price_with_discount_combination(discount_combination)
         # Price is calculated a ticket level so each ticket price should be rounded individually
         == math.ceil(seating.price * (1 - discount_student.percentage))
-        # TODO This isnt right - each seat needs to be ceiled individually
         + (3 * math.ceil(seating.price * (1 - discount_family.percentage)))
     )
 

@@ -15,6 +15,7 @@ from uobtheatre.bookings.test.factories import (
     PerformanceSeatingFactory,
     TicketFactory,
 )
+from uobtheatre.productions.models import PerformanceSeatGroup
 from uobtheatre.productions.test.factories import (
     AudienceWarningFactory,
     CastMemberFactory,
@@ -639,3 +640,17 @@ def test_is_upcoming_production(performances_start_deltas, is_upcoming):
         for start_delta in performances_start_deltas
     ]
     assert production.is_upcoming() == is_upcoming
+
+
+@pytest.mark.django_db
+def test_performance_seat_group_default_capacity():
+    args = {
+        "seat_group": SeatGroupFactory(capacity=100),
+        "performance": PerformanceFactory(),
+        "price": 10,
+    }
+
+    performance = PerformanceSeatGroup(**args)
+    performance.save()
+
+    assert performance.capacity == 100
