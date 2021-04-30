@@ -149,6 +149,7 @@ disable=print-statement,
         no-self-use,
         unused-import,
         not-callable,
+        cyclic-import,
 
 
 # Enable the message, report, category or checker with the given id(s). You can
