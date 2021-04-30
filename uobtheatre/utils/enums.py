@@ -1,3 +1,5 @@
+from typing import Any, Callable
+
 import graphene
 from django.db import models
 from graphene_django.utils.utils import get_model_fields
@@ -20,11 +22,31 @@ class GrapheneEnumMixin:
     }
     """
 
-    def _generate_enum_resolver(field_name):
-        def resolver(cls, info):
+    @classmethod
+    def _generate_enum_resolver(cls, field_name: str) -> Callable[[Any, Any], EnumNode]:
+        """Create a resolver for the enum.
+
+        For every enum a resolver is created which returns an EnumNode
+        containing the enums value as well as its display name.
+
+        Args:
+            field_name (str): The name of the field which is an enum
+
+        Returns:
+            EnumNode: An enum node containing, value (the enum) and description
+                (human readable display name of the enum).
+        """
+
+        def resolver(self, info) -> EnumNode:
+            """Resolver for enum values
+
+            Returns:
+                EnumNode: The enum node for the field given to
+                    _generate_enum_resolver
+            """
             return EnumNode(
-                value=getattr(cls, field_name).upper(),
-                description=getattr(cls, f"get_{field_name}_display")(),
+                value=getattr(self, field_name).upper(),
+                description=getattr(self, f"get_{field_name}_display")(),
             )
 
         return resolver
@@ -56,7 +78,8 @@ class GrapheneEnumMixin:
             # This doesnt work with certain imports, I think we might find out
             # about the true pain of this in the future.
             if (
-                type(field_type) is graphene.types.field.Field
+                type(field_type)  # pylint: disable=unidiomatic-typecheck
+                is graphene.types.field.Field
                 and hasattr(field_type, "type")
                 and field_type.type == EnumNode
             ):

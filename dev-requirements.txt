@@ -1,9 +1,13 @@
+# Install all regular requirements
+-r requirements.txt
+
 # hooks
 pre-commit >= 2.11.0
 
 # formatting
 black >= 20.8b1 # Code formatting
 isort >= 5.7.0 # Import sorting
+pylint >= 2.8.2 # Linting
 
 # mypy stuff
 mypy >= 0.812 # Type checking

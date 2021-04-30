@@ -5,7 +5,7 @@ ENV PYTHONUNBUFFERED 1
 COPY . code
 WORKDIR code
 
-RUN pip install -r requirements.txt -r dev-requirements.txt
+RUN pip install -r dev-requirements.txt
 
 EXPOSE 8000
 
