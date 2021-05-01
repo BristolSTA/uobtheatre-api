@@ -30,7 +30,7 @@ jobs:
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Set repo name
-        run: echo "${{ github.registry_owner }}" | awk '{print tolower($0)}' >> $REPO_OWNER
+        run: echo "${{ github.registry_owner }}" | awk '{print tolower($0)}' >> ${REPO_OWNER}
 
       - name: Push image
         run: docker push ghcr.io/$REPO_OWNER/$IMAGE_NAME:latest
