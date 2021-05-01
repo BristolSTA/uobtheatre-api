@@ -10,7 +10,7 @@ on:
   pull_request:
 
 env:
-  IMAGE_NAME: uobtheatre/api
+  IMAGE_NAME: api
 
 jobs:
   build:
@@ -30,4 +30,4 @@ jobs:
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Push image
-        run: docker push ghcr.io/${{ github.repository_owner }}/${{ IMAGE_NAME }}:latest
+        run: docker push ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME:latest
