@@ -11,6 +11,7 @@ on:
 
 env:
   IMAGE_NAME: api
+  IMAGE_OWNER: bristolsta
 
 jobs:
   build:
@@ -29,10 +30,5 @@ jobs:
         # This is where you will update the PAT to GITHUB_TOKEN
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      - id: repo_owner
-        uses: ASzc/change-string-case-action@v1
-        with:
-          string: ${{ github.registry_owner }}
-
       - name: Push image
-        run: docker push ghcr.io/${{ steps.lower_repo_owner.outputs.lowercase }}/$IMAGE_NAME:latest
+        run: docker push ghcr.io/$IMAGE_OWNER/$IMAGE_NAME:latest
