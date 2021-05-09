@@ -1,16 +1,16 @@
 [
     {
-        "model": "productions.warning",
+        "model": "productions.audiencewarning",
         "pk": 1,
         "fields": {
-          "warning": "Strobe"
+          "description": "Strobe"
         }
     },
     {
-        "model": "productions.warning",
+        "model": "productions.audiencewarning",
         "pk": 2,
         "fields": {
-          "warning": "Pyro"
+          "description": "Pyro"
         }
     },
 
