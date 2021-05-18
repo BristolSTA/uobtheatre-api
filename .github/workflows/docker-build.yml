@@ -2,12 +2,9 @@ name: Docker build and push
 
 on:
   push:
-    # Publish `master` as Docker `latest` image.
+    # Publish `main` as Docker `latest` image.
     branches:
-      - master
-
-  # Run tests for any PRs.
-  pull_request:
+      - main
 
 env:
   IMAGE_NAME: api
