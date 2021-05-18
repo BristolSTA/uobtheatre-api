@@ -14,7 +14,7 @@ from uobtheatre.utils.models import TimeStampedMixin
 from uobtheatre.venues.models import SeatGroup, Venue
 
 if TYPE_CHECKING:
-    from uobtheatre.bookings.models import Ticket, ConcessionType
+    from uobtheatre.bookings.models import ConcessionType, Ticket
 
 
 class CrewRole(models.Model):
