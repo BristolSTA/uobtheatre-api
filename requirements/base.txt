@@ -48,3 +48,7 @@ squareup>=9.0.0.20210226
 
 sentry-sdk==1.1.0
 whitenoise==5.2.0  # https://github.com/evansd/whitenoise
+
+#=== Deployment ===#
+
+gunicorn==20.1.0
