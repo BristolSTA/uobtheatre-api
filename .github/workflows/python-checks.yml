@@ -15,7 +15,7 @@ jobs:
         image: postgres
         env:
           POSTGRES_USER: postgres
-          POSTGRES_DB: postgres
+          POSTGRES_DB: uobtheatre_api
           POSTGRES_PASSWORD: postgres
         # Set health checks to wait until postgres has started
         options: >-
@@ -55,6 +55,7 @@ jobs:
         pytest --cov uobtheatre --cov-fail-under 100 -m "not square_integration"
       env:
         DATABASE_HOST: 0.0.0.0
+        DATABASE_URL: postgresql://postgres:postgres@postgres:5432/uobtheatre_api
 
   lint:
     runs-on: ubuntu-latest
