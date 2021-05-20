@@ -18,8 +18,6 @@ INSTALLED_APPS = (
     "django.contrib.staticfiles",
     "django.contrib.sites",
     # Third party apps
-    # Hosting
-    "gunicorn",
     # Authentiaction
     "graphql_auth",  # Graphql authentication (user setup)
     ##
