@@ -27,7 +27,6 @@ django-environ==0.4.5  # https://github.com/joke2k/django-environ
 #=== Django core ===#
 
 django==3.2.3
-psycopg2>=2.8.6
 
 #=== GQL core ===#
 
@@ -48,8 +47,4 @@ squareup>=9.0.0.20210226
 #=== Logging ===#
 
 sentry-sdk==1.1.0
-
-#=== Deployment ===#
-
-gunicorn==20.1.0
 whitenoise==5.2.0  # https://github.com/evansd/whitenoise

@@ -36,7 +36,7 @@ services:
       dockerfile: ./compose/production/traefik/Dockerfile
     image: uobtheatre_api_production_traefik
     depends_on:
-      - django
+      - api
     volumes:
       - production_traefik:/etc/traefik/acme:z
     ports:
