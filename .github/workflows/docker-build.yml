@@ -10,6 +10,7 @@ on:
 
 env:
   IMAGE_NAME: api
+  DEV_IMAGE_NAME: api-dev
   IMAGE_OWNER: bristolsta
 
 jobs:
@@ -31,3 +32,22 @@ jobs:
 
       - name: Push image
         run: docker push ghcr.io/$IMAGE_OWNER/$IMAGE_NAME:latest
+
+  build-dev:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build image
+        run: docker build . --file compose/local/django/Dockerfile --tag ghcr.io/$IMAGE_OWNER/$DEV_IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}"
+
+      - name: Log into registry
+        # This is where you will update the PAT to GITHUB_TOKEN
+        run: echo "${{ secrets.BRISTOLSTA_REGISTRY_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Push image
+        run: docker push ghcr.io/$IMAGE_OWNER/$DEV_IMAGE_NAME:latest
