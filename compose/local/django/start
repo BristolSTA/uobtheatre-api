@@ -5,5 +5,12 @@ set -o pipefail
 set -o nounset
 
 
+
 python manage.py migrate
+
+if [[ $* == *--seed-e2e ]]
+then
+   python manage.py loaddata db.json
+fi
+
 python manage.py runserver 0.0.0.0:8000
