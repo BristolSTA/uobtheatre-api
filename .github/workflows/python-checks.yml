@@ -54,8 +54,7 @@ jobs:
       run: |
         pytest --cov uobtheatre --cov-fail-under 100 -m "not square_integration"
       env:
-        DATABASE_HOST: 0.0.0.0
-        DATABASE_URL: postgresql://postgres:postgres@postgres:5432/uobtheatre_api
+        DATABASE_URL: postgresql://postgres:postgres@0.0.0.0:5432/uobtheatre_api
 
   lint:
     runs-on: ubuntu-latest
