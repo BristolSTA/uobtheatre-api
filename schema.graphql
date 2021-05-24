@@ -184,7 +184,7 @@ type Mutation {
   removeSecondaryEmail(password: String!): RemoveSecondaryEmail
   login(password: String!, email: String): ObtainJSONWebToken
   verifyToken(token: String!): VerifyToken
-  refreshToken(token: String!): RefreshToken
+  refreshToken(refreshToken: String!): RefreshToken
   revokeToken(refreshToken: String!): RevokeToken
 }
 
@@ -203,6 +203,7 @@ type ObtainJSONWebToken {
   errors: [GQLErrorUnion]
   user: UserNode
   unarchiving: Boolean
+  refreshToken: String
 }
 
 type PageInfo {
@@ -215,6 +216,7 @@ type PageInfo {
 type PasswordChange {
   success: Boolean
   errors: [GQLErrorUnion]
+  refreshToken: String
   token: String
 }
 
@@ -386,11 +388,13 @@ type RefreshToken {
   payload: GenericScalar
   success: Boolean
   errors: [GQLErrorUnion]
+  refreshToken: String
 }
 
 type Register {
   success: Boolean
   errors: [GQLErrorUnion]
+  refreshToken: String
   token: String
 }
 

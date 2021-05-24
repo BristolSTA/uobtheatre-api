@@ -190,6 +190,7 @@ def test_user_register(gql_client_flexible):
         mutation {
           login(email:"test@email.com", password:"strongpassword"){
             token
+            refreshToken
             success
             errors {
               __typename
@@ -214,6 +215,10 @@ def test_user_register(gql_client_flexible):
 
     # Check the token is valid
     assert isinstance(response_data["token"], str) and len(response_data["token"]) > 150
+    assert (
+        isinstance(response_data["refreshToken"], str)
+        and len(response_data["refreshToken"]) > 30
+    )
 
     # Check user is correct
     assert response_data["user"]["firstName"] == "James"

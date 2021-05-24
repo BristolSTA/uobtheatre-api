@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 from distutils.util import strtobool
 from os.path import join
 from typing import List
@@ -20,6 +21,7 @@ INSTALLED_APPS = (
     # Third party apps
     # Authentiaction
     "graphql_auth",  # Graphql authentication (user setup)
+    "graphql_jwt.refresh_token.apps.RefreshTokenConfig",
     ##
     "django_filters",  # for filtering rest endpoints
     "corsheaders",  # CORS
@@ -243,8 +245,9 @@ GRAPHQL_AUTH = {
     "REGISTER_MUTATION_FIELDS": ["email", "first_name", "last_name"],
     "REGISTER_MUTATION_FIELDS_OPTIONAL": [],
 }
+
+
 GRAPHQL_JWT = {
-    "JWT_VERIFY_EXPIRATION": True,
     "JWT_ALLOW_ANY_CLASSES": [
         "graphql_auth.mutations.Register",
         "graphql_auth.mutations.VerifyAccount",
@@ -257,7 +260,12 @@ GRAPHQL_JWT = {
         "graphql_auth.mutations.RevokeToken",
         "graphql_auth.mutations.VerifySecondaryEmail",
     ],
+    "JWT_VERIFY_EXPIRATION": True,
+    "JWT_LONG_RUNNING_REFRESH_TOKEN": True,
+    "JWT_EXPIRATION_DELTA": timedelta(minutes=5),
+    "JWT_REFRESH_EXPIRATION_DELTA": timedelta(days=365),
 }
+
 GRAPHENE = {
     "SCHEMA": "uobtheatre.schema.schema",
     "MIDDLEWARE": [
