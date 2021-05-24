@@ -17,7 +17,7 @@ fi
 # Seed the db if not already seeded
 if [[ $* == *--single-seed-e2e ]]
 then
-   if python manage.py number_of_users | tail -1 | grep 0
+   if python manage.py number_of_users | tail -n 1 | grep 0
    then
       echo "Skipping seeding as users in db"
    else

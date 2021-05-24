@@ -46,7 +46,7 @@ migrate: ## Do the migrations
 	docker-compose run api python manage.py migrate
 
 check-users: ## Do the migrations
-	docker-compose run api python manage.py number_of_users
+	docker-compose run api `python manage.py number_of_users | tail -n 1` | grep 0
 
 seed: ## Seed the db with some example data
 	docker-compose run api python manage.py loaddata uobtheatre/images/fixtures.json uobtheatre/addresses/fixtures.json uobtheatre/users/fixtures.json uobtheatre/venues/fixtures.json uobtheatre/societies/fixtures.json uobtheatre/productions/fixtures.json uobtheatre/bookings/fixtures.json
