@@ -3,6 +3,10 @@ from distutils.util import strtobool
 from os.path import join
 from typing import List
 
+import environ
+
+env = environ.Env()
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 INSTALLED_APPS = (
@@ -14,8 +18,6 @@ INSTALLED_APPS = (
     "django.contrib.staticfiles",
     "django.contrib.sites",
     # Third party apps
-    # Hosting
-    "gunicorn",
     # Authentiaction
     "graphql_auth",  # Graphql authentication (user setup)
     ##
@@ -62,17 +64,25 @@ EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 
 ADMINS = (("Author", "webmaster@bristolsta.com"),)
 
+
 # Postgres
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": os.getenv("DATABASE_NAME", default="postgres"),
-        "USER": os.getenv("DATABASE_USER", default="postgres"),
-        "PASSWORD": os.getenv("DATABASE_PASSWORD", default="postgres"),
-        "HOST": os.getenv("DATABASE_HOST", default="postgres"),
-        "PORT": os.getenv("DATABASE_PORT", default=5432),
-    }
+    "default": env.db(
+        "DATABASE_URL", "postgresql://postgres:postgres@postgres:5432/uobtheatre_api"
+    )
 }
+DATABASES["default"]["ATOMIC_REQUESTS"] = True
+# DATABASES = {
+#     "default"
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql_psycopg2",
+#         "NAME": os.getenv("DATABASE_NAME", default="postgres"),
+#         "USER": os.getenv("DATABASE_USER", default="postgres"),
+#         "PASSWORD": os.getenv("DATABASE_PASSWORD", default="postgres"),
+#         "HOST": os.getenv("DATABASE_HOST", default="postgres"),
+#         "PORT": os.getenv("DATABASE_PORT", default=5432),
+#     }
+# }
 
 # General
 APPEND_SLASH = False

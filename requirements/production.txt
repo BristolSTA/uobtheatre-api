@@ -1,0 +1,8 @@
+-r base.txt
+
+gunicorn==20.1.0
+
+# Django
+# ------------------------------------------------------------------------------
+django-storages[boto3]==1.11.1  # https://github.com/jschneier/django-storages
+django-anymail[amazon_ses]==8.2  # https://github.com/anymail/django-anymail

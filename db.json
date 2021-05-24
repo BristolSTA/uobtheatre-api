@@ -263,11 +263,11 @@
       "subtitle": "trash",
       "description": "literally trash...",
       "society": 2,
-      "cover_image": null,
-      "poster_image": null,
-      "featured_image": null,
-      "age_rating": null,
-      "facebook_event": null,
+      "cover_image": 3,
+      "poster_image": 1,
+      "featured_image": 3,
+      "age_rating": 12,
+      "facebook_event": "https://facebook.com/trash",
       "slug": "trash",
       "warnings": []
     }

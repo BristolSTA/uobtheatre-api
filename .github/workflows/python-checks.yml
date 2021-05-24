@@ -15,7 +15,7 @@ jobs:
         image: postgres
         env:
           POSTGRES_USER: postgres
-          POSTGRES_DB: postgres
+          POSTGRES_DB: uobtheatre_api
           POSTGRES_PASSWORD: postgres
         # Set health checks to wait until postgres has started
         options: >-
@@ -48,13 +48,13 @@ jobs:
 
     # Install dependencies
     - name: Install dependencies
-      run: pip install -r requirements.txt -r dev-requirements.txt
+      run: pip install -r requirements/local.txt
 
     - name: pytest - check tests pass and coverage is 100%
       run: |
         pytest --cov uobtheatre --cov-fail-under 100 -m "not square_integration"
       env:
-        DATABASE_HOST: 0.0.0.0
+        DATABASE_URL: postgresql://postgres:postgres@0.0.0.0:5432/uobtheatre_api
 
   lint:
     runs-on: ubuntu-latest
@@ -78,7 +78,7 @@ jobs:
 
     # Install dependencies
     - name: Install dependencies
-      run: pip install -r requirements.txt -r dev-requirements.txt
+      run: pip install -r requirements/local.txt
 
     - name: black - formatting
       run: |
@@ -118,7 +118,7 @@ jobs:
 
     # Install dependencies
     - name: Install dependencies
-      run: pip install -r requirements.txt -r dev-requirements.txt
+      run: pip install -r requirements/local.txt
     # Generate schmea
     - name: Generate schema
       run: |

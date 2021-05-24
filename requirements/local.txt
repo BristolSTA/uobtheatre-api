@@ -1,5 +1,5 @@
 # Install all regular requirements
--r requirements.txt
+-r base.txt
 
 # hooks
 pre-commit >= 2.11.0

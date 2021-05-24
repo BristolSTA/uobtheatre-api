@@ -1,0 +1,7 @@
+# PostgreSQL
+# ------------------------------------------------------------------------------
+POSTGRES_HOST=postgres
+POSTGRES_PORT=5432
+POSTGRES_DB=uobtheatre_api
+POSTGRES_USER=CLNLUaALBFiYuakQqtcJiwlbTWNgwORJ
+POSTGRES_PASSWORD=pjyz1KUXqrB4w1QjabLox0JnQYzCb9qsFjmy8f1TN3Z03awbOQLUNi3wsIi6loxU
