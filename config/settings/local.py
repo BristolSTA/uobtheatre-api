@@ -5,6 +5,8 @@ import os
 from .common import *
 
 MEDIA_URL = f"{BASE_URL}{MEDIA_PATH}"
+print(f"BASE_URL is {BASE_URL}")
+print(f"MEDIA_URL is {MEDIA_URL}")
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 DEBUG = True
