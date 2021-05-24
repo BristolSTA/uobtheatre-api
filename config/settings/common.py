@@ -9,6 +9,12 @@ import environ
 env = environ.Env()
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_URL = (
+    os.getenv(
+        "BASE_URL",
+        default="http://localhost:8000",
+    ),
+)
 
 INSTALLED_APPS = (
     "django.contrib.admin",
