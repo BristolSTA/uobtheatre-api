@@ -30,7 +30,7 @@ psycopg2==2.8.6  # https://github.com/psycopg/psycopg2
 
 #=== Django core ===#
 
-django==3.2.3
+django==3.2.4
 
 #=== GQL core ===#
 
