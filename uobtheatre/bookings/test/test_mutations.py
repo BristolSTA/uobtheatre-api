@@ -977,3 +977,90 @@ def test_check_in_booking(
     for ticket in non_booking_tickets:
         ticket.refresh_from_db()
         assert not ticket.checked_in
+
+
+@pytest.mark.django_db
+def test_check_in_booking_fails_if_already_checked_in(gql_client_flexible):
+    performance = PerformanceFactory()
+    booking = BookingFactory(
+        performance=performance,
+        user=gql_client_flexible.user,
+    )
+
+    checked_in_ticket = TicketFactory(booking=booking,checked_in=True)
+
+    request_query = """
+    mutation {
+    checkInBooking(
+            bookingReference: "%s"
+            performanceId: "%s"
+            tickets: [
+                { ticketId: "%s"}
+            ]
+        ) {
+            success
+            errors {
+            __typename
+            ... on NonFieldError {
+                message
+            }
+            }
+        }
+    }
+    """
+    response = gql_client_flexible.execute(request_query % (booking.reference, to_global_id("PerformanceNode", performance.id), to_global_id("TicketNode", checked_in_ticket.id)))
+    assert response == {
+        "data": {
+            "checkInBooking": {
+                "success": False,
+                "errors": [
+                    {
+                        "__typename": "NonFieldError",
+                        "message": "Ticket ID {} is already checked in".format(checked_in_ticket.id)
+                    }
+                ]
+            }
+        }
+    }
+
+@pytest.mark.django_db
+def test_uncheck_in_booking(gql_client_flexible):
+    performance = PerformanceFactory()
+    booking = BookingFactory(
+        performance=performance,
+        user=gql_client_flexible.user,
+    )
+
+    checked_in_ticket = TicketFactory(booking=booking,checked_in=True)
+    unchecked_in_ticket = TicketFactory(booking=booking,checked_in=False)
+
+    request_query = """
+    mutation {
+    uncheckInBooking(
+            bookingReference: "%s"
+            performanceId: "%s"
+            tickets: [
+                { ticketId: "%s"},
+                { ticketId: "%s"}
+            ]
+        ) {
+            success
+                errors {
+                __typename
+                ... on NonFieldError {
+                    message
+                    code
+                }
+            }
+        }
+    }
+    """
+    response = gql_client_flexible.execute(request_query % (booking.reference, to_global_id("PerformanceNode", performance.id), to_global_id("TicketNode", checked_in_ticket.id), to_global_id("TicketNode", unchecked_in_ticket.id)))
+    assert response == {
+        "data": {
+            "uncheckInBooking": {
+                "success": True,
+                "errors": None
+            }
+        }
+    }

@@ -425,7 +425,68 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
             transaction.
 
     Raises:
-        GQLNonFieldException: If the Payment was unsucessful.
+        GQLNonFieldException: If at least one ticket check in was unsuccessful
+    """
+
+    performance = graphene.Field("uobtheatre.productions.schema.PerformanceNode")
+    booking = graphene.Field(BookingNode)
+
+    class Arguments:
+        booking_reference = graphene.String(required=True)
+        performance_id = IdInputField(required=True)
+        tickets = graphene.List(CheckInTicketInput, required=True)
+
+    @classmethod
+    def resolve_mutation(cls, _, info, booking_reference, tickets, performance_id):
+        performance = Performance.objects.get(id=performance_id)
+        booking = Booking.objects.get(reference=booking_reference)
+
+        # check if the booking pertains to the correct performance
+        if booking.performance != performance:
+            raise GQLFieldException(
+                field="performance_id",
+                message="The booking performance does not match the given performance."
+            )
+            # raise booking performance does not match performance given
+        ticket_objects = []
+
+        ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))
+        # loop through the ticket IDs given
+        for ticket in ticket_objects:
+            # Check the ticket booking matches the given booking
+            if ticket.booking != booking:
+                raise GQLFieldException(
+                    field="booking_reference",
+                    message="The ticket booking does not match the mutation booking."
+                )
+
+            if ticket.checked_in:
+                raise GQLNonFieldException(
+                    message="Ticket ID {} is already checked in".format(ticket.id)
+                )
+
+            ticket.check_in()
+
+        return CheckInBooking(booking=booking, performance=performance)
+
+class UnCheckInBooking(AuthRequiredMixin, SafeMutation):
+    """Mutation to un-check in the tickets of a Booking.
+
+    Args:
+        booking_reference (str): The reference for the Booking being paid for.
+        performance_id (str): The id of the performance that the ticket is
+            being booked in for, this should match the performance of the
+            booking. If this is not the case an error will be thrown as the
+            Booking cannot be used for the Performance.
+
+
+    Returns:
+        booking (BookingNode): The Booking which was paid for.
+        payment (PaymentNode): The Payment which was created by the
+            transaction.
+
+    Raises:
+        GQLNonFieldException: If the un-check in was unsuccessful
     """
 
     performance = graphene.Field("uobtheatre.productions.schema.PerformanceNode")
@@ -458,14 +519,9 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
                     message="The ticket booking does not match the mutation booking."
                 )
 
-            ticket.check_in()
-            # Raise ticket booking does not match the booking
+            ticket.uncheck_in()
 
-        return CheckInBooking(booking=booking, performance=performance)
-
-
-# Check in booking mutation ([ticket_id], performance_id, booking_reference) -> {performanceNode, bookingNode, [ticketNode]}
-# Check in Ticket Method on the model
+        return UnCheckInBooking(booking=booking, performance=performance)
 
 
 class Mutation(graphene.ObjectType):
@@ -473,3 +529,4 @@ class Mutation(graphene.ObjectType):
     update_booking = UpdateBooking.Field()
     pay_booking = PayBooking.Field()
     check_in_booking = CheckInBooking.Field()
+    uncheck_in_booking = UnCheckInBooking.Field()

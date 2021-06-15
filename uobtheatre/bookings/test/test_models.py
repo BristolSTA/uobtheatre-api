@@ -908,3 +908,19 @@ def test_ticket_check_in(initial_state, final_state):
     assert ticket.checked_in == initial_state
     ticket.check_in()
     assert ticket.checked_in == final_state
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "initial_state, final_state",
+    [(True, False), (False, False)],
+)
+def test_ticket_uncheck_in(initial_state, final_state):
+    """
+    Test ticket check in method
+    """
+
+    ticket = TicketFactory(checked_in=initial_state)
+
+    assert ticket.checked_in == initial_state
+    ticket.uncheck_in()
+    assert ticket.checked_in == final_state

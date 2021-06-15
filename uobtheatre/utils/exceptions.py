@@ -78,7 +78,7 @@ class GQLFieldException(MutationException):
     A single GQL Field error
     """
 
-    def __init__(self, message, field=None, code=None, params=None):
+    def __init__(self, message, field, code=None, params=None):
         super().__init__()
         self.message = str(message)
         self.code = code

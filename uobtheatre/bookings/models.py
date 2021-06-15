@@ -679,3 +679,10 @@ class Ticket(models.Model):
         """
         self.checked_in = True
         self.save()
+
+    def uncheck_in(self):
+        """
+        Un-Check a ticket in
+        """
+        self.checked_in = False
+        self.save()

@@ -1,14 +1,8 @@
 {
 	"name": "Python 3",
-	"build": {
-		"dockerfile": "Dockerfile",
-		"context": "..",
-		"args": {
-			"VARIANT": "3.8",
-			"INSTALL_NODE": "true",
-			"NODE_VERSION": "lts/*"
-		}
-	},
+	"dockerComposeFile": "../local.yml",
+	"service": "api",
+	"workspaceFolder": "/app",
 
 	"settings": {
 		"terminal.integrated.shell.linux": "/bin/bash",
@@ -30,5 +24,4 @@
 		"ms-python.python"
 	],
 
-	"remoteUser": "vscode"
 }
