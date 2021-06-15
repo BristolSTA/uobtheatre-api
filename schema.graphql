@@ -168,6 +168,7 @@ type Mutation {
   updateBooking(bookingId: IdInputField, tickets: [UpdateTicketInput]): UpdateBooking
   payBooking(bookingId: IdInputField!, nonce: String!, price: Int!): PayBooking
   checkInBooking(bookingReference: String!, performanceId: IdInputField!, tickets: [CheckInTicketInput]!): CheckInBooking
+  uncheckInBooking(bookingReference: String!, performanceId: IdInputField!, tickets: [CheckInTicketInput]!): UnCheckInBooking
   register(email: String!, firstName: String!, lastName: String!, password1: String!, password2: String!): Register
   verifyAccount(token: String!): VerifyAccount
   resendActivationEmail(email: String!): ResendActivationEmail
@@ -497,6 +498,13 @@ type TicketNodeConnection {
 type TicketNodeEdge {
   node: TicketNode
   cursor: String!
+}
+
+type UnCheckInBooking {
+  success: Boolean
+  errors: [GQLErrorUnion]
+  performance: PerformanceNode
+  booking: BookingNode
 }
 
 type UpdateAccount {
