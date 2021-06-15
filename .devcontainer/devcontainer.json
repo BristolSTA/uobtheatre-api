@@ -3,7 +3,7 @@
 	"dockerComposeFile": "../local.yml",
 	"service": "api",
 	"workspaceFolder": "/app",
-
+	"postCreateCommand": "pre-commit install && ./manage.py migrate",
 	"settings": {
 		"terminal.integrated.shell.linux": "/bin/bash",
 		"python.pythonPath": "/usr/local/bin/python",
@@ -23,5 +23,4 @@
 	"extensions": [
 		"ms-python.python"
 	],
-
 }

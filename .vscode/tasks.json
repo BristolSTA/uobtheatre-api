@@ -1,0 +1,17 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "lint",
+            "type": "shell",
+            "command": "pre-commit",
+            "problemMatcher": []
+        },
+        {
+            "label": "seed",
+            "type": "shell",
+            "command": "./manage.py loaddata uobtheatre/images/fixtures.json uobtheatre/addresses/fixtures.json uobtheatre/users/fixtures.json uobtheatre/venues/fixtures.json uobtheatre/societies/fixtures.json uobtheatre/productions/fixtures.json uobtheatre/bookings/fixtures.json",
+            "problemMatcher": []
+        }
+    ]
+}
