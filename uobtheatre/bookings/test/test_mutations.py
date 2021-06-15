@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import pytest
 from graphql_relay.node.node import from_global_id, to_global_id
 
@@ -5,12 +6,8 @@ from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
     ConcessionTypeFactory,
-    DiscountFactory,
-    DiscountRequirementFactory,
-    PercentageMiscCostFactory,
     PerformanceSeatingFactory,
     TicketFactory,
-    ValueMiscCostFactory,
 )
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.utils.test_utils import ticket_dict_list_dict_gen, ticket_list_dict_gen

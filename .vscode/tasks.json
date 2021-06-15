@@ -12,6 +12,18 @@
             "type": "shell",
             "command": "./manage.py loaddata uobtheatre/images/fixtures.json uobtheatre/addresses/fixtures.json uobtheatre/users/fixtures.json uobtheatre/venues/fixtures.json uobtheatre/societies/fixtures.json uobtheatre/productions/fixtures.json uobtheatre/bookings/fixtures.json",
             "problemMatcher": []
+        },
+        {
+            "label": "test",
+            "type": "shell",
+            "command": "pytest -s -vv",
+            "problemMatcher": []
+        },
+        {
+            "label": "test-coverage",
+            "type": "shell",
+            "command": "coverage run --source=uobtheatre -m pytest -m \"not square_integration\" && coverage html",
+            "problemMatcher": []
         }
     ]
 }
