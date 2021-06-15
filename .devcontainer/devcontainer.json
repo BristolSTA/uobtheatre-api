@@ -1,8 +1,9 @@
 {
 	"name": "Python 3",
 	"dockerComposeFile": "../local.yml",
-	"service": "api",
+	"service": "api-container",
 	"workspaceFolder": "/app",
+	"postAttachCommand": ". /entrypoint",
 
 	"settings": {
 		"terminal.integrated.shell.linux": "/bin/bash",

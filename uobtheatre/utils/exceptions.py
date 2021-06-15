@@ -103,6 +103,28 @@ class GQLNonFieldException(MutationException):
         return [NonFieldError(message=self.message, code=self.code)]
 
 
+class GQLExceptions(MutationException):
+    """
+    Many GQL errors
+    """
+
+    def __init__(self, exceptions: List[MutationException] = None):
+        super().__init__()
+        self.exceptions = exceptions or []
+
+    def add_exception(self, exception: MutationException):
+        self.exceptions.append(exception)
+
+    def has_exceptions(self):
+        return len(self.exceptions) > 0
+
+    def resolve(self) -> List[Union[FieldError, NonFieldError]]:
+        resovled_exceptions = []
+        for exception in self.exceptions:
+            resovled_exceptions.extend(exception.resolve())
+        return resovled_exceptions
+
+
 class SquareException(GQLNonFieldException):
     def __init__(self, square_response):
         super().__init__(square_response.reason_phrase, square_response.status_code)
