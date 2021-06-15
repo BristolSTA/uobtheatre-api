@@ -2,3 +2,4 @@
 # ------------------------------------------------------------------------------
 USE_DOCKER=yes
 IPYTHONDIR=/app/.ipython
+DATABASE_URL="postgres://CLNLUaALBFiYuakQqtcJiwlbTWNgwORJ:useBav9fHmyLYoJ9r6aS5sufkm0EwWp2NZANLwK5gjmZcGlLPWkDILTXidkVE1kv@postgres:5432/uobtheatre_api"

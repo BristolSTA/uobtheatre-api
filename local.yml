@@ -22,18 +22,6 @@ services:
       - "8000:8000"
     command: /start
 
-  api-container:
-      build:
-        context: .
-        dockerfile: ./compose/local/django/Dockerfile
-      image: uobtheatre_api_local_django
-      env_file:
-        - ./.envs/.local/.django
-        - ./.envs/.local/.postgres
-      command: /bin/bash -c "while sleep 1000; do :; done"
-      volumes:
-        - .:/app:z
-
   postgres:
     build:
       context: .
