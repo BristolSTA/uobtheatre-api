@@ -26,7 +26,7 @@ django-environ==0.4.5  # https://github.com/joke2k/django-environ
 
 #=== Database ===#
 
-psycopg2==2.8.6  # https://github.com/psycopg/psycopg2
+psycopg2==2.9  # https://github.com/psycopg/psycopg2
 
 #=== Django core ===#
 
