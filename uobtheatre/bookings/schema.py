@@ -423,7 +423,8 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
         performance (PaymentNode): The Performance.
 
     Raises:
-        GQLNonFieldException: If at least one ticket check in was unsuccessful
+        GQLNonFieldException: If the booking does not match the performance booking
+        GQLExceptions: If at least one ticket check in was unsuccessful
     """
 
     performance = graphene.Field("uobtheatre.productions.schema.PerformanceNode")
