@@ -962,7 +962,6 @@ def test_check_in_booking(
         # tickets for the wrong booking we expect failure and a returned Field
         # Error
         assert not response["data"]["checkInBooking"]["success"]
-        print(response["data"]["checkInBooking"]["errors"])
         assert len(response["data"]["checkInBooking"]["errors"]) == 1
 
         assert (
