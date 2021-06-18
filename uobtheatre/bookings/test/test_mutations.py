@@ -1190,7 +1190,7 @@ def test_uncheck_in_booking_incorrect_ticket(gql_client_flexible):
                 "errors": [
                     {
                         "__typename": "FieldError",
-                        "message": f"The ticket booking of ticket {checked_in_ticket.id} does not match the given booking.",
+                        "message": f"The booking of ticket {checked_in_ticket.id} does not match the given booking.",
                     }
                 ],
             }
