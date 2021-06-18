@@ -535,7 +535,7 @@ class UnCheckInBooking(AuthRequiredMixin, SafeMutation):
                 exceptions=[
                     GQLFieldException(
                         field="booking_reference",
-                        message=f"The ticket booking of ticket {ticket.id} does not match the given booking.",
+                        message=f"The booking of ticket {ticket.id} does not match the given booking.",
                     )
                     for ticket in tickets_not_in_booking
                 ]
