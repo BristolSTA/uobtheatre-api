@@ -27,7 +27,8 @@
 	},
 
 	"extensions": [
-		"ms-python.python"
+		"ms-python.python",
+		"njpwerner.autodocstring"
 	],
 
 	"remoteUser": "vscode"
