@@ -57,10 +57,6 @@ type CheckInBooking {
   booking: BookingNode
 }
 
-input CheckInTicketInput {
-  ticketId: IdInputField!
-}
-
 type ConcessionTypeBookingType {
   concessionType: ConcessionTypeNode
   price: Int
@@ -167,7 +163,8 @@ type Mutation {
   createBooking(performanceId: IdInputField, tickets: [CreateTicketInput]): CreateBooking
   updateBooking(bookingId: IdInputField, tickets: [UpdateTicketInput]): UpdateBooking
   payBooking(bookingId: IdInputField!, nonce: String!, price: Int!): PayBooking
-  checkInBooking(bookingReference: String!, performanceId: IdInputField!, tickets: [CheckInTicketInput]!): CheckInBooking
+  checkInBooking(bookingReference: String!, performanceId: IdInputField!, tickets: [TicketIDInput]!): CheckInBooking
+  uncheckInBooking(bookingReference: String!, performanceId: IdInputField!, tickets: [TicketIDInput]!): UnCheckInBooking
   register(email: String!, firstName: String!, lastName: String!, password1: String!, password2: String!): Register
   verifyAccount(token: String!): VerifyAccount
   resendActivationEmail(email: String!): ResendActivationEmail
@@ -480,6 +477,10 @@ type SwapEmails {
   errors: [GQLErrorUnion]
 }
 
+input TicketIDInput {
+  ticketId: IdInputField!
+}
+
 type TicketNode implements Node {
   id: ID!
   seatGroup: SeatGroupNode!
@@ -497,6 +498,13 @@ type TicketNodeConnection {
 type TicketNodeEdge {
   node: TicketNode
   cursor: String!
+}
+
+type UnCheckInBooking {
+  success: Boolean
+  errors: [GQLErrorUnion]
+  performance: PerformanceNode
+  booking: BookingNode
 }
 
 type UpdateAccount {

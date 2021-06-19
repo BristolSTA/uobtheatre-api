@@ -3,6 +3,7 @@ import pytest
 from uobtheatre.utils.exceptions import (
     AuthOutput,
     FieldError,
+    GQLExceptions,
     GQLFieldException,
     GQLNonFieldException,
     NonFieldError,
@@ -51,6 +52,21 @@ def test_gql_non_field_exception():
 def test_gql_field_exception():
     exception = GQLFieldException("Some exception", code=400, field="booking")
     assert len(exception.resolve()) == 1
+    compare_gql_objects(
+        exception.resolve()[0],
+        FieldError(message="Some exception", code=400, field="booking"),
+    )
+
+
+def test_gql_exceptions():
+    exception = GQLExceptions()
+    assert not exception.has_exceptions()
+
+    exception.add_exception(
+        GQLFieldException("Some exception", code=400, field="booking")
+    )
+
+    assert exception.has_exceptions()
     compare_gql_objects(
         exception.resolve()[0],
         FieldError(message="Some exception", code=400, field="booking"),

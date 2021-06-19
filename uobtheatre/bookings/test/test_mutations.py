@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import pytest
 from graphql_relay.node.node import from_global_id, to_global_id
 
@@ -5,12 +6,8 @@ from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
     ConcessionTypeFactory,
-    DiscountFactory,
-    DiscountRequirementFactory,
-    PercentageMiscCostFactory,
     PerformanceSeatingFactory,
     TicketFactory,
-    ValueMiscCostFactory,
 )
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.utils.test_utils import ticket_dict_list_dict_gen, ticket_list_dict_gen
@@ -918,7 +915,7 @@ def test_check_in_booking(
             ){
                 success
                 errors {
-                __typename
+                    __typename
                 }
                 booking{
                     id
@@ -951,6 +948,15 @@ def test_check_in_booking(
         for ticket in check_in_tickets:
             ticket.refresh_from_db()
             assert ticket.checked_in
+    elif booking_obj.get("performance_id") == performance_id:
+        # The instance where there are tickets that don't belong to the booking
+        assert len(response["data"]["checkInBooking"]["errors"]) == len(
+            non_booking_ticket_id_list
+        )
+        assert (
+            response["data"]["checkInBooking"]["errors"][0]["__typename"]
+            == "FieldError"
+        )
     else:
         # In the instance where the performance is not correct or there are
         # tickets for the wrong booking we expect failure and a returned Field
@@ -977,3 +983,216 @@ def test_check_in_booking(
     for ticket in non_booking_tickets:
         ticket.refresh_from_db()
         assert not ticket.checked_in
+
+
+@pytest.mark.django_db
+def test_check_in_booking_fails_if_already_checked_in(gql_client_flexible):
+    performance = PerformanceFactory()
+    booking = BookingFactory(
+        performance=performance,
+        user=gql_client_flexible.user,
+    )
+
+    checked_in_ticket = TicketFactory(booking=booking, checked_in=True)
+
+    request_query = """
+    mutation {
+    checkInBooking(
+            bookingReference: "%s"
+            performanceId: "%s"
+            tickets: [
+                { ticketId: "%s"}
+            ]
+        ) {
+            success
+            errors {
+            __typename
+            ... on NonFieldError {
+                message
+            }
+            }
+        }
+    }
+    """
+    response = gql_client_flexible.execute(
+        request_query
+        % (
+            booking.reference,
+            to_global_id("PerformanceNode", performance.id),
+            to_global_id("TicketNode", checked_in_ticket.id),
+        )
+    )
+    assert response == {
+        "data": {
+            "checkInBooking": {
+                "success": False,
+                "errors": [
+                    {
+                        "__typename": "NonFieldError",
+                        "message": "Ticket {} is already checked in".format(
+                            checked_in_ticket.id
+                        ),
+                    }
+                ],
+            }
+        }
+    }
+
+
+@pytest.mark.django_db
+def test_uncheck_in_booking(gql_client_flexible):
+    performance = PerformanceFactory()
+    booking = BookingFactory(
+        performance=performance,
+        user=gql_client_flexible.user,
+    )
+
+    checked_in_ticket = TicketFactory(booking=booking, checked_in=True)
+    unchecked_in_ticket = TicketFactory(booking=booking, checked_in=False)
+
+    request_query = """
+    mutation {
+    uncheckInBooking(
+            bookingReference: "%s"
+            performanceId: "%s"
+            tickets: [
+                { ticketId: "%s"},
+                { ticketId: "%s"}
+            ]
+        ) {
+            success
+                errors {
+                __typename
+                ... on NonFieldError {
+                    message
+                    code
+                }
+            }
+        }
+    }
+    """
+    response = gql_client_flexible.execute(
+        request_query
+        % (
+            booking.reference,
+            to_global_id("PerformanceNode", performance.id),
+            to_global_id("TicketNode", checked_in_ticket.id),
+            to_global_id("TicketNode", unchecked_in_ticket.id),
+        )
+    )
+    assert response == {"data": {"uncheckInBooking": {"success": True, "errors": None}}}
+
+
+@pytest.mark.django_db
+def test_uncheck_in_booking_incorrect_performance(gql_client_flexible):
+    performance = PerformanceFactory()
+    wrong_performance = PerformanceFactory()
+    booking = BookingFactory(
+        performance=performance,
+        user=gql_client_flexible.user,
+    )
+
+    checked_in_ticket = TicketFactory(booking=booking, checked_in=True)
+
+    request_query = """
+    mutation {
+    uncheckInBooking(
+            bookingReference: "%s"
+            performanceId: "%s"
+            tickets: [
+                { ticketId: "%s"}
+            ]
+        ) {
+            success
+                errors {
+                __typename
+                ... on NonFieldError {
+                    message
+                }
+                ... on FieldError {
+                    message
+                }
+            }
+        }
+    }
+    """
+    response = gql_client_flexible.execute(
+        request_query
+        % (
+            booking.reference,
+            to_global_id("PerformanceNode", wrong_performance.id),
+            to_global_id("TicketNode", checked_in_ticket.id),
+        )
+    )
+    assert response == {
+        "data": {
+            "uncheckInBooking": {
+                "success": False,
+                "errors": [
+                    {
+                        "__typename": "FieldError",
+                        "message": "The booking performance does not match the given performance.",
+                    }
+                ],
+            }
+        }
+    }
+
+
+@pytest.mark.django_db
+def test_uncheck_in_booking_incorrect_ticket(gql_client_flexible):
+    performance = PerformanceFactory()
+    booking = BookingFactory(
+        performance=performance,
+        user=gql_client_flexible.user,
+    )
+    incorrect_booking = BookingFactory(
+        performance=performance,
+        user=gql_client_flexible.user,
+    )
+
+    checked_in_ticket = TicketFactory(booking=incorrect_booking, checked_in=True)
+
+    request_query = """
+    mutation {
+    uncheckInBooking(
+            bookingReference: "%s"
+            performanceId: "%s"
+            tickets: [
+                { ticketId: "%s"}
+            ]
+        ) {
+            success
+                errors {
+                __typename
+                ... on NonFieldError {
+                    message
+                }
+                ... on FieldError {
+                    message
+                }
+            }
+        }
+    }
+    """
+    response = gql_client_flexible.execute(
+        request_query
+        % (
+            booking.reference,
+            to_global_id("PerformanceNode", booking.performance.id),
+            to_global_id("TicketNode", checked_in_ticket.id),
+        )
+    )
+    assert response == {
+        "data": {
+            "uncheckInBooking": {
+                "success": False,
+                "errors": [
+                    {
+                        "__typename": "FieldError",
+                        "message": f"The booking of ticket {checked_in_ticket.id} does not match the given booking.",
+                    }
+                ],
+            }
+        }
+    }
