@@ -560,10 +560,6 @@ def test_performance_check_capacity(seat_groups, performance_capacity, is_valid)
             ]
         )
 
-    print(
-        performance.check_capacity(tickets_to_book, deleted_tickets=tickets_to_delete)
-    )
-    print(len(tickets_to_delete))
     # If valid this should be none if not it should return something
     assert (
         performance.check_capacity(tickets_to_book, deleted_tickets=tickets_to_delete)

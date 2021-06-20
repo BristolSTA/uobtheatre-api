@@ -315,6 +315,20 @@ class Performance(TimeStampedMixin, models.Model):
             for ticket in booking.tickets.filter(**filters)
         ]
 
+    def checked_in_tickets(self) -> List["Ticket"]:
+        return [
+            ticket
+            for booking in self.bookings.all()
+            for ticket in booking.tickets.filter(checked_in=True)
+        ]
+
+    def unchecked_in_tickets(self) -> List["Ticket"]:
+        return [
+            ticket
+            for booking in self.bookings.all()
+            for ticket in booking.tickets.filter(checked_in=False)
+        ]
+
     def total_capacity(self, seat_group=None):
         """Total capacity of the Performance.
 
@@ -341,6 +355,36 @@ class Performance(TimeStampedMixin, models.Model):
         response = self.performance_seat_groups.aggregate(Sum("capacity"))
         return response["capacity__sum"] or 0
 
+    def total_tickets_sold(self, seat_group=None):
+        """The number of tickets sold for the performance
+
+        Args:
+            seat_group (SeatGroup): A SeatGroup for which to get the number sold.
+                If a SeatGroup is supplied only the number of tickets for that
+                SeatGroup will be returned.
+                (default None)
+
+        Returns:
+            int: The number of tickets sold
+        """
+        return len(self.tickets(seat_group=seat_group))
+
+    def total_tickets_checked_in(self):
+        """The number of tickets checked in for the performance
+
+        Returns:
+            int: The number of tickets
+        """
+        return len(self.checked_in_tickets())
+
+    def total_tickets_unchecked_in(self):
+        """The number of tickets not checked in for the performance
+
+        Returns:
+            int: The number of tickets
+        """
+        return len(self.unchecked_in_tickets())
+
     def capacity_remaining(self, seat_group: SeatGroup = None):
         """Remaining capacity of the Performance.
 
@@ -361,8 +405,8 @@ class Performance(TimeStampedMixin, models.Model):
             int: The remaining capacity of the show (or SeatGroup if provided)
         """
         if seat_group:
-            return self.total_capacity(seat_group=seat_group) - len(
-                self.tickets(seat_group=seat_group)
+            return self.total_capacity(seat_group=seat_group) - self.total_tickets_sold(
+                seat_group=seat_group
             )
 
         seat_groups_remaining_capacity = sum(
@@ -373,7 +417,8 @@ class Performance(TimeStampedMixin, models.Model):
             seat_groups_remaining_capacity
             if not self.capacity
             else min(
-                self.capacity - len(self.tickets()), seat_groups_remaining_capacity
+                self.capacity - self.total_tickets_sold(),
+                seat_groups_remaining_capacity,
             )
         )
 

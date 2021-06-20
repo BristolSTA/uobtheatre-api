@@ -3,11 +3,14 @@ import math
 
 import pytest
 from django.utils import timezone
+from graphql_relay.node.node import to_global_id
 
 from uobtheatre.bookings.test.factories import (
+    BookingFactory,
     DiscountFactory,
     DiscountRequirementFactory,
     PerformanceSeatingFactory,
+    TicketFactory,
 )
 from uobtheatre.productions.test.factories import (
     AudienceWarningFactory,
@@ -387,7 +390,58 @@ def test_performance_blocked_attributes(gql_client, attribute, is_obj):
 
 
 @pytest.mark.django_db
-def test_ticket_options(gql_client, gql_id):
+def test_ticket_options(gql_client):
+    performance = PerformanceFactory()
+
+    # Create a seat group with capacity of 50
+    performance_seat_group = PerformanceSeatingFactory(
+        performance=performance, capacity=50
+    )
+
+    # Create booking
+    booking = BookingFactory(performance=performance)
+
+    # Create two tickets
+    TicketFactory(
+        booking=booking, seat_group=performance_seat_group.seat_group, checked_in=True
+    )
+    TicketFactory(
+        booking=booking, seat_group=performance_seat_group.seat_group, checked_in=False
+    )
+
+    response = gql_client.execute(
+        """
+        {
+            performance(id: "%s") {
+                ticketsBreakdown {
+                    totalCapacity
+                    totalTicketsSold
+                    totalTicketsCheckedIn
+                    totalTicketsToCheckIn
+                    totalTicketsAvailable
+                }
+            }
+        }
+        """
+        % to_global_id("PerformanceNode", performance.id)
+    )
+    assert response == {
+        "data": {
+            "performance": {
+                "ticketsBreakdown": {
+                    "totalCapacity": 50,
+                    "totalTicketsSold": 2,
+                    "totalTicketsCheckedIn": 1,
+                    "totalTicketsToCheckIn": 1,
+                    "totalTicketsAvailable": 48,
+                }
+            }
+        },
+    }
+
+
+@pytest.mark.django_db
+def test_tickets_breakdown(gql_client, gql_id):
     performance = PerformanceFactory()
 
     # Create some seat groups for this performance
