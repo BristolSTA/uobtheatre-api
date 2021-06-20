@@ -284,6 +284,7 @@ type PerformanceNode implements Node {
   isInperson: Boolean!
   isOnline: Boolean!
   soldOut: Boolean!
+  ticketsBreakdown: PerformanceTicketsBreakdown!
 }
 
 type PerformanceNodeConnection {
@@ -302,6 +303,14 @@ type PerformanceSeatGroupNode implements Node {
   id: ID!
   capacityRemaining: Int
   concessionTypes: [ConcessionTypeBookingType]
+}
+
+type PerformanceTicketsBreakdown {
+  totalCapacity: Int!
+  totalTicketsSold: Int!
+  totalTicketsCheckedIn: Int!
+  totalTicketsToCheckIn: Int!
+  totalTicketsAvailable: Int!
 }
 
 type PriceBreakdownNode implements Node {
