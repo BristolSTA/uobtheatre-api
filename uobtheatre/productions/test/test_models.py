@@ -325,10 +325,10 @@ def test_performance_seat_bookings():
     for _ in range(2):
         TicketFactory(booking=booking2)
 
-    assert len(perf1.tickets(seat_group)) == 4
+    assert perf1.tickets.filter(seat_group=seat_group).count() == 4
 
-    assert len(perf1.tickets()) == 7
-    assert len(perf2.tickets()) == 2
+    assert perf1.tickets.count() == 7
+    assert perf2.tickets.count() == 2
 
 
 @pytest.mark.django_db

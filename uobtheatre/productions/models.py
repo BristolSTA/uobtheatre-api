@@ -292,42 +292,34 @@ class Performance(TimeStampedMixin, models.Model):
 
     capacity = models.IntegerField(null=True, blank=True)
 
-    def tickets(self, seat_group=None) -> List["Ticket"]:
+    @property
+    def tickets(self) -> models.Manager["Ticket"]:
         """Get tickets for this performance
 
-        Args:
-            seat_group (SeatGroup): A SeatGroup to filter the tickets by. If a
-                SeatGroup is supplied only tickets for that SeatGroup will be
-                returned.
-                (default None)
+        Returns:
+            list of Tickets: The Ticket in the Booking.
+        """
+        from uobtheatre.bookings.models import Ticket
+
+        return Ticket.objects.filter(booking__in=self.bookings.all())
+
+    @property
+    def checked_in_tickets(self) -> models.Manager["Ticket"]:
+        """Get all checked in tickets
 
         Returns:
-            list of Tickets: The Ticket in the Booking. If SeatGroup supplied
-                then only the Tickets in that SeatGroup.
+            queryset(Tickets): all tickets for this perfromance which have been checked in.
         """
-        filters = {}
-        if seat_group:
-            filters["seat_group"] = seat_group
+        return self.tickets.filter(checked_in=True)
 
-        return [
-            ticket
-            for booking in self.bookings.all()
-            for ticket in booking.tickets.filter(**filters)
-        ]
+    @property
+    def unchecked_in_tickets(self) -> models.Manager["Ticket"]:
+        """Get all unchecked in tickets
 
-    def checked_in_tickets(self) -> List["Ticket"]:
-        return [
-            ticket
-            for booking in self.bookings.all()
-            for ticket in booking.tickets.filter(checked_in=True)
-        ]
-
-    def unchecked_in_tickets(self) -> List["Ticket"]:
-        return [
-            ticket
-            for booking in self.bookings.all()
-            for ticket in booking.tickets.filter(checked_in=False)
-        ]
+        Returns:
+            queryset(Tickets): all tickets for this perfromance which have not been checked in.
+        """
+        return self.tickets.filter(checked_in=False)
 
     def total_capacity(self, seat_group=None):
         """Total capacity of the Performance.
@@ -355,19 +347,16 @@ class Performance(TimeStampedMixin, models.Model):
         response = self.performance_seat_groups.aggregate(Sum("capacity"))
         return response["capacity__sum"] or 0
 
-    def total_tickets_sold(self, seat_group=None):
+    def total_tickets_sold(self, **kwargs):
         """The number of tickets sold for the performance
 
         Args:
-            seat_group (SeatGroup): A SeatGroup for which to get the number sold.
-                If a SeatGroup is supplied only the number of tickets for that
-                SeatGroup will be returned.
-                (default None)
+            kwargs (dict): Any additonal kwargs are used to filter the queryset.
 
         Returns:
             int: The number of tickets sold
         """
-        return len(self.tickets(seat_group=seat_group))
+        return self.tickets.filter(**kwargs).count()
 
     def total_tickets_checked_in(self):
         """The number of tickets checked in for the performance
@@ -375,7 +364,7 @@ class Performance(TimeStampedMixin, models.Model):
         Returns:
             int: The number of tickets
         """
-        return len(self.checked_in_tickets())
+        return self.checked_in_tickets.count()
 
     def total_tickets_unchecked_in(self):
         """The number of tickets not checked in for the performance
@@ -383,7 +372,7 @@ class Performance(TimeStampedMixin, models.Model):
         Returns:
             int: The number of tickets
         """
-        return len(self.unchecked_in_tickets())
+        return self.unchecked_in_tickets.count()
 
     def capacity_remaining(self, seat_group: SeatGroup = None):
         """Remaining capacity of the Performance.

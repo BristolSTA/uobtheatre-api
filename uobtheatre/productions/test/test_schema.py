@@ -390,7 +390,7 @@ def test_performance_blocked_attributes(gql_client, attribute, is_obj):
 
 
 @pytest.mark.django_db
-def test_ticket_options(gql_client):
+def test_ticket_breakdown(gql_client):
     performance = PerformanceFactory()
 
     # Create a seat group with capacity of 50
