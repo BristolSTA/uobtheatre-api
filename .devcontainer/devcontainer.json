@@ -2,7 +2,7 @@
 	"name": "Python 3",
 	"dockerComposeFile": "../local.yml",
 	"service": "api",
-	"workspaceFolder": "/app",
+	"workspaceFolder": "/app/uobtheatre-api",
 	"postCreateCommand": "pre-commit install && ./manage.py migrate",
 	"settings": {
 		"terminal.integrated.shell.linux": "/bin/bash",
