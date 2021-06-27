@@ -1,8 +1,11 @@
 import uuid
-from typing import List
+from typing import List, Optional, TYPE_CHECKING
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+
+if TYPE_CHECKING:
+    from uobtheatre.productions.models import Production
 
 
 class User(AbstractUser):
@@ -26,3 +29,9 @@ class User(AbstractUser):
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
+
+    def make_admin(self):
+        pass
+
+    def make_boxoffice(self, production: Optional["Production"]):
+        pass

@@ -32,6 +32,10 @@ psycopg2==2.9.1  # https://github.com/psycopg/psycopg2
 
 django==3.2.4
 
+#=== Django Extras ===#
+
+django-guardian==2.4.0  # https://github.com/django-guardian/django-guardian 
+
 #=== GQL core ===#
 
 graphene==2.1.8
