@@ -19,8 +19,8 @@ def test_boxoffice_permissions_object_level(gql_client_flexible: Authenticateabl
     production = ProductionFactory()
     production2 = ProductionFactory()
     user = gql_client_flexible.user
-    assert not user.has_perm('boxoffice', production)
-    assert not user.has_perm('boxoffice', production2)
+    assert not user.has_perm('productions.boxoffice', production)
+    assert not user.has_perm('productions.boxoffice', production2)
 
     assign_perm("boxoffice", user, production)
     assert user.has_perm('boxoffice', production)
