@@ -358,6 +358,7 @@ class Performance(TimeStampedMixin, models.Model):
         """
         return self.tickets.filter(**kwargs).count()
 
+    @property
     def total_tickets_checked_in(self):
         """The number of tickets checked in for the performance
 
@@ -366,6 +367,7 @@ class Performance(TimeStampedMixin, models.Model):
         """
         return self.checked_in_tickets.count()
 
+    @property
     def total_tickets_unchecked_in(self):
         """The number of tickets not checked in for the performance
 

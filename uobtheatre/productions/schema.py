@@ -258,8 +258,8 @@ class PerformanceNode(DjangoObjectType):
         return PerformanceTicketsBreakdown(
             self.total_capacity(),
             self.total_tickets_sold(),
-            self.total_tickets_checked_in(),
-            self.total_tickets_unchecked_in(),
+            self.total_tickets_checked_in,
+            self.total_tickets_unchecked_in,
             self.capacity_remaining(),
         )
 
