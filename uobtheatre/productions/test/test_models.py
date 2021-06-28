@@ -332,6 +332,34 @@ def test_performance_seat_bookings():
 
 
 @pytest.mark.django_db
+def test_performance_tickets():
+    booking = BookingFactory()
+
+    # 2 tickets in the performance
+    first_ticket = TicketFactory(booking=booking)
+    TicketFactory(booking=booking)
+
+    # A ticket not in the booking
+    TicketFactory()
+
+    assert booking.performance.tickets.count() == 2
+    assert booking.performance.tickets.all()[0].id == first_ticket.id
+    
+    
+@pytest.mark.django_db
+def test_performance_checked_in_tickets():
+    booking = BookingFactory()
+
+    # 2 tickets in the performance
+    TicketFactory(booking=booking)
+    ticket = TicketFactory(booking=booking, checked_in=True)
+
+    assert booking.performance.checked_in_tickets.count() == 1
+    assert booking.performance.checked_in_tickets.all()[0].id == ticket.id
+    assert False
+    
+
+@pytest.mark.django_db
 def test_performance_total_capacity():
     perf = PerformanceFactory()
 
