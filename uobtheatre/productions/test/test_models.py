@@ -375,7 +375,7 @@ def test_performance_total_tickets_sold():
     booking = BookingFactory()
 
     # 2 tickets in the performance
-    first_ticket = TicketFactory(booking=booking)
+    TicketFactory(booking=booking)
     TicketFactory(booking=booking)
 
     # A ticket not in the booking
@@ -389,7 +389,7 @@ def test_performance_total_tickets_checked_in():
 
     # 2 tickets in the performance
     TicketFactory(booking=booking)
-    ticket = TicketFactory(booking=booking, checked_in=True)
+    TicketFactory(booking=booking, checked_in=True)
     
     assert booking.performance.total_tickets_checked_in == 1
     assert booking.performance.total_tickets_unchecked_in == 1
