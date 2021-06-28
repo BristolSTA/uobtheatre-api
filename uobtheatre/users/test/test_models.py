@@ -16,11 +16,14 @@ def test_str_user():
 @pytest.mark.django_db
 def test_boxoffice_permissions_object_level(gql_client_flexible: AuthenticateableGQLClient):
     production = ProductionFactory()
+    production2 = ProductionFactory()
     user = gql_client_flexible.user
     assert not user.has_perm('boxoffice', production)
+    assert not user.has_perm('boxoffice', production2)
 
     assign_perm("boxoffice", user, production)
     assert user.has_perm('boxoffice', production)
+    assert not user.has_perm('boxoffice', production2)
 
 
 @pytest.mark.django_db
