@@ -515,7 +515,6 @@ def test_update_booking_capacity_error(gql_client_flexible):
     )
     response = gql_client_flexible.execute(request_query)
 
-    print(response)
     assert response == {
         "data": {
             "updateBooking": {
@@ -570,7 +569,6 @@ def test_create_booking_capacity_error(gql_client_flexible):
     )
     response = gql_client_flexible.execute(request_query)
 
-    print(response)
     assert response == {
         "data": {
             "createBooking": {
@@ -775,7 +773,6 @@ def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
     mock_square.success = True
 
     response = client.execute(request_query % gql_id(booking.id, "BookingNode"))
-    print(response)
     assert response == {
         "data": {
             "payBooking": {

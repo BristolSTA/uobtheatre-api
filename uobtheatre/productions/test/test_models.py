@@ -325,11 +325,74 @@ def test_performance_seat_bookings():
     for _ in range(2):
         TicketFactory(booking=booking2)
 
-    assert len(perf1.tickets(seat_group)) == 4
+    assert perf1.tickets.filter(seat_group=seat_group).count() == 4
 
-    assert len(perf1.tickets()) == 7
-    assert len(perf2.tickets()) == 2
+    assert perf1.tickets.count() == 7
+    assert perf2.tickets.count() == 2
 
+
+@pytest.mark.django_db
+def test_performance_tickets():
+    booking = BookingFactory()
+
+    # 2 tickets in the performance
+    first_ticket = TicketFactory(booking=booking)
+    TicketFactory(booking=booking)
+
+    # A ticket not in the booking
+    TicketFactory()
+
+    assert booking.performance.tickets.count() == 2
+    assert booking.performance.tickets.all()[0].id == first_ticket.id
+
+
+@pytest.mark.django_db
+def test_performance_checked_in_tickets():
+    booking = BookingFactory()
+
+    # 2 tickets in the performance
+    TicketFactory(booking=booking)
+    ticket = TicketFactory(booking=booking, checked_in=True)
+
+    assert booking.performance.checked_in_tickets.count() == 1
+    assert booking.performance.checked_in_tickets.all()[0].id == ticket.id
+
+
+@pytest.mark.django_db
+def test_performance_unchecked_in_tickets():
+    booking = BookingFactory()
+
+    # 2 tickets in the performance
+    ticket = TicketFactory(booking=booking)
+    TicketFactory(booking=booking, checked_in=True)
+
+    assert booking.performance.unchecked_in_tickets.count() == 1
+    assert booking.performance.unchecked_in_tickets.all()[0].id == ticket.id
+
+
+@pytest.mark.django_db
+def test_performance_total_tickets_sold():
+    booking = BookingFactory()
+
+    # 2 tickets in the performance
+    TicketFactory(booking=booking)
+    TicketFactory(booking=booking)
+
+    # A ticket not in the booking
+    TicketFactory()
+
+    assert booking.performance.total_tickets_sold() == 2
+
+@pytest.mark.django_db
+def test_performance_total_tickets_checked_in():
+    booking = BookingFactory()
+
+    # 2 tickets in the performance
+    TicketFactory(booking=booking)
+    TicketFactory(booking=booking, checked_in=True)
+    
+    assert booking.performance.total_tickets_checked_in == 1
+    assert booking.performance.total_tickets_unchecked_in == 1
 
 @pytest.mark.django_db
 def test_performance_total_capacity():
@@ -560,10 +623,6 @@ def test_performance_check_capacity(seat_groups, performance_capacity, is_valid)
             ]
         )
 
-    print(
-        performance.check_capacity(tickets_to_book, deleted_tickets=tickets_to_delete)
-    )
-    print(len(tickets_to_delete))
     # If valid this should be none if not it should return something
     assert (
         performance.check_capacity(tickets_to_book, deleted_tickets=tickets_to_delete)

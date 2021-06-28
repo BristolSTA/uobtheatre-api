@@ -14,7 +14,7 @@ services:
     depends_on:
       - postgres
     volumes:
-      - .:/app:z
+      - .:/app/uobtheatre-api:z
     env_file:
       - ./.envs/.local/.django
       - ./.envs/.local/.postgres
