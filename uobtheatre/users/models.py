@@ -35,3 +35,14 @@ class User(AbstractUser):
 
     def make_boxoffice(self, production: Optional["Production"]):
         pass
+
+    def has_perm(self, model: str, _object=None):
+        """
+        Check if the user has access to a given model or object. If a user has
+        acess to the model, they inherintly have access to all objects.
+
+        :param model str: The model that the user may have access to.
+        :param _object Model: The object that the user may have access to. It
+        must have the same type as the model.
+        """
+        return super().has_perm(model) or (super().has_perm(model, _object) if _object else False)
