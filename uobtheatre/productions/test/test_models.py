@@ -381,7 +381,7 @@ def test_performance_total_tickets_sold():
     # A ticket not in the booking
     TicketFactory()
 
-    assert booking.performance.total_tickets_sold == 2
+    assert booking.performance.total_tickets_sold() == 2
 
 @pytest.mark.django_db
 def test_performance_total_tickets_checked_in():
