@@ -371,6 +371,30 @@ def test_performance_unchecked_in_tickets():
 
 
 @pytest.mark.django_db
+def test_performance_total_tickets_sold():
+    booking = BookingFactory()
+
+    # 2 tickets in the performance
+    first_ticket = TicketFactory(booking=booking)
+    TicketFactory(booking=booking)
+
+    # A ticket not in the booking
+    TicketFactory()
+
+    assert booking.performance.total_tickets_sold == 2
+
+@pytest.mark.django_db
+def test_performance_total_tickets_checked_in():
+    booking = BookingFactory()
+
+    # 2 tickets in the performance
+    TicketFactory(booking=booking)
+    ticket = TicketFactory(booking=booking, checked_in=True)
+    
+    assert booking.performance.total_tickets_checked_in == 1
+    assert booking.performance.total_tickets_unchecked_in == 1
+
+@pytest.mark.django_db
 def test_performance_total_capacity():
     perf = PerformanceFactory()
 
