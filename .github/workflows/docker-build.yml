@@ -5,8 +5,6 @@ on:
     # Publish `main` as Docker `latest` image.
     branches:
       - main
-  pull_request:
-    branches: [ main, dev ]
 
 env:
   IMAGE_NAME: api
