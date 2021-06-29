@@ -283,32 +283,15 @@ class DiscountCombination:
         return get_concession_map(self.get_requirements())
 
 
-class Booking(TimeStampedMixin, models.Model):
-    """A booking for a performance
-
-    A booking holds a collection of tickets for a given performance.
-
-    Note:
-        A user can only have 1 In Progress booking per performance.
-    """
+class Booking(models.Model):
 
     class BookingStatus(models.TextChoices):
         IN_PROGRESS = "IN_PROGRESS", "In Progress"
         PAID = "PAID", "Paid"
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["status", "performance"],
-                condition=models.Q(status="IN_PROGRESS"),
-                name="one_in_progress_booking_per_user_per_performance",
-            )
-        ]
-
     reference = models.CharField(
         default=create_short_uuid, editable=False, max_length=12, unique=True
     )
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bookings")
     performance = models.ForeignKey(
         Performance,
         on_delete=models.RESTRICT,
@@ -320,12 +303,41 @@ class Booking(TimeStampedMixin, models.Model):
         default=BookingStatus.IN_PROGRESS,
     )
 
+    def __str__(self):
+        return str(self.reference)
+
+    class Meta:
+        abstract = True
+
+
+class ConcessionBooking(TimeStampedMixin, Booking):
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name="created_bookings")
+
+
+class OnlineBooking(TimeStampedMixin, Booking):
+    """A booking for a performance
+
+    A booking holds a collection of tickets for a given performance.
+
+    Note:
+        A user can only have 1 In Progress booking per performance.
+    """
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bookings")
     payments = GenericRelation(
         Payment, object_id_field="pay_object_id", content_type_field="pay_object_type"
     )
 
-    def __str__(self):
-        return str(self.reference)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["status", "performance"],
+                condition=models.Q(status="IN_PROGRESS"),
+                name="one_in_progress_booking_per_user_per_performance",
+            )
+        ]
+
 
     def get_concession_map(self) -> Dict["ConcessionType", int]:
         """Get map of number of concessions in this booking
