@@ -3,41 +3,44 @@
 ![Gitub actions](https://github.com/BristolSTA/uobtheatre-api/workflows/Python%20package/badge.svg?branch=main)
 [![Coverage Status](https://coveralls.io/repos/github/BristolSTA/uobtheatre-api/badge.svg?branch=main)](https://coveralls.io/github/BristolSTA/uobtheatre-api?branch=main)
 
-API for uobtheatre. Check out the project's [documentation](http://BristolSTA.github.io/uobtheatre-api/).
+# Quick Start (Getting the api running)
 
-# Prerequisites
+If you have docker and docker-compose installed run:
 
-- Python 3.8
-- [Docker](https://docs.docker.com/get-docker/)
-- [virtualenv](https://virtualenv.pypa.io/en/latest/installation.html)
+```
+make up
+```
+
+(If you are on windows you will need to copy the command into git bash from the makefile or use wsl)
+
+# Prerequisites (Local dev)
+
+- Python 3.9
+- [docker](https://docs.docker.com/get-docker/)
+- [docker-compose](https://docs.docker.com/compose/install/)
+
+
+At the moment precommit does not run in the docker container, so you will need to have things installed locally.
 
 Create a virtualenv and use it
 
 ```
-virtualenv -p python3.8 .venv
+python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt dev-requirements.txt
+pip install -r requirements/local.txt
 ```
-
-If you need to use a python thing locally (not in docker) go into pipenv with `pipenv shell`.
 
 ## Pre-commit
 
-Pre-commit runs everything required before a pr can be merged.
+Pre-commit is required to format code and do lots of nice checks.
 
-## Install in pipenv
-It should already be installed for you in pipenv so just make sure you are in pipenv
-shell (`pipenv shell`) before running `git commit`.
+Install precommit with (make sure you are in venv):
+`pre-commit install`
 
-Then run `pre-commit install`
-
-## Install locally
-If you don't want to live inside a pipenv shell then just install pre-commit
-locally `pip install pre-commit` (or `python3 -m pip install pre-commit`).
-
-Then run `pre-commit install`
+If this case every commit should trigger the precommit hook. You will always need to be commit from within the venv for this to work.
 
 ## Visual studio dev container
+
 TODO if people care
 
 # Local Development :computer:
@@ -102,7 +105,7 @@ docker-compose run --rm api pytest --cov uobtheatre -vv -s uobtheatre/bookings/t
 
 ## Seeding
 
-There are a load of fixtures save in fixture.json in all the moduels. These can be loaded into the database with make seed.
+There are a load of fixtures save in fixture.json in all the moduels. These can be loaded into the database with `make seed`.
 Most notably this will add an admin users called with the following details:
 
 email: admin@email.com
@@ -110,10 +113,15 @@ password: strongpassword
 
 ## Packages :package:
 
-When adding a package run
+When adding a package follow these steps:
 
-`pipenv install package-name`
+1. Add the pacakge to the correct requirements file:
+- base - Is for any package required in both local and production environments
+- local - Is for any package required in only local environments
+- production - Is for any package required in only production environments
 
-This will add the package to the pipenv environemnt. However it will not update the docker image. This means you will need to remove the current image with `make clean` and rebuild with `make up`.
+The API image will then need rebuilding to add this dependency. Run:
 
-This also means when starting work on a new branch which has a new package you will also need to clean and rebuild.
+```
+make build
+```
