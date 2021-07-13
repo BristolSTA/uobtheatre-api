@@ -1,3 +1,5 @@
+export COMPOSE_FILE = local.yml
+
 ## Defines the app varaible. This reference the module which is being used
 APP=$(if $(app),uobtheatre/$(app)/test,)
 export APP
