@@ -214,6 +214,14 @@ class PerformanceFilter(FilterSet):
     order_by = django_filters.OrderingFilter(fields=(("start"),))
 
 
+class PerformanceTicketsBreakdown(graphene.ObjectType):
+    total_capacity = graphene.Int(required=True)
+    total_tickets_sold = graphene.Int(required=True)
+    total_tickets_checked_in = graphene.Int(required=True)
+    total_tickets_to_check_in = graphene.Int(required=True)
+    total_tickets_available = graphene.Int(required=True)
+
+
 class PerformanceNode(DjangoObjectType):
     capacity_remaining = graphene.Int()
     ticket_options = graphene.List(PerformanceSeatGroupNode)
@@ -223,6 +231,7 @@ class PerformanceNode(DjangoObjectType):
     is_online = graphene.Boolean(required=True)
     sold_out = graphene.Boolean(required=True)
     discounts = DjangoListField(DiscountNode)
+    tickets_breakdown = graphene.Field(PerformanceTicketsBreakdown, required=True)
 
     def resolve_ticket_options(self, info):
         return self.performance_seat_groups.all()
@@ -244,6 +253,15 @@ class PerformanceNode(DjangoObjectType):
 
     def resolve_sold_out(self, info):
         return self.is_sold_out()
+
+    def resolve_tickets_breakdown(self, info):
+        return PerformanceTicketsBreakdown(
+            self.total_capacity(),
+            self.total_tickets_sold(),
+            self.total_tickets_checked_in,
+            self.total_tickets_unchecked_in,
+            self.capacity_remaining(),
+        )
 
     class Meta:
         model = Performance
