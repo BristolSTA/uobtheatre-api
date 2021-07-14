@@ -70,7 +70,7 @@ class ProductionByMethodOrderingFilter(django_filters.OrderingFilter):
             ("-end", "End (descending)"),
         ]
 
-    def filter(self, query_set, value: str):  # pylint: disable=arguments-differ
+    def filter(self, query_set, value: str):
         """Fitler for start and end of production
 
         Adds following options:
