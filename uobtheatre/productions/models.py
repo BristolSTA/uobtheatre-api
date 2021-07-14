@@ -57,39 +57,14 @@ class AudienceWarning(models.Model):
         return str(self.description)
 
 
-def append_production_qs(queryset, start=False, end=False):
-    """Given a booking queryset append extra fields.
-
-    The additional field which can be added are:
-        - start
-        - end
-
-    Args:
-        queryset (Queryset): The production queryset.
-        start (bool): Whether the start field should be annotated.
-            (default is False)
-        end (bool): Whether the end field should be annotated.
-            (default is False)
-
-    Returns:
-        Queryset: The Queryset with the additional fields annotated.
-    """
-    if start:
-        queryset = queryset.annotate(start=Min("performances__start"))
-    if end:
-        queryset = queryset.annotate(end=Max("performances__end"))
-    return queryset
-
-
-class ProductionManager(models.Manager):
+class ProductionQuerySet(QuerySet):
     def annotate_start(self):
-        return self.annotate(start=Min("start"))
+        """Annotate start datetime to queryset"""
+        return self.annotate(start=Min("performances__start"))
 
     def annotate_end(self):
+        """Annotate end datetime to queryset"""
         return self.annotate(end=Max("performances__end"))
-
-    def annotate_start_end(self):
-        return self.annoate_start().annotate_end()
 
 
 class Production(TimeStampedMixin, models.Model):
@@ -98,7 +73,8 @@ class Production(TimeStampedMixin, models.Model):
     A production is a show (like the 2 weeks things) and can have many
     performaces (these are like the nights).
     """
-    objects = ProductionManager()
+
+    objects = ProductionQuerySet.as_manager()
 
     name = models.CharField(max_length=255)
     subtitle = models.CharField(max_length=255, null=True)
@@ -215,9 +191,9 @@ class Production(TimeStampedMixin, models.Model):
     class Meta:
         ordering = ["id"]
         permissions = (
-            ('boxoffice', 'Can use boxoffice for this show'),
-            ('create', 'Can create a new production'),
-            ('edit', 'Can edit existing production'),
+            ("boxoffice", "Can use boxoffice for this show"),
+            ("create", "Can create a new production"),
+            ("edit", "Can edit existing production"),
         )
 
 
@@ -278,7 +254,6 @@ class CrewMember(models.Model):
         ordering = ["id"]
 
 
-
 class PerformanceQuerySet(QuerySet):
     def running_on(self, date: datetime.date):
         """Performances running on the provided date.
@@ -314,6 +289,7 @@ class Performance(TimeStampedMixin, models.Model):
     A performance is a discrete event when the show takes place eg 7pm on
     Tuesday.
     """
+
     objects = PerformanceQuerySet.as_manager()
 
     production = models.ForeignKey(
@@ -650,7 +626,7 @@ class Performance(TimeStampedMixin, models.Model):
         Returns:
             bool: Whether the user has permission
         """
-        if user.has_perm('productions.boxoffice', self.production):
+        if user.has_perm("productions.boxoffice", self.production):
             return True
         return False
 

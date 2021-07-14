@@ -18,7 +18,6 @@ from uobtheatre.productions.models import (
     PerformanceSeatGroup,
     Production,
     ProductionTeamMember,
-    append_production_qs,
 )
 from uobtheatre.utils.filters import FilterSet
 from uobtheatre.utils.schema import DjangoObjectType, GrapheneEnumMixin
@@ -87,14 +86,14 @@ class ProductionByMethodOrderingFilter(django_filters.OrderingFilter):
             Queryset: The filtered Queryset
         """
         if value and "start" in value:
-            return append_production_qs(query_set, start=True).order_by("start")
+            return query_set.append_start().order_by("start")
         if value and "-start" in value:
-            return append_production_qs(query_set, start=True).order_by("-start")
+            return query_set.append_start().order_by("-start")
 
         if value and "end" in value:
-            return append_production_qs(query_set, end=True).order_by("end")
+            return query_set.append_end().order_by("end")
         if value and "-end" in value:
-            return append_production_qs(query_set, end=True).order_by("-end")
+            return query_set.append_end().order_by("-end")
 
         return super().filter(query_set, value)
 
@@ -114,10 +113,10 @@ class ProductionFilter(FilterSet):
     end__lte = django_filters.DateTimeFilter(method="end_filter")
 
     def start_filter(self, query_set, value, date=None):
-        return append_production_qs(query_set, start=True).filter(**{value: date})
+        return query_set.append_start().filter(**{value: date})
 
     def end_filter(self, query_set, value, date=None):
-        return append_production_qs(query_set, end=True).filter(**{value: date})
+        return query_set.append_end().filter(**{value: date})
 
     class Meta:
         model = Production
@@ -205,7 +204,9 @@ class PerformanceFilter(FilterSet):
     Extends filterset to include orderby start.
     """
 
-    has_boxoffice_permissions = django_filters.BooleanFilter(method="has_boxoffice_perm_filter")
+    has_boxoffice_permissions = django_filters.BooleanFilter(
+        method="has_boxoffice_perm_filter"
+    )
     run_on = django_filters.DateFilter(method="run_on_filter")
 
     class Meta:
@@ -216,7 +217,9 @@ class PerformanceFilter(FilterSet):
 
     def has_boxoffice_perm_filter(self, query_set, _, has_permission=None):
         print("ABC")
-        return query_set.has_boxoffice_permission(self.request.user, has_permission=has_permission)
+        return query_set.has_boxoffice_permission(
+            self.request.user, has_permission=has_permission
+        )
 
     def run_on_filter(self, query_set, _, date=None):
         return query_set.running_on(date)
