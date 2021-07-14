@@ -86,14 +86,14 @@ class ProductionByMethodOrderingFilter(django_filters.OrderingFilter):
             Queryset: The filtered Queryset
         """
         if value and "start" in value:
-            return query_set.append_start().order_by("start")
+            return query_set.annotate_start().order_by("start")
         if value and "-start" in value:
-            return query_set.append_start().order_by("-start")
+            return query_set.annotate_start().order_by("-start")
 
         if value and "end" in value:
-            return query_set.append_end().order_by("end")
+            return query_set.annotate_end().order_by("end")
         if value and "-end" in value:
-            return query_set.append_end().order_by("-end")
+            return query_set.annotate_end().order_by("-end")
 
         return super().filter(query_set, value)
 
@@ -113,10 +113,10 @@ class ProductionFilter(FilterSet):
     end__lte = django_filters.DateTimeFilter(method="end_filter")
 
     def start_filter(self, query_set, value, date=None):
-        return query_set.append_start().filter(**{value: date})
+        return query_set.annotate_start().filter(**{value: date})
 
     def end_filter(self, query_set, value, date=None):
-        return query_set.append_end().filter(**{value: date})
+        return query_set.annotate_end().filter(**{value: date})
 
     class Meta:
         model = Production
