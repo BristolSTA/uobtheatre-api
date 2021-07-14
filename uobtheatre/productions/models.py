@@ -7,6 +7,7 @@ from django.db import models
 from django.db.models import Max, Min, Sum
 from django.db.models.query import QuerySet
 from django.utils import timezone
+from guardian.shortcuts import get_objects_for_user
 
 from uobtheatre.images.models import Image
 from uobtheatre.societies.models import Society
@@ -15,6 +16,7 @@ from uobtheatre.venues.models import SeatGroup, Venue
 
 if TYPE_CHECKING:
     from uobtheatre.bookings.models import ConcessionType, Ticket
+    from uobtheatre.users.models import User
 
 
 class CrewRole(models.Model):
@@ -55,28 +57,16 @@ class AudienceWarning(models.Model):
         return str(self.description)
 
 
-def append_production_qs(queryset, start=False, end=False):
-    """Given a booking queryset append extra fields.
+class ProductionQuerySet(QuerySet):
+    """Queryset for Productions, also used as manager."""
 
-    The additional field which can be added are:
-        - start
-        - end
+    def annotate_start(self):
+        """Annotate start datetime to queryset"""
+        return self.annotate(start=Min("performances__start"))
 
-    Args:
-        queryset (Queryset): The production queryset.
-        start (bool): Whether the start field should be annotated.
-            (default is False)
-        end (bool): Whether the end field should be annotated.
-            (default is False)
-
-    Returns:
-        Queryset: The Queryset with the additional fields annotated.
-    """
-    if start:
-        queryset = queryset.annotate(start=Min("performances__start"))
-    if end:
-        queryset = queryset.annotate(end=Max("performances__end"))
-    return queryset
+    def annotate_end(self):
+        """Annotate end datetime to queryset"""
+        return self.annotate(end=Max("performances__end"))
 
 
 class Production(TimeStampedMixin, models.Model):
@@ -85,6 +75,8 @@ class Production(TimeStampedMixin, models.Model):
     A production is a show (like the 2 weeks things) and can have many
     performaces (these are like the nights).
     """
+
+    objects = ProductionQuerySet.as_manager()
 
     name = models.CharField(max_length=255)
     subtitle = models.CharField(max_length=255, null=True)
@@ -200,6 +192,11 @@ class Production(TimeStampedMixin, models.Model):
 
     class Meta:
         ordering = ["id"]
+        permissions = (
+            ("boxoffice", "Can use boxoffice for this show"),
+            ("create", "Can create a new production"),
+            ("edit", "Can edit existing production"),
+        )
 
 
 class CastMember(models.Model):
@@ -259,12 +256,51 @@ class CrewMember(models.Model):
         ordering = ["id"]
 
 
+class PerformanceQuerySet(QuerySet):
+    """Queryset for Performances, also used as manager."""
+
+    def running_on(self, date: datetime.date):
+        """Performances running on the provided date.
+
+        This means the performance must either start or still be
+        running on the day.
+
+        Args:
+            date: The date which performances must be running on.
+
+        Returns:
+            QuerySet: The filtered queryset
+        """
+        return self.filter(start__date__lte=date, end__date__gte=date)
+
+    def has_boxoffice_permission(self, user: "User", has_permission=True):
+        """Filter performances where user has boxoffice permission.
+
+        Returns the performances which the provided user has permission to
+        access the boxoffice.
+
+        Args:
+            user (User): The user which is used in the filter.
+            has_permission (bool): Whether to filter those which the user has
+                permission for, or does not have permission for.
+
+        Returns:
+            QuerySet: The filtered queryset
+        """
+        production_with_perm = get_objects_for_user(user, "productions.boxoffice")
+        if has_permission:
+            return self.filter(production__in=production_with_perm)
+        return self.exclude(production__in=production_with_perm)
+
+
 class Performance(TimeStampedMixin, models.Model):
     """The model for a Performance of a Production.
 
     A performance is a discrete event when the show takes place eg 7pm on
     Tuesday.
     """
+
+    objects = PerformanceQuerySet.as_manager()
 
     production = models.ForeignKey(
         Production,
@@ -589,6 +625,20 @@ class Performance(TimeStampedMixin, models.Model):
             return f"There are only {self.capacity_remaining()} seats available for this performance. You attempted to book {len(tickets)}. Please remove some tickets and try again or select a different performance."
 
         return None
+
+    def has_boxoffice_permission(self, user: "User") -> bool:
+        """
+        Return whether the user has accesss to this performance's boxoffice
+
+        Args:
+            user (User): The user who is being checked
+
+        Returns:
+            bool: Whether the user has permission
+        """
+        if user.has_perm("productions.boxoffice", self.production):
+            return True
+        return False
 
     def __str__(self):
         if self.start is None:
