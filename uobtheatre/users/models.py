@@ -1,5 +1,5 @@
 import uuid
-from typing import List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Optional
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
@@ -30,16 +30,19 @@ class User(AbstractUser):
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 
-    def make_boxoffice(self, production: Optional["Production"]):
-        pass
-
-    def has_perm(self, model: str, _object=None):
+    def has_perm(self, model: str, query_object=None) -> bool:
         """
         Check if the user has access to a given model or object. If a user has
         acess to the model, they inherintly have access to all objects.
 
-        :param model str: The model that the user may have access to.
-        :param _object Model: The object that the user may have access to. It
-        must have the same type as the model.
+        Args:
+            model (str): The model that the user may have access to.
+            query_object (Model): The object that the user may have access to. It
+                must have the same type as the model.
+
+        Returns:
+            bool: Whether the user has permission to access the object/model.
         """
-        return super().has_perm(model) or (super().has_perm(model, _object) if _object else False)
+        return super().has_perm(model) or (
+            super().has_perm(model, query_object) if query_object else False
+        )

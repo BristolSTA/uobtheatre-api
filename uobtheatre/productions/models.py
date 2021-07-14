@@ -58,6 +58,8 @@ class AudienceWarning(models.Model):
 
 
 class ProductionQuerySet(QuerySet):
+    """Queryset for Productions, also used as manager."""
+
     def annotate_start(self):
         """Annotate start datetime to queryset"""
         return self.annotate(start=Min("performances__start"))
@@ -255,6 +257,8 @@ class CrewMember(models.Model):
 
 
 class PerformanceQuerySet(QuerySet):
+    """Queryset for Performances, also used as manager."""
+
     def running_on(self, date: datetime.date):
         """Performances running on the provided date.
 
@@ -263,6 +267,9 @@ class PerformanceQuerySet(QuerySet):
 
         Args:
             date: The date which performances must be running on.
+
+        Returns:
+            QuerySet: The filtered queryset
         """
         return self.filter(start__date__lte=date, end__date__gte=date)
 
@@ -273,9 +280,12 @@ class PerformanceQuerySet(QuerySet):
         access the boxoffice.
 
         Args:
-            user: The user which is used in the filter.
-            has_perm: Whether to filter those which the user has permission
-                for, or does not have permission for.
+            user (User): The user which is used in the filter.
+            has_permission (bool): Whether to filter those which the user has
+                permission for, or does not have permission for.
+
+        Returns:
+            QuerySet: The filtered queryset
         """
         production_with_perm = get_objects_for_user(user, "productions.boxoffice")
         if has_permission:

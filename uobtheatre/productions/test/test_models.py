@@ -16,7 +16,7 @@ from uobtheatre.bookings.test.factories import (
     PerformanceSeatingFactory,
     TicketFactory,
 )
-from uobtheatre.productions.models import PerformanceSeatGroup, Performance
+from uobtheatre.productions.models import Performance, PerformanceSeatGroup
 from uobtheatre.productions.test.factories import (
     AudienceWarningFactory,
     CastMemberFactory,
@@ -385,6 +385,7 @@ def test_performance_total_tickets_sold():
 
     assert booking.performance.total_tickets_sold() == 2
 
+
 @pytest.mark.django_db
 def test_performance_total_tickets_checked_in():
     booking = BookingFactory()
@@ -392,9 +393,10 @@ def test_performance_total_tickets_checked_in():
     # 2 tickets in the performance
     TicketFactory(booking=booking)
     TicketFactory(booking=booking, checked_in=True)
-    
+
     assert booking.performance.total_tickets_checked_in == 1
     assert booking.performance.total_tickets_unchecked_in == 1
+
 
 @pytest.mark.django_db
 def test_performance_total_capacity():
@@ -737,8 +739,14 @@ def test_qs_has_boxoffice_permission():
     for perm in has_perm_performances:
         assign_perm("boxoffice", user, perm.production)
 
-    assert list(Performance.objects.has_boxoffice_permission(user)) == has_perm_performances
-    assert list(Performance.objects.has_boxoffice_permission(user, has_permission=False)) == not_has_perm_performances
+    assert (
+        list(Performance.objects.has_boxoffice_permission(user))
+        == has_perm_performances
+    )
+    assert (
+        list(Performance.objects.has_boxoffice_permission(user, has_permission=False))
+        == not_has_perm_performances
+    )
 
 
 @pytest.mark.django_db
@@ -748,9 +756,17 @@ def test_qs_running_on():
     # Past performance
     PerformanceFactory(start=query_date - one_day, end=query_date - one_day)
     today_performance = PerformanceFactory(start=query_date, end=query_date)
-    spanning_performance_1 = PerformanceFactory(start=query_date - one_day, end=query_date)
-    spanning_performance_2 = PerformanceFactory(start=query_date - one_day, end=query_date + one_day)
+    spanning_performance_1 = PerformanceFactory(
+        start=query_date - one_day, end=query_date
+    )
+    spanning_performance_2 = PerformanceFactory(
+        start=query_date - one_day, end=query_date + one_day
+    )
     # Future performance
     PerformanceFactory(start=query_date + one_day, end=query_date + one_day)
 
-    assert list(Performance.objects.running_on(query_date)) == [today_performance, spanning_performance_1, spanning_performance_2]
+    assert list(Performance.objects.running_on(query_date)) == [
+        today_performance,
+        spanning_performance_1,
+        spanning_performance_2,
+    ]

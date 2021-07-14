@@ -6,12 +6,19 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('productions', '0001_initial'),
+        ("productions", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='production',
-            options={'ordering': ['id'], 'permissions': (('boxoffice', 'Can use boxoffice for this show'), ('create', 'Can create a new production'), ('edit', 'Can edit existing production'))},
+            name="production",
+            options={
+                "ordering": ["id"],
+                "permissions": (
+                    ("boxoffice", "Can use boxoffice for this show"),
+                    ("create", "Can create a new production"),
+                    ("edit", "Can edit existing production"),
+                ),
+            },
         ),
     ]

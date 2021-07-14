@@ -216,7 +216,6 @@ class PerformanceFilter(FilterSet):
     order_by = django_filters.OrderingFilter(fields=(("start"),))
 
     def has_boxoffice_perm_filter(self, query_set, _, has_permission=None):
-        print("ABC")
         return query_set.has_boxoffice_permission(
             self.request.user, has_permission=has_permission
         )
