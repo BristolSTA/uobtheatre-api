@@ -205,13 +205,21 @@ class PerformanceFilter(FilterSet):
     Extends filterset to include orderby start.
     """
 
-    start = django_filters.DateTimeFilter(method="start_filter")
+    has_boxoffice_permissions = django_filters.BooleanFilter(method="has_boxoffice_perm_filter")
+    run_on = django_filters.DateFilter(method="run_on_filter")
 
     class Meta:
         model = Performance
         exclude = ("performance_seat_groups", "bookings")
 
     order_by = django_filters.OrderingFilter(fields=(("start"),))
+
+    def has_boxoffice_perm_filter(self, query_set, _, has_permission=None):
+        print("ABC")
+        return query_set.has_boxoffice_permission(self.request.user, has_permission=has_permission)
+
+    def run_on_filter(self, query_set, _, date=None):
+        return query_set.running_on(date)
 
 
 class PerformanceTicketsBreakdown(graphene.ObjectType):
@@ -278,11 +286,12 @@ class Query(graphene.ObjectType):
 
     productions = DjangoFilterConnectionField(ProductionNode)
     performances = DjangoFilterConnectionField(PerformanceNode)
+    boxoffice_performances = graphene.List(PerformanceNode, date=graphene.Date())
 
     production = graphene.Field(ProductionNode, slug=graphene.String(required=True))
     performance = relay.Node.Field(PerformanceNode)
 
-    def resolve_production(self, info, slug):
+    def resolve_production(self, _, slug):
         try:
             return Production.objects.get(slug=slug)
         except Production.DoesNotExist:

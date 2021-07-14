@@ -5,6 +5,7 @@ import random
 import pytest
 from dateutil import parser
 from django.utils import timezone
+from guardian.shortcuts import assign_perm
 
 from uobtheatre.bookings.models import Ticket
 from uobtheatre.bookings.test.factories import (
@@ -15,7 +16,7 @@ from uobtheatre.bookings.test.factories import (
     PerformanceSeatingFactory,
     TicketFactory,
 )
-from uobtheatre.productions.models import PerformanceSeatGroup
+from uobtheatre.productions.models import PerformanceSeatGroup, Performance
 from uobtheatre.productions.test.factories import (
     AudienceWarningFactory,
     CastMemberFactory,
@@ -25,6 +26,7 @@ from uobtheatre.productions.test.factories import (
     ProductionFactory,
     ProductionTeamMemberFactory,
 )
+from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory
 
 
@@ -713,3 +715,42 @@ def test_performance_seat_group_default_capacity():
     performance.save()
 
     assert performance.capacity == 100
+
+
+@pytest.mark.django_db
+def test_performance_has_boxoffice_permission():
+    performance = PerformanceFactory()
+    user = UserFactory()
+
+    assert performance.has_boxoffice_permission(user) is False
+
+    assign_perm("boxoffice", user, performance.production)
+    assert performance.has_boxoffice_permission(user) is True
+
+
+@pytest.mark.django_db
+def test_qs_has_boxoffice_permission():
+    not_has_perm_performances = [PerformanceFactory() for _ in range(3)]
+    has_perm_performances = [PerformanceFactory() for _ in range(3)]
+    user = UserFactory()
+
+    for perm in has_perm_performances:
+        assign_perm("boxoffice", user, perm.production)
+
+    assert list(Performance.objects.has_boxoffice_permission(user)) == has_perm_performances
+    assert list(Performance.objects.has_boxoffice_permission(user, has_permission=False)) == not_has_perm_performances
+
+
+@pytest.mark.django_db
+def test_qs_running_on():
+    query_date = datetime.date(year=2021, month=7, day=14)
+    one_day = datetime.timedelta(days=1)
+    # Past performance
+    PerformanceFactory(start=query_date - one_day, end=query_date - one_day)
+    today_performance = PerformanceFactory(start=query_date, end=query_date)
+    spanning_performance_1 = PerformanceFactory(start=query_date - one_day, end=query_date)
+    spanning_performance_2 = PerformanceFactory(start=query_date - one_day, end=query_date + one_day)
+    # Future performance
+    PerformanceFactory(start=query_date + one_day, end=query_date + one_day)
+
+    assert list(Performance.objects.running_on(query_date)) == [today_performance, spanning_performance_1, spanning_performance_2]

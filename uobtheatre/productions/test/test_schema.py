@@ -12,6 +12,7 @@ from uobtheatre.bookings.test.factories import (
     PerformanceSeatingFactory,
     TicketFactory,
 )
+from uobtheatre.productions.models import Performance
 from uobtheatre.productions.test.factories import (
     AudienceWarningFactory,
     CastMemberFactory,
@@ -808,4 +809,33 @@ def test_production_filters(filter_name, value_days, expected_outputs, gql_clien
     assert response["data"]["productions"]["edges"] == [
         {"node": {"end": productions[i].end_date().isoformat()}}
         for i in expected_outputs
+    ]
+
+
+@pytest.mark.django_db
+def test_perfromance_run_on(gql_client):
+    query_date = datetime.date(year=2000, month=6, day=20)
+    [PerformanceFactory(start=query_date+datetime.timedelta(days=i), end=query_date+datetime.timedelta(days=i, hours=2)) for i in range(-2, 2)]
+
+    # Check we get 6 of the upcoming productions back in the right order
+    request = """
+        {
+          performances(runOn: "%s") {
+            edges {
+              node {
+                start
+              }
+            }
+          }
+        }
+        """
+
+    # Ask for nothing and check you get nothing
+    response = gql_client.execute(
+        request % query_date.isoformat()
+    )
+    print(response)
+    assert response["data"]["performances"]["edges"] == [
+        {"node": {"start": perm.start.isoformat()}}
+        for perm in Performance.objects.running_on(query_date)
     ]
