@@ -1,11 +1,11 @@
 import uuid
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 if TYPE_CHECKING:
-    from uobtheatre.productions.models import Production
+    pass
 
 
 class User(AbstractUser):
@@ -30,19 +30,18 @@ class User(AbstractUser):
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 
-    def has_perm(self, model: str, query_object=None) -> bool:
+    def has_perm(self, perm: str, obj=None) -> bool:
         """
         Check if the user has access to a given model or object. If a user has
         acess to the model, they inherintly have access to all objects.
 
         Args:
-            model (str): The model that the user may have access to.
-            query_object (Model): The object that the user may have access to. It
+            perm (str): The permission that the user may or may not have, these
+                are defined in the Meta class of the model.
+            obj (Model): The object that the user may have access to. It
                 must have the same type as the model.
 
         Returns:
             bool: Whether the user has permission to access the object/model.
         """
-        return super().has_perm(model) or (
-            super().has_perm(model, query_object) if query_object else False
-        )
+        return super().has_perm(perm) or (super().has_perm(perm, obj) if obj else False)
