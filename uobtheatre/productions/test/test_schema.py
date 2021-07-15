@@ -4,6 +4,7 @@ import math
 import pytest
 from django.utils import timezone
 from graphql_relay.node.node import to_global_id
+from guardian.shortcuts import assign_perm
 
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
@@ -12,6 +13,7 @@ from uobtheatre.bookings.test.factories import (
     PerformanceSeatingFactory,
     TicketFactory,
 )
+from uobtheatre.productions.models import Performance
 from uobtheatre.productions.test.factories import (
     AudienceWarningFactory,
     CastMemberFactory,
@@ -808,4 +810,69 @@ def test_production_filters(filter_name, value_days, expected_outputs, gql_clien
     assert response["data"]["productions"]["edges"] == [
         {"node": {"end": productions[i].end_date().isoformat()}}
         for i in expected_outputs
+    ]
+
+
+@pytest.mark.django_db
+def test_perfromance_run_on(gql_client):
+    query_date = datetime.date(year=2000, month=6, day=20)
+    _ = [
+        PerformanceFactory(
+            start=query_date + datetime.timedelta(days=i),
+            end=query_date + datetime.timedelta(days=i, hours=2),
+        )
+        for i in range(-2, 2)
+    ]
+
+    # Check we get 6 of the upcoming productions back in the right order
+    request = """
+        {
+          performances(runOn: "%s") {
+            edges {
+              node {
+                start
+              }
+            }
+          }
+        }
+        """
+
+    # Ask for nothing and check you get nothing
+    response = gql_client.execute(request % query_date.isoformat())
+    assert response["data"]["performances"]["edges"] == [
+        {"node": {"start": perm.start.isoformat()}}
+        for perm in Performance.objects.running_on(query_date)
+    ]
+
+
+@pytest.mark.django_db
+def test_perfromance_has_permission(gql_client_flexible):
+    performances = [PerformanceFactory() for _ in range(3)]
+
+    assign_perm("boxoffice", gql_client_flexible.user, performances[0].production)
+
+    # Check we get 6 of the upcoming productions back in the right order
+    request = """
+        {
+          performances(hasBoxofficePermissions: %s) {
+            edges {
+              node {
+                id
+              }
+            }
+          }
+        }
+        """
+
+    # Ask for nothing and check you get nothing
+    response = gql_client_flexible.execute(request % "true")
+    assert response["data"]["performances"]["edges"] == [
+        {"node": {"id": to_global_id("PerformanceNode", perm.id)}}
+        for perm in performances[:1]
+    ]
+
+    response = gql_client_flexible.execute(request % "false")
+    assert response["data"]["performances"]["edges"] == [
+        {"node": {"id": to_global_id("PerformanceNode", perm.id)}}
+        for perm in performances[1:]
     ]

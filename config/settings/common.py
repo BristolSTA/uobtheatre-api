@@ -31,6 +31,7 @@ INSTALLED_APPS = (
     "corsheaders",  # CORS
     "autoslug",  # Auto slug
     "graphene_django",  # Graphql
+    "guardian",
     # Your apps
     "uobtheatre.users",
     "uobtheatre.productions",
@@ -157,6 +158,7 @@ SITE_ID = 1
 
 AUTHENTICATION_BACKENDS = [
     "graphql_auth.backends.GraphQLAuthBackend",
+    "guardian.backends.ObjectPermissionBackend",
     "django.contrib.auth.backends.ModelBackend",
 ]
 

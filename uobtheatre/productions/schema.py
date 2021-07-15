@@ -18,7 +18,6 @@ from uobtheatre.productions.models import (
     PerformanceSeatGroup,
     Production,
     ProductionTeamMember,
-    append_production_qs,
 )
 from uobtheatre.utils.filters import FilterSet
 from uobtheatre.utils.schema import DjangoObjectType, GrapheneEnumMixin
@@ -70,7 +69,7 @@ class ProductionByMethodOrderingFilter(django_filters.OrderingFilter):
             ("-end", "End (descending)"),
         ]
 
-    def filter(self, query_set, value: str):  # pylint: disable=arguments-differ
+    def filter(self, query_set, value: str):
         """Fitler for start and end of production
 
         Adds following options:
@@ -87,14 +86,14 @@ class ProductionByMethodOrderingFilter(django_filters.OrderingFilter):
             Queryset: The filtered Queryset
         """
         if value and "start" in value:
-            return append_production_qs(query_set, start=True).order_by("start")
+            return query_set.annotate_start().order_by("start")
         if value and "-start" in value:
-            return append_production_qs(query_set, start=True).order_by("-start")
+            return query_set.annotate_start().order_by("-start")
 
         if value and "end" in value:
-            return append_production_qs(query_set, end=True).order_by("end")
+            return query_set.annotate_end().order_by("end")
         if value and "-end" in value:
-            return append_production_qs(query_set, end=True).order_by("-end")
+            return query_set.annotate_end().order_by("-end")
 
         return super().filter(query_set, value)
 
@@ -114,10 +113,10 @@ class ProductionFilter(FilterSet):
     end__lte = django_filters.DateTimeFilter(method="end_filter")
 
     def start_filter(self, query_set, value, date=None):
-        return append_production_qs(query_set, start=True).filter(**{value: date})
+        return query_set.annotate_start().filter(**{value: date})
 
     def end_filter(self, query_set, value, date=None):
-        return append_production_qs(query_set, end=True).filter(**{value: date})
+        return query_set.annotate_end().filter(**{value: date})
 
     class Meta:
         model = Production
@@ -205,13 +204,24 @@ class PerformanceFilter(FilterSet):
     Extends filterset to include orderby start.
     """
 
-    start = django_filters.DateTimeFilter(method="start_filter")
+    has_boxoffice_permissions = django_filters.BooleanFilter(
+        method="has_boxoffice_perm_filter"
+    )
+    run_on = django_filters.DateFilter(method="run_on_filter")
 
     class Meta:
         model = Performance
         exclude = ("performance_seat_groups", "bookings")
 
     order_by = django_filters.OrderingFilter(fields=(("start"),))
+
+    def has_boxoffice_perm_filter(self, query_set, _, has_permission=None):
+        return query_set.has_boxoffice_permission(
+            self.request.user, has_permission=has_permission
+        )
+
+    def run_on_filter(self, query_set, _, date=None):
+        return query_set.running_on(date)
 
 
 class PerformanceTicketsBreakdown(graphene.ObjectType):
@@ -278,11 +288,12 @@ class Query(graphene.ObjectType):
 
     productions = DjangoFilterConnectionField(ProductionNode)
     performances = DjangoFilterConnectionField(PerformanceNode)
+    boxoffice_performances = graphene.List(PerformanceNode, date=graphene.Date())
 
     production = graphene.Field(ProductionNode, slug=graphene.String(required=True))
     performance = relay.Node.Field(PerformanceNode)
 
-    def resolve_production(self, info, slug):
+    def resolve_production(self, _, slug):
         try:
             return Production.objects.get(slug=slug)
         except Production.DoesNotExist:

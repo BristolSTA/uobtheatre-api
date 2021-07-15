@@ -1,3 +1,5 @@
+export COMPOSE_FILE = local.yml
+
 ## Defines the app varaible. This reference the module which is being used
 APP=$(if $(app),uobtheatre/$(app)/test,)
 export APP
@@ -72,7 +74,7 @@ test-v: ## Run verbose unit tests in docker container, use test_path to specify 
 coverage: ## Generate test coverage report
 	docker-compose run --rm api coverage run --source=uobtheatre -m pytest -m "not square_integration"
 	docker-compose run --rm api coverage html
-	docker-compose run --rm api coveralls
+	# docker-compose run --rm api coveralls
 
 coverage-nr: ## Generate test coverage report from last test run
 	docker-compose run --rm api coverage html
