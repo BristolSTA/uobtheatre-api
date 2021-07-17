@@ -19,29 +19,6 @@ type ArchiveAccount {
   errors: [GQLErrorUnion]
 }
 
-type BookingNode implements Node {
-  id: ID!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  reference: String!
-  user: UserNode
-  performance: PerformanceNode!
-  status: EnumNode
-  tickets: [TicketNode!]
-  priceBreakdown: PriceBreakdownNode
-  payments(offset: Int, before: String, after: String, first: Int, last: Int, type: String, provider: String, createdAt: DateTime, id: ID): PaymentNodeConnection
-}
-
-type BookingNodeConnection {
-  pageInfo: PageInfo!
-  edges: [BookingNodeEdge]!
-}
-
-type BookingNodeEdge {
-  node: BookingNode
-  cursor: String!
-}
-
 type CastMemberNode implements Node {
   id: ID!
   name: String!
@@ -54,7 +31,7 @@ type CheckInBooking {
   success: Boolean
   errors: [GQLErrorUnion]
   performance: PerformanceNode
-  booking: BookingNode
+  booking: PaidBookingNode
 }
 
 type ConcessionTypeBookingType {
@@ -73,7 +50,7 @@ type ConcessionTypeNode implements Node {
 type CreateBooking {
   success: Boolean
   errors: [GQLErrorUnion]
-  booking: BookingNode
+  booking: PaidBookingNode
 }
 
 input CreateTicketInput {
@@ -212,6 +189,29 @@ type PageInfo {
   endCursor: String
 }
 
+type PaidBookingNode implements Node {
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  reference: String!
+  performance: PerformanceNode!
+  status: EnumNode
+  user: UserNode
+  priceBreakdown: PriceBreakdownNode
+  tickets: [TicketNode!]
+  payments(offset: Int, before: String, after: String, first: Int, last: Int, type: String, provider: String, createdAt: DateTime, id: ID): PaymentNodeConnection
+}
+
+type PaidBookingNodeConnection {
+  pageInfo: PageInfo!
+  edges: [PaidBookingNodeEdge]!
+}
+
+type PaidBookingNodeEdge {
+  node: PaidBookingNode
+  cursor: String!
+}
+
 type PasswordChange {
   success: Boolean
   errors: [GQLErrorUnion]
@@ -232,11 +232,11 @@ type PasswordSet {
 type PayBooking {
   success: Boolean
   errors: [GQLErrorUnion]
-  booking: BookingNode
+  booking: PaidBookingNode
   payment: PaymentNode
 }
 
-union PayObjectUnion = BookingNode
+union PayObjectUnion = PaidBookingNode
 
 type PaymentNode implements Node {
   id: ID!
@@ -278,7 +278,6 @@ type PerformanceNode implements Node {
   seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
   capacity: Int
   discounts: [DiscountNode!]
-  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, reference: String, user: ID, performance: ID, status: String, id: ID, orderBy: String): BookingNodeConnection!
   capacityRemaining: Int
   ticketOptions: [PerformanceSeatGroupNode]
   minSeatPrice: Int
@@ -496,7 +495,6 @@ input TicketIDInput {
 type TicketNode implements Node {
   id: ID!
   seatGroup: SeatGroupNode!
-  booking: BookingNode!
   concessionType: ConcessionTypeNode!
   seat: SeatNode
   checkedIn: Boolean!
@@ -516,7 +514,7 @@ type UnCheckInBooking {
   success: Boolean
   errors: [GQLErrorUnion]
   performance: PerformanceNode
-  booking: BookingNode
+  booking: PaidBookingNode
 }
 
 type UpdateAccount {
@@ -527,7 +525,7 @@ type UpdateAccount {
 type UpdateBooking {
   success: Boolean
   errors: [GQLErrorUnion]
-  booking: BookingNode
+  booking: PaidBookingNode
 }
 
 input UpdateTicketInput {
@@ -547,7 +545,7 @@ type UserNode implements Node {
   dateJoined: DateTime!
   id: ID!
   email: String!
-  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, reference: String, user: ID, performance: ID, status: String, id: ID, orderBy: String): BookingNodeConnection!
+  bookings(offset: Int, before: String, after: String, first: Int, last: Int, polymorphicCtype: ID, createdAt: DateTime, updatedAt: DateTime, reference: String, performance: ID, status: String, user: ID, id: ID, orderBy: String): PaidBookingNodeConnection!
   pk: Int
   archived: Boolean
   verified: Boolean
