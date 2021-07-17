@@ -1,6 +1,6 @@
 import pytest
 
-from uobtheatre.bookings.test.factories import BookingFactory
+from uobtheatre.bookings.test.factories import PaidBookingFactory
 from uobtheatre.users.test.factories import UserFactory
 
 
@@ -10,7 +10,7 @@ def test_user_schema(gql_client_flexible, gql_id):
     user = gql_client_flexible.request_factory.user
 
     # Create some booking
-    bookings = [BookingFactory(user=user) for i in range(4)]
+    bookings = [PaidBookingFactory(user=user) for i in range(4)]
 
     # Create an irrelevant user with some bookings
     # irrelevant_user = UserFactory()
@@ -50,7 +50,7 @@ def test_user_schema(gql_client_flexible, gql_id):
                 "id": gql_id(user.id, "UserNode"),
                 "bookings": {
                     "edges": [
-                        {"node": {"id": gql_id(booking.id, "BookingNode")}}
+                        {"node": {"id": gql_id(booking.id, "PaidBookingNode")}}
                         for booking in bookings
                     ]
                 },

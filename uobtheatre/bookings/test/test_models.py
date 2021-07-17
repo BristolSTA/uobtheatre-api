@@ -14,10 +14,10 @@ from uobtheatre.bookings.models import (
     combinations,
 )
 from uobtheatre.bookings.test.factories import (
-    BookingFactory,
     ConcessionTypeFactory,
     DiscountFactory,
     DiscountRequirementFactory,
+    PaidBookingFactory,
     PercentageMiscCostFactory,
     PerformanceSeatingFactory,
     TicketFactory,
@@ -107,7 +107,7 @@ def test_combinations(inputs, length, output):
 
 @pytest.mark.django_db
 def test_is_valid_single_discount():
-    booking = BookingFactory()
+    booking = PaidBookingFactory()
     discount = DiscountFactory()
     discount.performance = booking.performance
 
@@ -131,7 +131,7 @@ def test_is_valid_single_discount():
 
 @pytest.mark.django_db
 def test_is_valid_multi_discount():
-    booking = BookingFactory()
+    booking = PaidBookingFactory()
     discount = DiscountFactory()
     discount.performance = booking.performance
 
@@ -163,7 +163,7 @@ def test_is_valid_multi_discount():
 @pytest.mark.django_db
 def test_get_valid_discounts():
     performance = PerformanceFactory()
-    booking = BookingFactory(performance=performance)
+    booking = PaidBookingFactory(performance=performance)
 
     # Create some concession types
     concession_type_student = ConcessionTypeFactory(name="Student")
@@ -224,7 +224,7 @@ def test_get_valid_discounts():
 @pytest.mark.django_db
 def test_get_price():
     performance = PerformanceFactory()
-    booking = BookingFactory(performance=performance)
+    booking = PaidBookingFactory(performance=performance)
 
     # Set seat type price for performance
     performance_seat_group = PerformanceSeatingFactory(performance=performance)
@@ -248,7 +248,7 @@ def test_get_price():
 @pytest.mark.django_db
 def test_ticket_price():
     performance = PerformanceFactory()
-    booking = BookingFactory(performance=performance)
+    booking = PaidBookingFactory(performance=performance)
 
     # Set seat type price for performance
     performance_seat_group = PerformanceSeatingFactory(performance=performance)
@@ -275,7 +275,7 @@ def test_ticket_discounted_price(
     discount_amount, number_req, seat_group_price, discount_price
 ):
     performance = PerformanceFactory()
-    booking = BookingFactory(performance=performance)
+    booking = PaidBookingFactory(performance=performance)
 
     test_concession_type = ConcessionTypeFactory(name="Student")
     discount_student = DiscountFactory(name="Student", percentage=discount_amount)
@@ -304,7 +304,7 @@ def test_ticket_discounted_price(
 def test_get_price_with_discount_combination():
     venue = VenueFactory()
     performance = PerformanceFactory(venue=venue)
-    booking = BookingFactory(performance=performance)
+    booking = PaidBookingFactory(performance=performance)
 
     concession_type_student = ConcessionTypeFactory(name="Student")
     concession_type_adult = ConcessionTypeFactory(name="Adult")
@@ -370,7 +370,7 @@ def test_get_price_with_discount_combination():
 @pytest.mark.django_db
 def test_get_best_discount_combination():
     performance = PerformanceFactory()
-    booking = BookingFactory(performance=performance)
+    booking = PaidBookingFactory(performance=performance)
     venue = VenueFactory()
 
     # Create some concession types
@@ -451,7 +451,7 @@ def test_str_discount():
 
 @pytest.mark.django_db
 def test_str_booking():
-    booking = BookingFactory()
+    booking = PaidBookingFactory()
     assert str(booking) == str(booking.reference)
 
 
@@ -466,7 +466,7 @@ def test_percentage_misc_cost_value():
     misc_cost = PercentageMiscCostFactory(percentage=0.2)
 
     # Create a booking costing £12
-    booking = BookingFactory()
+    booking = PaidBookingFactory()
     psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
     TicketFactory(booking=booking, seat_group=psg.seat_group)
 
@@ -479,7 +479,7 @@ def test_misc_costs_value():
     PercentageMiscCostFactory(percentage=0.1)
 
     # Create a booking costing £12
-    booking = BookingFactory()
+    booking = PaidBookingFactory()
     psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
     TicketFactory(booking=booking, seat_group=psg.seat_group)
     assert booking.misc_costs_value() == 320
@@ -491,7 +491,7 @@ def test_total():
     PercentageMiscCostFactory(percentage=0.1)
 
     # Create a booking costing £12
-    booking = BookingFactory()
+    booking = PaidBookingFactory()
     psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
     ticket = TicketFactory(booking=booking, seat_group=psg.seat_group)
     assert ticket.booking.total() == 1520
@@ -506,16 +506,16 @@ def test_draft_uniqueness():
     }
 
     # Check that can make more bookings that are no in_progress
-    BookingFactory(
+    PaidBookingFactory(
         status=Booking.BookingStatus.PAID,
         performance=args["performance"],
         user=args["user"],
     )
 
     # Cannot create 2 booking with in_progress status
-    BookingFactory(**args)
+    PaidBookingFactory(**args)
     with pytest.raises(IntegrityError):
-        BookingFactory(**args)
+        PaidBookingFactory(**args)
 
 
 @pytest.mark.django_db
@@ -778,7 +778,7 @@ def test_booking_ticket_diff(existing_list, new_list, add_list, delete_list):
     SeatFactory(id=1)
     SeatFactory(id=2)
 
-    booking = BookingFactory()
+    booking = PaidBookingFactory()
 
     _ = [TicketFactory(booking=booking, **ticket) for ticket in existing_list]
     new_tickets = [Ticket(**ticket) for ticket in new_list]
@@ -809,7 +809,7 @@ def test_booking_pay_failure(mock_square):
     """
     Test paying a booking with square
     """
-    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    booking = PaidBookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
     psg = PerformanceSeatingFactory(performance=booking.performance)
     TicketFactory(booking=booking, seat_group=psg.seat_group)
 
@@ -832,7 +832,7 @@ def test_booking_pay_success(mock_square):
     """
     Test paying a booking with square
     """
-    booking = BookingFactory()
+    booking = PaidBookingFactory()
     psg = PerformanceSeatingFactory(performance=booking.performance)
     TicketFactory(booking=booking, seat_group=psg.seat_group)
 
@@ -874,7 +874,7 @@ def test_booking_pay_integration():
     """
     Test paying a booking with square
     """
-    booking = BookingFactory()
+    booking = PaidBookingFactory()
     psg = PerformanceSeatingFactory(performance=booking.performance)
     TicketFactory(booking=booking, seat_group=psg.seat_group)
 

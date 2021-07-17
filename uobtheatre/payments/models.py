@@ -26,7 +26,7 @@ class Payment(TimeStampedMixin, models.Model):
         REFUND = "REFUND", "Refund payment"
 
     # List of models which can be paid for
-    payables = models.Q(app_label="bookings", model="booking")
+    payables = models.Q(app_label="bookings", model="paidbooking")
     # This list can be extended to add additional types e.g.
     # | models.Q(app_label="shop", model="sellableitem")
 

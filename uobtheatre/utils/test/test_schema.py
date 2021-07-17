@@ -2,7 +2,7 @@ import pytest
 from graphql_relay.node.node import to_global_id
 
 from uobtheatre.bookings.models import Booking
-from uobtheatre.bookings.test.factories import BookingFactory
+from uobtheatre.bookings.test.factories import PaidBookingFactory
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.utils.schema import IdInputField
 
@@ -14,7 +14,7 @@ def test_id_input_field_wrong_thing(gql_client, gql_id):
 
 @pytest.mark.django_db
 def test_auth_required_mixin(gql_client_flexible, gql_id):
-    booking = BookingFactory()
+    booking = PaidBookingFactory()
     client = gql_client_flexible
     client.logout()
 
@@ -79,5 +79,6 @@ def test_id_input_field_parse_value(gql_client_flexible):
         variable_values={"id": to_global_id("PerformanceNode", performance.id)},
     )
 
+    print(response)
     booking = Booking.objects.first()
     assert booking.performance == performance

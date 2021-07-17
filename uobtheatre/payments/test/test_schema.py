@@ -1,12 +1,12 @@
 import pytest
 
-from uobtheatre.bookings.test.factories import BookingFactory
+from uobtheatre.bookings.test.factories import PaidBookingFactory
 from uobtheatre.payments.test.factories import PaymentFactory
 
 
 @pytest.mark.django_db
 def test_payment_schema(gql_client_flexible, gql_id):
-    booking = BookingFactory(user=gql_client_flexible.user)
+    booking = PaidBookingFactory(user=gql_client_flexible.user)
     payment = PaymentFactory(pay_object=booking)
 
     response = gql_client_flexible.execute(
@@ -37,7 +37,7 @@ def test_payment_schema(gql_client_flexible, gql_id):
                         last4
                         url
                         payObject {
-                          ... on BookingNode {
+                          ... on PaidBookingNode {
                             id
                             status {
                               value

@@ -7,9 +7,9 @@ from graphql_relay.node.node import to_global_id
 from guardian.shortcuts import assign_perm
 
 from uobtheatre.bookings.test.factories import (
-    BookingFactory,
     DiscountFactory,
     DiscountRequirementFactory,
+    PaidBookingFactory,
     PerformanceSeatingFactory,
     TicketFactory,
 )
@@ -401,7 +401,7 @@ def test_ticket_breakdown(gql_client):
     )
 
     # Create booking
-    booking = BookingFactory(performance=performance)
+    booking = PaidBookingFactory(performance=performance)
 
     # Create two tickets
     TicketFactory(

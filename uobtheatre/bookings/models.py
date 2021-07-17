@@ -5,6 +5,7 @@ from typing import Dict, List, Optional, Set, Tuple, TypeVar
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.exceptions import ValidationError
 from django.db import models
+from polymorphic.models import PolymorphicModel
 
 from uobtheatre.payments.models import Payment
 from uobtheatre.payments.square import PaymentProvider
@@ -23,7 +24,7 @@ class MiscCost(models.Model):
     For example: Booking fee/Theatre improvement levy.
 
     A misc costs is defined by either a value or a percentage. If both are
-    supplied the percentage will take precedence.
+    supplied the percentage will take pPaidrecedence.
 
     Note:
         Currently all misc costs are applied to all bookings.
@@ -283,8 +284,7 @@ class DiscountCombination:
         return get_concession_map(self.get_requirements())
 
 
-class Booking(models.Model):
-
+class Booking(TimeStampedMixin, PolymorphicModel):
     class BookingStatus(models.TextChoices):
         IN_PROGRESS = "IN_PROGRESS", "In Progress"
         PAID = "PAID", "Paid"
@@ -307,14 +307,22 @@ class Booking(models.Model):
         return str(self.reference)
 
     class Meta:
-        abstract = True
+        constraints = [
+            models.UniqueConstraint(
+                fields=["status", "performance"],
+                condition=models.Q(status="IN_PROGRESS"),
+                name="one_in_progress_booking_per_user_per_performance",
+            )
+        ]
 
 
-class ConcessionBooking(TimeStampedMixin, Booking):
-    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name="created_bookings")
+class ConcessionBooking(Booking):
+    creator = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="created_bookings"
+    )
 
 
-class OnlineBooking(TimeStampedMixin, Booking):
+class PaidBooking(Booking):
     """A booking for a performance
 
     A booking holds a collection of tickets for a given performance.
@@ -327,17 +335,6 @@ class OnlineBooking(TimeStampedMixin, Booking):
     payments = GenericRelation(
         Payment, object_id_field="pay_object_id", content_type_field="pay_object_type"
     )
-
-
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=["status", "performance"],
-                condition=models.Q(status="IN_PROGRESS"),
-                name="one_in_progress_booking_per_user_per_performance",
-            )
-        ]
-
 
     def get_concession_map(self) -> Dict["ConcessionType", int]:
         """Get map of number of concessions in this booking

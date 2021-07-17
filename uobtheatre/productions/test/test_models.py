@@ -9,10 +9,10 @@ from guardian.shortcuts import assign_perm
 
 from uobtheatre.bookings.models import Ticket
 from uobtheatre.bookings.test.factories import (
-    BookingFactory,
     ConcessionTypeFactory,
     DiscountFactory,
     DiscountRequirementFactory,
+    PaidBookingFactory,
     PerformanceSeatingFactory,
     TicketFactory,
 )
@@ -307,10 +307,10 @@ def test_performance_seat_bookings():
     perf2 = PerformanceFactory(production=prod)
 
     # Create a booking for the perf1
-    booking1 = BookingFactory(performance=perf1)
+    booking1 = PaidBookingFactory(performance=perf1)
 
     # Create a booking for the perf2
-    booking2 = BookingFactory(performance=perf2)
+    booking2 = PaidBookingFactory(performance=perf2)
 
     # Seat group
     seat_group = SeatGroupFactory()
@@ -335,7 +335,7 @@ def test_performance_seat_bookings():
 
 @pytest.mark.django_db
 def test_performance_tickets():
-    booking = BookingFactory()
+    booking = PaidBookingFactory()
 
     # 2 tickets in the performance
     first_ticket = TicketFactory(booking=booking)
@@ -350,7 +350,7 @@ def test_performance_tickets():
 
 @pytest.mark.django_db
 def test_performance_checked_in_tickets():
-    booking = BookingFactory()
+    booking = PaidBookingFactory()
 
     # 2 tickets in the performance
     TicketFactory(booking=booking)
@@ -362,7 +362,7 @@ def test_performance_checked_in_tickets():
 
 @pytest.mark.django_db
 def test_performance_unchecked_in_tickets():
-    booking = BookingFactory()
+    booking = PaidBookingFactory()
 
     # 2 tickets in the performance
     ticket = TicketFactory(booking=booking)
@@ -374,7 +374,7 @@ def test_performance_unchecked_in_tickets():
 
 @pytest.mark.django_db
 def test_performance_total_tickets_sold():
-    booking = BookingFactory()
+    booking = PaidBookingFactory()
 
     # 2 tickets in the performance
     TicketFactory(booking=booking)
@@ -388,7 +388,7 @@ def test_performance_total_tickets_sold():
 
 @pytest.mark.django_db
 def test_performance_total_tickets_checked_in():
-    booking = BookingFactory()
+    booking = PaidBookingFactory()
 
     # 2 tickets in the performance
     TicketFactory(booking=booking)
@@ -433,8 +433,8 @@ def test_performance_capacity_remaining():
     assert perf.capacity_remaining(seat_group) == perf.total_capacity(seat_group) != 0
 
     # Create some tickets for this performance
-    booking_1 = BookingFactory(performance=perf)
-    booking_2 = BookingFactory(performance=perf)
+    booking_1 = PaidBookingFactory(performance=perf)
+    booking_2 = PaidBookingFactory(performance=perf)
     _ = [TicketFactory(booking=booking_1, seat_group=seat_group) for _ in range(3)]
     _ = [TicketFactory(booking=booking_2, seat_group=seat_group) for _ in range(2)]
     assert perf.capacity_remaining(seat_group) == perf.total_capacity(seat_group) - 5
@@ -601,7 +601,7 @@ def test_performance_check_capacity(seat_groups, performance_capacity, is_valid)
         # Create some bookings which create the existing tickets
         number_of_existing_tickets = seat_group["number_of_existing_tickets"]
         bookings = [
-            BookingFactory(performance=performance)
+            PaidBookingFactory(performance=performance)
             for i in range(math.ceil(number_of_existing_tickets / 2))
         ]
         _ = [
@@ -641,7 +641,7 @@ def test_performance_check_capacity_seat_group_not_in_perforamnce():
     # Set up some seat groups for a performance
     psg = PerformanceSeatingFactory(capacity=100)
     psg2 = PerformanceSeatingFactory(capacity=100, performance=psg.performance)
-    booking = BookingFactory(performance=psg.performance)
+    booking = PaidBookingFactory(performance=psg.performance)
 
     # But then try and book a seat group that is not assigned to the performance
     tickets = [Ticket(seat_group=seat_group, booking=booking)]

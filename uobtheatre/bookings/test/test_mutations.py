@@ -4,8 +4,8 @@ from graphql_relay.node.node import from_global_id, to_global_id
 
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import (
-    BookingFactory,
     ConcessionTypeFactory,
+    PaidBookingFactory,
     PerformanceSeatingFactory,
     TicketFactory,
 )
@@ -386,7 +386,7 @@ def test_update_booking(
     PerformanceSeatingFactory(performance=performance, seat_group=seat_group_2)
 
     # Create booking with current tickets
-    booking = BookingFactory(performance=performance)
+    booking = PaidBookingFactory(performance=performance)
     _ = [TicketFactory(booking=booking, **ticket) for ticket in current_tickets]
     # Generate mutation query from input data
 
@@ -434,7 +434,7 @@ def test_update_booking(
             }
         }
         """ % (
-        to_global_id("BookingNode", booking.id),
+        to_global_id("PaidBookingNode", booking.id),
         ticket_queries,
     )
 
@@ -455,7 +455,7 @@ def test_update_booking(
 
 @pytest.mark.django_db
 def test_update_booking_no_tickets(gql_client_flexible):
-    booking = BookingFactory(user=gql_client_flexible.user)
+    booking = PaidBookingFactory(user=gql_client_flexible.user)
     tickets = [TicketFactory(booking=booking) for _ in range(10)]
 
     request_query = """
@@ -469,7 +469,7 @@ def test_update_booking_no_tickets(gql_client_flexible):
             }
         }
         """ % (
-        to_global_id("BookingNode", booking.id),
+        to_global_id("PaidBookingNode", booking.id),
     )
 
     gql_client_flexible.execute(request_query)
@@ -483,7 +483,7 @@ def test_update_booking_capacity_error(gql_client_flexible):
 
     seat_group = SeatGroupFactory()
     concession_type = ConcessionTypeFactory()
-    booking = BookingFactory(user=gql_client_flexible.user)
+    booking = PaidBookingFactory(user=gql_client_flexible.user)
     request_query = """
         mutation {
             updateBooking (
@@ -509,7 +509,7 @@ def test_update_booking_capacity_error(gql_client_flexible):
             }
         }
         """ % (
-        to_global_id("BookingNode", booking.id),
+        to_global_id("PaidBookingNode", booking.id),
         to_global_id("SeatGroupNode", seat_group.id),
         to_global_id("ConcessionTypeNode", concession_type.id),
     )
@@ -537,7 +537,7 @@ def test_create_booking_capacity_error(gql_client_flexible):
 
     seat_group = SeatGroupFactory()
     concession_type = ConcessionTypeFactory()
-    booking = BookingFactory(user=gql_client_flexible.user)
+    booking = PaidBookingFactory(user=gql_client_flexible.user)
     request_query = """
         mutation {
             createBooking (
@@ -588,7 +588,7 @@ def test_create_booking_capacity_error(gql_client_flexible):
 
 @pytest.mark.django_db
 def test_pay_booking_mutation_wrong_price(gql_client_flexible, gql_id):
-    booking = BookingFactory()
+    booking = PaidBookingFactory()
 
     request_query = """
     mutation {
@@ -629,7 +629,7 @@ def test_pay_booking_mutation_wrong_price(gql_client_flexible, gql_id):
 
 @pytest.mark.django_db
 def test_pay_booking_square_error(mock_square, gql_client_flexible, gql_id):
-    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    booking = PaidBookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
     client = gql_client_flexible
 
     request_query = """
@@ -674,7 +674,7 @@ def test_pay_booking_square_error(mock_square, gql_client_flexible, gql_id):
 
 @pytest.mark.django_db
 def test_pay_booking_mutation_payed_booking(gql_client_flexible, gql_id):
-    booking = BookingFactory(status=Booking.BookingStatus.PAID)
+    booking = PaidBookingFactory(status=Booking.BookingStatus.PAID)
     client = gql_client_flexible
 
     request_query = """
@@ -714,7 +714,7 @@ def test_pay_booking_mutation_payed_booking(gql_client_flexible, gql_id):
 
 @pytest.mark.django_db
 def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
-    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    booking = PaidBookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
     client = gql_client_flexible
 
     request_query = """
@@ -837,7 +837,7 @@ def test_check_in_booking(
 
     if booking_obj.get("performance_id") == performance_id:
         performance = PerformanceFactory(id=performance_id)
-        booking = BookingFactory(
+        booking = PaidBookingFactory(
             id=booking_obj.get("booking_id"),
             performance=performance,
             user=gql_client_flexible.user,
@@ -845,12 +845,12 @@ def test_check_in_booking(
     else:
         booking_performance = PerformanceFactory(id=booking_obj.get("performance_id"))
         performance = PerformanceFactory(id=performance_id)
-        booking = BookingFactory(
+        booking = PaidBookingFactory(
             id=booking_obj.get("booking_id"),
             performance=booking_performance,
             user=gql_client_flexible.user,
         )
-    non_booking = BookingFactory(
+    non_booking = PaidBookingFactory(
         id=0,
         performance=performance,
         user=gql_client_flexible.user,
@@ -913,6 +913,11 @@ def test_check_in_booking(
                 success
                 errors {
                     __typename
+                    ... on FieldError {
+                      message
+                      field
+                      code
+                    }
                 }
                 booking{
                     id
@@ -985,7 +990,7 @@ def test_check_in_booking(
 @pytest.mark.django_db
 def test_check_in_booking_fails_if_already_checked_in(gql_client_flexible):
     performance = PerformanceFactory()
-    booking = BookingFactory(
+    booking = PaidBookingFactory(
         performance=performance,
         user=gql_client_flexible.user,
     )
@@ -1039,7 +1044,7 @@ def test_check_in_booking_fails_if_already_checked_in(gql_client_flexible):
 @pytest.mark.django_db
 def test_uncheck_in_booking(gql_client_flexible):
     performance = PerformanceFactory()
-    booking = BookingFactory(
+    booking = PaidBookingFactory(
         performance=performance,
         user=gql_client_flexible.user,
     )
@@ -1084,7 +1089,7 @@ def test_uncheck_in_booking(gql_client_flexible):
 def test_uncheck_in_booking_incorrect_performance(gql_client_flexible):
     performance = PerformanceFactory()
     wrong_performance = PerformanceFactory()
-    booking = BookingFactory(
+    booking = PaidBookingFactory(
         performance=performance,
         user=gql_client_flexible.user,
     )
@@ -1139,11 +1144,11 @@ def test_uncheck_in_booking_incorrect_performance(gql_client_flexible):
 @pytest.mark.django_db
 def test_uncheck_in_booking_incorrect_ticket(gql_client_flexible):
     performance = PerformanceFactory()
-    booking = BookingFactory(
+    booking = PaidBookingFactory(
         performance=performance,
         user=gql_client_flexible.user,
     )
-    incorrect_booking = BookingFactory(
+    incorrect_booking = PaidBookingFactory(
         performance=performance,
         user=gql_client_flexible.user,
     )

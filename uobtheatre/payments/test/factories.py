@@ -1,12 +1,12 @@
 import factory
 
-from uobtheatre.bookings.test.factories import BookingFactory
+from uobtheatre.bookings.test.factories import PaidBookingFactory
 from uobtheatre.payments.models import Payment
 
 
 class PaymentFactory(factory.django.DjangoModelFactory):
 
-    pay_object = factory.SubFactory(BookingFactory)
+    pay_object = factory.SubFactory(PaidBookingFactory)
     type = Payment.PaymentType.PURCHASE
     provider = Payment.PaymentProvider.SQUARE_ONLINE
     value = factory.Faker("pyint", min_value=0)

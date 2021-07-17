@@ -1,11 +1,11 @@
 import factory
 
 from uobtheatre.bookings.models import (
-    Booking,
     ConcessionType,
     Discount,
     DiscountRequirement,
     MiscCost,
+    PaidBooking,
     Ticket,
 )
 from uobtheatre.productions.models import PerformanceSeatGroup
@@ -58,14 +58,14 @@ class DiscountRequirementFactory(factory.django.DjangoModelFactory):
         model = DiscountRequirement
 
 
-class BookingFactory(factory.django.DjangoModelFactory):
+class PaidBookingFactory(factory.django.DjangoModelFactory):
 
     user = factory.SubFactory(UserFactory)
     performance = factory.SubFactory(PerformanceFactory)
-    status = Booking.BookingStatus.PAID
+    status = PaidBooking.BookingStatus.PAID
 
     class Meta:
-        model = Booking
+        model = PaidBooking
 
 
 class PerformanceSeatingFactory(factory.django.DjangoModelFactory):
@@ -82,7 +82,7 @@ class PerformanceSeatingFactory(factory.django.DjangoModelFactory):
 class TicketFactory(factory.django.DjangoModelFactory):
 
     seat_group = factory.SubFactory(SeatGroupFactory)
-    booking = factory.SubFactory(BookingFactory)
+    booking = factory.SubFactory(PaidBookingFactory)
     concession_type = factory.SubFactory(ConcessionTypeFactory)
 
     class Meta:

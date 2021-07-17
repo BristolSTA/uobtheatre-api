@@ -3,10 +3,10 @@ from django.utils import timezone
 
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import (
-    BookingFactory,
     ConcessionTypeFactory,
     DiscountFactory,
     DiscountRequirementFactory,
+    PaidBookingFactory,
     PercentageMiscCostFactory,
     PerformanceSeatingFactory,
     TicketFactory,
@@ -20,9 +20,9 @@ from uobtheatre.venues.test.factories import SeatGroupFactory
 @pytest.mark.django_db
 def test_bookings_schema(gql_client_flexible, gql_id):
 
-    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    booking = PaidBookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
     # Create a booking that is not owned by the same user
-    BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    PaidBookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
     tickets = [TicketFactory(booking=booking) for _ in range(10)]
 
     request_query = """
@@ -71,7 +71,7 @@ def test_bookings_schema(gql_client_flexible, gql_id):
                     "edges": [
                         {
                             "node": {
-                                "id": gql_id(booking.id, "BookingNode"),
+                                "id": gql_id(booking.id, "PaidBookingNode"),
                                 "createdAt": booking.created_at.isoformat(),
                                 "updatedAt": booking.updated_at.isoformat(),
                                 "tickets": [
@@ -102,7 +102,7 @@ def test_bookings_schema(gql_client_flexible, gql_id):
 def test_bookings_price_break_down(
     gql_client_flexible, gql_id
 ):  # pylint: disable=too-many-locals
-    booking = BookingFactory()
+    booking = PaidBookingFactory()
 
     # Create 3 tickets with the same seat group and concession type
     seat_group_1 = SeatGroupFactory()
@@ -361,14 +361,14 @@ def test_booking_in_progress(gql_client_flexible, gql_id):
     performance = PerformanceFactory(id=1)
     # Create some completed bookings for the same performance
     _ = [
-        BookingFactory(
+        PaidBookingFactory(
             user=user, performance=performance, status=Booking.BookingStatus.PAID
         )
         for i in range(10)
     ]
     # Create some bookings for dfferent performances
-    _ = [BookingFactory(user=user) for i in range(10)]
-    booking = BookingFactory(
+    _ = [PaidBookingFactory(user=user) for i in range(10)]
+    booking = PaidBookingFactory(
         user=user, performance=performance, status=Booking.BookingStatus.IN_PROGRESS
     )
 
@@ -396,7 +396,7 @@ def test_booking_in_progress(gql_client_flexible, gql_id):
                     "edges": [
                         {
                             "node": {
-                                "id": gql_id(booking.id, "BookingNode"),
+                                "id": gql_id(booking.id, "PaidBookingNode"),
                             }
                         },
                     ]
@@ -424,7 +424,7 @@ def test_booking_orderby(order_by, expected_order, gql_client_flexible):
 
     # Create bookings in order, this first booking in the list is the first to be created
     for _ in range(3):
-        bookings.append(BookingFactory(user=user))
+        bookings.append(PaidBookingFactory(user=user))
 
     request = """
     {
@@ -451,7 +451,7 @@ def test_booking_orderby(order_by, expected_order, gql_client_flexible):
 @pytest.mark.django_db
 def test_bookings_auth(gql_client_flexible):
     user = gql_client_flexible.request_factory.user
-    BookingFactory(user=user)
+    PaidBookingFactory(user=user)
 
     request_query = """
     {
@@ -473,6 +473,7 @@ def test_bookings_auth(gql_client_flexible):
 
     # When we are logged in expect 1 booking
     response = gql_client_flexible.execute(request_query)
+    print(response)
     assert (
         len(response["data"]["performances"]["edges"][0]["node"]["bookings"]["edges"])
         == 1

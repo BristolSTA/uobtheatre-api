@@ -15,6 +15,7 @@ from uobtheatre.bookings.models import (
     Discount,
     DiscountRequirement,
     MiscCost,
+    PaidBooking,
     Ticket,
 )
 from uobtheatre.productions.models import Performance
@@ -149,7 +150,7 @@ class PriceBreakdownNode(DjangoObjectType):
         ]
 
     class Meta:
-        model = Booking
+        model = PaidBooking
         interfaces = (relay.Node,)
         fields = (
             "tickets_price",
@@ -161,14 +162,14 @@ class PriceBreakdownNode(DjangoObjectType):
 
 
 class BookingFilter(FilterSet):
-    """Custom filter for BookingNode.
+    """Custom filter for PaidBookingNode.
 
-    Restricts BookingNode to only return Bookings owned by the User. Adds
+    Restricts PaidBookingNode to only return Bookings owned by the User. Adds
     ordering filter for created_at.
     """
 
     class Meta:
-        model = Booking
+        model = PaidBooking
         fields = "__all__"
 
     # NOTE: When we add back in Bookings endpoint only admin users should be
@@ -185,15 +186,15 @@ class BookingFilter(FilterSet):
         """
         if self.request.user.is_authenticated:
             return super().qs.filter(user=self.request.user)
-        return Booking.objects.none()
+        return PaidBooking.objects.none()
 
     order_by = OrderingFilter(fields=("created_at",))
 
 
-BookingStatusSchema = graphene.Enum.from_enum(Booking.BookingStatus)
+BookingStatusSchema = graphene.Enum.from_enum(PaidBooking.BookingStatus)
 
 
-class BookingNode(GrapheneEnumMixin, DjangoObjectType):
+class PaidBookingNode(GrapheneEnumMixin, DjangoObjectType):
     price_breakdown = graphene.Field(PriceBreakdownNode)
     tickets = DjangoListField(TicketNode)
     user = graphene.Field(UserNode)
@@ -206,7 +207,7 @@ class BookingNode(GrapheneEnumMixin, DjangoObjectType):
         return self
 
     class Meta:
-        model = Booking
+        model = PaidBooking
         filterset_class = BookingFilter
         interfaces = (relay.Node,)
 
@@ -274,7 +275,7 @@ class TicketIDInput(graphene.InputObjectType):
 class CreateBooking(AuthRequiredMixin, SafeMutation):
     """Mutation to create a Booking"""
 
-    booking = graphene.Field(BookingNode)
+    booking = graphene.Field(PaidBookingNode)
 
     class Arguments:
         performance_id = IdInputField()
@@ -299,12 +300,12 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
             raise GQLNonFieldException(message=err, code=400)
 
         # If draft booking(s) already exists remove the bookings
-        Booking.objects.filter(
-            status=Booking.BookingStatus.IN_PROGRESS, performance_id=performance_id
+        PaidBooking.objects.filter(
+            status=PaidBooking.BookingStatus.IN_PROGRESS, performance_id=performance_id
         ).delete()
 
         # Create the booking
-        booking = Booking.objects.create(
+        booking = PaidBooking.objects.create(
             user=info.context.user, performance=performance
         )
 
@@ -327,7 +328,7 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
             tickets will not be changed.
     """
 
-    booking = graphene.Field(BookingNode)
+    booking = graphene.Field(PaidBookingNode)
 
     class Arguments:
         booking_id = IdInputField()
@@ -336,7 +337,7 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
     @classmethod
     def resolve_mutation(cls, _, info, booking_id, tickets=None):
 
-        booking = Booking.objects.get(id=booking_id, user=info.context.user)
+        booking = PaidBooking.objects.get(id=booking_id, user=info.context.user)
 
         # If no tickets are provided then we will not update the bookings
         # tickets.
@@ -374,7 +375,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         nonce (str): The Square payment form nonce.
 
     Returns:
-        booking (BookingNode): The Booking which was paid for.
+        booking (PaidBookingNode): The Booking which was paid for.
         payment (PaymentNode): The Payment which was created by the
             transaction.
 
@@ -382,7 +383,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         GQLNonFieldException: If the Payment was unsucessful.
     """
 
-    booking = graphene.Field(BookingNode)
+    booking = graphene.Field(PaidBookingNode)
     payment = graphene.Field("uobtheatre.payments.schema.PaymentNode")
 
     class Arguments:
@@ -393,14 +394,14 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
     @classmethod
     def resolve_mutation(cls, _, info, booking_id, price, nonce):
         # Get the performance and if it doesn't exist throw an error
-        booking = Booking.objects.get(id=booking_id)
+        booking = PaidBooking.objects.get(id=booking_id)
 
         if booking.total() != price:
             raise GQLNonFieldException(
                 message="The booking price does not match the expected price"
             )
 
-        if booking.status != Booking.BookingStatus.IN_PROGRESS:
+        if booking.status != PaidBooking.BookingStatus.IN_PROGRESS:
             raise GQLNonFieldException(message="The booking is not in progress")
 
         payment = booking.pay(nonce)
@@ -419,7 +420,7 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
 
 
     Returns:
-        booking (BookingNode): The Booking which was paid for.
+        booking (PaidBookingNode): The Booking which was paid for.
         performance (PaymentNode): The Performance.
 
     Raises:
@@ -428,7 +429,7 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
     """
 
     performance = graphene.Field("uobtheatre.productions.schema.PerformanceNode")
-    booking = graphene.Field(BookingNode)
+    booking = graphene.Field(PaidBookingNode)
 
     class Arguments:
         booking_reference = graphene.String(required=True)
@@ -451,7 +452,7 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
         ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))
 
         tickets_not_in_booking = [
-            ticket for ticket in ticket_objects if ticket.booking != booking
+            ticket for ticket in ticket_objects if ticket.booking.id != booking.id
         ]
 
         if tickets_not_in_booking:
@@ -495,7 +496,7 @@ class UnCheckInBooking(AuthRequiredMixin, SafeMutation):
 
 
     Returns:
-        booking (BookingNode): The Booking.
+        booking (PaidBookingNode): The Booking.
         performance (PaymentNode): The Performance.
 
     Raises:
@@ -503,7 +504,7 @@ class UnCheckInBooking(AuthRequiredMixin, SafeMutation):
     """
 
     performance = graphene.Field("uobtheatre.productions.schema.PerformanceNode")
-    booking = graphene.Field(BookingNode)
+    booking = graphene.Field(PaidBookingNode)
 
     class Arguments:
         booking_reference = graphene.String(required=True)
@@ -527,7 +528,7 @@ class UnCheckInBooking(AuthRequiredMixin, SafeMutation):
         # loop through the ticket IDs given
 
         tickets_not_in_booking = [
-            ticket for ticket in ticket_objects if ticket.booking != booking
+            ticket for ticket in ticket_objects if ticket.booking.id != booking.id
         ]
 
         if tickets_not_in_booking:

@@ -2,7 +2,7 @@ import graphene
 from graphene import relay
 from graphene_django import DjangoObjectType
 
-from uobtheatre.bookings.schema import BookingNode
+from uobtheatre.bookings.schema import PaidBookingNode
 from uobtheatre.payments.models import Payment
 from uobtheatre.utils.enums import GrapheneEnumMixin
 from uobtheatre.utils.filters import FilterSet
@@ -16,7 +16,7 @@ class PaymentFilter(FilterSet):
 
 class PayObjectUnion(graphene.Union):
     class Meta:
-        types = (BookingNode,)
+        types = (PaidBookingNode,)
 
 
 class PaymentNode(GrapheneEnumMixin, DjangoObjectType):

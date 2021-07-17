@@ -34,7 +34,8 @@ django==3.2.5
 
 #=== Django Extras ===#
 
-django-guardian==2.4.0  # https://github.com/django-guardian/django-guardian 
+django-guardian==2.4.0  # https://github.com/django-guardian/django-guardian
+django-polymorphic==3.0.0  # https://github.com/django-polymorphic/django-polymorphic
 
 #=== GQL core ===#
 

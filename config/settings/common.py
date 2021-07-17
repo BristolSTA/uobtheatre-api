@@ -32,6 +32,7 @@ INSTALLED_APPS = (
     "autoslug",  # Auto slug
     "graphene_django",  # Graphql
     "guardian",
+    "polymorphic",
     # Your apps
     "uobtheatre.users",
     "uobtheatre.productions",
