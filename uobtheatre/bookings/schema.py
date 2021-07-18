@@ -286,7 +286,10 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
             )
 
         # If a target user is provided get that user, if not then this booking is intended for the user that is logged in
-        user = User.objects.get(email=target_user) if target_user else info.context.user
+        if target_user:
+            user, _ = User.objects.get_or_create(email=target_user)
+        else:
+            user = info.context.user
 
         # Create the booking
         booking = Booking.objects.create(

@@ -11,6 +11,7 @@ from uobtheatre.bookings.test.factories import (
 )
 from uobtheatre.discounts.test.factories import ConcessionTypeFactory
 from uobtheatre.productions.test.factories import PerformanceFactory
+from uobtheatre.users.models import User
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.utils.test_utils import ticket_dict_list_dict_gen, ticket_list_dict_gen
 from uobtheatre.venues.test.factories import SeatFactory, SeatGroupFactory
@@ -255,6 +256,46 @@ def test_create_booking_with_taget_user(gql_client_flexible):
     assert response["data"]["createBooking"]["success"] is True
     booking = Booking.objects.first()
     assert str(booking.user.id) == str(user.id)
+    assert str(booking.creator.id) == str(gql_client_flexible.user.id)
+
+
+@pytest.mark.django_db
+def test_create_booking_with_new_taget_user(gql_client_flexible):
+
+    psg = PerformanceSeatingFactory()
+    request = """
+        mutation {
+          createBooking(
+            performanceId: "%s"
+            targetUser: "abc@email.com"
+          ) {
+            booking {
+              id
+            }
+            success
+            errors {
+              __typename
+              ... on NonFieldError {
+                message
+                code
+              }
+            }
+         }
+        }
+    """ % to_global_id(
+        "PerformanceNode", psg.performance.id
+    )
+
+    assign_perm("boxoffice", gql_client_flexible.user, psg.performance.production)
+    response = gql_client_flexible.execute(request)
+
+    assert response["data"]["createBooking"]["success"] is True
+
+    # Assert new user created
+    assert User.objects.filter(email="abc@email.com").exists()
+
+    booking = Booking.objects.first()
+    assert booking.user.email == "abc@email.com"
     assert str(booking.creator.id) == str(gql_client_flexible.user.id)
 
 
