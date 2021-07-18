@@ -1,18 +1,17 @@
-import itertools
 import math
-from typing import Dict, List, Optional, Set, Tuple, TypeVar
+from typing import Dict, List, Optional, Tuple
 
 from django.contrib.contenttypes.fields import GenericRelation
-from django.core.exceptions import ValidationError
 from django.db import models
 
+from uobtheatre.discounts.models import ConcessionType, DiscountCombination
 from uobtheatre.payments.models import Payment
 from uobtheatre.payments.square import PaymentProvider
 from uobtheatre.productions.models import Performance
 from uobtheatre.users.models import User
 from uobtheatre.utils.exceptions import SquareException
 from uobtheatre.utils.models import TimeStampedMixin, validate_percentage
-from uobtheatre.utils.utils import create_short_uuid
+from uobtheatre.utils.utils import combinations, create_short_uuid
 from uobtheatre.venues.models import Seat, SeatGroup
 
 
@@ -75,214 +74,6 @@ class MiscCost(models.Model):
         ]
 
 
-def get_concession_map(
-    requirements: List["DiscountRequirement"],
-) -> Dict["ConcessionType", int]:
-    """Get map of number of concessions for list discount requirements.
-
-    Given a list of DiscountRequirements return a dict with the number of each
-    concession type required.
-
-    Args:
-        requirements (:obj:`list` of :obj:`DiscountRequirement`): The list of
-            DiscountRequiments which should be counted.
-
-    Returns:
-        (dict of ConcessionType: int): The number of each ConcessionType
-            required for given list of DiscountRequirements.
-    """
-    concession_requirements: Dict["ConcessionType", int] = {}
-    for requirement in requirements:
-        if not requirement.concession_type in concession_requirements.keys():
-            concession_requirements[requirement.concession_type] = 0
-        concession_requirements[requirement.concession_type] += requirement.number
-    return concession_requirements
-
-
-class Discount(models.Model):
-    """A discount which can be applied to a performance's booking.
-
-    Discounts can be applied to a number of performances. They contain a
-    percentage, which is the percentage taken off the booking price.
-
-    A Discount requires a list of DiscountRequiements to be met in order to be
-    eligible for a given booking.
-    """
-
-    name = models.CharField(max_length=255)
-    percentage = models.FloatField()
-    performances = models.ManyToManyField(
-        Performance,
-        blank=True,
-        related_name="discounts",
-    )
-    seat_group = models.ForeignKey(
-        SeatGroup, on_delete=models.CASCADE, null=True, blank=True
-    )
-
-    def validate_unique(self, *args, **kwargs):
-        """Check if another booking with same requirements exists
-
-        Extend validate_unique to ensure only 1 discount with the same set of
-        requirements can be created.
-
-        Raises:
-            ValidationError: If a discount with the same requirements exists.
-        """
-
-        super().validate_unique(*args, **kwargs)
-
-        discounts = self.__class__._default_manager.all()  # pylint: disable=W0212
-        if not self._state.adding and self.pk is not None:
-            discounts = discounts.exclude(pk=self.pk)
-
-        discounts_with_same_requirements = [
-            discount
-            for discount in discounts
-            if discount.get_concession_map() == self.get_concession_map()
-        ]
-        discounts_with_same_requirements_names = [
-            discount.name for discount in discounts_with_same_requirements
-        ]
-
-        if len(discounts_with_same_requirements) != 0:
-            raise ValidationError(
-                f"Discount with given requirements already exists ({','.join(discounts_with_same_requirements_names)})"
-            )
-
-    def is_single_discount(self) -> bool:
-        """Checks if a discount applies to a single ticket.
-
-        Note:
-            Single discounts are used to set the price of a concession ticket.
-            e.g. a Student ticket.
-
-        Returns:
-            bool: If the booking is a single discount
-        """
-        return sum(requirement.number for requirement in self.requirements.all()) == 1
-
-    def get_concession_map(
-        self,
-    ) -> Dict["ConcessionType", int]:
-        """Get number of each concession type required for this discount.
-
-        Returns:
-            (dict of ConcessionType: int): The number of each ConcessionType
-                required by the discount.
-        """
-        return get_concession_map(list(self.requirements.all()))
-
-    def __str__(self) -> str:
-        return f"{self.percentage * 100}% off for {self.name}"
-
-
-class ConcessionType(models.Model):
-    """A type of person booking a ticket.
-
-    A concession type refers to the type of person booking a ticket.  e.g. a
-    student or society member. These concession are used to determine
-    discounts.
-    """
-
-    name = models.CharField(max_length=255)
-    description = models.TextField(null=True, blank=True)
-
-    def __str__(self) -> str:
-        return str(self.name)
-
-
-class DiscountRequirement(models.Model):
-    """A requirement for a discount to be eligible for a booking.
-
-    Discount have many discount requirement. A DiscountRequirement stores a
-    number of a given concession type required by the booking. If all the
-    requirements are met then the discount can be applied to the booking.
-
-    For example:
-        - 2x adult
-        - 1x student
-    are both valid discount requirements.
-
-    A discount requirement only maps to a single concession type. For a
-    discount to require multiple concession types, it must have multiple
-    requirements.
-
-    Note:
-        Each concession (ticket) can only be used in a single discount.
-    """
-
-    number = models.SmallIntegerField()
-    discount = models.ForeignKey(
-        Discount, on_delete=models.CASCADE, related_name="requirements"
-    )
-    concession_type = models.ForeignKey(ConcessionType, on_delete=models.CASCADE)
-
-
-IterableType = TypeVar("IterableType")
-
-
-def combinations(
-    iterable: List[IterableType], max_length: int
-) -> Set[Tuple[IterableType, ...]]:
-    """Return all subsets of input list upto a max length.
-
-    Args:
-        iterable (list of Any): The list which is used to find all the subsets.
-        max_length (int): The maximum length of the sub sets to return, this
-            must be smaller than or equal to the size of the provided iterable.
-
-    Returns:
-        (list of tuples of Any): Returns a list containing all the subsets of
-            the input list.
-    """
-    return set(
-        combination
-        for i in range(1, max_length + 1)
-        for combination in itertools.combinations(iterable * i, i)
-    )
-
-
-class DiscountCombination:
-    """A wrapper for a list of dicounts
-
-    When discounts are applied to a booking, the best discount combination is
-    selected (set of dicounts). A discount combination is simply a list of
-    discounts.
-    """
-
-    def __init__(self, discount_combination: Tuple[Discount, ...]):
-        self.discount_combination = discount_combination
-
-    def __eq__(self, obj) -> bool:
-        return (
-            isinstance(obj, DiscountCombination)
-            and obj.discount_combination == self.discount_combination
-        )
-
-    def get_requirements(self) -> List[DiscountRequirement]:
-        """Get the requirments for all the discounts
-
-        Returns:
-            (list of DiscountRequirement): The list of requirements for all the
-                discounts in the discount combination.
-        """
-        return [
-            requirement
-            for discount in self.discount_combination
-            for requirement in discount.requirements.all()
-        ]
-
-    def get_concession_map(self) -> Dict[ConcessionType, int]:
-        """Get map of number of concessions required for this discount
-
-        Returns:
-            (dict of ConcessionType: int): The number of each ConcessionType
-                required by this Discount.
-        """
-        return get_concession_map(self.get_requirements())
-
-
 class Booking(TimeStampedMixin, models.Model):
     """A booking for a performance
 
@@ -308,7 +99,17 @@ class Booking(TimeStampedMixin, models.Model):
     reference = models.CharField(
         default=create_short_uuid, editable=False, max_length=12, unique=True
     )
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bookings")
+
+    # Stores who created the booking
+    # For regular bookings this will be the user
+    # For boxoffice bookings it will be the logged in boxoffice user
+    # For admin bookings it will be the logged in admin
+    creator = models.ForeignKey(
+        User, on_delete=models.RESTRICT, related_name="created_bookings"
+    )
+
     performance = models.ForeignKey(
         Performance,
         on_delete=models.RESTRICT,
@@ -322,6 +123,12 @@ class Booking(TimeStampedMixin, models.Model):
 
     payments = GenericRelation(
         Payment, object_id_field="pay_object_id", content_type_field="pay_object_type"
+    )
+
+    # An additional discount that can be applied to the booking by an admin
+    # To create a concession ticket a 100% discount can be applied.
+    admin_discount_percentage = models.FloatField(
+        default=0, validators=[validate_percentage]
     )
 
     def __str__(self):
@@ -462,11 +269,15 @@ class Booking(TimeStampedMixin, models.Model):
 
         Returns the subtotal of the booking. This is the total value including
         single and group discounts before any misc costs are applied.
+        If an admin discount is also applied this will be added here.
 
         Returns:
             int: price of the booking with discounts applied in penies
         """
-        return self.get_best_discount_combination_with_price()[1]
+        return math.ceil(
+            self.get_best_discount_combination_with_price()[1]
+            * (1 - self.admin_discount_percentage)
+        )
 
     def get_best_discount_combination_with_price(
         self,
@@ -528,7 +339,10 @@ class Booking(TimeStampedMixin, models.Model):
         Returns:
             (int): total price of the booking in penies
         """
-        return math.ceil(self.subtotal() + self.misc_costs_value())
+        subtotal = self.subtotal()
+        if subtotal == 0:
+            return 0
+        return math.ceil(subtotal + self.misc_costs_value())
 
     def get_ticket_diff(
         self, tickets: List["Ticket"]

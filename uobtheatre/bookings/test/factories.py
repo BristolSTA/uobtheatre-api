@@ -1,13 +1,6 @@
 import factory
 
-from uobtheatre.bookings.models import (
-    Booking,
-    ConcessionType,
-    Discount,
-    DiscountRequirement,
-    MiscCost,
-    Ticket,
-)
+from uobtheatre.bookings.models import Booking, MiscCost, Ticket
 from uobtheatre.productions.models import PerformanceSeatGroup
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
@@ -32,35 +25,10 @@ class ValueMiscCostFactory(factory.django.DjangoModelFactory):
         model = MiscCost
 
 
-class DiscountFactory(factory.django.DjangoModelFactory):
-
-    name = factory.Faker("sentence", nb_words=2)
-    percentage = 0.2
-
-    class Meta:
-        model = Discount
-
-
-class ConcessionTypeFactory(factory.django.DjangoModelFactory):
-
-    name = factory.Faker("sentence", nb_words=2)
-
-    class Meta:
-        model = ConcessionType
-
-
-class DiscountRequirementFactory(factory.django.DjangoModelFactory):
-
-    number = 1
-    concession_type = factory.SubFactory(ConcessionTypeFactory)
-
-    class Meta:
-        model = DiscountRequirement
-
-
 class BookingFactory(factory.django.DjangoModelFactory):
 
     user = factory.SubFactory(UserFactory)
+    creator = factory.SubFactory(UserFactory)
     performance = factory.SubFactory(PerformanceFactory)
     status = Booking.BookingStatus.PAID
 
@@ -83,7 +51,9 @@ class TicketFactory(factory.django.DjangoModelFactory):
 
     seat_group = factory.SubFactory(SeatGroupFactory)
     booking = factory.SubFactory(BookingFactory)
-    concession_type = factory.SubFactory(ConcessionTypeFactory)
+    concession_type = factory.SubFactory(
+        "uobtheatre.discounts.test.factories.ConcessionTypeFactory"
+    )
 
     class Meta:
         model = Ticket

@@ -10,11 +10,13 @@ from guardian.shortcuts import assign_perm
 from uobtheatre.bookings.models import Ticket
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
+    PerformanceSeatingFactory,
+    TicketFactory,
+)
+from uobtheatre.discounts.test.factories import (
     ConcessionTypeFactory,
     DiscountFactory,
     DiscountRequirementFactory,
-    PerformanceSeatingFactory,
-    TicketFactory,
 )
 from uobtheatre.productions.models import Performance, PerformanceSeatGroup
 from uobtheatre.productions.test.factories import (
