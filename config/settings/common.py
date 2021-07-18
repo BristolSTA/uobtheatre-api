@@ -38,6 +38,7 @@ INSTALLED_APPS = (
     "uobtheatre.utils",
     "uobtheatre.venues",
     "uobtheatre.bookings",
+    "uobtheatre.discounts",
     "uobtheatre.societies",
     "uobtheatre.addresses",
     "uobtheatre.payments",

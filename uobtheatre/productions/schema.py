@@ -8,7 +8,7 @@ from graphene_django.filter import (
     GlobalIDMultipleChoiceFilter,
 )
 
-from uobtheatre.bookings.schema import ConcessionTypeNode, DiscountNode
+from uobtheatre.discounts.schema import ConcessionTypeNode, DiscountNode
 from uobtheatre.productions.models import (
     AudienceWarning,
     CastMember,

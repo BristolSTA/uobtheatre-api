@@ -2,21 +2,14 @@ import itertools
 from typing import List
 
 import graphene
-from django.db.models import Count
 from django_filters import OrderingFilter
 from graphene import relay
 from graphene_django import DjangoListField, DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
 from graphql_auth.schema import UserNode
 
-from uobtheatre.bookings.models import (
-    Booking,
-    ConcessionType,
-    Discount,
-    DiscountRequirement,
-    MiscCost,
-    Ticket,
-)
+from uobtheatre.bookings.models import Booking, MiscCost, Ticket
+from uobtheatre.discounts.models import ConcessionType
 from uobtheatre.productions.models import Performance
 from uobtheatre.utils.enums import GrapheneEnumMixin
 from uobtheatre.utils.exceptions import (
@@ -28,13 +21,6 @@ from uobtheatre.utils.exceptions import (
 from uobtheatre.utils.filters import FilterSet
 from uobtheatre.utils.schema import AuthRequiredMixin, IdInputField
 from uobtheatre.venues.models import Seat, SeatGroup
-
-
-class ConcessionTypeNode(DjangoObjectType):
-    class Meta:
-        model = ConcessionType
-        interfaces = (relay.Node,)
-        exclude = ("discountrequirement_set",)
 
 
 class MiscCostNode(DjangoObjectType):
@@ -49,31 +35,11 @@ class TicketNode(DjangoObjectType):
         interfaces = (relay.Node,)
 
 
-class DiscountRequirementNode(DjangoObjectType):
-    class Meta:
-        model = DiscountRequirement
-        interfaces = (relay.Node,)
-
-
-class DiscountNode(DjangoObjectType):
-    requirements = DjangoListField(DiscountRequirementNode)
-
-    @classmethod
-    def get_queryset(cls, queryset, info):
-        return queryset.annotate(
-            number_of_tickets_required=Count("requirements__number")
-        ).filter(number_of_tickets_required__gt=1)
-
-    class Meta:
-        model = Discount
-        interfaces = (relay.Node,)
-
-
 class PriceBreakdownTicketNode(graphene.ObjectType):
     ticket_price = graphene.Int(required=True)
     number = graphene.Int(required=True)
     seat_group = graphene.Field("uobtheatre.venues.schema.SeatGroupNode")
-    concession_type = graphene.Field("uobtheatre.bookings.schema.ConcessionTypeNode")
+    concession_type = graphene.Field("uobtheatre.discounts.schema.ConcessionTypeNode")
     total_price = graphene.Int(required=True)
 
     def resolve_total_price(self, info):
@@ -305,7 +271,7 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
 
         # Create the booking
         booking = Booking.objects.create(
-            user=info.context.user, performance=performance
+            user=info.context.user, creator=info.context.user, performance=performance
         )
 
         # Save all the validated tickets

@@ -1,29 +1,9 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from uobtheatre.bookings.models import (
-    Booking,
-    ConcessionType,
-    Discount,
-    DiscountRequirement,
-    MiscCost,
-    Ticket,
-)
+from uobtheatre.bookings.models import Booking, MiscCost, Ticket
 
-admin.site.register(ConcessionType)
 admin.site.register(MiscCost)
-
-
-class DiscountRequirementInline(admin.StackedInline):
-    model = DiscountRequirement
-    extra = 1
-
-
-class DiscountAdmin(admin.ModelAdmin):
-    inlines = [DiscountRequirementInline]
-
-
-admin.site.register(Discount, DiscountAdmin)
 
 
 class SeatBookingInline(admin.StackedInline):

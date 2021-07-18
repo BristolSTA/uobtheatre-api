@@ -101,8 +101,9 @@ clean-app-migrations: ## Generate clean migrations for productions
 	make migrations
 
 clean-postgres-migrate: ## Apply clean migrations to postgres
-	docker rm -f uobtheatre-api_postgres_1
-	docker volume rm uobtheatre-api_postgres_data
+	docker rm -f uobtheatre-postgres
+	docker volume rm uobtheatre-api_uobtheatre_local_postgres_data
+	docker volume rm uobtheatre-api_uobtheatre_local_postgres_data_backups
 	make migrate
 
 clean-migrations: ## Do the migrations from scratch

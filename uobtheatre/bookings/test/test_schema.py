@@ -4,13 +4,15 @@ from django.utils import timezone
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
-    ConcessionTypeFactory,
-    DiscountFactory,
-    DiscountRequirementFactory,
     PercentageMiscCostFactory,
     PerformanceSeatingFactory,
     TicketFactory,
     ValueMiscCostFactory,
+)
+from uobtheatre.discounts.test.factories import (
+    ConcessionTypeFactory,
+    DiscountFactory,
+    DiscountRequirementFactory,
 )
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory

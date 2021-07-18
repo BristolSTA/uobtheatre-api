@@ -4,24 +4,19 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
 
-from uobtheatre.bookings.models import (
-    Booking,
-    Discount,
-    DiscountCombination,
-    DiscountRequirement,
-    MiscCost,
-    Ticket,
-    combinations,
-)
+from uobtheatre.bookings.models import Booking, MiscCost, Ticket
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
-    ConcessionTypeFactory,
-    DiscountFactory,
-    DiscountRequirementFactory,
     PercentageMiscCostFactory,
     PerformanceSeatingFactory,
     TicketFactory,
     ValueMiscCostFactory,
+)
+from uobtheatre.discounts.models import Discount, DiscountCombination
+from uobtheatre.discounts.test.factories import (
+    ConcessionTypeFactory,
+    DiscountFactory,
+    DiscountRequirementFactory,
 )
 from uobtheatre.payments.models import Payment
 from uobtheatre.productions.test.factories import PerformanceFactory
@@ -29,80 +24,6 @@ from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.utils.exceptions import SquareException
 from uobtheatre.utils.test_utils import ticket_dict_list_dict_gen, ticket_list_dict_gen
 from uobtheatre.venues.test.factories import SeatFactory, SeatGroupFactory, VenueFactory
-
-
-@pytest.mark.parametrize(
-    "inputs, length, output",
-    [
-        (
-            [1, 2, 3],
-            2,
-            [
-                (1,),
-                (2,),
-                (3,),
-                (1, 1),
-                (1, 2),
-                (1, 3),
-                (2, 1),
-                (2, 2),
-                (2, 3),
-                (3, 1),
-                (3, 2),
-                (3, 3),
-            ],
-        ),
-        (
-            [1, 2, 3],
-            3,
-            [
-                (1,),
-                (2,),
-                (3,),
-                (1, 1),
-                (1, 2),
-                (1, 3),
-                (2, 1),
-                (2, 2),
-                (2, 3),
-                (3, 1),
-                (3, 2),
-                (3, 3),
-                (1, 1, 1),
-                (1, 1, 2),
-                (1, 1, 3),
-                (1, 2, 1),
-                (1, 2, 2),
-                (1, 2, 3),
-                (1, 3, 1),
-                (1, 3, 2),
-                (1, 3, 3),
-                (2, 1, 1),
-                (2, 1, 2),
-                (2, 1, 3),
-                (2, 2, 1),
-                (2, 2, 2),
-                (2, 2, 3),
-                (2, 3, 1),
-                (2, 3, 2),
-                (2, 3, 3),
-                (3, 1, 1),
-                (3, 1, 2),
-                (3, 1, 3),
-                (3, 2, 1),
-                (3, 2, 2),
-                (3, 2, 3),
-                (3, 3, 1),
-                (3, 3, 2),
-                (3, 3, 3),
-            ],
-        ),
-    ],
-)
-def test_combinations(inputs, length, output):
-    calculated_combinations = combinations(inputs, length)
-    assert set(calculated_combinations) == set(output)
-    assert len(calculated_combinations) == len(output)
 
 
 @pytest.mark.django_db
@@ -495,6 +416,22 @@ def test_total():
     psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
     ticket = TicketFactory(booking=booking, seat_group=psg.seat_group)
     assert ticket.booking.total() == 1520
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "admin_discount, expected_price",
+    [(0.2, 1256), (1, 0)],
+)
+def test_total_with_admin_discount(admin_discount, expected_price):
+    ValueMiscCostFactory(value=200)
+    PercentageMiscCostFactory(percentage=0.1)
+
+    # Create a booking costing £12
+    booking = BookingFactory(admin_discount=admin_discount)
+    psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
+    ticket = TicketFactory(booking=booking, seat_group=psg.seat_group)
+    assert ticket.booking.total() == expected_price
 
 
 @pytest.mark.django_db

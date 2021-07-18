@@ -5,10 +5,10 @@ from graphql_relay.node.node import from_global_id, to_global_id
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
-    ConcessionTypeFactory,
     PerformanceSeatingFactory,
     TicketFactory,
 )
+from uobtheatre.discounts.test.factories import ConcessionTypeFactory
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.utils.test_utils import ticket_dict_list_dict_gen, ticket_list_dict_gen
 from uobtheatre.venues.test.factories import SeatFactory, SeatGroupFactory
