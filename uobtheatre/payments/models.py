@@ -16,6 +16,7 @@ class Payment(TimeStampedMixin, models.Model):
         """How the payment was made."""
 
         CASH = "CASH", "Cash"
+        CARD = "CARD", "Card"
         SQUARE_ONLINE = "SQUARE_ONLINE", "Square online"
         SQUARE_POS = "SQUARE_POS", "Square point of sale"
 

@@ -755,13 +755,34 @@ def test_booking_pay_failure(mock_square):
     mock_square.success = False
 
     with pytest.raises(SquareException):
-        booking.pay("nonce")
+        booking.pay_online("nonce")
 
     # Assert the booking is not paid
     assert booking.status == Booking.BookingStatus.IN_PROGRESS
 
     # Assert no payments are created
     assert Payment.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_pay_manual():
+    """
+    Test create manual payment
+    """
+    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    psg = PerformanceSeatingFactory(performance=booking.performance)
+    TicketFactory(booking=booking, seat_group=psg.seat_group)
+
+    booking.pay_manual(Payment.PaymentProvider.CARD)
+
+    # Assert the booking is not paid
+    assert booking.status == Booking.BookingStatus.PAID
+
+    # Assert one payment created
+    assert Payment.objects.count() == 1
+    payment = Payment.objects.first()
+    assert payment.provider == Payment.PaymentProvider.CARD
+    assert payment.value == booking.total()
 
 
 @pytest.mark.django_db
@@ -790,7 +811,7 @@ def test_booking_pay_success(mock_square):
         }
     }
 
-    booking.pay("nonce")
+    booking.pay_online("nonce")
 
     assert booking.status == Booking.BookingStatus.PAID
     # Assert a payment of the correct type is created
@@ -815,7 +836,7 @@ def test_booking_pay_integration():
     psg = PerformanceSeatingFactory(performance=booking.performance)
     TicketFactory(booking=booking, seat_group=psg.seat_group)
 
-    booking.pay("cnon:card-nonce-ok")
+    booking.pay_online("cnon:card-nonce-ok")
 
     assert booking.status == Booking.BookingStatus.PAID
     # Assert a payment of the correct type is created

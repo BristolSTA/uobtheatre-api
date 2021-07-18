@@ -457,7 +457,7 @@
     }
   },
   {
-    "model": "bookings.discount",
+    "model": "discounts.discount",
     "pk": 1,
     "fields": {
       "name": "Student",
@@ -470,7 +470,7 @@
     }
   },
   {
-    "model": "bookings.discount",
+    "model": "discounts.discount",
     "pk": 2,
     "fields": {
       "name": "Child",
@@ -483,7 +483,7 @@
     }
   },
   {
-    "model": "bookings.discount",
+    "model": "discounts.discount",
     "pk": 3,
     "fields": {
       "name": "Family Discount",
@@ -496,7 +496,7 @@
     }
   },
   {
-    "model": "bookings.concessiontype",
+    "model": "discounts.concessiontype",
     "pk": 1,
     "fields": {
       "name": "Adult",
@@ -504,7 +504,7 @@
     }
   },
   {
-    "model": "bookings.concessiontype",
+    "model": "discounts.concessiontype",
     "pk": 2,
     "fields": {
       "name": "Student",
@@ -512,7 +512,7 @@
     }
   },
   {
-    "model": "bookings.concessiontype",
+    "model": "discounts.concessiontype",
     "pk": 3,
     "fields": {
       "name": "Child",
@@ -520,7 +520,7 @@
     }
   },
   {
-    "model": "bookings.discountrequirement",
+    "model": "discounts.discountrequirement",
     "pk": 1,
     "fields": {
       "number": 1,
@@ -529,7 +529,7 @@
     }
   },
   {
-    "model": "bookings.discountrequirement",
+    "model": "discounts.discountrequirement",
     "pk": 2,
     "fields": {
       "number": 1,
@@ -538,7 +538,7 @@
     }
   },
   {
-    "model": "bookings.discountrequirement",
+    "model": "discounts.discountrequirement",
     "pk": 3,
     "fields": {
       "number": 1,
@@ -547,7 +547,7 @@
     }
   },
   {
-    "model": "bookings.discountrequirement",
+    "model": "discounts.discountrequirement",
     "pk": 4,
     "fields": {
       "number": 2,
@@ -563,6 +563,7 @@
       "updated_at": "2020-11-11T12:24:32Z",
       "reference": "5yARDV8p6giN",
       "user": "00000000-0000-0000-0000-000000000001",
+      "creator": "00000000-0000-0000-0000-000000000001",
       "performance": 1,
       "status": "IN_PROGRESS"
     }
@@ -575,6 +576,7 @@
       "updated_at": "2020-11-11T12:24:32Z",
       "reference": "3e73M4gUQVbK",
       "user": "00000000-0000-0000-0000-000000000001",
+      "creator": "00000000-0000-0000-0000-000000000001",
       "performance": 2,
       "status": "IN_PROGRESS"
     }
@@ -587,6 +589,7 @@
       "updated_at": "2020-11-11T12:24:32Z",
       "reference": "Ufx5CLtNrxiN",
       "user": "00000000-0000-0000-0000-000000000001",
+      "creator": "00000000-0000-0000-0000-000000000001",
       "performance": 1,
       "status": "PAID"
     }
