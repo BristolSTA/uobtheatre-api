@@ -394,7 +394,7 @@ class Booking(TimeStampedMixin, models.Model):
 
         return add_tickets, delete_tickets
 
-    def pay(self, nonce: str):
+    def pay_online(self, nonce: str):
         """Pay for the Booking
 
         Makes a call to the Square API to pay for the Booking. The price is
@@ -434,6 +434,18 @@ class Booking(TimeStampedMixin, models.Model):
             provider_payment_id=response.body["payment"]["id"],
             value=amount_details["amount"],
             currency=amount_details["currency"],
+        )
+
+    def pay_manual(self, payment_provider: Payment.PaymentProvider):
+        # Set the booking as paid
+        self.status = self.BookingStatus.PAID
+        self.save()
+
+        return Payment.objects.create(
+            pay_object=self,
+            provider=payment_provider,
+            type=Payment.PaymentType.PURCHASE,
+            value=self.total(),
         )
 
 
