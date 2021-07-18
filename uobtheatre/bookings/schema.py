@@ -11,6 +11,7 @@ from graphql_auth.schema import UserNode
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
 from uobtheatre.discounts.models import ConcessionType
 from uobtheatre.productions.models import Performance
+from uobtheatre.users.models import User
 from uobtheatre.utils.enums import GrapheneEnumMixin
 from uobtheatre.utils.exceptions import (
     GQLExceptions,
@@ -245,10 +246,16 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
     class Arguments:
         performance_id = IdInputField()
         tickets = graphene.List(CreateTicketInput, required=False)
+        target_user = graphene.String(required=False)  # User email
 
     @classmethod
     def resolve_mutation(
-        cls, _, info, performance_id: int, tickets: List[CreateTicketInput] = None
+        cls,
+        _,
+        info,
+        performance_id: int,
+        tickets: List[CreateTicketInput] = None,
+        target_user: str = None,
     ):
 
         if tickets is None:
@@ -269,9 +276,21 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
             status=Booking.BookingStatus.IN_PROGRESS, performance_id=performance_id
         ).delete()
 
+        # Only (box office) admins can create a booking for a different user
+        if target_user and not info.context.user.has_perm(
+            "productions.boxoffice", performance.production
+        ):
+            raise GQLNonFieldException(
+                message="You do not have permission to create a booking for another user.",
+                code=403,
+            )
+
+        # If a target user is provided get that user, if not then this booking is intended for the user that is logged in
+        user = User.objects.get(email=target_user) if target_user else info.context.user
+
         # Create the booking
         booking = Booking.objects.create(
-            user=info.context.user, creator=info.context.user, performance=performance
+            user=user, creator=info.context.user, performance=performance
         )
 
         # Save all the validated tickets
