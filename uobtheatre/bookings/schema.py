@@ -10,6 +10,7 @@ from graphql_auth.schema import UserNode
 
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
 from uobtheatre.discounts.models import ConcessionType
+from uobtheatre.payments.models import Payment
 from uobtheatre.productions.models import Performance
 from uobtheatre.users.models import User
 from uobtheatre.utils.enums import GrapheneEnumMixin
@@ -376,12 +377,37 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
     class Arguments:
         booking_id = IdInputField(required=True)
         price = graphene.Int(required=True)
-        nonce = graphene.String(required=True)
+        nonce = graphene.String(required=False)
+        payment_provider = graphene.Argument(
+            graphene.Enum.from_enum(Payment.PaymentProvider), required=False
+        )
 
     @classmethod
-    def resolve_mutation(cls, _, info, booking_id, price, nonce):
+    def resolve_mutation(
+        cls,
+        _,
+        info,
+        booking_id,
+        price,
+        nonce=None,
+        payment_provider=Payment.PaymentProvider.SQUARE_ONLINE,
+    ):
+
         # Get the performance and if it doesn't exist throw an error
         booking = Booking.objects.get(id=booking_id)
+
+        # Only (box office) admins can create a booking for a different user
+        if (
+            payment_provider != Payment.PaymentProvider.SQUARE_ONLINE
+            and not info.context.user.has_perm(
+                "productions.boxoffice", booking.performance.production
+            )
+        ):
+            raise GQLFieldException(
+                message=f"You do not have permission to pay for a booking with the {payment_provider} provider.",
+                code=403,
+                field="payment_provider",
+            )
 
         if booking.total() != price:
             raise GQLNonFieldException(
@@ -391,7 +417,17 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         if booking.status != Booking.BookingStatus.IN_PROGRESS:
             raise GQLNonFieldException(message="The booking is not in progress")
 
-        payment = booking.pay(nonce)
+        if payment_provider == Payment.PaymentProvider.SQUARE_ONLINE:
+            if not nonce:
+                raise GQLFieldException(
+                    message=f"A nonce is required when using {payment_provider} provider.",
+                    field="nonce",
+                    code=400,
+                )
+            payment = booking.pay_online(nonce)
+        else:
+            payment = booking.pay_manual(payment_provider)
+
         return PayBooking(booking=booking, payment=payment)
 
 

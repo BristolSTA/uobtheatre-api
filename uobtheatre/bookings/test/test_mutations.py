@@ -831,6 +831,93 @@ def test_pay_booking_mutation_payed_booking(gql_client_flexible, gql_id):
 
 
 @pytest.mark.django_db
+def test_pay_booking_mutation_unauthorized_provider(gql_client_flexible, gql_id):
+    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    client = gql_client_flexible
+
+    request_query = """
+    mutation {
+	payBooking(
+            bookingId: "%s"
+            price: 0
+            paymentProvider: CARD
+        ) {
+            success
+            errors {
+              __typename
+              ... on FieldError {
+                message
+                code
+                field
+              }
+            }
+          }
+        }
+    """
+    response = client.execute(request_query % gql_id(booking.id, "BookingNode"))
+    assert response == {
+        "data": {
+            "payBooking": {
+                "success": False,
+                "errors": [
+                    {
+                        "__typename": "FieldError",
+                        "message": "You do not have permission to pay for a booking with the CARD provider.",
+                        "code": "403",
+                        "field": "payment_provider",
+                    }
+                ],
+            }
+        }
+    }
+
+
+@pytest.mark.django_db
+def test_pay_booking_mutation_online_without_nonce(gql_client_flexible, gql_id):
+    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    client = gql_client_flexible
+
+    request_query = """
+    mutation {
+	payBooking(
+            bookingId: "%s"
+            price: 0
+        ) {
+            success
+            errors {
+              __typename
+              ... on FieldError {
+                message
+                code
+                field
+              }
+              ... on NonFieldError {
+                message
+                code
+              }
+            }
+          }
+        }
+    """
+    response = client.execute(request_query % gql_id(booking.id, "BookingNode"))
+    assert response == {
+        "data": {
+            "payBooking": {
+                "success": False,
+                "errors": [
+                    {
+                        "__typename": "FieldError",
+                        "message": "A nonce is required when using SQUARE_ONLINE provider.",
+                        "code": "400",
+                        "field": "nonce",
+                    }
+                ],
+            }
+        }
+    }
+
+
+@pytest.mark.django_db
 def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
     booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
     client = gql_client_flexible
@@ -915,6 +1002,87 @@ def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
                     "cardBrand": "VISA",
                     "provider": {
                         "value": "SQUARE_ONLINE",
+                    },
+                    "currency": "GBP",
+                    "value": 0,
+                },
+                "success": True,
+                "errors": None,
+            }
+        }
+    }
+
+
+@pytest.mark.django_db
+def test_pay_booking_manual(gql_client_flexible):
+    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    client = gql_client_flexible
+    assign_perm("boxoffice", client.user, booking.performance.production)
+
+    request_query = """
+    mutation {
+	payBooking(
+            bookingId: "%s"
+            price: 0
+            paymentProvider: CARD
+        ) {
+            success
+            errors {
+              __typename
+            }
+
+            booking {
+              status {
+                value
+              }
+              payments {
+                edges {
+                  node {
+                    id
+                  }
+                }
+              }
+            }
+
+            payment {
+              last4
+              cardBrand
+              provider {
+                value
+              }
+              currency
+              value
+            }
+          }
+        }
+    """
+
+    response = client.execute(request_query % to_global_id("BookingNode", booking.id))
+    assert response == {
+        "data": {
+            "payBooking": {
+                "booking": {
+                    "status": {
+                        "value": "PAID",
+                    },
+                    "payments": {
+                        "edges": [
+                            {
+                                "node": {
+                                    "id": to_global_id(
+                                        "PaymentNode",
+                                        booking.payments.first().id,
+                                    )
+                                }
+                            }
+                        ]
+                    },
+                },
+                "payment": {
+                    "last4": None,
+                    "cardBrand": None,
+                    "provider": {
+                        "value": "CARD",
                     },
                     "currency": "GBP",
                     "value": 0,
