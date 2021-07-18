@@ -192,7 +192,7 @@ def test_create_booking_with_taget_user_without_perms(gql_client_flexible):
         mutation {
           createBooking(
             performanceId: "%s"
-            targetUser: "abc@email.com"
+            targetUserEmail: "abc@email.com"
           ) {
             booking {
               id
@@ -231,7 +231,7 @@ def test_create_booking_with_taget_user(gql_client_flexible):
         mutation {
           createBooking(
             performanceId: "%s"
-            targetUser: "abc@email.com"
+            targetUserEmail: "abc@email.com"
           ) {
             booking {
               id
@@ -267,7 +267,7 @@ def test_create_booking_with_new_taget_user(gql_client_flexible):
         mutation {
           createBooking(
             performanceId: "%s"
-            targetUser: "abc@email.com"
+            targetUserEmail: "abc@email.com"
           ) {
             booking {
               id

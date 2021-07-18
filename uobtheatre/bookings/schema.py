@@ -246,7 +246,7 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
     class Arguments:
         performance_id = IdInputField()
         tickets = graphene.List(CreateTicketInput, required=False)
-        target_user = graphene.String(required=False)  # User email
+        target_user_email = graphene.String(required=False)  # User email
 
     @classmethod
     def resolve_mutation(
@@ -255,7 +255,7 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
         info,
         performance_id: int,
         tickets: List[CreateTicketInput] = None,
-        target_user: str = None,
+        target_user_email: str = None,
     ):
 
         if tickets is None:
@@ -277,7 +277,7 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
         ).delete()
 
         # Only (box office) admins can create a booking for a different user
-        if target_user and not info.context.user.has_perm(
+        if target_user_email and not info.context.user.has_perm(
             "productions.boxoffice", performance.production
         ):
             raise GQLNonFieldException(
@@ -286,8 +286,8 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
             )
 
         # If a target user is provided get that user, if not then this booking is intended for the user that is logged in
-        if target_user:
-            user, _ = User.objects.get_or_create(email=target_user)
+        if target_user_email:
+            user, _ = User.objects.get_or_create(email=target_user_email)
         else:
             user = info.context.user
 

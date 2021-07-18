@@ -428,7 +428,7 @@ def test_total_with_admin_discount(admin_discount, expected_price):
     PercentageMiscCostFactory(percentage=0.1)
 
     # Create a booking costing £12
-    booking = BookingFactory(admin_discount=admin_discount)
+    booking = BookingFactory(admin_discount_percentage=admin_discount)
     psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
     ticket = TicketFactory(booking=booking, seat_group=psg.seat_group)
     assert ticket.booking.total() == expected_price

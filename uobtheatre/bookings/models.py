@@ -127,7 +127,9 @@ class Booking(TimeStampedMixin, models.Model):
 
     # An additional discount that can be applied to the booking by an admin
     # To create a concession ticket a 100% discount can be applied.
-    admin_discount = models.FloatField(default=0, validators=[validate_percentage])
+    admin_discount_percentage = models.FloatField(
+        default=0, validators=[validate_percentage]
+    )
 
     def __str__(self):
         return str(self.reference)
@@ -267,14 +269,14 @@ class Booking(TimeStampedMixin, models.Model):
 
         Returns the subtotal of the booking. This is the total value including
         single and group discounts before any misc costs are applied.
-        If an admin_discount is also applied this will be added here.
+        If an admin discount is also applied this will be added here.
 
         Returns:
             int: price of the booking with discounts applied in penies
         """
         return math.ceil(
             self.get_best_discount_combination_with_price()[1]
-            * (1 - self.admin_discount)
+            * (1 - self.admin_discount_percentage)
         )
 
     def get_best_discount_combination_with_price(
