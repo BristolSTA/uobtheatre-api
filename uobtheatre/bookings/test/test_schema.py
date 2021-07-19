@@ -1,5 +1,8 @@
 import pytest
+from django.contrib.auth.models import Permission
 from django.utils import timezone
+from graphql_relay.node.node import to_global_id
+from guardian.shortcuts import assign_perm
 
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import (
@@ -493,3 +496,96 @@ def test_bookings_auth(gql_client_flexible):
     assert (
         response["data"]["performances"]["edges"][0]["node"]["bookings"]["edges"] == []
     )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "search_phrase, expected_filtered_bookings",
+    [
+        ("jam", [1]),
+        ("alex", [2]),
+        ("abc", [1, 2]),
+        ("def", [2]),
+        ("mrfantastic", [2]),
+        ("irrelvent words mrfantastic", [2]),
+        ("james alex", [1, 2]),
+    ],
+)
+def test_bookings_search(
+    search_phrase, expected_filtered_bookings, gql_client_flexible
+):
+    user_1 = UserFactory(
+        first_name="James", last_name="Elgar", email="jameselgar@email.com"
+    )
+    user_2 = UserFactory(
+        first_name="Alex", last_name="Toff", email="mrfantastic@email.com"
+    )
+    BookingFactory(id=1, user=user_1, reference="abc123")
+    BookingFactory(id=2, user=user_2, reference="abcdef")
+
+    request = (
+        """
+        query {
+            bookings(search:"%s") {
+        	  edges {
+        	    node {
+        	      id
+        	    }
+        	  }
+        	}
+        }
+    """
+        % search_phrase
+    )
+
+    boxoffice_perm = Permission.objects.get(codename="boxoffice")
+    gql_client_flexible.user.user_permissions.add(boxoffice_perm)
+
+    response = gql_client_flexible.execute(request)
+    assert [node["node"]["id"] for node in response["data"]["bookings"]["edges"]] == [
+        to_global_id("BookingNode", booking_id)
+        for booking_id in expected_filtered_bookings
+    ]
+
+
+@pytest.mark.django_db
+def test_bookings_qs(gql_client_flexible):
+    """
+    The bookings query should only return bookings that the user has permission to view.
+    """
+
+    # Booking owned by user
+    BookingFactory(id=1, user=gql_client_flexible.user)
+
+    # Booking user does not have permission to acess
+    BookingFactory(id=2)
+
+    # Booking that user has permission to boxoffice
+    booking = BookingFactory(id=3)
+    assign_perm("boxoffice", gql_client_flexible.user, booking.performance.production)
+
+    request = """
+        query {
+            bookings {
+        	  edges {
+        	    node {
+        	      id
+        	    }
+        	  }
+        	}
+        }
+    """
+
+    response = gql_client_flexible.execute(request)
+    assert [node["node"]["id"] for node in response["data"]["bookings"]["edges"]] == [
+        to_global_id("BookingNode", booking_id) for booking_id in [1, 3]
+    ]
+
+    # If the user is a superuser they should be able to access all bookngs
+    gql_client_flexible.user.is_superuser = True
+    gql_client_flexible.user.save()
+
+    response = gql_client_flexible.execute(request)
+    assert [node["node"]["id"] for node in response["data"]["bookings"]["edges"]] == [
+        to_global_id("BookingNode", booking_id) for booking_id in [1, 2, 3]
+    ]

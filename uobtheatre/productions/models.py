@@ -287,7 +287,9 @@ class PerformanceQuerySet(QuerySet):
         Returns:
             QuerySet: The filtered queryset
         """
-        production_with_perm = get_objects_for_user(user, "productions.boxoffice")
+        production_with_perm = get_objects_for_user(
+            user, "productions.boxoffice", accept_global_perms=True, with_superuser=True
+        )
         if has_permission:
             return self.filter(production__in=production_with_perm)
         return self.exclude(production__in=production_with_perm)

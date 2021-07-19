@@ -16,6 +16,7 @@ class Query(
     productions_schema.Query,
     societies_schema.Query,
     users_schema.Query,
+    bookings_schema.Query,
     graphene.ObjectType,
 ):
     """

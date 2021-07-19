@@ -1,7 +1,9 @@
 import itertools
 from typing import List
 
+import django_filters
 import graphene
+from django.db.models import Q
 from django_filters import OrderingFilter
 from graphene import relay
 from graphene_django import DjangoListField, DjangoObjectType
@@ -135,6 +137,8 @@ class BookingFilter(FilterSet):
     ordering filter for created_at.
     """
 
+    search = django_filters.CharFilter(method="search_bookings", label="Search")
+
     class Meta:
         model = Booking
         fields = "__all__"
@@ -152,8 +156,35 @@ class BookingFilter(FilterSet):
 
         """
         if self.request.user.is_authenticated:
-            return super().qs.filter(user=self.request.user)
+            return super().qs.filter(
+                performance__in=Performance.objects.has_boxoffice_permission(
+                    self.request.user
+                )
+            ) | super().qs.filter(user=self.request.user)
         return Booking.objects.none()
+
+    def search_bookings(self, queryset, _, value):
+        """
+        Given a query string, searches through the bookings using first name,
+        last name, email and booking reference.
+
+        Args:
+            queryset (Queryset): The bookings queryset.
+            value (str): The search query.
+
+        Returns:
+            Queryset: Filtered booking queryset.
+        """
+        query = Q()
+        for word in value.split():
+            query = (
+                query
+                | Q(user__first_name__icontains=word)
+                | Q(user__last_name__icontains=word)
+                | Q(user__email__icontains=word)
+                | Q(reference__icontains=word)
+            )
+        return queryset.filter(query)
 
     order_by = OrderingFilter(fields=("created_at",))
 
@@ -569,6 +600,15 @@ class UnCheckInBooking(AuthRequiredMixin, SafeMutation):
             ticket.uncheck_in()
 
         return UnCheckInBooking(booking=booking, performance=performance)
+
+
+class Query(graphene.ObjectType):
+    """Query for production module.
+
+    These queries are appended to the main schema Query.
+    """
+
+    bookings = DjangoFilterConnectionField(BookingNode)
 
 
 class Mutation(graphene.ObjectType):
