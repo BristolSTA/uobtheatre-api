@@ -38,7 +38,7 @@ django-guardian==2.4.0  # https://github.com/django-guardian/django-guardian
 
 #=== GQL core ===#
 
-graphene==2.1.8
+graphene==2.1.9
 graphene-django==2.15.0
 
 #=== Auth ===#
