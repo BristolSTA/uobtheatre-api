@@ -1479,3 +1479,23 @@ def test_uncheck_in_booking_incorrect_ticket(gql_client_flexible):
             }
         }
     }
+
+
+def test_parse_target_user_email():
+    raise NotImplementedError
+
+
+def test_parse_target_user_email_without_permissions():
+    raise NotImplementedError
+
+
+def test_parse_target_user_email_without_target_email():
+    raise NotImplementedError
+
+
+def test_parse_target_user_email_creates_user():
+    raise NotImplementedError
+
+
+def test_parse_target_user_email_none():
+    raise NotImplementedError
