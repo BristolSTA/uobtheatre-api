@@ -7,6 +7,11 @@ import uobtheatre.utils.models
 import uobtheatre.utils.utils
 
 
+def create_default_concessions(apps, ):
+    ConcessionType = apps.get_model('uobtheatre.bookings', 'ConcessionType')
+    ConcessionType.objects.create(name="Adult")
+
+
 class Migration(migrations.Migration):
 
     initial = True
@@ -224,4 +229,5 @@ class Migration(migrations.Migration):
                 to="productions.performance",
             ),
         ),
+        migrations.RunPython(create_default_concession_types),
     ]
