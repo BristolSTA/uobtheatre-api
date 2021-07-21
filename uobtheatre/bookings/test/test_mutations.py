@@ -12,6 +12,7 @@ from uobtheatre.bookings.test.factories import (
 from uobtheatre.discounts.test.factories import ConcessionTypeFactory
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.models import User
+from uobtheatre.bookings.schema import parse_target_user_email
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.utils.test_utils import ticket_dict_list_dict_gen, ticket_list_dict_gen
 from uobtheatre.venues.test.factories import SeatFactory, SeatGroupFactory
@@ -1481,21 +1482,33 @@ def test_uncheck_in_booking_incorrect_ticket(gql_client_flexible):
     }
 
 
-def test_parse_target_user_email():
-    raise NotImplementedError
+@pytest.mark.django_db
+def test_parse_target_user_email_get_user():
+    creator = UserFactory(is_superuser=True)
+    user = UserFactory()
+    assert parse_target_user_email(user.email, creator, PerformanceFactory()) == user
 
 
+@pytest.mark.django_db
+def test_parse_target_user_email_creates_user():
+    creator = UserFactory(is_superuser=True, email="admin@email.com")
+
+    user = parse_target_user_email("somenewemail@email.com", creator, PerformanceFactory())
+    assert User.objects.filter(email="somenewemail@email.com") == user
+
+
+@pytest.mark.django_db
 def test_parse_target_user_email_without_permissions():
-    raise NotImplementedError
+    creator = UserFactory(email="admin@email.com")
+    parse_target_user_email("email@email.com", creator, PerformanceFactory())
+    assert not User.objects.filter(email="somenewemail@email.com").exists()
 
 
+@pytest.mark.django_db
 def test_parse_target_user_email_without_target_email():
     raise NotImplementedError
 
 
-def test_parse_target_user_email_creates_user():
-    raise NotImplementedError
-
-
+@pytest.mark.django_db
 def test_parse_target_user_email_none():
     raise NotImplementedError
