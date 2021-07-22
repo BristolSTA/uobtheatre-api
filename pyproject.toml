@@ -1,0 +1,44 @@
+[pytest]
+addopts = -p no:warnings
+
+[tool.isort]
+line_length = 88
+multi_line_output = 3
+include_trailing_comma = True
+known_third_party = ["autoslug", "dateutil", "django", "django_filters", "environ", "factory", "graphene", "graphene_django", "graphql", "graphql_auth", "graphql_relay", "guardian", "pytest", "pytest_factoryboy", "sentry_sdk", "shortuuid", "square"]
+
+[mypy]
+plugins =
+    mypy_django_plugin.main
+ignore_missing_imports = True
+warn_incomplete_stub = True
+
+[mypy-uobtheatre.*.migrations.*]
+ignore_errors = True
+
+[mypy.plugins.django-stubs]
+django_settings_module = "config.settings.common"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = --ds=config.settings.test --reuse-db
+python_files = tests.py test_*.py *_tests.py
+testpaths =
+  uobtheatre
+
+[tool.black]
+line-length = 79
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
