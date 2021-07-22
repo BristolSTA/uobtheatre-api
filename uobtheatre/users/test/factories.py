@@ -1,3 +1,5 @@
+import uuid
+
 import factory
 
 
@@ -6,7 +8,7 @@ class UserFactory(factory.django.DjangoModelFactory):
         model = "users.User"
         django_get_or_create = ("email",)
 
-    id = factory.Faker("uuid4")
+    id = factory.LazyFunction(uuid.uuid4)
     password = factory.Faker(
         "password",
         length=10,

@@ -1,5 +1,5 @@
 import itertools
-from typing import List
+from typing import List, Optional
 
 import django_filters
 import graphene
@@ -270,8 +270,56 @@ class TicketIDInput(graphene.InputObjectType):
         return Ticket.objects.get(id=self.ticket_id)
 
 
+def parse_target_user_email(
+    target_user_email: Optional[str], creator_user: User, performance: Performance
+) -> User:
+    """Parse provided user email to user and check permissions.
+
+    Given an email of a user return that email. If the email is not provided
+    return the creator. If the email is provided but the user does not have
+    permission to create a booking for another user, throw and error.
+
+    Args:
+        target_user_email: The email of the user that the booking is being
+            given to.
+        creator_user: The user creating/updating the booking.
+        performance: The performance that the booking if for.
+
+    Returns:
+        User: The user which the booking is being created for. (This may be the
+            same as the creator if not target_user_email is provided.)
+
+    Raises:
+        GQLFieldException: If the user does not have permission to create a
+            booking.
+    """
+    # Only (box office) admins can create a booking for a different user
+    if target_user_email and not creator_user.has_perm(
+        "productions.boxoffice", performance.production
+    ):
+        raise GQLFieldException(
+            message="You do not have permission to create a booking for another user.",
+            code=403,
+            field="target_user_email"
+        )
+
+    # If a target user is provided get that user, if not then this booking is intended for the user that is logged in
+    if target_user_email:
+        target_user, _ = User.objects.get_or_create(email=target_user_email)
+        return target_user
+    return creator_user
+
+
 class CreateBooking(AuthRequiredMixin, SafeMutation):
-    """Mutation to create a Booking"""
+    """Mutation to create a Booking
+
+    Args:
+        performance_id (str): Global id of performance which the booking is
+            being created for.
+        tickets (Ticket): The tickets which should be created for the booking.
+        target_user_email (str): The email of the user that this booking is
+            being created for. (Optional)
+    """
 
     booking = graphene.Field(BookingNode)
 
@@ -308,20 +356,9 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
             status=Booking.BookingStatus.IN_PROGRESS, performance_id=performance_id
         ).delete()
 
-        # Only (box office) admins can create a booking for a different user
-        if target_user_email and not info.context.user.has_perm(
-            "productions.boxoffice", performance.production
-        ):
-            raise GQLNonFieldException(
-                message="You do not have permission to create a booking for another user.",
-                code=403,
-            )
-
-        # If a target user is provided get that user, if not then this booking is intended for the user that is logged in
-        if target_user_email:
-            user, _ = User.objects.get_or_create(email=target_user_email)
-        else:
-            user = info.context.user
+        user = parse_target_user_email(
+            target_user_email, info.context.user, performance
+        )
 
         # Create the booking
         booking = Booking.objects.create(
@@ -345,6 +382,8 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
             after the update. If an empty list is provided all the bookings
             tickets will be deleted. If no list is provided the bookings
             tickets will not be changed.
+        target_user_email (str): The email of the user that this booking is
+            being created for. (Optional)
     """
 
     booking = graphene.Field(BookingNode)
@@ -352,11 +391,33 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
     class Arguments:
         booking_id = IdInputField()
         tickets = graphene.List(UpdateTicketInput, required=False)
+        target_user_email = graphene.String(required=False)  # User email
 
     @classmethod
-    def resolve_mutation(cls, _, info, booking_id, tickets=None):
+    def resolve_mutation(
+        cls,
+        _,
+        info,
+        booking_id: int,
+        tickets: List[CreateTicketInput] = None,
+        target_user_email: str = None,
+    ):
 
-        booking = Booking.objects.get(id=booking_id, user=info.context.user)
+        booking = Booking.objects.get(id=booking_id)
+
+        if booking.user.id != info.context.user.id and not info.context.user.has_perm("boxoffice", booking.performance.production):
+            raise GQLFieldException(
+                message="You do not have permission to access this booking.",
+                code=403,
+                field="booking",
+            )
+
+        if target_user_email:
+            user = parse_target_user_email(
+                target_user_email, info.context.user, booking.performance
+            )
+            booking.user = user
+            booking.save()
 
         # If no tickets are provided then we will not update the bookings
         # tickets.
@@ -392,6 +453,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
             actual price of the Booking. This is used to ensure the front end
             is showing the true price which will be paid.
         nonce (str): The Square payment form nonce.
+        payment_provider (PaymentProvider): The provider used for the payment.
 
     Returns:
         booking (BookingNode): The Booking which was paid for.
