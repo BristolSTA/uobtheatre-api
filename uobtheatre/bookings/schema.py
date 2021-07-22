@@ -290,16 +290,17 @@ def parse_target_user_email(
             same as the creator if not target_user_email is provided.)
 
     Raises:
-        GQLNonFieldException: If the user does not have permission to create a
+        GQLFieldException: If the user does not have permission to create a
             booking.
     """
     # Only (box office) admins can create a booking for a different user
     if target_user_email and not creator_user.has_perm(
         "productions.boxoffice", performance.production
     ):
-        raise GQLNonFieldException(
+        raise GQLFieldException(
             message="You do not have permission to create a booking for another user.",
             code=403,
+            field="target_user_email"
         )
 
     # If a target user is provided get that user, if not then this booking is intended for the user that is logged in
@@ -402,7 +403,21 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
         target_user_email: str = None,
     ):
 
-        booking = Booking.objects.get(id=booking_id, user=info.context.user)
+        booking = Booking.objects.get(id=booking_id)
+
+        if booking.user.id != info.context.user.id and not info.context.user.has_perm("boxoffice", booking.performance.production):
+            raise GQLFieldException(
+                message="You do not have permission to access this booking.",
+                code=403,
+                field="booking",
+            )
+
+        if target_user_email:
+            user = parse_target_user_email(
+                target_user_email, info.context.user, booking.performance
+            )
+            booking.user = user
+            booking.save()
 
         # If no tickets are provided then we will not update the bookings
         # tickets.
@@ -425,14 +440,6 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
 
         for ticket in delete_tickets:
             ticket.delete()
-
-        # If a target_user_email is provided then the email should be updated.
-        if target_user_email:
-            user = parse_target_user_email(
-                target_user_email, info.context.user, booking.performance
-            )
-            booking.user = user
-            booking.save()
 
         return UpdateBooking(booking=booking)
 

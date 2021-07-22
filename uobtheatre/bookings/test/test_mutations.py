@@ -4,6 +4,7 @@ from graphql_relay.node.node import from_global_id, to_global_id
 from guardian.shortcuts import assign_perm
 
 from uobtheatre.bookings.models import Booking
+from uobtheatre.bookings.schema import parse_target_user_email
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
     PerformanceSeatingFactory,
@@ -12,8 +13,8 @@ from uobtheatre.bookings.test.factories import (
 from uobtheatre.discounts.test.factories import ConcessionTypeFactory
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.models import User
-from uobtheatre.bookings.schema import parse_target_user_email
 from uobtheatre.users.test.factories import UserFactory
+from uobtheatre.utils.exceptions import GQLFieldException
 from uobtheatre.utils.test_utils import ticket_dict_list_dict_gen, ticket_list_dict_gen
 from uobtheatre.venues.test.factories import SeatFactory, SeatGroupFactory
 
@@ -201,9 +202,10 @@ def test_create_booking_with_taget_user_without_perms(gql_client_flexible):
             success
             errors {
               __typename
-              ... on NonFieldError {
+              ... on FieldError {
                 message
                 code
+                field
               }
             }
          }
@@ -216,9 +218,10 @@ def test_create_booking_with_taget_user_without_perms(gql_client_flexible):
     assert response["data"]["createBooking"]["success"] is False
     assert response["data"]["createBooking"]["errors"] == [
         {
-            "__typename": "NonFieldError",
+            "__typename": "FieldError",
             "message": "You do not have permission to create a booking for another user.",
             "code": "403",
+            "field": "targetUserEmail"
         }
     ]
 
@@ -598,6 +601,82 @@ def test_update_booking_no_tickets(gql_client_flexible):
 
 
 @pytest.mark.django_db
+def test_update_booking_set_target_user(gql_client_flexible):
+
+    creator = gql_client_flexible.user
+    booking = BookingFactory(user=creator)
+
+    creator.is_superuser = True
+    creator.save()
+
+    user = UserFactory(email="user@email.com")
+
+    assert creator.bookings.count() == 1
+    request_query = """
+        mutation {
+            updateBooking (
+                bookingId: "%s"
+                targetUserEmail: "user@email.com"
+            ){
+                booking{
+                    id
+                }
+            }
+        }
+        """ % (
+        to_global_id("BookingNode", booking.id),
+    )
+
+    gql_client_flexible.execute(request_query)
+
+    # Assert the bookings ticket have not changed
+    assert creator.bookings.count() == 0
+    assert user.bookings.count() == 1
+
+
+@pytest.mark.django_db
+def test_update_booking_without_permission(gql_client_flexible):
+    booking = BookingFactory()
+
+    request_query = """
+        mutation {
+            updateBooking (
+                bookingId: "%s"
+            ){
+                booking{
+                    id
+                }
+                errors {
+                  ... on FieldError {
+                    message
+                    field
+                    code
+                  }
+                }
+            }
+        }
+        """ % (
+        to_global_id("BookingNode", booking.id),
+    )
+
+    response = gql_client_flexible.execute(request_query)
+    assert response == {
+        "data": {
+            "updateBooking": {
+                "booking": None,
+                "errors": [
+                    {
+                        "code": "403",
+                        "message": "You do not have permission to access this booking.",
+                        "field": "booking"
+                    }
+                ]
+            }
+        }
+    }
+
+
+@pytest.mark.django_db
 def test_update_booking_capacity_error(gql_client_flexible):
 
     seat_group = SeatGroupFactory()
@@ -865,7 +944,7 @@ def test_pay_booking_mutation_unauthorized_provider(gql_client_flexible, gql_id)
                         "__typename": "FieldError",
                         "message": "You do not have permission to pay for a booking with the CARD provider.",
                         "code": "403",
-                        "field": "payment_provider",
+                        "field": "paymentProvider",
                     }
                 ],
             }
@@ -1486,7 +1565,7 @@ def test_uncheck_in_booking_incorrect_ticket(gql_client_flexible):
 def test_parse_target_user_email_get_user():
     creator = UserFactory(is_superuser=True)
     user = UserFactory()
-    assert parse_target_user_email(user.email, creator, PerformanceFactory()) == user
+    assert parse_target_user_email(user.email, creator, PerformanceFactory()).id == user.id
 
 
 @pytest.mark.django_db
@@ -1494,21 +1573,19 @@ def test_parse_target_user_email_creates_user():
     creator = UserFactory(is_superuser=True, email="admin@email.com")
 
     user = parse_target_user_email("somenewemail@email.com", creator, PerformanceFactory())
-    assert User.objects.filter(email="somenewemail@email.com") == user
+    assert str(User.objects.get(email="somenewemail@email.com").id) == str(user.id)
 
 
 @pytest.mark.django_db
 def test_parse_target_user_email_without_permissions():
     creator = UserFactory(email="admin@email.com")
-    parse_target_user_email("email@email.com", creator, PerformanceFactory())
+    with pytest.raises(GQLFieldException):
+        parse_target_user_email("email@email.com", creator, PerformanceFactory())
     assert not User.objects.filter(email="somenewemail@email.com").exists()
 
 
 @pytest.mark.django_db
 def test_parse_target_user_email_without_target_email():
-    raise NotImplementedError
-
-
-@pytest.mark.django_db
-def test_parse_target_user_email_none():
-    raise NotImplementedError
+    creator = UserFactory(email="admin@email.com")
+    user = parse_target_user_email(None, creator, PerformanceFactory())
+    assert user.id == creator.id
