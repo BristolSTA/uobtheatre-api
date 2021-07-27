@@ -1,6 +1,25 @@
 import graphene
-from graphql_auth import mutations
-from graphql_auth.schema import MeQuery, UserQuery
+from graphql_auth import mutations, schema
+from graphql_auth.schema import UserQuery
+from graphql_relay.node.node import to_global_id
+
+from uobtheatre.users.models import User
+
+
+class ExtendedUserNode(schema.UserNode):
+    """
+    Extends user node to add additional properties.
+    """
+
+    can_boxoffice = graphene.Boolean()
+    id = graphene.String()
+
+    def resolve_id(self, info):
+        print("REsolving id")
+        return to_global_id("UserNode", self.id)
+
+    class Meta:
+        model = User
 
 
 class AuthMutation(graphene.ObjectType):
@@ -31,7 +50,21 @@ class AuthMutation(graphene.ObjectType):
     revoke_token = mutations.RevokeToken.Field()
 
 
-class Query(UserQuery, MeQuery, graphene.ObjectType):
+class ExtendedMeQuery(graphene.ObjectType):
+    """
+    Extends user node to add additional properties.
+    """
+
+    me = graphene.Field(ExtendedUserNode)
+
+    def resolve_me(self, info):
+        user = info.context.user
+        if user.is_authenticated:
+            return user
+        return None
+
+
+class Query(UserQuery, ExtendedMeQuery, graphene.ObjectType):
     pass
 
 

@@ -3,7 +3,7 @@ from django.contrib.auth.models import Group, Permission
 from guardian.shortcuts import assign_perm
 
 from conftest import AuthenticateableGQLClient
-from uobtheatre.productions.test.factories import ProductionFactory
+from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.users.models import User
 from uobtheatre.users.test.factories import UserFactory
 
@@ -63,3 +63,15 @@ def test_boxoffice_permissions_model_level_group(
 
     assert user.has_perm("productions.boxoffice")
     assert user.has_perm("productions.boxoffice", production)
+
+
+@pytest.mark.django_db
+def test_can_boxoffice():
+    performance = PerformanceFactory()
+    PerformanceFactory()
+
+    user = UserFactory()
+    assert not user.can_boxoffice
+
+    assign_perm("boxoffice", user, performance.production)
+    assert user.can_boxoffice
