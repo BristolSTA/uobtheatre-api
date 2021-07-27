@@ -15,7 +15,6 @@ class ExtendedUserNode(schema.UserNode):
     id = graphene.String()
 
     def resolve_id(self, info):
-        print("REsolving id")
         return to_global_id("UserNode", self.id)
 
     class Meta:
