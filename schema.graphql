@@ -154,7 +154,7 @@ type ExtendedUserNode {
   archived: Boolean
   verified: Boolean
   secondaryEmail: String
-  canBoxoffice: Boolean
+  canBoxoffice: Boolean!
 }
 
 type FieldError {
