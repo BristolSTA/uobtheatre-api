@@ -46,3 +46,5 @@ if sentry_dns := os.getenv("SENTRY_DNS"):
 AWS_HEADERS = {
     "Cache-Control": "max-age=86400, s-maxage=86400, must-revalidate",
 }
+
+EMAIL_BACKEND = "anymail.backends.amazon_ses.EmailBackend"

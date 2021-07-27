@@ -127,3 +127,6 @@ pr: ## Runs everything required (that is not included in precommit) for a pr
 
 build:
 	docker-compose build api
+
+django-shell: ## Open django shell
+	docker-compose run --rm api python manage.py shell

@@ -13,6 +13,7 @@ DEBUG = True
 EMAIL_HOST = "localhost"
 EMAIL_PORT = 1025
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+EMAIL_BACKEND = "anymail.backends.amazon_ses.EmailBackend"
 
 # CORS
 CORS_ORIGIN_ALLOW_ALL = True
