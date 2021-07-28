@@ -36,7 +36,7 @@ down: ## Down
 	docker-compose down
 
 dump: ## dumps databse objects into fixture
-	docker-compose run --rm api python manage.py dumpdata users images addresses venues societies productions bookings --indent 2 > db.json
+	docker-compose run --rm api python manage.py dumpdata users images addresses venues societies productions discounts bookings payments --indent 2 > db.json
 
 migrations: ## Make the migrations
 	docker-compose run --rm api python manage.py makemigrations

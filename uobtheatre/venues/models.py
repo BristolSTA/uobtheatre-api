@@ -30,8 +30,8 @@ class Venue(TimeStampedMixin, models.Model):
 
     name = models.CharField(max_length=255)
     internal_capacity = models.SmallIntegerField()
-    description = models.TextField(null=True)
-    address = models.ForeignKey(Address, on_delete=models.CASCADE, null=True)
+    description = models.TextField(null=True, blank=True)
+    address = models.ForeignKey(Address, on_delete=models.CASCADE)
     image = models.ForeignKey(Image, on_delete=models.RESTRICT, related_name="venues")
     publicly_listed = models.BooleanField(default=True)
 
