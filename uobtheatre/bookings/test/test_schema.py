@@ -254,7 +254,7 @@ def test_bookings_price_break_down(
         "subtotalPrice": booking.subtotal(),
         "miscCostsValue": int(booking.misc_costs_value()),
         "totalPrice": booking.total(),
-        "ticketsDiscountedPrice": booking.total(),
+        "ticketsDiscountedPrice": booking.subtotal(),
     }
 
 

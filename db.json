@@ -362,6 +362,25 @@
   }
 },
 {
+  "model": "productions.production",
+  "pk": 5,
+  "fields": {
+    "created_at": "2021-07-28T13:44:47.657Z",
+    "updated_at": "2021-07-28T13:44:47.657Z",
+    "name": "AnOldShow",
+    "subtitle": null,
+    "description": "old boi in the past",
+    "society": 4,
+    "cover_image": null,
+    "poster_image": 1,
+    "featured_image": 3,
+    "age_rating": null,
+    "facebook_event": null,
+    "slug": "anoldshow",
+    "warnings": []
+  }
+},
+{
   "model": "productions.castmember",
   "pk": 1,
   "fields": {
@@ -563,6 +582,23 @@
   }
 },
 {
+  "model": "productions.performance",
+  "pk": 9,
+  "fields": {
+    "created_at": "2021-07-28T13:45:20.134Z",
+    "updated_at": "2021-07-28T13:47:46.524Z",
+    "production": 5,
+    "venue": 1,
+    "doors_open": "2021-07-01T18:00:00Z",
+    "start": "2021-07-01T18:03:00Z",
+    "end": "2021-07-01T19:00:00Z",
+    "description": "",
+    "extra_information": "",
+    "disabled": false,
+    "capacity": null
+  }
+},
+{
   "model": "productions.performanceseatgroup",
   "pk": 1,
   "fields": {
@@ -673,6 +709,16 @@
   }
 },
 {
+  "model": "productions.performanceseatgroup",
+  "pk": 12,
+  "fields": {
+    "seat_group": 1,
+    "performance": 9,
+    "price": 1000,
+    "capacity": 207
+  }
+},
+{
   "model": "discounts.concessiontype",
   "pk": 1,
   "fields": {
@@ -706,13 +752,21 @@
 },
 {
   "model": "discounts.discount",
-  "pk": 5,
+  "pk": 1,
   "fields": {
-    "name": "Student",
-    "percentage": 0.2,
+    "name": "Adult",
+    "percentage": 0.0,
     "seat_group": null,
     "performances": [
-      1
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
     ]
   }
 },
@@ -724,9 +778,10 @@
     "percentage": 0.3,
     "seat_group": null,
     "performances": [
-      1,
       2,
-      3
+      5,
+      7,
+      8
     ]
   }
 },
@@ -745,44 +800,26 @@
 },
 {
   "model": "discounts.discount",
-  "pk": 4,
+  "pk": 5,
   "fields": {
-    "name": "Old Person Back Winston",
-    "percentage": 0.4,
-    "seat_group": 2,
-    "performances": [
-      1,
-      2,
-      3
-    ]
-  }
-},
-{
-  "model": "discounts.discount",
-  "pk": 1,
-  "fields": {
-    "name": "Adult",
-    "percentage": 0.0,
+    "name": "Student",
+    "percentage": 0.2,
     "seat_group": null,
     "performances": [
       1,
       2,
-      3,
-      4,
       5,
-      6,
-      7,
-      8
+      7
     ]
   }
 },
 {
   "model": "discounts.discountrequirement",
-  "pk": 5,
+  "pk": 1,
   "fields": {
     "number": 1,
-    "discount": 5,
-    "concession_type": 2
+    "discount": 1,
+    "concession_type": 1
   }
 },
 {
@@ -805,20 +842,11 @@
 },
 {
   "model": "discounts.discountrequirement",
-  "pk": 4,
+  "pk": 5,
   "fields": {
     "number": 1,
-    "discount": 4,
-    "concession_type": 4
-  }
-},
-{
-  "model": "discounts.discountrequirement",
-  "pk": 1,
-  "fields": {
-    "number": 1,
-    "discount": 1,
-    "concession_type": 1
+    "discount": 5,
+    "concession_type": 2
   }
 },
 {
@@ -839,6 +867,158 @@
     "description": null,
     "percentage": null,
     "value": 100.0
+  }
+},
+{
+  "model": "bookings.booking",
+  "pk": 1,
+  "fields": {
+    "created_at": "2021-07-28T13:25:27.287Z",
+    "updated_at": "2021-07-28T13:40:58.689Z",
+    "reference": "7zDQnhisvaic",
+    "user": "00000000-0000-0000-0000-000000000001",
+    "creator": "00000000-0000-0000-0000-000000000001",
+    "performance": 2,
+    "status": "PAID",
+    "admin_discount_percentage": 0.0
+  }
+},
+{
+  "model": "bookings.booking",
+  "pk": 2,
+  "fields": {
+    "created_at": "2021-07-28T13:41:37.402Z",
+    "updated_at": "2021-07-28T13:43:01.965Z",
+    "reference": "5Qx4sK8gVqgA",
+    "user": "00000000-0000-0000-0000-000000000001",
+    "creator": "00000000-0000-0000-0000-000000000001",
+    "performance": 5,
+    "status": "PAID",
+    "admin_discount_percentage": 0.0
+  }
+},
+{
+  "model": "bookings.booking",
+  "pk": 3,
+  "fields": {
+    "created_at": "2021-07-28T13:45:55.201Z",
+    "updated_at": "2021-07-28T13:45:55.201Z",
+    "reference": "zFrzjafU3SQb",
+    "user": "00000000-0000-0000-0000-000000000001",
+    "creator": "00000000-0000-0000-0000-000000000001",
+    "performance": 9,
+    "status": "PAID",
+    "admin_discount_percentage": 0.0
+  }
+},
+{
+  "model": "bookings.ticket",
+  "pk": 1,
+  "fields": {
+    "seat_group": 3,
+    "booking": 1,
+    "concession_type": 1,
+    "seat": null,
+    "checked_in": false
+  }
+},
+{
+  "model": "bookings.ticket",
+  "pk": 2,
+  "fields": {
+    "seat_group": 2,
+    "booking": 1,
+    "concession_type": 1,
+    "seat": null,
+    "checked_in": false
+  }
+},
+{
+  "model": "bookings.ticket",
+  "pk": 3,
+  "fields": {
+    "seat_group": 5,
+    "booking": 2,
+    "concession_type": 1,
+    "seat": null,
+    "checked_in": false
+  }
+},
+{
+  "model": "bookings.ticket",
+  "pk": 4,
+  "fields": {
+    "seat_group": 5,
+    "booking": 2,
+    "concession_type": 1,
+    "seat": null,
+    "checked_in": false
+  }
+},
+{
+  "model": "bookings.ticket",
+  "pk": 5,
+  "fields": {
+    "seat_group": 5,
+    "booking": 2,
+    "concession_type": 1,
+    "seat": null,
+    "checked_in": false
+  }
+},
+{
+  "model": "bookings.ticket",
+  "pk": 6,
+  "fields": {
+    "seat_group": 5,
+    "booking": 2,
+    "concession_type": 1,
+    "seat": null,
+    "checked_in": false
+  }
+},
+{
+  "model": "bookings.ticket",
+  "pk": 7,
+  "fields": {
+    "seat_group": 5,
+    "booking": 2,
+    "concession_type": 1,
+    "seat": null,
+    "checked_in": false
+  }
+},
+{
+  "model": "bookings.ticket",
+  "pk": 8,
+  "fields": {
+    "seat_group": 5,
+    "booking": 2,
+    "concession_type": 1,
+    "seat": null,
+    "checked_in": false
+  }
+},
+{
+  "model": "bookings.ticket",
+  "pk": 9,
+  "fields": {
+    "seat_group": 5,
+    "booking": 2,
+    "concession_type": 1,
+    "seat": null,
+    "checked_in": false
+  }
+},
+{
+  "model": "bookings.ticket",
+  "pk": 10,
+  "fields": {
+    "seat_group": 1,
+    "booking": 3,
+    "concession_type": 1,
+    "seat": null,
+    "checked_in": false
   }
 }
 ]
