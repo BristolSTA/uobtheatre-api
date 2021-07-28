@@ -884,3 +884,29 @@ def test_ticket_uncheck_in(initial_state, final_state):
     ticket.uncheck_in()
     assert ticket.checked_in == final_state
     assert Ticket.objects.first().checked_in == final_state
+
+
+@pytest.mark.django_db
+def test_filter_by_checked_in():
+    """
+    Filter by booking tickets checked in
+    """
+    # No tickets booking
+    booking_no_tickets = BookingFactory()
+
+    # None checked in
+    booking_none = BookingFactory()
+    TicketFactory(booking=booking_none)
+    TicketFactory(booking=booking_none)
+
+    # Some checked in
+    booking_some = BookingFactory()
+    TicketFactory(booking=booking_some, checked_in=True)
+    TicketFactory(booking=booking_some)
+
+    # All checked in
+    booking_all = BookingFactory()
+    TicketFactory(booking=booking_all, checked_in=True)
+    TicketFactory(booking=booking_all, checked_in=True)
+    
+    assert list(Booking.objects.checked_in().all()) ==  [booking_all]

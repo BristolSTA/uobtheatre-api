@@ -2,7 +2,9 @@ import math
 from typing import Dict, List, Optional, Tuple
 
 from django.contrib.contenttypes.fields import GenericRelation
+from django.contrib.postgres.aggregates import BoolAnd
 from django.db import models
+from django.db.models.query import QuerySet
 
 from uobtheatre.discounts.models import ConcessionType, DiscountCombination
 from uobtheatre.payments.models import Payment
@@ -73,6 +75,22 @@ class MiscCost(models.Model):
             )
         ]
 
+class BookingQuerySet(QuerySet):
+    """QuerySet for bookings """
+
+    def checked_in(self):
+        """Bookings that are checked in will be returned
+
+        Args:
+            None
+
+        Returns:
+            QuerySet: the filtered queryset
+        """
+
+        return self.annotate(checked_in=BoolAnd('tickets__checked_in')).filter(checked_in=True)
+
+    # def not_checked_in(self):
 
 class Booking(TimeStampedMixin, models.Model):
     """A booking for a performance
@@ -82,6 +100,9 @@ class Booking(TimeStampedMixin, models.Model):
     Note:
         A user can only have 1 In Progress booking per performance.
     """
+
+    objects = BookingQuerySet.as_manager()
+
 
     class BookingStatus(models.TextChoices):
         IN_PROGRESS = "IN_PROGRESS", "In Progress"
@@ -512,3 +533,7 @@ class Ticket(models.Model):
         """
         self.checked_in = False
         self.save()
+
+
+    
+

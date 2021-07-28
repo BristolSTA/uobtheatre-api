@@ -589,3 +589,50 @@ def test_bookings_qs(gql_client_flexible):
     assert [node["node"]["id"] for node in response["data"]["bookings"]["edges"]] == [
         to_global_id("BookingNode", booking_id) for booking_id in [1, 2, 3]
     ]
+
+@pytest.mark.django_db
+def test_booking_filters():
+
+        # No tickets booking
+    booking_no_tickets = BookingFactory()
+
+    # None checked in
+    booking_none = BookingFactory()
+    TicketFactory(booking=booking_none)
+    TicketFactory(booking=booking_none)
+
+    # Some checked in
+    booking_some = BookingFactory()
+    TicketFactory(booking=booking_some, checked_in=True)
+    TicketFactory(booking=booking_some)
+
+    # All checked in
+    booking_all = BookingFactory()
+    TicketFactory(booking=booking_all, checked_in=True)
+    TicketFactory(booking=booking_all, checked_in=True)
+
+    
+    request = """
+        {
+          bookings(checked_in) {
+            edges {
+              node {
+                id
+              }
+            }
+          }
+        }
+        """
+
+    # Ask for nothing and check you get nothing
+    response = gql_client.execute(
+        request
+        % (
+            filter_name,
+            (current_time + datetime.timedelta(days=value_days)).isoformat(),
+        )
+    )
+    assert response["data"]["productions"]["edges"] == [
+        {"node": {"end": productions[i].end_date().isoformat()}}
+        for i in expected_outputs
+    ]
