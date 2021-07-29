@@ -138,6 +138,7 @@ class BookingFilter(FilterSet):
     """
 
     search = django_filters.CharFilter(method="search_bookings", label="Search")
+    checked_in = django_filters.BooleanFilter(method="filter_checked_in", label="Checked In")
 
     class Meta:
         model = Booking
@@ -157,10 +158,12 @@ class BookingFilter(FilterSet):
         """
         if self.request.user.is_authenticated:
             return super().qs.filter(
-                performance__in=Performance.objects.has_boxoffice_permission(
-                    self.request.user
-                )
-            ) | super().qs.filter(user=self.request.user)
+                Q(
+                    performance__in=Performance.objects.has_boxoffice_permission(
+                        self.request.user
+                    )
+                ) | Q(user=self.request.user)
+            ) 
         return Booking.objects.none()
 
     def search_bookings(self, queryset, _, value):
@@ -185,6 +188,9 @@ class BookingFilter(FilterSet):
                 | Q(reference__icontains=word)
             )
         return queryset.filter(query)
+
+    def filter_checked_in(self, queryset, _, value):
+        return queryset.checked_in()
 
     order_by = OrderingFilter(fields=("created_at",))
 

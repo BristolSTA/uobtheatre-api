@@ -909,4 +909,4 @@ def test_filter_by_checked_in():
     TicketFactory(booking=booking_all, checked_in=True)
     TicketFactory(booking=booking_all, checked_in=True)
     
-    assert list(Booking.objects.checked_in().all()) ==  [booking_all]
+    assert list(Booking.objects.checked_in()) ==  [booking_all]

@@ -1,4 +1,5 @@
 import math
+import random
 from typing import Dict, List, Optional, Tuple
 
 from django.contrib.contenttypes.fields import GenericRelation
@@ -16,6 +17,7 @@ from uobtheatre.utils.models import TimeStampedMixin, validate_percentage
 from uobtheatre.utils.utils import combinations, create_short_uuid
 from uobtheatre.venues.models import Seat, SeatGroup
 
+from django.db.models import Count
 
 class MiscCost(models.Model):
     """Model for miscellaneous costs for shows
@@ -87,10 +89,9 @@ class BookingQuerySet(QuerySet):
         Returns:
             QuerySet: the filtered queryset
         """
-
+        
         return self.annotate(checked_in=BoolAnd('tickets__checked_in')).filter(checked_in=True)
 
-    # def not_checked_in(self):
 
 class Booking(TimeStampedMixin, models.Model):
     """A booking for a performance
