@@ -76,7 +76,7 @@ class PriceBreakdownNode(DjangoObjectType):
         return self.total()
 
     def resolve_tickets_discounted_price(self, info):
-        return self.total()
+        return self.subtotal()
 
     def resolve_tickets(self, info):
 

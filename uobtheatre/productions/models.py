@@ -79,7 +79,7 @@ class Production(TimeStampedMixin, models.Model):
     objects = ProductionQuerySet.as_manager()
 
     name = models.CharField(max_length=255)
-    subtitle = models.CharField(max_length=255, null=True)
+    subtitle = models.CharField(max_length=255, null=True, blank=True)
     description = models.TextField(null=True)
 
     society = models.ForeignKey(
@@ -97,19 +97,15 @@ class Production(TimeStampedMixin, models.Model):
         Image,
         on_delete=models.RESTRICT,
         related_name="production_poster_images",
-        null=True,
-        blank=True,
     )
     featured_image = models.ForeignKey(
         Image,
         on_delete=models.RESTRICT,
         related_name="production_featured_images",
-        null=True,
-        blank=True,
     )
 
-    age_rating = models.SmallIntegerField(null=True)
-    facebook_event = models.CharField(max_length=255, null=True)
+    age_rating = models.SmallIntegerField(null=True, blank=True)
+    facebook_event = models.CharField(max_length=255, null=True, blank=True)
 
     warnings = models.ManyToManyField(AudienceWarning, blank=True)
 
