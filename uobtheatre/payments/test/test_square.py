@@ -27,3 +27,22 @@ def test_payment_provider(monkeypatch):
         "source_id": "efg",
         "amount_money": {"amount": 10, "currency": "GBP"},
     }
+
+
+def test_create_device_code():
+    payment_provider = PaymentProvider()
+    code = payment_provider.create_device_code("Boxoffice1")
+    print(code)
+
+
+def test_list_device_code():
+    payment_provider = PaymentProvider()
+    payment_provider.list_devices()
+
+
+def test_create_terminal_payment():
+    payment_provider = PaymentProvider()
+    response = payment_provider.create_terminal_payment(
+        "9fa747a2-25ff-48ee-b078-04381f7c828f", 100, "abc"
+    )
+    print(response)

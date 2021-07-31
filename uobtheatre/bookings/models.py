@@ -410,7 +410,7 @@ class Booking(TimeStampedMixin, models.Model):
         Raises:
             SquareException:  If the payment is unsucessful.
         """
-        response = PaymentProvider.create_payment(
+        response = PaymentProvider().create_payment(
             self.total(), str(self.reference), nonce
         )
 

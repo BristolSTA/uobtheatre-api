@@ -291,4 +291,8 @@ SQUARE_SETTINGS = {
         "SQUARE_ENVIRONMENT",
         default="sandbox",
     ),
+    "SQUARE_LOCATION": os.getenv(
+        "SQUARE_LOCATION",
+        default="",
+    ),
 }
