@@ -13,6 +13,7 @@ from graphql_auth.schema import UserNode
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
 from uobtheatre.discounts.models import ConcessionType
 from uobtheatre.payments.models import Payment
+from uobtheatre.payments.square import PaymentProvider
 from uobtheatre.productions.models import Performance
 from uobtheatre.users.models import User
 from uobtheatre.utils.enums import GrapheneEnumMixin
@@ -25,6 +26,7 @@ from uobtheatre.utils.exceptions import (
 from uobtheatre.utils.filters import FilterSet
 from uobtheatre.utils.schema import AuthRequiredMixin, IdInputField
 from uobtheatre.venues.models import Seat, SeatGroup
+
 
 
 class MiscCostNode(DjangoObjectType):
@@ -474,6 +476,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         payment_provider = graphene.Argument(
             graphene.Enum.from_enum(Payment.PaymentProvider), required=False
         )
+        device_id = graphene.String(required=False)
 
     @classmethod
     def resolve_mutation(
@@ -484,6 +487,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         price,
         nonce=None,
         payment_provider=Payment.PaymentProvider.SQUARE_ONLINE,
+        device_id=None
     ):
 
         # Get the performance and if it doesn't exist throw an error
@@ -518,6 +522,8 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
                     code=400,
                 )
             payment = booking.pay_online(nonce)
+        elif payment_provider == Payment.PaymentProvider.POS and device_id is not None:
+            PaymentProvider().create_terminal_payment(device_id, booking.total(), booking.reference)
         else:
             payment = booking.pay_manual(payment_provider)
 

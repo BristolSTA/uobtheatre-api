@@ -31,7 +31,8 @@ class PaymentNode(GrapheneEnumMixin, DjangoObjectType):
         interfaces = (relay.Node,)
         filterset_class = PaymentFilter
         exclude = ("pay_object_id", "pay_object_type")
-class CreateDeviceCode(AuthRequiredMixin, SafeMutation):
+
+class CreateDeviceCode(SafeMutation):
     """Mutation to generate device code using name.
 
     Args:
