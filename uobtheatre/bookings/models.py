@@ -6,6 +6,7 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.aggregates import BoolAnd
 from django.db import models
 from django.db.models.query import QuerySet
+from django.db.models import F, Count
 
 from uobtheatre.discounts.models import ConcessionType, DiscountCombination
 from uobtheatre.payments.models import Payment
@@ -17,7 +18,7 @@ from uobtheatre.utils.models import TimeStampedMixin, validate_percentage
 from uobtheatre.utils.utils import combinations, create_short_uuid
 from uobtheatre.venues.models import Seat, SeatGroup
 
-from django.db.models import Count
+from django.db.models import Count, Case, When, Value
 
 class MiscCost(models.Model):
     """Model for miscellaneous costs for shows
@@ -89,8 +90,12 @@ class BookingQuerySet(QuerySet):
         Returns:
             QuerySet: the filtered queryset
         """
-        self.annotate(checked_in=Boolcount )
-        return self.annotate(checked_in=BoolAnd('tickets__checked_in')).filter(checked_in=True)
+
+        if boolVal == True:
+            return self.annotate(checked_in=BoolAnd('tickets__checked_in')).filter(checked_in=True)
+        else:
+            return self.annotate(count=models.Count('tickets')).annotate(checked_in_count=models.Count(Case(When(tickets__checked_in=True, then=Value(1))))).filter(checked_in_count__lt=F('count'))
+
 
 
 class Booking(TimeStampedMixin, models.Model):
