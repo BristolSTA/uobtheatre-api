@@ -5,6 +5,7 @@ from typing import Dict, List, Optional, Tuple
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.aggregates import BoolAnd
 from django.db import models
+from django.utils import timezone
 from django.db.models.query import QuerySet
 from django.db.models import F, Count
 
@@ -81,21 +82,36 @@ class MiscCost(models.Model):
 class BookingQuerySet(QuerySet):
     """QuerySet for bookings """
 
-    def checked_in(self, boolVal):
-        """Bookings that are checked in will be returned
+    def checked_in(self, boolVal=True):
+        """Bookings with checked in will be returned
 
         Args:
-            None
+            boolVal (bool): when True: return only bookings with all tickets checked in, 
+            when False: return all bookings with atleast one ticket that is not checked in.
 
         Returns:
             QuerySet: the filtered queryset
         """
 
-        if boolVal == True:
+        if boolVal:
             return self.annotate(checked_in=BoolAnd('tickets__checked_in')).filter(checked_in=True)
         else:
             return self.annotate(count=models.Count('tickets')).annotate(checked_in_count=models.Count(Case(When(tickets__checked_in=True, then=Value(1))))).filter(checked_in_count__lt=F('count'))
 
+    def active(self, boolVal=True):
+        """Bookings that are active (end time is in the future) will be returned
+
+        Args:
+            boolVal (bool): when True: return only active bookings, 
+            when False: return only old bookings (bookings for performances with end dates in the past)
+
+        Returns:
+            QuerySet: the filtered queryset
+        """
+        if boolVal:
+            return self.filter(performance__end__gte=timezone.now())
+        else:
+            return self.filter(performance__end__lte=timezone.now())
 
 
 class Booking(TimeStampedMixin, models.Model):

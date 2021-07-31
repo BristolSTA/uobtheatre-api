@@ -139,6 +139,7 @@ class BookingFilter(FilterSet):
 
     search = django_filters.CharFilter(method="search_bookings", label="Search")
     checked_in = django_filters.BooleanFilter(method="filter_checked_in", label="Checked In")
+    active = django_filters.BooleanFilter(method="filter_active", label="Active Bookings")
 
     class Meta:
         model = Booking
@@ -191,6 +192,9 @@ class BookingFilter(FilterSet):
 
     def filter_checked_in(self, queryset, _, value):
         return queryset.checked_in(value)
+
+    def filter_active(self, queryset, _, value):
+        return queryset.active(value)
 
     order_by = OrderingFilter(fields=("created_at",))
 
