@@ -1,11 +1,12 @@
 import pytest
 from django.core.exceptions import ValidationError
+from django.db import models
 
 from uobtheatre.bookings.models import Booking
 from uobtheatre.payments.models import Payment
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.societies.models import Society
-from uobtheatre.utils.models import validate_percentage
+from uobtheatre.utils.models import Draft, validate_percentage
 from uobtheatre.venues.models import Venue
 
 
@@ -31,3 +32,16 @@ def test_validate_percentage(percentage, is_valid):
             validate_percentage(percentage)
     else:
         validate_percentage(percentage)
+
+
+def test_draft():
+    class SomeModel(models.Model, metaclass=Draft):
+        required_fields = ["abc"]
+
+        abc = models.BooleanField()
+
+        class Meta:
+            app_label = "test"
+
+    a = SomeModel()
+    a.publish()

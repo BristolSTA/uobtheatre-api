@@ -2,6 +2,7 @@
 Utils for uobtheatre modles
 """
 
+
 from django.core.exceptions import ValidationError
 from django.db import models
 
@@ -35,3 +36,22 @@ def validate_percentage(percentage):
         raise ValidationError(
             f"The percentage {percentage} is not in the required range [0, 1]"
         )
+
+
+class Draft(models.Model):
+    """Adds support for drafts to model
+
+    A draft is a model which can be created without the required fields and
+    then saved later if all the requirements are met.
+    """
+
+    draft = models.BooleanField(default=True)
+
+    def __init_subclass__(cls):
+        if not hasattr(cls, "required_fields"):
+            raise ValueError(
+                "When using a draft model you must define the required_fields"
+            )
+
+    def publish(self):
+        print(self.required_fields)
