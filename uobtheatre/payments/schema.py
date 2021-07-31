@@ -4,6 +4,7 @@ from graphene_django import DjangoObjectType
 
 from uobtheatre.bookings.schema import BookingNode
 from uobtheatre.payments.models import Payment
+from uobtheatre.payments.square import PaymentProvider
 from uobtheatre.utils.enums import GrapheneEnumMixin
 from uobtheatre.utils.filters import FilterSet
 
@@ -19,6 +20,12 @@ class PayObjectUnion(graphene.Union):
         types = (BookingNode,)
 
 
+class SquarePaymentDevice(graphene.ObjectType):
+    id = graphene.String()
+    name = graphene.String()
+    code = graphene.String()
+
+
 class PaymentNode(GrapheneEnumMixin, DjangoObjectType):
     url = graphene.String(required=False)
     pay_object = PayObjectUnion()
@@ -31,3 +38,16 @@ class PaymentNode(GrapheneEnumMixin, DjangoObjectType):
         interfaces = (relay.Node,)
         filterset_class = PaymentFilter
         exclude = ("pay_object_id", "pay_object_type")
+
+
+class Query(graphene.ObjectType):
+    square_devices = graphene.List(SquarePaymentDevice)
+
+    def resolve_square_device_code(self, _):
+        payment_provider = PaymentProvider()
+        [
+            SquarePaymentDevice(
+                id=device["id"], name=device["name"], code=device["code"]
+            )
+            for device in payment_provider.list_devices()
+        ]

@@ -51,8 +51,7 @@ class PaymentProvider:
             "source_id": nonce,
             "amount_money": {"amount": value, "currency": "GBP"},
         }
-        response = self.client.payments.create_payment(body)
-        return response.body["device_code"]["code"]
+        return self.client.payments.create_payment(body)
 
     def create_device_code(self, name):
         body = {
@@ -66,10 +65,10 @@ class PaymentProvider:
         response = self.client.devices.create_device_code(body)
         if response.errors:
             print(response.body["errors"])
-        print(response.body["device_code"])
+        return response.body["device_code"]["code"]
 
     def list_devices(self):
-        print(self.client.devices.list_device_codes())
+        return self.client.devices.list_device_codes()["device_codes"]
 
     def create_terminal_payment(self, device_id: str, value: int, reference_id: str):
         body = {

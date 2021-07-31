@@ -37,7 +37,7 @@ def test_create_device_code():
 
 def test_list_device_code():
     payment_provider = PaymentProvider()
-    payment_provider.list_devices()
+    print(payment_provider.list_devices())
 
 
 def test_create_terminal_payment():
