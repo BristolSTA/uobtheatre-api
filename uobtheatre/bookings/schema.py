@@ -190,7 +190,7 @@ class BookingFilter(FilterSet):
         return queryset.filter(query)
 
     def filter_checked_in(self, queryset, _, value):
-        return queryset.checked_in()
+        return queryset.checked_in(value)
 
     order_by = OrderingFilter(fields=("created_at",))
 

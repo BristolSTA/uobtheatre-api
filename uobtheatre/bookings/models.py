@@ -80,7 +80,7 @@ class MiscCost(models.Model):
 class BookingQuerySet(QuerySet):
     """QuerySet for bookings """
 
-    def checked_in(self):
+    def checked_in(self, boolVal):
         """Bookings that are checked in will be returned
 
         Args:
@@ -89,7 +89,7 @@ class BookingQuerySet(QuerySet):
         Returns:
             QuerySet: the filtered queryset
         """
-        
+        self.annotate(checked_in=Boolcount )
         return self.annotate(checked_in=BoolAnd('tickets__checked_in')).filter(checked_in=True)
 
 

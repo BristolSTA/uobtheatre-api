@@ -627,8 +627,6 @@ def test_booking_filters(gql_client_flexible):
 
     # Ask for nothing and check you get nothing
     response = gql_client_flexible.execute(request)
-    print("HELLLLOOOOO")
-    print(response)
     actualList = []
 
     for booking in response["data"]["bookings"]["edges"]:
