@@ -129,6 +129,7 @@ class PriceBreakdownNode(DjangoObjectType):
             "total_price",
         )
 
+
 class BookingByMethodOrderingFilter(OrderingFilter):
     """Ordering filter for bookings which adds created at and checked_in
 
@@ -173,6 +174,7 @@ class BookingByMethodOrderingFilter(OrderingFilter):
 
         return super().filter(query_set, value)
 
+
 class BookingFilter(FilterSet):
     """Custom filter for BookingNode.
 
@@ -181,8 +183,12 @@ class BookingFilter(FilterSet):
     """
 
     search = django_filters.CharFilter(method="search_bookings", label="Search")
-    checked_in = django_filters.BooleanFilter(method="filter_checked_in", label="Checked In")
-    active = django_filters.BooleanFilter(method="filter_active", label="Active Bookings")
+    checked_in = django_filters.BooleanFilter(
+        method="filter_checked_in", label="Checked In"
+    )
+    active = django_filters.BooleanFilter(
+        method="filter_active", label="Active Bookings"
+    )
 
     class Meta:
         model = Booking
@@ -206,8 +212,9 @@ class BookingFilter(FilterSet):
                     performance__in=Performance.objects.has_boxoffice_permission(
                         self.request.user
                     )
-                ) | Q(user=self.request.user)
-            ) 
+                )
+                | Q(user=self.request.user)
+            )
         return Booking.objects.none()
 
     def search_bookings(self, queryset, _, value):
@@ -240,6 +247,7 @@ class BookingFilter(FilterSet):
         return queryset.active(value)
 
     order_by = BookingByMethodOrderingFilter()
+
 
 BookingStatusSchema = graphene.Enum.from_enum(Booking.BookingStatus)
 
@@ -352,7 +360,7 @@ def parse_target_user_email(
         raise GQLFieldException(
             message="You do not have permission to create a booking for another user.",
             code=403,
-            field="target_user_email"
+            field="target_user_email",
         )
 
     # If a target user is provided get that user, if not then this booking is intended for the user that is logged in
@@ -457,7 +465,9 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
 
         booking = Booking.objects.get(id=booking_id)
 
-        if booking.user.id != info.context.user.id and not info.context.user.has_perm("boxoffice", booking.performance.production):
+        if booking.user.id != info.context.user.id and not info.context.user.has_perm(
+            "boxoffice", booking.performance.production
+        ):
             raise GQLFieldException(
                 message="You do not have permission to access this booking.",
                 code=403,

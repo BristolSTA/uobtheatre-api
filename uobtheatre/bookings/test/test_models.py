@@ -2,9 +2,9 @@ import datetime
 import math
 
 import pytest
-from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
+from django.utils import timezone
 
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
 from uobtheatre.bookings.test.factories import (
@@ -911,31 +911,45 @@ def test_filter_order_by_checked_in():
     booking_all = BookingFactory()
     TicketFactory(booking=booking_all, checked_in=True)
     TicketFactory(booking=booking_all, checked_in=True)
-    
 
-    assert set([(booking.reference, booking.proportion) for booking in Booking.objects.annotate_checked_in_proportion()]) == set([(booking_no_tickets.reference, 0), (booking_none.reference, 0), (booking_some.reference, 0.5), (booking_all.reference, 1)])
+    assert set(
+        [
+            (booking.reference, booking.proportion)
+            for booking in Booking.objects.annotate_checked_in_proportion()
+        ]
+    ) == set(
+        [
+            (booking_no_tickets.reference, 0),
+            (booking_none.reference, 0),
+            (booking_some.reference, 0.5),
+            (booking_all.reference, 1),
+        ]
+    )
 
-    assert set(Booking.objects.checked_in()) ==  {booking_all}
+    assert set(Booking.objects.checked_in()) == {booking_all}
     assert set(Booking.objects.checked_in(True)) == {booking_all}
 
     assert set(Booking.objects.checked_in(False)) == {booking_none, booking_some}
 
 
-
 @pytest.mark.django_db
 def test_filter_by_active():
-    """ 
-    Filter active bookings 
+    """
+    Filter active bookings
         Active - performance end date is in the future
         Not active - performance end date in the past
     """
-    
+
     now = timezone.now()
 
     production = ProductionFactory()
 
-    performance_future = PerformanceFactory(production=production, end=now + datetime.timedelta(days=2))
-    performance_past = PerformanceFactory(production=production, end=now + datetime.timedelta(days=-2))
+    performance_future = PerformanceFactory(
+        production=production, end=now + datetime.timedelta(days=2)
+    )
+    performance_past = PerformanceFactory(
+        production=production, end=now + datetime.timedelta(days=-2)
+    )
 
     booking_future = BookingFactory(performance=performance_future)
     booking_past = BookingFactory(performance=performance_past)

@@ -1,14 +1,13 @@
 import math
-import random
 from typing import Dict, List, Optional, Tuple
 
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.aggregates import BoolAnd
 from django.db import models
-from django.utils import timezone
-from django.db.models.query import QuerySet
-from django.db.models import Q, F, Count, FloatField
+from django.db.models import Case, F, FloatField, Q, Value, When
 from django.db.models.functions import Cast
+from django.db.models.query import QuerySet
+from django.utils import timezone
 
 from uobtheatre.discounts.models import ConcessionType, DiscountCombination
 from uobtheatre.payments.models import Payment
@@ -20,7 +19,6 @@ from uobtheatre.utils.models import TimeStampedMixin, validate_percentage
 from uobtheatre.utils.utils import combinations, create_short_uuid
 from uobtheatre.venues.models import Seat, SeatGroup
 
-from django.db.models import Count, Case, When, Value
 
 class MiscCost(models.Model):
     """Model for miscellaneous costs for shows
@@ -80,24 +78,34 @@ class MiscCost(models.Model):
             )
         ]
 
+
 class BookingQuerySet(QuerySet):
-    """QuerySet for bookings """
+    """QuerySet for bookings"""
 
     def annotate_checked_in(self):
-        return self.annotate(checked_in=BoolAnd('tickets__checked_in'))
+        return self.annotate(checked_in=BoolAnd("tickets__checked_in"))
 
     def annotate_not_checked_in(self):
-        return self.annotate(count=models.Count('tickets')).annotate(checked_in_count=models.Count(Case(When(tickets__checked_in=True, then=Value(1)))))
+        return self.annotate(count=models.Count("tickets")).annotate(
+            checked_in_count=models.Count(
+                Case(When(tickets__checked_in=True, then=Value(1)))
+            )
+        )
 
     def annotate_checked_in_proportion(self):
-        return self.annotate_not_checked_in().annotate(proportion=Case(When(Q(count=0), then=Cast(0, FloatField())), default=Cast(F('checked_in_count'), FloatField()) / Cast(F('count'), FloatField())))
-
+        return self.annotate_not_checked_in().annotate(
+            proportion=Case(
+                When(Q(count=0), then=Cast(0, FloatField())),
+                default=Cast(F("checked_in_count"), FloatField())
+                / Cast(F("count"), FloatField()),
+            )
+        )
 
     def checked_in(self, boolVal=True):
         """Bookings with checked in will be returned
 
         Args:
-            boolVal (bool): when True: return only bookings with all tickets checked in, 
+            boolVal (bool): when True: return only bookings with all tickets checked in,
             when False: return all bookings with atleast one ticket that is not checked in.
 
         Returns:
@@ -107,13 +115,15 @@ class BookingQuerySet(QuerySet):
         if boolVal:
             return self.annotate_checked_in().filter(checked_in=True)
         else:
-            return self.annotate_not_checked_in().filter(checked_in_count__lt=F('count'))
+            return self.annotate_not_checked_in().filter(
+                checked_in_count__lt=F("count")
+            )
 
     def active(self, boolVal=True):
         """Bookings that are active (end time is in the future) will be returned
 
         Args:
-            boolVal (bool): when True: return only active bookings, 
+            boolVal (bool): when True: return only active bookings,
             when False: return only old bookings (bookings for performances with end dates in the past)
 
         Returns:
@@ -135,7 +145,6 @@ class Booking(TimeStampedMixin, models.Model):
     """
 
     objects = BookingQuerySet.as_manager()
-
 
     class BookingStatus(models.TextChoices):
         IN_PROGRESS = "IN_PROGRESS", "In Progress"
@@ -566,7 +575,3 @@ class Ticket(models.Model):
         """
         self.checked_in = False
         self.save()
-
-
-    
-
