@@ -668,7 +668,7 @@ def test_booking_filter_active(gql_client_flexible):
           }
         }
         """
-        
+
     true_response = gql_client_flexible.execute(request % "true")
     false_response = gql_client_flexible.execute(request % "false")
     
@@ -682,3 +682,49 @@ def test_booking_filter_active(gql_client_flexible):
 
     assert true_response_set == true_expected_set
     assert false_response_set == false_expected_set
+
+@pytest.mark.django_db
+def test_booking_order_checked_in(gql_client_flexible):
+
+    # None checked in
+    booking_none = BookingFactory(user=gql_client_flexible.user)
+    TicketFactory(booking=booking_none)
+    TicketFactory(booking=booking_none)
+
+    # Some checked in
+    booking_some = BookingFactory(user=gql_client_flexible.user)
+    TicketFactory(booking=booking_some, checked_in=True)
+    TicketFactory(booking=booking_some)
+
+    # All checked in
+    booking_all = BookingFactory(user=gql_client_flexible.user)
+    TicketFactory(booking=booking_all, checked_in=True)
+    TicketFactory(booking=booking_all, checked_in=True)
+
+    desc_expected_list = [booking_all.reference, booking_some.reference, booking_none.reference]
+    asec_expected_list = [booking_none.reference, booking_some.reference, booking_all.reference]
+
+    request = """
+        {
+          bookings(orderBy: "%s") {
+            edges {
+              node {
+                reference
+              }
+            }
+          }
+        }
+        """
+
+    # Ask for nothing and check you get nothing
+    desc_response = gql_client_flexible.execute(request % "checkedIn")
+    asec_response = gql_client_flexible.execute(request % "-checkedIn")
+
+    desc_response_list = list()
+    asec_response_list = list()
+
+    [ desc_response_list.append(booking["node"]["reference"]) for booking in desc_response["data"]["bookings"]["edges"]]
+    [ asec_response_list.append(booking["node"]["reference"]) for booking in asec_response["data"]["bookings"]["edges"]]
+    
+    assert desc_response_list == desc_expected_list
+    assert asec_response_list == asec_expected_list

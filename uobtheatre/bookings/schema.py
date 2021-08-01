@@ -129,6 +129,49 @@ class PriceBreakdownNode(DjangoObjectType):
             "total_price",
         )
 
+class BookingByMethodOrderingFilter(OrderingFilter):
+    """Ordering filter for bookings which adds created at and checked_in
+
+    Extends the default implementation of OrderingFitler to include ordering
+    (ascending and descending) of booking orders
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.extra["choices"] += [
+            ("created_at", "Created At"),
+            ("-created_at", "Created At (descending)"),
+            ("checked_in", "Checked In"),
+            ("-checked_in", "Checked In (descending)"),
+        ]
+
+    def filter(self, query_set, value: str):
+        """Fitler
+
+        Adds following options:
+         - 'created_at'
+         - '-created_at' (Descending created at)
+         - 'checked_in'
+         - '-checked_in' (Descending checked in)
+
+        Args:
+            query_set (QuerySet): The Queryset which is being filtered.
+            value (str): The choices s(eg 'start')
+
+        Returns:
+            Queryset: The filtered Queryset
+        """
+        if value and "created_at" in value:
+            return query_set.order_by("created_at")
+        if value and "-created_at" in value:
+            return query_set.order_by("-created_at")
+
+        if value and "checked_in" in value:
+            return query_set.annotate_checked_in_proportion().order_by("-proportion")
+        if value and "-checked_in" in value:
+            return query_set.annotate_checked_in_proportion().order_by("proportion")
+
+        return super().filter(query_set, value)
 
 class BookingFilter(FilterSet):
     """Custom filter for BookingNode.
@@ -196,8 +239,7 @@ class BookingFilter(FilterSet):
     def filter_active(self, queryset, _, value):
         return queryset.active(value)
 
-    order_by = OrderingFilter(fields=("created_at",))
-
+    order_by = BookingByMethodOrderingFilter()
 
 BookingStatusSchema = graphene.Enum.from_enum(Booking.BookingStatus)
 

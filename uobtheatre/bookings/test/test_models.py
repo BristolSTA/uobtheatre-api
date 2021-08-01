@@ -889,9 +889,10 @@ def test_ticket_uncheck_in(initial_state, final_state):
 
 
 @pytest.mark.django_db
-def test_filter_by_checked_in():
+def test_filter_order_by_checked_in():
     """
     Filter by booking tickets checked in
+    Order by booking tickets checked in
     """
     # No tickets booking
     booking_no_tickets = BookingFactory()
@@ -911,10 +912,15 @@ def test_filter_by_checked_in():
     TicketFactory(booking=booking_all, checked_in=True)
     TicketFactory(booking=booking_all, checked_in=True)
     
-    assert set(Booking.objects.checked_in()) ==  set(booking_all)
-    assert set(Booking.objects.checked_in(True)) ==  set(booking_all)
 
-    assert set(Booking.objects.checked_in(False)) == set(booking_none, booking_some)
+    assert set([(booking.reference, booking.proportion) for booking in Booking.objects.annotate_checked_in_proportion()]) == set([(booking_no_tickets.reference, 0), (booking_none.reference, 0), (booking_some.reference, 0.5), (booking_all.reference, 1)])
+
+    assert set(Booking.objects.checked_in()) ==  {booking_all}
+    assert set(Booking.objects.checked_in(True)) == {booking_all}
+
+    assert set(Booking.objects.checked_in(False)) == {booking_none, booking_some}
+
+
 
 @pytest.mark.django_db
 def test_filter_by_active():
