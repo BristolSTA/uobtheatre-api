@@ -597,7 +597,7 @@ def test_bookings_qs(gql_client_flexible):
 def test_booking_filter_checked_in(gql_client_flexible):
 
     # No tickets booking
-    booking_no_tickets = BookingFactory(user=gql_client_flexible.user)
+    _ = BookingFactory(user=gql_client_flexible.user)
 
     # None checked in
     booking_none = BookingFactory(user=gql_client_flexible.user)
@@ -636,14 +636,14 @@ def test_booking_filter_checked_in(gql_client_flexible):
     true_response_set = set()
     false_response_set = set()
 
-    [
-        true_response_set.add(booking["node"]["reference"])
+    true_response_set = {
+        booking["node"]["reference"]
         for booking in true_response["data"]["bookings"]["edges"]
-    ]
-    [
-        false_response_set.add(booking["node"]["reference"])
+    }
+    false_response_set = {
+        booking["node"]["reference"]
         for booking in false_response["data"]["bookings"]["edges"]
-    ]
+    }
 
     assert true_response_set == true_expected_set
     assert false_response_set == false_expected_set
@@ -688,19 +688,14 @@ def test_booking_filter_active(gql_client_flexible):
     true_response = gql_client_flexible.execute(request % "true")
     false_response = gql_client_flexible.execute(request % "false")
 
-    print(true_response)
-
-    true_response_set = set()
-    false_response_set = set()
-
-    [
-        true_response_set.add(booking["node"]["reference"])
+    true_response_set = {
+        booking["node"]["reference"]
         for booking in true_response["data"]["bookings"]["edges"]
-    ]
-    [
-        false_response_set.add(booking["node"]["reference"])
+    }
+    false_response_set = {
+        booking["node"]["reference"]
         for booking in false_response["data"]["bookings"]["edges"]
-    ]
+    }
 
     assert true_response_set == true_expected_set
     assert false_response_set == false_expected_set
@@ -751,15 +746,12 @@ def test_booking_order_checked_in(gql_client_flexible):
     desc_response = gql_client_flexible.execute(request % "checkedIn")
     asec_response = gql_client_flexible.execute(request % "-checkedIn")
 
-    desc_response_list = list()
-    asec_response_list = list()
-
-    [
-        desc_response_list.append(booking["node"]["reference"])
+    desc_response_list = [
+        booking["node"]["reference"]
         for booking in desc_response["data"]["bookings"]["edges"]
     ]
-    [
-        asec_response_list.append(booking["node"]["reference"])
+    asec_response_list = [
+        booking["node"]["reference"]
         for booking in asec_response["data"]["bookings"]["edges"]
     ]
 

@@ -912,19 +912,15 @@ def test_filter_order_by_checked_in():
     TicketFactory(booking=booking_all, checked_in=True)
     TicketFactory(booking=booking_all, checked_in=True)
 
-    assert set(
-        [
-            (booking.reference, booking.proportion)
-            for booking in Booking.objects.annotate_checked_in_proportion()
-        ]
-    ) == set(
-        [
-            (booking_no_tickets.reference, 0),
-            (booking_none.reference, 0),
-            (booking_some.reference, 0.5),
-            (booking_all.reference, 1),
-        ]
-    )
+    assert {
+        (booking.reference, booking.proportion)
+        for booking in Booking.objects.annotate_checked_in_proportion()
+    } == {
+        (booking_no_tickets.reference, 0),
+        (booking_none.reference, 0),
+        (booking_some.reference, 0.5),
+        (booking_all.reference, 1),
+    }
 
     assert set(Booking.objects.checked_in()) == {booking_all}
     assert set(Booking.objects.checked_in(True)) == {booking_all}

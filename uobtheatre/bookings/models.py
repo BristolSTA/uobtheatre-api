@@ -101,7 +101,7 @@ class BookingQuerySet(QuerySet):
             )
         )
 
-    def checked_in(self, boolVal=True):
+    def checked_in(self, bool_val=True):
         """Bookings with checked in will be returned
 
         Args:
@@ -112,14 +112,16 @@ class BookingQuerySet(QuerySet):
             QuerySet: the filtered queryset
         """
 
-        if boolVal:
-            return self.annotate_checked_in().filter(checked_in=True)
+        if bool_val:
+            query_set = self.annotate_checked_in().filter(checked_in=True)
         else:
-            return self.annotate_not_checked_in().filter(
+            query_set = self.annotate_not_checked_in().filter(
                 checked_in_count__lt=F("count")
             )
 
-    def active(self, boolVal=True):
+        return query_set
+
+    def active(self, bool_val=True):
         """Bookings that are active (end time is in the future) will be returned
 
         Args:
@@ -129,10 +131,12 @@ class BookingQuerySet(QuerySet):
         Returns:
             QuerySet: the filtered queryset
         """
-        if boolVal:
-            return self.filter(performance__end__gte=timezone.now())
+        if bool_val:
+            query_set = self.filter(performance__end__gte=timezone.now())
         else:
-            return self.filter(performance__end__lte=timezone.now())
+            query_set = self.filter(performance__end__lte=timezone.now())
+
+        return query_set
 
 
 class Booking(TimeStampedMixin, models.Model):
