@@ -1,6 +1,8 @@
+import datetime
 import math
 
 import pytest
+from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
 
@@ -19,7 +21,7 @@ from uobtheatre.discounts.test.factories import (
     DiscountRequirementFactory,
 )
 from uobtheatre.payments.models import Payment
-from uobtheatre.productions.test.factories import PerformanceFactory
+from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.utils.exceptions import SquareException
 from uobtheatre.utils.test_utils import ticket_dict_list_dict_gen, ticket_list_dict_gen
@@ -910,3 +912,23 @@ def test_filter_by_checked_in():
     TicketFactory(booking=booking_all, checked_in=True)
     
     assert list(Booking.objects.checked_in()) ==  [booking_all]
+
+@pytest.mark.django_db
+def test_filter_by_active():
+    """ 
+    Filter active bookings 
+        Active - performance end date is in the future
+        Not active - performance end date in the past
+    """
+    
+    now = timezone.now()
+
+    production = ProductionFactory()
+
+    performance_future = PerformanceFactory(production=production, end=now + datetime.timedelta(days=2))
+    performance_past = PerformanceFactory(production=production, end=now + datetime.timedelta(days=-2))
+
+    booking_future = BookingFactory(performance=performance_future)
+    booking_past = BookingFactory(performance=performance_past)
+
+    assert list(Booking.objects.active()) == [booking_future]
