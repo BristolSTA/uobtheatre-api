@@ -911,7 +911,10 @@ def test_filter_by_checked_in():
     TicketFactory(booking=booking_all, checked_in=True)
     TicketFactory(booking=booking_all, checked_in=True)
     
-    assert list(Booking.objects.checked_in()) ==  [booking_all]
+    assert set(Booking.objects.checked_in()) ==  set(booking_all)
+    assert set(Booking.objects.checked_in(True)) ==  set(booking_all)
+
+    assert set(Booking.objects.checked_in(False)) == set(booking_none, booking_some)
 
 @pytest.mark.django_db
 def test_filter_by_active():
@@ -932,3 +935,6 @@ def test_filter_by_active():
     booking_past = BookingFactory(performance=performance_past)
 
     assert list(Booking.objects.active()) == [booking_future]
+    assert list(Booking.objects.active(True)) == [booking_future]
+
+    assert list(Booking.objects.active(False)) == [booking_past]
