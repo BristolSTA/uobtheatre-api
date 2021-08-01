@@ -105,7 +105,7 @@ class BookingQuerySet(QuerySet):
         """Bookings with checked in will be returned
 
         Args:
-            boolVal (bool): when True: return only bookings with all tickets checked in,
+            bool_val (bool): when True: return only bookings with all tickets checked in,
             when False: return all bookings with atleast one ticket that is not checked in.
 
         Returns:
@@ -125,7 +125,7 @@ class BookingQuerySet(QuerySet):
         """Bookings that are active (end time is in the future) will be returned
 
         Args:
-            boolVal (bool): when True: return only active bookings,
+            bool_val (bool): when True: return only active bookings,
             when False: return only old bookings (bookings for performances with end dates in the past)
 
         Returns:
