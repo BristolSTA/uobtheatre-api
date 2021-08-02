@@ -355,6 +355,23 @@ class Performance(TimeStampedMixin, models.Model):
         """
         return self.tickets.filter(checked_in=False)
 
+    @property
+    def has_group_discounts(self) -> bool:
+        """
+        Returns true if any of the discounts for this production have more than
+        1 ticket in the requirements.
+
+        Returns:
+            bool: Whether the peformance has group discounts available.
+        """
+        return (
+            self.discounts.annotate(
+                number_of_tickets_required=Sum("requirements__number")
+            )
+            .filter(number_of_tickets_required__gt=1)
+            .exists()
+        )
+
     def total_capacity(self, seat_group=None):
         """Total capacity of the Performance.
 
