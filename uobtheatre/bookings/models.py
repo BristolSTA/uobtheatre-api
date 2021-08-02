@@ -394,7 +394,7 @@ class Booking(TimeStampedMixin, models.Model):
 
         return add_tickets, delete_tickets
 
-    def pay_online(self, nonce: str):
+    def pay_online(self, nonce: str) -> Payment:
         """Pay for the Booking
 
         Makes a call to the Square API to pay for the Booking. The price is
@@ -436,7 +436,18 @@ class Booking(TimeStampedMixin, models.Model):
             currency=amount_details["currency"],
         )
 
-    def pay_manual(self, payment_provider: Payment.PaymentProvider):
+    def pay_manual(self, payment_provider: Payment.PaymentProvider) -> Payment:
+        """
+        Pay for the booking manually. This allows an admin or boxoffice user to
+        say the booking has been paid for with either cash or card.
+
+        Parameters:
+            payment_provider (Payment.PaymentProvider): The payment provider
+                type, either cash or card.
+
+        Returns:
+            Payment: The payment object that is created by this payment.
+        """
         # Set the booking as paid
         self.status = self.BookingStatus.PAID
         self.save()
@@ -447,6 +458,23 @@ class Booking(TimeStampedMixin, models.Model):
             type=Payment.PaymentType.PURCHASE,
             value=self.total(),
         )
+
+    def create_pos_payment(self, device_id: str) -> None:
+        """
+        Send payment to point of sale device.
+
+        Parameters:
+            device_id (str): The id of the device to send the payment to.
+
+        Raises:
+            SquareException: If the request was unsuccessful.
+        """
+        response = PaymentProvider().create_pos_payment(
+            device_id, self.total(), str(self.reference)
+        )
+
+        if not response.is_success():
+            raise SquareException(response)
 
 
 class Ticket(models.Model):

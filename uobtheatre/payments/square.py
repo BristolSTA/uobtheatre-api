@@ -1,4 +1,5 @@
 import uuid
+from typing import Dict, List
 
 from square.client import Client
 
@@ -67,10 +68,19 @@ class PaymentProvider:
             print(response.body["errors"])
         return response.body["device_code"]["code"]
 
-    def list_devices(self):
-        return self.client.devices.list_device_codes()["device_codes"]
+    def list_pos_devices(self) -> List[Dict]:
+        """
+        List the device codes available on square.
 
-    def create_terminal_payment(self, device_id: str, value: int, reference_id: str):
+        Returns:
+            list of dict: A list of dictionaries which store the device code
+                info. When connection to a device the `device_id` should be
+                used.
+        """
+        response = self.client.devices.list_device_codes()
+        return response.body["device_codes"]
+
+    def create_pos_payment(self, device_id: str, value: int, reference_id: str):
         body = {
             "idempotency_key": str(uuid.uuid4()),
             "checkout": {
@@ -79,7 +89,9 @@ class PaymentProvider:
                     "currency": "GBP",
                 },
                 "reference_id": reference_id,
-                "device_options": {"device_id": device_id},
+                "device_options": {
+                    "device_id": device_id,
+                },
             },
         }
         response = self.client.terminal.create_terminal_checkout(body)

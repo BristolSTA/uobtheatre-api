@@ -18,6 +18,10 @@ def gql_client():
 
 
 class AuthenticateableGQLClient(GQLClient):
+    """
+    Graphql client which can be loged in and out.
+    """
+
     def __init__(self, schema, format_error=None, user=None, **execute_options):
         self.request_factory = RequestFactory().get("/")
         self.request_factory.user = user
@@ -56,6 +60,10 @@ def gql_id():
 
 @pytest.fixture
 def mock_square(monkeypatch):
+    """
+    Create mocked square object.
+    """
+
     class MockApiResponse:
         def __init__(self):
             self.reason_phrase = "Some phrase"
@@ -66,11 +74,18 @@ def mock_square(monkeypatch):
         def is_success(self):
             return self.success
 
-    def mock_create_payment(value, indeptency_key, nonce):
+    def mock_create_payment(*_):
+        return mock_api_response
+
+    def mock_create_pos_payment(*_):
         return mock_api_response
 
     monkeypatch.setattr(
         "uobtheatre.bookings.models.PaymentProvider.create_payment", mock_create_payment
+    )
+    monkeypatch.setattr(
+        "uobtheatre.bookings.models.PaymentProvider.create_pos_payment",
+        mock_create_pos_payment,
     )
 
     mock_api_response = MockApiResponse()

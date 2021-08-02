@@ -13,6 +13,7 @@ from graphql_auth.schema import UserNode
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
 from uobtheatre.discounts.models import ConcessionType
 from uobtheatre.payments.models import Payment
+from uobtheatre.payments.square import PaymentProvider
 from uobtheatre.productions.models import Performance
 from uobtheatre.users.models import User
 from uobtheatre.utils.enums import GrapheneEnumMixin
@@ -300,7 +301,7 @@ def parse_target_user_email(
         raise GQLFieldException(
             message="You do not have permission to create a booking for another user.",
             code=403,
-            field="target_user_email"
+            field="target_user_email",
         )
 
     # If a target user is provided get that user, if not then this booking is intended for the user that is logged in
@@ -405,7 +406,9 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
 
         booking = Booking.objects.get(id=booking_id)
 
-        if booking.user.id != info.context.user.id and not info.context.user.has_perm("boxoffice", booking.performance.production):
+        if booking.user.id != info.context.user.id and not info.context.user.has_perm(
+            "boxoffice", booking.performance.production
+        ):
             raise GQLFieldException(
                 message="You do not have permission to access this booking.",
                 code=403,
@@ -474,6 +477,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         payment_provider = graphene.Argument(
             graphene.Enum.from_enum(Payment.PaymentProvider), required=False
         )
+        device_id = graphene.String(required=False)
 
     @classmethod
     def resolve_mutation(
@@ -484,6 +488,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         price,
         nonce=None,
         payment_provider=Payment.PaymentProvider.SQUARE_ONLINE,
+        device_id=None,
     ):
 
         # Get the performance and if it doesn't exist throw an error
@@ -518,6 +523,14 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
                     code=400,
                 )
             payment = booking.pay_online(nonce)
+        elif (
+            payment_provider == Payment.PaymentProvider.SQUARE_POS
+            and device_id is not None
+        ):
+            payment = PaymentProvider().create_terminal_payment(
+                device_id, booking.total(), booking.reference
+            )
+            print(payment)
         else:
             payment = booking.pay_manual(payment_provider)
 
