@@ -82,18 +82,22 @@ class MiscCost(models.Model):
 class BookingQuerySet(QuerySet):
     """QuerySet for bookings"""
 
-    def annotate_checked_in(self):
+    def annotate_checked_in(self) -> QuerySet:
         return self.annotate(checked_in=BoolAnd("tickets__checked_in"))
 
-    def annotate_not_checked_in(self):
+    def annotate_checked_in_count(self) -> QuerySet:
         return self.annotate(count=models.Count("tickets")).annotate(
             checked_in_count=models.Count(
                 Case(When(tickets__checked_in=True, then=Value(1)))
             )
         )
 
-    def annotate_checked_in_proportion(self):
-        return self.annotate_not_checked_in().annotate(
+    def annotate_checked_in_proportion(self) -> QuerySet:
+        # To calculate the proportion of tickets that are checked in you need two values
+        # the first - the number of tickets
+        # the second - the number of tickets that are checked in
+        # Whilst it shouldn't occur a divide by zero is prevented setting to zero when the ticket count is zero
+        return self.annotate_checked_in_count().annotate(
             proportion=Case(
                 When(Q(count=0), then=Cast(0, FloatField())),
                 default=Cast(F("checked_in_count"), FloatField())
@@ -101,7 +105,7 @@ class BookingQuerySet(QuerySet):
             )
         )
 
-    def checked_in(self, bool_val=True):
+    def checked_in(self, bool_val=True) -> QuerySet:
         """Bookings with checked in will be returned
 
         Args:
@@ -115,13 +119,13 @@ class BookingQuerySet(QuerySet):
         if bool_val:
             query_set = self.annotate_checked_in().filter(checked_in=True)
         else:
-            query_set = self.annotate_not_checked_in().filter(
+            query_set = self.annotate_checked_in_count().filter(
                 checked_in_count__lt=F("count")
             )
-
+        print(query_set)
         return query_set
 
-    def active(self, bool_val=True):
+    def active(self, bool_val=True) -> QuerySet:
         """Bookings that are active (end time is in the future) will be returned
 
         Args:
