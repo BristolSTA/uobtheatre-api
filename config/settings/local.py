@@ -14,6 +14,7 @@ EMAIL_HOST = "localhost"
 EMAIL_PORT = 1025
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 EMAIL_BACKEND = "anymail.backends.amazon_ses.EmailBackend"
+DEFAULT_FROM_EMAIL = "dev@uobtheatre.com"
 
 # CORS
 CORS_ORIGIN_ALLOW_ALL = True
