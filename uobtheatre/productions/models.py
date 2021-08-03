@@ -501,9 +501,14 @@ class Performance(TimeStampedMixin, models.Model):
         """
         from uobtheatre.discounts.models import DiscountRequirement
 
-        discount_requirement = DiscountRequirement.objects.filter(
-            discount__in=self.get_single_discounts(), concession_type=concession_type
-        ).first()
+        discount_requirement = (
+            DiscountRequirement.objects.filter(
+                discount__in=self.get_single_discounts(),
+                concession_type=concession_type,
+            )
+            .select_related("discount")
+            .first()
+        )
 
         if not discount_requirement:
             return 0
