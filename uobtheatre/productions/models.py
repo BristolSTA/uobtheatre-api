@@ -499,15 +499,16 @@ class Performance(TimeStampedMixin, models.Model):
         Returns:
             int: The value of the single discount on the concession type.
         """
-        discount = next(
-            (
-                discount
-                for discount in self.get_single_discounts()
-                if discount.requirements.first().concession_type == concession_type
-            ),
-            None,
-        )
-        return discount.percentage if discount else 0
+        from uobtheatre.discounts.models import DiscountRequirement
+
+        discount_requirement = DiscountRequirement.objects.filter(
+            discount__in=self.get_single_discounts(), concession_type=concession_type
+        ).first()
+
+        if not discount_requirement:
+            return 0
+
+        return discount_requirement.discount.percentage
 
     def price_with_concession(
         self,
