@@ -407,6 +407,18 @@ def test_misc_costs_value():
 
 
 @pytest.mark.django_db
+def test_subtotal_with_group_discounts():
+    performance = PerformanceFactory()
+    group_discount = DiscountFactory()
+    group_discount.performances.set([performance])
+    DiscountRequirementFactory(discount=group_discount)
+    DiscountRequirementFactory(discount=group_discount)
+    booking = BookingFactory(performance=performance)
+
+    assert booking.subtotal() == booking.get_best_discount_combination_with_price()[1]
+
+
+@pytest.mark.django_db
 def test_total():
     ValueMiscCostFactory(value=200)
     PercentageMiscCostFactory(percentage=0.1)

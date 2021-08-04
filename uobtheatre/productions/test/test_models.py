@@ -772,3 +772,27 @@ def test_qs_running_on():
         spanning_performance_1,
         spanning_performance_2,
     ]
+
+
+@pytest.mark.django_db
+def test_has_group_discounts():
+    performance = PerformanceFactory()
+    assert not performance.has_group_discounts
+
+    # Add a discount with no requirements
+    single_discount = DiscountFactory()
+    single_discount.performances.set([performance])
+    assert not performance.has_group_discounts
+
+    # Create a discount requirement
+    DiscountRequirementFactory(discount=single_discount)
+    assert not performance.has_group_discounts
+
+    # Create another single discount
+    double_discount = DiscountFactory()
+    double_discount.performances.set([performance])
+    DiscountRequirementFactory(discount=double_discount)
+    assert not performance.has_group_discounts
+
+    DiscountRequirementFactory(discount=double_discount)
+    assert performance.has_group_discounts

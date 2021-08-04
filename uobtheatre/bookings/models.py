@@ -274,10 +274,11 @@ class Booking(TimeStampedMixin, models.Model):
         Returns:
             int: price of the booking with discounts applied in penies
         """
-        return math.ceil(
-            self.get_best_discount_combination_with_price()[1]
-            * (1 - self.admin_discount_percentage)
-        )
+        if self.performance.has_group_discounts:
+            discounted_price = self.get_best_discount_combination_with_price()[1]
+        else:
+            discounted_price = self.tickets_price()
+        return math.ceil(discounted_price * (1 - self.admin_discount_percentage))
 
     def get_best_discount_combination_with_price(
         self,

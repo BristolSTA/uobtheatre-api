@@ -355,6 +355,23 @@ class Performance(TimeStampedMixin, models.Model):
         """
         return self.tickets.filter(checked_in=False)
 
+    @property
+    def has_group_discounts(self) -> bool:
+        """
+        Returns true if any of the discounts for this production have more than
+        1 ticket in the requirements.
+
+        Returns:
+            bool: Whether the peformance has group discounts available.
+        """
+        return (
+            self.discounts.annotate(
+                number_of_tickets_required=Sum("requirements__number")
+            )
+            .filter(number_of_tickets_required__gt=1)
+            .exists()
+        )
+
     def total_capacity(self, seat_group=None):
         """Total capacity of the Performance.
 
@@ -482,15 +499,21 @@ class Performance(TimeStampedMixin, models.Model):
         Returns:
             int: The value of the single discount on the concession type.
         """
-        discount = next(
-            (
-                discount
-                for discount in self.get_single_discounts()
-                if discount.requirements.first().concession_type == concession_type
-            ),
-            None,
+        from uobtheatre.discounts.models import DiscountRequirement
+
+        discount_requirement = (
+            DiscountRequirement.objects.filter(
+                discount__in=self.get_single_discounts(),
+                concession_type=concession_type,
+            )
+            .select_related("discount")
+            .first()
         )
-        return discount.percentage if discount else 0
+
+        if not discount_requirement:
+            return 0
+
+        return discount_requirement.discount.percentage
 
     def price_with_concession(
         self,
