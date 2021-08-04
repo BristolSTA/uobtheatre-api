@@ -7,6 +7,7 @@ from .common import *
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")  # type: ignore
 CORS_ALLOWED_ORIGINS = [
     "https://uobtheatre.com",
+    "https://staging.uobtheatre.com",
 ]
 
 # Site
