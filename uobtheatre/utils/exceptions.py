@@ -14,6 +14,7 @@ from typing import List, Union
 
 import graphene
 from django.db import transaction
+from graphene.utils.str_converters import to_camel_case
 
 
 class NonFieldError(graphene.ObjectType):
@@ -86,7 +87,7 @@ class GQLFieldException(MutationException):
         self.field = field
 
     def resolve(self) -> List[Union[FieldError, NonFieldError]]:
-        return [FieldError(message=self.message, code=self.code, field=self.field)]
+        return [FieldError(message=self.message, code=self.code, field=to_camel_case(self.field))]
 
 
 class GQLNonFieldException(MutationException):

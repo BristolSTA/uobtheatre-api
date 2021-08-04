@@ -1,4 +1,5 @@
 from django.contrib import admin
+from guardian.admin import GuardedModelAdmin
 
 from uobtheatre.productions.models import (
     AudienceWarning,
@@ -12,7 +13,13 @@ from uobtheatre.productions.models import (
     Society,
 )
 
-admin.site.register(Production)
+
+class ProductionAdmin(GuardedModelAdmin):
+    pass
+
+
+admin.site.register(Production, ProductionAdmin)
+
 admin.site.register(Society)
 admin.site.register(Performance)
 admin.site.register(AudienceWarning)

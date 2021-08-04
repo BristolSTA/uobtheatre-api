@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING, List
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+from uobtheatre.productions.models import Performance
+
 if TYPE_CHECKING:
     pass
 
@@ -26,6 +28,10 @@ class User(AbstractUser):
     )
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS: List[str] = ["first_name", "last_name"]
+
+    @property
+    def can_boxoffice(self):
+        return Performance.objects.has_boxoffice_permission(self).count() > 0
 
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
