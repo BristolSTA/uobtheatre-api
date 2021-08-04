@@ -5,9 +5,13 @@ import os
 from .common import *
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")  # type: ignore
+CORS_ALLOWED_ORIGINS = [
+    "https://uobtheatre.com",
+]
+
 # Site
 # https://docs.djangoproject.com/en/2.0/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ["*.uobtheatre.com"]
 INSTALLED_APPS += ("gunicorn",)  # type: ignore
 
 # Static files (CSS, JavaScript, Images)
