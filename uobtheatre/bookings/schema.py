@@ -162,14 +162,13 @@ class BookingByMethodOrderingFilter(OrderingFilter):
         Returns:
             Queryset: The filtered Queryset
         """
-        if value in ["created_at", "-created_at"]:
-            return query_set.order_by(value)
 
         if value and "checked_in" in value:
             return query_set.annotate_checked_in_proportion().order_by("-proportion")
         if value and "-checked_in" in value:
             return query_set.annotate_checked_in_proportion().order_by("proportion")
 
+        # the super class handles the filtering of "created_at"
         return super().filter(query_set, value)
 
 
