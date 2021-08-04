@@ -1,7 +1,10 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
+from graphql_auth.models import UserStatus
 
 from .models import User
+
+admin.site.register(UserStatus)
 
 
 @admin.register(User)

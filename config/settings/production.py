@@ -26,7 +26,6 @@ AWS_AUTO_CREATE_BUCKET = True
 AWS_QUERYSTRING_AUTH = False
 MEDIA_URL = f"https://s3.amazonaws.com/{AWS_STORAGE_BUCKET_NAME}/"
 
-
 if sentry_dns := os.getenv("SENTRY_DNS"):
     sentry_sdk.init(
         dsn=sentry_dns,
@@ -46,3 +45,6 @@ if sentry_dns := os.getenv("SENTRY_DNS"):
 AWS_HEADERS = {
     "Cache-Control": "max-age=86400, s-maxage=86400, must-revalidate",
 }
+
+EMAIL_BACKEND = "anymail.backends.amazon_ses.EmailBackend"
+DEFAULT_FROM_EMAIL = "UOB Theatre <no-reply@uobtheatre.com>"

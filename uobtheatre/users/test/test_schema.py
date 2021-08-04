@@ -1,4 +1,5 @@
 import pytest
+from graphql_auth.models import UserStatus
 
 from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.users.test.factories import UserFactory
@@ -19,7 +20,7 @@ def test_user_schema(gql_client_flexible, gql_id):
     response = gql_client_flexible.execute(
         """
         {
-	  me {
+	      me {
             firstName
             lastName
             email
@@ -101,7 +102,6 @@ def test_user_field_error(gql_client_flexible):
                 code
               }
             }
-            token
           }
         }
         """
@@ -119,7 +119,6 @@ def test_user_field_error(gql_client_flexible):
                         "code": "password_mismatch",
                     }
                 ],
-                "token": None,
             }
         }
     }
@@ -167,7 +166,7 @@ def test_user_wrong_credentials(gql_client_flexible):
 @pytest.mark.django_db
 def test_user_register(gql_client_flexible):
     # Create an account
-    gql_client_flexible.execute(
+    response = gql_client_flexible.execute(
         """
         mutation {
           register(
@@ -177,16 +176,13 @@ def test_user_register(gql_client_flexible):
             firstName: "James"
             lastName: "Tooof"
           ) {
-            success,
-            token
+            success
           }
         }
         """
     )
 
-    # Now check we can login to it
-    response = gql_client_flexible.execute(
-        """
+    login_query = """
         mutation {
           login(email:"test@email.com", password:"strongpassword"){
             token
@@ -194,6 +190,10 @@ def test_user_register(gql_client_flexible):
             success
             errors {
               __typename
+              ... on NonFieldError {
+                code
+                message
+              }
             }
             user {
               firstName
@@ -201,8 +201,24 @@ def test_user_register(gql_client_flexible):
           }
         }
         """
-    )
 
+    # Now check we cannot login in (unverified)
+    response = gql_client_flexible.execute(login_query)
+    assert response["data"]["login"]["errors"] == [
+        {
+            "__typename": "NonFieldError",
+            "code": "not_verified",
+            "message": "Please verify your account.",
+        }
+    ]
+
+    # Verify the user
+    user_status = UserStatus.objects.get(user__email="test@email.com")
+    user_status.verified = True
+    user_status.save()
+
+    # Assert the verify user can login
+    response = gql_client_flexible.execute(login_query)
     response_data = response["data"]["login"]
     # Assert no errors
     assert all(

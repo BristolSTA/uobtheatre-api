@@ -433,8 +433,6 @@ type RefreshToken {
 type Register {
   success: Boolean
   errors: [GQLErrorUnion]
-  refreshToken: String
-  token: String
 }
 
 type RemoveSecondaryEmail {
