@@ -122,7 +122,6 @@ class BookingQuerySet(QuerySet):
             query_set = self.annotate_checked_in_count().filter(
                 checked_in_count__lt=F("count")
             )
-        print(query_set)
         return query_set
 
     def active(self, bool_val=True) -> QuerySet:
