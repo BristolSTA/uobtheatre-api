@@ -13,8 +13,10 @@ from uobtheatre.utils.exceptions import (
 
 
 def compare_gql_objects(object1, object2):
-    assert type(object1) == type(object2) # pylint: disable=unidiomatic-typecheck
-    assert object1._meta.fields == object2._meta.fields # pylint: disable=protected-access
+    assert type(object1) == type(object2)  # pylint: disable=unidiomatic-typecheck
+    assert (
+        object1._meta.fields == object2._meta.fields
+    )  # pylint: disable=protected-access
 
 
 def test_auth_error_handling_failure():
@@ -34,7 +36,7 @@ def test_auth_error_handling_no_error():
 @pytest.mark.django_db
 def test_safe_mutation_throws_unknown_exception():
     class SomeMutation(SafeMutation):
-        def resolve_mutation(cls, info, **inputs): # pylint: disable=no-self-argument
+        def resolve_mutation(cls, info, **inputs):  # pylint: disable=no-self-argument
             raise Exception("Some exception")
 
     with pytest.raises(Exception, match="Some exception"):
@@ -55,7 +57,7 @@ def test_gql_non_field_exception():
         ("booking", "booking"),
         ("dateOfBirth", "dateOfBirth"),
         ("date_of_birth", "dateOfBirth"),
-    ]
+    ],
 )
 def test_gql_field_exception(field, resolved_field):
     exception = GQLFieldException("Some exception", code=400, field=field)
@@ -82,7 +84,7 @@ def test_gql_exceptions():
 
 
 def test_square_exception():
-    class MockApiResponse: # pylint: disable=missing-class-docstring
+    class MockApiResponse:  # pylint: disable=missing-class-docstring
         def __init__(self):
             self.reason_phrase = "Some phrase"
             self.status_code = 404

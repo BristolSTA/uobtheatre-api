@@ -94,13 +94,13 @@ make test-v
 and to run a single test file run
 
 ```
-docker-compose run --rm api pytest --cov uobtheatre -vv -s uobtheatre/bookings/test/test_views.py
+make test path=uobtheatre/bookings/test/test_views.py
 ```
 
 and to run a single test
 
 ```
-docker-compose run --rm api pytest --cov uobtheatre -vv -s uobtheatre/bookings/test/test_views.py -k 'test_name'
+make test path=uobtheatre/bookings/test/test_views.py test=test_name
 ```
 
 ## Seeding
