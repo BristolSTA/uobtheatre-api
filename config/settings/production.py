@@ -1,32 +1,33 @@
+# pylint: skip-file
+
 import os
 
-import sentry_sdk
-from sentry_sdk.integrations.django import DjangoIntegration
+from .common import *
 
-from uobtheatre.config.settings.common import Common
-
-INSTALLED_APPS = Common.INSTALLED_APPS
-SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")  # type: ignore
 # Site
 # https://docs.djangoproject.com/en/2.0/ref/settings/#allowed-hosts
 ALLOWED_HOSTS = ["*"]
-INSTALLED_APPS += ("gunicorn",)
+INSTALLED_APPS += ("gunicorn",)  # type: ignore
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 # http://django-storages.readthedocs.org/en/latest/index.html
-INSTALLED_APPS += ("storages",)
+INSTALLED_APPS += ("storages",)  # type: ignore
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-AWS_ACCESS_KEY_ID = os.getenv("DJANGO_AWS_ACCESS_KEY_ID")
-AWS_SECRET_ACCESS_KEY = os.getenv("DJANGO_AWS_SECRET_ACCESS_KEY")
-AWS_STORAGE_BUCKET_NAME = os.getenv("DJANGO_AWS_STORAGE_BUCKET_NAME")
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
 AWS_DEFAULT_ACL = "public-read"
 AWS_AUTO_CREATE_BUCKET = True
 AWS_QUERYSTRING_AUTH = False
 MEDIA_URL = f"https://s3.amazonaws.com/{AWS_STORAGE_BUCKET_NAME}/"
 
 if sentry_dns := os.getenv("SENTRY_DNS"):
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+
     sentry_sdk.init(
         dsn=sentry_dns,
         integrations=[DjangoIntegration()],
