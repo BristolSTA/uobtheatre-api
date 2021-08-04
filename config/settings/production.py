@@ -12,7 +12,6 @@ CORS_ALLOWED_ORIGINS = [
 
 # Site
 # https://docs.djangoproject.com/en/2.0/ref/settings/#allowed-hosts
-ALLOWED_HOSTS = ["*.uobtheatre.com"]
 INSTALLED_APPS += ("gunicorn",)  # type: ignore
 
 # Static files (CSS, JavaScript, Images)
