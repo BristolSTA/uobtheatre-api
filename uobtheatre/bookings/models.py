@@ -3,10 +3,12 @@ from typing import Dict, List, Optional, Tuple
 
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.aggregates import BoolAnd
+from django.core.mail import EmailMultiAlternatives
 from django.db import models
 from django.db.models import Case, F, FloatField, Q, Value, When
 from django.db.models.functions import Cast
 from django.db.models.query import QuerySet
+from django.template.loader import get_template
 from django.utils import timezone
 
 from uobtheatre.discounts.models import ConcessionType, DiscountCombination
@@ -518,6 +520,24 @@ class Booking(TimeStampedMixin, models.Model):
             type=Payment.PaymentType.PURCHASE,
             value=self.total(),
         )
+
+    def send_confirmation_email(self):
+        plaintext_template = get_template("booking_confirmation_email.txt")
+        html_template = get_template("booking_confirmation_email.html")
+
+        context = {"booking": self}
+
+        subject, from_email, to_email = (
+            f"{self.performance.production.name} Booking",
+            '"UOB Theatre" <tickets@uobtheatre.com>',
+            self.user.email,
+        )
+        text_content = plaintext_template.render(context)
+        html_content = html_template.render(context)
+
+        msg = EmailMultiAlternatives(subject, text_content, from_email, [to_email])
+        msg.attach_alternative(html_content, "text/html")
+        msg.send()
 
 
 class Ticket(models.Model):
