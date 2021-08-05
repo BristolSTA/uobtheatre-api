@@ -373,8 +373,8 @@ type ProductionNode implements Node {
   description: String
   society: SocietyNode
   coverImage: ImageNode
-  posterImage: ImageNode!
-  featuredImage: ImageNode!
+  posterImage: ImageNode
+  featuredImage: ImageNode
   ageRating: Int
   facebookEvent: String
   warnings: [WarningNode!]
