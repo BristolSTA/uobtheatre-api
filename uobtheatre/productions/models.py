@@ -7,6 +7,7 @@ from django.db import models
 from django.db.models import Max, Min, Sum
 from django.db.models.query import QuerySet
 from django.utils import timezone
+from django_tiptap.fields import TipTapTextField
 from guardian.shortcuts import get_objects_for_user
 
 from uobtheatre.images.models import Image
@@ -80,7 +81,7 @@ class Production(TimeStampedMixin, models.Model):
 
     name = models.CharField(max_length=255)
     subtitle = models.CharField(max_length=255, null=True, blank=True)
-    description = models.TextField(null=True)
+    description = TipTapTextField(null=True)
 
     society = models.ForeignKey(
         Society, on_delete=models.SET_NULL, null=True, related_name="productions"
