@@ -251,7 +251,7 @@ GRAPHQL_AUTH = {
     "REGISTER_MUTATION_FIELDS": ["email", "first_name", "last_name"],
     "REGISTER_MUTATION_FIELDS_OPTIONAL": [],
     "ALLOW_LOGIN_NOT_VERIFIED": False,
-    "ACTIVATION_PATH_ON_EMAIL": "user/email_verify",
+    "ACTIVATION_PATH_ON_EMAIL": "user/email-verify",
     "EMAIL_TEMPLATE_ACTIVATION": "emails/activation_email.html",
 }
 
