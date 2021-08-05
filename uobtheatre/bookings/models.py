@@ -2,7 +2,12 @@ import math
 from typing import Dict, List, Optional, Tuple
 
 from django.contrib.contenttypes.fields import GenericRelation
+from django.contrib.postgres.aggregates import BoolAnd
 from django.db import models
+from django.db.models import Case, F, FloatField, Q, Value, When
+from django.db.models.functions import Cast
+from django.db.models.query import QuerySet
+from django.utils import timezone
 
 from uobtheatre.discounts.models import ConcessionType, DiscountCombination
 from uobtheatre.payments.models import Payment
@@ -74,6 +79,69 @@ class MiscCost(models.Model):
         ]
 
 
+class BookingQuerySet(QuerySet):
+    """QuerySet for bookings"""
+
+    def annotate_checked_in(self) -> QuerySet:
+        return self.annotate(checked_in=BoolAnd("tickets__checked_in"))
+
+    def annotate_checked_in_count(self) -> QuerySet:
+        return self.annotate(count=models.Count("tickets")).annotate(
+            checked_in_count=models.Count(
+                Case(When(tickets__checked_in=True, then=Value(1)))
+            )
+        )
+
+    def annotate_checked_in_proportion(self) -> QuerySet:
+        # To calculate the proportion of tickets that are checked in you need two values
+        # the first - the number of tickets
+        # the second - the number of tickets that are checked in
+        # Whilst it shouldn't occur a divide by zero is prevented setting to zero when the ticket count is zero
+        return self.annotate_checked_in_count().annotate(
+            proportion=Case(
+                When(Q(count=0), then=Cast(0, FloatField())),
+                default=Cast(F("checked_in_count"), FloatField())
+                / Cast(F("count"), FloatField()),
+            )
+        )
+
+    def checked_in(self, bool_val=True) -> QuerySet:
+        """Bookings with checked in will be returned
+
+        Args:
+            bool_val (bool): when True: return only bookings with all tickets checked in,
+            when False: return all bookings with atleast one ticket that is not checked in.
+
+        Returns:
+            QuerySet: the filtered queryset
+        """
+
+        if bool_val:
+            query_set = self.annotate_checked_in().filter(checked_in=True)
+        else:
+            query_set = self.annotate_checked_in_count().filter(
+                checked_in_count__lt=F("count")
+            )
+        return query_set
+
+    def active(self, bool_val=True) -> QuerySet:
+        """Bookings that are active (end time is in the future) will be returned
+
+        Args:
+            bool_val (bool): when True: return only active bookings,
+            when False: return only old bookings (bookings for performances with end dates in the past)
+
+        Returns:
+            QuerySet: the filtered queryset
+        """
+        if bool_val:
+            query_set = self.filter(performance__end__gte=timezone.now())
+        else:
+            query_set = self.filter(performance__end__lte=timezone.now())
+
+        return query_set
+
+
 class Booking(TimeStampedMixin, models.Model):
     """A booking for a performance
 
@@ -82,6 +150,8 @@ class Booking(TimeStampedMixin, models.Model):
     Note:
         A user can only have 1 In Progress booking per performance.
     """
+
+    objects = BookingQuerySet.as_manager()
 
     class BookingStatus(models.TextChoices):
         IN_PROGRESS = "IN_PROGRESS", "In Progress"

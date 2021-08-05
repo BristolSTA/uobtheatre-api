@@ -1,3 +1,5 @@
+import datetime
+
 import pytest
 from django.contrib.auth.models import Permission
 from django.utils import timezone
@@ -17,7 +19,7 @@ from uobtheatre.discounts.test.factories import (
     DiscountFactory,
     DiscountRequirementFactory,
 )
-from uobtheatre.productions.test.factories import PerformanceFactory
+from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory
 
@@ -589,3 +591,169 @@ def test_bookings_qs(gql_client_flexible):
     assert [node["node"]["id"] for node in response["data"]["bookings"]["edges"]] == [
         to_global_id("BookingNode", booking_id) for booking_id in [1, 2, 3]
     ]
+
+
+@pytest.mark.django_db
+def test_booking_filter_checked_in(gql_client_flexible):
+
+    # No tickets booking
+    _ = BookingFactory(user=gql_client_flexible.user)
+
+    # None checked in
+    booking_none = BookingFactory(user=gql_client_flexible.user)
+    TicketFactory(booking=booking_none)
+    TicketFactory(booking=booking_none)
+
+    # Some checked in
+    booking_some = BookingFactory(user=gql_client_flexible.user)
+    TicketFactory(booking=booking_some, checked_in=True)
+    TicketFactory(booking=booking_some)
+
+    # All checked in
+    booking_all = BookingFactory(user=gql_client_flexible.user)
+    TicketFactory(booking=booking_all, checked_in=True)
+    TicketFactory(booking=booking_all, checked_in=True)
+
+    true_expected_set = {booking_all.reference}
+    false_expected_set = {booking_none.reference, booking_some.reference}
+
+    request = """
+        {
+          bookings(checkedIn: %s) {
+            edges {
+              node {
+                reference
+              }
+            }
+          }
+        }
+        """
+
+    # Ask for nothing and check you get nothing
+    true_response = gql_client_flexible.execute(request % "true")
+    false_response = gql_client_flexible.execute(request % "false")
+
+    true_response_set = set()
+    false_response_set = set()
+
+    true_response_set = {
+        booking["node"]["reference"]
+        for booking in true_response["data"]["bookings"]["edges"]
+    }
+    false_response_set = {
+        booking["node"]["reference"]
+        for booking in false_response["data"]["bookings"]["edges"]
+    }
+
+    assert true_response_set == true_expected_set
+    assert false_response_set == false_expected_set
+
+
+@pytest.mark.django_db
+def test_booking_filter_active(gql_client_flexible):
+
+    now = timezone.now()
+
+    production = ProductionFactory()
+
+    performance_future = PerformanceFactory(
+        production=production, end=now + datetime.timedelta(days=2)
+    )
+    performance_past = PerformanceFactory(
+        production=production, end=now + datetime.timedelta(days=-2)
+    )
+
+    booking_future = BookingFactory(
+        user=gql_client_flexible.user, performance=performance_future
+    )
+    booking_past = BookingFactory(
+        user=gql_client_flexible.user, performance=performance_past
+    )
+
+    true_expected_set = {booking_future.reference}
+    false_expected_set = {booking_past.reference}
+
+    request = """
+        {
+          bookings(active: %s) {
+            edges {
+              node {
+                reference
+              }
+            }
+          }
+        }
+        """
+
+    true_response = gql_client_flexible.execute(request % "true")
+    false_response = gql_client_flexible.execute(request % "false")
+
+    true_response_set = {
+        booking["node"]["reference"]
+        for booking in true_response["data"]["bookings"]["edges"]
+    }
+    false_response_set = {
+        booking["node"]["reference"]
+        for booking in false_response["data"]["bookings"]["edges"]
+    }
+
+    assert true_response_set == true_expected_set
+    assert false_response_set == false_expected_set
+
+
+@pytest.mark.django_db
+def test_booking_order_checked_in(gql_client_flexible):
+
+    # None checked in
+    booking_none = BookingFactory(user=gql_client_flexible.user)
+    TicketFactory(booking=booking_none)
+    TicketFactory(booking=booking_none)
+
+    # Some checked in
+    booking_some = BookingFactory(user=gql_client_flexible.user)
+    TicketFactory(booking=booking_some, checked_in=True)
+    TicketFactory(booking=booking_some)
+
+    # All checked in
+    booking_all = BookingFactory(user=gql_client_flexible.user)
+    TicketFactory(booking=booking_all, checked_in=True)
+    TicketFactory(booking=booking_all, checked_in=True)
+
+    desc_expected_list = [
+        booking_all.reference,
+        booking_some.reference,
+        booking_none.reference,
+    ]
+    asec_expected_list = [
+        booking_none.reference,
+        booking_some.reference,
+        booking_all.reference,
+    ]
+
+    request = """
+        {
+          bookings(orderBy: "%s") {
+            edges {
+              node {
+                reference
+              }
+            }
+          }
+        }
+        """
+
+    # Ask for nothing and check you get nothing
+    desc_response = gql_client_flexible.execute(request % "checkedIn")
+    asec_response = gql_client_flexible.execute(request % "-checkedIn")
+
+    desc_response_list = [
+        booking["node"]["reference"]
+        for booking in desc_response["data"]["bookings"]["edges"]
+    ]
+    asec_response_list = [
+        booking["node"]["reference"]
+        for booking in asec_response["data"]["bookings"]["edges"]
+    ]
+
+    assert desc_response_list == desc_expected_list
+    assert asec_response_list == asec_expected_list

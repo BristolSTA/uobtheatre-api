@@ -221,7 +221,7 @@ def test_create_booking_with_taget_user_without_perms(gql_client_flexible):
             "__typename": "FieldError",
             "message": "You do not have permission to create a booking for another user.",
             "code": "403",
-            "field": "targetUserEmail"
+            "field": "targetUserEmail",
         }
     ]
 
@@ -668,9 +668,9 @@ def test_update_booking_without_permission(gql_client_flexible):
                     {
                         "code": "403",
                         "message": "You do not have permission to access this booking.",
-                        "field": "booking"
+                        "field": "booking",
                     }
-                ]
+                ],
             }
         }
     }
@@ -1565,14 +1565,18 @@ def test_uncheck_in_booking_incorrect_ticket(gql_client_flexible):
 def test_parse_target_user_email_get_user():
     creator = UserFactory(is_superuser=True)
     user = UserFactory()
-    assert parse_target_user_email(user.email, creator, PerformanceFactory()).id == user.id
+    assert (
+        parse_target_user_email(user.email, creator, PerformanceFactory()).id == user.id
+    )
 
 
 @pytest.mark.django_db
 def test_parse_target_user_email_creates_user():
     creator = UserFactory(is_superuser=True, email="admin@email.com")
 
-    user = parse_target_user_email("somenewemail@email.com", creator, PerformanceFactory())
+    user = parse_target_user_email(
+        "somenewemail@email.com", creator, PerformanceFactory()
+    )
     assert str(User.objects.get(email="somenewemail@email.com").id) == str(user.id)
 
 
