@@ -757,3 +757,66 @@ def test_booking_order_checked_in(gql_client_flexible):
 
     assert desc_response_list == desc_expected_list
     assert asec_response_list == asec_expected_list
+
+
+@pytest.mark.django_db
+def test_booking_order_start(gql_client_flexible):
+
+    now = timezone.now()
+
+    # First
+    performance_soonest = PerformanceFactory(start=now + datetime.timedelta(days=2))
+    booking_soonest = BookingFactory(
+        user=gql_client_flexible.user, performance=performance_soonest
+    )
+
+    # Second
+    performance_middle = PerformanceFactory(start=now + datetime.timedelta(days=6))
+    booking_middle = BookingFactory(
+        user=gql_client_flexible.user, performance=performance_middle
+    )
+
+    # Last
+    performance_last = PerformanceFactory(start=now + datetime.timedelta(days=24))
+    booking_last = BookingFactory(
+        user=gql_client_flexible.user, performance=performance_last
+    )
+
+    desc_expected_list = [
+        booking_soonest.reference,
+        booking_middle.reference,
+        booking_last.reference,
+    ]
+    asec_expected_list = [
+        booking_last.reference,
+        booking_middle.reference,
+        booking_soonest.reference,
+    ]
+
+    request = """
+        {
+          bookings(orderBy: "%s") {
+            edges {
+              node {
+                reference
+              }
+            }
+          }
+        }
+        """
+
+    # Ask for nothing and check you get nothing
+    desc_response = gql_client_flexible.execute(request % "start")
+    asec_response = gql_client_flexible.execute(request % "-start")
+
+    desc_response_list = [
+        booking["node"]["reference"]
+        for booking in desc_response["data"]["bookings"]["edges"]
+    ]
+    asec_response_list = [
+        booking["node"]["reference"]
+        for booking in asec_response["data"]["bookings"]["edges"]
+    ]
+
+    assert desc_response_list == desc_expected_list
+    assert asec_response_list == asec_expected_list
