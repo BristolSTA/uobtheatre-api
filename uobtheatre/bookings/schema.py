@@ -144,6 +144,8 @@ class BookingByMethodOrderingFilter(OrderingFilter):
             ("-created_at", "Created At (descending)"),
             ("checked_in", "Checked In"),
             ("-checked_in", "Checked In (descending)"),
+            ("start", "Start Time"),
+            ("-start", "Start Time (descending)"),
         ]
 
     def filter(self, query_set, value: str):
@@ -154,6 +156,8 @@ class BookingByMethodOrderingFilter(OrderingFilter):
          - '-created_at' (Descending created at)
          - 'checked_in'
          - '-checked_in' (Descending checked in)
+         - 'start'
+         - '-start' (Descending start)
 
         Args:
             query_set (QuerySet): The Queryset which is being filtered.
@@ -167,6 +171,11 @@ class BookingByMethodOrderingFilter(OrderingFilter):
             return query_set.annotate_checked_in_proportion().order_by("-proportion")
         if value and "-checked_in" in value:
             return query_set.annotate_checked_in_proportion().order_by("proportion")
+
+        if value and "start" in value:
+            return query_set.order_by("performance__start")
+        if value and "-start" in value:
+            return query_set.order_by("-performance__start")
 
         # the super class handles the filtering of "created_at"
         return super().filter(query_set, value)
