@@ -108,6 +108,27 @@ class Production(TimeStampedMixin, models.Model):
         blank=True,
     )
 
+    class Status(models.TextChoices):
+        """The overall status of the production"""
+
+        DRAFT = "DRAFT", "Draft"  # Production is in draft
+        PUBLISHED = (
+            "PUBLISHED",
+            "Published",
+        )  # Production is public
+        CLOSED = (
+            "CLOSED",
+            "Closed",
+        )  # Production has been closed after it's run. No edits allowed.
+        COMPLETE = (
+            "COMPLETE",
+            "Complete",
+        )  # Production has been closed and paid for/transactions settled
+
+    status = models.CharField(
+        max_length=20, choices=Status.choices, default=Status.DRAFT
+    )
+
     age_rating = models.SmallIntegerField(null=True, blank=True)
     facebook_event = models.CharField(max_length=255, null=True, blank=True)
 
