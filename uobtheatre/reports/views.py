@@ -6,8 +6,7 @@ from django.http import HttpResponse
 
 from uobtheatre.payments.models import Payment
 
-# pylint: disable=too-many-statements
-# pylint: disable=too-many-locals
+from . import reports
 
 
 def card_totals(request):
@@ -22,48 +21,20 @@ def card_totals(request):
     start = datetime(2020, 1, 1)
     end = datetime(2021, 12, 30)
 
-    # For the purpose of this report, we only care about payments where the provider is NOT cash
-
-    payments_in_range = (
-        Payment.objects.filter(created_at__gt=start)
-        .filter(created_at__lt=end)
-        .exclude(provider=Payment.PaymentProvider.CASH)
-        .prefetch_related("pay_object")
-        .prefetch_related("pay_object__performance__production__society")
+    # Generate report
+    report = reports.ProviderPeriodTotals(
+        start,
+        end,
+        [
+            item
+            for item in Payment.PaymentProvider.names
+            if not item == Payment.PaymentProvider.CASH.name
+        ],
     )
 
-    production_totals = {}
-    society_totals = {}
-    provider_totals = {}
-
-    for payment in payments_in_range:
-        # Handle production
-        if not payment.pay_object.performance.production.id in production_totals:
-            production_totals[payment.pay_object.performance.production.id] = {
-                "production": payment.pay_object.performance.production,
-                "total": 0,
-            }
-        production_totals[payment.pay_object.performance.production.id][
-            "total"
-        ] += payment.value
-
-        # Handle society
-        if not payment.pay_object.performance.production.society.id in society_totals:
-            society_totals[payment.pay_object.performance.production.society.id] = {
-                "society": payment.pay_object.performance.production.society,
-                "total": 0,
-            }
-        society_totals[payment.pay_object.performance.production.society.id][
-            "total"
-        ] += payment.value
-
-        # Handle Provider
-        if not payment.provider in provider_totals:
-            provider_totals[payment.provider] = {
-                "provider": payment.provider,
-                "total": 0,
-            }
-        provider_totals[payment.provider]["total"] += payment.value
+    print(
+        report.matched_payments[0].pay_object.performance.production.sales_breakdown()
+    )
 
     output = io.BytesIO()  # Output buffer
     workbook = xlsxwriter.Workbook(output)
@@ -102,34 +73,40 @@ def card_totals(request):
     worksheet.write("B7", str(request.user))
 
     worksheet.write("A9", "No. of Payments")
-    worksheet.write("B9", len(payments_in_range))
+    worksheet.write("B9", len(report.matched_payments))
 
     totals_breakdown_start_row = 13
     totals_breakdown_end_row = (
-        max([len(provider_totals), len(production_totals)]) + totals_breakdown_start_row
+        max(
+            [
+                len(report.provider_totals.collection),
+                len(report.production_totals.collection),
+            ]
+        )
+        + totals_breakdown_start_row
     )
 
     # Add totals
     worksheet.write(
         "A%s" % (totals_breakdown_start_row - 1), "Totals By Provider", bold
     )
-    for i, provider in enumerate(provider_totals.values()):
-        worksheet.write("A" + str(totals_breakdown_start_row + i), provider["provider"])
+    for i, provider in enumerate(report.provider_totals.collection):
+        worksheet.write("A" + str(totals_breakdown_start_row + i), provider.object)
         worksheet.write(
-            "B" + str(totals_breakdown_start_row + i), provider["total"] / 100, currency
+            "B" + str(totals_breakdown_start_row + i), provider.total / 100, currency
         )
     worksheet.write("A%s" % (totals_breakdown_end_row + 1), "Total")
     worksheet.write_formula(
         "B%s" % (totals_breakdown_end_row + 1),
-        "=SUM(A%s:A%s)" % (totals_breakdown_start_row, totals_breakdown_end_row),
+        "=SUM(B%s:B%s)" % (totals_breakdown_start_row, totals_breakdown_end_row),
         currency,
     )
 
     worksheet.write("D12", "Totals By Production", bold)
-    for i, production in enumerate(production_totals.values()):
-        worksheet.write("D" + str(13 + i), str(production["production"]))
-        worksheet.write("E" + str(13 + i), str(production["production"].society))
-        worksheet.write("F" + str(13 + i), production["total"] / 100, currency)
+    for i, production in enumerate(report.production_totals.collection):
+        worksheet.write("D" + str(13 + i), str(production.object))
+        worksheet.write("E" + str(13 + i), str(production.object.society))
+        worksheet.write("F" + str(13 + i), production.total / 100, currency)
     worksheet.write("E%s" % (totals_breakdown_end_row + 1), "Total")
     worksheet.write_formula(
         "F%s" % (totals_breakdown_end_row + 1),
@@ -141,10 +118,15 @@ def card_totals(request):
 
     # Rewind buffer
     output.seek(0)
-    filename = "card_totals_report.xlsx"
     response = HttpResponse(
         output,
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
-    response["Content-Disposition"] = "attachment; filename=%s" % filename
+    response["Content-Disposition"] = (
+        "attachment; filename=%s" % "card_totals_report.xlsx"
+    )
     return response
+
+
+def outstanding_production_payments():
+    pass

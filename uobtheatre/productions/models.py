@@ -190,6 +190,31 @@ class Production(TimeStampedMixin, models.Model):
             return None
         return min(performance.duration() for performance in performances)
 
+    def sales_breakdown(self):
+        """Generates a breakdown of the sales of this production"""
+        from uobtheatre.bookings.models import Booking
+
+        bookings = (
+            Booking.objects.filter(performance__production=self)
+            .prefetch_related("payments")
+            .all()
+        )
+        total_payments = bookings.aggregate(Sum("payments__value"))[
+            "payments__value__sum"
+        ]
+        total_misc_costs = sum(
+            [
+                booking.misc_costs_value() if len(booking.payments.all()) else 0
+                for booking in bookings
+            ]
+        )
+
+        return {
+            "payments_value": total_payments,
+            "misc_costs_value": total_misc_costs,
+            "society_income": total_payments - total_misc_costs,
+        }
+
     class Meta:
         ordering = ["id"]
         permissions = (
