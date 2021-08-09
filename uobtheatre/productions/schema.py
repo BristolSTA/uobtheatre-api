@@ -125,7 +125,7 @@ class ProductionFilter(FilterSet):
     order_by = ProductionByMethodOrderingFilter()
 
 
-class ProductionNode(DjangoObjectType):
+class ProductionNode(GrapheneEnumMixin, DjangoObjectType):
     warnings = DjangoListField(WarningNode)
     crew = DjangoListField(CrewMemberNode)
     cast = DjangoListField(CastMemberNode)
