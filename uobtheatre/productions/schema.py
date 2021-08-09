@@ -122,6 +122,12 @@ class ProductionFilter(FilterSet):
         model = Production
         exclude = ("poster_image", "featured_image", "cover_image")
 
+    @property
+    def qs(self):
+        if self.request.user.is_authenticated:
+            return super().qs.user_can_see(self.request.user)
+        return super().qs
+
     order_by = ProductionByMethodOrderingFilter()
 
 

@@ -68,6 +68,21 @@ class ProductionQuerySet(QuerySet):
         """Annotate end datetime to queryset"""
         return self.annotate(end=Max("performances__end"))
 
+    # pylint: disable=unused-argument
+    def user_can_see(self, user: "User"):
+        """Filter productions which the user can see
+
+        Returns the productions which the provided user has permission to see.
+        TODO: Implement permissions
+
+        Args:
+            user (User): The user which is used in the filter.
+
+        Returns:
+            QuerySet: The filtered queryset
+        """
+        return self.exclude(status=Production.Status.DRAFT)
+
 
 class Production(TimeStampedMixin, models.Model):
     """The model for a production.
