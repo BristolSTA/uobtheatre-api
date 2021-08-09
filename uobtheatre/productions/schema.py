@@ -2,11 +2,7 @@ import django_filters
 import graphene
 from graphene import relay
 from graphene_django import DjangoListField
-from graphene_django.filter import (
-    DjangoFilterConnectionField,
-    GlobalIDFilter,
-    GlobalIDMultipleChoiceFilter,
-)
+from graphene_django.filter import DjangoFilterConnectionField
 
 from uobtheatre.discounts.schema import ConcessionTypeNode, DiscountNode
 from uobtheatre.productions.models import (
@@ -124,9 +120,7 @@ class ProductionFilter(FilterSet):
 
     @property
     def qs(self):
-        if self.request.user.is_authenticated:
-            return super().qs.user_can_see(self.request.user)
-        return super().qs
+        return super().qs.user_can_see(self.request.user)
 
     order_by = ProductionByMethodOrderingFilter()
 
@@ -294,7 +288,6 @@ class Query(graphene.ObjectType):
 
     productions = DjangoFilterConnectionField(ProductionNode)
     performances = DjangoFilterConnectionField(PerformanceNode)
-    boxoffice_performances = graphene.List(PerformanceNode, date=graphene.Date())
 
     production = graphene.Field(ProductionNode, slug=graphene.String(required=True))
     performance = relay.Node.Field(PerformanceNode)

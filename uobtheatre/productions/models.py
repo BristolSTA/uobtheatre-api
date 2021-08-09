@@ -6,6 +6,7 @@ from autoslug import AutoSlugField
 from django.db import models
 from django.db.models import Max, Min, Sum
 from django.db.models.query import QuerySet
+from django.db.models.query_utils import Q
 from django.utils import timezone
 from guardian.shortcuts import get_objects_for_user
 
@@ -68,12 +69,10 @@ class ProductionQuerySet(QuerySet):
         """Annotate end datetime to queryset"""
         return self.annotate(end=Max("performances__end"))
 
-    # pylint: disable=unused-argument
     def user_can_see(self, user: "User"):
         """Filter productions which the user can see
 
         Returns the productions which the provided user has permission to see.
-        TODO: Implement permissions
 
         Args:
             user (User): The user which is used in the filter.
@@ -81,7 +80,12 @@ class ProductionQuerySet(QuerySet):
         Returns:
             QuerySet: The filtered queryset
         """
-        return self.exclude(status=Production.Status.DRAFT)
+        productions_user_can_edit = get_objects_for_user(
+            user, "productions.edit"
+        ).values_list("id", flat=True)
+        return self.filter(
+            ~Q(status=Production.Status.DRAFT) | Q(id__in=productions_user_can_edit)
+        )
 
 
 class Production(TimeStampedMixin, models.Model):
