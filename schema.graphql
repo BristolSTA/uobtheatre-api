@@ -375,7 +375,7 @@ type ProductionNode implements Node {
   coverImage: ImageNode
   posterImage: ImageNode
   featuredImage: ImageNode
-  status: ProductionStatus!
+  status: EnumNode
   ageRating: Int
   facebookEvent: String
   warnings: [WarningNode!]
@@ -398,13 +398,6 @@ type ProductionNodeConnection {
 type ProductionNodeEdge {
   node: ProductionNode
   cursor: String!
-}
-
-enum ProductionStatus {
-  DRAFT
-  PUBLISHED
-  CLOSED
-  COMPLETE
 }
 
 type ProductionTeamMemberNode implements Node {
