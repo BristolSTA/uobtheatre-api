@@ -843,12 +843,12 @@ def test_draft_productions_not_shown(gql_client_flexible):
 
 
 @pytest.mark.django_db
-def test_perfromance_run_on(gql_client_flexible):
+def test_performance_run_on(gql_client_flexible):
     query_date = datetime.date(year=2000, month=6, day=20)
     _ = [
         PerformanceFactory(
-            start=query_date + datetime.timedelta(days=i),
-            end=query_date + datetime.timedelta(days=i, hours=2),
+            start=query_date + timezone.timedelta(days=i),
+            end=query_date + timezone.timedelta(days=i, hours=2),
         )
         for i in range(-2, 2)
     ]
@@ -867,7 +867,7 @@ def test_perfromance_run_on(gql_client_flexible):
         """
 
     # Ask for nothing and check you get nothing
-    response = gql_client_flexible.execute(request % query_date.isoformat())
+    response = gql_client_flexible.execute(request % query_date)
     assert response["data"]["performances"]["edges"] == [
         {"node": {"start": perm.start.isoformat()}}
         for perm in Performance.objects.running_on(query_date)
