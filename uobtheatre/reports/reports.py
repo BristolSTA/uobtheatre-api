@@ -28,7 +28,7 @@ class ObjectTotalCollection:
             self.collection.append(object_total)
 
 
-class ProviderPeriodTotals:
+class PeriodTotalsBreakdown:
     """Generates a report on payments made via specified providers over a given time period"""
 
     def __init__(self, start: datetime, end: datetime, providers: List) -> None:
@@ -41,6 +41,10 @@ class ProviderPeriodTotals:
             .filter(provider__in=providers)
             .prefetch_related("pay_object__performance__production__society")
         )
+
+        # Add all providers
+        for provider in Payment.PaymentProvider.names:
+            self.provider_totals.merge_push(ObjectTotal(provider, 0))
 
         for payment in self.matched_payments:
             # Handle production
@@ -62,3 +66,23 @@ class ProviderPeriodTotals:
             self.provider_totals.merge_push(
                 ObjectTotal(payment.provider, payment.value)
             )
+
+
+# class OutstandingSocietyPayments:
+#     """Generates a report on outstanding balances to be paid to societies"""
+
+#     def __init__(self) -> None:
+#         self.societies = {}
+
+#         # Get productions that are marked closed
+#         productions = Production.objects.filter(
+#             status=Production.Status.Closed
+#         ).prefetch_related("society")
+
+#         for production in productions:
+#             if not production.society.id in self.societies:
+#                 self.societies[production.society.id] = []
+
+#             self.societies[production.society.id].append(
+#                 ObjectTotal(production, production.sales_breakdown["society_income"])
+#             )
