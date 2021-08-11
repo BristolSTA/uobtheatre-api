@@ -1,4 +1,6 @@
 import base64
+from typing import TYPE_CHECKING, Optional
+from unittest.mock import patch
 
 import pytest
 from django.contrib.auth.models import AnonymousUser
@@ -8,6 +10,9 @@ from pytest_factoryboy import register
 
 from uobtheatre.schema import schema
 from uobtheatre.users.test.factories import UserFactory
+
+if TYPE_CHECKING:
+    pass
 
 register(UserFactory)  # fixture is user_factory
 
@@ -47,8 +52,8 @@ class AuthenticateableGQLClient(GQLClient):
 
 
 @pytest.fixture
-def gql_client_flexible(user_factory):
-    return AuthenticateableGQLClient(schema, user=user_factory())
+def gql_client_flexible():
+    return AuthenticateableGQLClient(schema, user=UserFactory())
 
 
 @pytest.fixture
@@ -59,34 +64,36 @@ def gql_id():
 
 
 @pytest.fixture
-def mock_square(monkeypatch):
-    """
-    Create mocked square object.
-    """
-
+def mock_square():
     class MockApiResponse:
-        def __init__(self):
-            self.reason_phrase = "Some phrase"
-            self.status_code = 400
-            self.success = False
-            self.body = None
+        def __init__(
+            self, reason_phrase="Some phrase", status_code=400, success=False, body=None
+        ):
+            self.reason_phrase = reason_phrase
+            self.status_code = status_code
+            self.success = success
+            self.body = body
 
         def is_success(self):
             return self.success
 
-    def mock_create_payment(*_):
-        return mock_api_response
+    def mock_client(
+        square_client_api,
+        method: str,
+        body: Optional[dict] = None,
+        success: Optional[bool] = None,
+        reason_phrase: Optional[str] = None,
+        status_code: Optional[int] = None,
+    ):
+        return patch.object(
+            square_client_api,
+            method,
+            lambda *_: MockApiResponse(
+                body=body,
+                success=success,
+                reason_phrase=reason_phrase,
+                status_code=status_code,
+            ),
+        )
 
-    def mock_create_pos_payment(*_):
-        return mock_api_response
-
-    monkeypatch.setattr(
-        "uobtheatre.bookings.models.PaymentProvider.create_payment", mock_create_payment
-    )
-    monkeypatch.setattr(
-        "uobtheatre.bookings.models.PaymentProvider.create_pos_payment",
-        mock_create_pos_payment,
-    )
-
-    mock_api_response = MockApiResponse()
-    return mock_api_response
+    return mock_client

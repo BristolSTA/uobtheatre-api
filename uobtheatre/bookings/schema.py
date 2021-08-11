@@ -12,8 +12,14 @@ from graphql_auth.schema import UserNode
 
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
 from uobtheatre.discounts.models import ConcessionType
-from uobtheatre.payments.models import Payment
-from uobtheatre.payments.square import PaymentProvider
+from uobtheatre.payments.payment_methods import (
+    Card,
+    Cash,
+    PaymentMethod,
+    SquareOnline,
+    SquarePOS,
+    payment_method_is,
+)
 from uobtheatre.productions.models import Performance
 from uobtheatre.users.models import User
 from uobtheatre.utils.enums import GrapheneEnumMixin
@@ -475,19 +481,19 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         price = graphene.Int(required=True)
         nonce = graphene.String(required=False)
         payment_provider = graphene.Argument(
-            graphene.Enum.from_enum(Payment.PaymentProvider), required=False
+            graphene.Enum("PaymentMethod", PaymentMethod.choices)
         )
         device_id = graphene.String(required=False)
 
     @classmethod
-    def resolve_mutation(
+    def resolve_mutation(  # pylint: disable=too-many-arguments
         cls,
         _,
         info,
         booking_id,
         price,
         nonce=None,
-        payment_provider=Payment.PaymentProvider.SQUARE_ONLINE,
+        payment_provider=SquareOnline.__name__,
         device_id=None,
     ):
 
@@ -495,11 +501,10 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         booking = Booking.objects.get(id=booking_id)
 
         # Only (box office) admins can create a booking for a different user
-        if (
-            payment_provider != Payment.PaymentProvider.SQUARE_ONLINE
-            and not info.context.user.has_perm(
-                "productions.boxoffice", booking.performance.production
-            )
+        if not payment_method_is(
+            payment_provider, SquareOnline
+        ) and not info.context.user.has_perm(
+            "productions.boxoffice", booking.performance.production
         ):
             raise GQLFieldException(
                 message=f"You do not have permission to pay for a booking with the {payment_provider} provider.",
@@ -515,25 +520,31 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         if booking.status != Booking.BookingStatus.IN_PROGRESS:
             raise GQLNonFieldException(message="The booking is not in progress")
 
-        if payment_provider == Payment.PaymentProvider.SQUARE_ONLINE:
+        if payment_method_is(payment_provider, SquareOnline):
             if not nonce:
                 raise GQLFieldException(
-                    message=f"A nonce is required when using {payment_provider} provider.",
+                    message=f"A nonce is required when using {payment_provider.upper()} provider.",
                     field="nonce",
                     code=400,
                 )
-            payment = booking.pay_online(nonce)
-        elif (
-            payment_provider == Payment.PaymentProvider.SQUARE_POS
-            and device_id is not None
-        ):
-            payment = PaymentProvider().create_terminal_payment(
-                device_id, booking.total(), booking.reference
-            )
-            print(payment)
-        else:
-            payment = booking.pay_manual(payment_provider)
+            payment_method = SquareOnline(nonce, booking.id)  # This needs sorting
 
+        elif payment_method_is(payment_provider, SquarePOS):
+            if not device_id:
+                raise GQLFieldException(
+                    message=f"A device_id is required when using {payment_provider.upper()} provider.",
+                    field="device_id",
+                    code=400,
+                )
+            payment_method = SquarePOS(device_id)
+        elif payment_method_is(payment_provider, Cash):
+            payment_method = Cash()
+        elif payment_method_is(payment_provider, Card):
+            payment_method = Card()
+        else:
+            raise GQLNonFieldException(message="Unsupported payment provider.")
+
+        payment = booking.pay(payment_method)
         return PayBooking(booking=booking, payment=payment)
 
 

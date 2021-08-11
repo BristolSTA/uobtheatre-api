@@ -46,7 +46,13 @@ class GrapheneEnumMixin:
             """
             return EnumNode(
                 value=getattr(self, field_name).upper(),
-                description=getattr(self, f"get_{field_name}_display")(),
+                description=(
+                    # I think pylint does not understand use of walrus in
+                    # ternary if statement
+                    desc_getter()  # pylint: disable=used-before-assignment
+                    if (desc_getter := getattr(self, f"get_{field_name}_display", None))
+                    else None
+                ),
             )
 
         return resolver
@@ -57,15 +63,17 @@ class GrapheneEnumMixin:
         Overwrite the DjangoObjectType init to add in resolvers for every
         EnumNode.
         """
-
         # Do the regular init
         super().__init_subclass_with_meta__(*args, **kwargs)
 
         # Find all the char fields which have choices
         _model_fields = get_model_fields(cls._meta.model)
+
         for name, field in _model_fields:
-            # For every char field
-            if isinstance(field, models.fields.CharField):
+            # For every char field that doesnt have a custom resolver already
+            if isinstance(field, models.fields.CharField) and not hasattr(
+                cls, f"resolve_{name}"
+            ):
                 # If it has choices
                 choices = getattr(field, "choices", None)
                 if choices:
@@ -82,5 +90,6 @@ class GrapheneEnumMixin:
                 is graphene.types.field.Field
                 and hasattr(field_type, "type")
                 and field_type.type == EnumNode
+                and not hasattr(cls, f"resolve_{name}")
             ):
                 setattr(cls, f"resolve_{name}", cls._generate_enum_resolver(name))

@@ -21,7 +21,6 @@ from uobtheatre.discounts.test.factories import (
 from uobtheatre.payments.models import Payment
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
-from uobtheatre.utils.exceptions import SquareException
 from uobtheatre.utils.test_utils import ticket_dict_list_dict_gen, ticket_list_dict_gen
 from uobtheatre.venues.test.factories import SeatFactory, SeatGroupFactory, VenueFactory
 
@@ -739,91 +738,6 @@ def test_booking_ticket_diff(existing_list, new_list, add_list, delete_list):
     )
     assert expected_add_tickets == actual_add_tickets
     assert expected_delete_tickets == actual_delete_tickets
-
-
-@pytest.mark.django_db
-def test_booking_pay_failure(mock_square):
-    """
-    Test paying a booking with square
-    """
-    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
-    psg = PerformanceSeatingFactory(performance=booking.performance)
-    TicketFactory(booking=booking, seat_group=psg.seat_group)
-
-    mock_square.reason_phrase = "Some phrase"
-    mock_square.status_code = 400
-    mock_square.success = False
-
-    with pytest.raises(SquareException):
-        booking.pay_online("nonce")
-
-    # Assert the booking is not paid
-    assert booking.status == Booking.BookingStatus.IN_PROGRESS
-
-    # Assert no payments are created
-    assert Payment.objects.count() == 0
-
-
-@pytest.mark.django_db
-def test_pay_manual():
-    """
-    Test create manual payment
-    """
-    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
-    psg = PerformanceSeatingFactory(performance=booking.performance)
-    TicketFactory(booking=booking, seat_group=psg.seat_group)
-
-    booking.pay_manual(Payment.PaymentProvider.CARD)
-
-    # Assert the booking is not paid
-    assert booking.status == Booking.BookingStatus.PAID
-
-    # Assert one payment created
-    assert Payment.objects.count() == 1
-    payment = Payment.objects.first()
-    assert payment.provider == Payment.PaymentProvider.CARD
-    assert payment.value == booking.total()
-
-
-@pytest.mark.django_db
-def test_booking_pay_success(mock_square):
-    """
-    Test paying a booking with square
-    """
-    booking = BookingFactory()
-    psg = PerformanceSeatingFactory(performance=booking.performance)
-    TicketFactory(booking=booking, seat_group=psg.seat_group)
-
-    mock_square.success = True
-    mock_square.body = {
-        "payment": {
-            "id": "abc",
-            "card_details": {
-                "card": {
-                    "card_brand": "MASTERCARD",
-                    "last_4": "1234",
-                }
-            },
-            "amount_money": {
-                "currency": "GBP",
-                "amount": 0,
-            },
-        }
-    }
-
-    booking.pay_online("nonce")
-
-    assert booking.status == Booking.BookingStatus.PAID
-    # Assert a payment of the correct type is created
-    payment = booking.payments.first()
-    assert payment.pay_object == booking
-    assert payment.value == 0
-    assert payment.currency == "GBP"
-    assert payment.card_brand == "MASTERCARD"
-    assert payment.last_4 == "1234"
-    assert payment.provider_payment_id == "abc"
-    assert payment.provider == Payment.PaymentProvider.SQUARE_ONLINE
-    assert payment.type == Payment.PaymentType.PURCHASE
 
 
 @pytest.mark.django_db

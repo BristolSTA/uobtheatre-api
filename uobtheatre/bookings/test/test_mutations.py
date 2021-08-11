@@ -11,6 +11,7 @@ from uobtheatre.bookings.test.factories import (
     TicketFactory,
 )
 from uobtheatre.discounts.test.factories import ConcessionTypeFactory
+from uobtheatre.payments.payment_methods import SquareOnline
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.models import User
 from uobtheatre.users.test.factories import UserFactory
@@ -221,7 +222,7 @@ def test_create_booking_with_taget_user_without_perms(gql_client_flexible):
             "__typename": "FieldError",
             "message": "You do not have permission to create a booking for another user.",
             "code": "403",
-            "field": "targetUserEmail"
+            "field": "targetUserEmail",
         }
     ]
 
@@ -668,9 +669,9 @@ def test_update_booking_without_permission(gql_client_flexible):
                     {
                         "code": "403",
                         "message": "You do not have permission to access this booking.",
-                        "field": "booking"
+                        "field": "booking",
                     }
-                ]
+                ],
             }
         }
     }
@@ -826,7 +827,7 @@ def test_pay_booking_mutation_wrong_price(gql_client_flexible, gql_id):
 
 
 @pytest.mark.django_db
-def test_pay_booking_square_error(mock_square, gql_client_flexible, gql_id):
+def test_pay_booking_square_error(mock_square, gql_client_flexible):
     booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
     client = gql_client_flexible
 
@@ -849,11 +850,17 @@ def test_pay_booking_square_error(mock_square, gql_client_flexible, gql_id):
         }
     """
 
-    mock_square.reason_phrase = "Some phrase"
-    mock_square.status_code = 400
-    mock_square.success = False
+    with mock_square(
+        SquareOnline.client.payments,
+        "create_payment",
+        success=False,
+        reason_phrase="Some phrase",
+        status_code=400,
+    ):
+        response = client.execute(
+            request_query % to_global_id("BookingNode", booking.id)
+        )
 
-    response = client.execute(request_query % gql_id(booking.id, "BookingNode"))
     assert response == {
         "data": {
             "payBooking": {
@@ -987,7 +994,7 @@ def test_pay_booking_mutation_online_without_nonce(gql_client_flexible, gql_id):
                 "errors": [
                     {
                         "__typename": "FieldError",
-                        "message": "A nonce is required when using SQUARE_ONLINE provider.",
+                        "message": "A nonce is required when using SQUAREONLINE provider.",
                         "code": "400",
                         "field": "nonce",
                     }
@@ -998,7 +1005,7 @@ def test_pay_booking_mutation_online_without_nonce(gql_client_flexible, gql_id):
 
 
 @pytest.mark.django_db
-def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
+def test_pay_booking_success(mock_square, gql_client_flexible):
     booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
     client = gql_client_flexible
 
@@ -1040,24 +1047,30 @@ def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
         }
     """
 
-    mock_square.body = {
-        "payment": {
-            "id": "abc",
-            "card_details": {
-                "card": {
-                    "card_brand": "VISA",
-                    "last_4": "1111",
-                }
-            },
-            "amount_money": {
-                "currency": "GBP",
-                "amount": 0,
-            },
-        }
-    }
-    mock_square.success = True
+    with mock_square(
+        SquareOnline.client.payments,
+        "create_payment",
+        body={
+            "payment": {
+                "id": "abc",
+                "card_details": {
+                    "card": {
+                        "card_brand": "VISA",
+                        "last_4": "1111",
+                    }
+                },
+                "amount_money": {
+                    "currency": "GBP",
+                    "amount": 0,
+                },
+            }
+        },
+        success=True,
+    ):
+        response = client.execute(
+            request_query % to_global_id("BookingNode", booking.id)
+        )
 
-    response = client.execute(request_query % gql_id(booking.id, "BookingNode"))
     assert response == {
         "data": {
             "payBooking": {
@@ -1069,8 +1082,8 @@ def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
                         "edges": [
                             {
                                 "node": {
-                                    "id": gql_id(
-                                        booking.payments.first().id, "PaymentNode"
+                                    "id": to_global_id(
+                                        "PaymentNode", booking.payments.first().id
                                     )
                                 }
                             }
@@ -1081,7 +1094,7 @@ def test_pay_booking_success(mock_square, gql_client_flexible, gql_id):
                     "last4": "1111",
                     "cardBrand": "VISA",
                     "provider": {
-                        "value": "SQUARE_ONLINE",
+                        "value": "SQUAREONLINE",
                     },
                     "currency": "GBP",
                     "value": 0,
@@ -1109,6 +1122,10 @@ def test_pay_booking_manual(gql_client_flexible):
             success
             errors {
               __typename
+              ... on NonFieldError {
+                message
+                code
+              }
             }
 
             booking {
@@ -1138,6 +1155,8 @@ def test_pay_booking_manual(gql_client_flexible):
     """
 
     response = client.execute(request_query % to_global_id("BookingNode", booking.id))
+
+    print(f"{response=}")
     assert response == {
         "data": {
             "payBooking": {
@@ -1565,14 +1584,18 @@ def test_uncheck_in_booking_incorrect_ticket(gql_client_flexible):
 def test_parse_target_user_email_get_user():
     creator = UserFactory(is_superuser=True)
     user = UserFactory()
-    assert parse_target_user_email(user.email, creator, PerformanceFactory()).id == user.id
+    assert (
+        parse_target_user_email(user.email, creator, PerformanceFactory()).id == user.id
+    )
 
 
 @pytest.mark.django_db
 def test_parse_target_user_email_creates_user():
     creator = UserFactory(is_superuser=True, email="admin@email.com")
 
-    user = parse_target_user_email("somenewemail@email.com", creator, PerformanceFactory())
+    user = parse_target_user_email(
+        "somenewemail@email.com", creator, PerformanceFactory()
+    )
     assert str(User.objects.get(email="somenewemail@email.com").id) == str(user.id)
 
 
