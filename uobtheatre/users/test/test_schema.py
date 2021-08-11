@@ -6,9 +6,9 @@ from uobtheatre.users.test.factories import UserFactory
 
 
 @pytest.mark.django_db
-def test_user_schema(gql_client_flexible, gql_id):
+def test_user_schema(gql_client, gql_id):
 
-    user = gql_client_flexible.request_factory.user
+    user = gql_client.login().user
 
     # Create some booking
     bookings = [BookingFactory(user=user) for i in range(4)]
@@ -17,7 +17,7 @@ def test_user_schema(gql_client_flexible, gql_id):
     # irrelevant_user = UserFactory()
     # _ = [BookingFactory(user=irrelevant_user) for i in range(4)]
 
-    response = gql_client_flexible.execute(
+    response = gql_client.execute(
         """
         {
 	      me {
@@ -61,9 +61,9 @@ def test_user_schema(gql_client_flexible, gql_id):
 
 
 @pytest.mark.django_db
-def test_user_schema_unauthenticated(gql_client_flexible):
-    gql_client_flexible.logout()
-    response = gql_client_flexible.execute(
+def test_user_schema_unauthenticated(gql_client):
+    gql_client.logout()
+    response = gql_client.execute(
         """
         {
 	  me {
@@ -77,9 +77,9 @@ def test_user_schema_unauthenticated(gql_client_flexible):
 
 
 @pytest.mark.django_db
-def test_user_field_error(gql_client_flexible):
+def test_user_field_error(gql_client):
     UserFactory()
-    response = gql_client_flexible.execute(
+    response = gql_client.execute(
         """
         mutation {
           register(
@@ -125,8 +125,8 @@ def test_user_field_error(gql_client_flexible):
 
 
 @pytest.mark.django_db
-def test_user_wrong_credentials(gql_client_flexible):
-    response = gql_client_flexible.execute(
+def test_user_wrong_credentials(gql_client):
+    response = gql_client.execute(
         """
         mutation {
           login(email:"fakeaccount@email.com", password:"strongpassword"){
@@ -164,9 +164,9 @@ def test_user_wrong_credentials(gql_client_flexible):
 
 
 @pytest.mark.django_db
-def test_user_register(gql_client_flexible):
+def test_user_register(gql_client):
     # Create an account
-    response = gql_client_flexible.execute(
+    response = gql_client.execute(
         """
         mutation {
           register(
@@ -203,7 +203,7 @@ def test_user_register(gql_client_flexible):
         """
 
     # Now check we cannot login in (unverified)
-    response = gql_client_flexible.execute(login_query)
+    response = gql_client.execute(login_query)
     assert response["data"]["login"]["errors"] == [
         {
             "__typename": "NonFieldError",
@@ -218,7 +218,7 @@ def test_user_register(gql_client_flexible):
     user_status.save()
 
     # Assert the verify user can login
-    response = gql_client_flexible.execute(login_query)
+    response = gql_client.execute(login_query)
     response_data = response["data"]["login"]
     # Assert no errors
     assert all(
