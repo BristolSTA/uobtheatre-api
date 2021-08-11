@@ -5,13 +5,13 @@ from uobtheatre.societies.test.factories import SocietyFactory
 
 
 @pytest.mark.django_db
-def test_societies_schema(gql_client_flexible, gql_id):
+def test_societies_schema(gql_client, gql_id):
     societies = [SocietyFactory() for i in range(3)]
     society_productions = [
         [ProductionFactory(society=society) for i in range(10)] for society in societies
     ]
 
-    response = gql_client_flexible.execute(
+    response = gql_client.execute(
         """
         {
 	  societies {
@@ -83,7 +83,7 @@ def test_societies_schema(gql_client_flexible, gql_id):
 
 
 @pytest.mark.django_db
-def test_slug_single_schema(gql_client_flexible, gql_id):
+def test_slug_single_schema(gql_client, gql_id):
     societies = [SocietyFactory() for i in range(2)]
 
     request = """
@@ -94,12 +94,12 @@ def test_slug_single_schema(gql_client_flexible, gql_id):
         }
 
         """
-    response = gql_client_flexible.execute(request % "")
+    response = gql_client.execute(request % "")
 
     assert response["errors"][0]["message"] == "Society matching query does not exist."
     assert response["data"] == {"society": None}
 
-    response = gql_client_flexible.execute(request % societies[0].slug)
+    response = gql_client.execute(request % societies[0].slug)
     assert response["data"] == {
         "society": {"id": gql_id(societies[0].id, "SocietyNode")}
     }

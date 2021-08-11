@@ -28,7 +28,7 @@ from uobtheatre.productions.test.factories import (
 
 
 @pytest.mark.django_db
-def test_productions_schema(gql_client_flexible, gql_id):
+def test_productions_schema(gql_client, gql_id):
 
     production = ProductionFactory()
     performances = [PerformanceFactory(production=production) for i in range(2)]
@@ -42,7 +42,7 @@ def test_productions_schema(gql_client_flexible, gql_id):
         ProductionTeamMemberFactory(production=production) for i in range(10)
     ]
 
-    response = gql_client_flexible.execute(
+    response = gql_client.execute(
         """
         {
 	  productions {
@@ -252,7 +252,7 @@ def test_productions_schema(gql_client_flexible, gql_id):
         ),
     ],
 )
-def test_productions_filter(factories, requests, gql_client_flexible):
+def test_productions_filter(factories, requests, gql_client):
     """
     factories - A list of tuples each tuple cosists of a factory and the
     parameters to use when calling that factory.
@@ -271,16 +271,16 @@ def test_productions_filter(factories, requests, gql_client_flexible):
         filter_args, expected_number = request
 
         query_string = "{ productions(" + filter_args + ") { edges { node { id } } } }"
-        response = gql_client_flexible.execute(query_string)
+        response = gql_client.execute(query_string)
 
         assert len(response["data"]["productions"]["edges"]) == expected_number
 
 
 @pytest.mark.django_db
-def test_performance_schema(gql_client_flexible, gql_id):
+def test_performance_schema(gql_client, gql_id):
     performances = [PerformanceFactory() for i in range(1)]
 
-    response = gql_client_flexible.execute(
+    response = gql_client.execute(
         """
         {
 	  performances {
@@ -371,7 +371,7 @@ def test_performance_schema(gql_client_flexible, gql_id):
         ("bookings", True),
     ],
 )
-def test_performance_blocked_attributes(gql_client_flexible, attribute, is_obj):
+def test_performance_blocked_attributes(gql_client, attribute, is_obj):
     query_string = """
         {
             performances {
@@ -386,7 +386,7 @@ def test_performance_blocked_attributes(gql_client_flexible, attribute, is_obj):
         attribute if not is_obj else "%s {id}" % attribute
     )
 
-    response = gql_client_flexible.execute(query_string)
+    response = gql_client.execute(query_string)
     assert (
         response["errors"][0]["message"]
         == f'Cannot query field "{attribute}" on type "PerformanceNode".'
@@ -394,7 +394,7 @@ def test_performance_blocked_attributes(gql_client_flexible, attribute, is_obj):
 
 
 @pytest.mark.django_db
-def test_ticket_breakdown(gql_client_flexible):
+def test_ticket_breakdown(gql_client):
     performance = PerformanceFactory()
 
     # Create a seat group with capacity of 50
@@ -413,7 +413,7 @@ def test_ticket_breakdown(gql_client_flexible):
         booking=booking, seat_group=performance_seat_group.seat_group, checked_in=False
     )
 
-    response = gql_client_flexible.execute(
+    response = gql_client.execute(
         """
         {
             performance(id: "%s") {
@@ -445,7 +445,7 @@ def test_ticket_breakdown(gql_client_flexible):
 
 
 @pytest.mark.django_db
-def test_tickets_breakdown(gql_client_flexible, gql_id):
+def test_tickets_breakdown(gql_client, gql_id):
     performance = PerformanceFactory()
 
     # Create some seat groups for this performance
@@ -462,7 +462,7 @@ def test_tickets_breakdown(gql_client_flexible, gql_id):
     discount_2.performances.set([performance])
     discount_requirement_2 = DiscountRequirementFactory(discount=discount_2, number=1)
 
-    response = gql_client_flexible.execute(
+    response = gql_client.execute(
         """
         {
           performances {
@@ -602,7 +602,7 @@ def test_tickets_breakdown(gql_client_flexible, gql_id):
 
 
 @pytest.mark.django_db
-def test_production_single_slug(gql_client_flexible, gql_id):
+def test_production_single_slug(gql_client, gql_id):
     productions = [ProductionFactory() for i in range(2)]
 
     request = """
@@ -613,19 +613,19 @@ def test_production_single_slug(gql_client_flexible, gql_id):
         }
 
         """
-    response = gql_client_flexible.execute(request % "")
+    response = gql_client.execute(request % "")
 
     assert not response.get("errors", None)
     assert response["data"] == {"production": None}
 
-    response = gql_client_flexible.execute(request % productions[0].slug)
+    response = gql_client.execute(request % productions[0].slug)
     assert response["data"] == {
         "production": {"id": gql_id(productions[0].id, "ProductionNode")}
     }
 
 
 @pytest.mark.django_db
-def test_performance_single_id(gql_client_flexible, gql_id):
+def test_performance_single_id(gql_client, gql_id):
     performances = [PerformanceFactory() for i in range(2)]
 
     request = """
@@ -638,11 +638,11 @@ def test_performance_single_id(gql_client_flexible, gql_id):
         """
 
     # Ask for nothing and check you get nothing
-    response = gql_client_flexible.execute(request % "")
+    response = gql_client.execute(request % "")
     assert response["data"]["performance"] is None
 
     # Ask for first performance and check you get it
-    response = gql_client_flexible.execute(
+    response = gql_client.execute(
         request % gql_id(performances[0].id, "PerformanceNode")
     )
     assert response["data"] == {
@@ -651,7 +651,7 @@ def test_performance_single_id(gql_client_flexible, gql_id):
 
 
 @pytest.mark.django_db
-def test_upcoming_productions(gql_client_flexible):
+def test_upcoming_productions(gql_client):
     def create_prod(start, end):
         production = ProductionFactory()
         diff = end - start
@@ -691,7 +691,7 @@ def test_upcoming_productions(gql_client_flexible):
         """
 
     # Ask for nothing and check you get nothing
-    response = gql_client_flexible.execute(request % current_time.isoformat())
+    response = gql_client.execute(request % current_time.isoformat())
     assert response["data"]["productions"] == {
         "edges": [
             {"node": {"end": productions[i].end_date().isoformat()}} for i in range(6)
@@ -709,7 +709,7 @@ def test_upcoming_productions(gql_client_flexible):
         ("-end", [2, 3, 1, 0]),
     ],
 )
-def test_productions_orderby(order_by, expected_order, gql_client_flexible):
+def test_productions_orderby(order_by, expected_order, gql_client):
     current_time = timezone.now()
 
     productions = [
@@ -747,7 +747,7 @@ def test_productions_orderby(order_by, expected_order, gql_client_flexible):
         """
 
     # Ask for nothing and check you get nothing
-    response = gql_client_flexible.execute(request % order_by)
+    response = gql_client.execute(request % order_by)
     assert response["data"]["productions"]["edges"] == [
         {"node": {"end": productions[i].end_date().isoformat()}} for i in expected_order
     ]
@@ -763,9 +763,7 @@ def test_productions_orderby(order_by, expected_order, gql_client_flexible):
         ("end_Lte", 2, [0, 1]),
     ],
 )
-def test_production_filters(
-    filter_name, value_days, expected_outputs, gql_client_flexible
-):
+def test_production_filters(filter_name, value_days, expected_outputs, gql_client):
     current_time = timezone.now()
 
     productions = [
@@ -804,7 +802,7 @@ def test_production_filters(
         """
 
     # Ask for nothing and check you get nothing
-    response = gql_client_flexible.execute(
+    response = gql_client.execute(
         request
         % (
             filter_name,
@@ -818,7 +816,11 @@ def test_production_filters(
 
 
 @pytest.mark.django_db
-def test_draft_productions_not_shown(gql_client_flexible):
+@pytest.mark.parametrize(
+    "logged_in",
+    [(True), (False)],
+)
+def test_draft_productions_not_shown_publically(logged_in, gql_client):
     _ = [ProductionFactory() for _ in range(3)]
     draft_production = ProductionFactory(status=Production.Status.DRAFT)
 
@@ -833,8 +835,9 @@ def test_draft_productions_not_shown(gql_client_flexible):
           }
         }
         """
-
-    response = gql_client_flexible.execute(request)
+    if logged_in:
+        gql_client.login()
+    response = gql_client.execute(request)
 
     assert len(response["data"]["productions"]["edges"]) == 3
     assert draft_production.id not in [
@@ -843,7 +846,29 @@ def test_draft_productions_not_shown(gql_client_flexible):
 
 
 @pytest.mark.django_db
-def test_performance_run_on(gql_client_flexible):
+def test_draft_production_shown_with_permission(gql_client):
+    _ = [ProductionFactory() for _ in range(3)]
+    draft_production = ProductionFactory(status=Production.Status.DRAFT)
+    assign_perm("production.edit", gql_client.login().user, draft_production)
+
+    request = """
+        {
+          productions {
+            edges {
+              node {
+                id
+              }
+            }
+          }
+        }
+        """
+    response = gql_client.execute(request)
+
+    assert len(response["data"]["productions"]["edges"]) == 4
+
+
+@pytest.mark.django_db
+def test_performance_run_on(gql_client):
     query_date = datetime.date(year=2000, month=6, day=20)
     _ = [
         PerformanceFactory(
@@ -867,7 +892,7 @@ def test_performance_run_on(gql_client_flexible):
         """
 
     # Ask for nothing and check you get nothing
-    response = gql_client_flexible.execute(request % query_date)
+    response = gql_client.execute(request % query_date)
     assert response["data"]["performances"]["edges"] == [
         {"node": {"start": perm.start.isoformat()}}
         for perm in Performance.objects.running_on(query_date)
@@ -875,10 +900,10 @@ def test_performance_run_on(gql_client_flexible):
 
 
 @pytest.mark.django_db
-def test_performance_has_permission(gql_client_flexible):
+def test_performance_has_permission(gql_client):
     performances = [PerformanceFactory() for _ in range(3)]
 
-    assign_perm("boxoffice", gql_client_flexible.user, performances[0].production)
+    assign_perm("boxoffice", gql_client.user, performances[0].production)
 
     # Check we get 6 of the upcoming productions back in the right order
     request = """
@@ -894,13 +919,13 @@ def test_performance_has_permission(gql_client_flexible):
         """
 
     # Ask for nothing and check you get nothing
-    response = gql_client_flexible.execute(request % "true")
+    response = gql_client.execute(request % "true")
     assert response["data"]["performances"]["edges"] == [
         {"node": {"id": to_global_id("PerformanceNode", perm.id)}}
         for perm in performances[:1]
     ]
 
-    response = gql_client_flexible.execute(request % "false")
+    response = gql_client.execute(request % "false")
     assert response["data"]["performances"]["edges"] == [
         {"node": {"id": to_global_id("PerformanceNode", perm.id)}}
         for perm in performances[1:]

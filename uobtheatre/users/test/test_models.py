@@ -16,11 +16,11 @@ def test_str_user():
 
 @pytest.mark.django_db
 def test_boxoffice_permissions_object_level(
-    gql_client_flexible: AuthenticateableGQLClient,
+    gql_client: AuthenticateableGQLClient,
 ):
     production = ProductionFactory()
     production2 = ProductionFactory()
-    user = gql_client_flexible.user
+    user = gql_client.user
     assert not user.has_perm("productions.boxoffice", production)
     assert not user.has_perm("productions.boxoffice", production2)
 
@@ -31,10 +31,10 @@ def test_boxoffice_permissions_object_level(
 
 @pytest.mark.django_db
 def test_boxoffice_permissions_model_level(
-    gql_client_flexible: AuthenticateableGQLClient,
+    gql_client: AuthenticateableGQLClient,
 ):
     production = ProductionFactory()
-    user = gql_client_flexible.user
+    user = gql_client.login().user
     assert not user.has_perm("productions.boxoffice")
     assert not user.has_perm("productions.boxoffice", production)
 
@@ -48,14 +48,14 @@ def test_boxoffice_permissions_model_level(
 
 @pytest.mark.django_db
 def test_boxoffice_permissions_model_level_group(
-    gql_client_flexible: AuthenticateableGQLClient,
+    gql_client: AuthenticateableGQLClient,
 ):
     production = ProductionFactory()
     group = Group.objects.create(name="TestGroup")
     boxoffice_perm = Permission.objects.get(codename="boxoffice")
     group.permissions.add(boxoffice_perm)
 
-    user = gql_client_flexible.user
+    user = gql_client.login().user
     assert not user.has_perm("productions.boxoffice", production)
 
     user.groups.add(group)

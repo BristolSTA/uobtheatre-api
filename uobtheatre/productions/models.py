@@ -131,6 +131,7 @@ class Production(TimeStampedMixin, models.Model):
         """The overall status of the production"""
 
         DRAFT = "DRAFT", "Draft"  # Production is in draft
+        PENDING = "PENDING", "Pending"  # Produciton is pending publication/review
         PUBLISHED = (
             "PUBLISHED",
             "Published",
