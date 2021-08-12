@@ -1,7 +1,8 @@
 from datetime import datetime
-from typing import List
+from typing import Dict, List
 
 from uobtheatre.payments.models import Payment
+from uobtheatre.productions.models import Production
 
 
 class ObjectTotal:
@@ -26,6 +27,14 @@ class ObjectTotalCollection:
             match.total += object_total.total
         else:
             self.collection.append(object_total)
+
+
+class ObjectCollection:
+    """A wrapper around an list of things that belong to an object"""
+
+    def __init__(self, target_object) -> None:
+        self.collection: List = []
+        self.object = target_object
 
 
 class PeriodTotalsBreakdown:
@@ -68,21 +77,22 @@ class PeriodTotalsBreakdown:
             )
 
 
-# class OutstandingSocietyPayments:
-#     """Generates a report on outstanding balances to be paid to societies"""
+class OutstandingSocietyPayments:
+    """Generates a report on outstanding balances to be paid to societies"""
 
-#     def __init__(self) -> None:
-#         self.societies = {}
+    def __init__(self) -> None:
+        self.societies: Dict[int, ObjectCollection] = {}
 
-#         # Get productions that are marked closed
-#         productions = Production.objects.filter(
-#             status=Production.Status.Closed
-#         ).prefetch_related("society")
+        # Get productions that are marked closed
+        productions = Production.objects.filter(
+            status=Production.Status.CLOSED
+        ).prefetch_related("society")
 
-#         for production in productions:
-#             if not production.society.id in self.societies:
-#                 self.societies[production.society.id] = []
-
-#             self.societies[production.society.id].append(
-#                 ObjectTotal(production, production.sales_breakdown["society_income"])
-#             )
+        for production in productions:
+            if not production.society.id in self.societies:
+                self.societies[production.society.id] = ObjectCollection(
+                    production.society
+                )
+            self.societies[production.society.id].collection.append(
+                ObjectTotal(production, production.sales_breakdown()["society_income"])
+            )

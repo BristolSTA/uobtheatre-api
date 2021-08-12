@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from django.http import HttpResponse
+from xlsxwriter.utility import xl_rowcol_to_cell
 
 from uobtheatre.payments.models import Payment
 from uobtheatre.reports.utils import ExcelReport
@@ -33,6 +34,7 @@ def period_totals(request):
             "This report provides summaries and totals of payments taken and recorded.",
             "Totals are calcualted by summing the payments (which are positive in the chase of a charge, or negative for a refund).",
             "Totals are inclusive of any costs and fees that are charged to the society. Hence, these figures should not be used to calculate account transfers to societies.",
+            "All currency is GBP.",
         ],
         [
             ["Period From", str(start)],
@@ -104,13 +106,14 @@ def period_totals(request):
 
 def outstanding_society_payments(request):
     """Generates excel of society payments report"""
-    #     report = reports.OutstandingSocietyPayments() TODO: Implement report
+    report = reports.OutstandingSocietyPayments()
 
     excel = ExcelReport(
         "Outstanding Society Payments",
         [
             "This report details the production income due to societies at the time the report is generated.",
             "Once the payment has been made, this MUST be recorded on the system in order to remove the balance.",
+            "All currency is GBP.",
         ],
         [],
         request.user,
@@ -118,54 +121,46 @@ def outstanding_society_payments(request):
 
     totals_row_start = excel.row_tracker - 1
 
-    excel.write_list(
-        (totals_row_start, 0),
-        [
-            "Legally Ginger",
-            "Showcase",
-        ],
-        title="MTB",
-    )
-    excel.write_list(
-        (totals_row_start + 1, 1),
-        [
-            345.60,
-            1039.23,
-        ],
-        items_format="currency",
-    )
+    for i, society_object_collection in enumerate(report.societies.values()):
+        start_col = i + 2 * i
+        excel.write_list(
+            (totals_row_start, start_col),
+            [
+                str(production_object_total.object)
+                for production_object_total in society_object_collection.collection
+            ],
+            title=str(society_object_collection.object),
+        )
 
-    excel.set_col_width(2, 2, 20)
-    excel.write_list(
-        (totals_row_start, 3),
-        ["Shakespear", "Christmas Panto", "Another One??"],
-        title="Panto",
-    )
-    excel.write_list(
-        (totals_row_start + 1, 4),
-        [
-            1.20,
-            4324.30,
-            4.20,
-        ],
-        items_format="currency",
-    )
+        excel.write_list(
+            (totals_row_start + 1, start_col + 1),
+            [
+                production_object_total.total / 100
+                for production_object_total in society_object_collection.collection
+            ],
+            items_format="currency",
+        )
+
+        if not i == 0:
+            excel.set_col_width(start_col, start_col, 20)
 
     # Add SUM Totals
     excel.increment_row_tracker()
 
-    excel.write("A%s" % excel.row_tracker, "Payment Due")
-    excel.write_formula(
-        "B%s" % excel.row_tracker,
-        "=SUM(B%s:B%s)" % (totals_row_start + 1, excel.row_tracker - 2),
-        excel.formats["currency"],
-    )
-    excel.write("D%s" % excel.row_tracker, "Payment Due")
-    excel.write_formula(
-        "E%s" % excel.row_tracker,
-        "=SUM(E%s:E%s)" % (totals_row_start + 1, excel.row_tracker - 2),
-        excel.formats["currency"],
-    )
+    for i, society_object_collection in enumerate(report.societies.values()):
+        start_col = i + 2 * i
+
+        excel.write(excel.row_tracker - 1, start_col, "Payment Due")
+        excel.write_formula(
+            excel.row_tracker - 1,
+            start_col + 1,
+            "=SUM(%s:%s)"
+            % (
+                xl_rowcol_to_cell(totals_row_start + 1, start_col + 1),
+                xl_rowcol_to_cell(excel.row_tracker - 3, start_col + 1),
+            ),
+            excel.formats["currency"],
+        )
 
     response = HttpResponse(
         excel.get_output(),

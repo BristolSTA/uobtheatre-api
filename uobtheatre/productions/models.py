@@ -240,9 +240,9 @@ class Production(TimeStampedMixin, models.Model):
             .prefetch_related("payments")
             .all()
         )
-        total_payments = bookings.aggregate(Sum("payments__value"))[
-            "payments__value__sum"
-        ]
+        total_payments = (
+            bookings.aggregate(Sum("payments__value"))["payments__value__sum"] or 0
+        )
         total_misc_costs = sum(
             [
                 booking.misc_costs_value() if len(booking.payments.all()) else 0
