@@ -25,7 +25,7 @@ from uobtheatre.venues.test.factories import SeatGroupFactory
 
 
 @pytest.mark.django_db
-def test_bookings_schema(gql_client_flexible, gql_id):
+def test_bookings_schema(gql_client, gql_id):
 
     booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
     # Create a booking that is not owned by the same user
@@ -61,7 +61,7 @@ def test_bookings_schema(gql_client_flexible, gql_id):
           }
         }
         """
-    client = gql_client_flexible
+    client = gql_client
 
     # When there is no user expect no bookings
     client.logout()
@@ -107,7 +107,7 @@ def test_bookings_schema(gql_client_flexible, gql_id):
 
 @pytest.mark.django_db
 def test_bookings_price_break_down(
-    gql_client_flexible, gql_id
+    gql_client, gql_id
 ):  # pylint: disable=too-many-locals
     booking = BookingFactory()
 
@@ -220,7 +220,7 @@ def test_bookings_price_break_down(
         }
         """
     # Login in client
-    client = gql_client_flexible
+    client = gql_client
     client.user = booking.user
     response = client.execute(request_query)
 
@@ -359,7 +359,7 @@ def test_discounts_node(gql_client, gql_id):
 
 
 @pytest.mark.django_db
-def test_booking_in_progress(gql_client_flexible, gql_id):
+def test_booking_in_progress(gql_client, gql_id):
     """
     We will often want to get an "in_progress" booking for a given booking and user.
         bookings(performance: "UGVyZm9ybWFuY2VOb2RlOjE=", status: "IN_PROGRESS")
@@ -393,8 +393,8 @@ def test_booking_in_progress(gql_client_flexible, gql_id):
     }
     """
 
-    gql_client_flexible.user = user
-    response = gql_client_flexible.execute(request_query)
+    gql_client.user = user
+    response = gql_client.execute(request_query)
 
     assert response == {
         "data": {
@@ -421,7 +421,7 @@ def test_booking_in_progress(gql_client_flexible, gql_id):
         ("-createdAt", [2, 1, 0]),
     ],
 )
-def test_booking_orderby(order_by, expected_order, gql_client_flexible):
+def test_booking_orderby(order_by, expected_order, gql_client):
     """
     Test for the ordfering of a user's bookings
     """
@@ -446,8 +446,8 @@ def test_booking_orderby(order_by, expected_order, gql_client_flexible):
       }
     }
     """
-    gql_client_flexible.user = user
-    response = gql_client_flexible.execute(request % order_by)
+    gql_client.user = user
+    response = gql_client.execute(request % order_by)
 
     assert response["data"]["me"]["bookings"]["edges"] == [
         {"node": {"createdAt": bookings[i].created_at.isoformat()}}
@@ -456,8 +456,8 @@ def test_booking_orderby(order_by, expected_order, gql_client_flexible):
 
 
 @pytest.mark.django_db
-def test_bookings_auth(gql_client_flexible):
-    user = gql_client_flexible.request_factory.user
+def test_bookings_auth(gql_client):
+    user = gql_client.login().user
     BookingFactory(user=user)
 
     request_query = """
@@ -479,22 +479,22 @@ def test_bookings_auth(gql_client_flexible):
     """
 
     # When we are logged in expect 1 booking
-    response = gql_client_flexible.execute(request_query)
+    response = gql_client.execute(request_query)
     assert (
         len(response["data"]["performances"]["edges"][0]["node"]["bookings"]["edges"])
         == 1
     )
 
     # When we are logged out expect 0 booking
-    gql_client_flexible.logout()
-    response = gql_client_flexible.execute(request_query)
+    gql_client.logout()
+    response = gql_client.execute(request_query)
     assert (
         response["data"]["performances"]["edges"][0]["node"]["bookings"]["edges"] == []
     )
 
     # When we are logged in as a different user expect 0 booking
     user2 = UserFactory()
-    gql_client_flexible.user = user2
+    gql_client.user = user2
     assert (
         response["data"]["performances"]["edges"][0]["node"]["bookings"]["edges"] == []
     )
@@ -513,9 +513,7 @@ def test_bookings_auth(gql_client_flexible):
         ("james alex", [1, 2]),
     ],
 )
-def test_bookings_search(
-    search_phrase, expected_filtered_bookings, gql_client_flexible
-):
+def test_bookings_search(search_phrase, expected_filtered_bookings, gql_client):
     user_1 = UserFactory(
         first_name="James", last_name="Elgar", email="jameselgar@email.com"
     )
@@ -541,9 +539,9 @@ def test_bookings_search(
     )
 
     boxoffice_perm = Permission.objects.get(codename="boxoffice")
-    gql_client_flexible.user.user_permissions.add(boxoffice_perm)
+    gql_client.login().user.user_permissions.add(boxoffice_perm)
 
-    response = gql_client_flexible.execute(request)
+    response = gql_client.execute(request)
     assert [node["node"]["id"] for node in response["data"]["bookings"]["edges"]] == [
         to_global_id("BookingNode", booking_id)
         for booking_id in expected_filtered_bookings
@@ -551,20 +549,20 @@ def test_bookings_search(
 
 
 @pytest.mark.django_db
-def test_bookings_qs(gql_client_flexible):
+def test_bookings_qs(gql_client):
     """
     The bookings query should only return bookings that the user has permission to view.
     """
 
     # Booking owned by user
-    BookingFactory(id=1, user=gql_client_flexible.user)
+    BookingFactory(id=1, user=gql_client.login().user)
 
     # Booking user does not have permission to acess
     BookingFactory(id=2)
 
     # Booking that user has permission to boxoffice
     booking = BookingFactory(id=3)
-    assign_perm("boxoffice", gql_client_flexible.user, booking.performance.production)
+    assign_perm("boxoffice", gql_client.user, booking.performance.production)
 
     request = """
         query {
@@ -578,39 +576,39 @@ def test_bookings_qs(gql_client_flexible):
         }
     """
 
-    response = gql_client_flexible.execute(request)
+    response = gql_client.execute(request)
     assert [node["node"]["id"] for node in response["data"]["bookings"]["edges"]] == [
         to_global_id("BookingNode", booking_id) for booking_id in [1, 3]
     ]
 
     # If the user is a superuser they should be able to access all bookngs
-    gql_client_flexible.user.is_superuser = True
-    gql_client_flexible.user.save()
+    gql_client.user.is_superuser = True
+    gql_client.user.save()
 
-    response = gql_client_flexible.execute(request)
+    response = gql_client.execute(request)
     assert [node["node"]["id"] for node in response["data"]["bookings"]["edges"]] == [
         to_global_id("BookingNode", booking_id) for booking_id in [1, 2, 3]
     ]
 
 
 @pytest.mark.django_db
-def test_booking_filter_checked_in(gql_client_flexible):
+def test_booking_filter_checked_in(gql_client):
 
     # No tickets booking
-    _ = BookingFactory(user=gql_client_flexible.user)
+    _ = BookingFactory(user=gql_client.login().user)
 
     # None checked in
-    booking_none = BookingFactory(user=gql_client_flexible.user)
+    booking_none = BookingFactory(user=gql_client.user)
     TicketFactory(booking=booking_none)
     TicketFactory(booking=booking_none)
 
     # Some checked in
-    booking_some = BookingFactory(user=gql_client_flexible.user)
+    booking_some = BookingFactory(user=gql_client.user)
     TicketFactory(booking=booking_some, checked_in=True)
     TicketFactory(booking=booking_some)
 
     # All checked in
-    booking_all = BookingFactory(user=gql_client_flexible.user)
+    booking_all = BookingFactory(user=gql_client.user)
     TicketFactory(booking=booking_all, checked_in=True)
     TicketFactory(booking=booking_all, checked_in=True)
 
@@ -630,8 +628,8 @@ def test_booking_filter_checked_in(gql_client_flexible):
         """
 
     # Ask for nothing and check you get nothing
-    true_response = gql_client_flexible.execute(request % "true")
-    false_response = gql_client_flexible.execute(request % "false")
+    true_response = gql_client.execute(request % "true")
+    false_response = gql_client.execute(request % "false")
 
     true_response_set = set()
     false_response_set = set()
@@ -650,7 +648,7 @@ def test_booking_filter_checked_in(gql_client_flexible):
 
 
 @pytest.mark.django_db
-def test_booking_filter_active(gql_client_flexible):
+def test_booking_filter_active(gql_client):
 
     now = timezone.now()
 
@@ -664,11 +662,9 @@ def test_booking_filter_active(gql_client_flexible):
     )
 
     booking_future = BookingFactory(
-        user=gql_client_flexible.user, performance=performance_future
+        user=gql_client.login().user, performance=performance_future
     )
-    booking_past = BookingFactory(
-        user=gql_client_flexible.user, performance=performance_past
-    )
+    booking_past = BookingFactory(user=gql_client.user, performance=performance_past)
 
     true_expected_set = {booking_future.reference}
     false_expected_set = {booking_past.reference}
@@ -685,8 +681,8 @@ def test_booking_filter_active(gql_client_flexible):
         }
         """
 
-    true_response = gql_client_flexible.execute(request % "true")
-    false_response = gql_client_flexible.execute(request % "false")
+    true_response = gql_client.execute(request % "true")
+    false_response = gql_client.execute(request % "false")
 
     true_response_set = {
         booking["node"]["reference"]
@@ -702,20 +698,20 @@ def test_booking_filter_active(gql_client_flexible):
 
 
 @pytest.mark.django_db
-def test_booking_order_checked_in(gql_client_flexible):
+def test_booking_order_checked_in(gql_client):
 
     # None checked in
-    booking_none = BookingFactory(user=gql_client_flexible.user)
+    booking_none = BookingFactory(user=gql_client.login().user)
     TicketFactory(booking=booking_none)
     TicketFactory(booking=booking_none)
 
     # Some checked in
-    booking_some = BookingFactory(user=gql_client_flexible.user)
+    booking_some = BookingFactory(user=gql_client.user)
     TicketFactory(booking=booking_some, checked_in=True)
     TicketFactory(booking=booking_some)
 
     # All checked in
-    booking_all = BookingFactory(user=gql_client_flexible.user)
+    booking_all = BookingFactory(user=gql_client.user)
     TicketFactory(booking=booking_all, checked_in=True)
     TicketFactory(booking=booking_all, checked_in=True)
 
@@ -743,8 +739,8 @@ def test_booking_order_checked_in(gql_client_flexible):
         """
 
     # Ask for nothing and check you get nothing
-    desc_response = gql_client_flexible.execute(request % "checkedIn")
-    asec_response = gql_client_flexible.execute(request % "-checkedIn")
+    desc_response = gql_client.execute(request % "checkedIn")
+    asec_response = gql_client.execute(request % "-checkedIn")
 
     desc_response_list = [
         booking["node"]["reference"]
@@ -760,27 +756,25 @@ def test_booking_order_checked_in(gql_client_flexible):
 
 
 @pytest.mark.django_db
-def test_booking_order_start(gql_client_flexible):
+def test_booking_order_start(gql_client):
 
     now = timezone.now()
 
     # First
     performance_soonest = PerformanceFactory(start=now + datetime.timedelta(days=2))
     booking_soonest = BookingFactory(
-        user=gql_client_flexible.user, performance=performance_soonest
+        user=gql_client.login().user, performance=performance_soonest
     )
 
     # Second
     performance_middle = PerformanceFactory(start=now + datetime.timedelta(days=6))
     booking_middle = BookingFactory(
-        user=gql_client_flexible.user, performance=performance_middle
+        user=gql_client.user, performance=performance_middle
     )
 
     # Last
     performance_last = PerformanceFactory(start=now + datetime.timedelta(days=24))
-    booking_last = BookingFactory(
-        user=gql_client_flexible.user, performance=performance_last
-    )
+    booking_last = BookingFactory(user=gql_client.user, performance=performance_last)
 
     desc_expected_list = [
         booking_soonest.reference,
@@ -806,8 +800,8 @@ def test_booking_order_start(gql_client_flexible):
         """
 
     # Ask for nothing and check you get nothing
-    desc_response = gql_client_flexible.execute(request % "start")
-    asec_response = gql_client_flexible.execute(request % "-start")
+    desc_response = gql_client.execute(request % "start")
+    asec_response = gql_client.execute(request % "-start")
 
     desc_response_list = [
         booking["node"]["reference"]

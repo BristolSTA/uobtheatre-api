@@ -8,15 +8,14 @@ from uobtheatre.utils.schema import IdInputField
 
 
 @pytest.mark.django_db
-def test_id_input_field_wrong_thing(gql_client, gql_id):
+def test_id_input_field_wrong_thing():
     assert IdInputField.parse_literal(1.2) is None
 
 
 @pytest.mark.django_db
-def test_auth_required_mixin(gql_client_flexible, gql_id):
+def test_auth_required_mixin(gql_client, gql_id):
     booking = BookingFactory()
-    client = gql_client_flexible
-    client.logout()
+    client = gql_client
 
     request_query = """
     mutation {
@@ -54,9 +53,9 @@ def test_auth_required_mixin(gql_client_flexible, gql_id):
 
 
 @pytest.mark.django_db
-def test_id_input_field_parse_value(gql_client_flexible):
+def test_id_input_field_parse_value(gql_client):
     performance = PerformanceFactory()
-    response = gql_client_flexible.execute(
+    gql_client.login().execute(
         """
         mutation($id: IdInputField!) {
           createBooking(

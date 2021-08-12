@@ -6,6 +6,7 @@ from autoslug import AutoSlugField
 from django.db import models
 from django.db.models import Max, Min, Sum
 from django.db.models.query import QuerySet
+from django.db.models.query_utils import Q
 from django.utils import timezone
 from guardian.shortcuts import get_objects_for_user
 
@@ -68,6 +69,24 @@ class ProductionQuerySet(QuerySet):
         """Annotate end datetime to queryset"""
         return self.annotate(end=Max("performances__end"))
 
+    def user_can_see(self, user: "User"):
+        """Filter productions which the user can see
+
+        Returns the productions which the provided user has permission to see.
+
+        Args:
+            user (User): The user which is used in the filter.
+
+        Returns:
+            QuerySet: The filtered queryset
+        """
+        productions_user_can_edit = get_objects_for_user(
+            user, "productions.edit"
+        ).values_list("id", flat=True)
+        return self.filter(
+            ~Q(status=Production.Status.DRAFT) | Q(id__in=productions_user_can_edit)
+        )
+
 
 class Production(TimeStampedMixin, models.Model):
     """The model for a production.
@@ -106,6 +125,28 @@ class Production(TimeStampedMixin, models.Model):
         related_name="production_featured_images",
         null=True,
         blank=True,
+    )
+
+    class Status(models.TextChoices):
+        """The overall status of the production"""
+
+        DRAFT = "DRAFT", "Draft"  # Production is in draft
+        PENDING = "PENDING", "Pending"  # Produciton is pending publication/review
+        PUBLISHED = (
+            "PUBLISHED",
+            "Published",
+        )  # Production is public
+        CLOSED = (
+            "CLOSED",
+            "Closed",
+        )  # Production has been closed after it's run. No edits allowed.
+        COMPLETE = (
+            "COMPLETE",
+            "Complete",
+        )  # Production has been closed and paid for/transactions settled
+
+    status = models.CharField(
+        max_length=10, choices=Status.choices, default=Status.DRAFT
     )
 
     age_rating = models.SmallIntegerField(null=True, blank=True)
@@ -371,7 +412,7 @@ class Performance(TimeStampedMixin, models.Model):
         """Get all checked in tickets
 
         Returns:
-            queryset(Tickets): all tickets for this perfromance which have been checked in.
+            queryset(Tickets): all tickets for this performance which have been checked in.
         """
         return self.tickets.filter(checked_in=True)
 
@@ -380,7 +421,7 @@ class Performance(TimeStampedMixin, models.Model):
         """Get all unchecked in tickets
 
         Returns:
-            queryset(Tickets): all tickets for this perfromance which have not been checked in.
+            queryset(Tickets): all tickets for this performance which have not been checked in.
         """
         return self.tickets.filter(checked_in=False)
 
@@ -646,21 +687,21 @@ class Performance(TimeStampedMixin, models.Model):
             seat_group_counts[seat_group] = (seat_group_count or 0) - 1
 
         # Check each seat group is in the performance
-        seat_groups_not_in_perfromance: List[str] = [
+        seat_groups_not_in_performance: List[str] = [
             seat_group.name
             for seat_group in seat_group_counts.keys()  # pylint: disable=consider-iterating-dictionary
             if seat_group not in self.seat_groups.all()
         ]
 
         # If any of the seat_groups are not assigned to this performance then throw an error
-        if len(seat_groups_not_in_perfromance) != 0:
-            seat_groups_not_in_perfromance_str = ", ".join(
-                seat_groups_not_in_perfromance
+        if len(seat_groups_not_in_performance) != 0:
+            seat_groups_not_in_performance_str = ", ".join(
+                seat_groups_not_in_performance
             )
             performance_seat_groups_str = ", ".join(
                 [seat_group.name for seat_group in self.seat_groups.all()]
             )
-            return f"You cannot book a seat group that is not assigned to this performance, you have booked {seat_groups_not_in_perfromance_str} but the performance only has {performance_seat_groups_str}"
+            return f"You cannot book a seat group that is not assigned to this performance, you have booked {seat_groups_not_in_performance_str} but the performance only has {performance_seat_groups_str}"
 
         # Check that each seat group has enough capacity
         for seat_group, number_booked in seat_group_counts.items():

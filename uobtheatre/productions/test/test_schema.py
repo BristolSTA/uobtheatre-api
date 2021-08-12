@@ -15,7 +15,7 @@ from uobtheatre.discounts.test.factories import (
     DiscountFactory,
     DiscountRequirementFactory,
 )
-from uobtheatre.productions.models import Performance
+from uobtheatre.productions.models import Performance, Production
 from uobtheatre.productions.test.factories import (
     AudienceWarningFactory,
     CastMemberFactory,
@@ -816,12 +816,64 @@ def test_production_filters(filter_name, value_days, expected_outputs, gql_clien
 
 
 @pytest.mark.django_db
-def test_perfromance_run_on(gql_client):
+@pytest.mark.parametrize(
+    "logged_in",
+    [(True), (False)],
+)
+def test_draft_productions_not_shown_publically(logged_in, gql_client):
+    _ = [ProductionFactory() for _ in range(3)]
+    draft_production = ProductionFactory(status=Production.Status.DRAFT)
+
+    request = """
+        {
+          productions {
+            edges {
+              node {
+                id
+              }
+            }
+          }
+        }
+        """
+    if logged_in:
+        gql_client.login()
+    response = gql_client.execute(request)
+
+    assert len(response["data"]["productions"]["edges"]) == 3
+    assert draft_production.id not in [
+        edge["node"]["id"] for edge in response["data"]["productions"]["edges"]
+    ]
+
+
+@pytest.mark.django_db
+def test_draft_production_shown_with_permission(gql_client):
+    _ = [ProductionFactory() for _ in range(3)]
+    draft_production = ProductionFactory(status=Production.Status.DRAFT)
+    assign_perm("production.edit", gql_client.login().user, draft_production)
+
+    request = """
+        {
+          productions {
+            edges {
+              node {
+                id
+              }
+            }
+          }
+        }
+        """
+    response = gql_client.execute(request)
+
+    assert len(response["data"]["productions"]["edges"]) == 4
+
+
+@pytest.mark.django_db
+def test_performance_run_on(gql_client):
     query_date = datetime.date(year=2000, month=6, day=20)
     _ = [
         PerformanceFactory(
-            start=query_date + datetime.timedelta(days=i),
-            end=query_date + datetime.timedelta(days=i, hours=2),
+            start=query_date + timezone.timedelta(days=i),
+            end=query_date + timezone.timedelta(days=i, hours=2),
         )
         for i in range(-2, 2)
     ]
@@ -840,7 +892,7 @@ def test_perfromance_run_on(gql_client):
         """
 
     # Ask for nothing and check you get nothing
-    response = gql_client.execute(request % query_date.isoformat())
+    response = gql_client.execute(request % query_date)
     assert response["data"]["performances"]["edges"] == [
         {"node": {"start": perm.start.isoformat()}}
         for perm in Performance.objects.running_on(query_date)
@@ -848,10 +900,10 @@ def test_perfromance_run_on(gql_client):
 
 
 @pytest.mark.django_db
-def test_perfromance_has_permission(gql_client_flexible):
+def test_performance_has_permission(gql_client):
     performances = [PerformanceFactory() for _ in range(3)]
 
-    assign_perm("boxoffice", gql_client_flexible.user, performances[0].production)
+    assign_perm("boxoffice", gql_client.user, performances[0].production)
 
     # Check we get 6 of the upcoming productions back in the right order
     request = """
@@ -867,13 +919,13 @@ def test_perfromance_has_permission(gql_client_flexible):
         """
 
     # Ask for nothing and check you get nothing
-    response = gql_client_flexible.execute(request % "true")
+    response = gql_client.execute(request % "true")
     assert response["data"]["performances"]["edges"] == [
         {"node": {"id": to_global_id("PerformanceNode", perm.id)}}
         for perm in performances[:1]
     ]
 
-    response = gql_client_flexible.execute(request % "false")
+    response = gql_client.execute(request % "false")
     assert response["data"]["performances"]["edges"] == [
         {"node": {"id": to_global_id("PerformanceNode", perm.id)}}
         for perm in performances[1:]

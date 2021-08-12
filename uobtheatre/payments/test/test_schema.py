@@ -5,11 +5,11 @@ from uobtheatre.payments.test.factories import PaymentFactory
 
 
 @pytest.mark.django_db
-def test_payment_schema(gql_client_flexible, gql_id):
-    booking = BookingFactory(user=gql_client_flexible.user)
+def test_payment_schema(gql_client, gql_id):
+    booking = BookingFactory(user=gql_client.login().user)
     payment = PaymentFactory(pay_object=booking)
 
-    response = gql_client_flexible.execute(
+    response = gql_client.execute(
         """
         {
           me {
