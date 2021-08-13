@@ -209,5 +209,83 @@ def test_square_pos_list_devices_failure(mock_square):
             SquarePOS.list_devices()
 
 
+@pytest.mark.parametrize(
+    "body, signature, signature_key, valid",
+    [
+        (
+            {
+                "merchant_id": "ML8M1AQ1GQG2K",
+                "type": "terminal.checkout.updated",
+                "event_id": "d395e3d0-1c5c-4372-bdf2-6955b8f44166",
+                "created_at": "2021-08-13T13:45:52.789468835Z",
+                "data": {
+                    "type": "checkout.event",
+                    "id": "dhgENdnFOPXqO",
+                    "object": {
+                        "checkout": {
+                            "amount_money": {"amount": 111, "currency": "USD"},
+                            "app_id": "sq0idp-734Md5EcFjFmwpaR0Snm6g",
+                            "created_at": "2020-04-10T14:43:55.262Z",
+                            "deadline_duration": "PT5M",
+                            "device_options": {
+                                "device_id": "907CS13101300122",
+                                "skip_receipt_screen": False,
+                                "tip_settings": {"allow_tipping": False},
+                            },
+                            "id": "dhgENdnFOPXqO",
+                            "note": "A simple note",
+                            "payment_ids": ["dgzrZTeIeVuOGwYgekoTHsPouaB"],
+                            "reference_id": "id72709",
+                            "status": "COMPLETED",
+                            "updated_at": "2020-04-10T14:44:06.039Z",
+                        }
+                    },
+                },
+            },
+            "xoa9/2fAXamuULrlhV1HP7C4ai4=",
+            "Hd_mmQkhER3EPkpRpNQh9Q",
+            True,
+        ),
+        (
+            {
+                "merchant_id": "ML8M1AQ1GQG2K",
+                "type": "terminal.checkout.updated",
+                "event_id": "d395e3d0-1c5c-4372-bdf2-6955b8f44166",
+                "created_at": "2021-08-13T13:45:52.789468835Z",
+                "data": {
+                    "type": "checkout.event",
+                    "id": "dhgENdnFOPXqO",
+                    "object": {
+                        "checkout": {
+                            "amount_money": {"amount": 111, "currency": "USD"},
+                            "app_id": "sq0idp-734Md5EcFjFmwpaR0Snm6g",
+                            "created_at": "2020-04-10T14:43:55.262Z",
+                            "deadline_duration": "PT5M",
+                            "device_options": {
+                                "device_id": "907CS13101300122",
+                                "skip_receipt_screen": False,
+                                "tip_settings": {"allow_tipping": False},
+                            },
+                            "id": "dhgENdnFOPXqO",
+                            "note": "A simple note",
+                            "payment_ids": ["dgzrZTeIeVuOGwYgekoTHsPouaB"],
+                            "reference_id": "id72709",
+                            "status": "NOTCOMPLETED",
+                            "updated_at": "2020-04-10T14:44:06.039Z",
+                        }
+                    },
+                },
+            },
+            "xoa9/2fAXamuULrlhV1HP7C4ai4=",
+            "Hd_mmQkhER3EPkpRpNQh9Q",
+            False,
+        ),
+    ],
+)
+def test_is_valid_callback(body, signature, signature_key, valid):
+    SquarePOS.webhook_signature_key = signature_key
+    assert SquarePOS.is_valid_callback(body, signature) == valid
+
+
 # TODO
 # @pytest.mark.square_integration

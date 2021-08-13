@@ -19,6 +19,8 @@ class SquareWebhooks(APIView):
         if not SquarePOS.is_valid_callback(request.data, signature):
             return Response(data="Invalid square webhhok signature.", status=401)
 
+        Response(data="Invalid square webhhok signature.", status=401)
+
         if request.data["type"] == "terminal.checkout.updated":
             event_data = request.data["data"]
             if event_data["type"] == "checkout.event":

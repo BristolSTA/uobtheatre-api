@@ -1,4 +1,5 @@
 import abc
+import base64
 import hmac
 import json
 import re
@@ -7,7 +8,7 @@ from typing import TYPE_CHECKING, Optional, Type
 
 from square.client import Client
 
-from config.settings.common import BASE_URL, SQUARE_SETTINGS
+from config.settings.common import SQUARE_SETTINGS
 from uobtheatre.payments import models as payment_models
 from uobtheatre.utils.exceptions import (
     GQLExceptions,
@@ -106,14 +107,14 @@ class SquarePOS(PaymentMethod):
         access_token=SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],
         environment=SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],
     )
+    webhook_signature_key = SQUARE_SETTINGS["SQUARE_WEBHOOK_SIGNATURE_KEY"]
 
     def __init__(self, device_id: str) -> None:
         self.device_id = device_id
         super().__init__()
 
     def pay(self, value: int, pay_object: "Payable") -> None:
-        """
-        Send payment to point of sale device.
+        """Send payment to point of sale device.
 
         Parameters:
             value (int): Amount of money being payed
@@ -140,32 +141,50 @@ class SquarePOS(PaymentMethod):
             raise SquareException(response)
 
     @classmethod
-    def handle_checkout_event(cls, event_data: dict, pay_object: "Payable"):
-        """
-        Handle checkout event for terminal api.
+    def handle_webhook(cls, data: dict, signature: str):
+        """Handle checkout event for terminal api.
 
         Args:
-            event_data (dict): The data provided in the webhook event
-            pay_object (Payable): The object the event is related to
+            data (dict): The data provided in the webhook event
+            signature (str): The signature of the requeset
 
-        Returns:
-            Payment: The payment if created (optional)
+        Raises:
+            ValueError: If the signature is invalid
         """
         # TODO: Check payment is completed
-        if event_data["type"] == "checkout.event":
-            checkout = event_data["object"]["checkout"]
-            return cls.create_payment_object(
-                pay_object,
-                checkout["amount_money"]["amount"],
+        if not cls.is_valid_callback(data, signature):
+            raise ValueError("Invalid signature")
+
+        webhook_type = data["type"]
+        if webhook_type == "terminal.checkout.updated":
+            cls.handle_terminal_checkout_updated_webhook(data["data"])
+
+    @classmethod
+    def handle_terminal_checkout_updated_webhook(cls, data: dict):
+        """Handle a terminal checkout update event
+
+        Function to handle a square webhook containing terminal checkout
+        udpate. If the status of the checkout is completed the booking can be
+        completed and a payment object can be created.
+        """
+
+        from uobtheatre.bookings.models import Booking
+
+        checkout = data["object"]["checkout"]
+        booking = Booking.objects.get(reference=checkout["reference_id"])
+
+        if checkout["status"] == "COMPLETED":
+            cls.create_payment_object(
+                booking,
+                data["amount_money"]["amount"],
                 provider_payment_id=checkout["payment_ids"][0],
                 currency=checkout["amount_money"]["currency"],
             )
-        return None
+            booking.complete()
 
     @classmethod
     def list_devices(cls) -> list[dict]:
-        """
-        List the device codes available on square.
+        """List the device codes available on square.
 
         Returns:
             list of dict: A list of dictionaries which store the device code
@@ -225,26 +244,29 @@ class SquarePOS(PaymentMethod):
                 from square
         """
 
-        # Combine your webhook notification URL and the JSON body of the incoming request into a single string
-        square_path = f"{BASE_URL}/{SQUARE_SETTINGS['PATH']}"
-        string_to_sign = (square_path + json.dumps(callback_body)).encode("utf-8")
-
-        # Generate the HMAC-SHA1 signature of the string, signed with your webhook signature key
-        string_signature = (
-            hmac.new(
-                key=SQUARE_SETTINGS["SQUARE_WEBHOOK_SIGNATURE_KEY"].encode("utf-8"),
-                msg=string_to_sign,
-                digestmod="sha1",
-            )
-            .digest()
-            .encode("base64")
+        # Combine your webhook notification URL and the JSON body of the
+        # incoming request into a single string
+        notification_url = "https://webhook.site/5bca8c49-e6f0-40ed-9415-4035bc05b48d"
+        clean_request = json.dumps(callback_body, separators=(",", ":"))
+        url_request_bytes = notification_url.encode("utf-8") + clean_request.encode(
+            "utf-8"
         )
 
-        # Remove the trailing newline from the generated signature (this is a quirk of the Python library)
-        string_signature = string_signature.rstrip("\n")
+        # Generate the HMAC-SHA1 signature of the string, signed with the
+        # webhook signature key
+        hmac_code = hmac.new(
+            key=cls.webhook_signature_key.encode("utf-8"),
+            msg=None,
+            digestmod="sha1",
+        )
+        hmac_code.update(url_request_bytes)
+        generated_hash = hmac_code.digest()
 
-        # Compare your generated signature with the signature included in the request
-        return hmac.compare_digest(string_signature, callback_signature)
+        # Compare the generated signature with the signature included in the
+        # request
+        return hmac.compare_digest(
+            base64.b64encode(generated_hash), callback_signature.encode("utf-8")
+        )
 
 
 class SquareOnline(PaymentMethod):

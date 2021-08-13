@@ -87,7 +87,11 @@ class GQLFieldException(MutationException):
         self.field = field
 
     def resolve(self) -> List[Union[FieldError, NonFieldError]]:
-        return [FieldError(message=self.message, code=self.code, field=to_camel_case(self.field))]
+        return [
+            FieldError(
+                message=self.message, code=self.code, field=to_camel_case(self.field)
+            )
+        ]
 
 
 class GQLNonFieldException(MutationException):

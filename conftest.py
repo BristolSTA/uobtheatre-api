@@ -1,4 +1,3 @@
-import base64
 from typing import TYPE_CHECKING, Optional
 from unittest.mock import patch
 
@@ -8,7 +7,7 @@ from django.test import RequestFactory
 from graphene.test import Client as GQLClient
 from pytest_factoryboy import register
 
-from uobtheatre.schema import schema
+from uobtheatre.schema import schema as app_schema
 from uobtheatre.users.test.factories import UserFactory
 
 if TYPE_CHECKING:
@@ -17,9 +16,9 @@ if TYPE_CHECKING:
 register(UserFactory)  # fixture is user_factory
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def gql_client():
-    return GQLClient(schema)
+    return AuthenticateableGQLClient(app_schema)
 
 
 class AuthenticateableGQLClient(GQLClient):
@@ -29,7 +28,7 @@ class AuthenticateableGQLClient(GQLClient):
 
     def __init__(self, schema, format_error=None, user=None, **execute_options):
         self.request_factory = RequestFactory().get("/")
-        self.request_factory.user = user
+        self.request_factory.user = user if user else AnonymousUser()
         super().__init__(schema, format_error, **execute_options)
 
     @property
@@ -42,6 +41,10 @@ class AuthenticateableGQLClient(GQLClient):
             self.logout()
         self.request_factory.user = new_user
 
+    def login(self, user=None):
+        self.user = user if user else UserFactory()
+        return self
+
     def logout(self):
         self.request_factory.user = AnonymousUser()
 
@@ -52,20 +55,16 @@ class AuthenticateableGQLClient(GQLClient):
 
 
 @pytest.fixture
-def gql_client_flexible():
-    return AuthenticateableGQLClient(schema, user=UserFactory())
-
-
-@pytest.fixture
-def gql_id():
-    return lambda id, node: base64.b64encode(f"{node}:{id}".encode("ascii")).decode(
-        "utf-8"
-    )
-
-
-@pytest.fixture
 def mock_square():
+    """
+    Used to mock the square clinet
+    """
+
     class MockApiResponse:
+        """
+        Mock of the square API Response CLass
+        """
+
         def __init__(
             self, reason_phrase="Some phrase", status_code=400, success=False, body=None
         ):
@@ -77,7 +76,7 @@ def mock_square():
         def is_success(self):
             return self.success
 
-    def mock_client(
+    def mock_client(  # pylint: disable=too-many-arguments
         square_client_api,
         method: str,
         body: Optional[dict] = None,
@@ -85,6 +84,9 @@ def mock_square():
         reason_phrase: Optional[str] = None,
         status_code: Optional[int] = None,
     ):
+        """
+        Mock a provided square client object
+        """
         return patch.object(
             square_client_api,
             method,

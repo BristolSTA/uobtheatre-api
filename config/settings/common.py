@@ -51,12 +51,11 @@ INSTALLED_APPS = (
 MIDDLEWARE = (
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
-    "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
-    "django.contrib.messages.middleware.MessageMiddleware",
-    "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
 )
 
@@ -252,6 +251,9 @@ GRAPHQL_AUTH = {
     },
     "REGISTER_MUTATION_FIELDS": ["email", "first_name", "last_name"],
     "REGISTER_MUTATION_FIELDS_OPTIONAL": [],
+    "ALLOW_LOGIN_NOT_VERIFIED": False,
+    "ACTIVATION_PATH_ON_EMAIL": "user/email-verify",
+    "EMAIL_TEMPLATE_ACTIVATION": "emails/activation_email.html",
 }
 
 

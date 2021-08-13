@@ -4,8 +4,8 @@ from django.db import models
 class Address(models.Model):
     """The model for an address"""
 
-    building_name = models.CharField(max_length=255, null=True)
-    building_number = models.CharField(max_length=10, null=True)
+    building_name = models.CharField(max_length=255, blank=True, null=True)
+    building_number = models.CharField(max_length=10, blank=True, null=True)
     street = models.CharField(max_length=255)
     city = models.CharField(max_length=255)
     postcode = models.CharField(max_length=9)

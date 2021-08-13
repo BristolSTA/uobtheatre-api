@@ -1,15 +1,16 @@
 import pytest
+from graphql_relay.node.node import to_global_id
 
 from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.payments.test.factories import PaymentFactory
 
 
 @pytest.mark.django_db
-def test_payment_schema(gql_client_flexible, gql_id):
-    booking = BookingFactory(user=gql_client_flexible.user)
+def test_payment_schema(gql_client):
+    booking = BookingFactory(user=gql_client.login().user)
     payment = PaymentFactory(pay_object=booking)
 
-    response = gql_client_flexible.execute(
+    response = gql_client.execute(
         """
         {
           me {
@@ -67,7 +68,9 @@ def test_payment_schema(gql_client_flexible, gql_id):
                                     "edges": [
                                         {
                                             "node": {
-                                                "id": gql_id(payment.id, "PaymentNode"),
+                                                "id": to_global_id(
+                                                    "PaymentNode", payment.id
+                                                ),
                                                 "createdAt": payment.created_at.isoformat(),
                                                 "updatedAt": payment.updated_at.isoformat(),
                                                 "type": {
@@ -87,9 +90,9 @@ def test_payment_schema(gql_client_flexible, gql_id):
                                                 "last4": payment.last_4,
                                                 "url": payment.url(),
                                                 "payObject": {
-                                                    "id": gql_id(
-                                                        payment.pay_object.id,
+                                                    "id": to_global_id(
                                                         "BookingNode",
+                                                        payment.pay_object.id,
                                                     ),
                                                     "status": {
                                                         "value": str(
@@ -108,36 +111,4 @@ def test_payment_schema(gql_client_flexible, gql_id):
                 }
             }
         }
-    }
-
-
-def test_square_webhook_terminal_checkout_updated():
-    body = {
-        "merchant_id": "ML8M1AQ1GQG2K",
-        "type": "terminal.checkout.updated",
-        "event_id": "f958651d-def0-4ef6-bb75-3d82c3bdf9e7",
-        "created_at": "2021-08-01T09:36:44.547787606Z",
-        "data": {
-            "type": "checkout.event",
-            "id": "dhgENdnFOPXqO",
-            "object": {
-                "checkout": {
-                    "amount_money": {"amount": 111, "currency": "USD"},
-                    "app_id": "sq0idp-734Md5EcFjFmwpaR0Snm6g",
-                    "created_at": "2020-04-10T14:43:55.262Z",
-                    "deadline_duration": "PT5M",
-                    "device_options": {
-                        "device_id": "907CS13101300122",
-                        "skip_receipt_screen": False,
-                        "tip_settings": {"allow_tipping": False},
-                    },
-                    "id": "dhgENdnFOPXqO",
-                    "note": "A simple note",
-                    "payment_ids": ["dgzrZTeIeVuOGwYgekoTHsPouaB"],
-                    "reference_id": "id72709",
-                    "status": "COMPLETED",
-                    "updated_at": "2020-04-10T14:44:06.039Z",
-                }
-            },
-        },
     }

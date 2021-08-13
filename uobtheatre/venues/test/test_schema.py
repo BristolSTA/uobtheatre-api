@@ -1,11 +1,12 @@
 import pytest
+from graphql_relay.node.node import to_global_id
 
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory, VenueFactory
 
 
 @pytest.mark.django_db
-def test_venues_schema(gql_client, gql_id):
+def test_venues_schema(gql_client):
     venues = [VenueFactory() for i in range(3)]
     venue_performances = [
         [PerformanceFactory(venue=venue) for i in range(10)] for venue in venues
@@ -68,12 +69,12 @@ def test_venues_schema(gql_client, gql_id):
                 "edges": [
                     {
                         "node": {
-                            "id": gql_id(venue.id, "VenueNode"),
+                            "id": to_global_id("VenueNode", venue.id),
                             "createdAt": venue.created_at.isoformat(),
                             "updatedAt": venue.updated_at.isoformat(),
                             "name": venue.name,
                             "address": {
-                                "id": gql_id(venue.address.id, "AddressNode"),
+                                "id": to_global_id("AddressNode", venue.address.id),
                             },
                             "internalCapacity": venue.internal_capacity,
                             "description": venue.description,
@@ -84,7 +85,9 @@ def test_venues_schema(gql_client, gql_id):
                                 "edges": [
                                     {
                                         "node": {
-                                            "id": gql_id(seat_group.id, "SeatGroupNode")
+                                            "id": to_global_id(
+                                                "SeatGroupNode", seat_group.id
+                                            )
                                         }
                                     }
                                     for seat_group in venue_seat_groups[index]
@@ -94,8 +97,8 @@ def test_venues_schema(gql_client, gql_id):
                                 "edges": [
                                     {
                                         "node": {
-                                            "id": gql_id(
-                                                performance.id, "PerformanceNode"
+                                            "id": to_global_id(
+                                                "PerformanceNode", performance.id
                                             )
                                         }
                                     }
@@ -106,8 +109,8 @@ def test_venues_schema(gql_client, gql_id):
                                 "edges": [
                                     {
                                         "node": {
-                                            "id": gql_id(
-                                                production.id, "ProductionNode"
+                                            "id": to_global_id(
+                                                "ProductionNode", production.id
                                             )
                                         }
                                     }
@@ -124,7 +127,7 @@ def test_venues_schema(gql_client, gql_id):
 
 
 @pytest.mark.django_db
-def test_slug_single_schema(gql_client, gql_id):
+def test_slug_single_schema(gql_client):
     venues = [VenueFactory() for i in range(2)]
 
     request = """
@@ -141,4 +144,6 @@ def test_slug_single_schema(gql_client, gql_id):
     assert response["data"] == {"venue": None}
 
     response = gql_client.execute(request % venues[0].slug)
-    assert response["data"] == {"venue": {"id": gql_id(venues[0].id, "VenueNode")}}
+    assert response["data"] == {
+        "venue": {"id": to_global_id("VenueNode", venues[0].id)}
+    }

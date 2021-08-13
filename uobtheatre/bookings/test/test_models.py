@@ -1,8 +1,10 @@
+import datetime
 import math
 
 import pytest
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
+from django.utils import timezone
 
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
 from uobtheatre.bookings.test.factories import (
@@ -19,7 +21,7 @@ from uobtheatre.discounts.test.factories import (
     DiscountRequirementFactory,
 )
 from uobtheatre.payments.models import Payment
-from uobtheatre.productions.test.factories import PerformanceFactory
+from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.utils.test_utils import ticket_dict_list_dict_gen, ticket_list_dict_gen
 from uobtheatre.venues.test.factories import SeatFactory, SeatGroupFactory, VenueFactory
@@ -403,6 +405,18 @@ def test_misc_costs_value():
     psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
     TicketFactory(booking=booking, seat_group=psg.seat_group)
     assert booking.misc_costs_value() == 320
+
+
+@pytest.mark.django_db
+def test_subtotal_with_group_discounts():
+    performance = PerformanceFactory()
+    group_discount = DiscountFactory()
+    group_discount.performances.set([performance])
+    DiscountRequirementFactory(discount=group_discount)
+    DiscountRequirementFactory(discount=group_discount)
+    booking = BookingFactory(performance=performance)
+
+    assert booking.subtotal() == booking.get_best_discount_combination_with_price()[1]
 
 
 @pytest.mark.django_db
@@ -810,3 +824,71 @@ def test_ticket_uncheck_in(initial_state, final_state):
     ticket.uncheck_in()
     assert ticket.checked_in == final_state
     assert Ticket.objects.first().checked_in == final_state
+
+
+@pytest.mark.django_db
+def test_filter_order_by_checked_in():
+    """
+    Filter by booking tickets checked in
+    Order by booking tickets checked in
+    """
+    # No tickets booking
+    booking_no_tickets = BookingFactory()
+
+    # None checked in
+    booking_none = BookingFactory()
+    TicketFactory(booking=booking_none)
+    TicketFactory(booking=booking_none)
+
+    # Some checked in
+    booking_some = BookingFactory()
+    TicketFactory(booking=booking_some, checked_in=True)
+    TicketFactory(booking=booking_some)
+
+    # All checked in
+    booking_all = BookingFactory()
+    TicketFactory(booking=booking_all, checked_in=True)
+    TicketFactory(booking=booking_all, checked_in=True)
+
+    assert {
+        (booking.reference, booking.proportion)
+        for booking in Booking.objects.annotate_checked_in_proportion()
+    } == {
+        (booking_no_tickets.reference, 0),
+        (booking_none.reference, 0),
+        (booking_some.reference, 0.5),
+        (booking_all.reference, 1),
+    }
+
+    assert set(Booking.objects.checked_in()) == {booking_all}
+    assert set(Booking.objects.checked_in(True)) == {booking_all}
+
+    assert set(Booking.objects.checked_in(False)) == {booking_none, booking_some}
+
+
+@pytest.mark.django_db
+def test_filter_by_active():
+    """
+    Filter active bookings
+        Active - performance end date is in the future
+        Not active - performance end date in the past
+    """
+
+    now = timezone.now()
+
+    production = ProductionFactory()
+
+    performance_future = PerformanceFactory(
+        production=production, end=now + datetime.timedelta(days=2)
+    )
+    performance_past = PerformanceFactory(
+        production=production, end=now + datetime.timedelta(days=-2)
+    )
+
+    booking_future = BookingFactory(performance=performance_future)
+    booking_past = BookingFactory(performance=performance_past)
+
+    assert list(Booking.objects.active()) == [booking_future]
+    assert list(Booking.objects.active(True)) == [booking_future]
+
+    assert list(Booking.objects.active(False)) == [booking_past]
