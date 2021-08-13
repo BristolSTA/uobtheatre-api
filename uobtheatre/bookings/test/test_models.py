@@ -7,6 +7,7 @@ from django.db.utils import IntegrityError
 from django.utils import timezone
 
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
+from uobtheatre.discounts.models import ConcessionType
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
     PercentageMiscCostFactory,
@@ -220,7 +221,38 @@ def test_ticket_discounted_price(
     )
 
     assert ticket.discounted_price() == discount_price
+    assert ticket.discounted_price(performance.single_discounts_map) == discount_price
 
+@pytest.mark.django_db
+def test_ticket_discount_with_discount_map():
+    performance = PerformanceFactory()
+
+    booking = BookingFactory(performance=performance)
+    performance_seat_group = PerformanceSeatingFactory(
+        performance=performance, price=1000
+    )
+    
+    concession_type_1 = ConcessionTypeFactory(name="student")
+    concession_type_2 = ConcessionTypeFactory(name="child")
+
+    ticket_1 = TicketFactory(
+        booking=booking,
+        concession_type=concession_type_1,
+        seat_group=performance_seat_group.seat_group,
+    )
+
+    ticket_2 = TicketFactory(
+        booking=booking,
+        concession_type=concession_type_2,
+        seat_group=performance_seat_group.seat_group,
+    )
+
+    single_discounts_map = {
+        concession_type_1: 0.2,
+    }
+
+    assert ticket_1.discounted_price(single_discounts_map) == 800
+    assert ticket_2.discounted_price(single_discounts_map) == 1000
 
 @pytest.mark.django_db
 def test_single_discounts_map():
@@ -228,6 +260,7 @@ def test_single_discounts_map():
 
     concession_type_1 = ConcessionTypeFactory()
     concession_type_2 = ConcessionTypeFactory()
+    concession_type_3 = ConcessionTypeFactory()
 
     concession_type_1 = ConcessionTypeFactory()
     discount_1 = DiscountFactory(name="Family")
@@ -240,8 +273,17 @@ def test_single_discounts_map():
         discount=discount_2, number=1, concession_type=concession_type_2
     )
 
+    discount_3 = DiscountFactory(name="Student")
+    DiscountRequirementFactory(
+        discount=discount_3, number=1, concession_type=concession_type_2
+    )
+    DiscountRequirementFactory(
+        discount=discount_3, number=1, concession_type=concession_type_3
+    )
+
     discount_1.performances.set([performance])
     discount_2.performances.set([performance])
+    discount_3.performances.set([performance])
 
     booking = BookingFactory(performance=performance)
 
