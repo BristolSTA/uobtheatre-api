@@ -6,6 +6,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory
 from graphene.test import Client as GQLClient
 from pytest_factoryboy import register
+from rest_framework.test import APIClient
 
 from uobtheatre.schema import schema as app_schema
 from uobtheatre.users.test.factories import UserFactory
@@ -19,6 +20,11 @@ register(UserFactory)  # fixture is user_factory
 @pytest.fixture
 def gql_client():
     return AuthenticateableGQLClient(app_schema)
+
+
+@pytest.fixture
+def rest_client():
+    return APIClient()
 
 
 class AuthenticateableGQLClient(GQLClient):

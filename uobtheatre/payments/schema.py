@@ -21,10 +21,17 @@ class PayObjectUnion(graphene.Union):
 
 
 class SquarePaymentDevice(graphene.ObjectType):
+    """
+    Graphql object for square device
+    """
+
     id = graphene.String()
     name = graphene.String()
     code = graphene.String()
     device_id = graphene.String()
+    location_id = graphene.String()
+    product_type = graphene.String()
+    status = graphene.String()
 
 
 class PaymentNode(GrapheneEnumMixin, DjangoObjectType):
@@ -50,7 +57,10 @@ class Query(graphene.ObjectType):
                 id=device["id"],
                 name=device["name"],
                 code=device["code"],
-                device_id=device["device_id"],
+                status=device["status"],
+                product_type=device["product_type"],
+                location_id=device["location_id"],
+                device_id=device.get("device_id"),
             )
             for device in SquarePOS.list_devices()
         ]

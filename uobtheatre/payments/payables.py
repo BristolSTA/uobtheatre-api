@@ -10,4 +10,4 @@ class Payable(metaclass=AbstractModelMeta):
 
     @abc.abstractproperty
     def payment_reference_id(self):
-        pass
+        raise NotImplementedError

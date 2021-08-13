@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Optional, Type
 
 from square.client import Client
 
-from config.settings.common import SQUARE_SETTINGS
+from config.settings.common import BASE_URL, SQUARE_SETTINGS
 from uobtheatre.payments import models as payment_models
 from uobtheatre.utils.exceptions import (
     GQLExceptions,
@@ -56,11 +56,11 @@ class PaymentMethod(abc.ABC):
     def pay(
         self, value: int, pay_object: "Payable"
     ) -> Optional["payment_models.Payment"]:
-        pass
+        raise NotImplementedError
 
     @abc.abstractproperty
     def description(self):
-        pass
+        raise NotImplementedError
 
     @classmethod
     def create_payment_object(cls, pay_object: "Payable", value: int, **kwargs):
@@ -108,6 +108,7 @@ class SquarePOS(PaymentMethod):
         environment=SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],
     )
     webhook_signature_key = SQUARE_SETTINGS["SQUARE_WEBHOOK_SIGNATURE_KEY"]
+    webhook_url = f"{BASE_URL}/{SQUARE_SETTINGS['PATH']}"
 
     def __init__(self, device_id: str) -> None:
         self.device_id = device_id
@@ -151,12 +152,10 @@ class SquarePOS(PaymentMethod):
         Raises:
             ValueError: If the signature is invalid
         """
-        # TODO: Check payment is completed
         if not cls.is_valid_callback(data, signature):
             raise ValueError("Invalid signature")
 
-        webhook_type = data["type"]
-        if webhook_type == "terminal.checkout.updated":
+        if data["type"] == "terminal.checkout.updated":
             cls.handle_terminal_checkout_updated_webhook(data["data"])
 
     @classmethod
@@ -176,7 +175,7 @@ class SquarePOS(PaymentMethod):
         if checkout["status"] == "COMPLETED":
             cls.create_payment_object(
                 booking,
-                data["amount_money"]["amount"],
+                checkout["amount_money"]["amount"],
                 provider_payment_id=checkout["payment_ids"][0],
                 currency=checkout["amount_money"]["currency"],
             )
@@ -246,10 +245,13 @@ class SquarePOS(PaymentMethod):
 
         # Combine your webhook notification URL and the JSON body of the
         # incoming request into a single string
-        notification_url = "https://webhook.site/5bca8c49-e6f0-40ed-9415-4035bc05b48d"
         clean_request = json.dumps(callback_body, separators=(",", ":"))
-        url_request_bytes = notification_url.encode("utf-8") + clean_request.encode(
+        url_request_bytes = cls.webhook_url.encode("utf-8") + clean_request.encode(
             "utf-8"
+        )
+
+        print(
+            f"CHECKING: {cls.webhook_url}, {cls.webhook_signature_key}, {callback_signature}"
         )
 
         # Generate the HMAC-SHA1 signature of the string, signed with the

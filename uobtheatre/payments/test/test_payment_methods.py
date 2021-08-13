@@ -1,5 +1,8 @@
+from unittest.mock import PropertyMock, patch
+
 import pytest
 
+from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.payments.models import Payment
 from uobtheatre.payments.payment_methods import (
@@ -210,7 +213,7 @@ def test_square_pos_list_devices_failure(mock_square):
 
 
 @pytest.mark.parametrize(
-    "body, signature, signature_key, valid",
+    "body, signature, signature_key, webhook_url, valid",
     [
         (
             {
@@ -244,6 +247,7 @@ def test_square_pos_list_devices_failure(mock_square):
             },
             "xoa9/2fAXamuULrlhV1HP7C4ai4=",
             "Hd_mmQkhER3EPkpRpNQh9Q",
+            "https://webhook.site/5bca8c49-e6f0-40ed-9415-4035bc05b48d",
             True,
         ),
         (
@@ -278,13 +282,106 @@ def test_square_pos_list_devices_failure(mock_square):
             },
             "xoa9/2fAXamuULrlhV1HP7C4ai4=",
             "Hd_mmQkhER3EPkpRpNQh9Q",
+            "https://webhook.site/5bca8c49-e6f0-40ed-9415-4035bc05b48d",
             False,
         ),
     ],
 )
-def test_is_valid_callback(body, signature, signature_key, valid):
-    SquarePOS.webhook_signature_key = signature_key
-    assert SquarePOS.is_valid_callback(body, signature) == valid
+def test_is_valid_callback(body, signature, signature_key, webhook_url, valid):
+    with patch.object(
+        SquarePOS, "webhook_signature_key", new_callable=PropertyMock
+    ) as key_mock, patch.object(
+        SquarePOS, "webhook_url", new_callable=PropertyMock
+    ) as url_mock:
+        key_mock.return_value = signature_key
+        url_mock.return_value = webhook_url
+        assert SquarePOS.is_valid_callback(body, signature) == valid
+
+
+@pytest.mark.django_db
+def test_handle_terminal_checkout_updated_webhook_completed():
+    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    data = {
+        "object": {
+            "checkout": {
+                "amount_money": {"amount": 111, "currency": "USD"},
+                "reference_id": booking.payment_reference_id,
+                "payment_ids": ["dgzrZTeIeVuOGwYgekoTHsPouaB"],
+                "status": "COMPLETED",
+            }
+        },
+    }
+    SquarePOS.handle_terminal_checkout_updated_webhook(data)
+    booking.refresh_from_db()
+    assert booking.status == Booking.BookingStatus.PAID
+    assert Payment.objects.count() == 1
+
+    payment = Payment.objects.first()
+    payment.provider_payment_id = "dgzrZTeIeVuOGwYgekoTHsPouaB"
+    payment.value = 111
+    payment.currency = "USD"
+
+
+@pytest.mark.django_db
+def test_square_pos_handle_terminal_checkout_updated_webhook_not_completed():
+    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    data = {
+        "object": {
+            "checkout": {
+                "amount_money": {"amount": 111, "currency": "USD"},
+                "reference_id": booking.payment_reference_id,
+                "payment_ids": ["dgzrZTeIeVuOGwYgekoTHsPouaB"],
+                "status": "FAILED",
+            }
+        },
+    }
+    SquarePOS.handle_terminal_checkout_updated_webhook(data)
+    booking.refresh_from_db()
+    assert booking.status == Booking.BookingStatus.IN_PROGRESS
+    assert Payment.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_square_pos_handle_webhook_invalid_webhook():
+    with pytest.raises(ValueError, match="Invalid signature"), patch.object(
+        SquarePOS, "is_valid_callback"
+    ) as is_valid_callback_mock:
+        is_valid_callback_mock.return_value = False
+        SquarePOS.handle_webhook({}, signature="signature")
+
+
+def test_square_pos_handle_webhook_terminal_checkout_updated():
+    with patch.object(
+        SquarePOS, "handle_terminal_checkout_updated_webhook"
+    ) as mock, patch.object(SquarePOS, "is_valid_callback") as is_valid_callback_mock:
+        is_valid_callback_mock.return_value = True
+        SquarePOS.handle_webhook(
+            {
+                "type": "terminal.checkout.updated",
+                "data": {
+                    "type": "checkout.event",
+                    "extra": "data",
+                },
+            },
+            "signature",
+        )
+
+    mock.assert_called_once_with(
+        {
+            "type": "checkout.event",
+            "extra": "data",
+        }
+    )
+
+
+def test_square_pos_handle_webhook_other_type():
+    with patch.object(
+        SquarePOS, "handle_terminal_checkout_updated_webhook"
+    ) as mock, patch.object(SquarePOS, "is_valid_callback") as is_valid_callback_mock:
+        is_valid_callback_mock.return_value = True
+        SquarePOS.handle_webhook({"type": "other"}, "signature")
+
+    mock.assert_not_called()
 
 
 # TODO
