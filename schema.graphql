@@ -186,7 +186,7 @@ type MiscCostNode implements Node {
 type Mutation {
   createBooking(performanceId: IdInputField, targetUserEmail: String, tickets: [CreateTicketInput]): CreateBooking
   updateBooking(bookingId: IdInputField, targetUserEmail: String, tickets: [UpdateTicketInput]): UpdateBooking
-  payBooking(bookingId: IdInputField!, nonce: String, paymentProvider: PaymentProvider, price: Int!): PayBooking
+  payBooking(bookingId: IdInputField!, deviceId: String, nonce: String, paymentProvider: PaymentMethod, price: Int!): PayBooking
   checkInBooking(bookingReference: String!, performanceId: IdInputField!, tickets: [TicketIDInput]!): CheckInBooking
   uncheckInBooking(bookingReference: String!, performanceId: IdInputField!, tickets: [TicketIDInput]!): UnCheckInBooking
   register(email: String!, firstName: String!, lastName: String!, password1: String!, password2: String!): Register
@@ -260,6 +260,13 @@ type PayBooking {
 
 union PayObjectUnion = BookingNode
 
+enum PaymentMethod {
+  CASH
+  CARD
+  SQUARE_POS
+  SQUARE_ONLINE
+}
+
 type PaymentNode implements Node {
   id: ID!
   createdAt: DateTime!
@@ -283,13 +290,6 @@ type PaymentNodeConnection {
 type PaymentNodeEdge {
   node: PaymentNode
   cursor: String!
-}
-
-enum PaymentProvider {
-  CASH
-  CARD
-  SQUARE_ONLINE
-  SQUARE_POS
 }
 
 type PerformanceNode implements Node {
@@ -408,6 +408,7 @@ type ProductionTeamMemberNode implements Node {
 }
 
 type Query {
+  squareDevices: [SquarePaymentDevice]
   bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, reference: String, user: ID, creator: ID, performance: ID, status: String, adminDiscountPercentage: Float, id: ID, search: String, checkedIn: Boolean, active: Boolean, orderBy: String): BookingNodeConnection
   me: ExtendedUserNode
   user(id: ID!): UserNode
@@ -510,6 +511,16 @@ type SocietyNodeConnection {
 type SocietyNodeEdge {
   node: SocietyNode
   cursor: String!
+}
+
+type SquarePaymentDevice {
+  id: String
+  name: String
+  code: String
+  deviceId: String
+  locationId: String
+  productType: String
+  status: String
 }
 
 type SwapEmails {
