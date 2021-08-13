@@ -29,7 +29,6 @@ class Query(
 class Mutation(
     users_schema.Mutation,
     bookings_schema.Mutation,
-    payments_schema.Mutation,
     graphene.ObjectType,
 ):
     """

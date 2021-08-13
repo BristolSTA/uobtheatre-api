@@ -741,28 +741,40 @@ def test_booking_ticket_diff(existing_list, new_list, add_list, delete_list):
 
 
 @pytest.mark.django_db
-@pytest.mark.square_integration
-def test_booking_pay_integration():
+def test_booking_pay_with_payment():
     """
-    Test paying a booking with square
+    When the payment_method pay return a payment assert the booking is marked
+    as paid.
     """
-    booking = BookingFactory()
-    psg = PerformanceSeatingFactory(performance=booking.performance)
-    TicketFactory(booking=booking, seat_group=psg.seat_group)
 
-    booking.pay_online("cnon:card-nonce-ok")
+    class MockPaymentMethod:  # pylint: disable=no-method-argument
+        def pay(*_):
+            return Payment()
+
+    payment_method = MockPaymentMethod()
+    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+
+    booking.pay(payment_method)  # type: ignore
 
     assert booking.status == Booking.BookingStatus.PAID
-    # Assert a payment of the correct type is created
-    payment = booking.payments.first()
-    assert payment.pay_object == booking
-    assert payment.value == booking.total()
-    assert payment.currency == "GBP"
-    assert isinstance(payment.card_brand, str)
-    assert isinstance(payment.last_4, str) and len(payment.last_4) == 4
-    assert isinstance(payment.provider_payment_id, str)
-    assert payment.provider == Payment.PaymentProvider.SQUARE_ONLINE
-    assert payment.type, Payment.PaymentType.PURCHASE
+
+
+@pytest.mark.django_db
+def test_booking_pay_without_payment():
+    """
+    When the payment_method pay does not return a payment assert the booking is
+    not marked as paid.
+    """
+
+    class MockPaymentMethod:
+        def pay(*_):  # pylint: disable=no-method-argument
+            return None
+
+    payment_method = MockPaymentMethod()
+    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+
+    booking.pay(payment_method)  # type: ignore
+    assert booking.status != Booking.BookingStatus.PAID
 
 
 @pytest.mark.django_db

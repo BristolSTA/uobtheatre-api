@@ -59,8 +59,6 @@ class Payment(TimeStampedMixin, models.Model):
         Returns:
             string, optional: url to provider's payment reference
         """
-        if payment_methods.payment_method_is(
-            self.provider, payment_methods.SquareOnline
-        ):
+        if self.provider == payment_methods.SquareOnline.name:
             return f"https://squareupsandbox.com/dashboard/sales/transactions/{self.provider_payment_id}"
         return None

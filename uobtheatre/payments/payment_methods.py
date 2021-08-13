@@ -1,6 +1,7 @@
 import abc
 import hmac
 import json
+import re
 import uuid
 from typing import TYPE_CHECKING, Optional, Type
 
@@ -8,7 +9,11 @@ from square.client import Client
 
 from config.settings.common import BASE_URL, SQUARE_SETTINGS
 from uobtheatre.payments import models as payment_models
-from uobtheatre.utils.exceptions import SquareException
+from uobtheatre.utils.exceptions import (
+    GQLExceptions,
+    GQLFieldException,
+    SquareException,
+)
 from uobtheatre.utils.utils import classproperty
 
 if TYPE_CHECKING:
@@ -29,29 +34,22 @@ class PaymentMethod(abc.ABC):
     """
 
     __all__: list[Type["PaymentMethod"]] = []
+    name: str
 
     def __init_subclass__(cls) -> None:
+        cls.name = PaymentMethod.generate_name(cls.__name__)
         cls.__all__.append(cls)
+
+    @staticmethod
+    def generate_name(name):
+        name = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1_\2", name)
+        name = re.sub(r"([a-z\d])([A-Z])", r"\1_\2", name)
+        name = name.replace("-", "_")
+        return name.upper()
 
     @classproperty
     def choices(cls):  # pylint: disable=no-self-argument
-        return [
-            (method.__name__.upper(), method.__name__.upper()) for method in cls.__all__
-        ]
-
-    # TODO decide whether to use this pattern
-    # @classmethod
-    # def factory(cls, method_name: str, args: dict) -> "PaymentMethod":
-    #     payment_method = next(
-    #         method for method in cls.__all__ if method.name == method_name
-    #     )
-    #     init_args = payment_method.__init__.__code__.co_varnames
-    #     func_args = {arg: args.get(arg) for arg in init_args}
-    #     return payment_method(**func_args)
-
-    @property
-    def name(self):
-        return self.__class__.__name__
+        return [(method.name, method.name) for method in cls.__all__]
 
     @abc.abstractmethod
     def pay(
@@ -59,10 +57,14 @@ class PaymentMethod(abc.ABC):
     ) -> Optional["payment_models.Payment"]:
         pass
 
+    @abc.abstractproperty
+    def description(self):
+        pass
+
     @classmethod
     def create_payment_object(cls, pay_object: "Payable", value: int, **kwargs):
         return payment_models.Payment.objects.create(
-            provider=cls.__name__,
+            provider=cls.name,
             type=payment_models.Payment.PaymentType.PURCHASE,
             pay_object=pay_object,
             value=value,
@@ -71,11 +73,15 @@ class PaymentMethod(abc.ABC):
 
 
 class Cash(PaymentMethod):
+    description = "Manual cash payment"
+
     def pay(self, value: int, pay_object: "Payable") -> "payment_models.Payment":
         return self.create_payment_object(pay_object, value)
 
 
 class Card(PaymentMethod):
+    description = "Manual card payment"
+
     def pay(self, value: int, pay_object: "Payable") -> "payment_models.Payment":
         return self.create_payment_object(pay_object, value)
 
@@ -94,13 +100,14 @@ class SquarePOS(PaymentMethod):
     test command (`make test` or `make test-v`)
     """
 
+    description = "Square terminal card payment"
     client = Client(
         square_version="2020-11-18",
         access_token=SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],
         environment=SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],
     )
 
-    def __init__(self, device_id: int) -> None:
+    def __init__(self, device_id: str) -> None:
         self.device_id = device_id
         super().__init__()
 
@@ -129,7 +136,7 @@ class SquarePOS(PaymentMethod):
             },
         }
         response = self.client.terminal.create_terminal_checkout(body)
-        if not response.is_sucess():
+        if not response.is_success():
             raise SquareException(response)
 
     @classmethod
@@ -164,34 +171,40 @@ class SquarePOS(PaymentMethod):
             list of dict: A list of dictionaries which store the device code
                 info. When connection to a device the `device_id` should be
                 used.
+
+        Raises:
+            SquareException: If the square request returns an error
         """
         response = cls.client.devices.list_device_codes()
+        if not response.is_success():
+            raise SquareException(response)
         return response.body["device_codes"]
 
-    @classmethod
-    def create_device_code(cls, name: str) -> str:
-        """
-        Create device code with square api with a given device name. This code
-        can be used to connect the device to the api.
+    # TODO: Use or remove
+    # @classmethod
+    # def create_device_code(cls, name: str) -> str:
+    #     """
+    #     Create device code with square api with a given device name. This code
+    #     can be used to connect the device to the api.
 
-        Args:
-            name (str): The name to assign the device code
+    #     Args:
+    #         name (str): The name to assign the device code
 
-        Returns:
-            code (str): The device code used to connect
-        """
-        body = {
-            "idempotency_key": str(uuid.uuid4()),
-            "device_code": {
-                "name": name,
-                "product_type": "TERMINAL_API",
-                "location_id": SQUARE_SETTINGS["SQUARE_LOCATION"],
-            },
-        }
-        response = cls.client.devices.create_device_code(body)
-        if response.errors:
-            print(response.body["errors"])
-        return response.body["device_code"]["code"]
+    #     Returns:
+    #         code (str): The device code used to connect
+    #     """
+    #     body = {
+    #         "idempotency_key": str(uuid.uuid4()),
+    #         "device_code": {
+    #             "name": name,
+    #             "product_type": "TERMINAL_API",
+    #             "location_id": SQUARE_SETTINGS["SQUARE_LOCATION"],
+    #         },
+    #     }
+    #     response = cls.client.devices.create_device_code(body)
+    #     if response.errors:
+    #         print(response.body["errors"])
+    #     return response.body["device_code"]["code"]
 
     @classmethod
     def is_valid_callback(cls, callback_body: dict, callback_signature: str) -> bool:
@@ -247,6 +260,7 @@ class SquareOnline(PaymentMethod):
     test command (`make test` or `make test-v`)
     """
 
+    description = "Square online card payment"
     client = Client(
         square_version="2020-11-18",
         access_token=SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],
@@ -305,7 +319,3 @@ class SquareOnline(PaymentMethod):
             provider_payment_id=response.body["payment"]["id"],
             currency=amount_details["currency"],
         )
-
-
-def payment_method_is(payment_provider: str, payment_method: Type[PaymentMethod]):
-    return payment_provider.lower() == payment_method.__name__.lower()

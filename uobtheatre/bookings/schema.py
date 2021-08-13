@@ -18,7 +18,6 @@ from uobtheatre.payments.payment_methods import (
     PaymentMethod,
     SquareOnline,
     SquarePOS,
-    payment_method_is,
 )
 from uobtheatre.productions.models import Performance
 from uobtheatre.users.models import User
@@ -493,7 +492,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         booking_id,
         price,
         nonce=None,
-        payment_provider=SquareOnline.__name__,
+        payment_provider=SquareOnline.name,
         device_id=None,
     ):
 
@@ -501,8 +500,8 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         booking = Booking.objects.get(id=booking_id)
 
         # Only (box office) admins can create a booking for a different user
-        if not payment_method_is(
-            payment_provider, SquareOnline
+        if not (
+            payment_provider == SquareOnline.name
         ) and not info.context.user.has_perm(
             "productions.boxoffice", booking.performance.production
         ):
@@ -520,29 +519,31 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         if booking.status != Booking.BookingStatus.IN_PROGRESS:
             raise GQLNonFieldException(message="The booking is not in progress")
 
-        if payment_method_is(payment_provider, SquareOnline):
+        if payment_provider == SquareOnline.name:
             if not nonce:
                 raise GQLFieldException(
-                    message=f"A nonce is required when using {payment_provider.upper()} provider.",
+                    message=f"A nonce is required when using {payment_provider} provider.",
                     field="nonce",
-                    code=400,
+                    code="missing_required",
                 )
             payment_method = SquareOnline(nonce, booking.id)  # This needs sorting
 
-        elif payment_method_is(payment_provider, SquarePOS):
+        elif payment_provider == SquarePOS.name:
             if not device_id:
                 raise GQLFieldException(
-                    message=f"A device_id is required when using {payment_provider.upper()} provider.",
+                    message=f"A device_id is required when using {payment_provider} provider.",
                     field="device_id",
-                    code=400,
+                    code="missing_required",
                 )
             payment_method = SquarePOS(device_id)
-        elif payment_method_is(payment_provider, Cash):
+        elif payment_provider == Cash.name:
             payment_method = Cash()
-        elif payment_method_is(payment_provider, Card):
+        elif payment_provider == Card.name:
             payment_method = Card()
         else:
-            raise GQLNonFieldException(message="Unsupported payment provider.")
+            raise GQLNonFieldException(
+                message=f"Unsupported payment provider {payment_provider}."
+            )
 
         payment = booking.pay(payment_method)
         return PayBooking(booking=booking, payment=payment)
