@@ -13,7 +13,7 @@ from uobtheatre.bookings.test.factories import (
     TicketFactory,
 )
 from uobtheatre.discounts.test.factories import ConcessionTypeFactory
-from uobtheatre.payments.payment_methods import SquareOnline
+from uobtheatre.payments.payment_methods import SquareOnline, SquarePOS
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.models import User
 from uobtheatre.users.test.factories import UserFactory
@@ -1139,6 +1139,95 @@ def test_pay_booking_success(mock_square, gql_client):
                     "currency": "GBP",
                     "value": 0,
                 },
+                "success": True,
+                "errors": None,
+            }
+        }
+    }
+
+
+@pytest.mark.django_db
+def test_pay_booking_success_square_pos(mock_square, gql_client):
+    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    client = gql_client.login()
+    assign_perm("boxoffice", client.user, booking.performance.production)
+
+    request_query = """
+    mutation {
+	payBooking(
+            bookingId: "%s"
+            price: 0
+            deviceId: "abc"
+            paymentProvider: SQUARE_POS
+        ) {
+            success
+            errors {
+              __typename
+            }
+
+            booking {
+              status {
+                value
+              }
+              payments {
+                edges {
+                  node {
+                    id
+                  }
+                }
+              }
+            }
+
+            payment {
+              last4
+              cardBrand
+              provider {
+                value
+              }
+              currency
+              value
+            }
+          }
+        }
+    """
+
+    with mock_square(
+        SquarePOS.client.terminal,
+        "create_terminal_checkout",
+        body={
+            "checkout": {
+                "id": "qhpRUp4dPCfqO",
+                "amount_money": {"amount": 1000, "currency": "GBP"},
+                "device_options": {
+                    "device_id": "121CS145A5000029",
+                    "tip_settings": {"allow_tipping": False},
+                    "skip_receipt_screen": False,
+                },
+                "status": "PENDING",
+                "created_at": "2021-08-13T21:55:20.260Z",
+                "updated_at": "2021-08-13T21:55:20.260Z",
+                "app_id": "sq0idp-terKoT_PULVOpP8lAJHYQQ",
+                "deadline_duration": "PT5M",
+                "location_id": "LMHP97T10P8JV",
+                "payment_type": "CARD_PRESENT",
+            }
+        },
+        success=True,
+    ):
+        response = client.execute(
+            request_query % to_global_id("BookingNode", booking.id)
+        )
+
+    assert response == {
+        "data": {
+            "payBooking": {
+                "booking": {
+                    "status": {
+                        "value": "IN_PROGRESS",
+                    },
+                    "payments": {"edges": []},
+                },
+                "payment": None,
                 "success": True,
                 "errors": None,
             }
