@@ -253,10 +253,10 @@ def test_bookings_price_break_down(gql_client):  # pylint: disable=too-many-loca
     assert response_booking_price_break_down == {
         "ticketsPrice": booking.tickets_price(),
         "discountsValue": booking.discount_value(),
-        "subtotalPrice": booking.subtotal(),
+        "subtotalPrice": booking.subtotal,
         "miscCostsValue": int(booking.misc_costs_value()),
         "totalPrice": booking.total(),
-        "ticketsDiscountedPrice": booking.subtotal(),
+        "ticketsDiscountedPrice": booking.subtotal,
     }
 
 
