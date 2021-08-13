@@ -8,6 +8,7 @@ class Payable(metaclass=AbstractModelMeta):
     An model which can be paid for
     """
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def payment_reference_id(self):
         raise NotImplementedError

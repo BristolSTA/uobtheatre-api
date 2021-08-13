@@ -58,7 +58,8 @@ class PaymentMethod(abc.ABC):
     ) -> Optional["payment_models.Payment"]:
         raise NotImplementedError
 
-    @abc.abstractproperty
+    @property
+    @abc.abstractmethod
     def description(self):
         raise NotImplementedError
 
@@ -222,10 +223,6 @@ class SquarePOS(PaymentMethod):
         clean_request = json.dumps(callback_body, separators=(",", ":"))
         url_request_bytes = cls.webhook_url.encode("utf-8") + clean_request.encode(
             "utf-8"
-        )
-
-        print(
-            f"CHECKING: {cls.webhook_url}, {cls.webhook_signature_key}, {callback_signature}"
         )
 
         # Generate the HMAC-SHA1 signature of the string, signed with the
