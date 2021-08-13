@@ -8,6 +8,7 @@ from django.db.models import Max, Min, Sum
 from django.db.models.query import QuerySet
 from django.db.models.query_utils import Q
 from django.utils import timezone
+from django.utils.functional import cached_property
 from guardian.shortcuts import get_objects_for_user
 
 from uobtheatre.images.models import Image
@@ -519,6 +520,19 @@ class Performance(TimeStampedMixin, models.Model):
         """
         return self.end - self.start
 
+    @cached_property
+    def single_discounts_map(self) -> Dict["ConcessionType", float]:
+        """Get the discount value for each concession type
+
+        Returns:
+            dict: Map of concession types to thier single discount percentage
+
+        """
+        return {
+            discount.requirements.first().concession_type: discount.percentage
+            for discount in self.get_single_discounts()
+        }
+
     def get_single_discounts(self) -> QuerySet[Any]:
         """QuerySet for single discounts available for this Performance.
 
@@ -530,39 +544,9 @@ class Performance(TimeStampedMixin, models.Model):
             number_of_tickets_required=Sum("requirements__number")
         ).filter(number_of_tickets_required=1)
 
-    def get_concession_discount(self, concession_type) -> float:
-        """Discount value for a concession type.
-
-        Given a concession type find the single discount which applies to that
-        ConcessionType, if there is one. If there is return the percentage of
-        the discount. If no single discount for that concession type is found
-        return 0.
-
-        Args:
-            (ConcessionType): The concession type for the discount.
-
-        Returns:
-            int: The value of the single discount on the concession type.
-        """
-        from uobtheatre.discounts.models import DiscountRequirement
-
-        discount_requirement = (
-            DiscountRequirement.objects.filter(
-                discount__in=self.get_single_discounts(),
-                concession_type=concession_type,
-            )
-            .select_related("discount")
-            .first()
-        )
-
-        if not discount_requirement:
-            return 0
-
-        return discount_requirement.discount.percentage
-
     def price_with_concession(
         self,
-        concession: "ConcessionType",
+        concession_type: "ConcessionType",
         performance_seat_group: "PerformanceSeatGroup",
     ) -> int:
         """Price with single concession applied.
@@ -579,7 +563,9 @@ class Performance(TimeStampedMixin, models.Model):
             int: price in pennies once concession discount applied.
         """
         price = performance_seat_group.price if performance_seat_group else 0
-        return math.ceil((1 - self.get_concession_discount(concession)) * price)
+        return math.ceil(
+            (1 - self.single_discounts_map.get(concession_type, 0)) * price
+        )
 
     def concessions(self) -> List:
         """Available concession types for this Performance.
