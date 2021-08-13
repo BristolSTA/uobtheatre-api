@@ -147,42 +147,6 @@ def test_concessions():
 
 
 @pytest.mark.django_db
-def test_single_discounts_map():
-    performance = PerformanceFactory()
-    concession_type_1 = ConcessionTypeFactory()
-    concession_type_2 = ConcessionTypeFactory()
-    concession_type_3 = ConcessionTypeFactory()
-
-    concession_type_1 = ConcessionTypeFactory()
-    discount_1 = DiscountFactory(name="Family")
-    DiscountRequirementFactory(
-        discount=discount_1, number=1, concession_type=concession_type_1
-    )
-
-    discount_2 = DiscountFactory(name="Student")
-    DiscountRequirementFactory(
-        discount=discount_2, number=1, concession_type=concession_type_2
-    )
-
-    discount_3 = DiscountFactory(name="Student")
-    DiscountRequirementFactory(
-        discount=discount_3, number=1, concession_type=concession_type_2
-    )
-    DiscountRequirementFactory(
-        discount=discount_3, number=1, concession_type=concession_type_3
-    )
-
-    discount_1.performances.set([performance])
-    discount_2.performances.set([performance])
-    discount_3.performances.set([performance])
-
-    assert performance.single_discounts_map == {
-        concession_type_1: discount_1.percentage,
-        concession_type_2: discount_2.percentage,
-    }
-
-
-@pytest.mark.django_db
 def test_price_with_concession():
     performance = PerformanceFactory()
     concession_type = ConcessionTypeFactory()

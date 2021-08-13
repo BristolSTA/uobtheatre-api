@@ -564,7 +564,7 @@ class Ticket(models.Model):
         to only one ticket) applied.
 
         Args:
-            (single_discounts_map): ap of concession types to thier single discount percentage.
+            (single_discounts_map): ap of concession types to thier single discount percentage. (optional)
 
         Returns:
             (int): Price of the Ticket in penies with single discounts applied.
