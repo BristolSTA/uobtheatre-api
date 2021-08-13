@@ -198,32 +198,6 @@ class SquarePOS(PaymentMethod):
             raise SquareException(response)
         return response.body["device_codes"]
 
-    # TODO: Use or remove
-    # @classmethod
-    # def create_device_code(cls, name: str) -> str:
-    #     """
-    #     Create device code with square api with a given device name. This code
-    #     can be used to connect the device to the api.
-
-    #     Args:
-    #         name (str): The name to assign the device code
-
-    #     Returns:
-    #         code (str): The device code used to connect
-    #     """
-    #     body = {
-    #         "idempotency_key": str(uuid.uuid4()),
-    #         "device_code": {
-    #             "name": name,
-    #             "product_type": "TERMINAL_API",
-    #             "location_id": SQUARE_SETTINGS["SQUARE_LOCATION"],
-    #         },
-    #     }
-    #     response = cls.client.devices.create_device_code(body)
-    #     if response.errors:
-    #         print(response.body["errors"])
-    #     return response.body["device_code"]["code"]
-
     @classmethod
     def is_valid_callback(cls, callback_body: dict, callback_signature: str) -> bool:
         """

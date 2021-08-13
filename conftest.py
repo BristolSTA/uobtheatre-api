@@ -1,20 +1,14 @@
-from typing import TYPE_CHECKING, Optional
+from typing import Optional
 from unittest.mock import patch
 
 import pytest
 from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory
 from graphene.test import Client as GQLClient
-from pytest_factoryboy import register
 from rest_framework.test import APIClient
 
 from uobtheatre.schema import schema as app_schema
 from uobtheatre.users.test.factories import UserFactory
-
-if TYPE_CHECKING:
-    pass
-
-register(UserFactory)  # fixture is user_factory
 
 
 @pytest.fixture

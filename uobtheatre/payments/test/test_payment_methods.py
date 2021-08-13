@@ -382,7 +382,3 @@ def test_square_pos_handle_webhook_other_type():
         SquarePOS.handle_webhook({"type": "other"}, "signature")
 
     mock.assert_not_called()
-
-
-# TODO
-# @pytest.mark.square_integration
