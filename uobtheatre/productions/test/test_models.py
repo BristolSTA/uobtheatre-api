@@ -176,13 +176,10 @@ def test_single_discounts_map():
     discount_2.performances.set([performance])
     discount_3.performances.set([performance])
 
-
-    assert (
-        performance.single_discounts_map == {
-            concession_type_1: discount_1.percentage,
-            concession_type_2: discount_2.percentage,
-        }
-    )
+    assert performance.single_discounts_map == {
+        concession_type_1: discount_1.percentage,
+        concession_type_2: discount_2.percentage,
+    }
 
 
 @pytest.mark.django_db

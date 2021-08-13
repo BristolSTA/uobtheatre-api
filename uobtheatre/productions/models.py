@@ -8,8 +8,8 @@ from django.db.models import Max, Min, Sum
 from django.db.models.query import QuerySet
 from django.db.models.query_utils import Q
 from django.utils import timezone
-from guardian.shortcuts import get_objects_for_user
 from django.utils.functional import cached_property
+from guardian.shortcuts import get_objects_for_user
 
 from uobtheatre.images.models import Image
 from uobtheatre.societies.models import Society
@@ -521,15 +521,16 @@ class Performance(TimeStampedMixin, models.Model):
         return self.end - self.start
 
     @cached_property
-    def single_discounts_map(self) -> dict['ConcessionType',float]:
+    def single_discounts_map(self) -> Dict["ConcessionType", float]:
         """Get the discount value for each concession type
-        
+
         Returns:
             dict: Map of concession types to thier single discount percentage
-        
+
         """
         return {
-            discount.requirements.first().concession_type: discount.percentage for discount in self.get_single_discounts()  
+            discount.requirements.first().concession_type: discount.percentage
+            for discount in self.get_single_discounts()
         }
 
     def get_single_discounts(self) -> QuerySet[Any]:
@@ -562,7 +563,9 @@ class Performance(TimeStampedMixin, models.Model):
             int: price in pennies once concession discount applied.
         """
         price = performance_seat_group.price if performance_seat_group else 0
-        return math.ceil((1 - self.single_discounts_map.get(concession_type,0)) * price)
+        return math.ceil(
+            (1 - self.single_discounts_map.get(concession_type, 0)) * price
+        )
 
     def concessions(self) -> List:
         """Available concession types for this Performance.

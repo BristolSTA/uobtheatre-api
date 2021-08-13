@@ -278,15 +278,18 @@ class Booking(TimeStampedMixin, models.Model):
         Returns:
             int: Price of the Booking with single discounts.
         """
-        return sum(ticket.discounted_price(single_discounts_map=self.single_discounts_map) for ticket in self.tickets.all())
+        return sum(
+            ticket.discounted_price(single_discounts_map=self.single_discounts_map)
+            for ticket in self.tickets.all()
+        )
 
     @cached_property
-    def single_discounts_map(self) -> dict['ConcessionType',float]:
+    def single_discounts_map(self) -> Dict["ConcessionType", float]:
         """Get the discount value for each concession type from the performance model
-        
+
         Returns:
             dict: Map of concession types to thier single discount percentage
-        
+
         """
         return self.performance.single_discounts_map
 
@@ -423,7 +426,7 @@ class Booking(TimeStampedMixin, models.Model):
             (int): total price of the booking in penies
         """
         subtotal = self.subtotal
-        if subtotal == 0:
+        if subtotal == 0:  # pylint: disable=comparison-with-callable
             return 0
         return math.ceil(subtotal + self.misc_costs_value())
 
@@ -554,8 +557,7 @@ class Ticket(models.Model):
 
     checked_in = models.BooleanField(default=False)
 
-
-    def discounted_price(self,single_discounts_map=None) -> int:
+    def discounted_price(self, single_discounts_map=None) -> int:
         """Ticket price with single discounts
 
         Get the price of the ticket if only single discounts (those applying
@@ -571,12 +573,13 @@ class Ticket(models.Model):
             single_discounts_map = self.booking.single_discounts_map
 
         performance_seat_group = self.booking.performance.performance_seat_groups.get(
-                seat_group=self.seat_group
-            )
+            seat_group=self.seat_group
+        )
         price = performance_seat_group.price if performance_seat_group else 0
 
-        return math.ceil((1 - single_discounts_map.get(self.concession_type,0)) * price)
-        
+        return math.ceil(
+            (1 - single_discounts_map.get(self.concession_type, 0)) * price
+        )
 
     def seat_price(self) -> int:
         """Price of the Seat without Discounts.

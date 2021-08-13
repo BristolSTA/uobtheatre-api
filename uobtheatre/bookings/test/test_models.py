@@ -7,7 +7,6 @@ from django.db.utils import IntegrityError
 from django.utils import timezone
 
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
-from uobtheatre.discounts.models import ConcessionType
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
     PercentageMiscCostFactory,
@@ -184,6 +183,7 @@ def test_ticket_price():
 
     assert ticket.seat_price() == performance_seat_group.price
 
+
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "discount_amount, number_req, seat_group_price, discount_price",
@@ -223,6 +223,7 @@ def test_ticket_discounted_price(
     assert ticket.discounted_price() == discount_price
     assert ticket.discounted_price(performance.single_discounts_map) == discount_price
 
+
 @pytest.mark.django_db
 def test_ticket_discount_with_discount_map():
     performance = PerformanceFactory()
@@ -231,7 +232,7 @@ def test_ticket_discount_with_discount_map():
     performance_seat_group = PerformanceSeatingFactory(
         performance=performance, price=1000
     )
-    
+
     concession_type_1 = ConcessionTypeFactory(name="student")
     concession_type_2 = ConcessionTypeFactory(name="child")
 
@@ -253,6 +254,7 @@ def test_ticket_discount_with_discount_map():
 
     assert ticket_1.discounted_price(single_discounts_map) == 800
     assert ticket_2.discounted_price(single_discounts_map) == 1000
+
 
 @pytest.mark.django_db
 def test_single_discounts_map():
@@ -288,12 +290,11 @@ def test_single_discounts_map():
     booking = BookingFactory(performance=performance)
 
     assert booking.single_discounts_map == performance.single_discounts_map
-    assert (
-        performance.single_discounts_map == {
-            concession_type_1: discount_1.percentage,
-            concession_type_2: discount_2.percentage,
-        }
-    )
+    assert performance.single_discounts_map == {
+        concession_type_1: discount_1.percentage,
+        concession_type_2: discount_2.percentage,
+    }
+
 
 @pytest.mark.django_db
 def test_get_price_with_discount_combination():
@@ -436,6 +437,7 @@ def test_is_single_discount(students, adults, is_single):
     DiscountRequirementFactory(number=adults, discount=discount)
 
     assert discount.is_single_discount() == is_single
+
 
 @pytest.mark.django_db
 def test_str_discount():
