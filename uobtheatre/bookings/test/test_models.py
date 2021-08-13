@@ -183,7 +183,6 @@ def test_ticket_price():
 
     assert ticket.seat_price() == performance_seat_group.price
 
-
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "discount_amount, number_req, seat_group_price, discount_price",
@@ -222,6 +221,37 @@ def test_ticket_discounted_price(
 
     assert ticket.discounted_price() == discount_price
 
+
+@pytest.mark.django_db
+def test_single_discounts_map():
+    performance = PerformanceFactory()
+
+    concession_type_1 = ConcessionTypeFactory()
+    concession_type_2 = ConcessionTypeFactory()
+
+    concession_type_1 = ConcessionTypeFactory()
+    discount_1 = DiscountFactory(name="Family")
+    DiscountRequirementFactory(
+        discount=discount_1, number=1, concession_type=concession_type_1
+    )
+
+    discount_2 = DiscountFactory(name="Student")
+    DiscountRequirementFactory(
+        discount=discount_2, number=1, concession_type=concession_type_2
+    )
+
+    discount_1.performances.set([performance])
+    discount_2.performances.set([performance])
+
+    booking = BookingFactory(performance=performance)
+
+    assert booking.single_discounts_map == performance.single_discounts_map
+    assert (
+        performance.single_discounts_map == {
+            concession_type_1: discount_1.percentage,
+            concession_type_2: discount_2.percentage,
+        }
+    )
 
 @pytest.mark.django_db
 def test_get_price_with_discount_combination():
@@ -365,7 +395,6 @@ def test_is_single_discount(students, adults, is_single):
 
     assert discount.is_single_discount() == is_single
 
-
 @pytest.mark.django_db
 def test_str_discount():
     discount = DiscountFactory(percentage=0.12, name="student")
@@ -417,7 +446,7 @@ def test_subtotal_with_group_discounts():
     DiscountRequirementFactory(discount=group_discount)
     booking = BookingFactory(performance=performance)
 
-    assert booking.subtotal() == booking.get_best_discount_combination_with_price()[1]
+    assert booking.subtotal == booking.get_best_discount_combination_with_price()[1]
 
 
 @pytest.mark.django_db
