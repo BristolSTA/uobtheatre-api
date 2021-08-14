@@ -546,7 +546,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         price = graphene.Int(required=True)
         nonce = graphene.String(required=False)
         payment_provider = graphene.Argument(
-            graphene.Enum("PaymentMethod", PaymentMethod.choices)
+            "uobtheatre.payments.schema.PaymentMethodsEnum"
         )
         device_id = graphene.String(required=False)
 
@@ -592,7 +592,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
                     field="nonce",
                     code="missing_required",
                 )
-            payment_method = SquareOnline(nonce, booking.id)  # This needs sorting
+            payment_method = SquareOnline(nonce, booking.id)
 
         elif payment_provider == SquarePOS.name:
             if not device_id:

@@ -11,4 +11,7 @@ class Payable(metaclass=AbstractModelMeta):
     @property
     @abc.abstractmethod
     def payment_reference_id(self):
+        """
+        The id of the payable object provided to payment providers.
+        """
         raise NotImplementedError

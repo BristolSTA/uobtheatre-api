@@ -491,7 +491,8 @@ class Booking(TimeStampedMixin, Payable, models.Model):
         Pay for booking using provided payment method.
 
         Args:
-            PaymentMethod:
+            payment_method (PaymentMethod): The payment method used to pay for
+                the booking
 
         Returns:
             Payment: The payment created by the checkout (optional)

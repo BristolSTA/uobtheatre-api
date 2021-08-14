@@ -154,7 +154,7 @@ def test_list_devices(gql_client, mock_square):
         response = gql_client.execute(
             """
             query {
-              squareDevices {
+              paymentDevices {
                 id
                 name
                 code
@@ -169,7 +169,7 @@ def test_list_devices(gql_client, mock_square):
 
     assert response == {
         "data": {
-            "squareDevices": [
+            "paymentDevices": [
                 {
                     "id": "X12GC60W7P7V8",
                     "name": "Boxoffice Terminal",
@@ -211,7 +211,30 @@ class MockApiResponse:
 
 
 @pytest.mark.django_db
-def test_filter_list_devices(gql_client, mock_square):
+@pytest.mark.parametrize(
+    "filters, expect_called, expected_args",
+    [
+        (
+            "paymentProvider: SQUARE_POS, paired: false",
+            True,
+            {"status": "UNPAIRED", "product_type": "TERMINAL_API"},
+        ),
+        ("paymentProvider: SQUARE_ONLINE", False, {}),
+        (
+            "paymentProvider: SQUARE_POS",
+            True,
+            {"status": None, "product_type": "TERMINAL_API"},
+        ),
+        (
+            "paymentProvider: SQUARE_POS, paired: true",
+            True,
+            {"status": "PAIRED", "product_type": "TERMINAL_API"},
+        ),
+    ],
+)
+def test_filter_list_devices(
+    gql_client, mock_square, filters, expect_called, expected_args
+):
 
     with mock_square(
         SquarePOS.client.devices,
@@ -223,14 +246,19 @@ def test_filter_list_devices(gql_client, mock_square):
         response = gql_client.execute(
             """
             query {
-              squareDevices(productType: "TERMINAL_API", status: "PAIRED") {
+              paymentDevices%s {
                 id
               }
             }
             """
+            % f"({filters})"
+            if filters
+            else ""
         )
 
-    assert response == {"data": {"squareDevices": []}}
-    list_devices_mock.assert_called_once_with(
-        status="PAIRED", product_type="TERMINAL_API"
-    )
+    assert response == {"data": {"paymentDevices": []}}
+
+    if expect_called:
+        list_devices_mock.assert_called_once_with(**expected_args)
+    else:
+        list_devices_mock.assert_not_called()

@@ -4,9 +4,11 @@ from graphene_django import DjangoObjectType
 
 from uobtheatre.bookings.schema import BookingNode
 from uobtheatre.payments.models import Payment
-from uobtheatre.payments.payment_methods import SquarePOS
+from uobtheatre.payments.payment_methods import PaymentMethod, SquarePOS
 from uobtheatre.utils.enums import GrapheneEnumMixin
 from uobtheatre.utils.filters import FilterSet
+
+PaymentMethodsEnum = graphene.Enum("PaymentMethod", PaymentMethod.choices)
 
 
 class PaymentFilter(FilterSet):
@@ -53,32 +55,48 @@ class Query(graphene.ObjectType):
     Base query for payments
     """
 
-    square_devices = graphene.List(
-        SquarePaymentDevice, product_type=graphene.String(), status=graphene.String()
+    payment_devices = graphene.List(
+        SquarePaymentDevice,
+        payment_provider=graphene.Argument(PaymentMethodsEnum),
+        paired=graphene.Boolean(),
     )
 
-    def resolve_square_devices(self, _, product_type=None, status=None):
+    def resolve_payment_devices(
+        self, _, payment_provider: str = None, paired: bool = None
+    ):
         """
         Returns square payment devices.
 
         Args:
-            product_type (str): filter by device type
-            status (str): filter by device status
+            payment_provider (str): Filter to only show devices related to
+                this payment provider.
+            paired (bool): Filter to only show devices that have been paired.
 
         Returns:
             list of SquarePaymentDevice: The square devices
         """
-        return [
-            SquarePaymentDevice(
-                id=device["id"],
-                name=device["name"],
-                code=device["code"],
-                status=device["status"],
-                product_type=device["product_type"],
-                location_id=device["location_id"],
-                device_id=device.get("device_id"),
+
+        devices = []
+        include_all = not payment_provider
+
+        if include_all or payment_provider == SquarePOS.name:
+            status = None if paired is None else "PAIRED" if paired else "UNPAIRED"
+
+            devices.extend(
+                [
+                    SquarePaymentDevice(
+                        id=device["id"],
+                        name=device["name"],
+                        code=device["code"],
+                        status=device["status"],
+                        product_type=device["product_type"],
+                        location_id=device["location_id"],
+                        device_id=device.get("device_id"),
+                    )
+                    for device in SquarePOS.list_devices(
+                        product_type="TERMINAL_API", status=status
+                    )
+                ]
             )
-            for device in SquarePOS.list_devices(
-                product_type=product_type, status=status
-            )
-        ]
+
+        return devices
