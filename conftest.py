@@ -24,7 +24,7 @@ def rest_client():
 
 class AuthenticateableGQLClient(GQLClient):
     """
-    Graphql client which can be loged in and out.
+    Graphql client which can be logged in and out.
     """
 
     def __init__(self, schema, format_error=None, user=None, **execute_options):
@@ -58,7 +58,7 @@ class AuthenticateableGQLClient(GQLClient):
 @pytest.fixture(scope="session")
 def mock_square():
     """
-    Used to mock the square clinet
+    Used to mock the square client
     """
 
     class MockApiResponse:
