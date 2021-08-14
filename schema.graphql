@@ -408,7 +408,7 @@ type ProductionTeamMemberNode implements Node {
 }
 
 type Query {
-  squareDevices(productType: String, status: String): [SquarePaymentDevice]
+  paymentDevices(paymentProvider: PaymentMethod, paired: Boolean): [SquarePaymentDevice]
   bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, reference: String, user: ID, creator: ID, performance: ID, status: String, adminDiscountPercentage: Float, id: ID, search: String, checkedIn: Boolean, active: Boolean, orderBy: String): BookingNodeConnection
   me: ExtendedUserNode
   user(id: ID!): UserNode
