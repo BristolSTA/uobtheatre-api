@@ -49,9 +49,25 @@ class PaymentNode(GrapheneEnumMixin, DjangoObjectType):
 
 
 class Query(graphene.ObjectType):
-    square_devices = graphene.List(SquarePaymentDevice)
+    """
+    Base query for payments
+    """
 
-    def resolve_square_devices(self, _):
+    square_devices = graphene.List(
+        SquarePaymentDevice, product_type=graphene.String(), status=graphene.String()
+    )
+
+    def resolve_square_devices(self, _, product_type=None, status=None):
+        """
+        Returns square payment devices.
+
+        Args:
+            product_type (str): filter by device type
+            status (str): filter by device status
+
+        Returns:
+            list of SquarePaymentDevice: The square devices
+        """
         return [
             SquarePaymentDevice(
                 id=device["id"],
@@ -62,5 +78,7 @@ class Query(graphene.ObjectType):
                 location_id=device["location_id"],
                 device_id=device.get("device_id"),
             )
-            for device in SquarePOS.list_devices()
+            for device in SquarePOS.list_devices(
+                product_type=product_type, status=status
+            )
         ]

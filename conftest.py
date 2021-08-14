@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from typing import Optional
 from unittest.mock import patch
 
@@ -54,7 +55,7 @@ class AuthenticateableGQLClient(GQLClient):
         )
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def mock_square():
     """
     Used to mock the square clinet
@@ -76,6 +77,7 @@ def mock_square():
         def is_success(self):
             return self.success
 
+    @contextmanager
     def mock_client(  # pylint: disable=too-many-arguments
         square_client_api,
         method: str,
@@ -87,15 +89,16 @@ def mock_square():
         """
         Mock a provided square client object
         """
-        return patch.object(
+        with patch.object(
             square_client_api,
             method,
-            lambda *_: MockApiResponse(
+        ) as mocked_square:
+            mocked_square.return_value = MockApiResponse(
                 body=body,
                 success=success,
                 reason_phrase=reason_phrase,
                 status_code=status_code,
-            ),
-        )
+            )
+            yield mocked_square
 
     return mock_client

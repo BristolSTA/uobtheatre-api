@@ -183,8 +183,14 @@ class SquarePOS(PaymentMethod):
             booking.complete()
 
     @classmethod
-    def list_devices(cls) -> list[dict]:
+    def list_devices(cls, product_type: str = None, status: str = None) -> list[dict]:
         """List the device codes available on square.
+
+        Args:
+            product_type (str): If provided filters the result by the device
+                type, for square_terminal use: "TERMINAL_API"
+            status (str): If provided filters the result by the status type,
+                for just paried devices use: "PAIRED"
 
         Returns:
             list of dict: A list of dictionaries which store the device code
@@ -194,7 +200,9 @@ class SquarePOS(PaymentMethod):
         Raises:
             SquareException: If the square request returns an error
         """
-        response = cls.client.devices.list_device_codes()
+        response = cls.client.devices.list_device_codes(
+            status=status, product_type=product_type
+        )
         if not response.is_success():
             raise SquareException(response)
         return response.body["device_codes"]

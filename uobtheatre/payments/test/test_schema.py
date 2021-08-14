@@ -191,3 +191,46 @@ def test_list_devices(gql_client, mock_square):
             ]
         }
     }
+
+
+class MockApiResponse:
+    """
+    Mock of the square API Response CLass
+    """
+
+    def __init__(
+        self, reason_phrase="Some phrase", status_code=400, success=False, body=None
+    ):
+        self.reason_phrase = reason_phrase
+        self.status_code = status_code
+        self.success = success
+        self.body = body
+
+    def is_success(self):
+        return self.success
+
+
+@pytest.mark.django_db
+def test_filter_list_devices(gql_client, mock_square):
+
+    with mock_square(
+        SquarePOS.client.devices,
+        "list_device_codes",
+        body={"device_codes": []},
+        status_code=200,
+        success=True,
+    ) as list_devices_mock:
+        response = gql_client.execute(
+            """
+            query {
+              squareDevices(productType: "TERMINAL_API", status: "PAIRED") {
+                id
+              }
+            }
+            """
+        )
+
+    assert response == {"data": {"squareDevices": []}}
+    list_devices_mock.assert_called_once_with(
+        status="PAIRED", product_type="TERMINAL_API"
+    )
