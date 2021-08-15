@@ -1,20 +1,23 @@
 # pylint: disable=too-many-lines
+from types import SimpleNamespace
+
 import pytest
 from graphql_relay.node.node import from_global_id, to_global_id
 from guardian.shortcuts import assign_perm
 
 from uobtheatre.bookings.models import Booking
-from uobtheatre.bookings.schema import parse_target_user_email
+from uobtheatre.bookings.schema import PayBooking, parse_target_user_email
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
     PerformanceSeatingFactory,
     TicketFactory,
 )
 from uobtheatre.discounts.test.factories import ConcessionTypeFactory
+from uobtheatre.payments.payment_methods import SquareOnline, SquarePOS
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.models import User
 from uobtheatre.users.test.factories import UserFactory
-from uobtheatre.utils.exceptions import GQLFieldException
+from uobtheatre.utils.exceptions import GQLFieldException, GQLNonFieldException
 from uobtheatre.utils.test_utils import ticket_dict_list_dict_gen, ticket_list_dict_gen
 from uobtheatre.venues.test.factories import SeatFactory, SeatGroupFactory
 
@@ -783,7 +786,7 @@ def test_create_booking_capacity_error(gql_client):
 
 
 @pytest.mark.django_db
-def test_pay_booking_mutation_wrong_price(gql_client, gql_id):
+def test_pay_booking_mutation_wrong_price(gql_client):
     booking = BookingFactory()
 
     request_query = """
@@ -805,7 +808,7 @@ def test_pay_booking_mutation_wrong_price(gql_client, gql_id):
         }
     """
     response = gql_client.login().execute(
-        request_query % gql_id(booking.id, "BookingNode")
+        request_query % to_global_id("BookingNode", booking.id)
     )
     assert response == {
         "data": {
@@ -824,7 +827,51 @@ def test_pay_booking_mutation_wrong_price(gql_client, gql_id):
 
 
 @pytest.mark.django_db
-def test_pay_booking_square_error(mock_square, gql_client, gql_id):
+def test_pay_booking_square_pos_no_device_id(gql_client):
+    request_query = """
+    mutation {
+	payBooking(
+            bookingId: "%s"
+            price: 0
+            paymentProvider: SQUARE_POS
+        ) {
+            success
+            errors {
+              __typename
+              ... on FieldError {
+                message
+                code
+                field
+              }
+            }
+          }
+        }
+    """
+    gql_client.login()
+    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    assign_perm("boxoffice", gql_client.user, booking.performance.production)
+    response = gql_client.execute(
+        request_query % to_global_id("BookingNode", booking.id)
+    )
+    assert response == {
+        "data": {
+            "payBooking": {
+                "success": False,
+                "errors": [
+                    {
+                        "__typename": "FieldError",
+                        "message": "A device_id is required when using SQUARE_POS provider.",
+                        "code": "missing_required",
+                        "field": "deviceId",
+                    }
+                ],
+            }
+        }
+    }
+
+
+@pytest.mark.django_db
+def test_pay_booking_square_error(mock_square, gql_client):
     booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
     client = gql_client.login()
 
@@ -847,11 +894,17 @@ def test_pay_booking_square_error(mock_square, gql_client, gql_id):
         }
     """
 
-    mock_square.reason_phrase = "Some phrase"
-    mock_square.status_code = 400
-    mock_square.success = False
+    with mock_square(
+        SquareOnline.client.payments,
+        "create_payment",
+        success=False,
+        reason_phrase="Some phrase",
+        status_code=400,
+    ):
+        response = client.execute(
+            request_query % to_global_id("BookingNode", booking.id)
+        )
 
-    response = client.execute(request_query % gql_id(booking.id, "BookingNode"))
     assert response == {
         "data": {
             "payBooking": {
@@ -869,7 +922,7 @@ def test_pay_booking_square_error(mock_square, gql_client, gql_id):
 
 
 @pytest.mark.django_db
-def test_pay_booking_mutation_payed_booking(gql_client, gql_id):
+def test_pay_booking_mutation_payed_booking(gql_client):
     booking = BookingFactory(status=Booking.BookingStatus.PAID)
     client = gql_client.login()
 
@@ -891,7 +944,7 @@ def test_pay_booking_mutation_payed_booking(gql_client, gql_id):
           }
         }
     """
-    response = client.execute(request_query % gql_id(booking.id, "BookingNode"))
+    response = client.execute(request_query % to_global_id("BookingNode", booking.id))
     assert response == {
         "data": {
             "payBooking": {
@@ -909,7 +962,7 @@ def test_pay_booking_mutation_payed_booking(gql_client, gql_id):
 
 
 @pytest.mark.django_db
-def test_pay_booking_mutation_unauthorized_provider(gql_client, gql_id):
+def test_pay_booking_mutation_unauthorized_provider(gql_client):
     booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
     client = gql_client.login()
 
@@ -932,7 +985,7 @@ def test_pay_booking_mutation_unauthorized_provider(gql_client, gql_id):
           }
         }
     """
-    response = client.execute(request_query % gql_id(booking.id, "BookingNode"))
+    response = client.execute(request_query % to_global_id("BookingNode", booking.id))
     assert response == {
         "data": {
             "payBooking": {
@@ -951,7 +1004,7 @@ def test_pay_booking_mutation_unauthorized_provider(gql_client, gql_id):
 
 
 @pytest.mark.django_db
-def test_pay_booking_mutation_online_without_nonce(gql_client, gql_id):
+def test_pay_booking_mutation_online_without_nonce(gql_client):
     booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
     client = gql_client.login()
 
@@ -969,15 +1022,11 @@ def test_pay_booking_mutation_online_without_nonce(gql_client, gql_id):
                 code
                 field
               }
-              ... on NonFieldError {
-                message
-                code
-              }
             }
           }
         }
     """
-    response = client.execute(request_query % gql_id(booking.id, "BookingNode"))
+    response = client.execute(request_query % to_global_id("BookingNode", booking.id))
     assert response == {
         "data": {
             "payBooking": {
@@ -986,7 +1035,7 @@ def test_pay_booking_mutation_online_without_nonce(gql_client, gql_id):
                     {
                         "__typename": "FieldError",
                         "message": "A nonce is required when using SQUARE_ONLINE provider.",
-                        "code": "400",
+                        "code": "missing_required",
                         "field": "nonce",
                     }
                 ],
@@ -996,7 +1045,7 @@ def test_pay_booking_mutation_online_without_nonce(gql_client, gql_id):
 
 
 @pytest.mark.django_db
-def test_pay_booking_success(mock_square, gql_client, gql_id):
+def test_pay_booking_success(mock_square, gql_client):
     booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
     client = gql_client.login()
 
@@ -1038,24 +1087,30 @@ def test_pay_booking_success(mock_square, gql_client, gql_id):
         }
     """
 
-    mock_square.body = {
-        "payment": {
-            "id": "abc",
-            "card_details": {
-                "card": {
-                    "card_brand": "VISA",
-                    "last_4": "1111",
-                }
-            },
-            "amount_money": {
-                "currency": "GBP",
-                "amount": 0,
-            },
-        }
-    }
-    mock_square.success = True
+    with mock_square(
+        SquareOnline.client.payments,
+        "create_payment",
+        body={
+            "payment": {
+                "id": "abc",
+                "card_details": {
+                    "card": {
+                        "card_brand": "VISA",
+                        "last_4": "1111",
+                    }
+                },
+                "amount_money": {
+                    "currency": "GBP",
+                    "amount": 0,
+                },
+            }
+        },
+        success=True,
+    ):
+        response = client.execute(
+            request_query % to_global_id("BookingNode", booking.id)
+        )
 
-    response = client.execute(request_query % gql_id(booking.id, "BookingNode"))
     assert response == {
         "data": {
             "payBooking": {
@@ -1067,8 +1122,8 @@ def test_pay_booking_success(mock_square, gql_client, gql_id):
                         "edges": [
                             {
                                 "node": {
-                                    "id": gql_id(
-                                        booking.payments.first().id, "PaymentNode"
+                                    "id": to_global_id(
+                                        "PaymentNode", booking.payments.first().id
                                     )
                                 }
                             }
@@ -1092,7 +1147,7 @@ def test_pay_booking_success(mock_square, gql_client, gql_id):
 
 
 @pytest.mark.django_db
-def test_pay_booking_manual(gql_client):
+def test_pay_booking_success_square_pos(mock_square, gql_client):
     booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
     client = gql_client.login()
     assign_perm("boxoffice", client.user, booking.performance.production)
@@ -1102,7 +1157,8 @@ def test_pay_booking_manual(gql_client):
 	payBooking(
             bookingId: "%s"
             price: 0
-            paymentProvider: CARD
+            deviceId: "abc"
+            paymentProvider: SQUARE_POS
         ) {
             success
             errors {
@@ -1135,7 +1191,103 @@ def test_pay_booking_manual(gql_client):
         }
     """
 
-    response = client.execute(request_query % to_global_id("BookingNode", booking.id))
+    with mock_square(
+        SquarePOS.client.terminal,
+        "create_terminal_checkout",
+        body={
+            "checkout": {
+                "id": "qhpRUp4dPCfqO",
+                "amount_money": {"amount": 1000, "currency": "GBP"},
+                "device_options": {
+                    "device_id": "121CS145A5000029",
+                    "tip_settings": {"allow_tipping": False},
+                    "skip_receipt_screen": False,
+                },
+                "status": "PENDING",
+                "created_at": "2021-08-13T21:55:20.260Z",
+                "updated_at": "2021-08-13T21:55:20.260Z",
+                "app_id": "sq0idp-terKoT_PULVOpP8lAJHYQQ",
+                "deadline_duration": "PT5M",
+                "location_id": "LMHP97T10P8JV",
+                "payment_type": "CARD_PRESENT",
+            }
+        },
+        success=True,
+    ):
+        response = client.execute(
+            request_query % to_global_id("BookingNode", booking.id)
+        )
+
+    assert response == {
+        "data": {
+            "payBooking": {
+                "booking": {
+                    "status": {
+                        "value": "IN_PROGRESS",
+                    },
+                    "payments": {"edges": []},
+                },
+                "payment": None,
+                "success": True,
+                "errors": None,
+            }
+        }
+    }
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("payment_method", ["CARD", "CASH"])
+def test_pay_booking_manual(gql_client, payment_method):
+    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    client = gql_client.login()
+    assign_perm("boxoffice", client.user, booking.performance.production)
+
+    request_query = """
+    mutation {
+	payBooking(
+            bookingId: "%s"
+            price: 0
+            paymentProvider: %s
+        ) {
+            success
+            errors {
+              __typename
+              ... on NonFieldError {
+                message
+                code
+              }
+            }
+
+            booking {
+              status {
+                value
+              }
+              payments {
+                edges {
+                  node {
+                    id
+                  }
+                }
+              }
+            }
+
+            payment {
+              last4
+              cardBrand
+              provider {
+                value
+              }
+              currency
+              value
+            }
+          }
+        }
+    """
+
+    response = client.execute(
+        request_query % (to_global_id("BookingNode", booking.id), payment_method)
+    )
+
     assert response == {
         "data": {
             "payBooking": {
@@ -1160,7 +1312,7 @@ def test_pay_booking_manual(gql_client):
                     "last4": None,
                     "cardBrand": None,
                     "provider": {
-                        "value": "CARD",
+                        "value": payment_method,
                     },
                     "currency": "GBP",
                     "value": 0,
@@ -1170,6 +1322,21 @@ def test_pay_booking_manual(gql_client):
             }
         }
     }
+
+
+@pytest.mark.django_db
+def test_paybooking_unsupported_payment_provider():
+    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    user = UserFactory()
+
+    info = SimpleNamespace(context=SimpleNamespace(user=user))
+    assign_perm("boxoffice", user, booking.performance.production)
+
+    with pytest.raises(GQLNonFieldException) as exc:
+        PayBooking.resolve_mutation(
+            None, info, booking.id, booking.total(), payment_provider="NOT_A_THING"
+        )
+        assert exc.message == "Unsupported payment provider NOT_A_THING."
 
 
 @pytest.mark.django_db

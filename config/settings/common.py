@@ -32,6 +32,7 @@ INSTALLED_APPS = (
     "autoslug",  # Auto slug
     "graphene_django",  # Graphql
     "guardian",
+    "rest_framework",
     # Your apps
     "uobtheatre.users",
     "uobtheatre.productions",
@@ -293,4 +294,13 @@ SQUARE_SETTINGS = {
         "SQUARE_ENVIRONMENT",
         default="sandbox",
     ),
+    "SQUARE_LOCATION": os.getenv(
+        "SQUARE_LOCATION",
+        default="",
+    ),
+    "SQUARE_WEBHOOK_SIGNATURE_KEY": os.getenv(
+        "SQUARE_WEBHOOK_SIGNATURE_KEY",
+        default="",
+    ),
+    "PATH": "square",
 }

@@ -1,12 +1,13 @@
 import pytest
 from graphql_auth.models import UserStatus
+from graphql_relay.node.node import to_global_id
 
 from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.users.test.factories import UserFactory
 
 
 @pytest.mark.django_db
-def test_user_schema(gql_client, gql_id):
+def test_user_schema(gql_client):
 
     user = gql_client.login().user
 
@@ -48,10 +49,10 @@ def test_user_schema(gql_client, gql_id):
                 "email": user.email,
                 "isStaff": user.is_staff,
                 "dateJoined": user.date_joined.isoformat(),
-                "id": gql_id(user.id, "UserNode"),
+                "id": to_global_id("UserNode", user.id),
                 "bookings": {
                     "edges": [
-                        {"node": {"id": gql_id(booking.id, "BookingNode")}}
+                        {"node": {"id": to_global_id("BookingNode", booking.id)}}
                         for booking in bookings
                     ]
                 },

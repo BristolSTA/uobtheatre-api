@@ -1,5 +1,5 @@
 import math
-from typing import Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.aggregates import BoolAnd
@@ -12,13 +12,15 @@ from django.utils.functional import cached_property
 
 from uobtheatre.discounts.models import ConcessionType, DiscountCombination
 from uobtheatre.payments.models import Payment
-from uobtheatre.payments.square import PaymentProvider
+from uobtheatre.payments.payables import Payable
 from uobtheatre.productions.models import Performance
 from uobtheatre.users.models import User
-from uobtheatre.utils.exceptions import SquareException
 from uobtheatre.utils.models import TimeStampedMixin, validate_percentage
 from uobtheatre.utils.utils import combinations, create_short_uuid
 from uobtheatre.venues.models import Seat, SeatGroup
+
+if TYPE_CHECKING:
+    from uobtheatre.payments.payment_methods import PaymentMethod
 
 
 class MiscCost(models.Model):
@@ -143,7 +145,7 @@ class BookingQuerySet(QuerySet):
         return query_set
 
 
-class Booking(TimeStampedMixin, models.Model):
+class Booking(TimeStampedMixin, Payable, models.Model):
     """A booking for a performance
 
     A booking holds a collection of tickets for a given performance.
@@ -201,6 +203,10 @@ class Booking(TimeStampedMixin, models.Model):
     admin_discount_percentage = models.FloatField(
         default=0, validators=[validate_percentage]
     )
+
+    @property
+    def payment_reference_id(self):
+        return self.reference
 
     def __str__(self):
         return str(self.reference)
@@ -480,59 +486,31 @@ class Booking(TimeStampedMixin, models.Model):
 
         return add_tickets, delete_tickets
 
-    def pay_online(self, nonce: str):
-        """Pay for the Booking
-
-        Makes a call to the Square API to pay for the Booking. The price is
-        equal to the Booking total.
+    def pay(self, payment_method: "PaymentMethod") -> Optional["Payment"]:
+        """
+        Pay for booking using provided payment method.
 
         Args:
-            nonce (str): The nonce provided by the Square payment form on the
-                front end.
+            payment_method (PaymentMethod): The payment method used to pay for
+                the booking
 
         Returns:
-            Payment: The payment object created by paying for the Booking.
-
-        Raises:
-            SquareException:  If the payment is unsucessful.
+            Payment: The payment created by the checkout (optional)
         """
-        response = PaymentProvider.create_payment(
-            self.total(), str(self.reference), nonce
-        )
+        payment = payment_method.pay(self.total(), self)
 
-        # If the square transaction failed then raise an exception
-        if not response.is_success():
-            raise SquareException(response)
+        # If a payment is created set the booking as paid
+        if payment:
+            self.complete()
 
-        # Set the booking as paid
+        return payment
+
+    def complete(self):
+        """
+        Complete the booking (after it has been paid for).
+        """
         self.status = self.BookingStatus.PAID
         self.save()
-
-        # Create a payment for this transaction
-        card_details = response.body["payment"]["card_details"]["card"]
-        amount_details = response.body["payment"]["amount_money"]
-        return Payment.objects.create(
-            pay_object=self,
-            card_brand=card_details["card_brand"],
-            last_4=card_details["last_4"],
-            provider=Payment.PaymentProvider.SQUARE_ONLINE,
-            type=Payment.PaymentType.PURCHASE,
-            provider_payment_id=response.body["payment"]["id"],
-            value=amount_details["amount"],
-            currency=amount_details["currency"],
-        )
-
-    def pay_manual(self, payment_provider: Payment.PaymentProvider):
-        # Set the booking as paid
-        self.status = self.BookingStatus.PAID
-        self.save()
-
-        return Payment.objects.create(
-            pay_object=self,
-            provider=payment_provider,
-            type=Payment.PaymentType.PURCHASE,
-            value=self.total(),
-        )
 
 
 class Ticket(models.Model):

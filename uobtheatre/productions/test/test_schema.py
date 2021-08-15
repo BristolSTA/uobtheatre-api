@@ -28,7 +28,7 @@ from uobtheatre.productions.test.factories import (
 
 
 @pytest.mark.django_db
-def test_productions_schema(gql_client, gql_id):
+def test_productions_schema(gql_client):
 
     production = ProductionFactory()
     performances = [PerformanceFactory(production=production) for i in range(2)]
@@ -137,7 +137,7 @@ def test_productions_schema(gql_client, gql_id):
                             "featuredImage": {
                                 "url": production.featured_image.file.url,
                             },
-                            "id": gql_id(production.id, "ProductionNode"),
+                            "id": to_global_id("ProductionNode", production.id),
                             "isBookable": production.is_bookable(),
                             "name": production.name,
                             "posterImage": {
@@ -149,8 +149,8 @@ def test_productions_schema(gql_client, gql_id):
                                 "edges": [
                                     {
                                         "node": {
-                                            "id": gql_id(
-                                                performance.id, "PerformanceNode"
+                                            "id": to_global_id(
+                                                "PerformanceNode", performance.id
                                             )
                                         }
                                     }
@@ -162,7 +162,9 @@ def test_productions_schema(gql_client, gql_id):
                             "minSeatPrice": production.min_seat_price(),
                             "cast": [
                                 {
-                                    "id": gql_id(cast_member.id, "CastMemberNode"),
+                                    "id": to_global_id(
+                                        "CastMemberNode", cast_member.id
+                                    ),
                                     "name": cast_member.name,
                                     "profilePicture": {
                                         "url": cast_member.profile_picture.file.url
@@ -171,21 +173,27 @@ def test_productions_schema(gql_client, gql_id):
                                     else None,
                                     "role": cast_member.role,
                                     "production": {
-                                        "id": gql_id(production.id, "ProductionNode")
+                                        "id": to_global_id(
+                                            "ProductionNode", production.id
+                                        )
                                     },
                                 }
                                 for cast_member in cast
                             ],
                             "crew": [
                                 {
-                                    "id": gql_id(crew_member.id, "CrewMemberNode"),
+                                    "id": to_global_id(
+                                        "CrewMemberNode", crew_member.id
+                                    ),
                                     "name": crew_member.name,
                                     "production": {
-                                        "id": gql_id(production.id, "ProductionNode")
+                                        "id": to_global_id(
+                                            "ProductionNode", production.id
+                                        )
                                     },
                                     "role": {
-                                        "id": gql_id(
-                                            crew_member.role.id, "CrewRoleNode"
+                                        "id": to_global_id(
+                                            "CrewRoleNode", crew_member.role.id
                                         ),
                                         "name": crew_member.role.name,
                                         "department": {
@@ -200,21 +208,23 @@ def test_productions_schema(gql_client, gql_id):
                             ],
                             "productionTeam": [
                                 {
-                                    "id": gql_id(
-                                        production_team_member.id,
+                                    "id": to_global_id(
                                         "ProductionTeamMemberNode",
+                                        production_team_member.id,
                                     ),
                                     "name": production_team_member.name,
                                     "role": production_team_member.role,
                                     "production": {
-                                        "id": gql_id(production.id, "ProductionNode")
+                                        "id": to_global_id(
+                                            "ProductionNode", production.id
+                                        )
                                     },
                                 }
                                 for production_team_member in production_team
                             ],
                             "warnings": [
                                 {
-                                    "id": gql_id(warning.id, "WarningNode"),
+                                    "id": to_global_id("WarningNode", warning.id),
                                     "description": warning.description,
                                 }
                                 for warning in warnings
@@ -277,7 +287,7 @@ def test_productions_filter(factories, requests, gql_client):
 
 
 @pytest.mark.django_db
-def test_performance_schema(gql_client, gql_id):
+def test_performance_schema(gql_client):
     performances = [PerformanceFactory() for i in range(1)]
 
     response = gql_client.execute(
@@ -331,7 +341,7 @@ def test_performance_schema(gql_client, gql_id):
                             "disabled": performance.disabled,
                             "discounts": [
                                 {
-                                    "id": gql_id(discount.id, "DiscountNode"),
+                                    "id": to_global_id("DiscountNode", discount.id),
                                 }
                                 for discount in performance.discounts.all()
                             ],
@@ -339,17 +349,19 @@ def test_performance_schema(gql_client, gql_id):
                             "durationMins": performance.duration().seconds // 60,
                             "end": performance.end.isoformat(),
                             "extraInformation": performance.extra_information,
-                            "id": gql_id(performance.id, "PerformanceNode"),
+                            "id": to_global_id("PerformanceNode", performance.id),
                             "isOnline": False,
                             "isInperson": True,
                             "production": {
-                                "id": gql_id(
-                                    performance.production.id, "ProductionNode"
+                                "id": to_global_id(
+                                    "ProductionNode", performance.production.id
                                 )
                             },
                             "start": performance.start.isoformat(),
                             "capacityRemaining": performance.capacity_remaining(),
-                            "venue": {"id": gql_id(performance.venue.id, "VenueNode")},
+                            "venue": {
+                                "id": to_global_id("VenueNode", performance.venue.id)
+                            },
                             "minSeatPrice": performance.min_seat_price(),
                             "soldOut": performance.is_sold_out(),
                         }
@@ -445,7 +457,7 @@ def test_ticket_breakdown(gql_client):
 
 
 @pytest.mark.django_db
-def test_tickets_breakdown(gql_client, gql_id):
+def test_tickets_breakdown(gql_client):
     performance = PerformanceFactory()
 
     # Create some seat groups for this performance
@@ -501,9 +513,9 @@ def test_tickets_breakdown(gql_client, gql_id):
                                     "concessionTypes": [
                                         {
                                             "concessionType": {
-                                                "id": gql_id(
-                                                    discount_requirement_1.concession_type.id,
+                                                "id": to_global_id(
                                                     "ConcessionTypeNode",
+                                                    discount_requirement_1.concession_type.id,
                                                 ),
                                             },
                                             "price": math.ceil(
@@ -519,9 +531,9 @@ def test_tickets_breakdown(gql_client, gql_id):
                                         },
                                         {
                                             "concessionType": {
-                                                "id": gql_id(
-                                                    discount_requirement_2.concession_type.id,
+                                                "id": to_global_id(
                                                     "ConcessionTypeNode",
+                                                    discount_requirement_2.concession_type.id,
                                                 ),
                                             },
                                             "price": math.ceil(
@@ -537,9 +549,9 @@ def test_tickets_breakdown(gql_client, gql_id):
                                         },
                                     ],
                                     "seatGroup": {
-                                        "id": gql_id(
-                                            performance_seat_group_1.seat_group.id,
+                                        "id": to_global_id(
                                             "SeatGroupNode",
+                                            performance_seat_group_1.seat_group.id,
                                         )
                                     },
                                 },
@@ -550,9 +562,9 @@ def test_tickets_breakdown(gql_client, gql_id):
                                     "concessionTypes": [
                                         {
                                             "concessionType": {
-                                                "id": gql_id(
-                                                    discount_requirement_1.concession_type.id,
+                                                "id": to_global_id(
                                                     "ConcessionTypeNode",
+                                                    discount_requirement_1.concession_type.id,
                                                 ),
                                             },
                                             "price": math.ceil(
@@ -568,9 +580,9 @@ def test_tickets_breakdown(gql_client, gql_id):
                                         },
                                         {
                                             "concessionType": {
-                                                "id": gql_id(
-                                                    discount_requirement_2.concession_type.id,
+                                                "id": to_global_id(
                                                     "ConcessionTypeNode",
+                                                    discount_requirement_2.concession_type.id,
                                                 ),
                                             },
                                             "price": math.ceil(
@@ -586,9 +598,9 @@ def test_tickets_breakdown(gql_client, gql_id):
                                         },
                                     ],
                                     "seatGroup": {
-                                        "id": gql_id(
-                                            performance_seat_group_2.seat_group.id,
+                                        "id": to_global_id(
                                             "SeatGroupNode",
+                                            performance_seat_group_2.seat_group.id,
                                         )
                                     },
                                 },
@@ -602,7 +614,7 @@ def test_tickets_breakdown(gql_client, gql_id):
 
 
 @pytest.mark.django_db
-def test_production_single_slug(gql_client, gql_id):
+def test_production_single_slug(gql_client):
     productions = [ProductionFactory() for i in range(2)]
 
     request = """
@@ -620,12 +632,12 @@ def test_production_single_slug(gql_client, gql_id):
 
     response = gql_client.execute(request % productions[0].slug)
     assert response["data"] == {
-        "production": {"id": gql_id(productions[0].id, "ProductionNode")}
+        "production": {"id": to_global_id("ProductionNode", productions[0].id)}
     }
 
 
 @pytest.mark.django_db
-def test_performance_single_id(gql_client, gql_id):
+def test_performance_single_id(gql_client):
     performances = [PerformanceFactory() for i in range(2)]
 
     request = """
@@ -643,10 +655,10 @@ def test_performance_single_id(gql_client, gql_id):
 
     # Ask for first performance and check you get it
     response = gql_client.execute(
-        request % gql_id(performances[0].id, "PerformanceNode")
+        request % to_global_id("PerformanceNode", performances[0].id)
     )
     assert response["data"] == {
-        "performance": {"id": gql_id(performances[0].id, "PerformanceNode")}
+        "performance": {"id": to_global_id("PerformanceNode", performances[0].id)}
     }
 
 

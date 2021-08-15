@@ -15,8 +15,8 @@ from uobtheatre.utils.exceptions import (
 def compare_gql_objects(object1, object2):
     assert type(object1) == type(object2)  # pylint: disable=unidiomatic-typecheck
     assert (
-        object1._meta.fields == object2._meta.fields
-    )  # pylint: disable=protected-access
+        object1._meta.fields == object2._meta.fields  # pylint: disable=protected-access
+    )
 
 
 def test_auth_error_handling_failure():
