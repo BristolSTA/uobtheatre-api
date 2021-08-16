@@ -1,31 +1,27 @@
-from datetime import datetime
-
 from django.http import HttpResponse
 from xlsxwriter.utility import xl_rowcol_to_cell
 
-from uobtheatre.payments.models import Payment
 from uobtheatre.reports.utils import ExcelReport
 
 from . import reports
 
 
-def period_totals(request):
+def period_totals(request, start_time, end_time):
     """Generates excel for period totals report
 
     Args:
         request (HttpRequest): The HttpRequest
+        start_time (DateTime): Start date for the report
+        end_time (DateTime): End date for the report
 
     Returns:
         HttpResponse: The HttpResponse
     """
-    start = datetime(2020, 1, 1)  # Sometext TODO: Implement arguments for these
-    end = datetime(2021, 12, 30)
 
     # Generate report
     report = reports.PeriodTotalsBreakdown(
-        start,
-        end,
-        Payment.PaymentProvider.names,
+        start_time,
+        end_time,
     )
 
     excel = ExcelReport(
@@ -37,9 +33,9 @@ def period_totals(request):
             "All currency is GBP.",
         ],
         [
-            ["Period From", str(start)],
-            ["Period To", str(end)],
-            ["No. of Payments", len(report.matched_payments)],
+            ["Period From", str(start_time)],
+            ["Period To", str(end_time)],
+            ["No. of Payments", len(report.dataset_by_name("payments").items)],
         ],
         request.user,
     )
@@ -49,31 +45,43 @@ def period_totals(request):
     # Add Provider Totals
     excel.write_list(
         (totals_breakdown_start_row, 0),  # A
-        [provider.object for provider in report.provider_totals.collection],
+        [
+            provider_item.subject
+            for provider_item in report.dataset_by_name("provider_totals").items
+        ],
         title="Totals By Provider",
     )
     excel.write_list(
         (totals_breakdown_start_row + 1, 1),  # B
-        [provider.total / 100 for provider in report.provider_totals.collection],
+        [
+            provider_item.data / 100
+            for provider_item in report.dataset_by_name("provider_totals").items
+        ],
         items_format="currency",
     )
 
     # Add Production Totals
     excel.write_list(
         (totals_breakdown_start_row, 3),  # D
-        [str(production.object) for production in report.production_totals.collection],
+        [
+            str(production_item.subject)
+            for production_item in report.dataset_by_name("production_totals").items
+        ],
         title="Totals By Production",
     )
     excel.write_list(
         (totals_breakdown_start_row + 1, 4),  # E
         [
-            str(production.object.society)
-            for production in report.production_totals.collection
+            str(production_item.subject.society)
+            for production_item in report.dataset_by_name("production_totals").items
         ],
     )
     excel.write_list(
         (totals_breakdown_start_row + 1, 5),  # F
-        [production.total / 100 for production in report.production_totals.collection],
+        [
+            production_item.data / 100
+            for production_item in report.dataset_by_name("production_totals").items
+        ],
         items_format="currency",
     )
 
@@ -121,23 +129,20 @@ def outstanding_society_payments(request):
 
     totals_row_start = excel.row_tracker - 1
 
-    for i, society_object_collection in enumerate(report.societies.values()):
+    for i, society_item in enumerate(report.dataset_by_name("societies").items):
         start_col = i + 2 * i
         excel.write_list(
             (totals_row_start, start_col),
             [
-                str(production_object_total.object)
-                for production_object_total in society_object_collection.collection
+                str(production_item.subject)
+                for production_item in society_item.data.items
             ],
-            title=str(society_object_collection.object),
+            title=str(society_item.subject),
         )
 
         excel.write_list(
             (totals_row_start + 1, start_col + 1),
-            [
-                production_object_total.total / 100
-                for production_object_total in society_object_collection.collection
-            ],
+            [production_item.data / 100 for production_item in society_item.data.items],
             items_format="currency",
         )
 
@@ -147,7 +152,7 @@ def outstanding_society_payments(request):
     # Add SUM Totals
     excel.increment_row_tracker()
 
-    for i, society_object_collection in enumerate(report.societies.values()):
+    for i, society_item in enumerate(report.dataset_by_name("societies").items):
         start_col = i + 2 * i
 
         excel.write(excel.row_tracker - 1, start_col, "Payment Due")
