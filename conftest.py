@@ -1,15 +1,15 @@
-import base64
+from contextlib import contextmanager
+from typing import Optional
+from unittest.mock import patch
 
 import pytest
 from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory
 from graphene.test import Client as GQLClient
-from pytest_factoryboy import register
+from rest_framework.test import APIClient
 
 from uobtheatre.schema import schema as app_schema
 from uobtheatre.users.test.factories import UserFactory
-
-register(UserFactory)  # fixture is user_factory
 
 
 @pytest.fixture
@@ -17,8 +17,15 @@ def gql_client():
     return AuthenticateableGQLClient(app_schema)
 
 
+@pytest.fixture
+def rest_client():
+    return APIClient()
+
+
 class AuthenticateableGQLClient(GQLClient):
-    """A graphql client extension that supports a request and user"""
+    """
+    Graphql client which can be logged in and out.
+    """
 
     def __init__(self, schema, format_error=None, user=None, **execute_options):
         self.request_factory = RequestFactory().get("/")
@@ -48,35 +55,50 @@ class AuthenticateableGQLClient(GQLClient):
         )
 
 
-@pytest.fixture
-def gql_id():
-    return lambda id, node: base64.b64encode(f"{node}:{id}".encode("ascii")).decode(
-        "utf-8"
-    )
-
-
-@pytest.fixture
-def mock_square(monkeypatch):
-    """Mocks the square library"""
+@pytest.fixture(scope="session")
+def mock_square():
+    """
+    Used to mock the square client
+    """
 
     class MockApiResponse:
-        """Mock of the square API Response CLass"""
+        """
+        Mock of the square API Response CLass
+        """
 
-        def __init__(self):
-            self.reason_phrase = "Some phrase"
-            self.status_code = 400
-            self.success = False
-            self.body = None
+        def __init__(
+            self, reason_phrase="Some phrase", status_code=400, success=False, body=None
+        ):
+            self.reason_phrase = reason_phrase
+            self.status_code = status_code
+            self.success = success
+            self.body = body
 
         def is_success(self):
             return self.success
 
-    def mock_create_payment(*_):
-        return mock_api_response
+    @contextmanager
+    def mock_client(  # pylint: disable=too-many-arguments
+        square_client_api,
+        method: str,
+        body: Optional[dict] = None,
+        success: Optional[bool] = None,
+        reason_phrase: Optional[str] = None,
+        status_code: Optional[int] = None,
+    ):
+        """
+        Mock a provided square client object
+        """
+        with patch.object(
+            square_client_api,
+            method,
+        ) as mocked_square:
+            mocked_square.return_value = MockApiResponse(
+                body=body,
+                success=success,
+                reason_phrase=reason_phrase,
+                status_code=status_code,
+            )
+            yield mocked_square
 
-    monkeypatch.setattr(
-        "uobtheatre.bookings.models.PaymentProvider.create_payment", mock_create_payment
-    )
-
-    mock_api_response = MockApiResponse()
-    return mock_api_response
+    return mock_client

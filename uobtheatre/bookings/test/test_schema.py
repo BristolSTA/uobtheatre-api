@@ -25,7 +25,7 @@ from uobtheatre.venues.test.factories import SeatGroupFactory
 
 
 @pytest.mark.django_db
-def test_bookings_schema(gql_client, gql_id):
+def test_bookings_schema(gql_client):
 
     booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
     # Create a booking that is not owned by the same user
@@ -78,24 +78,26 @@ def test_bookings_schema(gql_client, gql_id):
                     "edges": [
                         {
                             "node": {
-                                "id": gql_id(booking.id, "BookingNode"),
+                                "id": to_global_id("BookingNode", booking.id),
                                 "createdAt": booking.created_at.isoformat(),
                                 "updatedAt": booking.updated_at.isoformat(),
                                 "tickets": [
-                                    {"id": gql_id(ticket.id, "TicketNode")}
+                                    {"id": to_global_id("TicketNode", ticket.id)}
                                     for ticket in tickets
                                 ],
                                 "reference": str(booking.reference),
                                 "performance": {
-                                    "id": gql_id(
-                                        booking.performance.id, "PerformanceNode"
+                                    "id": to_global_id(
+                                        "PerformanceNode", booking.performance.id
                                     )
                                 },
                                 "status": {
                                     "value": "IN_PROGRESS",
                                     "description": "In Progress",
                                 },
-                                "user": {"id": gql_id(booking.user.id, "UserNode")},
+                                "user": {
+                                    "id": to_global_id("UserNode", booking.user.id)
+                                },
                             }
                         }
                     ]
@@ -106,9 +108,7 @@ def test_bookings_schema(gql_client, gql_id):
 
 
 @pytest.mark.django_db
-def test_bookings_price_break_down(
-    gql_client, gql_id
-):  # pylint: disable=too-many-locals
+def test_bookings_price_break_down(gql_client):  # pylint: disable=too-many-locals
     booking = BookingFactory()
 
     # Create 3 tickets with the same seat group and concession type
@@ -232,15 +232,15 @@ def test_bookings_price_break_down(
             "ticketPrice": ticket_group["price"],
             "number": ticket_group["number"],
             "seatGroup": {
-                "id": gql_id(
-                    ticket_group["seat_group"].id,
+                "id": to_global_id(
                     "SeatGroupNode",
+                    ticket_group["seat_group"].id,
                 ),
             },
             "concessionType": {
-                "id": gql_id(
-                    ticket_group["concession_type"].id,
+                "id": to_global_id(
                     "ConcessionTypeNode",
+                    ticket_group["concession_type"].id,
                 ),
             },
             "totalPrice": ticket_group["number"] * ticket_group["price"],
@@ -253,15 +253,15 @@ def test_bookings_price_break_down(
     assert response_booking_price_break_down == {
         "ticketsPrice": booking.tickets_price(),
         "discountsValue": booking.discount_value(),
-        "subtotalPrice": booking.subtotal(),
+        "subtotalPrice": booking.subtotal,
         "miscCostsValue": int(booking.misc_costs_value()),
         "totalPrice": booking.total(),
-        "ticketsDiscountedPrice": booking.subtotal(),
+        "ticketsDiscountedPrice": booking.subtotal,
     }
 
 
 @pytest.mark.django_db
-def test_discounts_node(gql_client, gql_id):
+def test_discounts_node(gql_client):
     performance = PerformanceFactory()
 
     # Create a discount
@@ -315,34 +315,34 @@ def test_discounts_node(gql_client, gql_id):
                         "node": {
                             "discounts": [
                                 {
-                                    "id": gql_id(discount.id, "DiscountNode"),
+                                    "id": to_global_id("DiscountNode", discount.id),
                                     "percentage": discount.percentage,
                                     "name": discount.name,
                                     "seatGroup": {
-                                        gql_id(
-                                            discount.seat_group.id,
+                                        to_global_id(
                                             "SeatGroupNode",
+                                            discount.seat_group.id,
                                         )
                                     }
                                     if discount.seat_group
                                     else None,
                                     "requirements": [
                                         {
-                                            "id": gql_id(
-                                                requirement.id,
+                                            "id": to_global_id(
                                                 "DiscountRequirementNode",
+                                                requirement.id,
                                             ),
                                             "number": requirement.number,
                                             "discount": {
-                                                "id": gql_id(
-                                                    requirement.discount.id,
+                                                "id": to_global_id(
                                                     "DiscountNode",
+                                                    requirement.discount.id,
                                                 )
                                             },
                                             "concessionType": {
-                                                "id": gql_id(
-                                                    requirement.concession_type.id,
+                                                "id": to_global_id(
                                                     "ConcessionTypeNode",
+                                                    requirement.concession_type.id,
                                                 )
                                             },
                                         }
@@ -359,7 +359,7 @@ def test_discounts_node(gql_client, gql_id):
 
 
 @pytest.mark.django_db
-def test_booking_in_progress(gql_client, gql_id):
+def test_booking_in_progress(gql_client):
     """
     We will often want to get an "in_progress" booking for a given booking and user.
         bookings(performance: "UGVyZm9ybWFuY2VOb2RlOjE=", status: "IN_PROGRESS")
@@ -403,7 +403,7 @@ def test_booking_in_progress(gql_client, gql_id):
                     "edges": [
                         {
                             "node": {
-                                "id": gql_id(booking.id, "BookingNode"),
+                                "id": to_global_id("BookingNode", booking.id),
                             }
                         },
                     ]

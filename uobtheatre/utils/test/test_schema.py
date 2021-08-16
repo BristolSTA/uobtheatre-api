@@ -13,7 +13,7 @@ def test_id_input_field_wrong_thing():
 
 
 @pytest.mark.django_db
-def test_auth_required_mixin(gql_client, gql_id):
+def test_auth_required_mixin(gql_client):
     booking = BookingFactory()
     client = gql_client
 
@@ -35,7 +35,7 @@ def test_auth_required_mixin(gql_client, gql_id):
           }
         }
     """
-    response = client.execute(request_query % gql_id(booking.id, "BookingNode"))
+    response = client.execute(request_query % to_global_id("BookingNode", booking.id))
     assert response == {
         "data": {
             "payBooking": {
