@@ -1,5 +1,6 @@
 import datetime
 import math
+from unittest.mock import patch
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -935,7 +936,6 @@ def test_filter_order_by_checked_in():
 
     assert set(Booking.objects.checked_in()) == {booking_all}
     assert set(Booking.objects.checked_in(True)) == {booking_all}
-
     assert set(Booking.objects.checked_in(False)) == {booking_none, booking_some}
 
 
@@ -963,5 +963,37 @@ def test_filter_by_active():
 
     assert list(Booking.objects.active()) == [booking_future]
     assert list(Booking.objects.active(True)) == [booking_future]
-
     assert list(Booking.objects.active(False)) == [booking_past]
+
+
+@pytest.mark.django_db
+def test_complete():
+    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    with patch.object(booking, "send_confirmation_email") as mock_send_email:
+        booking.complete()
+        mock_send_email.assert_called_once()
+
+    booking.refresh_from_db()
+    assert booking.status == Booking.BookingStatus.PAID
+
+
+@pytest.mark.django_db
+def test_send_confirmation_email(mailoutbox):
+    production = ProductionFactory(name="Legally Ginger")
+    performance = PerformanceFactory(
+        start=datetime.datetime(day=20, month=10, year=2021, hour=19, minute=15),
+        production=production,
+    )
+    booking = BookingFactory(
+        status=Booking.BookingStatus.IN_PROGRESS,
+        reference="abc",
+        performance=performance,
+    )
+    booking.send_confirmation_email()
+
+    assert len(mailoutbox) == 1
+    email = mailoutbox[0]
+    assert email.subject == "Your booking is confirmed!"
+    assert "https://example.com/user/booking/abc" in email.body
+    assert "Legally Ginger" in email.body
+    assert "on Wednesday, 20 October 2021" in email.body

@@ -1,18 +1,9 @@
-from collections import namedtuple
-from typing import Union
-
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
 from uobtheatre.payments import payment_methods
 from uobtheatre.utils.models import TimeStampedMixin
-
-CashPayment = namedtuple("CashPayment", [])
-CardPayment = namedtuple("CardPayment", [])
-SquareOnlinePayment = namedtuple("SquareOnlinePayment", ["nonce"])
-SquarePOSPayment = namedtuple("SquarePOSPayment", ["device_id"])
-PaymentType = Union[CashPayment, CardPayment, SquareOnlinePayment, SquarePOSPayment]
 
 
 class Payment(TimeStampedMixin, models.Model):

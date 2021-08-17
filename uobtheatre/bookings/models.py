@@ -519,8 +519,7 @@ class Booking(TimeStampedMixin, Payable, models.Model):
 
     def send_confirmation_email(self):
         """
-        Send email confirmation after a booking is completed. This includes a
-        link to the booking.
+        Send email confirmation which includes a link to the booking.
         """
         plaintext_template = get_template("emails/booking_confirmation_email.txt")
         html_template = get_template("emails/booking_confirmation_email.html")
@@ -536,7 +535,7 @@ class Booking(TimeStampedMixin, Payable, models.Model):
         }
 
         subject, from_email, to_email = (
-            f"{self.performance.production.name} Booking",
+            "Your booking is confirmed!",
             '"UOB Theatre" <tickets@uobtheatre.com>',
             self.user.email,
         )
