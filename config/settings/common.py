@@ -32,6 +32,7 @@ INSTALLED_APPS = (
     "autoslug",  # Auto slug
     "graphene_django",  # Graphql
     "guardian",
+    "rest_framework",
     # Your apps
     "uobtheatre.users",
     "uobtheatre.productions",
@@ -251,7 +252,7 @@ GRAPHQL_AUTH = {
     "REGISTER_MUTATION_FIELDS": ["email", "first_name", "last_name"],
     "REGISTER_MUTATION_FIELDS_OPTIONAL": [],
     "ALLOW_LOGIN_NOT_VERIFIED": False,
-    "ACTIVATION_PATH_ON_EMAIL": "user/email_verify",
+    "ACTIVATION_PATH_ON_EMAIL": "user/email-verify",
     "EMAIL_TEMPLATE_ACTIVATION": "emails/activation_email.html",
 }
 
@@ -293,4 +294,13 @@ SQUARE_SETTINGS = {
         "SQUARE_ENVIRONMENT",
         default="sandbox",
     ),
+    "SQUARE_LOCATION": os.getenv(
+        "SQUARE_LOCATION",
+        default="",
+    ),
+    "SQUARE_WEBHOOK_SIGNATURE_KEY": os.getenv(
+        "SQUARE_WEBHOOK_SIGNATURE_KEY",
+        default="",
+    ),
+    "PATH": "square",
 }

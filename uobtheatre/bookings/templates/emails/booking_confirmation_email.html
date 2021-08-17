@@ -1,6 +1,6 @@
-<p>Hello {{ booking.user.first_name }}!</p>
+<p>Hello {{ user_name }}!</p>
 
-<p> Your booking for booking.performance.production.name on {{ booking.performance.start|date:"l, d M Y" }} at {{ booking.performance.start|time:"H:i" }} is confirmed!</p>
+<p> Your booking for {{ production_name }} on {{ start|date:"l, d F Y" }} at {{ start|time:"H:i" }} is confirmed!</p>
 
 <p>Check your booking here:</p>
 <p>{{ protocol }}://{{ domain }}/user/booking/{{ booking.reference }}</p>

@@ -34,3 +34,8 @@ def combinations(
         for i in range(1, max_length + 1)
         for combination in itertools.combinations(iterable * i, i)
     )
+
+
+class classproperty(property):  # pylint: disable=invalid-name
+    def __get__(self, cls, owner):
+        return classmethod(self.fget).__get__(None, owner)()

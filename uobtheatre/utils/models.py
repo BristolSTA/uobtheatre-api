@@ -2,8 +2,14 @@
 Utils for uobtheatre modles
 """
 
+import abc
+
 from django.core.exceptions import ValidationError
 from django.db import models
+
+
+class AbstractModelMeta(abc.ABCMeta, type(models.Model)):  # type: ignore
+    pass
 
 
 class TimeStampedMixin(models.Model):

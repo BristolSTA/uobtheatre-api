@@ -1,4 +1,3 @@
-import datetime
 import math
 import random
 
@@ -34,7 +33,7 @@ from uobtheatre.venues.test.factories import SeatGroupFactory
 
 @pytest.mark.django_db
 def test_performance_duration():
-    start = datetime.datetime(
+    start = timezone.datetime(
         day=2,
         month=3,
         year=2020,
@@ -43,7 +42,7 @@ def test_performance_duration():
         second=10,
         tzinfo=timezone.get_current_timezone(),
     )
-    end = datetime.datetime(
+    end = timezone.datetime(
         day=3,
         month=4,
         year=2021,
@@ -63,7 +62,7 @@ def test_production_duration():
     production = ProductionFactory()
 
     # Create a performance with a long duration
-    start = datetime.datetime(
+    start = timezone.datetime(
         day=2,
         month=3,
         year=2020,
@@ -72,7 +71,7 @@ def test_production_duration():
         second=10,
         tzinfo=timezone.get_current_timezone(),
     )
-    end = datetime.datetime(
+    end = timezone.datetime(
         day=3,
         month=4,
         year=2021,
@@ -84,7 +83,7 @@ def test_production_duration():
     PerformanceFactory(start=start, end=end, production=production)
 
     # Create a performance with a short duration
-    start = datetime.datetime(
+    start = timezone.datetime(
         day=2,
         month=3,
         year=2020,
@@ -93,7 +92,7 @@ def test_production_duration():
         second=10,
         tzinfo=timezone.get_current_timezone(),
     )
-    end = datetime.datetime(
+    end = timezone.datetime(
         day=2,
         month=3,
         year=2020,
@@ -145,37 +144,6 @@ def test_concessions():
     discount_2.performances.set([performance])
 
     assert len(performance.concessions()) == 4
-
-
-@pytest.mark.django_db
-def test_get_concession_discount():
-    performance = PerformanceFactory()
-    concession_type = ConcessionTypeFactory()
-
-    # Before any discounts are create assert there is no discount
-    assert performance.get_concession_discount(concession_type) == 0
-
-    # Create discounts
-    discount_1 = DiscountFactory(name="Family")
-    DiscountRequirementFactory(
-        discount=discount_1, number=1, concession_type=concession_type
-    )
-    DiscountRequirementFactory(discount=discount_1, number=1)
-
-    discount_2 = DiscountFactory(name="Student")
-    discount_requirement_3 = DiscountRequirementFactory(
-        discount=discount_2, number=1, concession_type=concession_type
-    )
-
-    discount_1.performances.set([performance])
-    discount_2.performances.set([performance])
-
-    # Assert the discount for the concession_type is the discount where only 1
-    # of that concession_type is required (and nothing else)
-    assert (
-        performance.get_concession_discount(concession_type)
-        == discount_requirement_3.discount.percentage
-    )
 
 
 @pytest.mark.django_db
@@ -666,35 +634,35 @@ def test_production_start_and_end_date():
 
     _ = [
         PerformanceFactory(
-            start=current_time + datetime.timedelta(days=1),
-            end=current_time + datetime.timedelta(days=1),
+            start=current_time + timezone.timedelta(days=1),
+            end=current_time + timezone.timedelta(days=1),
             production=production,
         ),
         PerformanceFactory(
-            start=current_time + datetime.timedelta(days=2),
-            end=current_time + datetime.timedelta(days=2),
+            start=current_time + timezone.timedelta(days=2),
+            end=current_time + timezone.timedelta(days=2),
             production=production,
         ),
         PerformanceFactory(
-            start=current_time + datetime.timedelta(days=3),
-            end=current_time + datetime.timedelta(days=3),
+            start=current_time + timezone.timedelta(days=3),
+            end=current_time + timezone.timedelta(days=3),
             production=production,
         ),
     ]
 
-    assert production.end_date() == current_time + datetime.timedelta(days=3)
-    assert production.start_date() == current_time + datetime.timedelta(days=1)
+    assert production.end_date() == current_time + timezone.timedelta(days=3)
+    assert production.start_date() == current_time + timezone.timedelta(days=1)
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "performances_start_deltas, is_upcoming",
     [
-        ([datetime.timedelta(days=1), datetime.timedelta(days=-1)], True),
-        ([datetime.timedelta(hours=1), datetime.timedelta(hours=-1)], True),
-        ([datetime.timedelta(days=-1), datetime.timedelta(hours=-1)], False),
-        ([datetime.timedelta(hours=-2), datetime.timedelta(hours=-1)], False),
-        ([datetime.timedelta(hours=2), datetime.timedelta(hours=1)], True),
+        ([timezone.timedelta(days=1), timezone.timedelta(days=-1)], True),
+        ([timezone.timedelta(hours=1), timezone.timedelta(hours=-1)], True),
+        ([timezone.timedelta(days=-1), timezone.timedelta(hours=-1)], False),
+        ([timezone.timedelta(hours=-2), timezone.timedelta(hours=-1)], False),
+        ([timezone.timedelta(hours=2), timezone.timedelta(hours=1)], True),
     ],
 )
 def test_is_upcoming_production(performances_start_deltas, is_upcoming):
@@ -753,8 +721,8 @@ def test_qs_has_boxoffice_permission():
 
 @pytest.mark.django_db
 def test_qs_running_on():
-    query_date = datetime.date(year=2021, month=7, day=14)
-    one_day = datetime.timedelta(days=1)
+    query_date = timezone.datetime(year=2021, month=7, day=14)
+    one_day = timezone.timedelta(days=1)
     # Past performance
     PerformanceFactory(start=query_date - one_day, end=query_date - one_day)
     today_performance = PerformanceFactory(start=query_date, end=query_date)

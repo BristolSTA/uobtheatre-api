@@ -5,6 +5,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
+from uobtheatre.payments import payment_methods
 from uobtheatre.utils.models import TimeStampedMixin
 
 CashPayment = namedtuple("CashPayment", [])
@@ -15,19 +16,12 @@ PaymentType = Union[CashPayment, CardPayment, SquareOnlinePayment, SquarePOSPaym
 
 
 class Payment(TimeStampedMixin, models.Model):
+
     """The model for a transaction.
 
     When ever a transaction is made for a Production a Payment object is
     created. This stores the key information about the transaction.
     """
-
-    class PaymentProvider(models.TextChoices):
-        """How the payment was made."""
-
-        CASH = "CASH", "Cash"
-        CARD = "CARD", "Card"
-        SQUARE_ONLINE = "SQUARE_ONLINE", "Square online"
-        SQUARE_POS = "SQUARE_POS", "Square point of sale"
 
     class PaymentType(models.TextChoices):
         """Whether the payment was a refund or purchase."""
@@ -59,9 +53,7 @@ class Payment(TimeStampedMixin, models.Model):
 
     provider_payment_id = models.CharField(max_length=40, null=True, blank=True)
     provider = models.CharField(
-        max_length=20,
-        choices=PaymentProvider.choices,
-        default=PaymentProvider.SQUARE_ONLINE,
+        max_length=20, choices=payment_methods.PaymentMethod.choices
     )
 
     value = models.IntegerField()
@@ -76,6 +68,6 @@ class Payment(TimeStampedMixin, models.Model):
         Returns:
             string, optional: url to provider's payment reference
         """
-        if self.provider == self.PaymentProvider.SQUARE_ONLINE:
+        if self.provider == payment_methods.SquareOnline.name:
             return f"https://squareupsandbox.com/dashboard/sales/transactions/{self.provider_payment_id}"
         return None

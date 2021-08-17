@@ -30,11 +30,12 @@ psycopg2==2.9.1  # https://github.com/psycopg/psycopg2
 
 #=== Django core ===#
 
-django==3.2.5
+django==3.2.6
 
 #=== Django Extras ===#
 
 django-guardian==2.4.0  # https://github.com/django-guardian/django-guardian
+djangorestframework==3.12.4  # https://www.django-rest-framework.org
 
 #=== GQL core ===#
 
