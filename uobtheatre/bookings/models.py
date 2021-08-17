@@ -3,10 +3,13 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.aggregates import BoolAnd
+from django.contrib.sites.models import Site
+from django.core.mail import EmailMultiAlternatives
 from django.db import models
 from django.db.models import Case, F, FloatField, Q, Value, When
 from django.db.models.functions import Cast
 from django.db.models.query import QuerySet
+from django.template.loader import get_template
 from django.utils import timezone
 from django.utils.functional import cached_property
 
@@ -507,10 +510,41 @@ class Booking(TimeStampedMixin, Payable, models.Model):
 
     def complete(self):
         """
-        Complete the booking (after it has been paid for).
+        Complete the booking (after it has been paid for) and send the
+        confirmation email.
         """
         self.status = self.BookingStatus.PAID
         self.save()
+        self.send_confirmation_email()
+
+    def send_confirmation_email(self):
+        """
+        Send email confirmation which includes a link to the booking.
+        """
+        plaintext_template = get_template("emails/booking_confirmation_email.txt")
+        html_template = get_template("emails/booking_confirmation_email.html")
+        site = Site.objects.get_current()
+
+        context = {
+            "booking": self,
+            "user_name": self.user.first_name.capitalize(),
+            "production_name": self.performance.production.name,
+            "start": self.performance.start,
+            "protocol": "https",
+            "domain": site.domain,
+        }
+
+        subject, from_email, to_email = (
+            "Your booking is confirmed!",
+            '"UOB Theatre" <tickets@uobtheatre.com>',
+            self.user.email,
+        )
+        text_content = plaintext_template.render(context)
+        html_content = html_template.render(context)
+
+        msg = EmailMultiAlternatives(subject, text_content, from_email, [to_email])
+        msg.attach_alternative(html_content, "text/html")
+        msg.send()
 
 
 class Ticket(models.Model):

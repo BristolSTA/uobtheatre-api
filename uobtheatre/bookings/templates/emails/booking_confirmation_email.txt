@@ -1,0 +1,6 @@
+Hello {{ user_name }}!
+
+Your booking for {{ production_name }} on {{ start|date:"l, d F Y" }} at {{ start|time:"H:i" }} is confirmed!
+
+Check your booking here:
+{{ protocol }}://{{ domain }}/user/booking/{{ booking.reference }}
