@@ -42,6 +42,9 @@ djangorestframework==3.12.4  # https://www.django-rest-framework.org
 graphene==2.1.9
 graphene-django==2.15.0
 
+# Subscriptions
+django-channels-graphql-ws==0.8.0  # https://github.com/datadvance/DjangoChannelsGraphqlWs
+
 #=== Auth ===#
 
 django-graphql-auth==0.3.16

@@ -33,6 +33,7 @@ INSTALLED_APPS = (
     "graphene_django",  # Graphql
     "guardian",
     "rest_framework",
+    "channels",
     # Your apps
     "uobtheatre.users",
     "uobtheatre.productions",
@@ -304,3 +305,6 @@ SQUARE_SETTINGS = {
     ),
     "PATH": "square",
 }
+
+CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
+ASGI_APPLICATION = "uobtheatre.schema.application"
