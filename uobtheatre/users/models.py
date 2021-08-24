@@ -1,21 +1,21 @@
 import uuid
-from typing import TYPE_CHECKING, List
+from typing import List
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 from uobtheatre.productions.models import Performance
-
-if TYPE_CHECKING:
-    pass
+from uobtheatre.users.abilities import AbilitiesMixin, OpenAdmin, OpenBoxoffice
 
 
-class User(AbstractUser):
+class User(AbilitiesMixin, AbstractUser):
     """The model for users.
 
     A User is someone that uses the app (including admins). A user is
     identified by their email address (usernames are not used).
     """
+
+    abilities = [OpenAdmin, OpenBoxoffice]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     username = None  # type: ignore
@@ -31,6 +31,10 @@ class User(AbstractUser):
 
     @property
     def can_boxoffice(self):
+        """
+        Returns whether the user can access the boxoffice region of the
+        website.
+        """
         return Performance.objects.has_boxoffice_permission(self).count() > 0
 
     def __str__(self):

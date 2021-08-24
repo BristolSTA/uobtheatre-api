@@ -4,9 +4,10 @@ from graphql_auth.schema import UserQuery
 from graphql_relay.node.node import to_global_id
 
 from uobtheatre.users.models import User
+from uobtheatre.utils.schema import PermissionsMixin
 
 
-class ExtendedUserNode(schema.UserNode):
+class ExtendedUserNode(PermissionsMixin, schema.UserNode):
     """
     Extends user node to add additional properties.
     """

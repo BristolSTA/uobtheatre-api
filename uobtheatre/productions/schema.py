@@ -16,7 +16,11 @@ from uobtheatre.productions.models import (
     ProductionTeamMember,
 )
 from uobtheatre.utils.filters import FilterSet
-from uobtheatre.utils.schema import DjangoObjectType, GrapheneEnumMixin
+from uobtheatre.utils.schema import (
+    DjangoObjectType,
+    GrapheneEnumMixin,
+    PermissionsMixin,
+)
 
 
 class CrewRoleNode(GrapheneEnumMixin, DjangoObjectType):
@@ -125,7 +129,7 @@ class ProductionFilter(FilterSet):
     order_by = ProductionByMethodOrderingFilter()
 
 
-class ProductionNode(GrapheneEnumMixin, DjangoObjectType):
+class ProductionNode(PermissionsMixin, GrapheneEnumMixin, DjangoObjectType):
     warnings = DjangoListField(WarningNode)
     crew = DjangoListField(CrewMemberNode)
     cast = DjangoListField(CastMemberNode)

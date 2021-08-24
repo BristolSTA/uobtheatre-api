@@ -9,6 +9,8 @@ class Society(TimeStampedMixin, models.Model):
     """Model for a group which puts on Productions."""
 
     name = models.CharField(max_length=255)
+    slug = AutoSlugField(populate_from="name", unique=True, blank=True)
+
     description = models.TextField()
     logo = models.ForeignKey(
         Image, on_delete=models.RESTRICT, related_name="society_logos"
@@ -17,7 +19,7 @@ class Society(TimeStampedMixin, models.Model):
         Image, on_delete=models.RESTRICT, related_name="society_banners"
     )
 
-    slug = AutoSlugField(populate_from="name", unique=True, blank=True)
+    members = models.ManyToManyField("users.User", related_name="societies")
 
     def __str__(self):
         return str(self.name)
