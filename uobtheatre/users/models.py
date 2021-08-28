@@ -1,8 +1,9 @@
 import uuid
-from typing import List
+from typing import Union
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from guardian.shortcuts import get_objects_for_user
 
 from uobtheatre.productions.models import Performance
 from uobtheatre.users.abilities import AbilitiesMixin, OpenAdmin, OpenBoxoffice
@@ -27,7 +28,7 @@ class User(AbilitiesMixin, AbstractUser):
         blank=False,
     )
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS: List[str] = ["first_name", "last_name"]
+    REQUIRED_FIELDS: list[str] = ["first_name", "last_name"]
 
     @property
     def can_boxoffice(self):
@@ -55,3 +56,29 @@ class User(AbilitiesMixin, AbstractUser):
             bool: Whether the user has permission to access the object/model.
         """
         return super().has_perm(perm) or (super().has_perm(perm, obj) if obj else False)
+
+    def get_objects_with_perm(self, permissions: Union[str, list[str]]):
+        """
+        Returns all the objects which the user has the request permissions for.
+        """
+        return get_objects_for_user(self, permissions)
+
+    def has_any_objects_with_perms(self, permissions: Union[str, list[str]]) -> bool:
+        """
+        Given a list of permissions (or a single permission) returns if the
+        user has this permission globally or for any objects.
+
+        Args:
+            permissions: (Union[str, list[str]]): The permissions being
+                checked. If a list is provided only one of the permissions must
+                be met to return True
+
+        Returns:
+            bool: Whether the user has any of the permissions
+        """
+        return (
+            # Here we check explicitly check globalal permissions as no objects
+            # are returned if no objects exist for get_objects_with_perm.
+            any(self.has_perm(perm) for perm in permissions)
+            or self.get_objects_with_perm(permissions).exists()
+        )

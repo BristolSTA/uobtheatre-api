@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from types import SimpleNamespace
 from typing import Optional
 from unittest.mock import patch
 
@@ -102,3 +103,8 @@ def mock_square():
             yield mocked_square
 
     return mock_client
+
+
+@pytest.fixture
+def info():
+    return SimpleNamespace(context=SimpleNamespace(user=UserFactory()))

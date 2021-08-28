@@ -1,8 +1,11 @@
+from unittest.mock import patch
+
 import pytest
 from graphql_auth.models import UserStatus
 from graphql_relay.node.node import to_global_id
 
 from uobtheatre.bookings.test.factories import BookingFactory
+from uobtheatre.users.abilities import OpenAdmin, OpenBoxoffice
 from uobtheatre.users.test.factories import UserFactory
 
 
@@ -239,3 +242,39 @@ def test_user_register(gql_client):
 
     # Check user is correct
     assert response_data["user"]["firstName"] == "James"
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "user_can_open_boxoffice, user_can_open_admin",
+    [
+        (True, False),
+        (False, True),
+        (True, True),
+        (False, False),
+    ],
+)
+def test_user_schema_abilities(
+    user_can_open_boxoffice, user_can_open_admin, gql_client
+):
+    gql_client.login()
+    with patch.object(
+        OpenBoxoffice, "user_has", return_value=user_can_open_boxoffice
+    ) as mock_open_boxoffice, patch.object(
+        OpenAdmin, "user_has", return_value=user_can_open_admin
+    ) as mock_open_admin:
+        response = gql_client.execute(
+            """
+            {
+	          me {
+                permissions
+              }
+            }
+            """
+        )
+
+    mock_open_boxoffice.assert_called_once_with(gql_client.user, gql_client.user)
+    mock_open_admin.assert_called_once_with(gql_client.user, gql_client.user)
+    permissions = response["data"]["me"]["permissions"]
+    assert ("boxoffice_open" in permissions) == user_can_open_boxoffice
+    assert ("admin_open" in permissions) == user_can_open_admin

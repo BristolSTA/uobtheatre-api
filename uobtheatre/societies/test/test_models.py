@@ -12,7 +12,7 @@ def test_str_society():
 @pytest.mark.django_db
 def test_autoslug_doesnot_change_on_update():
     society = SocietyFactory(name="abc")
-    initial_slug = society
+    initial_slug = society.slug
 
     society.name = "def"
     society.save()

@@ -2,7 +2,6 @@ import graphene
 from graphene_django import DjangoObjectType
 from graphql.language.ast import IntValue, StringValue
 from graphql_relay.node.node import from_global_id
-from guardian.shortcuts import get_perms
 
 from uobtheatre.utils.enums import GrapheneEnumMixin
 from uobtheatre.utils.exceptions import AuthException, SafeMutation
@@ -61,17 +60,3 @@ class IdInputField(graphene.ID):
         it to the local integer id.
         """
         return from_global_id(ast)[1]
-
-
-class PermissionsMixin:
-    """
-    Add permissions to schema. This is a list of string, if a string is
-    included then the user has this permission.
-    """
-
-    permissions = graphene.List(graphene.String)
-
-    def resolve_permissions(self, info):
-        if hasattr(self, "get_perms"):
-            return self.get_perms(info.context.user, self)
-        return get_perms(info.context.user, self)

@@ -1,5 +1,6 @@
 import abc
 
+import graphene
 from guardian.shortcuts import get_perms
 
 
@@ -36,7 +37,7 @@ class Ability(abc.ABC):
 
     @staticmethod
     @abc.abstractmethod
-    def user_has(user, item) -> bool:
+    def user_has(user, obj) -> bool:
         raise NotImplementedError
 
 
@@ -47,12 +48,9 @@ class OpenBoxoffice(Ability):
 
     @staticmethod
     def user_has(user, _) -> bool:
-        from uobtheatre.productions.models import Performance
+        from uobtheatre.productions.models import Performance  # type: ignore
 
-        return (
-            Performance.objects.has_boxoffice_permission(user).count()  #  type: ignore
-            > 0
-        )
+        return Performance.objects.has_boxoffice_permission(user).exists()  # type: ignore
 
 
 class OpenAdmin(Ability):
@@ -62,5 +60,24 @@ class OpenAdmin(Ability):
 
     @staticmethod
     def user_has(user, _) -> bool:
-        # TODO check if the user can edit or create productions
-        return user.is_superuser
+        return user.is_superuser or user.has_any_objects_with_perms(
+            [
+                "productions.add_production",
+                "productions.change_production",
+                "productions.view_production",
+            ]
+        )
+
+
+class PermissionsMixin:
+    """
+    Add permissions to schema. This is a list of string, if a string is
+    included then the user has this permission.
+    """
+
+    permissions = graphene.List(graphene.String)
+
+    def resolve_permissions(self, info):
+        if hasattr(self, "get_perms"):
+            return self.get_perms(info.context.user, self)
+        return get_perms(info.context.user, self)

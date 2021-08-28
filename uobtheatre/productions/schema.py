@@ -15,12 +15,9 @@ from uobtheatre.productions.models import (
     Production,
     ProductionTeamMember,
 )
+from uobtheatre.users.abilities import PermissionsMixin
 from uobtheatre.utils.filters import FilterSet
-from uobtheatre.utils.schema import (
-    DjangoObjectType,
-    GrapheneEnumMixin,
-    PermissionsMixin,
-)
+from uobtheatre.utils.schema import DjangoObjectType, GrapheneEnumMixin
 
 
 class CrewRoleNode(GrapheneEnumMixin, DjangoObjectType):

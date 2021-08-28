@@ -1,5 +1,4 @@
 # pylint: disable=too-many-lines
-from types import SimpleNamespace
 
 import pytest
 from graphql_relay.node.node import from_global_id, to_global_id
@@ -1325,12 +1324,9 @@ def test_pay_booking_manual(gql_client, payment_method):
 
 
 @pytest.mark.django_db
-def test_paybooking_unsupported_payment_provider():
+def test_paybooking_unsupported_payment_provider(info):
     booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
-    user = UserFactory()
-
-    info = SimpleNamespace(context=SimpleNamespace(user=user))
-    assign_perm("boxoffice", user, booking.performance.production)
+    assign_perm("boxoffice", info.context.user, booking.performance.production)
 
     with pytest.raises(GQLNonFieldException) as exc:
         PayBooking.resolve_mutation(

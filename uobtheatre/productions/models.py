@@ -234,11 +234,7 @@ class Production(TimeStampedMixin, models.Model):
 
     class Meta:
         ordering = ["id"]
-        permissions = (
-            ("boxoffice", "Can use boxoffice for this show"),
-            ("create", "Can create a new production"),
-            ("edit", "Can edit existing production"),
-        )
+        permissions = (("boxoffice", "Can use boxoffice for this show"),)
 
 
 class CastMember(models.Model):
