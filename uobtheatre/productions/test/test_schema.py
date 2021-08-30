@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import datetime
 import math
 
@@ -15,6 +16,7 @@ from uobtheatre.discounts.test.factories import (
     DiscountFactory,
     DiscountRequirementFactory,
 )
+from uobtheatre.payments.test.factories import PaymentFactory
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.productions.test.factories import (
     AudienceWarningFactory,
@@ -25,6 +27,7 @@ from uobtheatre.productions.test.factories import (
     ProductionTeamMemberFactory,
     create_production,
 )
+from uobtheatre.users.test.factories import UserFactory
 
 
 @pytest.mark.django_db
@@ -942,3 +945,68 @@ def test_performance_has_permission(gql_client):
         {"node": {"id": to_global_id("PerformanceNode", perm.id)}}
         for perm in performances[1:]
     ]
+
+
+@pytest.mark.django_db
+def test_production_and_performance_sales_breakdowns(gql_client):
+    performance = PerformanceFactory()
+    booking = BookingFactory(performance=performance)
+    perf_seat_group = PerformanceSeatingFactory(performance=performance, price=100)
+    TicketFactory(booking=booking, seat_group=perf_seat_group.seat_group)
+    PaymentFactory(pay_object=booking, value=booking.total())
+
+    request = """
+        {
+          productions(id: "%s") {
+            edges {
+                node {
+                    salesBreakdown {
+                        totalPaymentsValue
+                        totalMiscCostsValue
+                        totalSocietyIncomeValue
+                    }
+                    performances {
+                        edges {
+                            node {
+                                salesBreakdown {
+                                    totalPaymentsValue
+                                    totalMiscCostsValue
+                                    totalSocietyIncomeValue
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        }
+        """
+
+    # First, test as unauthenticated/unauthorised
+    response = gql_client.execute(
+        request % to_global_id("ProductionNode", performance.production.id)
+    )
+    assert response["data"]["productions"]["edges"][0]["node"]["salesBreakdown"] is None
+    assert (
+        response["data"]["productions"]["edges"][0]["node"]["performances"]["edges"][0][
+            "node"
+        ]["salesBreakdown"]
+        is None
+    )
+
+    # Second, as superuser  TODO: Make this not a super user, but a user with the correct permission
+    response = gql_client.login(user=UserFactory(is_superuser=True)).execute(
+        request % to_global_id("ProductionNode", performance.production.id)
+    )
+    assert response["data"]["productions"]["edges"][0]["node"]["salesBreakdown"] == {
+        "totalPaymentsValue": 100,
+        "totalMiscCostsValue": 0,
+        "totalSocietyIncomeValue": 100,
+    }
+    assert response["data"]["productions"]["edges"][0]["node"]["performances"]["edges"][
+        0
+    ]["node"]["salesBreakdown"] == {
+        "totalPaymentsValue": 100,
+        "totalMiscCostsValue": 0,
+        "totalSocietyIncomeValue": 100,
+    }

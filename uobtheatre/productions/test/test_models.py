@@ -6,17 +6,19 @@ from dateutil import parser
 from django.utils import timezone
 from guardian.shortcuts import assign_perm
 
-from uobtheatre.bookings.models import Ticket
+from uobtheatre.bookings.models import Booking, Ticket
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
     PerformanceSeatingFactory,
     TicketFactory,
+    ValueMiscCostFactory,
 )
 from uobtheatre.discounts.test.factories import (
     ConcessionTypeFactory,
     DiscountFactory,
     DiscountRequirementFactory,
 )
+from uobtheatre.payments.test.factories import PaymentFactory
 from uobtheatre.productions.models import Performance, PerformanceSeatGroup
 from uobtheatre.productions.test.factories import (
     AudienceWarningFactory,
@@ -764,3 +766,92 @@ def test_has_group_discounts():
 
     DiscountRequirementFactory(discount=double_discount)
     assert performance.has_group_discounts
+
+
+@pytest.mark.django_db
+def test_sales_breakdown_on_production():
+    production = ProductionFactory()
+
+    def asser_breakdown_values(
+        production, payments_value, misc_costs_value, society_income
+    ):
+        assert production.sales_breakdown["payments_total"] == payments_value
+        assert production.sales_breakdown["misc_costs_total"] == misc_costs_value
+        assert production.sales_breakdown["society_income_total"] == society_income
+
+    # Blank production should have no sales
+    asser_breakdown_values(production, 0, 0, 0)
+
+    # Add a performance with 1 draft, 1 paid and one comp booking
+    performance = PerformanceFactory(production=production)
+    perf_seat_group = PerformanceSeatingFactory(performance=performance, price=100)
+
+    # Make a misc cost
+    ValueMiscCostFactory(value=100)
+
+    booking_1 = BookingFactory(
+        status=Booking.BookingStatus.IN_PROGRESS, performance=performance
+    )
+
+    # Both bookings have a tickets value of 200, and a misc cost of 0
+    booking_2 = BookingFactory(
+        status=Booking.BookingStatus.PAID, performance=performance
+    )
+    booking_3 = BookingFactory(
+        status=Booking.BookingStatus.PAID,
+        admin_discount_percentage=1,
+        performance=performance,
+    )
+
+    TicketFactory(booking=booking_1, seat_group=perf_seat_group.seat_group)
+    TicketFactory(booking=booking_2, seat_group=perf_seat_group.seat_group)
+    TicketFactory(booking=booking_2, seat_group=perf_seat_group.seat_group)
+    TicketFactory(booking=booking_3, seat_group=perf_seat_group.seat_group)
+    TicketFactory(booking=booking_3, seat_group=perf_seat_group.seat_group)
+    PaymentFactory(pay_object=booking_2, value=booking_2.total())
+
+    asser_breakdown_values(production, 300, 100, 200)
+
+
+@pytest.mark.django_db
+def test_sales_breakdown_on_performance():
+    performance = PerformanceFactory()
+
+    def asser_breakdown_values(
+        performance, payments_total, misc_costs_total, society_income
+    ):
+        assert performance.sales_breakdown["payments_total"] == payments_total
+        assert performance.sales_breakdown["misc_costs_total"] == misc_costs_total
+        assert performance.sales_breakdown["society_income_total"] == society_income
+
+    # Blank performance should have no sales
+    asser_breakdown_values(performance, 0, 0, 0)
+
+    # Add a performance with 1 draft, 1 paid and one comp booking
+    perf_seat_group = PerformanceSeatingFactory(performance=performance, price=150)
+
+    # Make a misc cost
+    ValueMiscCostFactory(value=100)
+
+    booking_1 = BookingFactory(
+        status=Booking.BookingStatus.IN_PROGRESS, performance=performance
+    )
+
+    # Both bookings have a tickets value of 200, and a misc cost of 0
+    booking_2 = BookingFactory(
+        status=Booking.BookingStatus.PAID, performance=performance
+    )
+    booking_3 = BookingFactory(
+        status=Booking.BookingStatus.PAID,
+        admin_discount_percentage=1,
+        performance=performance,
+    )
+
+    TicketFactory(booking=booking_1, seat_group=perf_seat_group.seat_group)
+    TicketFactory(booking=booking_2, seat_group=perf_seat_group.seat_group)
+    TicketFactory(booking=booking_2, seat_group=perf_seat_group.seat_group)
+    TicketFactory(booking=booking_3, seat_group=perf_seat_group.seat_group)
+    TicketFactory(booking=booking_3, seat_group=perf_seat_group.seat_group)
+    PaymentFactory(pay_object=booking_2, value=booking_2.total())
+
+    asser_breakdown_values(performance, 400, 100, 300)

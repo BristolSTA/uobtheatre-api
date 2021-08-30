@@ -125,6 +125,12 @@ class ProductionFilter(FilterSet):
     order_by = ProductionByMethodOrderingFilter()
 
 
+class SalesBreakdown(graphene.ObjectType):
+    total_payments_value = graphene.Int(required=True)
+    total_misc_costs_value = graphene.Int(required=True)
+    total_society_income_value = graphene.Int(required=True)
+
+
 class ProductionNode(GrapheneEnumMixin, DjangoObjectType):
     warnings = DjangoListField(WarningNode)
     crew = DjangoListField(CrewMemberNode)
@@ -137,6 +143,8 @@ class ProductionNode(GrapheneEnumMixin, DjangoObjectType):
     is_bookable = graphene.Boolean(required=True)
     min_seat_price = graphene.Int()
 
+    sales_breakdown = graphene.Field(SalesBreakdown)
+
     def resolve_start(self, info):
         return self.start_date()
 
@@ -148,6 +156,20 @@ class ProductionNode(GrapheneEnumMixin, DjangoObjectType):
 
     def resolve_min_seat_price(self, info):
         return self.min_seat_price()
+
+    def resolve_sales_breakdown(self, info):
+        if not info.context.user.has_perm(
+            "productions.sales", self  # TOD!O: Use real permission here
+        ):
+            return None
+
+        sales_breakdown = self.sales_breakdown
+
+        return SalesBreakdown(
+            total_payments_value=sales_breakdown["payments_total"],
+            total_misc_costs_value=sales_breakdown["misc_costs_total"],
+            total_society_income_value=sales_breakdown["society_income_total"],
+        )
 
     class Meta:
         model = Production
@@ -242,6 +264,7 @@ class PerformanceNode(DjangoObjectType):
     sold_out = graphene.Boolean(required=True)
     discounts = DjangoListField(DiscountNode)
     tickets_breakdown = graphene.Field(PerformanceTicketsBreakdown, required=True)
+    sales_breakdown = graphene.Field(SalesBreakdown)
 
     def resolve_ticket_options(self, info):
         return self.performance_seat_groups.all()
@@ -271,6 +294,20 @@ class PerformanceNode(DjangoObjectType):
             self.total_tickets_checked_in,
             self.total_tickets_unchecked_in,
             self.capacity_remaining(),
+        )
+
+    def resolve_sales_breakdown(self, info):
+        if not info.context.user.has_perm(
+            "productions.sales", self.production  # TOD!O: Use real permission here
+        ):
+            return None
+
+        sales_breakdown = self.sales_breakdown
+
+        return SalesBreakdown(
+            total_payments_value=sales_breakdown["payments_total"],
+            total_misc_costs_value=sales_breakdown["misc_costs_total"],
+            total_society_income_value=sales_breakdown["society_income_total"],
         )
 
     class Meta:

@@ -232,29 +232,24 @@ class Production(TimeStampedMixin, models.Model):
             return None
         return min(performance.duration() for performance in performances)
 
+    @property
     def sales_breakdown(self):
         """Generates a breakdown of the sales of this production"""
-        from uobtheatre.bookings.models import Booking
 
-        bookings = (
-            Booking.objects.filter(performance__production=self)
-            .prefetch_related("payments")
-            .all()
-        )
-        total_payments = (
-            bookings.aggregate(Sum("payments__value"))["payments__value__sum"] or 0
-        )
-        total_misc_costs = sum(
-            [
-                booking.misc_costs_value() if len(booking.payments.all()) else 0
-                for booking in bookings
-            ]
-        )
+        sale_breakdowns = [
+            performance.sales_breakdown for performance in self.performances.all()
+        ]
 
         return {
-            "payments_value": total_payments,
-            "misc_costs_value": total_misc_costs,
-            "society_income": total_payments - total_misc_costs,
+            "payments_total": sum(
+                [breakdown["payments_total"] for breakdown in sale_breakdowns]
+            ),
+            "misc_costs_total": sum(
+                [breakdown["misc_costs_total"] for breakdown in sale_breakdowns]
+            ),
+            "society_income_total": sum(
+                [breakdown["society_income_total"] for breakdown in sale_breakdowns]
+            ),
         }
 
     class Meta:
@@ -716,6 +711,33 @@ class Performance(TimeStampedMixin, models.Model):
         if user.has_perm("productions.boxoffice", self.production):
             return True
         return False
+
+    @property
+    def sales_breakdown(self):
+        """Generates a breakdown of the sales of this performance"""
+        from uobtheatre.bookings.models import Booking
+
+        bookings = (
+            Booking.objects.filter(performance=self).prefetch_related("payments").all()
+        )
+        total_payments = (
+            bookings.aggregate(Sum("payments__value"))["payments__value__sum"] or 0
+        )
+        total_misc_costs = sum(
+            [
+                booking.misc_costs_value()
+                if len(booking.payments.all())
+                and booking.status == Booking.BookingStatus.PAID
+                else 0
+                for booking in bookings
+            ]
+        )
+
+        return {
+            "payments_total": total_payments,
+            "misc_costs_total": total_misc_costs,
+            "society_income_total": total_payments - total_misc_costs,
+        }
 
     def __str__(self):
         if self.start is None:
