@@ -12,7 +12,13 @@ from graphql_auth.schema import UserNode
 
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
 from uobtheatre.discounts.models import ConcessionType
-from uobtheatre.payments.models import Payment
+from uobtheatre.payments.payment_methods import (
+    Card,
+    Cash,
+    PaymentMethod,
+    SquareOnline,
+    SquarePOS,
+)
 from uobtheatre.productions.models import Performance
 from uobtheatre.users.models import User
 from uobtheatre.utils.enums import GrapheneEnumMixin
@@ -67,7 +73,7 @@ class PriceBreakdownNode(DjangoObjectType):
         return self.discount_value()
 
     def resolve_subtotal_price(self, info):
-        return self.subtotal()
+        return self.subtotal
 
     def resolve_misc_costs_value(self, info):
         return self.misc_costs_value()
@@ -76,7 +82,7 @@ class PriceBreakdownNode(DjangoObjectType):
         return self.total()
 
     def resolve_tickets_discounted_price(self, info):
-        return self.subtotal()
+        return self.subtotal
 
     def resolve_tickets(self, info):
 
@@ -144,6 +150,8 @@ class BookingByMethodOrderingFilter(OrderingFilter):
             ("-created_at", "Created At (descending)"),
             ("checked_in", "Checked In"),
             ("-checked_in", "Checked In (descending)"),
+            ("start", "Start Time"),
+            ("-start", "Start Time (descending)"),
         ]
 
     def filter(self, query_set, value: str):
@@ -154,6 +162,8 @@ class BookingByMethodOrderingFilter(OrderingFilter):
          - '-created_at' (Descending created at)
          - 'checked_in'
          - '-checked_in' (Descending checked in)
+         - 'start'
+         - '-start' (Descending start)
 
         Args:
             query_set (QuerySet): The Queryset which is being filtered.
@@ -167,6 +177,11 @@ class BookingByMethodOrderingFilter(OrderingFilter):
             return query_set.annotate_checked_in_proportion().order_by("-proportion")
         if value and "-checked_in" in value:
             return query_set.annotate_checked_in_proportion().order_by("proportion")
+
+        if value and "start" in value:
+            return query_set.order_by("performance__start")
+        if value and "-start" in value:
+            return query_set.order_by("-performance__start")
 
         # the super class handles the filtering of "created_at"
         return super().filter(query_set, value)
@@ -531,29 +546,30 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         price = graphene.Int(required=True)
         nonce = graphene.String(required=False)
         payment_provider = graphene.Argument(
-            graphene.Enum.from_enum(Payment.PaymentProvider), required=False
+            "uobtheatre.payments.schema.PaymentMethodsEnum"
         )
+        device_id = graphene.String(required=False)
 
     @classmethod
-    def resolve_mutation(
+    def resolve_mutation(  # pylint: disable=too-many-arguments
         cls,
         _,
         info,
         booking_id,
         price,
         nonce=None,
-        payment_provider=Payment.PaymentProvider.SQUARE_ONLINE,
+        payment_provider=SquareOnline.name,
+        device_id=None,
     ):
 
         # Get the performance and if it doesn't exist throw an error
         booking = Booking.objects.get(id=booking_id)
 
         # Only (box office) admins can create a booking for a different user
-        if (
-            payment_provider != Payment.PaymentProvider.SQUARE_ONLINE
-            and not info.context.user.has_perm(
-                "productions.boxoffice", booking.performance.production
-            )
+        if not (
+            payment_provider == SquareOnline.name
+        ) and not info.context.user.has_perm(
+            "productions.boxoffice", booking.performance.production
         ):
             raise GQLFieldException(
                 message=f"You do not have permission to pay for a booking with the {payment_provider} provider.",
@@ -569,17 +585,33 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         if booking.status != Booking.BookingStatus.IN_PROGRESS:
             raise GQLNonFieldException(message="The booking is not in progress")
 
-        if payment_provider == Payment.PaymentProvider.SQUARE_ONLINE:
+        if payment_provider == SquareOnline.name:
             if not nonce:
                 raise GQLFieldException(
                     message=f"A nonce is required when using {payment_provider} provider.",
                     field="nonce",
-                    code=400,
+                    code="missing_required",
                 )
-            payment = booking.pay_online(nonce)
-        else:
-            payment = booking.pay_manual(payment_provider)
+            payment_method = SquareOnline(nonce, booking.id)
 
+        elif payment_provider == SquarePOS.name:
+            if not device_id:
+                raise GQLFieldException(
+                    message=f"A device_id is required when using {payment_provider} provider.",
+                    field="device_id",
+                    code="missing_required",
+                )
+            payment_method = SquarePOS(device_id)
+        elif payment_provider == Cash.name:
+            payment_method = Cash()
+        elif payment_provider == Card.name:
+            payment_method = Card()
+        else:
+            raise GQLNonFieldException(
+                message=f"Unsupported payment provider {payment_provider}."
+            )
+
+        payment = booking.pay(payment_method)
         return PayBooking(booking=booking, payment=payment)
 
 

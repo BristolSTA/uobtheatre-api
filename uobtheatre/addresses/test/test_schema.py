@@ -1,11 +1,11 @@
 import pytest
+from graphql_relay.node.node import to_global_id
 
-# from uobtheatre.addresses.test.factories import PerformanceFactory
 from uobtheatre.venues.test.factories import VenueFactory
 
 
 @pytest.mark.django_db
-def test_address_schema(gql_client, gql_id):
+def test_address_schema(gql_client):
     venues = [VenueFactory() for i in range(3)]
 
     response = gql_client.execute(
@@ -38,9 +38,9 @@ def test_address_schema(gql_client, gql_id):
                 "edges": [
                     {
                         "node": {
-                            "id": gql_id(venue.id, "VenueNode"),
+                            "id": to_global_id("VenueNode", venue.id),
                             "address": {
-                                "id": gql_id(venue.address.id, "AddressNode"),
+                                "id": to_global_id("AddressNode", venue.address.id),
                                 "buildingName": venue.address.building_name,
                                 "buildingNumber": venue.address.building_number,
                                 "street": venue.address.street,
