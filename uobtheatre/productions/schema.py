@@ -226,6 +226,7 @@ class PerformanceFilter(FilterSet):
 
 class PerformanceTicketsBreakdown(graphene.ObjectType):
     total_capacity = graphene.Int(required=True)
+    total_seat_group_capacity = graphene.Int(required=True)
     total_tickets_sold = graphene.Int(required=True)
     total_tickets_checked_in = graphene.Int(required=True)
     total_tickets_to_check_in = graphene.Int(required=True)
@@ -267,6 +268,7 @@ class PerformanceNode(DjangoObjectType):
     def resolve_tickets_breakdown(self, info):
         return PerformanceTicketsBreakdown(
             self.total_capacity(),
+            self.total_seat_group_capacity(),
             self.total_tickets_sold(),
             self.total_tickets_checked_in,
             self.total_tickets_unchecked_in,

@@ -419,11 +419,8 @@ class Performance(TimeStampedMixin, models.Model):
             .exists()
         )
 
-    def total_capacity(self, seat_group=None):
-        """Total capacity of the Performance.
-
-        The is the total number of seats (Tickets) which can be booked for this
-        performance. This does not take into account any existing Bookings.
+    def total_seat_group_capacity(self, seat_group=None):
+        """The sum of the capacities of all the seat groups in this performance.
 
         Note:
             The sum of the capacities of all the seat groups is not necessarily
@@ -434,7 +431,7 @@ class Performance(TimeStampedMixin, models.Model):
                 (default None)
 
         Returns:
-            int: The capacity of the show (or SeatGroup if provided)
+            int: The capacity of the seat groups (or SeatGroup if provided) of the show
         """
         if seat_group:
             queryset = self.performance_seat_groups
@@ -444,6 +441,21 @@ class Performance(TimeStampedMixin, models.Model):
                 return 0
         response = self.performance_seat_groups.aggregate(Sum("capacity"))
         return response["capacity__sum"] or 0
+
+    def total_capacity(self, seat_group=None):
+        """Total capacity of the Performance.
+
+        The is the total number of seats (Tickets) which can be booked for this
+        performance. This does not take into account any existing Bookings.
+
+        Returns:
+            int: The capacity of the show
+        """
+        if seat_group is not None:
+            return self.total_seat_group_capacity(seat_group=seat_group)
+        if self.capacity:
+            return min(self.capacity, self.total_seat_group_capacity())
+        return self.total_seat_group_capacity()
 
     def total_tickets_sold(self, **kwargs):
         """The number of tickets sold for the performance

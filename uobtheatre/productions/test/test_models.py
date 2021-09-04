@@ -370,20 +370,25 @@ def test_performance_total_tickets_checked_in():
 
 @pytest.mark.django_db
 def test_performance_total_capacity():
-    perf = PerformanceFactory()
-
-    seating = [PerformanceSeatingFactory(performance=perf) for _ in range(3)]
+    perf1 = PerformanceFactory()
+    seating = [PerformanceSeatingFactory(performance=perf1) for _ in range(3)]
+    set_capacity = 100
+    perf2 = PerformanceFactory(capacity=set_capacity)
+    for _ in range(3):
+        PerformanceSeatingFactory(performance=perf2)
 
     assert (
-        perf.total_capacity() == sum(perf_seat.capacity for perf_seat in seating) != 0
+        perf1.total_capacity() == sum(perf_seat.capacity for perf_seat in seating) != 0
     )
+    assert perf1.total_capacity() == perf1.total_seat_group_capacity()
+    assert perf2.total_capacity() == set_capacity
 
     seat_group = SeatGroupFactory()
-    assert perf.total_capacity(seat_group) == 0
+    assert perf1.total_capacity(seat_group) == 0
 
     seating[0].seat_group = seat_group
     seating[0].save()
-    assert perf.total_capacity(seat_group) == seating[0].capacity != 0
+    assert perf1.total_capacity(seat_group) == seating[0].capacity != 0
 
 
 @pytest.mark.django_db
