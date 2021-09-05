@@ -22,7 +22,7 @@ django-cors-headers==3.8.0
 django-configurations==2.2
 
 # Django config
-django-environ==0.4.5  # https://github.com/joke2k/django-environ
+django-environ==0.5.0  # https://github.com/joke2k/django-environ
 
 #=== Database ===#
 
@@ -35,6 +35,7 @@ django==3.2.6
 #=== Django Extras ===#
 
 django-guardian==2.4.0  # https://github.com/django-guardian/django-guardian
+django_tiptap==0.0.10  # https://github.com/django-tiptap/django_tiptap
 djangorestframework==3.12.4  # https://www.django-rest-framework.org
 
 #=== GQL core ===#

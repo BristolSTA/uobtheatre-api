@@ -5,6 +5,7 @@ Models for venues.
 from autoslug import AutoSlugField
 from django.apps import apps
 from django.db import models
+from django_tiptap.fields import TipTapTextField
 
 from uobtheatre.addresses.models import Address
 from uobtheatre.images.models import Image
@@ -30,7 +31,7 @@ class Venue(TimeStampedMixin, models.Model):
 
     name = models.CharField(max_length=255)
     internal_capacity = models.SmallIntegerField()
-    description = models.TextField(null=True, blank=True)
+    description = TipTapTextField(null=True, blank=True)
     address = models.ForeignKey(Address, on_delete=models.CASCADE)
     image = models.ForeignKey(Image, on_delete=models.RESTRICT, related_name="venues")
     publicly_listed = models.BooleanField(default=True)
