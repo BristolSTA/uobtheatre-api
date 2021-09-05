@@ -378,7 +378,7 @@ class Performance(TimeStampedMixin, models.Model):
         """
         from uobtheatre.bookings.models import Ticket
 
-        return Ticket.objects.filter(booking__in=self.bookings.all())
+        return Ticket.objects.filter(booking__in=self.bookings.all())  # type: ignore
 
     @property
     def checked_in_tickets(self) -> models.Manager["Ticket"]:
@@ -387,7 +387,7 @@ class Performance(TimeStampedMixin, models.Model):
         Returns:
             queryset(Tickets): all tickets for this performance which have been checked in.
         """
-        return self.tickets.filter(checked_in=True)
+        return self.tickets.filter(checked_in=True)  # type: ignore
 
     @property
     def unchecked_in_tickets(self) -> models.Manager["Ticket"]:
@@ -396,7 +396,7 @@ class Performance(TimeStampedMixin, models.Model):
         Returns:
             queryset(Tickets): all tickets for this performance which have not been checked in.
         """
-        return self.tickets.filter(checked_in=False)
+        return self.tickets.filter(checked_in=False)  # type: ignore
 
     @property
     def has_group_discounts(self) -> bool:
