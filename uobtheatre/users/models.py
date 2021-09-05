@@ -77,7 +77,7 @@ class User(AbilitiesMixin, AbstractUser):
             bool: Whether the user has any of the permissions
         """
         return (
-            # Here we check explicitly check globalal permissions as no objects
+            # Here we check explicitly check global permissions as no objects
             # are returned if no objects exist for get_objects_with_perm.
             any(self.has_perm(perm) for perm in permissions)
             or self.get_objects_with_perm(permissions).exists()
