@@ -34,7 +34,7 @@ def test_boxoffice_permissions_model_level(
     gql_client: AuthenticateableGQLClient,
 ):
     production = ProductionFactory()
-    user = gql_client.login().user
+    user = gql_client.login()
     assert not user.has_perm("productions.boxoffice")
     assert not user.has_perm("productions.boxoffice", production)
 
@@ -55,7 +55,7 @@ def test_boxoffice_permissions_model_level_group(
     boxoffice_perm = Permission.objects.get(codename="boxoffice")
     group.permissions.add(boxoffice_perm)
 
-    user = gql_client.login().user
+    user = gql_client.login()
     assert not user.has_perm("productions.boxoffice", production)
 
     user.groups.add(group)

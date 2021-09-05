@@ -82,7 +82,7 @@ class ProductionQuerySet(QuerySet):
             QuerySet: The filtered queryset
         """
         productions_user_can_edit = get_objects_for_user(
-            user, "productions.edit"
+            user, "change_production", self
         ).values_list("id", flat=True)
         return self.filter(
             ~Q(status=Production.Status.DRAFT) | Q(id__in=productions_user_can_edit)

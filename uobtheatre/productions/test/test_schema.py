@@ -121,6 +121,7 @@ def test_productions_schema(gql_client):
         }
         """
     )
+    print(f"{response=}")
 
     assert response == {
         "data": {
@@ -861,7 +862,7 @@ def test_draft_productions_not_shown_publically(logged_in, gql_client):
 def test_draft_production_shown_with_permission(gql_client):
     _ = [ProductionFactory() for _ in range(3)]
     draft_production = ProductionFactory(status=Production.Status.DRAFT)
-    assign_perm("production.edit", gql_client.login().user, draft_production)
+    assign_perm("productions.change_production", gql_client.login(), draft_production)
 
     request = """
         {
