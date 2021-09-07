@@ -452,9 +452,12 @@ class Performance(TimeStampedMixin, models.Model):
         Returns:
             int: The capacity of the show
         """
-        if self.capacity:
-            return min(self.capacity, self.total_seat_group_capacity())
-        return self.total_seat_group_capacity()
+
+        return (
+            min(self.capacity, self.total_seat_group_capacity())
+            if self.capacity
+            else self.total_seat_group_capacity()
+        )
 
     def total_tickets_sold(self, **kwargs):
         """The number of tickets sold for the performance

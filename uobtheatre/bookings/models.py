@@ -56,7 +56,7 @@ class MiscCost(models.Model):
         This will always return an value (not optional) as the model is
         required to either have a non null percentage or a non null value.
 
-        This will return 0 if the booking is complimentary (admin_discount_percentage = 1).
+        This will return 0 if the booking is complimentary (subtotal = 0).
 
         Args:
             booking (Booking): The booking on which the misc cost is being
