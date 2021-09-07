@@ -374,7 +374,7 @@ class Performance(TimeStampedMixin, models.Model):
     capacity = models.IntegerField(null=True, blank=True)
 
     @property
-    def tickets(self) -> models.Manager["Ticket"]:
+    def tickets(self) -> QuerySet["Ticket"]:
         """Get tickets for this performance
 
         Returns:
@@ -385,7 +385,7 @@ class Performance(TimeStampedMixin, models.Model):
         return Ticket.objects.filter(booking__in=self.bookings.all())
 
     @property
-    def checked_in_tickets(self) -> models.Manager["Ticket"]:
+    def checked_in_tickets(self) -> QuerySet["Ticket"]:
         """Get all checked in tickets
 
         Returns:
@@ -394,7 +394,7 @@ class Performance(TimeStampedMixin, models.Model):
         return self.tickets.filter(checked_in=True)
 
     @property
-    def unchecked_in_tickets(self) -> models.Manager["Ticket"]:
+    def unchecked_in_tickets(self) -> QuerySet["Ticket"]:
         """Get all unchecked in tickets
 
         Returns:
