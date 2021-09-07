@@ -370,7 +370,7 @@ class Performance(TimeStampedMixin, models.Model):
     capacity = models.IntegerField(null=True, blank=True)
 
     @property
-    def tickets(self) -> models.Manager["Ticket"]:
+    def tickets(self) -> QuerySet["Ticket"]:
         """Get tickets for this performance
 
         Returns:
@@ -378,25 +378,25 @@ class Performance(TimeStampedMixin, models.Model):
         """
         from uobtheatre.bookings.models import Ticket
 
-        return Ticket.objects.filter(booking__in=self.bookings.all())  # type: ignore
+        return Ticket.objects.filter(booking__in=self.bookings.all())
 
     @property
-    def checked_in_tickets(self) -> models.Manager["Ticket"]:
+    def checked_in_tickets(self) -> QuerySet["Ticket"]:
         """Get all checked in tickets
 
         Returns:
             queryset(Tickets): all tickets for this performance which have been checked in.
         """
-        return self.tickets.filter(checked_in=True)  # type: ignore
+        return self.tickets.filter(checked_in=True)
 
     @property
-    def unchecked_in_tickets(self) -> models.Manager["Ticket"]:
+    def unchecked_in_tickets(self) -> QuerySet["Ticket"]:
         """Get all unchecked in tickets
 
         Returns:
             queryset(Tickets): all tickets for this performance which have not been checked in.
         """
-        return self.tickets.filter(checked_in=False)  # type: ignore
+        return self.tickets.filter(checked_in=False)
 
     @property
     def has_group_discounts(self) -> bool:
