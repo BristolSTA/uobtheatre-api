@@ -266,7 +266,7 @@ class PerformanceNode(DjangoObjectType):
 
     def resolve_tickets_breakdown(self, info):
         return PerformanceTicketsBreakdown(
-            self.total_capacity(),
+            self.total_capacity,
             self.total_tickets_sold(),
             self.total_tickets_checked_in,
             self.total_tickets_unchecked_in,

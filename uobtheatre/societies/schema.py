@@ -22,5 +22,8 @@ class Query(graphene.ObjectType):
     societies = DjangoFilterConnectionField(SocietyNode)
     society = graphene.Field(SocietyNode, slug=graphene.String(required=True))
 
-    def resolve_society(self, info, slug):
-        return Society.objects.get(slug=slug)
+    def resolve_society(self, _, slug):
+        try:
+            return Society.objects.get(slug=slug)
+        except Society.DoesNotExist:
+            return None

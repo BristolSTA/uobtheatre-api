@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import datetime
 import math
 from unittest.mock import patch
@@ -507,10 +508,12 @@ def test_total():
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "admin_discount, expected_price",
-    [(0.2, 1256), (1, 0)],
+    "admin_discount, expected_price, expected_misc_costs_value",
+    [(0.2, 1256, 296), (1, 0, 0)],
 )
-def test_total_with_admin_discount(admin_discount, expected_price):
+def test_total_with_admin_discount(
+    admin_discount, expected_price, expected_misc_costs_value
+):
     ValueMiscCostFactory(value=200)
     PercentageMiscCostFactory(percentage=0.1)
 
@@ -518,6 +521,7 @@ def test_total_with_admin_discount(admin_discount, expected_price):
     booking = BookingFactory(admin_discount_percentage=admin_discount)
     psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
     ticket = TicketFactory(booking=booking, seat_group=psg.seat_group)
+    assert booking.misc_costs_value() == expected_misc_costs_value
     assert ticket.booking.total() == expected_price
 
 

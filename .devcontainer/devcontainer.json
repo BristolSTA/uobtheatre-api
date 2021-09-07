@@ -24,4 +24,8 @@
 		"ms-python.python",
 		"njpwerner.autodocstring"
 	],
+
+	"remoteEnv": {
+		"DATABASE_URL": "postgres://${containerEnv:POSTGRES_USER}:${containerEnv:POSTGRES_PASSWORD}@${containerEnv:POSTGRES_HOST}:${containerEnv:POSTGRES_PORT}/${containerEnv:POSTGRES_DB}"
+	}
 }

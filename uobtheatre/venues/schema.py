@@ -43,5 +43,8 @@ class Query(graphene.ObjectType):
     venues = DjangoFilterConnectionField(VenueNode)
     venue = graphene.Field(VenueNode, slug=graphene.String(required=True))
 
-    def resolve_venue(self, info, slug):
-        return Venue.objects.get(slug=slug)
+    def resolve_venue(self, _, slug):
+        try:
+            return Venue.objects.get(slug=slug)
+        except Venue.DoesNotExist:
+            return None
