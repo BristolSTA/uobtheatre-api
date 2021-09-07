@@ -83,7 +83,7 @@ class ProductionQuerySet(QuerySet):
             QuerySet: The filtered queryset
         """
         productions_user_can_edit = get_objects_for_user(
-            user, "productions.edit"
+            user, "change_production", self
         ).values_list("id", flat=True)
         return self.filter(
             ~Q(status=Production.Status.DRAFT) | Q(id__in=productions_user_can_edit)
@@ -235,11 +235,7 @@ class Production(TimeStampedMixin, models.Model):
 
     class Meta:
         ordering = ["id"]
-        permissions = (
-            ("boxoffice", "Can use boxoffice for this show"),
-            ("create", "Can create a new production"),
-            ("edit", "Can edit existing production"),
-        )
+        permissions = (("boxoffice", "Can use boxoffice for this show"),)
 
 
 class CastMember(models.Model):
@@ -374,7 +370,7 @@ class Performance(TimeStampedMixin, models.Model):
     capacity = models.IntegerField(null=True, blank=True)
 
     @property
-    def tickets(self) -> models.Manager["Ticket"]:
+    def tickets(self) -> QuerySet["Ticket"]:
         """Get tickets for this performance
 
         Returns:
@@ -385,7 +381,7 @@ class Performance(TimeStampedMixin, models.Model):
         return Ticket.objects.filter(booking__in=self.bookings.all())  # type: ignore
 
     @property
-    def checked_in_tickets(self) -> models.Manager["Ticket"]:
+    def checked_in_tickets(self) -> QuerySet["Ticket"]:
         """Get all checked in tickets
 
         Returns:
@@ -394,7 +390,7 @@ class Performance(TimeStampedMixin, models.Model):
         return self.tickets.filter(checked_in=True)  # type: ignore
 
     @property
-    def unchecked_in_tickets(self) -> models.Manager["Ticket"]:
+    def unchecked_in_tickets(self) -> QuerySet["Ticket"]:
         """Get all unchecked in tickets
 
         Returns:

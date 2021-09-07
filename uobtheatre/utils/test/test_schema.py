@@ -55,7 +55,8 @@ def test_auth_required_mixin(gql_client):
 @pytest.mark.django_db
 def test_id_input_field_parse_value(gql_client):
     performance = PerformanceFactory()
-    gql_client.login().execute(
+    gql_client.login()
+    gql_client.execute(
         """
         mutation($id: IdInputField!) {
           createBooking(

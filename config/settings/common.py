@@ -284,7 +284,6 @@ GRAPHENE = {
     ],
 }
 
-
 # Square payments
 SQUARE_SETTINGS = {
     "SQUARE_ACCESS_TOKEN": os.getenv(

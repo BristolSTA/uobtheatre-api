@@ -12,7 +12,10 @@ class UserAdmin(DjangoUserAdmin):
     ordering = ("email",)
     exclude = ("username",)
     fieldsets = (
-        ("Personal info", {"fields": ("first_name", "last_name", "email", "password")}),
+        (
+            "Personal info",
+            {"fields": ("first_name", "last_name", "email", "password")},
+        ),
         ("Important dates", {"fields": ("last_login", "date_joined")}),
         (
             "Permissions",

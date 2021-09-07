@@ -8,7 +8,7 @@ from uobtheatre.payments.test.factories import PaymentFactory
 
 @pytest.mark.django_db
 def test_payment_schema(gql_client):
-    booking = BookingFactory(user=gql_client.login().user)
+    booking = BookingFactory(user=gql_client.login())
     payment = PaymentFactory(pay_object=booking)
 
     response = gql_client.execute(
