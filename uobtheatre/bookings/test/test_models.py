@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import datetime
 import math
 from unittest.mock import patch
@@ -510,7 +511,9 @@ def test_total():
     "admin_discount, expected_price, expected_misc_costs_value",
     [(0.2, 1256, 296), (1, 0, 0)],
 )
-def test_total_with_admin_discount(admin_discount, expected_price, expected_misc_costs_value):
+def test_total_with_admin_discount(
+    admin_discount, expected_price, expected_misc_costs_value
+):
     ValueMiscCostFactory(value=200)
     PercentageMiscCostFactory(percentage=0.1)
 

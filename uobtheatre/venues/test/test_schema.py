@@ -140,7 +140,7 @@ def test_slug_single_schema(gql_client):
         """
     response = gql_client.execute(request % "")
 
-    assert response["errors"][0]["message"] == "Venue matching query does not exist."
+    assert not response.get("errors", None)
     assert response["data"] == {"venue": None}
 
     response = gql_client.execute(request % venues[0].slug)
