@@ -68,10 +68,9 @@ class MiscCost(models.Model):
         if self.percentage is not None:
             return math.ceil(booking.subtotal * self.percentage)
 
-        if booking.admin_discount_percentage == 1:
+        if booking.subtotal == 1:
             return 0
-        else:
-            return self.value  # type: ignore
+        return self.value  # type: ignore
 
     class Meta:
         constraints = [
