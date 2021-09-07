@@ -22,7 +22,7 @@ django-cors-headers==3.8.0
 django-configurations==2.2
 
 # Django config
-django-environ==0.5.0  # https://github.com/joke2k/django-environ
+django-environ==0.6.0  # https://github.com/joke2k/django-environ
 
 #=== Database ===#
 
