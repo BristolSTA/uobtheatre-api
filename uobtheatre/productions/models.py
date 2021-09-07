@@ -442,7 +442,8 @@ class Performance(TimeStampedMixin, models.Model):
         response = self.performance_seat_groups.aggregate(Sum("capacity"))
         return response["capacity__sum"] or 0
 
-    def total_capacity(self, seat_group=None):
+    @property
+    def total_capacity(self) -> int:
         """Total capacity of the Performance.
 
         The is the total number of seats (Tickets) which can be booked for this
@@ -451,8 +452,6 @@ class Performance(TimeStampedMixin, models.Model):
         Returns:
             int: The capacity of the show
         """
-        if seat_group is not None:
-            return self.total_seat_group_capacity(seat_group=seat_group)
         if self.capacity:
             return min(self.capacity, self.total_seat_group_capacity())
         return self.total_seat_group_capacity()
@@ -506,9 +505,9 @@ class Performance(TimeStampedMixin, models.Model):
             int: The remaining capacity of the show (or SeatGroup if provided)
         """
         if seat_group:
-            return self.total_capacity(seat_group=seat_group) - self.total_tickets_sold(
+            return self.total_seat_group_capacity(
                 seat_group=seat_group
-            )
+            ) - self.total_tickets_sold(seat_group=seat_group)
 
         seat_groups_remaining_capacity = sum(
             self.capacity_remaining(seat_group=performance_seat_group.seat_group)

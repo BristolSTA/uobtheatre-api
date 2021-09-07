@@ -68,7 +68,7 @@ class MiscCost(models.Model):
         if self.percentage is not None:
             return math.ceil(booking.subtotal * self.percentage)
 
-        if booking.subtotal == 1:
+        if booking.subtotal == 0:
             return 0
         return self.value  # type: ignore
 

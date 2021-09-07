@@ -431,7 +431,6 @@ def test_ticket_breakdown(gql_client):
             performance(id: "%s") {
                 ticketsBreakdown {
                     totalCapacity
-                    totalSeatGroupCapacity
                     totalTicketsSold
                     totalTicketsCheckedIn
                     totalTicketsToCheckIn
@@ -447,7 +446,6 @@ def test_ticket_breakdown(gql_client):
             "performance": {
                 "ticketsBreakdown": {
                     "totalCapacity": 50,
-                    "totalSeatGroupCapacity": 50,
                     "totalTicketsSold": 2,
                     "totalTicketsCheckedIn": 1,
                     "totalTicketsToCheckIn": 1,
