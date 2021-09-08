@@ -325,6 +325,7 @@ type PerformanceNode implements Node {
   isOnline: Boolean!
   soldOut: Boolean!
   ticketsBreakdown: PerformanceTicketsBreakdown!
+  salesBreakdown: SalesBreakdown
 }
 
 type PerformanceNodeConnection {
@@ -398,6 +399,7 @@ type ProductionNode implements Node {
   end: DateTime
   isBookable: Boolean!
   minSeatPrice: Int
+  salesBreakdown: SalesBreakdown
 }
 
 type ProductionNodeConnection {
@@ -458,6 +460,12 @@ type RevokeToken {
   revoked: Int
   success: Boolean
   errors: [GQLErrorUnion]
+}
+
+type SalesBreakdown {
+  totalPaymentsValue: Int!
+  totalMiscCostsValue: Int!
+  totalSocietyIncomeValue: Int!
 }
 
 type SeatGroupNode implements Node {
