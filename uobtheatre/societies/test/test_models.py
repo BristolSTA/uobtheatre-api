@@ -1,6 +1,5 @@
 import pytest
 
-from uobtheatre.productions.test.factories import ProductionFactory
 from uobtheatre.societies.test.factories import SocietyFactory
 
 
@@ -11,5 +10,11 @@ def test_str_society():
 
 
 @pytest.mark.django_db
-def test_str_prod():
-    ProductionFactory()
+def test_autoslug_doesnot_change_on_update():
+    society = SocietyFactory(name="abc")
+    initial_slug = society.slug
+
+    society.name = "def"
+    society.save()
+    society.refresh_from_db()
+    assert society.slug == initial_slug

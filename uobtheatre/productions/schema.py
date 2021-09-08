@@ -15,6 +15,7 @@ from uobtheatre.productions.models import (
     Production,
     ProductionTeamMember,
 )
+from uobtheatre.users.abilities import PermissionsMixin
 from uobtheatre.utils.filters import FilterSet
 from uobtheatre.utils.schema import DjangoObjectType, GrapheneEnumMixin
 
@@ -131,7 +132,7 @@ class SalesBreakdown(graphene.ObjectType):
     total_society_income_value = graphene.Int(required=True)
 
 
-class ProductionNode(GrapheneEnumMixin, DjangoObjectType):
+class ProductionNode(PermissionsMixin, GrapheneEnumMixin, DjangoObjectType):
     warnings = DjangoListField(WarningNode)
     crew = DjangoListField(CrewMemberNode)
     cast = DjangoListField(CastMemberNode)
@@ -289,7 +290,7 @@ class PerformanceNode(DjangoObjectType):
 
     def resolve_tickets_breakdown(self, info):
         return PerformanceTicketsBreakdown(
-            self.total_capacity(),
+            self.total_capacity,
             self.total_tickets_sold(),
             self.total_tickets_checked_in,
             self.total_tickets_unchecked_in,

@@ -9,6 +9,7 @@ from django.db.models.query import QuerySet
 from django.db.models.query_utils import Q
 from django.utils import timezone
 from django.utils.functional import cached_property
+from django_tiptap.fields import TipTapTextField
 from guardian.shortcuts import get_objects_for_user
 
 from uobtheatre.images.models import Image
@@ -82,7 +83,7 @@ class ProductionQuerySet(QuerySet):
             QuerySet: The filtered queryset
         """
         productions_user_can_edit = get_objects_for_user(
-            user, "productions.edit"
+            user, "change_production", self
         ).values_list("id", flat=True)
         return self.filter(
             ~Q(status=Production.Status.DRAFT) | Q(id__in=productions_user_can_edit)
@@ -100,7 +101,7 @@ class Production(TimeStampedMixin, models.Model):
 
     name = models.CharField(max_length=255)
     subtitle = models.CharField(max_length=255, null=True, blank=True)
-    description = models.TextField(null=True)
+    description = TipTapTextField(null=True)
 
     society = models.ForeignKey(
         Society, on_delete=models.SET_NULL, null=True, related_name="productions"
@@ -254,11 +255,7 @@ class Production(TimeStampedMixin, models.Model):
 
     class Meta:
         ordering = ["id"]
-        permissions = (
-            ("boxoffice", "Can use boxoffice for this show"),
-            ("create", "Can create a new production"),
-            ("edit", "Can edit existing production"),
-        )
+        permissions = (("boxoffice", "Can use boxoffice for this show"),)
 
 
 class CastMember(models.Model):
@@ -393,7 +390,7 @@ class Performance(TimeStampedMixin, models.Model):
     capacity = models.IntegerField(null=True, blank=True)
 
     @property
-    def tickets(self) -> models.Manager["Ticket"]:
+    def tickets(self) -> QuerySet["Ticket"]:
         """Get tickets for this performance
 
         Returns:
@@ -401,25 +398,25 @@ class Performance(TimeStampedMixin, models.Model):
         """
         from uobtheatre.bookings.models import Ticket
 
-        return Ticket.objects.filter(booking__in=self.bookings.all())
+        return Ticket.objects.filter(booking__in=self.bookings.all())  # type: ignore
 
     @property
-    def checked_in_tickets(self) -> models.Manager["Ticket"]:
+    def checked_in_tickets(self) -> QuerySet["Ticket"]:
         """Get all checked in tickets
 
         Returns:
             queryset(Tickets): all tickets for this performance which have been checked in.
         """
-        return self.tickets.filter(checked_in=True)
+        return self.tickets.filter(checked_in=True)  # type: ignore
 
     @property
-    def unchecked_in_tickets(self) -> models.Manager["Ticket"]:
+    def unchecked_in_tickets(self) -> QuerySet["Ticket"]:
         """Get all unchecked in tickets
 
         Returns:
             queryset(Tickets): all tickets for this performance which have not been checked in.
         """
-        return self.tickets.filter(checked_in=False)
+        return self.tickets.filter(checked_in=False)  # type: ignore
 
     @property
     def has_group_discounts(self) -> bool:
@@ -438,11 +435,8 @@ class Performance(TimeStampedMixin, models.Model):
             .exists()
         )
 
-    def total_capacity(self, seat_group=None):
-        """Total capacity of the Performance.
-
-        The is the total number of seats (Tickets) which can be booked for this
-        performance. This does not take into account any existing Bookings.
+    def total_seat_group_capacity(self, seat_group=None):
+        """The sum of the capacities of all the seat groups in this performance.
 
         Note:
             The sum of the capacities of all the seat groups is not necessarily
@@ -453,7 +447,7 @@ class Performance(TimeStampedMixin, models.Model):
                 (default None)
 
         Returns:
-            int: The capacity of the show (or SeatGroup if provided)
+            int: The capacity of the seat groups (or SeatGroup if provided) of the show
         """
         if seat_group:
             queryset = self.performance_seat_groups
@@ -463,6 +457,23 @@ class Performance(TimeStampedMixin, models.Model):
                 return 0
         response = self.performance_seat_groups.aggregate(Sum("capacity"))
         return response["capacity__sum"] or 0
+
+    @property
+    def total_capacity(self) -> int:
+        """Total capacity of the Performance.
+
+        The is the total number of seats (Tickets) which can be booked for this
+        performance. This does not take into account any existing Bookings.
+
+        Returns:
+            int: The capacity of the show
+        """
+
+        return (
+            min(self.capacity, self.total_seat_group_capacity())
+            if self.capacity
+            else self.total_seat_group_capacity()
+        )
 
     def total_tickets_sold(self, **kwargs):
         """The number of tickets sold for the performance
@@ -513,9 +524,9 @@ class Performance(TimeStampedMixin, models.Model):
             int: The remaining capacity of the show (or SeatGroup if provided)
         """
         if seat_group:
-            return self.total_capacity(seat_group=seat_group) - self.total_tickets_sold(
+            return self.total_seat_group_capacity(
                 seat_group=seat_group
-            )
+            ) - self.total_tickets_sold(seat_group=seat_group)
 
         seat_groups_remaining_capacity = sum(
             self.capacity_remaining(seat_group=performance_seat_group.seat_group)

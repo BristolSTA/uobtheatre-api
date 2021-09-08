@@ -1,12 +1,12 @@
 import graphene
 from graphql_auth import mutations, schema
-from graphql_auth.schema import UserQuery
 from graphql_relay.node.node import to_global_id
 
+from uobtheatre.users.abilities import PermissionsMixin
 from uobtheatre.users.models import User
 
 
-class ExtendedUserNode(schema.UserNode):
+class ExtendedUserNode(PermissionsMixin, schema.UserNode):
     """
     Extends user node to add additional properties.
     """
@@ -63,7 +63,7 @@ class ExtendedMeQuery(graphene.ObjectType):
         return None
 
 
-class Query(UserQuery, ExtendedMeQuery, graphene.ObjectType):
+class Query(ExtendedMeQuery, graphene.ObjectType):
     pass
 
 

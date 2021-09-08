@@ -32,6 +32,7 @@ INSTALLED_APPS = (
     "autoslug",  # Auto slug
     "graphene_django",  # Graphql
     "guardian",
+    "django_tiptap",
     "rest_framework",
     # Your apps
     "uobtheatre.users",
@@ -283,7 +284,6 @@ GRAPHENE = {
         "graphql_jwt.middleware.JSONWebTokenMiddleware",
     ],
 }
-
 
 # Square payments
 SQUARE_SETTINGS = {

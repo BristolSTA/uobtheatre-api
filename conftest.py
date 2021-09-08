@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from types import SimpleNamespace
 from typing import Optional
 from unittest.mock import patch
 
@@ -44,7 +45,7 @@ class AuthenticateableGQLClient(GQLClient):
 
     def login(self, user=None):
         self.user = user if user else UserFactory()
-        return self
+        return self.user
 
     def logout(self):
         self.request_factory.user = AnonymousUser()
@@ -102,3 +103,8 @@ def mock_square():
             yield mocked_square
 
     return mock_client
+
+
+@pytest.fixture
+def info():
+    return SimpleNamespace(context=SimpleNamespace(user=UserFactory()))
