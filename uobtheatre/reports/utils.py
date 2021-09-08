@@ -10,7 +10,7 @@ from uobtheatre.users.models import User
 from . import reports
 
 
-class ExcelReport:
+class ExcelReport:  # pragma: no cover
     """Generates an Excel xlxs spreadsheet"""
 
     def __init__(

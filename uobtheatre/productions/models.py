@@ -253,6 +253,21 @@ class Production(TimeStampedMixin, models.Model):
             ),
         }
 
+    @property
+    def total_capacity(self):
+        return sum(
+            [performance.total_capacity for performance in self.performances.all()]
+        )
+
+    @property
+    def total_tickets_sold(self):
+        return sum(
+            [
+                performance.total_tickets_sold()
+                for performance in self.performances.all()
+            ]
+        )
+
     class Meta:
         ordering = ["id"]
         permissions = (("boxoffice", "Can use boxoffice for this show"),)

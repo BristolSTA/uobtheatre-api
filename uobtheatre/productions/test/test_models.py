@@ -271,6 +271,36 @@ def test_production_min_price_no_perfs():
 
 
 @pytest.mark.django_db
+def test_production_total_capacity():
+    perf_1 = PerformanceFactory(capacity=100)
+    perf_2 = PerformanceFactory(production=perf_1.production, capacity=150)
+    PerformanceSeatingFactory(performance=perf_1, capacity=1000)
+    PerformanceSeatingFactory(performance=perf_2, capacity=140)
+
+    assert perf_1.production.total_capacity == 240
+
+
+@pytest.mark.django_db
+def test_production_total_tickets_sold():
+    perf_1 = PerformanceFactory()
+    perf_2 = PerformanceFactory(production=perf_1.production)
+    booking_1 = BookingFactory(performance=perf_1)
+    booking_2 = BookingFactory(performance=perf_2)
+
+    # 2 tickets in the performance 1
+    TicketFactory(booking=booking_1)
+    TicketFactory(booking=booking_1)
+
+    # 1 tickets in the performance 1
+    TicketFactory(booking=booking_2)
+
+    # A ticket not in the booking
+    TicketFactory()
+
+    assert perf_1.production.total_tickets_sold == 3
+
+
+@pytest.mark.django_db
 def test_performance_seat_bookings():
 
     prod = ProductionFactory()

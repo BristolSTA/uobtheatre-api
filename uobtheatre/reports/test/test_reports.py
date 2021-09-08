@@ -15,7 +15,13 @@ from uobtheatre.payments.models import Payment
 from uobtheatre.payments.test.factories import PaymentFactory
 from uobtheatre.productions.models import Production
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
-from uobtheatre.reports.reports import OutstandingSocietyPayments, PeriodTotalsBreakdown
+from uobtheatre.reports.reports import (
+    DataSet,
+    MetaItem,
+    OutstandingSocietyPayments,
+    PeriodTotalsBreakdown,
+    Report,
+)
 from uobtheatre.societies.models import Society
 from uobtheatre.societies.test.factories import SocietyFactory
 
@@ -92,6 +98,39 @@ def create_fixtures():
     payment_3.save()
 
 
+def test_dataset_class():
+    dataset = DataSet("My Dataset", ["Heading 1", "Heading 2"])
+
+    assert len(dataset.data) == 0
+
+    row = dataset.find_or_create_row_by_first_column(
+        "My Unique ID", ["My Unique ID", "My value"]
+    )
+    assert len(dataset.data) == 1
+
+    # Check it won't create a duplicate
+    row_2 = dataset.find_or_create_row_by_first_column(
+        "My Unique ID", ["My Unique ID", "My value"]
+    )
+    assert len(dataset.data) == 1
+    assert row is row_2
+
+
+def test_abstract_report():
+    class SimpleReport(Report):
+        pass
+
+    report = SimpleReport()
+    dataset = DataSet("My Dataset", ["1", "2"])
+    report.datasets.append(dataset)
+    report.meta.append(MetaItem("Name", "Value"))
+
+    assert report.dataset_by_name("My Dataset") is dataset
+    assert report.dataset_by_name("My Missing Dataset") is None
+
+    assert report.get_meta_array() == [["Name", "Value"]]
+
+
 @pytest.mark.django_db
 def test_period_totals_breakdown_report():
     create_fixtures()
@@ -107,6 +146,12 @@ def test_period_totals_breakdown_report():
     )
 
     assert len(report.datasets) == 3
+
+    assert len(report.meta) == 2
+    assert report.meta[0].name == "No. of Payments"
+    assert report.meta[0].value == "2"
+    assert report.meta[1].name == "Total Income"
+    assert report.meta[1].value == "1680"
 
     assert report.datasets[0].name == "Provider Totals"
     assert len(report.datasets[0].headings) == 2
@@ -131,16 +176,16 @@ def test_period_totals_breakdown_report():
     assert len(report.datasets[2].headings) == 4
     assert report.datasets[2].data == [
         [
-            payment_1.id,
+            str(payment_1.id),
             "2021-09-08 00:00:01",
-            booking_1.id,
-            1100,
+            str(booking_1.id),
+            "1100",
         ],
         [
-            payment_3.id,
+            str(payment_3.id),
             "2021-09-08 12:00:01",
-            booking_3.id,
-            580,
+            str(booking_3.id),
+            "580",
         ],
     ]
 
@@ -155,6 +200,10 @@ def test_outstanding_society_payments_report():
     report = OutstandingSocietyPayments()
 
     assert len(report.datasets) == 2
+
+    assert len(report.meta) == 1
+    assert report.meta[0].name == "Total Outstanding"
+    assert report.meta[0].value == "3200.0"
 
     assert report.datasets[0].name == "Societies"
     assert len(report.datasets[0].headings) == 3

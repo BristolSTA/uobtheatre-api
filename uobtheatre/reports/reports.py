@@ -1,4 +1,5 @@
 from abc import ABC
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import List, Union
 
@@ -6,19 +7,19 @@ from uobtheatre.payments.models import Payment
 from uobtheatre.productions.models import Production
 
 
+@dataclass
 class MetaItem:
-    def __init__(self, name: str, value):
-        self.name = name
-        self.value = value
+    name: str
+    value: str
 
 
+@dataclass
 class DataSet:
     """A data set represents a table, with headers and rows of data"""
 
-    def __init__(self, name: str, headings: List[str], data: List[List[str]] = None):
-        self.name = name
-        self.headings = headings
-        self.data = data if data else []
+    name: str
+    headings: List[str]
+    data: List[List[str]] = field(default_factory=list)
 
     def add_row(self, data):
         self.data.append(data)
@@ -31,7 +32,7 @@ class DataSet:
         return row
 
 
-class AbstractReport(ABC):
+class Report(ABC):
     """An abstract class for a generic report"""
 
     def __init__(self):
@@ -47,7 +48,7 @@ class AbstractReport(ABC):
         return [[meta.name, meta.value] for meta in self.meta]
 
 
-class PeriodTotalsBreakdown(AbstractReport):
+class PeriodTotalsBreakdown(Report):
     """Generates a report on payments made via specified providers over a given time period"""
 
     def __init__(self, start: datetime, end: datetime) -> None:
@@ -66,23 +67,28 @@ class PeriodTotalsBreakdown(AbstractReport):
             .prefetch_related("pay_object__performance__production__society")
         )
 
-        self.meta.append(MetaItem("No. of Payments", len(payments)))
+        self.meta.append(MetaItem("No. of Payments", str(len(payments))))
         self.meta.append(
-            MetaItem("Total Income", sum([payment.value for payment in payments]))
+            MetaItem("Total Income", str(sum([payment.value for payment in payments])))
         )
 
         for payment in payments:
-            if payment.pay_object and payment.pay_object.performance:
-                # Handle production
-                row = production_totals_set.find_or_create_row_by_first_column(
-                    payment.pay_object.performance.production.id,
-                    [
-                        payment.pay_object.performance.production.id,
-                        payment.pay_object.performance.production.name,
-                        0,
-                    ],
-                )
-                row[2] += payment.value
+            # Handle production
+            row = production_totals_set.find_or_create_row_by_first_column(
+                payment.pay_object.performance.production.id
+                if payment.pay_object
+                else "",
+                [
+                    payment.pay_object.performance.production.id
+                    if payment.pay_object
+                    else "",
+                    payment.pay_object.performance.production.name
+                    if payment.pay_object
+                    else "",
+                    0,
+                ],
+            )
+            row[2] += payment.value
 
             # Handle Provider
             row = provider_totals_set.find_or_create_row_by_first_column(
@@ -115,7 +121,7 @@ class PeriodTotalsBreakdown(AbstractReport):
         )
 
 
-class OutstandingSocietyPayments(AbstractReport):
+class OutstandingSocietyPayments(Report):
     """Generates a report on outstanding balances to be paid to societies"""
 
     def __init__(self) -> None:
@@ -180,7 +186,8 @@ class OutstandingSocietyPayments(AbstractReport):
         societies_dataset.add_row(["", "Stage Technicians' Association", sta_total_due])
         self.meta.append(
             MetaItem(
-                "Total Outstanding", sum([row[2] for row in societies_dataset.data])
+                "Total Outstanding",
+                str(sum([row[2] for row in societies_dataset.data])),
             )
         )
 

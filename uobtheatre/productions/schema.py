@@ -145,6 +145,8 @@ class ProductionNode(PermissionsMixin, GrapheneEnumMixin, DjangoObjectType):
     min_seat_price = graphene.Int()
 
     sales_breakdown = graphene.Field(SalesBreakdown)
+    total_capacity = graphene.Int(required=True)
+    total_tickets_sold = graphene.Int(required=True)
 
     def resolve_start(self, info):
         return self.start_date()
@@ -160,17 +162,23 @@ class ProductionNode(PermissionsMixin, GrapheneEnumMixin, DjangoObjectType):
 
     def resolve_sales_breakdown(self, info):
         if not info.context.user.has_perm(
-            "productions.sales", self  # TOD!O: Use real permission here
+            "productions.sales", self  # TODO: Use real permission here
         ):
             return None
 
-        sales_breakdown = self.sales_breakdown
-
         return SalesBreakdown(
-            total_payments_value=sales_breakdown["payments_total"],
-            total_misc_costs_value=sales_breakdown["misc_costs_total"],
-            total_society_income_value=sales_breakdown["society_income_total"],
+            total_payments_value=self.sales_breakdown["payments_total"],
+            total_misc_costs_value=self.sales_breakdown["misc_costs_total"],
+            total_society_income_value=self.sales_breakdown["society_income_total"],
         )
+
+    def resolve_total_capacity(self, info):
+        # TODO: This should have a permission
+        return self.total_capacity
+
+    def resolve_total_tickets_sold(self, info):
+        # TODO: This should have a permission
+        return self.total_tickets_sold
 
     class Meta:
         model = Production
@@ -289,6 +297,7 @@ class PerformanceNode(DjangoObjectType):
         return self.is_sold_out()
 
     def resolve_tickets_breakdown(self, info):
+        # TODO: This should have a permission
         return PerformanceTicketsBreakdown(
             self.total_capacity,
             self.total_tickets_sold(),
@@ -299,16 +308,14 @@ class PerformanceNode(DjangoObjectType):
 
     def resolve_sales_breakdown(self, info):
         if not info.context.user.has_perm(
-            "productions.sales", self.production  # TOD!O: Use real permission here
+            "productions.sales", self.production  # TODO: Use real permission here
         ):
             return None
 
-        sales_breakdown = self.sales_breakdown
-
         return SalesBreakdown(
-            total_payments_value=sales_breakdown["payments_total"],
-            total_misc_costs_value=sales_breakdown["misc_costs_total"],
-            total_society_income_value=sales_breakdown["society_income_total"],
+            total_payments_value=self.sales_breakdown["payments_total"],
+            total_misc_costs_value=self.sales_breakdown["misc_costs_total"],
+            total_society_income_value=self.sales_breakdown["society_income_total"],
         )
 
     class Meta:

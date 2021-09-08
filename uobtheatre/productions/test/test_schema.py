@@ -1013,3 +1013,33 @@ def test_production_and_performance_sales_breakdowns(gql_client):
         "totalMiscCostsValue": 0,
         "totalSocietyIncomeValue": 100,
     }
+
+
+@pytest.mark.django_db
+def test_production_totals(gql_client):
+    perf_1 = PerformanceFactory(capacity=100)
+    perf_2 = PerformanceFactory(production=perf_1.production, capacity=150)
+    PerformanceSeatingFactory(performance=perf_1, capacity=1000)
+    PerformanceSeatingFactory(performance=perf_2, capacity=140)
+
+    booking_1 = BookingFactory(performance=perf_1)
+    TicketFactory(booking=booking_1)
+
+    request = """
+        {
+          productions(id: "%s") {
+            edges {
+                node {
+                    totalCapacity
+                    totalTicketsSold
+                }
+            }
+        }
+        }
+        """
+
+    response = gql_client.login(user=UserFactory(is_superuser=True)).execute(
+        request % to_global_id("ProductionNode", perf_1.production.id)
+    )
+    assert response["data"]["productions"]["edges"][0]["node"]["totalCapacity"] == 240
+    assert response["data"]["productions"]["edges"][0]["node"]["totalTicketsSold"] == 1

@@ -15,6 +15,8 @@ def period_totals(request, start_time, end_time):
         HttpResponse: The HttpResponse
     """
 
+    # TODO: Permissions
+
     # Generate report
     report = reports.PeriodTotalsBreakdown(
         start_time,
@@ -42,6 +44,7 @@ def period_totals(request, start_time, end_time):
 
 def outstanding_society_payments(request):
     """Generates excel of society payments report"""
+    # TODO: Permissions
     report = reports.OutstandingSocietyPayments()
 
     excel = ExcelReport(
