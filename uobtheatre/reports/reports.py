@@ -2,15 +2,8 @@ from abc import ABC
 from datetime import datetime
 from typing import List, Union
 
-from uobtheatre.payments import payment_methods
 from uobtheatre.payments.models import Payment
 from uobtheatre.productions.models import Production
-
-
-class DataItem:
-    def __init__(self, data, subject=None):
-        self.subject = subject
-        self.data = data
 
 
 class MetaItem:
@@ -20,38 +13,38 @@ class MetaItem:
 
 
 class DataSet:
-    """A data set represents a list of data items."""
+    """A data set represents a table, with headers and rows of data"""
 
-    def __init__(
-        self, name: str, items: List[DataItem] = None, meta: List[MetaItem] = None
-    ):
+    def __init__(self, name: str, headings: List[str], data: List[List[str]] = None):
         self.name = name
-        self.items = items if items else []
-        self.meta = meta if meta else []
+        self.headings = headings
+        self.data = data if data else []
 
-    def find_item_by_subject(self, subject) -> Union[DataItem, None]:
-        """Find a data item in the set by a subject"""
-        return next((item for item in self.items if item.subject == subject), None)
+    def add_row(self, data):
+        self.data.append(data)
 
-    def find_or_create_item_by_subject(self, subject, data) -> DataItem:
-        """Finds a data item in the set by subject. If it doesn't exist, creates a new data item with the given initial value"""
-        return self.find_item_by_subject(subject) or self.create_item(data, subject)
-
-    def create_item(self, *args) -> DataItem:
-        """Creates a data item in the data set"""
-        item = DataItem(*args)
-        self.items.append(item)
-        return item
+    def find_or_create_row_by_first_column(self, value, default_row_data):
+        row = next((row for row in self.data if row[0] == value), None)
+        if not row:
+            row = default_row_data
+            self.add_row(row)
+        return row
 
 
 class AbstractReport(ABC):
+    """An abstract class for a generic report"""
+
     def __init__(self):
         self.datasets = []
+        self.meta = []
 
     def dataset_by_name(self, name: str) -> Union[DataSet, None]:
         return next(
             (dataset for dataset in self.datasets if dataset.name == name), None
         )
+
+    def get_meta_array(self):
+        return [[meta.name, meta.value] for meta in self.meta]
 
 
 class PeriodTotalsBreakdown(AbstractReport):
@@ -59,37 +52,65 @@ class PeriodTotalsBreakdown(AbstractReport):
 
     def __init__(self, start: datetime, end: datetime) -> None:
         super().__init__()
-        production_totals_set = DataSet("production_totals")
-        provider_totals_set = DataSet("provider_totals")
+        production_totals_set = DataSet(
+            "Production Totals", ["Production ID", "Production Name", "Total Income"]
+        )
+
+        provider_totals_set = DataSet(
+            "Provider Totals", ["Provider Name", "Total Income"]
+        )
+
         payments = (
             Payment.objects.filter(created_at__gt=start)
             .filter(created_at__lt=end)
             .prefetch_related("pay_object__performance__production__society")
         )
 
-        # Add all providers
-        for provider in payment_methods.PaymentMethod.__all__:
-            provider_totals_set.create_item(0, provider.name)
+        self.meta.append(MetaItem("No. of Payments", len(payments)))
+        self.meta.append(
+            MetaItem("Total Income", sum([payment.value for payment in payments]))
+        )
 
         for payment in payments:
             if payment.pay_object and payment.pay_object.performance:
-
                 # Handle production
-                production_set = production_totals_set.find_or_create_item_by_subject(
-                    payment.pay_object.performance.production, 0
+                row = production_totals_set.find_or_create_row_by_first_column(
+                    payment.pay_object.performance.production.id,
+                    [
+                        payment.pay_object.performance.production.id,
+                        payment.pay_object.performance.production.name,
+                        0,
+                    ],
                 )
-                production_set.data += payment.value
+                row[2] += payment.value
 
             # Handle Provider
-            provider_set = provider_totals_set.find_item_by_subject(payment.provider)
-            if provider_set:
-                provider_set.data += payment.value
+            row = provider_totals_set.find_or_create_row_by_first_column(
+                payment.provider,
+                [
+                    payment.provider,
+                    0,
+                ],
+            )
+            row[1] += payment.value
 
         self.datasets.extend(
             [
-                production_totals_set,
                 provider_totals_set,
-                DataSet("payments", [DataItem(payment) for payment in payments]),
+                production_totals_set,
+                DataSet(
+                    "Payments",
+                    ["Payment ID", "Timestamp", "Pay Object ID", "Payment Value"],
+                    [
+                        [
+                            str(payment.id),
+                            payment.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                            str(payment.pay_object.id) if payment.pay_object else "",
+                            str(payment.value),
+                        ]
+                        for payment in payments
+                    ],
+                ),
             ]
         )
 
@@ -99,32 +120,69 @@ class OutstandingSocietyPayments(AbstractReport):
 
     def __init__(self) -> None:
         super().__init__()
-        dataset = DataSet("societies")
+        productions_dataset = DataSet(
+            "Productions",
+            [
+                "Production ID",
+                "Production Name",
+                "Society ID",
+                "Society Name",
+                "Society Net Income",
+                "STA Fees",
+            ],
+        )
+
+        societies_dataset = DataSet(
+            "Societies",
+            [
+                "Society ID",
+                "Society Name",
+                "Total Ammount Due",
+            ],
+        )
 
         # Get productions that are marked closed
         productions = Production.objects.filter(
             status=Production.Status.CLOSED
         ).prefetch_related("society")
 
-        for production in productions:
-            production_society_income = production.sales_breakdown()["society_income"]
-            society_data_item = dataset.find_item_by_subject(production.society)
-            if not society_data_item:
-                society_data_item = dataset.create_item(
-                    DataSet("productions"), production.society
-                )
-            society_data_item.data.create_item(production_society_income, production)
+        sta_total_due = 0
 
-        dataset.meta.append(
+        for production in productions:
+            production_society_net_income = production.sales_breakdown[
+                "society_income_total"
+            ]
+            production_sta_fees = production.sales_breakdown["misc_costs_total"]
+            sta_total_due += production_sta_fees
+
+            productions_dataset.find_or_create_row_by_first_column(
+                production.id,
+                [
+                    production.id,
+                    production.name,
+                    production.society.id,
+                    production.society.name,
+                    production_society_net_income,
+                    production_sta_fees,
+                ],
+            )
+
+            row = societies_dataset.find_or_create_row_by_first_column(
+                production.society.id,
+                [
+                    production.society.id,
+                    production.society.name,
+                    0,
+                ],
+            )
+            row[2] += production_society_net_income
+
+        societies_dataset.add_row(["", "Stage Technicians' Association", sta_total_due])
+        self.meta.append(
             MetaItem(
-                "total",
-                sum(
-                    [
-                        production_item.data
-                        for society_item in dataset.items
-                        for production_item in society_item.data.items
-                    ]
-                ),
+                "Total Outstanding", sum([row[2] for row in societies_dataset.data])
             )
         )
-        self.datasets.append(dataset)
+
+        self.datasets.append(societies_dataset)
+        self.datasets.append(productions_dataset)

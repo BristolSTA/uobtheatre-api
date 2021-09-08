@@ -24,6 +24,7 @@ class DiscountRequirementFactory(factory.django.DjangoModelFactory):
 
     number = 1
     concession_type = factory.SubFactory(ConcessionTypeFactory)
+    discount = factory.SubFactory("uobtheatre.discounts.test.factories.DiscountFactory")
 
     class Meta:
         model = DiscountRequirement

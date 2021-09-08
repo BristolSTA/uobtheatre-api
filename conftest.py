@@ -45,7 +45,7 @@ class AuthenticateableGQLClient(GQLClient):
 
     def login(self, user=None):
         self.user = user if user else UserFactory()
-        return self.user
+        return self
 
     def logout(self):
         self.request_factory.user = AnonymousUser()

@@ -3,8 +3,11 @@ from datetime import datetime
 from typing import List, Tuple
 
 import xlsxwriter
+from django.http.response import HttpResponse
 
 from uobtheatre.users.models import User
+
+from . import reports
 
 
 class ExcelReport:
@@ -17,6 +20,7 @@ class ExcelReport:
         meta: List = None,
         user: User = None,
     ) -> None:
+        self.name = name
         self.output_buffer = io.BytesIO()
         self.row_tracker = 1  # Track the row we are currently at
 
@@ -27,6 +31,9 @@ class ExcelReport:
         # Setup Formatters
         self.formats = {
             "bold": self.workbook.add_format({"bold": True}),
+            "dataset_title": self.workbook.add_format(
+                {"underline": True, "bold": True}
+            ),
             "currency": self.workbook.add_format({"num_format": "£#,##0.00"}),
         }
 
@@ -67,8 +74,13 @@ class ExcelReport:
         self.increment_row_tracker(amount=2)  # Add gap
 
     def increment_row_tracker(self, current_row=None, amount=1) -> None:
-        if not current_row or current_row >= self.row_tracker:
-            self.row_tracker += amount
+        """Increments the row tracker"""
+        if current_row:
+            if current_row >= self.row_tracker:
+                self.row_tracker = current_row
+            else:
+                return
+        self.row_tracker += amount
 
     def write_formula(self, *args) -> None:
         self.worksheet.write_formula(*args)
@@ -112,8 +124,15 @@ class ExcelReport:
                 self.formats[items_format] if items_format else None,
             )
             self.increment_row_tracker(
-                current_row=(start_row + i + 1)
+                current_row=(start_row + i)
             )  # Plus one due to excel non-zero first row
+
+    def write_dataset(self, dataset: reports.DataSet, start: Tuple[int, int]):
+        self.write(start[0], start[1], dataset.name, self.formats["dataset_title"])
+        for i, header in enumerate(dataset.headings):
+            self.write_list(
+                (start[0] + 1, start[1] + i), [data[i] for data in dataset.data], header
+            )
 
     def write(self, *args, **kwargs) -> None:
         """Write to the spreadsheet"""
@@ -121,6 +140,21 @@ class ExcelReport:
 
     def set_col_width(self, *args):
         self.worksheet.set_column(*args)
+
+    def datasets_to_response(self, datasets):
+        """Converts a list of datasets into a standard XLSX file and returns a Http response to download the result"""
+        for dataset in datasets:
+            self.write_dataset(dataset, (self.row_tracker, 0))
+            self.increment_row_tracker()
+
+        response = HttpResponse(
+            self.get_output(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        response["Content-Disposition"] = (
+            "attachment; filename=%s" % self.name.lower().replace(" ", "_") + ".xlsx"
+        )
+        return response
 
     def get_output(self) -> io.BytesIO:
         """Gets the output buffer, starting at the start"""
