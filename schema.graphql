@@ -167,10 +167,10 @@ type FieldError {
 
 union GQLErrorUnion = FieldError | NonFieldError
 
-type GenereateReport {
+type GenerateReport {
   success: Boolean
   errors: [GQLErrorUnion]
-  donwloadUri: String
+  downloadUri: String
 }
 
 scalar GenericScalar
@@ -192,7 +192,7 @@ type MiscCostNode implements Node {
 }
 
 type Mutation {
-  generateReport(endTime: DateTime, name: String!, startTime: DateTime): GenereateReport
+  generateReport(endTime: DateTime, name: String!, startTime: DateTime): GenerateReport
   createBooking(performanceId: IdInputField, targetUserEmail: String, tickets: [CreateTicketInput]): CreateBooking
   updateBooking(bookingId: IdInputField, targetUserEmail: String, tickets: [UpdateTicketInput]): UpdateBooking
   payBooking(bookingId: IdInputField!, deviceId: String, nonce: String, paymentProvider: PaymentMethod, price: Int!): PayBooking
@@ -400,6 +400,8 @@ type ProductionNode implements Node {
   isBookable: Boolean!
   minSeatPrice: Int
   salesBreakdown: SalesBreakdown
+  totalCapacity: Int!
+  totalTicketsSold: Int!
 }
 
 type ProductionNodeConnection {
