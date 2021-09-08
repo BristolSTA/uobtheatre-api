@@ -3,9 +3,11 @@ from typing import List, Optional
 
 import django_filters
 import graphene
+from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django_filters import OrderingFilter
 from graphene import relay
+from graphene.types.scalars import Float
 from graphene_django import DjangoListField, DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
 from graphql_auth.schema import UserNode
@@ -19,7 +21,7 @@ from uobtheatre.payments.payment_methods import (
     SquareOnline,
     SquarePOS,
 )
-from uobtheatre.productions.models import Performance
+from uobtheatre.productions.models import Performance, Production
 from uobtheatre.users.models import User
 from uobtheatre.utils.enums import GrapheneEnumMixin
 from uobtheatre.utils.exceptions import (
@@ -29,6 +31,7 @@ from uobtheatre.utils.exceptions import (
     SafeMutation,
 )
 from uobtheatre.utils.filters import FilterSet
+from uobtheatre.utils.models import validate_percentage
 from uobtheatre.utils.schema import AuthRequiredMixin, IdInputField
 from uobtheatre.venues.models import Seat, SeatGroup
 
@@ -382,6 +385,36 @@ def parse_target_user_email(
     return creator_user
 
 
+def parse_admin_discount_percentage(
+    admin_discount_percentage: Float, user: User, production: Production
+):
+    """Parse provided admin discount and check permissions.
+    Args:
+        admin_discount_percentage: The decimal percentage discount (e.g. 0.2 = 20%)
+        user: The user creating/updating the booking.
+        production: The production that the booking is for.
+
+    Returns:
+        Float: The parsed/verified float
+
+    Raises:
+        GQLFieldException: If the user does not have permission to change the admin discount
+    """
+    if not user.has_perm("change_production", production):
+        raise GQLFieldException(
+            "You do not have permission to assign an admin discount",
+            "admin_discount_percentage",
+        )
+    try:
+        validate_percentage(admin_discount_percentage)
+    except ValidationError as error:
+        raise GQLFieldException(
+            error.message,
+            "admin_discount_percentage",
+        ) from error
+    return admin_discount_percentage
+
+
 class CreateBooking(AuthRequiredMixin, SafeMutation):
     """Mutation to create a Booking
 
@@ -399,6 +432,7 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
         performance_id = IdInputField()
         tickets = graphene.List(CreateTicketInput, required=False)
         target_user_email = graphene.String(required=False)  # User email
+        admin_discount_percentage = graphene.Float()
 
     @classmethod
     def resolve_mutation(
@@ -408,6 +442,7 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
         performance_id: int,
         tickets: List[CreateTicketInput] = None,
         target_user_email: str = None,
+        admin_discount_percentage: float = None,
     ):
 
         if tickets is None:
@@ -433,8 +468,14 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
         )
 
         # Create the booking
+        extra_args = {}
+        if admin_discount_percentage:
+            extra_args["admin_discount_percentage"] = parse_admin_discount_percentage(
+                admin_discount_percentage, info.context.user, performance.production
+            )
+
         booking = Booking.objects.create(
-            user=user, creator=info.context.user, performance=performance
+            user=user, creator=info.context.user, performance=performance, **extra_args
         )
 
         # Save all the validated tickets
@@ -464,6 +505,7 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
         booking_id = IdInputField()
         tickets = graphene.List(UpdateTicketInput, required=False)
         target_user_email = graphene.String(required=False)  # User email
+        admin_discount_percentage = graphene.Float()
 
     @classmethod
     def resolve_mutation(
@@ -473,6 +515,7 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
         booking_id: int,
         tickets: List[CreateTicketInput] = None,
         target_user_email: str = None,
+        admin_discount_percentage: Float = None,
     ):
 
         booking = Booking.objects.get(id=booking_id)
@@ -485,6 +528,14 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
                 code=403,
                 field="booking",
             )
+
+        if admin_discount_percentage:
+            booking.admin_discount_percentage = parse_admin_discount_percentage(
+                admin_discount_percentage,
+                info.context.user,
+                booking.performance.production,
+            )
+            booking.save()
 
         if target_user_email:
             user = parse_target_user_email(
