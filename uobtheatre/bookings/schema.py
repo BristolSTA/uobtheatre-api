@@ -25,9 +25,9 @@ from uobtheatre.productions.models import Performance, Production
 from uobtheatre.users.models import User
 from uobtheatre.utils.enums import GrapheneEnumMixin
 from uobtheatre.utils.exceptions import (
+    AuthorizationException,
+    GQLException,
     GQLExceptions,
-    GQLFieldException,
-    GQLNonFieldException,
     SafeMutation,
 )
 from uobtheatre.utils.filters import FilterSet
@@ -365,16 +365,15 @@ def parse_target_user_email(
             same as the creator if not target_user_email is provided.)
 
     Raises:
-        GQLFieldException: If the user does not have permission to create a
+        AuthorizationException: If the user does not have permission to create a
             booking.
     """
     # Only (box office) admins can create a booking for a different user
     if target_user_email and not creator_user.has_perm(
         "productions.boxoffice", performance.production
     ):
-        raise GQLFieldException(
+        raise AuthorizationException(
             message="You do not have permission to create a booking for another user.",
-            code=403,
             field="target_user_email",
         )
 
@@ -398,19 +397,20 @@ def parse_admin_discount_percentage(
         Float: The parsed/verified float
 
     Raises:
-        GQLFieldException: If the user does not have permission to change the admin discount
+        AuthorizationException: If the user does not have permission to change the admin discount
+        GQLException: If the admin discount percentage is invalid
     """
     if not user.has_perm("change_production", production):
-        raise GQLFieldException(
-            "You do not have permission to assign an admin discount",
-            "admin_discount_percentage",
+        raise AuthorizationException(
+            message="You do not have permission to assign an admin discount",
+            field="admin_discount_percentage",
         )
     try:
         validate_percentage(admin_discount_percentage)
     except ValidationError as error:
-        raise GQLFieldException(
-            error.message,
-            "admin_discount_percentage",
+        raise GQLException(
+            message=error.message,
+            field="admin_discount_percentage",
         ) from error
     return admin_discount_percentage
 
@@ -456,7 +456,7 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
         # Check the capacity of the show and its seat_groups
         err = performance.check_capacity(ticket_objects)
         if err:
-            raise GQLNonFieldException(message=err, code=400)
+            raise GQLException(message=err, code=400)
 
         # If draft booking(s) already exists remove the bookings
         Booking.objects.filter(
@@ -523,9 +523,8 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
         if booking.user.id != info.context.user.id and not info.context.user.has_perm(
             "boxoffice", booking.performance.production
         ):
-            raise GQLFieldException(
+            raise AuthorizationException(
                 message="You do not have permission to access this booking.",
-                code=403,
                 field="booking",
             )
 
@@ -556,7 +555,7 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
         # Check the capacity of the show and its seat_groups
         err = booking.performance.check_capacity(ticket_objects)
         if err:
-            raise GQLNonFieldException(message=err, code=400)
+            raise GQLException(message=err, code=400)
 
         # Save all the validated tickets
         for ticket in add_tickets:
@@ -586,7 +585,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
             transaction.
 
     Raises:
-        GQLNonFieldException: If the Payment was unsucessful.
+        GQLException: If the Payment was unsucessful.
     """
 
     booking = graphene.Field(BookingNode)
@@ -622,23 +621,22 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         ) and not info.context.user.has_perm(
             "productions.boxoffice", booking.performance.production
         ):
-            raise GQLFieldException(
+            raise AuthorizationException(
                 message=f"You do not have permission to pay for a booking with the {payment_provider} provider.",
-                code=403,
                 field="payment_provider",
             )
 
         if booking.total() != price:
-            raise GQLNonFieldException(
+            raise GQLException(
                 message="The booking price does not match the expected price"
             )
 
         if booking.status != Booking.BookingStatus.IN_PROGRESS:
-            raise GQLNonFieldException(message="The booking is not in progress")
+            raise GQLException(message="The booking is not in progress")
 
         if payment_provider == SquareOnline.name:
             if not nonce:
-                raise GQLFieldException(
+                raise GQLException(
                     message=f"A nonce is required when using {payment_provider} provider.",
                     field="nonce",
                     code="missing_required",
@@ -647,7 +645,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
 
         elif payment_provider == SquarePOS.name:
             if not device_id:
-                raise GQLFieldException(
+                raise GQLException(
                     message=f"A device_id is required when using {payment_provider} provider.",
                     field="device_id",
                     code="missing_required",
@@ -658,7 +656,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         elif payment_provider == Card.name:
             payment_method = Card()
         else:
-            raise GQLNonFieldException(
+            raise GQLException(
                 message=f"Unsupported payment provider {payment_provider}."
             )
 
@@ -682,7 +680,7 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
         performance (PaymentNode): The Performance.
 
     Raises:
-        GQLNonFieldException: If the booking does not match the performance booking
+        GQLException: If the booking does not match the performance booking
         GQLExceptions: If at least one ticket check in was unsuccessful
     """
 
@@ -701,7 +699,7 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
 
         # check if the booking pertains to the correct performance
         if booking.performance != performance:
-            raise GQLFieldException(
+            raise GQLException(
                 field="performance_id",
                 message="The booking performance does not match the given performance.",
             )
@@ -716,7 +714,7 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
         if tickets_not_in_booking:
             raise GQLExceptions(
                 exceptions=[
-                    GQLFieldException(
+                    GQLException(
                         field="booking_reference",
                         message=f"The booking of ticket {ticket.id} does not match the given booking.",
                     )
@@ -729,9 +727,7 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
         if tickets_checked_in:
             raise GQLExceptions(
                 exceptions=[
-                    GQLNonFieldException(
-                        message=f"Ticket {ticket.id} is already checked in"
-                    )
+                    GQLException(message=f"Ticket {ticket.id} is already checked in")
                     for ticket in tickets_checked_in
                 ]
             )
@@ -758,7 +754,7 @@ class UnCheckInBooking(AuthRequiredMixin, SafeMutation):
         performance (PaymentNode): The Performance.
 
     Raises:
-        GQLNonFieldException: If the un-check in was unsuccessful
+        GQLException: If the un-check in was unsuccessful
     """
 
     performance = graphene.Field("uobtheatre.productions.schema.PerformanceNode")
@@ -776,7 +772,7 @@ class UnCheckInBooking(AuthRequiredMixin, SafeMutation):
 
         # check if the booking pertains to the correct performance
         if booking.performance != performance:
-            raise GQLFieldException(
+            raise GQLException(
                 field="performance_id",
                 message="The booking performance does not match the given performance.",
             )
@@ -792,7 +788,7 @@ class UnCheckInBooking(AuthRequiredMixin, SafeMutation):
         if tickets_not_in_booking:
             raise GQLExceptions(
                 exceptions=[
-                    GQLFieldException(
+                    GQLException(
                         field="booking_reference",
                         message=f"The booking of ticket {ticket.id} does not match the given booking.",
                     )

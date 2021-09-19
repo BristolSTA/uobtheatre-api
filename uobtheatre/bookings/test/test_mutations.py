@@ -16,7 +16,7 @@ from uobtheatre.payments.payment_methods import SquareOnline, SquarePOS
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.models import User
 from uobtheatre.users.test.factories import UserFactory
-from uobtheatre.utils.exceptions import GQLFieldException, GQLNonFieldException
+from uobtheatre.utils.exceptions import AuthorizationException, GQLException
 from uobtheatre.utils.test_utils import ticket_dict_list_dict_gen, ticket_list_dict_gen
 from uobtheatre.venues.test.factories import SeatFactory, SeatGroupFactory
 
@@ -1520,7 +1520,7 @@ def test_paybooking_unsupported_payment_provider(info):
     booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
     assign_perm("boxoffice", info.context.user, booking.performance.production)
 
-    with pytest.raises(GQLNonFieldException) as exc:
+    with pytest.raises(GQLException) as exc:
         PayBooking.resolve_mutation(
             None, info, booking.id, booking.total(), payment_provider="NOT_A_THING"
         )
@@ -1925,7 +1925,7 @@ def test_parse_target_user_email_creates_user():
 @pytest.mark.django_db
 def test_parse_target_user_email_without_permissions():
     creator = UserFactory(email="admin@email.com")
-    with pytest.raises(GQLFieldException):
+    with pytest.raises(AuthorizationException):
         parse_target_user_email("email@email.com", creator, PerformanceFactory())
     assert not User.objects.filter(email="somenewemail@email.com").exists()
 
