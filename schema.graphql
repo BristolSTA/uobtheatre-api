@@ -56,6 +56,11 @@ type CastMemberNode implements Node {
   production: ProductionNode!
 }
 
+input CastMemeberInput {
+  name: String
+  role: String
+}
+
 type CheckInBooking {
   success: Boolean
   errors: [GQLErrorUnion]
@@ -93,6 +98,11 @@ input CreateTicketInput {
   concessionTypeId: IdInputField!
 }
 
+input CrewMemberInput {
+  name: String
+  role: CrewRoleInput
+}
+
 type CrewMemberNode implements Node {
   id: ID!
   name: String!
@@ -110,6 +120,11 @@ type CrewMemberNodeEdge {
   cursor: String!
 }
 
+input CrewRoleInput {
+  name: String
+  department: Department
+}
+
 type CrewRoleNode implements Node {
   id: ID!
   name: String!
@@ -124,6 +139,16 @@ scalar DateTime
 type DeleteAccount {
   success: Boolean
   errors: [GQLErrorUnion]
+}
+
+enum Department {
+  LX
+  SND
+  AV
+  SM
+  PYRO
+  SET
+  MISC
 }
 
 type DiscountNode implements Node {
@@ -196,7 +221,7 @@ type MiscCostNode implements Node {
 }
 
 type Mutation {
-  createProduction(ageRating: Int, facebookEvent: String, name: String!, performances: [PerformanceInput], societyId: IdInputField, subtitle: String, warnings: [AudienceWarningInput]): CreateProduction
+  createProduction(ageRating: Int, cast: [CastMemeberInput], coverImageId: IdInputField, crew: [CrewMemberInput], facebookEvent: String, featuredImageId: IdInputField, name: String!, performances: [PerformanceInput], posterImageId: IdInputField, productionTeam: [ProductionTeamMemberInput], societyId: IdInputField, subtitle: String, warnings: [AudienceWarningInput]): CreateProduction
   createBooking(performanceId: IdInputField, targetUserEmail: String, tickets: [CreateTicketInput]): CreateBooking
   updateBooking(bookingId: IdInputField, targetUserEmail: String, tickets: [UpdateTicketInput]): UpdateBooking
   payBooking(bookingId: IdInputField!, deviceId: String, nonce: String, paymentProvider: PaymentMethod, price: Int!): PayBooking
@@ -306,13 +331,14 @@ type PaymentNodeEdge {
 }
 
 input PerformanceInput {
-  venue: IdInputField
+  venueId: IdInputField
   doorsOpen: DateTime
   start: DateTime
   end: DateTime
   description: String
   extraInformation: String
   capacity: Int
+  ticketOptions: [PerformanceSeatGroupInput]
 }
 
 type PerformanceNode implements Node {
@@ -349,6 +375,12 @@ type PerformanceNodeConnection {
 type PerformanceNodeEdge {
   node: PerformanceNode
   cursor: String!
+}
+
+input PerformanceSeatGroupInput {
+  seatGroup: IdInputField!
+  price: Int!
+  capacity: Int
 }
 
 type PerformanceSeatGroupNode implements Node {
@@ -424,6 +456,11 @@ type ProductionNodeEdge {
   cursor: String!
 }
 
+input ProductionTeamMemberInput {
+  name: String
+  role: String
+}
+
 type ProductionTeamMemberNode implements Node {
   id: ID!
   name: String!
@@ -434,6 +471,7 @@ type ProductionTeamMemberNode implements Node {
 type Query {
   paymentDevices(paymentProvider: PaymentMethod, paired: Boolean): [SquarePaymentDevice]
   bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, reference: String, user: ID, creator: ID, performance: ID, status: String, adminDiscountPercentage: Float, id: ID, search: String, checkedIn: Boolean, active: Boolean, orderBy: String): BookingNodeConnection
+  images: [ImageNode]
   me: ExtendedUserNode
   societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String): SocietyNodeConnection
   society(slug: String!): SocietyNode
