@@ -16,3 +16,10 @@ class ImageNode(DjangoObjectType):
         model = Image
         interfaces = (relay.Node,)
         fields = ("id", "url", "alt_text")
+
+
+class Query(graphene.ObjectType):
+    images = graphene.List(ImageNode)
+
+    def resolve_images(self, _):
+        return Image.objects.all()
