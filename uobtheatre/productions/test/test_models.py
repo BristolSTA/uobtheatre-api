@@ -425,8 +425,12 @@ def test_performance_capacity_remaining():
 @pytest.mark.parametrize(
     "name, start, string",
     [
-        ("TRASH", None, "Perforamce of TRASH"),
-        ("TRASH", "2020-12-27T11:17:43Z", "Perforamce of TRASH at 11:17 on 27/12/2020"),
+        ("TRASH", None, "Performance of TRASH"),
+        (
+            "TRASH",
+            "2020-12-27T11:17:43Z",
+            "Performance of TRASH at 11:17 on 27/12/2020",
+        ),
     ],
 )
 def test_performance_str(name, start, string):

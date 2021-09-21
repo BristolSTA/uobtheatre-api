@@ -705,8 +705,8 @@ class Performance(TimeStampedMixin, models.Model):
 
     def __str__(self):
         if self.start is None:
-            return f"Perforamce of {self.production.name}"
-        return f"Perforamce of {self.production.name} at {self.start.strftime('%H:%M')} on {self.start.strftime('%d/%m/%Y')}"
+            return f"Performance of {self.production.name}"
+        return f"Performance of {self.production.name} at {self.start.strftime('%H:%M')} on {self.start.strftime('%d/%m/%Y')}"
 
     class Meta:
         ordering = ["id"]
