@@ -1,5 +1,6 @@
 import graphene
 
+from uobtheatre.discounts.models import Discount, DiscountRequirement
 from uobtheatre.productions.models import (
     AudienceWarning,
     CastMember,
@@ -69,7 +70,9 @@ class PerformanceSeatGroupInput(graphene.InputObjectType):
             performance=performance,
             seat_group=seat_group,
             price=self.price,
-            capacity=self.capacity,
+            capacity=self.capacity
+            if self.capacity is not None
+            else seat_group.capacity,
         )
 
 
@@ -102,6 +105,42 @@ class PerformanceInput(graphene.InputObjectType):
         )
 
 
+class ConcessionTypeInput(graphene.InputObjectType):
+    name = graphene.String()
+    description = graphene.String()
+
+
+class DiscountRequirementInput(graphene.InputObjectType):
+    number = graphene.Int()
+    concession_type = graphene.Field(ConcessionTypeInput)
+
+    def to_obj(self):
+        return DiscountRequirement(
+            number=self.number, concession_type=self.concession_type
+        )
+
+
+class DiscountInput(graphene.InputObjectType):
+    name = graphene.String()
+    percentage = graphene.Float()
+    requirements = graphene.List(DiscountRequirementInput)
+
+    def create(self, performances):
+        discount = Discount.objects.create(
+            name=self.name,
+            percentage=self.percentage,
+        )
+        discount.performances.add(*performances)
+
+        DiscountRequirement.bulk_create(
+            [
+                DiscountRequirement(number=requirement.number)
+                for requirement in self.requirements or []
+            ]
+        )
+        return discount
+
+
 class CreateProduction(SafeMutation):
     production = graphene.Field("uobtheatre.productions.schema.ProductionNode")
 
@@ -122,6 +161,8 @@ class CreateProduction(SafeMutation):
         poster_image_id = IdInputField()
         featured_image_id = IdInputField()
 
+        discounts = graphene.List(DiscountInput)
+
     @classmethod
     def resolve_mutation(
         cls,
@@ -137,6 +178,7 @@ class CreateProduction(SafeMutation):
         cast=None,
         crew=None,
         production_team=None,
+        discounts=None,
         **kwargs,
     ):
         production = Production.objects.create(
@@ -163,8 +205,9 @@ class CreateProduction(SafeMutation):
             ]
         )
 
-        for performance in performances or []:
-            performance.create(production)
+        created_performances = [
+            performance.create(production) for performance in performances or []
+        ]
 
         CastMember.objects.bulk_create(
             [cast_member.to_obj(production) for cast_member in cast or []]
@@ -180,6 +223,10 @@ class CreateProduction(SafeMutation):
                 for production_team_member in production_team or []
             ]
         )
+
+        # Create discounts and assign to all performances
+        for discount in discounts or []:
+            discount.create(created_performances)
 
         return CreateProduction(production=production)
 

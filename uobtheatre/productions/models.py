@@ -727,6 +727,7 @@ class PerformanceSeatGroup(models.Model):
     """
 
     seat_group = models.ForeignKey(SeatGroup, on_delete=models.RESTRICT)
+
     performance = models.ForeignKey(
         Performance, on_delete=models.RESTRICT, related_name="performance_seat_groups"
     )
@@ -734,7 +735,6 @@ class PerformanceSeatGroup(models.Model):
     capacity = models.SmallIntegerField(blank=True)
 
     def save(self, *args, **kwargs):
-        if self._state.adding:
-            if self.capacity is None:
-                self.capacity = self.seat_group.capacity
+        if self._state.adding and self.capacity is None:
+            self.capacity = self.seat_group.capacity
         super().save(*args, **kwargs)

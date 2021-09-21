@@ -48,6 +48,7 @@ class WarningNode(DjangoObjectType):
     class Meta:
         model = AudienceWarning
         interfaces = (relay.Node,)
+        filter_fields = {}  # type: ignore
 
 
 class ProductionByMethodOrderingFilter(django_filters.OrderingFilter):
@@ -292,6 +293,8 @@ class Query(graphene.ObjectType):
 
     production = graphene.Field(ProductionNode, slug=graphene.String(required=True))
     performance = relay.Node.Field(PerformanceNode)
+
+    warnings = DjangoFilterConnectionField(WarningNode)
 
     def resolve_production(self, _, slug):
         try:
