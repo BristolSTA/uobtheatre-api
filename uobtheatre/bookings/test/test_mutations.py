@@ -16,7 +16,7 @@ from uobtheatre.payments.payment_methods import SquareOnline, SquarePOS
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.models import User
 from uobtheatre.users.test.factories import UserFactory
-from uobtheatre.utils.exceptions import GQLFieldException, GQLNonFieldException
+from uobtheatre.utils.exceptions import AuthorizationException, GQLException
 from uobtheatre.utils.test_utils import ticket_dict_list_dict_gen, ticket_list_dict_gen
 from uobtheatre.venues.test.factories import SeatFactory, SeatGroupFactory
 
@@ -304,6 +304,98 @@ def test_create_booking_with_new_taget_user(gql_client):
     booking = Booking.objects.first()
     assert booking.user.email == "abc@email.com"
     assert str(booking.creator.id) == str(gql_client.user.id)
+
+
+@pytest.mark.django_db
+def test_create_booking_admin_discount_without_perms(gql_client):
+    performance = PerformanceFactory()
+    request = """
+        mutation {
+          createBooking(
+            performanceId: "%s"
+            adminDiscountPercentage: 0.8
+          ) {
+            booking {
+              id
+            }
+            success
+            errors {
+              __typename
+              ... on FieldError {
+                message
+                field
+              }
+            }
+         }
+        }
+    """ % to_global_id(
+        "PerformanceNode", performance.id
+    )
+    gql_client.login()
+    response = gql_client.execute(request)
+
+    assert response["data"]["createBooking"]["success"] is False
+    assert (
+        response["data"]["createBooking"]["errors"][0]["message"]
+        == "You do not have permission to assign an admin discount"
+    )
+    assert (
+        response["data"]["createBooking"]["errors"][0]["field"]
+        == "adminDiscountPercentage"
+    )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "discount,should_be_valid",
+    [
+        (0.8, True),
+        (-1, False),
+        (1.2, False),
+    ],
+)
+def test_create_booking_admin_discount(gql_client, discount, should_be_valid):
+    performance = PerformanceFactory()
+    request = """
+        mutation {
+          createBooking(
+            performanceId: "%s"
+            adminDiscountPercentage: %s
+          ) {
+            booking {
+              id
+              adminDiscountPercentage
+            }
+            success
+            errors {
+              __typename
+              ... on FieldError {
+                message
+                field
+              }
+            }
+         }
+        }
+    """ % (
+        to_global_id("PerformanceNode", performance.id),
+        discount,
+    )
+    gql_client.login()
+    assign_perm("change_production", gql_client.user, performance.production)
+    response = gql_client.execute(request)
+
+    assert response["data"]["createBooking"]["success"] is should_be_valid
+
+    if not should_be_valid:
+        assert (
+            response["data"]["createBooking"]["errors"][0]["field"]
+            == "adminDiscountPercentage"
+        )
+    else:
+        assert (
+            response["data"]["createBooking"]["booking"]["adminDiscountPercentage"]
+            == 0.8
+        )
 
 
 @pytest.mark.django_db
@@ -633,6 +725,97 @@ def test_update_booking_set_target_user(gql_client):
     # Assert the bookings ticket have not changed
     assert creator.bookings.count() == 0
     assert user.bookings.count() == 1
+
+
+@pytest.mark.django_db
+def test_update_booking_admin_discount_without_perms(gql_client):
+    booking = BookingFactory()
+    request = """
+        mutation {
+          updateBooking(
+            bookingId: "%s"
+            adminDiscountPercentage: 0.8
+          ) {
+            booking {
+              id
+            }
+            success
+            errors {
+              __typename
+              ... on FieldError {
+                message
+                field
+              }
+            }
+         }
+        }
+    """ % to_global_id(
+        "BookingNode", booking.id
+    )
+    gql_client.login(booking.user)
+    response = gql_client.execute(request)
+
+    assert response["data"]["updateBooking"]["success"] is False
+    assert (
+        response["data"]["updateBooking"]["errors"][0]["message"]
+        == "You do not have permission to assign an admin discount"
+    )
+    assert (
+        response["data"]["updateBooking"]["errors"][0]["field"]
+        == "adminDiscountPercentage"
+    )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "discount,should_be_valid",
+    [
+        (0.8, True),
+        (-1, False),
+        (1.2, False),
+    ],
+)
+def test_update_booking_admin_discount(gql_client, discount, should_be_valid):
+    booking = BookingFactory()
+    request = """
+        mutation {
+          updateBooking(
+            bookingId: "%s"
+            adminDiscountPercentage: %s
+          ) {
+            booking {
+              id
+              adminDiscountPercentage
+            }
+            errors{
+                ...on FieldError {
+                    message
+                    field
+                }
+            }
+            success
+         }
+        }
+    """ % (
+        to_global_id("BookingNode", booking.id),
+        discount,
+    )
+    gql_client.login(booking.user)
+    assign_perm("change_production", gql_client.user, booking.performance.production)
+    response = gql_client.execute(request)
+
+    assert response["data"]["updateBooking"]["success"] is should_be_valid
+
+    if not should_be_valid:
+        assert (
+            response["data"]["updateBooking"]["errors"][0]["field"]
+            == "adminDiscountPercentage"
+        )
+    else:
+        assert (
+            response["data"]["updateBooking"]["booking"]["adminDiscountPercentage"]
+            == 0.8
+        )
 
 
 @pytest.mark.django_db
@@ -1337,7 +1520,7 @@ def test_paybooking_unsupported_payment_provider(info):
     booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
     assign_perm("boxoffice", info.context.user, booking.performance.production)
 
-    with pytest.raises(GQLNonFieldException) as exc:
+    with pytest.raises(GQLException) as exc:
         PayBooking.resolve_mutation(
             None, info, booking.id, booking.total(), payment_provider="NOT_A_THING"
         )
@@ -1742,7 +1925,7 @@ def test_parse_target_user_email_creates_user():
 @pytest.mark.django_db
 def test_parse_target_user_email_without_permissions():
     creator = UserFactory(email="admin@email.com")
-    with pytest.raises(GQLFieldException):
+    with pytest.raises(AuthorizationException):
         parse_target_user_email("email@email.com", creator, PerformanceFactory())
     assert not User.objects.filter(email="somenewemail@email.com").exists()
 
