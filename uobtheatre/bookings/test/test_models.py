@@ -966,3 +966,14 @@ def test_filter_by_active():
     assert list(Booking.objects.active(True)) == [booking_future]
 
     assert list(Booking.objects.active(False)) == [booking_past]
+
+
+@pytest.mark.django_db
+def test_booking_expiration():
+    unexpired_booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+
+    expired_bookings = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    expired_bookings.expiration_time = timezone.now() - datetime.timedelta(seconds=900)
+
+    assert not unexpired_booking.is_reservation_expired()
+    assert expired_bookings.is_reservation_expired

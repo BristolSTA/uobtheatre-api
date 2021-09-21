@@ -1,4 +1,5 @@
 import math
+import datetime
 from typing import Dict, List, Optional, Tuple
 
 from django.contrib.contenttypes.fields import GenericRelation
@@ -142,6 +143,7 @@ class BookingQuerySet(QuerySet):
         return query_set
 
 
+
 class Booking(TimeStampedMixin, models.Model):
     """A booking for a performance
 
@@ -171,6 +173,14 @@ class Booking(TimeStampedMixin, models.Model):
     )
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bookings")
+    start_time = models.DateTimeField(auto_now_add=True)
+    update_time = models.DateTimeField(auto_now=True)
+
+    def return_expire_time(self):
+        now = timezone.now()
+        return now + timezone.timedelta(minutes=15)
+
+    expiration_time = models.DateTimeField(default=timezone.now()+timezone.timedelta(minutes=15))
 
     # Stores who created the booking
     # For regular bookings this will be the user
@@ -518,6 +528,22 @@ class Booking(TimeStampedMixin, models.Model):
             type=Payment.PaymentType.PURCHASE,
             value=self.total(),
         )
+    
+    def is_reservation_expired(self):
+        """
+        This returns False if the user is still allowed to book their tickets.
+        It returns False when:
+            - The ticket is already paid for.
+            - Their booking has not expired (15mins)
+            [- They have taken longer than 15 mins, but the tickets are still available]
+        """
+        if (self.status == self.BookingStatus.PAID):
+            return False
+
+        if (datetime.datetime.now(timezone.utc) < (self.expiration_time)):
+            return False
+
+        return True
 
 
 class Ticket(models.Model):

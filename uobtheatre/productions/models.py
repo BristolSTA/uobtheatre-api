@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from autoslug import AutoSlugField
 from django.db import models
-from django.db.models import Max, Min, Sum
+from django.db.models import Max, Min, Sum, Q
 from django.db.models.query import QuerySet
 from django.utils import timezone
 from guardian.shortcuts import get_objects_for_user
@@ -411,7 +411,7 @@ class Performance(TimeStampedMixin, models.Model):
         Returns:
             int: The number of tickets sold
         """
-        return self.tickets.filter(**kwargs).count()
+        return self.tickets.filter(Q(booking__status="PAID") | Q(booking__expiration_time__gt=datetime.now()), **kwargs).count()
 
     @property
     def total_tickets_checked_in(self):

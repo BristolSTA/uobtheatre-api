@@ -1,4 +1,5 @@
 import itertools
+import datetime
 from typing import List, Optional
 
 import django_filters
@@ -410,7 +411,7 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
 
         # If draft booking(s) already exists remove the bookings
         Booking.objects.filter(
-            status=Booking.BookingStatus.IN_PROGRESS, performance_id=performance_id
+            user=info.context.user, status=Booking.BookingStatus.IN_PROGRESS, performance_id=performance_id
         ).delete()
 
         user = parse_target_user_email(
@@ -492,6 +493,10 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
         if err:
             raise GQLNonFieldException(message=err, code=400)
 
+        # Check if booking has expired
+        if booking.is_reservation_expired():
+            booking.expiration_time = booking.return_expire_time()
+
         # Save all the validated tickets
         for ticket in add_tickets:
             ticket.booking = booking
@@ -560,6 +565,16 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
                 code=403,
                 field="payment_provider",
             )
+
+        # Check the capacity of the show and its seat_groups, if still available
+        tickets = Ticket.objects.filter(booking=booking)
+        err = booking.performance.check_capacity(tickets)
+        if err:
+            raise GQLNonFieldException(message=err, code=400)
+
+        # Check if booking has expired
+        if booking.is_reservation_expired():
+            booking.expiration_time = booking.return_expire_time()
 
         if booking.total() != price:
             raise GQLNonFieldException(
