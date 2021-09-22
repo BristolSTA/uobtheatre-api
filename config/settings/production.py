@@ -52,4 +52,3 @@ AWS_HEADERS = {
 }
 
 EMAIL_BACKEND = "anymail.backends.amazon_ses.EmailBackend"
-DEFAULT_FROM_EMAIL = "UOB Theatre <no-reply@uobtheatre.com>"

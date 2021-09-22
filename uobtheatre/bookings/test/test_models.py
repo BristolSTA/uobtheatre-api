@@ -985,7 +985,22 @@ def test_complete():
 def test_send_confirmation_email(mailoutbox):
     production = ProductionFactory(name="Legally Ginger")
     performance = PerformanceFactory(
-        start=datetime.datetime(day=20, month=10, year=2021, hour=19, minute=15),
+        doors_open=datetime.datetime(
+            day=20,
+            month=10,
+            year=2021,
+            hour=18,
+            minute=15,
+            tzinfo=timezone.get_current_timezone(),
+        ),
+        start=datetime.datetime(
+            day=20,
+            month=10,
+            year=2021,
+            hour=19,
+            minute=15,
+            tzinfo=timezone.get_current_timezone(),
+        ),
         production=production,
     )
     booking = BookingFactory(
@@ -1000,4 +1015,4 @@ def test_send_confirmation_email(mailoutbox):
     assert email.subject == "Your booking is confirmed!"
     assert "https://example.com/user/booking/abc" in email.body
     assert "Legally Ginger" in email.body
-    assert "on Wednesday, 20 October 2021" in email.body
+    assert "opens at 20 October 2021 18:15 UTC for a 19:15 UTC start" in email.body

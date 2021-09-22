@@ -642,7 +642,6 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
                     code="missing_required",
                 )
             payment_method = SquareOnline(nonce, booking.id)
-
         elif payment_provider == SquarePOS.name:
             if not device_id:
                 raise GQLException(
