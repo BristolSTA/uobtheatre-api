@@ -261,7 +261,7 @@ GRAPHQL_AUTH = {
     "ALLOW_LOGIN_NOT_VERIFIED": False,
     "ACTIVATION_PATH_ON_EMAIL": "login/activate",
     "ACTIVATION_SECONDARY_EMAIL_PATH_ON_EMAIL": "user/email-verify",
-    "PASSWORD_RESET_PATH_ON_EMAIL": "login/reset",
+    "PASSWORD_RESET_PATH_ON_EMAIL": "login/forgot",
     "EMAIL_TEMPLATE_ACTIVATION": "emails/activation_email.html",
     "EMAIL_TEMPLATE_SECONDARY_EMAIL_ACTIVATION": "emails/activation_email.html",
     "EMAIL_TEMPLATE_PASSWORD_RESET": "emails/password_reset_email.html",
