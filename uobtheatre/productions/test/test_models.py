@@ -1,5 +1,6 @@
 import math
 import random
+from datetime import timedelta
 
 import pytest
 from dateutil import parser
@@ -236,6 +237,8 @@ def test_production_is_bookable(performance_disabled, expected):
             for perf in performance_disabled
         ]
     )
+    for perf in production.performances.all():
+        PerformanceSeatingFactory(performance=perf)
 
     assert production.is_bookable() == expected
 
@@ -425,8 +428,12 @@ def test_performance_capacity_remaining():
 @pytest.mark.parametrize(
     "name, start, string",
     [
-        ("TRASH", None, "Perforamce of TRASH"),
-        ("TRASH", "2020-12-27T11:17:43Z", "Perforamce of TRASH at 11:17 on 27/12/2020"),
+        ("TRASH", None, "Performance of TRASH"),
+        (
+            "TRASH",
+            "2020-12-27T11:17:43Z",
+            "Performance of TRASH at 11:17 on 27/12/2020",
+        ),
     ],
 )
 def test_performance_str(name, start, string):
@@ -615,7 +622,7 @@ def test_performance_check_capacity(seat_groups, performance_capacity, is_valid)
 
 
 @pytest.mark.django_db
-def test_performance_check_capacity_seat_group_not_in_perforamnce():
+def test_performance_check_capacity_seat_group_not_in_performance():
     seat_group = SeatGroupFactory()
 
     # Set up some seat groups for a performance
@@ -630,6 +637,30 @@ def test_performance_check_capacity_seat_group_not_in_perforamnce():
         psg.performance.check_capacity(tickets=tickets)
         == f"You cannot book a seat group that is not assigned to this performance, you have booked {seat_group} but the performance only has {psg.seat_group}, {psg2.seat_group}"
     )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "disabled,sold_out,past,expected",
+    [
+        (False, False, False, True),
+        (True, False, False, False),
+        (False, True, False, False),
+        (False, False, True, False),
+    ],
+)
+def test_performance_is_bookable(disabled, sold_out, past, expected):
+    performance = PerformanceFactory(end=timezone.now() + timedelta(days=1))
+    PerformanceSeatingFactory(
+        performance=performance, capacity=100 if not sold_out else 0
+    )
+
+    if past:
+        performance.end = timezone.now() - timedelta(days=1)
+
+    performance.disabled = disabled
+
+    assert performance.is_bookable is expected
 
 
 @pytest.mark.django_db
