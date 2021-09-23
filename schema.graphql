@@ -31,17 +31,7 @@ type BookingNode implements Node {
   adminDiscountPercentage: Float!
   tickets: [TicketNode!]
   priceBreakdown: PriceBreakdownNode
-  payments(
-    offset: Int
-    before: String
-    after: String
-    first: Int
-    last: Int
-    type: String
-    provider: String
-    createdAt: DateTime
-    id: ID
-  ): PaymentNodeConnection
+  payments(offset: Int, before: String, after: String, first: Int, last: Int, type: String, provider: String, createdAt: DateTime, id: ID): PaymentNodeConnection
 }
 
 type BookingNodeConnection {
@@ -79,13 +69,7 @@ type ConcessionTypeNode implements Node {
   id: ID!
   name: String!
   description: String
-  seatBookings(
-    offset: Int
-    before: String
-    after: String
-    first: Int
-    last: Int
-  ): TicketNodeConnection!
+  seatBookings(offset: Int, before: String, after: String, first: Int, last: Int): TicketNodeConnection!
 }
 
 type CreateBooking {
@@ -120,13 +104,7 @@ type CrewRoleNode implements Node {
   id: ID!
   name: String!
   department: EnumNode
-  crewMembers(
-    offset: Int
-    before: String
-    after: String
-    first: Int
-    last: Int
-  ): CrewMemberNodeConnection!
+  crewMembers(offset: Int, before: String, after: String, first: Int, last: Int): CrewMemberNodeConnection!
 }
 
 scalar Date
@@ -142,29 +120,7 @@ type DiscountNode implements Node {
   id: ID!
   name: String!
   percentage: Float!
-  performances(
-    offset: Int
-    before: String
-    after: String
-    first: Int
-    last: Int
-    createdAt: DateTime
-    updatedAt: DateTime
-    production: ID
-    venue: ID
-    doorsOpen: DateTime
-    start: DateTime
-    end: DateTime
-    description: String
-    extraInformation: String
-    disabled: Boolean
-    seatGroups: [ID]
-    capacity: Int
-    id: ID
-    hasBoxofficePermissions: Boolean
-    runOn: Date
-    orderBy: String
-  ): PerformanceNodeConnection!
+  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, hasBoxofficePermissions: Boolean, runOn: Date, orderBy: String): PerformanceNodeConnection!
   seatGroup: SeatGroupNode
   requirements: [DiscountRequirementNode!]
 }
@@ -191,56 +147,9 @@ type ExtendedUserNode {
   dateJoined: DateTime!
   id: String
   email: String!
-  societies(
-    offset: Int
-    before: String
-    after: String
-    first: Int
-    last: Int
-    id: ID
-    name: String
-    slug: String
-  ): SocietyNodeConnection!
-  bookings(
-    offset: Int
-    before: String
-    after: String
-    first: Int
-    last: Int
-    createdAt: DateTime
-    updatedAt: DateTime
-    reference: String
-    user: ID
-    creator: ID
-    performance: ID
-    status: String
-    adminDiscountPercentage: Float
-    id: ID
-    search: String
-    checkedIn: Boolean
-    active: Boolean
-    orderBy: String
-  ): BookingNodeConnection!
-  createdBookings(
-    offset: Int
-    before: String
-    after: String
-    first: Int
-    last: Int
-    createdAt: DateTime
-    updatedAt: DateTime
-    reference: String
-    user: ID
-    creator: ID
-    performance: ID
-    status: String
-    adminDiscountPercentage: Float
-    id: ID
-    search: String
-    checkedIn: Boolean
-    active: Boolean
-    orderBy: String
-  ): BookingNodeConnection!
+  societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String): SocietyNodeConnection!
+  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, reference: String, user: ID, creator: ID, performance: ID, status: String, adminDiscountPercentage: Float, id: ID, search: String, checkedIn: Boolean, active: Boolean, orderBy: String): BookingNodeConnection!
+  createdBookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, reference: String, user: ID, creator: ID, performance: ID, status: String, adminDiscountPercentage: Float, id: ID, search: String, checkedIn: Boolean, active: Boolean, orderBy: String): BookingNodeConnection!
   password: String!
   pk: Int
   archived: Boolean
@@ -283,67 +192,23 @@ type MiscCostNode implements Node {
 }
 
 type Mutation {
-  createBooking(
-    adminDiscountPercentage: Float
-    performanceId: IdInputField
-    targetUserEmail: String
-    tickets: [CreateTicketInput]
-  ): CreateBooking
-  updateBooking(
-    adminDiscountPercentage: Float
-    bookingId: IdInputField
-    targetUserEmail: String
-    tickets: [UpdateTicketInput]
-  ): UpdateBooking
-  payBooking(
-    bookingId: IdInputField!
-    deviceId: String
-    nonce: String
-    paymentProvider: PaymentMethod
-    price: Int!
-  ): PayBooking
-  checkInBooking(
-    bookingReference: String!
-    performanceId: IdInputField!
-    tickets: [TicketIDInput]!
-  ): CheckInBooking
-  uncheckInBooking(
-    bookingReference: String!
-    performanceId: IdInputField!
-    tickets: [TicketIDInput]!
-  ): UnCheckInBooking
-  register(
-    email: String!
-    firstName: String!
-    lastName: String!
-    password1: String!
-    password2: String!
-  ): Register
+  generateReport(endTime: DateTime, name: String!, options: [ReportOption], startTime: DateTime): GenerateReport
+  createBooking(adminDiscountPercentage: Float, performanceId: IdInputField, targetUserEmail: String, tickets: [CreateTicketInput]): CreateBooking
+  updateBooking(adminDiscountPercentage: Float, bookingId: IdInputField, targetUserEmail: String, tickets: [UpdateTicketInput]): UpdateBooking
+  payBooking(bookingId: IdInputField!, deviceId: String, nonce: String, paymentProvider: PaymentMethod, price: Int!): PayBooking
+  checkInBooking(bookingReference: String!, performanceId: IdInputField!, tickets: [TicketIDInput]!): CheckInBooking
+  uncheckInBooking(bookingReference: String!, performanceId: IdInputField!, tickets: [TicketIDInput]!): UnCheckInBooking
+  register(email: String!, firstName: String!, lastName: String!, password1: String!, password2: String!): Register
   verifyAccount(token: String!): VerifyAccount
   resendActivationEmail(email: String!): ResendActivationEmail
   sendPasswordResetEmail(email: String!): SendPasswordResetEmail
-  passwordReset(
-    token: String!
-    newPassword1: String!
-    newPassword2: String!
-  ): PasswordReset
-  passwordSet(
-    token: String!
-    newPassword1: String!
-    newPassword2: String!
-  ): PasswordSet
-  passwordChange(
-    oldPassword: String!
-    newPassword1: String!
-    newPassword2: String!
-  ): PasswordChange
+  passwordReset(token: String!, newPassword1: String!, newPassword2: String!): PasswordReset
+  passwordSet(token: String!, newPassword1: String!, newPassword2: String!): PasswordSet
+  passwordChange(oldPassword: String!, newPassword1: String!, newPassword2: String!): PasswordChange
   updateAccount(firstName: String, lastName: String): UpdateAccount
   archiveAccount(password: String!): ArchiveAccount
   deleteAccount(password: String!): DeleteAccount
-  sendSecondaryEmailActivation(
-    email: String!
-    password: String!
-  ): SendSecondaryEmailActivation
+  sendSecondaryEmailActivation(email: String!, password: String!): SendSecondaryEmailActivation
   verifySecondaryEmail(token: String!): VerifySecondaryEmail
   swapEmails(password: String!): SwapEmails
   removeSecondaryEmail(password: String!): RemoveSecondaryEmail
@@ -448,35 +313,10 @@ type PerformanceNode implements Node {
   description: String
   extraInformation: String
   disabled: Boolean!
-  seatGroups(
-    offset: Int
-    before: String
-    after: String
-    first: Int
-    last: Int
-  ): SeatGroupNodeConnection!
+  seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
   capacity: Int
   discounts: [DiscountNode!]
-  bookings(
-    offset: Int
-    before: String
-    after: String
-    first: Int
-    last: Int
-    createdAt: DateTime
-    updatedAt: DateTime
-    reference: String
-    user: ID
-    creator: ID
-    performance: ID
-    status: String
-    adminDiscountPercentage: Float
-    id: ID
-    search: String
-    checkedIn: Boolean
-    active: Boolean
-    orderBy: String
-  ): BookingNodeConnection!
+  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, reference: String, user: ID, creator: ID, performance: ID, status: String, adminDiscountPercentage: Float, id: ID, search: String, checkedIn: Boolean, active: Boolean, orderBy: String): BookingNodeConnection!
   capacityRemaining: Int
   ticketOptions: [PerformanceSeatGroupNode]
   minSeatPrice: Int
@@ -554,29 +394,7 @@ type ProductionNode implements Node {
   cast: [CastMemberNode!]
   productionTeam: [ProductionTeamMemberNode!]
   crew: [CrewMemberNode!]
-  performances(
-    offset: Int
-    before: String
-    after: String
-    first: Int
-    last: Int
-    createdAt: DateTime
-    updatedAt: DateTime
-    production: ID
-    venue: ID
-    doorsOpen: DateTime
-    start: DateTime
-    end: DateTime
-    description: String
-    extraInformation: String
-    disabled: Boolean
-    seatGroups: [ID]
-    capacity: Int
-    id: ID
-    hasBoxofficePermissions: Boolean
-    runOn: Date
-    orderBy: String
-  ): PerformanceNodeConnection!
+  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, hasBoxofficePermissions: Boolean, runOn: Date, orderBy: String): PerformanceNodeConnection!
   permissions: [String]
   start: DateTime
   end: DateTime
@@ -605,103 +423,16 @@ type ProductionTeamMemberNode implements Node {
 }
 
 type Query {
-  paymentDevices(
-    paymentProvider: PaymentMethod
-    paired: Boolean
-  ): [SquarePaymentDevice]
-  bookings(
-    offset: Int
-    before: String
-    after: String
-    first: Int
-    last: Int
-    createdAt: DateTime
-    updatedAt: DateTime
-    reference: String
-    user: ID
-    creator: ID
-    performance: ID
-    status: String
-    adminDiscountPercentage: Float
-    id: ID
-    search: String
-    checkedIn: Boolean
-    active: Boolean
-    orderBy: String
-  ): BookingNodeConnection
+  paymentDevices(paymentProvider: PaymentMethod, paired: Boolean): [SquarePaymentDevice]
+  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, reference: String, user: ID, creator: ID, performance: ID, status: String, adminDiscountPercentage: Float, id: ID, search: String, checkedIn: Boolean, active: Boolean, orderBy: String): BookingNodeConnection
   me: ExtendedUserNode
-  societies(
-    offset: Int
-    before: String
-    after: String
-    first: Int
-    last: Int
-    id: ID
-    name: String
-    slug: String
-  ): SocietyNodeConnection
+  societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String): SocietyNodeConnection
   society(slug: String!): SocietyNode
-  productions(
-    offset: Int
-    before: String
-    after: String
-    first: Int
-    last: Int
-    createdAt: DateTime
-    updatedAt: DateTime
-    name: String
-    subtitle: String
-    description: String
-    society: ID
-    status: String
-    ageRating: Int
-    facebookEvent: String
-    warnings: [ID]
-    slug: String
-    id: ID
-    start: DateTime
-    start_Gte: DateTime
-    start_Lte: DateTime
-    end: DateTime
-    end_Gte: DateTime
-    end_Lte: DateTime
-    orderBy: String
-  ): ProductionNodeConnection
-  performances(
-    offset: Int
-    before: String
-    after: String
-    first: Int
-    last: Int
-    createdAt: DateTime
-    updatedAt: DateTime
-    production: ID
-    venue: ID
-    doorsOpen: DateTime
-    start: DateTime
-    end: DateTime
-    description: String
-    extraInformation: String
-    disabled: Boolean
-    seatGroups: [ID]
-    capacity: Int
-    id: ID
-    hasBoxofficePermissions: Boolean
-    runOn: Date
-    orderBy: String
-  ): PerformanceNodeConnection
+  productions(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, society: ID, status: String, ageRating: Int, facebookEvent: String, warnings: [ID], slug: String, id: ID, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, orderBy: String): ProductionNodeConnection
+  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, hasBoxofficePermissions: Boolean, runOn: Date, orderBy: String): PerformanceNodeConnection
   production(slug: String!): ProductionNode
   performance(id: ID!): PerformanceNode
-  venues(
-    offset: Int
-    before: String
-    after: String
-    first: Int
-    last: Int
-    id: ID
-    name: String
-    slug: String
-  ): VenueNodeConnection
+  venues(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String): VenueNodeConnection
   venue(slug: String!): VenueNode
 }
 
@@ -721,6 +452,11 @@ type Register {
 type RemoveSecondaryEmail {
   success: Boolean
   errors: [GQLErrorUnion]
+}
+
+input ReportOption {
+  name: String!
+  value: String!
 }
 
 type ResendActivationEmail {
@@ -748,13 +484,7 @@ type SeatGroupNode implements Node {
   capacity: Int
   seats: SeatNode
   isInternal: Boolean!
-  tickets(
-    offset: Int
-    before: String
-    after: String
-    first: Int
-    last: Int
-  ): TicketNodeConnection!
+  tickets(offset: Int, before: String, after: String, first: Int, last: Int): TicketNodeConnection!
 }
 
 type SeatGroupNodeConnection {
@@ -771,20 +501,8 @@ type SeatNode implements Node {
   id: ID!
   row: String
   number: String
-  seatgroupSet(
-    offset: Int
-    before: String
-    after: String
-    first: Int
-    last: Int
-  ): SeatGroupNodeConnection!
-  ticketSet(
-    offset: Int
-    before: String
-    after: String
-    first: Int
-    last: Int
-  ): TicketNodeConnection!
+  seatgroupSet(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
+  ticketSet(offset: Int, before: String, after: String, first: Int, last: Int): TicketNodeConnection!
 }
 
 type SendPasswordResetEmail {
@@ -807,32 +525,7 @@ type SocietyNode implements Node {
   logo: ImageNode!
   banner: ImageNode!
   members: [ExtendedUserNode!]!
-  productions(
-    offset: Int
-    before: String
-    after: String
-    first: Int
-    last: Int
-    createdAt: DateTime
-    updatedAt: DateTime
-    name: String
-    subtitle: String
-    description: String
-    society: ID
-    status: String
-    ageRating: Int
-    facebookEvent: String
-    warnings: [ID]
-    slug: String
-    id: ID
-    start: DateTime
-    start_Gte: DateTime
-    start_Lte: DateTime
-    end: DateTime
-    end_Gte: DateTime
-    end_Lte: DateTime
-    orderBy: String
-  ): ProductionNodeConnection!
+  productions(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, society: ID, status: String, ageRating: Int, facebookEvent: String, warnings: [ID], slug: String, id: ID, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, orderBy: String): ProductionNodeConnection!
 }
 
 type SocietyNodeConnection {
@@ -918,56 +611,9 @@ type UserNode implements Node {
   dateJoined: DateTime!
   id: ID!
   email: String!
-  societies(
-    offset: Int
-    before: String
-    after: String
-    first: Int
-    last: Int
-    id: ID
-    name: String
-    slug: String
-  ): SocietyNodeConnection!
-  bookings(
-    offset: Int
-    before: String
-    after: String
-    first: Int
-    last: Int
-    createdAt: DateTime
-    updatedAt: DateTime
-    reference: String
-    user: ID
-    creator: ID
-    performance: ID
-    status: String
-    adminDiscountPercentage: Float
-    id: ID
-    search: String
-    checkedIn: Boolean
-    active: Boolean
-    orderBy: String
-  ): BookingNodeConnection!
-  createdBookings(
-    offset: Int
-    before: String
-    after: String
-    first: Int
-    last: Int
-    createdAt: DateTime
-    updatedAt: DateTime
-    reference: String
-    user: ID
-    creator: ID
-    performance: ID
-    status: String
-    adminDiscountPercentage: Float
-    id: ID
-    search: String
-    checkedIn: Boolean
-    active: Boolean
-    orderBy: String
-  ): BookingNodeConnection!
+  societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String): SocietyNodeConnection!
+  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, reference: String, user: ID, creator: ID, performance: ID, status: String, adminDiscountPercentage: Float, id: ID, search: String, checkedIn: Boolean, active: Boolean, orderBy: String): BookingNodeConnection!
+  createdBookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, reference: String, user: ID, creator: ID, performance: ID, status: String, adminDiscountPercentage: Float, id: ID, search: String, checkedIn: Boolean, active: Boolean, orderBy: String): BookingNodeConnection!
   pk: Int
   archived: Boolean
   verified: Boolean
@@ -985,43 +631,9 @@ type VenueNode implements Node {
   image: ImageNode!
   publiclyListed: Boolean!
   slug: String!
-  seatGroups(
-    offset: Int
-    before: String
-    after: String
-    first: Int
-    last: Int
-  ): SeatGroupNodeConnection!
-  performances(
-    offset: Int
-    before: String
-    after: String
-    first: Int
-    last: Int
-    createdAt: DateTime
-    updatedAt: DateTime
-    production: ID
-    venue: ID
-    doorsOpen: DateTime
-    start: DateTime
-    end: DateTime
-    description: String
-    extraInformation: String
-    disabled: Boolean
-    seatGroups: [ID]
-    capacity: Int
-    id: ID
-    hasBoxofficePermissions: Boolean
-    runOn: Date
-    orderBy: String
-  ): PerformanceNodeConnection!
-  productions(
-    offset: Int
-    before: String
-    after: String
-    first: Int
-    last: Int
-  ): ProductionNodeConnection
+  seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
+  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, hasBoxofficePermissions: Boolean, runOn: Date, orderBy: String): PerformanceNodeConnection!
+  productions(offset: Int, before: String, after: String, first: Int, last: Int): ProductionNodeConnection
 }
 
 type VenueNodeConnection {
@@ -1053,30 +665,5 @@ type VerifyToken {
 type WarningNode implements Node {
   id: ID!
   description: String!
-  productionSet(
-    offset: Int
-    before: String
-    after: String
-    first: Int
-    last: Int
-    createdAt: DateTime
-    updatedAt: DateTime
-    name: String
-    subtitle: String
-    description: String
-    society: ID
-    status: String
-    ageRating: Int
-    facebookEvent: String
-    warnings: [ID]
-    slug: String
-    id: ID
-    start: DateTime
-    start_Gte: DateTime
-    start_Lte: DateTime
-    end: DateTime
-    end_Gte: DateTime
-    end_Lte: DateTime
-    orderBy: String
-  ): ProductionNodeConnection!
+  productionSet(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, society: ID, status: String, ageRating: Int, facebookEvent: String, warnings: [ID], slug: String, id: ID, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, orderBy: String): ProductionNodeConnection!
 }
