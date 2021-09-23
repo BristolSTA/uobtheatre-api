@@ -74,12 +74,12 @@ class MutationException(Exception):
         raise NotImplementedError
 
 
-class GQLFieldException(MutationException):
+class GQLException(MutationException):
     """
-    A single GQL Field error
+    A single GQL error (field or non-field)
     """
 
-    def __init__(self, message, field, code=None, params=None):
+    def __init__(self, message, code=None, field=None, params=None):
         super().__init__()
         self.message = str(message)
         self.code = code
@@ -91,21 +91,9 @@ class GQLFieldException(MutationException):
             FieldError(
                 message=self.message, code=self.code, field=to_camel_case(self.field)
             )
+            if self.field
+            else NonFieldError(message=self.message, code=self.code)
         ]
-
-
-class GQLNonFieldException(MutationException):
-    """
-    A single GQL Field error
-    """
-
-    def __init__(self, message, code=None):
-        super().__init__()
-        self.message = str(message)
-        self.code = code
-
-    def resolve(self) -> List[Union[FieldError, NonFieldError]]:
-        return [NonFieldError(message=self.message, code=self.code)]
 
 
 class GQLExceptions(MutationException):
@@ -130,14 +118,21 @@ class GQLExceptions(MutationException):
         return resovled_exceptions
 
 
-class SquareException(GQLNonFieldException):
+class SquareException(GQLException):
     def __init__(self, square_response):
         super().__init__(square_response.reason_phrase, square_response.status_code)
 
 
-class AuthException(GQLNonFieldException):
+class AuthException(GQLException):
     def __init__(self, message="Authentication Error"):
         super().__init__(message, code=401)
+
+
+class AuthorizationException(GQLException):
+    def __init__(
+        self, message="You are not authorized to perform this action", field=None
+    ):
+        super().__init__(message=message, code=403, field=field)
 
 
 class SafeMutation(MutationResult, graphene.Mutation):

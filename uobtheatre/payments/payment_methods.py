@@ -10,11 +10,7 @@ from square.client import Client
 
 from config.settings.common import BASE_URL, SQUARE_SETTINGS
 from uobtheatre.payments import models as payment_models
-from uobtheatre.utils.exceptions import (
-    GQLExceptions,
-    GQLFieldException,
-    SquareException,
-)
+from uobtheatre.utils.exceptions import SquareException
 from uobtheatre.utils.utils import classproperty
 
 if TYPE_CHECKING:

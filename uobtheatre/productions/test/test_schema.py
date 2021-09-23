@@ -315,6 +315,7 @@ def test_performance_schema(gql_client):
                 id
                 isOnline
                 isInperson
+                isBookable
                 production {
                   id
                 }
@@ -367,7 +368,8 @@ def test_performance_schema(gql_client):
                                 "id": to_global_id("VenueNode", performance.venue.id)
                             },
                             "minSeatPrice": performance.min_seat_price(),
-                            "soldOut": performance.is_sold_out(),
+                            "soldOut": performance.is_sold_out,
+                            "isBookable": performance.is_bookable,
                         }
                     }
                     for performance in performances

@@ -271,6 +271,7 @@ class PerformanceNode(DjangoObjectType):
     is_inperson = graphene.Boolean(required=True)
     is_online = graphene.Boolean(required=True)
     sold_out = graphene.Boolean(required=True)
+    is_bookable = graphene.Boolean(required=True)
     discounts = DjangoListField(DiscountNode)
     tickets_breakdown = graphene.Field(PerformanceTicketsBreakdown, required=True)
     sales_breakdown = graphene.Field(SalesBreakdown)
@@ -294,7 +295,7 @@ class PerformanceNode(DjangoObjectType):
         return self.duration().seconds // 60
 
     def resolve_sold_out(self, info):
-        return self.is_sold_out()
+        return self.is_sold_out
 
     def resolve_tickets_breakdown(self, info):
         # TODO: This should have a permission
@@ -308,7 +309,8 @@ class PerformanceNode(DjangoObjectType):
 
     def resolve_sales_breakdown(self, info):
         if not info.context.user.has_perm(
-            "productions.sales", self.production  # TODO: Use real permission here
+            "productions.sales",
+            self.production,  # TODO: Use real permission here #pylint: disable=fixme
         ):
             return None
 
@@ -317,6 +319,9 @@ class PerformanceNode(DjangoObjectType):
             total_misc_costs_value=self.sales_breakdown["misc_costs_total"],
             total_society_income_value=self.sales_breakdown["society_income_total"],
         )
+
+    def resolve_is_bookable(self, info):
+        return self.is_bookable
 
     class Meta:
         model = Performance

@@ -180,7 +180,16 @@ class Production(TimeStampedMixin, models.Model):
         Returns:
             bool: If the booking can be booked.
         """
-        return self.performances.filter(disabled=False).count() != 0
+        return (
+            len(
+                [
+                    performance
+                    for performance in self.performances.all()
+                    if performance.is_bookable
+                ]
+            )
+            > 0
+        )
 
     def end_date(self):
         """When the last Performance of the Production ends.
@@ -642,6 +651,7 @@ class Performance(TimeStampedMixin, models.Model):
         """
         return self.performance_seat_groups.aggregate(Min("price"))["price__min"]
 
+    @property
     def is_sold_out(self) -> bool:
         """If the performance is sold out
 
@@ -649,6 +659,14 @@ class Performance(TimeStampedMixin, models.Model):
             bool: if the performance is soldout.
         """
         return self.capacity_remaining() == 0
+
+    @property
+    def is_bookable(self) -> bool:
+        return not (
+            self.disabled
+            or self.is_sold_out
+            or (self.end and self.end < timezone.now())
+        )
 
     def check_capacity(self, tickets, deleted_tickets=None) -> Optional[str]:
         """Check the capacity with ticket changes.
@@ -767,8 +785,8 @@ class Performance(TimeStampedMixin, models.Model):
 
     def __str__(self):
         if self.start is None:
-            return f"Perforamce of {self.production.name}"
-        return f"Perforamce of {self.production.name} at {self.start.strftime('%H:%M')} on {self.start.strftime('%d/%m/%Y')}"
+            return f"Performance of {self.production.name}"
+        return f"Performance of {self.production.name} at {self.start.strftime('%H:%M')} on {self.start.strftime('%d/%m/%Y')}"
 
     class Meta:
         ordering = ["id"]
