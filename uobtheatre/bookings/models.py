@@ -7,6 +7,7 @@ from django.contrib.sites.models import Site
 from django.core.mail import EmailMultiAlternatives
 from django.db import models
 from django.db.models import Case, F, FloatField, Q, Value, When
+from django.db.models.aggregates import Sum
 from django.db.models.functions import Cast
 from django.db.models.query import QuerySet
 from django.template.loader import get_template
@@ -444,6 +445,15 @@ class Booking(TimeStampedMixin, Payable, models.Model):
             return 0
         return math.ceil(subtotal + self.misc_costs_value())
 
+    @property
+    def total_paid(self) -> int:
+        """The total amount that has been paid for this booking (including any refunds,e tc)
+
+        Returns:
+            int: The total sum of all payments
+        """
+        return self.payments.aggregate(Sum("value"))["value__sum"] or 0
+
     def get_ticket_diff(
         self, tickets: List["Ticket"]
     ) -> Tuple[List["Ticket"], List["Ticket"]]:
@@ -623,3 +633,6 @@ class Ticket(models.Model):
         """
         self.checked_in = False
         self.save()
+
+    def __str__(self):
+        return "%s | %s" % (self.seat_group.name, self.concession_type.name)

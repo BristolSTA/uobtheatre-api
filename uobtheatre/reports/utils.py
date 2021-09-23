@@ -1,13 +1,18 @@
 import io
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Tuple
 
 import xlsxwriter
+from django.core import signing
+from django.core.signing import TimestampSigner
 from django.http.response import HttpResponse
 
+from uobtheatre.reports.exceptions import InvalidReportSignature
 from uobtheatre.users.models import User
 
 from . import reports
+
+signer = TimestampSigner()
 
 
 class ExcelReport:  # pragma: no cover
@@ -162,3 +167,43 @@ class ExcelReport:  # pragma: no cover
 
         self.output_buffer.seek(0)
         return self.output_buffer
+
+
+def generate_report_download_signature(
+    user: User, report_name: str, options: List = None
+):
+    """Generate a signed hash for the report to be downloaded
+
+    Args:
+        user (User): The user generating the report
+        report_name (str): The report name
+        options (List): List of options
+
+    Returns:
+        str: The signed hash
+    """
+    return signer.sign_object(
+        {"user_id": str(user.id), "report": report_name, "options": options}
+    )
+
+
+def validate_report_download_signature(signature: str):
+    """Validate a report download signature
+
+    Args:
+        signature (str): The signature
+
+    Returns:
+        obj: The unsigned object payload
+
+    Raises:
+        InvalidReportSignature: Thrown if the signature has been changed, is too old or is invalid
+    """
+    if not signature:
+        raise InvalidReportSignature
+
+    try:
+        return signer.unsign_object(signature, max_age=timedelta(minutes=10))
+
+    except (signing.BadSignature, signing.SignatureExpired) as error:
+        raise InvalidReportSignature from error

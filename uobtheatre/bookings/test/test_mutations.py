@@ -949,11 +949,11 @@ def test_update_booking_capacity_error(gql_client):
 
 @pytest.mark.django_db
 def test_booking_with_invalid_seat_group(gql_client):
-
+    gql_client.login()
     seat_group = SeatGroupFactory()
     real_seatgroup = SeatGroupFactory(name="My seat group")
     concession_type = ConcessionTypeFactory()
-    booking = BookingFactory(user=gql_client.login())
+    booking = BookingFactory(user=gql_client.user)
     PerformanceSeatingFactory(
         performance=booking.performance, seat_group=real_seatgroup, capacity=1
     )

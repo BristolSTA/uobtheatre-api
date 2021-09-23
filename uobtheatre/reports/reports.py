@@ -3,8 +3,27 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import List, Union
 
+from django.db import connection
+from graphql_relay.node.node import from_global_id
+
+from uobtheatre.bookings.models import Booking
 from uobtheatre.payments.models import Payment
-from uobtheatre.productions.models import Production
+from uobtheatre.productions.models import Performance, Production
+from uobtheatre.users.models import User
+from uobtheatre.utils.exceptions import AuthorizationException, GQLException
+
+
+def get_option(options: List, name: str, default=None):
+    return next(
+        (option["value"] for option in options if option["name"] == name), default
+    )
+
+
+def require_option(options: List, option_name):
+    if not get_option(options, option_name):
+        raise GQLException(
+            message="You must supply the %s option" % option_name, field="options"
+        )
 
 
 @dataclass
@@ -46,6 +65,14 @@ class Report(ABC):
 
     def get_meta_array(self):
         return [[meta.name, meta.value] for meta in self.meta]
+
+    @staticmethod
+    def authorize_user(user: User, options: List):
+        raise NotImplementedError()
+
+    @staticmethod
+    def validate_options(options: List):
+        pass
 
 
 class PeriodTotalsBreakdown(Report):
@@ -120,6 +147,11 @@ class PeriodTotalsBreakdown(Report):
             ]
         )
 
+    @staticmethod
+    def authorize_user(user: User, options: List):
+        if not user.has_perm("reports.finance_reports"):
+            raise AuthorizationException()
+
 
 class OutstandingSocietyPayments(Report):
     """Generates a report on outstanding balances to be paid to societies"""
@@ -193,3 +225,62 @@ class OutstandingSocietyPayments(Report):
 
         self.datasets.append(societies_dataset)
         self.datasets.append(productions_dataset)
+
+    @staticmethod
+    def authorize_user(user: User, options: List):
+        if not user.has_perm("reports.finance_reports"):
+            raise AuthorizationException()
+
+
+class PerformanceBookings(Report):
+    """Generates a report with the bookings for a production"""
+
+    def __init__(self, performance: Performance) -> None:
+        super().__init__()
+        bookings_dataset = DataSet(
+            "Bookings",
+            ["ID", "Reference", "Name", "Email", "Tickets", "Total Paid (Pence)"],
+        )
+
+        self.meta.append(MetaItem("Performance", str(performance)))
+        print(len(connection.queries))
+        for booking in (
+            performance.bookings.filter(status=Booking.BookingStatus.PAID)
+            .prefetch_related(
+                "payments", "user", "tickets__seat_group", "tickets__concession_type"
+            )
+            .all()
+        ):
+            bookings_dataset.add_row(
+                [
+                    booking.id,
+                    booking.reference,
+                    str(booking.user),
+                    booking.user.email,
+                    "\r\n".join([str(ticket) for ticket in booking.tickets.all()]),
+                    str(booking.total_paid),
+                ]
+            )
+        print(len(connection.queries))
+        print(connection.queries)
+
+        self.datasets.append(bookings_dataset)
+
+    @staticmethod
+    def authorize_user(user: User, options: List):
+        if not user.has_perm(
+            "change_production",
+            Performance.objects.prefetch_related("production")
+            .get(pk=from_global_id(get_option(options, "id"))[1])
+            .production,
+        ):
+            raise AuthorizationException()
+
+    @staticmethod
+    def validate_options(options: List):
+        # Need a valid performance id
+        require_option(options, "id")
+        if not Performance.objects.filter(
+            pk=from_global_id(get_option(options, "id"))[1]
+        ).exists():
+            raise GQLException(message="Invalid performance ID option", field="options")

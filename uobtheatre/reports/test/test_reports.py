@@ -9,21 +9,27 @@ from uobtheatre.bookings.test.factories import (
     TicketFactory,
     ValueMiscCostFactory,
 )
-from uobtheatre.discounts.test.factories import DiscountRequirementFactory
+from uobtheatre.discounts.test.factories import (
+    ConcessionTypeFactory,
+    DiscountRequirementFactory,
+)
 from uobtheatre.payments import payment_methods
 from uobtheatre.payments.models import Payment
 from uobtheatre.payments.test.factories import PaymentFactory
-from uobtheatre.productions.models import Production
+from uobtheatre.productions.models import Performance, Production
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.reports.reports import (
     DataSet,
     MetaItem,
     OutstandingSocietyPayments,
+    PerformanceBookings,
     PeriodTotalsBreakdown,
     Report,
 )
 from uobtheatre.societies.models import Society
 from uobtheatre.societies.test.factories import SocietyFactory
+from uobtheatre.users.test.factories import UserFactory
+from uobtheatre.venues.test.factories import SeatGroupFactory
 
 
 def create_fixtures():
@@ -34,43 +40,68 @@ def create_fixtures():
                 name="Amazing Show 1",
                 society=SocietyFactory(name="Society 1"),
                 status=Production.Status.CLOSED,
-            )
-        )
+            ),
+            start=datetime(2021, 9, 23, 15, 0),
+        ),
+        user=UserFactory(first_name="Joe", last_name="Bloggs", email="joe@example.org"),
+        reference="booking1",
     )  # This booking has 1 ticket, priced at 1000. With misc cost, this makes the total 1100.
 
     booking_2 = BookingFactory(
-        performance=booking_1.performance
-    )  # This booking has 2 tickets, priced at 1000 each. With misc cost, this makes the total 2100. However, it lies outside of the time bounds
+        performance=booking_1.performance,
+        reference="booking2",
+        user=UserFactory(
+            first_name="Gill", last_name="Bloggs", email="gill@example.org"
+        ),
+    )  # This booking has 2 tickets, priced at 1000 each. With misc cost, this makes the total 2100. However, it lies outside of the time bounds for the period test
 
     booking_3 = BookingFactory(
         performance=PerformanceFactory(
             production=ProductionFactory(
                 name="Amazing Show 2", society=SocietyFactory(name="Society 2")
             )
-        )
+        ),
+        reference="booking3",
     )  # This booking has 1 ticket, priced at 600 * 0.8 = 480. With misc cost, this makes the total 580.
 
     booking_4 = BookingFactory(
-        admin_discount_percentage=1, performance=booking_3.performance
+        admin_discount_percentage=1,
+        performance=booking_3.performance,
+        reference="booking4",
     )  # A comp booking. Total should be 0
+
+    BookingFactory(
+        performance=booking_1.performance, status=Booking.BookingStatus.IN_PROGRESS
+    )  # This booking is in progress - it shouldn't show in any reports
 
     discount_requirement = DiscountRequirementFactory()
     discount_requirement.discount.performances.add(booking_1.performance)
     discount_requirement.discount.performances.add(booking_3.performance)
 
     seat_group_1 = PerformanceSeatingFactory(
-        performance=booking_1.performance, price=1000
+        performance=booking_1.performance,
+        price=1000,
+        seat_group=SeatGroupFactory(name="SeatGroup1"),
     ).seat_group
     seat_group_2 = PerformanceSeatingFactory(
         performance=booking_3.performance,
+        seat_group=SeatGroupFactory(name="SeatGroup2"),
         price=600,
     ).seat_group
 
     ValueMiscCostFactory(value=100)
 
-    TicketFactory(booking=booking_1, seat_group=seat_group_1)
-    TicketFactory(booking=booking_2, seat_group=seat_group_1)
-    TicketFactory(booking=booking_2, seat_group=seat_group_1)
+    concession_1 = ConcessionTypeFactory(name="ConessionType1")
+
+    TicketFactory(
+        booking=booking_1, seat_group=seat_group_1, concession_type=concession_1
+    )
+    TicketFactory(
+        booking=booking_2, seat_group=seat_group_1, concession_type=concession_1
+    )
+    TicketFactory(
+        booking=booking_2, seat_group=seat_group_1, concession_type=concession_1
+    )
     TicketFactory(
         booking=booking_3,
         seat_group=seat_group_2,
@@ -220,4 +251,42 @@ def test_outstanding_society_payments_report():
     assert len(report.datasets[1].headings) == 6
     assert report.datasets[1].data == [
         [production_1.id, "Amazing Show 1", society_1.id, "Society 1", 3000, 200]
+    ]
+
+
+@pytest.mark.django_db
+def test_performance_bookings_report():
+    create_fixtures()
+
+    performance_1 = Performance.objects.first()
+
+    report = PerformanceBookings(performance_1)
+
+    assert len(report.datasets) == 1
+
+    assert len(report.meta) == 1
+    assert report.meta[0].name == "Performance"
+    assert (
+        report.meta[0].value == "Performance of Amazing Show 1 at 15:00 on 23/09/2021"
+    )
+
+    assert report.datasets[0].name == "Bookings"
+    assert len(report.datasets[0].headings) == 6
+    assert report.datasets[0].data == [
+        [
+            Booking.objects.first().id,
+            "booking1",
+            "Joe Bloggs",
+            "joe@example.org",
+            "SeatGroup1 | ConessionType1",
+            "1100",
+        ],
+        [
+            Booking.objects.first().id + 1,
+            "booking2",
+            "Gill Bloggs",
+            "gill@example.org",
+            "SeatGroup1 | ConessionType1\r\nSeatGroup1 | ConessionType1",
+            "2100",
+        ],
     ]

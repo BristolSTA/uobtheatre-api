@@ -13,4 +13,9 @@ urlpatterns = [
         views.outstanding_society_payments,
         name="outstanding_society_payments",
     ),
+    path(
+        "performance_bookings",
+        views.performance_bookings,
+        name="performance_bookings",
+    ),
 ]
