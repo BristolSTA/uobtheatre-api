@@ -1,7 +1,10 @@
 # pylint: disable=too-many-lines
 
 
+from datetime import timedelta
+
 import pytest
+from django.utils import timezone
 from graphql_relay.node.node import from_global_id, to_global_id
 from guardian.shortcuts import assign_perm
 
@@ -730,6 +733,42 @@ def test_update_booking(current_tickets, planned_tickets, expected_tickets, gql_
 
 
 @pytest.mark.django_db
+def test_update_expired_booking(gql_client):
+    gql_client.login()
+    booking = BookingFactory(
+        user=gql_client.user,
+        expires_at=timezone.now() - timedelta(minutes=20),
+        status=Booking.BookingStatus.IN_PROGRESS,
+    )
+
+    request = """
+        mutation {
+          updateBooking(
+            bookingId: "%s"
+          ) {
+            success
+            errors {
+              __typename
+              ... on NonFieldError {
+                message
+              }
+            }
+         }
+        }
+    """ % to_global_id(
+        "BookingNode", booking.id
+    )
+
+    response = gql_client.execute(request)
+
+    assert response["data"]["updateBooking"]["success"] is False
+    assert (
+        response["data"]["updateBooking"]["errors"][0]["message"]
+        == "This booking has expired. Please create a new booking."
+    )
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize("with_boxoffice_perms", [False, True])
 def test_update_booking_with_too_many_tickets(gql_client, with_boxoffice_perms):
     gql_client.login()
@@ -966,9 +1005,8 @@ def test_update_booking_without_permission(gql_client):
                     id
                 }
                 errors {
-                  ... on FieldError {
+                  ... on NonFieldError {
                     message
-                    field
                     code
                   }
                 }
@@ -988,7 +1026,6 @@ def test_update_booking_without_permission(gql_client):
                     {
                         "code": "403",
                         "message": "You do not have permission to access this booking.",
-                        "field": "booking",
                     }
                 ],
             }
@@ -1334,6 +1371,90 @@ def test_pay_booking_mutation_unauthorized_provider(gql_client):
                         "message": "You do not have permission to pay for a booking with the CARD provider.",
                         "code": "403",
                         "field": "paymentProvider",
+                    }
+                ],
+            }
+        }
+    }
+
+
+@pytest.mark.django_db
+def test_pay_booking_mutation_unauthorized_user(gql_client):
+    gql_client.login()
+    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+
+    request_query = """
+    mutation {
+	payBooking(
+            bookingId: "%s"
+            price: 0
+        ) {
+            success
+            errors {
+              __typename
+              ... on NonFieldError {
+                message
+                code
+              }
+            }
+          }
+        }
+    """
+    response = gql_client.execute(
+        request_query % to_global_id("BookingNode", booking.id)
+    )
+    assert response == {
+        "data": {
+            "payBooking": {
+                "success": False,
+                "errors": [
+                    {
+                        "__typename": "NonFieldError",
+                        "message": "You do not have permission to access this booking.",
+                        "code": "403",
+                    }
+                ],
+            }
+        }
+    }
+
+
+@pytest.mark.django_db
+def test_pay_booking_mutation_expired_booking(gql_client):
+    gql_client.login()
+    booking = BookingFactory(
+        status=Booking.BookingStatus.IN_PROGRESS,
+        user=gql_client.user,
+        expires_at=timezone.now() - timedelta(minutes=20),
+    )
+
+    request_query = """
+    mutation {
+	payBooking(
+            bookingId: "%s"
+            price: 0
+        ) {
+            success
+            errors {
+              __typename
+              ... on NonFieldError {
+                message
+              }
+            }
+          }
+        }
+    """
+    response = gql_client.execute(
+        request_query % to_global_id("BookingNode", booking.id)
+    )
+    assert response == {
+        "data": {
+            "payBooking": {
+                "success": False,
+                "errors": [
+                    {
+                        "__typename": "NonFieldError",
+                        "message": "This booking has expired. Please create a new booking.",
                     }
                 ],
             }

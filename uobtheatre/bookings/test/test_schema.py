@@ -453,6 +453,44 @@ def test_booking_in_progress(gql_client):
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("expired", [False, True])
+def test_booking_expired(gql_client, expired):
+    gql_client.login()
+
+    expired_booking = BookingFactory(
+        user=gql_client.user,
+        status=Booking.BookingStatus.IN_PROGRESS,
+        expires_at=timezone.now() - datetime.timedelta(minutes=20),
+    )
+    not_expired_booking = BookingFactory(
+        user=gql_client.user, status=Booking.BookingStatus.IN_PROGRESS
+    )
+
+    request = (
+        """
+      {
+        me {
+          bookings(expired: %s) {
+            edges {
+              node {
+                id
+              }
+            }
+          }
+        }
+      }
+    """
+        % str(expired).lower()
+    )
+
+    response = gql_client.execute(request)
+    assert len(response["data"]["me"]["bookings"]["edges"]) == 1
+    assert response["data"]["me"]["bookings"]["edges"][0]["node"]["id"] == to_global_id(
+        "BookingNode", expired_booking.id if expired else not_expired_booking.id
+    )
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     "order_by, expected_order",
     [

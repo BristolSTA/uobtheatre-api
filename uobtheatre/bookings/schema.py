@@ -203,6 +203,9 @@ class BookingFilter(FilterSet):
     active = django_filters.BooleanFilter(
         method="filter_active", label="Active Bookings"
     )
+    expired = django_filters.BooleanFilter(
+        method="filter_expired", label="Expired Bookings"
+    )
 
     class Meta:
         model = Booking
@@ -259,6 +262,9 @@ class BookingFilter(FilterSet):
 
     def filter_active(self, queryset, _, value):
         return queryset.active(value)
+
+    def filter_expired(self, queryset, _, value):
+        return queryset.expired(value)
 
     order_by = BookingByMethodOrderingFilter()
 
@@ -538,7 +544,6 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
         ):
             raise AuthorizationException(
                 message="You do not have permission to access this booking.",
-                field="booking",
             )
 
         # Booking must be in progress to update
@@ -595,10 +600,6 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
         err = booking.performance.check_capacity(ticket_objects)
         if err:
             raise GQLException(message=err, code=400)
-
-        # Check if booking has expired
-        if booking.is_reservation_expired:
-            booking.expiration_time = booking.return_expire_time()
 
         # Save all the validated tickets
         for ticket in add_tickets:
@@ -664,7 +665,6 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         ):
             raise AuthorizationException(
                 message="You do not have permission to access this booking.",
-                field="booking",
             )
 
         # Booking must not be paid for already

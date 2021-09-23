@@ -152,6 +152,20 @@ class BookingQuerySet(QuerySet):
 
         return query_set
 
+    def expired(self, bool_val=False) -> QuerySet:
+        """Bookings that are not expired will be returned
+
+        Args:
+            bool_val (bool): when True: return only expired bookings,
+            when False: return only non-expired bookings
+
+        Returns:
+            QuerySet: the filtered queryset
+        """
+        if bool_val:
+            return self.exclude(status="PAID").filter(expires_at__lt=timezone.now())
+        return self.filter(Q(status="PAID") | Q(expires_at__gt=timezone.now()))
+
 
 class Booking(TimeStampedMixin, Payable, models.Model):
     """A booking for a performance
