@@ -1,24 +1,30 @@
-import math
 import datetime
-from typing import Dict, List, Optional, Tuple
+import math
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.aggregates import BoolAnd
+from django.contrib.sites.models import Site
+from django.core.mail import EmailMultiAlternatives
 from django.db import models
 from django.db.models import Case, F, FloatField, Q, Value, When
 from django.db.models.functions import Cast
 from django.db.models.query import QuerySet
+from django.template.loader import get_template
 from django.utils import timezone
+from django.utils.functional import cached_property
 
 from uobtheatre.discounts.models import ConcessionType, DiscountCombination
 from uobtheatre.payments.models import Payment
-from uobtheatre.payments.square import PaymentProvider
+from uobtheatre.payments.payables import Payable
 from uobtheatre.productions.models import Performance
 from uobtheatre.users.models import User
-from uobtheatre.utils.exceptions import SquareException
 from uobtheatre.utils.models import TimeStampedMixin, validate_percentage
 from uobtheatre.utils.utils import combinations, create_short_uuid
 from uobtheatre.venues.models import Seat, SeatGroup
+
+if TYPE_CHECKING:
+    from uobtheatre.payments.payment_methods import PaymentMethod
 
 
 class MiscCost(models.Model):
@@ -49,7 +55,9 @@ class MiscCost(models.Model):
         discounts applied).
 
         This will always return an value (not optional) as the model is
-        required to either have a non null percentage or a non null value
+        required to either have a non null percentage or a non null value.
+
+        This will return 0 if the booking is complimentary (subtotal = 0).
 
         Args:
             booking (Booking): The booking on which the misc cost is being
@@ -59,7 +67,10 @@ class MiscCost(models.Model):
             int: The value in pennies of the misc cost on this booking.
         """
         if self.percentage is not None:
-            return math.ceil(booking.subtotal() * self.percentage)
+            return math.ceil(booking.subtotal * self.percentage)
+
+        if booking.subtotal == 0:
+            return 0
         return self.value  # type: ignore
 
     class Meta:
@@ -143,8 +154,7 @@ class BookingQuerySet(QuerySet):
         return query_set
 
 
-
-class Booking(TimeStampedMixin, models.Model):
+class Booking(TimeStampedMixin, Payable, models.Model):
     """A booking for a performance
 
     A booking holds a collection of tickets for a given performance.
@@ -180,7 +190,9 @@ class Booking(TimeStampedMixin, models.Model):
         now = timezone.now()
         return now + timezone.timedelta(minutes=15)
 
-    expiration_time = models.DateTimeField(default=timezone.now()+timezone.timedelta(minutes=15))
+    expiration_time = models.DateTimeField(
+        default=timezone.now() + timezone.timedelta(minutes=15)
+    )
 
     # Stores who created the booking
     # For regular bookings this will be the user
@@ -210,6 +222,10 @@ class Booking(TimeStampedMixin, models.Model):
     admin_discount_percentage = models.FloatField(
         default=0, validators=[validate_percentage]
     )
+
+    @property
+    def payment_reference_id(self):
+        return self.reference
 
     def __str__(self):
         return str(self.reference)
@@ -287,7 +303,20 @@ class Booking(TimeStampedMixin, models.Model):
         Returns:
             int: Price of the Booking with single discounts.
         """
-        return sum(ticket.discounted_price() for ticket in self.tickets.all())
+        return sum(
+            ticket.discounted_price(single_discounts_map=self.single_discounts_map)
+            for ticket in self.tickets.all()
+        )
+
+    @cached_property
+    def single_discounts_map(self) -> Dict["ConcessionType", float]:
+        """Get the discount value for each concession type from the performance model
+
+        Returns:
+            dict: Map of concession types to thier single discount percentage
+
+        """
+        return self.performance.single_discounts_map
 
     def get_price_with_discount_combination(
         self, discounts: DiscountCombination
@@ -344,6 +373,7 @@ class Booking(TimeStampedMixin, models.Model):
         """
         return self.get_best_discount_combination_with_price()[0]
 
+    @cached_property
     def subtotal(self) -> int:
         """Price of the booking with discounts applied.
 
@@ -397,7 +427,7 @@ class Booking(TimeStampedMixin, models.Model):
         Returns:
             (int): The value in penies of group discounts applied to the Booking.
         """
-        return self.tickets_price() - self.subtotal()
+        return self.tickets_price() - self.subtotal
 
     def misc_costs_value(self) -> int:
         """The value of the misc costs applied in pence
@@ -420,8 +450,8 @@ class Booking(TimeStampedMixin, models.Model):
         Returns:
             (int): total price of the booking in penies
         """
-        subtotal = self.subtotal()
-        if subtotal == 0:
+        subtotal = self.subtotal
+        if subtotal == 0:  # pylint: disable=comparison-with-callable
             return 0
         return math.ceil(subtotal + self.misc_costs_value())
 
@@ -475,60 +505,64 @@ class Booking(TimeStampedMixin, models.Model):
 
         return add_tickets, delete_tickets
 
-    def pay_online(self, nonce: str):
-        """Pay for the Booking
-
-        Makes a call to the Square API to pay for the Booking. The price is
-        equal to the Booking total.
+    def pay(self, payment_method: "PaymentMethod") -> Optional["Payment"]:
+        """
+        Pay for booking using provided payment method.
 
         Args:
-            nonce (str): The nonce provided by the Square payment form on the
-                front end.
+            payment_method (PaymentMethod): The payment method used to pay for
+                the booking
 
         Returns:
-            Payment: The payment object created by paying for the Booking.
-
-        Raises:
-            SquareException:  If the payment is unsucessful.
+            Payment: The payment created by the checkout (optional)
         """
-        response = PaymentProvider.create_payment(
-            self.total(), str(self.reference), nonce
-        )
+        payment = payment_method.pay(self.total(), self)
 
-        # If the square transaction failed then raise an exception
-        if not response.is_success():
-            raise SquareException(response)
+        # If a payment is created set the booking as paid
+        if payment:
+            self.complete()
 
-        # Set the booking as paid
+        return payment
+
+    def complete(self):
+        """
+        Complete the booking (after it has been paid for) and send the
+        confirmation email.
+        """
         self.status = self.BookingStatus.PAID
         self.save()
+        self.send_confirmation_email()
 
-        # Create a payment for this transaction
-        card_details = response.body["payment"]["card_details"]["card"]
-        amount_details = response.body["payment"]["amount_money"]
-        return Payment.objects.create(
-            pay_object=self,
-            card_brand=card_details["card_brand"],
-            last_4=card_details["last_4"],
-            provider=Payment.PaymentProvider.SQUARE_ONLINE,
-            type=Payment.PaymentType.PURCHASE,
-            provider_payment_id=response.body["payment"]["id"],
-            value=amount_details["amount"],
-            currency=amount_details["currency"],
+    def send_confirmation_email(self):
+        """
+        Send email confirmation which includes a link to the booking.
+        """
+        plaintext_template = get_template("emails/booking_confirmation_email.txt")
+        html_template = get_template("emails/booking_confirmation_email.html")
+        site = Site.objects.get_current()
+
+        context = {
+            "booking": self,
+            "user_name": self.user.first_name.capitalize(),
+            "production_name": self.performance.production.name,
+            "start": self.performance.start,
+            "protocol": "https",
+            "domain": site.domain,
+        }
+
+        subject, from_email, to_email = (
+            "Your booking is confirmed!",
+            '"UOB Theatre" <tickets@uobtheatre.com>',
+            self.user.email,
         )
 
-    def pay_manual(self, payment_provider: Payment.PaymentProvider):
-        # Set the booking as paid
-        self.status = self.BookingStatus.PAID
-        self.save()
+        text_content = plaintext_template.render(context)
+        html_content = html_template.render(context)
 
-        return Payment.objects.create(
-            pay_object=self,
-            provider=payment_provider,
-            type=Payment.PaymentType.PURCHASE,
-            value=self.total(),
-        )
-    
+        msg = EmailMultiAlternatives(subject, text_content, from_email, [to_email])
+        msg.attach_alternative(html_content, "text/html")
+        msg.send()
+
     def is_reservation_expired(self):
         """
         This returns False if the user is still allowed to book their tickets.
@@ -537,10 +571,10 @@ class Booking(TimeStampedMixin, models.Model):
             - Their booking has not expired (15mins)
             [- They have taken longer than 15 mins, but the tickets are still available]
         """
-        if (self.status == self.BookingStatus.PAID):
+        if self.status == self.BookingStatus.PAID:
             return False
 
-        if (datetime.datetime.now(timezone.utc) < (self.expiration_time)):
+        if datetime.datetime.now(timezone.utc) < (self.expiration_time):
             return False
 
         return True
@@ -568,20 +602,28 @@ class Ticket(models.Model):
 
     checked_in = models.BooleanField(default=False)
 
-    def discounted_price(self) -> int:
+    def discounted_price(self, single_discounts_map=None) -> int:
         """Ticket price with single discounts
 
         Get the price of the ticket if only single discounts (those applying
         to only one ticket) applied.
 
+        Args:
+            (single_discounts_map): ap of concession types to thier single discount percentage. (optional)
+
         Returns:
             (int): Price of the Ticket in penies with single discounts applied.
         """
-        return self.booking.performance.price_with_concession(
-            self.concession_type,
-            self.booking.performance.performance_seat_groups.get(
-                seat_group=self.seat_group
-            ),
+        if single_discounts_map is None:
+            single_discounts_map = self.booking.single_discounts_map
+
+        performance_seat_group = self.booking.performance.performance_seat_groups.get(
+            seat_group=self.seat_group
+        )
+        price = performance_seat_group.price if performance_seat_group else 0
+
+        return math.ceil(
+            (1 - single_discounts_map.get(self.concession_type, 0)) * price
         )
 
     def seat_price(self) -> int:

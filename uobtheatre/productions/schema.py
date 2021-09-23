@@ -2,11 +2,7 @@ import django_filters
 import graphene
 from graphene import relay
 from graphene_django import DjangoListField
-from graphene_django.filter import (
-    DjangoFilterConnectionField,
-    GlobalIDFilter,
-    GlobalIDMultipleChoiceFilter,
-)
+from graphene_django.filter import DjangoFilterConnectionField
 
 from uobtheatre.discounts.schema import ConcessionTypeNode, DiscountNode
 from uobtheatre.productions.models import (
@@ -19,6 +15,7 @@ from uobtheatre.productions.models import (
     Production,
     ProductionTeamMember,
 )
+from uobtheatre.users.abilities import PermissionsMixin
 from uobtheatre.utils.filters import FilterSet
 from uobtheatre.utils.schema import DjangoObjectType, GrapheneEnumMixin
 
@@ -122,10 +119,14 @@ class ProductionFilter(FilterSet):
         model = Production
         exclude = ("poster_image", "featured_image", "cover_image")
 
+    @property
+    def qs(self):
+        return super().qs.user_can_see(self.request.user)
+
     order_by = ProductionByMethodOrderingFilter()
 
 
-class ProductionNode(DjangoObjectType):
+class ProductionNode(PermissionsMixin, GrapheneEnumMixin, DjangoObjectType):
     warnings = DjangoListField(WarningNode)
     crew = DjangoListField(CrewMemberNode)
     cast = DjangoListField(CastMemberNode)
@@ -266,7 +267,7 @@ class PerformanceNode(DjangoObjectType):
 
     def resolve_tickets_breakdown(self, info):
         return PerformanceTicketsBreakdown(
-            self.total_capacity(),
+            self.total_capacity,
             self.total_tickets_sold(),
             self.total_tickets_checked_in,
             self.total_tickets_unchecked_in,
@@ -288,7 +289,6 @@ class Query(graphene.ObjectType):
 
     productions = DjangoFilterConnectionField(ProductionNode)
     performances = DjangoFilterConnectionField(PerformanceNode)
-    boxoffice_performances = graphene.List(PerformanceNode, date=graphene.Date())
 
     production = graphene.Field(ProductionNode, slug=graphene.String(required=True))
     performance = relay.Node.Field(PerformanceNode)

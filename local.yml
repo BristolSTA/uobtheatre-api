@@ -33,3 +33,8 @@ services:
       - uobtheatre_local_postgres_data_backups:/backups:z
     env_file:
       - ./.envs/.local/.postgres
+
+  adminer:
+    image: adminer
+    ports:
+      - 8001:8080

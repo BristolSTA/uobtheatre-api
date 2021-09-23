@@ -1,3 +1,5 @@
+# pylint: disable=unused-wildcard-import,wildcard-import
+
 import tempfile
 
 from .local import *  # noqa: F403,F401

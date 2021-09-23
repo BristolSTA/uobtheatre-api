@@ -1,5 +1,7 @@
+# pylint: disable=too-many-lines
 import datetime
 import math
+from unittest.mock import patch
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -23,7 +25,6 @@ from uobtheatre.discounts.test.factories import (
 from uobtheatre.payments.models import Payment
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.users.test.factories import UserFactory
-from uobtheatre.utils.exceptions import SquareException
 from uobtheatre.utils.test_utils import ticket_dict_list_dict_gen, ticket_list_dict_gen
 from uobtheatre.venues.test.factories import SeatFactory, SeatGroupFactory, VenueFactory
 
@@ -221,6 +222,79 @@ def test_ticket_discounted_price(
     )
 
     assert ticket.discounted_price() == discount_price
+    assert ticket.discounted_price(performance.single_discounts_map) == discount_price
+
+
+@pytest.mark.django_db
+def test_ticket_discount_with_discount_map():
+    performance = PerformanceFactory()
+
+    booking = BookingFactory(performance=performance)
+    performance_seat_group = PerformanceSeatingFactory(
+        performance=performance, price=1000
+    )
+
+    concession_type_1 = ConcessionTypeFactory(name="student")
+    concession_type_2 = ConcessionTypeFactory(name="child")
+
+    ticket_1 = TicketFactory(
+        booking=booking,
+        concession_type=concession_type_1,
+        seat_group=performance_seat_group.seat_group,
+    )
+
+    ticket_2 = TicketFactory(
+        booking=booking,
+        concession_type=concession_type_2,
+        seat_group=performance_seat_group.seat_group,
+    )
+
+    single_discounts_map = {
+        concession_type_1: 0.2,
+    }
+
+    assert ticket_1.discounted_price(single_discounts_map) == 800
+    assert ticket_2.discounted_price(single_discounts_map) == 1000
+
+
+@pytest.mark.django_db
+def test_single_discounts_map():
+    performance = PerformanceFactory()
+
+    concession_type_1 = ConcessionTypeFactory()
+    concession_type_2 = ConcessionTypeFactory()
+    concession_type_3 = ConcessionTypeFactory()
+
+    concession_type_1 = ConcessionTypeFactory()
+    discount_1 = DiscountFactory(name="Family")
+    DiscountRequirementFactory(
+        discount=discount_1, number=1, concession_type=concession_type_1
+    )
+
+    discount_2 = DiscountFactory(name="Student")
+    DiscountRequirementFactory(
+        discount=discount_2, number=1, concession_type=concession_type_2
+    )
+
+    discount_3 = DiscountFactory(name="Student")
+    DiscountRequirementFactory(
+        discount=discount_3, number=1, concession_type=concession_type_2
+    )
+    DiscountRequirementFactory(
+        discount=discount_3, number=1, concession_type=concession_type_3
+    )
+
+    discount_1.performances.set([performance])
+    discount_2.performances.set([performance])
+    discount_3.performances.set([performance])
+
+    booking = BookingFactory(performance=performance)
+
+    assert booking.single_discounts_map == performance.single_discounts_map
+    assert performance.single_discounts_map == {
+        concession_type_1: discount_1.percentage,
+        concession_type_2: discount_2.percentage,
+    }
 
 
 @pytest.mark.django_db
@@ -417,7 +491,7 @@ def test_subtotal_with_group_discounts():
     DiscountRequirementFactory(discount=group_discount)
     booking = BookingFactory(performance=performance)
 
-    assert booking.subtotal() == booking.get_best_discount_combination_with_price()[1]
+    assert booking.subtotal == booking.get_best_discount_combination_with_price()[1]
 
 
 @pytest.mark.django_db
@@ -434,10 +508,12 @@ def test_total():
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "admin_discount, expected_price",
-    [(0.2, 1256), (1, 0)],
+    "admin_discount, expected_price, expected_misc_costs_value",
+    [(0.2, 1256, 296), (1, 0, 0)],
 )
-def test_total_with_admin_discount(admin_discount, expected_price):
+def test_total_with_admin_discount(
+    admin_discount, expected_price, expected_misc_costs_value
+):
     ValueMiscCostFactory(value=200)
     PercentageMiscCostFactory(percentage=0.1)
 
@@ -445,6 +521,7 @@ def test_total_with_admin_discount(admin_discount, expected_price):
     booking = BookingFactory(admin_discount_percentage=admin_discount)
     psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
     ticket = TicketFactory(booking=booking, seat_group=psg.seat_group)
+    assert booking.misc_costs_value() == expected_misc_costs_value
     assert ticket.booking.total() == expected_price
 
 
@@ -756,113 +833,40 @@ def test_booking_ticket_diff(existing_list, new_list, add_list, delete_list):
 
 
 @pytest.mark.django_db
-def test_booking_pay_failure(mock_square):
+def test_booking_pay_with_payment():
     """
-    Test paying a booking with square
+    When the payment_method pay return a payment assert the booking is marked
+    as paid.
     """
+
+    class MockPaymentMethod:  # pylint: disable=no-method-argument
+        def pay(*_):
+            return Payment()
+
+    payment_method = MockPaymentMethod()
     booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
-    psg = PerformanceSeatingFactory(performance=booking.performance)
-    TicketFactory(booking=booking, seat_group=psg.seat_group)
 
-    mock_square.reason_phrase = "Some phrase"
-    mock_square.status_code = 400
-    mock_square.success = False
+    booking.pay(payment_method)  # type: ignore
 
-    with pytest.raises(SquareException):
-        booking.pay_online("nonce")
-
-    # Assert the booking is not paid
-    assert booking.status == Booking.BookingStatus.IN_PROGRESS
-
-    # Assert no payments are created
-    assert Payment.objects.count() == 0
+    assert booking.status == Booking.BookingStatus.PAID
 
 
 @pytest.mark.django_db
-def test_pay_manual():
+def test_booking_pay_without_payment():
     """
-    Test create manual payment
+    When the payment_method pay does not return a payment assert the booking is
+    not marked as paid.
     """
+
+    class MockPaymentMethod:
+        def pay(*_):  # pylint: disable=no-method-argument
+            return None
+
+    payment_method = MockPaymentMethod()
     booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
-    psg = PerformanceSeatingFactory(performance=booking.performance)
-    TicketFactory(booking=booking, seat_group=psg.seat_group)
 
-    booking.pay_manual(Payment.PaymentProvider.CARD)
-
-    # Assert the booking is not paid
-    assert booking.status == Booking.BookingStatus.PAID
-
-    # Assert one payment created
-    assert Payment.objects.count() == 1
-    payment = Payment.objects.first()
-    assert payment.provider == Payment.PaymentProvider.CARD
-    assert payment.value == booking.total()
-
-
-@pytest.mark.django_db
-def test_booking_pay_success(mock_square):
-    """
-    Test paying a booking with square
-    """
-    booking = BookingFactory()
-    psg = PerformanceSeatingFactory(performance=booking.performance)
-    TicketFactory(booking=booking, seat_group=psg.seat_group)
-
-    mock_square.success = True
-    mock_square.body = {
-        "payment": {
-            "id": "abc",
-            "card_details": {
-                "card": {
-                    "card_brand": "MASTERCARD",
-                    "last_4": "1234",
-                }
-            },
-            "amount_money": {
-                "currency": "GBP",
-                "amount": 0,
-            },
-        }
-    }
-
-    booking.pay_online("nonce")
-
-    assert booking.status == Booking.BookingStatus.PAID
-    # Assert a payment of the correct type is created
-    payment = booking.payments.first()
-    assert payment.pay_object == booking
-    assert payment.value == 0
-    assert payment.currency == "GBP"
-    assert payment.card_brand == "MASTERCARD"
-    assert payment.last_4 == "1234"
-    assert payment.provider_payment_id == "abc"
-    assert payment.provider == Payment.PaymentProvider.SQUARE_ONLINE
-    assert payment.type == Payment.PaymentType.PURCHASE
-
-
-@pytest.mark.django_db
-@pytest.mark.square_integration
-def test_booking_pay_integration():
-    """
-    Test paying a booking with square
-    """
-    booking = BookingFactory()
-    psg = PerformanceSeatingFactory(performance=booking.performance)
-    TicketFactory(booking=booking, seat_group=psg.seat_group)
-
-    booking.pay_online("cnon:card-nonce-ok")
-
-    assert booking.status == Booking.BookingStatus.PAID
-    # Assert a payment of the correct type is created
-    payment = booking.payments.first()
-    assert payment.pay_object == booking
-    assert payment.value == booking.total()
-    assert payment.currency == "GBP"
-    assert isinstance(payment.card_brand, str)
-    assert isinstance(payment.last_4, str) and len(payment.last_4) == 4
-    assert isinstance(payment.provider_payment_id, str)
-    assert payment.provider == Payment.PaymentProvider.SQUARE_ONLINE
-    assert payment.type, Payment.PaymentType.PURCHASE
+    booking.pay(payment_method)  # type: ignore
+    assert booking.status != Booking.BookingStatus.PAID
 
 
 @pytest.mark.django_db
@@ -936,7 +940,6 @@ def test_filter_order_by_checked_in():
 
     assert set(Booking.objects.checked_in()) == {booking_all}
     assert set(Booking.objects.checked_in(True)) == {booking_all}
-
     assert set(Booking.objects.checked_in(False)) == {booking_none, booking_some}
 
 
@@ -964,7 +967,6 @@ def test_filter_by_active():
 
     assert list(Booking.objects.active()) == [booking_future]
     assert list(Booking.objects.active(True)) == [booking_future]
-
     assert list(Booking.objects.active(False)) == [booking_past]
 
 
@@ -977,3 +979,36 @@ def test_booking_expiration():
 
     assert not unexpired_booking.is_reservation_expired()
     assert expired_bookings.is_reservation_expired
+
+
+@pytest.mark.django_db
+def test_complete():
+    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    with patch.object(booking, "send_confirmation_email") as mock_send_email:
+        booking.complete()
+        mock_send_email.assert_called_once()
+
+    booking.refresh_from_db()
+    assert booking.status == Booking.BookingStatus.PAID
+
+
+@pytest.mark.django_db
+def test_send_confirmation_email(mailoutbox):
+    production = ProductionFactory(name="Legally Ginger")
+    performance = PerformanceFactory(
+        start=datetime.datetime(day=20, month=10, year=2021, hour=19, minute=15),
+        production=production,
+    )
+    booking = BookingFactory(
+        status=Booking.BookingStatus.IN_PROGRESS,
+        reference="abc",
+        performance=performance,
+    )
+    booking.send_confirmation_email()
+
+    assert len(mailoutbox) == 1
+    email = mailoutbox[0]
+    assert email.subject == "Your booking is confirmed!"
+    assert "https://example.com/user/booking/abc" in email.body
+    assert "Legally Ginger" in email.body
+    assert "on Wednesday, 20 October 2021" in email.body

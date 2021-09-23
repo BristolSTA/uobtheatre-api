@@ -1,14 +1,18 @@
+from unittest.mock import patch
+
 import pytest
 from graphql_auth.models import UserStatus
+from graphql_relay.node.node import to_global_id
 
 from uobtheatre.bookings.test.factories import BookingFactory
+from uobtheatre.users.abilities import OpenAdmin, OpenBoxoffice
 from uobtheatre.users.test.factories import UserFactory
 
 
 @pytest.mark.django_db
-def test_user_schema(gql_client_flexible, gql_id):
+def test_user_schema(gql_client):
 
-    user = gql_client_flexible.request_factory.user
+    user = gql_client.login()
 
     # Create some booking
     bookings = [BookingFactory(user=user) for i in range(4)]
@@ -17,7 +21,7 @@ def test_user_schema(gql_client_flexible, gql_id):
     # irrelevant_user = UserFactory()
     # _ = [BookingFactory(user=irrelevant_user) for i in range(4)]
 
-    response = gql_client_flexible.execute(
+    response = gql_client.execute(
         """
         {
 	      me {
@@ -48,10 +52,10 @@ def test_user_schema(gql_client_flexible, gql_id):
                 "email": user.email,
                 "isStaff": user.is_staff,
                 "dateJoined": user.date_joined.isoformat(),
-                "id": gql_id(user.id, "UserNode"),
+                "id": to_global_id("UserNode", user.id),
                 "bookings": {
                     "edges": [
-                        {"node": {"id": gql_id(booking.id, "BookingNode")}}
+                        {"node": {"id": to_global_id("BookingNode", booking.id)}}
                         for booking in bookings
                     ]
                 },
@@ -61,9 +65,9 @@ def test_user_schema(gql_client_flexible, gql_id):
 
 
 @pytest.mark.django_db
-def test_user_schema_unauthenticated(gql_client_flexible):
-    gql_client_flexible.logout()
-    response = gql_client_flexible.execute(
+def test_user_schema_unauthenticated(gql_client):
+    gql_client.logout()
+    response = gql_client.execute(
         """
         {
 	  me {
@@ -77,9 +81,9 @@ def test_user_schema_unauthenticated(gql_client_flexible):
 
 
 @pytest.mark.django_db
-def test_user_field_error(gql_client_flexible):
+def test_user_field_error(gql_client):
     UserFactory()
-    response = gql_client_flexible.execute(
+    response = gql_client.execute(
         """
         mutation {
           register(
@@ -125,8 +129,8 @@ def test_user_field_error(gql_client_flexible):
 
 
 @pytest.mark.django_db
-def test_user_wrong_credentials(gql_client_flexible):
-    response = gql_client_flexible.execute(
+def test_user_wrong_credentials(gql_client):
+    response = gql_client.execute(
         """
         mutation {
           login(email:"fakeaccount@email.com", password:"strongpassword"){
@@ -164,9 +168,9 @@ def test_user_wrong_credentials(gql_client_flexible):
 
 
 @pytest.mark.django_db
-def test_user_register(gql_client_flexible):
+def test_user_register(gql_client):
     # Create an account
-    response = gql_client_flexible.execute(
+    response = gql_client.execute(
         """
         mutation {
           register(
@@ -203,7 +207,7 @@ def test_user_register(gql_client_flexible):
         """
 
     # Now check we cannot login in (unverified)
-    response = gql_client_flexible.execute(login_query)
+    response = gql_client.execute(login_query)
     assert response["data"]["login"]["errors"] == [
         {
             "__typename": "NonFieldError",
@@ -218,7 +222,7 @@ def test_user_register(gql_client_flexible):
     user_status.save()
 
     # Assert the verify user can login
-    response = gql_client_flexible.execute(login_query)
+    response = gql_client.execute(login_query)
     response_data = response["data"]["login"]
     # Assert no errors
     assert all(
@@ -238,3 +242,39 @@ def test_user_register(gql_client_flexible):
 
     # Check user is correct
     assert response_data["user"]["firstName"] == "James"
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "user_can_open_boxoffice, user_can_open_admin",
+    [
+        (True, False),
+        (False, True),
+        (True, True),
+        (False, False),
+    ],
+)
+def test_user_schema_abilities(
+    user_can_open_boxoffice, user_can_open_admin, gql_client
+):
+    gql_client.login()
+    with patch.object(
+        OpenBoxoffice, "user_has", return_value=user_can_open_boxoffice
+    ) as mock_open_boxoffice, patch.object(
+        OpenAdmin, "user_has", return_value=user_can_open_admin
+    ) as mock_open_admin:
+        response = gql_client.execute(
+            """
+            {
+	          me {
+                permissions
+              }
+            }
+            """
+        )
+
+    mock_open_boxoffice.assert_called_once_with(gql_client.user, gql_client.user)
+    mock_open_admin.assert_called_once_with(gql_client.user, gql_client.user)
+    permissions = response["data"]["me"]["permissions"]
+    assert ("boxoffice_open" in permissions) == user_can_open_boxoffice
+    assert ("admin_open" in permissions) == user_can_open_admin

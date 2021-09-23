@@ -4,9 +4,11 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from autoslug import AutoSlugField
 from django.db import models
-from django.db.models import Max, Min, Sum, Q
+from django.db.models import Max, Min, Q, Sum
 from django.db.models.query import QuerySet
 from django.utils import timezone
+from django.utils.functional import cached_property
+from django_tiptap.fields import TipTapTextField
 from guardian.shortcuts import get_objects_for_user
 
 from uobtheatre.images.models import Image
@@ -68,6 +70,24 @@ class ProductionQuerySet(QuerySet):
         """Annotate end datetime to queryset"""
         return self.annotate(end=Max("performances__end"))
 
+    def user_can_see(self, user: "User"):
+        """Filter productions which the user can see
+
+        Returns the productions which the provided user has permission to see.
+
+        Args:
+            user (User): The user which is used in the filter.
+
+        Returns:
+            QuerySet: The filtered queryset
+        """
+        productions_user_can_edit = get_objects_for_user(
+            user, "change_production", self
+        ).values_list("id", flat=True)
+        return self.filter(
+            ~Q(status=Production.Status.DRAFT) | Q(id__in=productions_user_can_edit)
+        )
+
 
 class Production(TimeStampedMixin, models.Model):
     """The model for a production.
@@ -80,7 +100,7 @@ class Production(TimeStampedMixin, models.Model):
 
     name = models.CharField(max_length=255)
     subtitle = models.CharField(max_length=255, null=True, blank=True)
-    description = models.TextField(null=True)
+    description = TipTapTextField(null=True)
 
     society = models.ForeignKey(
         Society, on_delete=models.SET_NULL, null=True, related_name="productions"
@@ -106,6 +126,28 @@ class Production(TimeStampedMixin, models.Model):
         related_name="production_featured_images",
         null=True,
         blank=True,
+    )
+
+    class Status(models.TextChoices):
+        """The overall status of the production"""
+
+        DRAFT = "DRAFT", "Draft"  # Production is in draft
+        PENDING = "PENDING", "Pending"  # Produciton is pending publication/review
+        PUBLISHED = (
+            "PUBLISHED",
+            "Published",
+        )  # Production is public
+        CLOSED = (
+            "CLOSED",
+            "Closed",
+        )  # Production has been closed after it's run. No edits allowed.
+        COMPLETE = (
+            "COMPLETE",
+            "Complete",
+        )  # Production has been closed and paid for/transactions settled
+
+    status = models.CharField(
+        max_length=10, choices=Status.choices, default=Status.DRAFT
     )
 
     age_rating = models.SmallIntegerField(null=True, blank=True)
@@ -192,11 +234,7 @@ class Production(TimeStampedMixin, models.Model):
 
     class Meta:
         ordering = ["id"]
-        permissions = (
-            ("boxoffice", "Can use boxoffice for this show"),
-            ("create", "Can create a new production"),
-            ("edit", "Can edit existing production"),
-        )
+        permissions = (("boxoffice", "Can use boxoffice for this show"),)
 
 
 class CastMember(models.Model):
@@ -331,7 +369,7 @@ class Performance(TimeStampedMixin, models.Model):
     capacity = models.IntegerField(null=True, blank=True)
 
     @property
-    def tickets(self) -> models.Manager["Ticket"]:
+    def tickets(self) -> QuerySet["Ticket"]:
         """Get tickets for this performance
 
         Returns:
@@ -339,25 +377,25 @@ class Performance(TimeStampedMixin, models.Model):
         """
         from uobtheatre.bookings.models import Ticket
 
-        return Ticket.objects.filter(booking__in=self.bookings.all())
+        return Ticket.objects.filter(booking__in=self.bookings.all())  # type: ignore
 
     @property
-    def checked_in_tickets(self) -> models.Manager["Ticket"]:
+    def checked_in_tickets(self) -> QuerySet["Ticket"]:
         """Get all checked in tickets
 
         Returns:
-            queryset(Tickets): all tickets for this perfromance which have been checked in.
+            queryset(Tickets): all tickets for this performance which have been checked in.
         """
-        return self.tickets.filter(checked_in=True)
+        return self.tickets.filter(checked_in=True)  # type: ignore
 
     @property
-    def unchecked_in_tickets(self) -> models.Manager["Ticket"]:
+    def unchecked_in_tickets(self) -> QuerySet["Ticket"]:
         """Get all unchecked in tickets
 
         Returns:
-            queryset(Tickets): all tickets for this perfromance which have not been checked in.
+            queryset(Tickets): all tickets for this performance which have not been checked in.
         """
-        return self.tickets.filter(checked_in=False)
+        return self.tickets.filter(checked_in=False)  # type: ignore
 
     @property
     def has_group_discounts(self) -> bool:
@@ -376,11 +414,8 @@ class Performance(TimeStampedMixin, models.Model):
             .exists()
         )
 
-    def total_capacity(self, seat_group=None):
-        """Total capacity of the Performance.
-
-        The is the total number of seats (Tickets) which can be booked for this
-        performance. This does not take into account any existing Bookings.
+    def total_seat_group_capacity(self, seat_group=None):
+        """The sum of the capacities of all the seat groups in this performance.
 
         Note:
             The sum of the capacities of all the seat groups is not necessarily
@@ -391,7 +426,7 @@ class Performance(TimeStampedMixin, models.Model):
                 (default None)
 
         Returns:
-            int: The capacity of the show (or SeatGroup if provided)
+            int: The capacity of the seat groups (or SeatGroup if provided) of the show
         """
         if seat_group:
             queryset = self.performance_seat_groups
@@ -402,6 +437,23 @@ class Performance(TimeStampedMixin, models.Model):
         response = self.performance_seat_groups.aggregate(Sum("capacity"))
         return response["capacity__sum"] or 0
 
+    @property
+    def total_capacity(self) -> int:
+        """Total capacity of the Performance.
+
+        The is the total number of seats (Tickets) which can be booked for this
+        performance. This does not take into account any existing Bookings.
+
+        Returns:
+            int: The capacity of the show
+        """
+
+        return (
+            min(self.capacity, self.total_seat_group_capacity())
+            if self.capacity
+            else self.total_seat_group_capacity()
+        )
+
     def total_tickets_sold(self, **kwargs):
         """The number of tickets sold for the performance
 
@@ -411,7 +463,10 @@ class Performance(TimeStampedMixin, models.Model):
         Returns:
             int: The number of tickets sold
         """
-        return self.tickets.filter(Q(booking__status="PAID") | Q(booking__expiration_time__gt=datetime.now()), **kwargs).count()
+        return self.tickets.filter(
+            Q(booking__status="PAID") | Q(booking__expiration_time__gt=datetime.now()),
+            **kwargs,
+        ).count()
 
     @property
     def total_tickets_checked_in(self):
@@ -451,9 +506,9 @@ class Performance(TimeStampedMixin, models.Model):
             int: The remaining capacity of the show (or SeatGroup if provided)
         """
         if seat_group:
-            return self.total_capacity(seat_group=seat_group) - self.total_tickets_sold(
+            return self.total_seat_group_capacity(
                 seat_group=seat_group
-            )
+            ) - self.total_tickets_sold(seat_group=seat_group)
 
         seat_groups_remaining_capacity = sum(
             self.capacity_remaining(seat_group=performance_seat_group.seat_group)
@@ -478,6 +533,19 @@ class Performance(TimeStampedMixin, models.Model):
         """
         return self.end - self.start
 
+    @cached_property
+    def single_discounts_map(self) -> Dict["ConcessionType", float]:
+        """Get the discount value for each concession type
+
+        Returns:
+            dict: Map of concession types to thier single discount percentage
+
+        """
+        return {
+            discount.requirements.first().concession_type: discount.percentage
+            for discount in self.get_single_discounts()
+        }
+
     def get_single_discounts(self) -> QuerySet[Any]:
         """QuerySet for single discounts available for this Performance.
 
@@ -489,39 +557,9 @@ class Performance(TimeStampedMixin, models.Model):
             number_of_tickets_required=Sum("requirements__number")
         ).filter(number_of_tickets_required=1)
 
-    def get_concession_discount(self, concession_type) -> float:
-        """Discount value for a concession type.
-
-        Given a concession type find the single discount which applies to that
-        ConcessionType, if there is one. If there is return the percentage of
-        the discount. If no single discount for that concession type is found
-        return 0.
-
-        Args:
-            (ConcessionType): The concession type for the discount.
-
-        Returns:
-            int: The value of the single discount on the concession type.
-        """
-        from uobtheatre.discounts.models import DiscountRequirement
-
-        discount_requirement = (
-            DiscountRequirement.objects.filter(
-                discount__in=self.get_single_discounts(),
-                concession_type=concession_type,
-            )
-            .select_related("discount")
-            .first()
-        )
-
-        if not discount_requirement:
-            return 0
-
-        return discount_requirement.discount.percentage
-
     def price_with_concession(
         self,
-        concession: "ConcessionType",
+        concession_type: "ConcessionType",
         performance_seat_group: "PerformanceSeatGroup",
     ) -> int:
         """Price with single concession applied.
@@ -538,7 +576,9 @@ class Performance(TimeStampedMixin, models.Model):
             int: price in pennies once concession discount applied.
         """
         price = performance_seat_group.price if performance_seat_group else 0
-        return math.ceil((1 - self.get_concession_discount(concession)) * price)
+        return math.ceil(
+            (1 - self.single_discounts_map.get(concession_type, 0)) * price
+        )
 
     def concessions(self) -> List:
         """Available concession types for this Performance.
@@ -621,21 +661,21 @@ class Performance(TimeStampedMixin, models.Model):
             seat_group_counts[seat_group] = (seat_group_count or 0) - 1
 
         # Check each seat group is in the performance
-        seat_groups_not_in_perfromance: List[str] = [
+        seat_groups_not_in_performance: List[str] = [
             seat_group.name
             for seat_group in seat_group_counts.keys()  # pylint: disable=consider-iterating-dictionary
             if seat_group not in self.seat_groups.all()
         ]
 
         # If any of the seat_groups are not assigned to this performance then throw an error
-        if len(seat_groups_not_in_perfromance) != 0:
-            seat_groups_not_in_perfromance_str = ", ".join(
-                seat_groups_not_in_perfromance
+        if len(seat_groups_not_in_performance) != 0:
+            seat_groups_not_in_performance_str = ", ".join(
+                seat_groups_not_in_performance
             )
             performance_seat_groups_str = ", ".join(
                 [seat_group.name for seat_group in self.seat_groups.all()]
             )
-            return f"You cannot book a seat group that is not assigned to this performance, you have booked {seat_groups_not_in_perfromance_str} but the performance only has {performance_seat_groups_str}"
+            return f"You cannot book a seat group that is not assigned to this performance, you have booked {seat_groups_not_in_performance_str} but the performance only has {performance_seat_groups_str}"
 
         # Check that each seat group has enough capacity
         for seat_group, number_booked in seat_group_counts.items():
