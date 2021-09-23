@@ -193,6 +193,55 @@ def test_create_booking_mutation(
 
 
 @pytest.mark.django_db
+def test_create_booking_deletes_users_draft(gql_client):
+    gql_client.login()
+    performance = PerformanceFactory()
+    PerformanceSeatingFactory(performance=performance)
+
+    assert Booking.objects.count() == 0  # Check that no bookings exist
+
+    BookingFactory(
+        performance=performance,
+        user=gql_client.user,
+        status=Booking.BookingStatus.IN_PROGRESS,
+    )  # A booking belonging to this user
+    unaffected_booking = BookingFactory(
+        performance=performance, status=Booking.BookingStatus.IN_PROGRESS
+    )  # A booking belonging to another user
+
+    assert Booking.objects.count() == 2
+
+    request = """
+        mutation {
+          createBooking(
+            performanceId: "%s"
+          ) {
+            success
+            errors {
+              __typename
+              ... on NonFieldError {
+                message
+              }
+            }
+            booking {
+                id
+            }
+         }
+        }
+    """ % to_global_id(
+        "PerformanceNode", performance.id
+    )
+
+    response = gql_client.execute(request)
+
+    assert Booking.objects.count() == 2
+    assert [booking.id for booking in Booking.objects.all()].sort() == [
+        int(from_global_id(response["data"]["createBooking"]["booking"]["id"])[1]),
+        unaffected_booking.id,
+    ].sort()
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize("with_boxoffice_perms", [False, True])
 def test_create_booking_with_too_many_tickets(gql_client, with_boxoffice_perms):
     performance = PerformanceFactory(id=1, capacity=100)
