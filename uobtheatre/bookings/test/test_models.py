@@ -600,7 +600,7 @@ def test_misc_cost_constraints(value, percentage, error):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "existing_list, new_list, add_list, delete_list",
+    "existing_list, new_list, add_list, delete_list, expected_total_number_of_tickets",
     [
         # SAME, SAME, null, null  - SAME
         (
@@ -634,6 +634,7 @@ def test_misc_cost_constraints(value, percentage, error):
             ],
             [],
             [],
+            2,
         ),
         # 1&2, 1, null, 2 - DELETE 1
         (
@@ -668,6 +669,7 @@ def test_misc_cost_constraints(value, percentage, error):
                     "id": 2,
                 }
             ],
+            1,
         ),
         # 1, 1&2, 2, null - ADD 1
         (
@@ -700,6 +702,7 @@ def test_misc_cost_constraints(value, percentage, error):
                 }
             ],
             [],
+            2,
         ),
         # 1&2, null, null, 1&2 - DELETE ALL
         (
@@ -733,6 +736,7 @@ def test_misc_cost_constraints(value, percentage, error):
                     "id": 2,
                 },
             ],
+            0,
         ),
         # null, 1&2, 1&2, null - ADD ALL
         (
@@ -762,6 +766,7 @@ def test_misc_cost_constraints(value, percentage, error):
                 },
             ],
             [],
+            2,
         ),
         # 1, 2, 2, 1 - SWAP
         (
@@ -795,10 +800,13 @@ def test_misc_cost_constraints(value, percentage, error):
                     "id": 1,
                 },
             ],
+            1,
         ),
     ],
 )
-def test_booking_ticket_diff(existing_list, new_list, add_list, delete_list):
+def test_booking_ticket_diff(
+    existing_list, new_list, add_list, delete_list, expected_total_number_of_tickets
+):
     SeatGroupFactory(id=1)
     SeatGroupFactory(id=2)
     ConcessionTypeFactory(id=1)
@@ -813,7 +821,9 @@ def test_booking_ticket_diff(existing_list, new_list, add_list, delete_list):
     add_tickets = [Ticket(**ticket) for ticket in add_list]
     delete_tickets = [Ticket(**ticket) for ticket in delete_list]
 
-    add_tickets, delete_tickets = booking.get_ticket_diff(new_tickets)
+    add_tickets, delete_tickets, total_number_of_tickets = booking.get_ticket_diff(
+        new_tickets
+    )
     expected_add_tickets, expected_delete_tickets = map(
         ticket_dict_list_dict_gen,
         [
@@ -830,6 +840,7 @@ def test_booking_ticket_diff(existing_list, new_list, add_list, delete_list):
     )
     assert expected_add_tickets == actual_add_tickets
     assert expected_delete_tickets == actual_delete_tickets
+    assert total_number_of_tickets == expected_total_number_of_tickets
 
 
 @pytest.mark.django_db
@@ -974,11 +985,23 @@ def test_filter_by_active():
 def test_booking_expiration():
     unexpired_booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
 
-    expired_bookings = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
-    expired_bookings.expiration_time = timezone.now() - datetime.timedelta(seconds=900)
+    expired_booking = BookingFactory(
+        status=Booking.BookingStatus.IN_PROGRESS,
+        expires_at=timezone.now() - datetime.timedelta(minutes=16),
+    )
 
-    assert not unexpired_booking.is_reservation_expired()
-    assert expired_bookings.is_reservation_expired
+    assert unexpired_booking.expires_at > timezone.now() + datetime.timedelta(
+        minutes=14
+    )
+    assert unexpired_booking.expires_at < timezone.now() + datetime.timedelta(
+        minutes=16
+    )
+
+    assert not unexpired_booking.is_reservation_expired
+    assert expired_booking.is_reservation_expired
+
+    expired_booking.status = Booking.BookingStatus.PAID
+    assert not expired_booking.is_reservation_expired
 
 
 @pytest.mark.django_db

@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from autoslug import AutoSlugField
 from django.db import models
-from django.db.models import Max, Min, Q, Sum
-from django.db.models.query import QuerySet
+from django.db.models import Max, Min, Sum
+from django.db.models.query import Q, QuerySet
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django_tiptap.fields import TipTapTextField
@@ -463,10 +463,30 @@ class Performance(TimeStampedMixin, models.Model):
         Returns:
             int: The number of tickets sold
         """
-        return self.tickets.filter(
-            Q(booking__status="PAID") | Q(booking__expiration_time__gt=datetime.now()),
-            **kwargs,
-        ).count()
+        return (
+            self.tickets.sold()
+            .filter(
+                **kwargs,
+            )
+            .count()
+        )
+
+    def total_tickets_sold_or_reserved(self, **kwargs):
+        """The number of tickets available for the performance (i.e. factoring in any draft bookings)
+
+        Args:
+            kwargs (dict): Any additonal kwargs are used to filter the queryset.
+
+        Returns:
+            int: The number of tickets sold
+        """
+        return (
+            self.tickets.sold_or_reserved()
+            .filter(
+                **kwargs,
+            )
+            .count()
+        )
 
     @property
     def total_tickets_checked_in(self):
@@ -508,7 +528,7 @@ class Performance(TimeStampedMixin, models.Model):
         if seat_group:
             return self.total_seat_group_capacity(
                 seat_group=seat_group
-            ) - self.total_tickets_sold(seat_group=seat_group)
+            ) - self.total_tickets_sold_or_reserved(seat_group=seat_group)
 
         seat_groups_remaining_capacity = sum(
             self.capacity_remaining(seat_group=performance_seat_group.seat_group)
@@ -518,7 +538,7 @@ class Performance(TimeStampedMixin, models.Model):
             seat_groups_remaining_capacity
             if not self.capacity
             else min(
-                self.capacity - self.total_tickets_sold(),
+                self.capacity - self.total_tickets_sold_or_reserved(),
                 seat_groups_remaining_capacity,
             )
         )

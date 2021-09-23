@@ -1,12 +1,13 @@
 import math
 import random
+from datetime import timedelta
 
 import pytest
 from dateutil import parser
 from django.utils import timezone
 from guardian.shortcuts import assign_perm
 
-from uobtheatre.bookings.models import Ticket
+from uobtheatre.bookings.models import Booking, Ticket
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
     PerformanceSeatingFactory,
@@ -344,16 +345,63 @@ def test_performance_unchecked_in_tickets():
 
 @pytest.mark.django_db
 def test_performance_total_tickets_sold():
+    # Booking with 2 tickets
     booking = BookingFactory()
-
-    # 2 tickets in the performance
     TicketFactory(booking=booking)
     TicketFactory(booking=booking)
 
-    # A ticket not in the booking
+    # Draft booking with 3 tickets (shouldn't be counted)
+    draft_booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    TicketFactory(booking=draft_booking)
+    TicketFactory(booking=draft_booking)
+    TicketFactory(booking=draft_booking)
+
+    # Expired Booking with 4 tickets (shouldn't be counted)
+    expires_draft_booking = BookingFactory(
+        expires_at=timezone.now() - timedelta(minutes=16),
+        status=Booking.BookingStatus.IN_PROGRESS,
+    )
+    TicketFactory(booking=expires_draft_booking)
+    TicketFactory(booking=expires_draft_booking)
+    TicketFactory(booking=expires_draft_booking)
+    TicketFactory(booking=expires_draft_booking)
+
+    # A ticket not in any of the bookings (shouldn't be counted)
     TicketFactory()
 
     assert booking.performance.total_tickets_sold() == 2
+
+
+@pytest.mark.django_db
+def test_performance_total_tickets_sold_or_reserved():
+    # Booking with 2 tickets
+    booking = BookingFactory()
+    TicketFactory(booking=booking)
+    TicketFactory(booking=booking)
+
+    # Draft booking with 3 tickets
+    draft_booking = BookingFactory(
+        status=Booking.BookingStatus.IN_PROGRESS, performance=booking.performance
+    )
+    TicketFactory(booking=draft_booking)
+    TicketFactory(booking=draft_booking)
+    TicketFactory(booking=draft_booking)
+
+    # Expired Booking with 4 tickets (shouldn't be counted)
+    expires_draft_booking = BookingFactory(
+        expires_at=timezone.now() - timedelta(minutes=16),
+        status=Booking.BookingStatus.IN_PROGRESS,
+        performance=booking.performance,
+    )
+    TicketFactory(booking=expires_draft_booking)
+    TicketFactory(booking=expires_draft_booking)
+    TicketFactory(booking=expires_draft_booking)
+    TicketFactory(booking=expires_draft_booking)
+
+    # A ticket not in any of the bookings (shouldn't be counted)
+    TicketFactory()
+
+    assert booking.performance.total_tickets_sold_or_reserved() == 2 + 3
 
 
 @pytest.mark.django_db
@@ -419,6 +467,23 @@ def test_performance_capacity_remaining():
         == perf.total_seat_group_capacity(seat_group) - 5
     )
     assert perf.capacity_remaining() == perf.total_capacity - 5
+
+    # Check an expired booking with tickets (should not be included)
+    booking_3 = BookingFactory(
+        performance=perf,
+        status=Booking.BookingStatus.IN_PROGRESS,
+        expires_at=timezone.now() - timedelta(minutes=16),
+    )
+    TicketFactory(booking=booking_3, seat_group=seat_group)
+    assert perf.capacity_remaining() == perf.total_capacity - 5
+
+    # Check a draft booking with tickets
+    booking_4 = BookingFactory(
+        performance=perf, status=Booking.BookingStatus.IN_PROGRESS
+    )
+    TicketFactory(booking=booking_4, seat_group=seat_group)
+    TicketFactory(booking=booking_4, seat_group=seat_group)
+    assert perf.capacity_remaining() == perf.total_capacity - 7
 
 
 @pytest.mark.django_db

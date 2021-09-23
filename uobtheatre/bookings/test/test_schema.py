@@ -108,6 +108,45 @@ def test_bookings_schema(gql_client):
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    "expired",
+    [False, True],
+)
+def test_booking_expires_at(gql_client, expired):
+    gql_client.login()
+    booking = BookingFactory(
+        status=Booking.BookingStatus.IN_PROGRESS, user=gql_client.user
+    )
+    if expired:
+        booking.expires_at = timezone.now() - datetime.timedelta(minutes=30)
+        booking.save()
+
+    request_query = """
+        {
+            me {
+              bookings(id: "%s") {
+                  edges {
+                    node {
+                      expiresAt
+                      expired
+                    }
+                  }
+              }
+            }
+        }
+        """
+
+    response = gql_client.execute(
+        request_query % to_global_id("BookingNode", booking.id)
+    )
+
+    assert (
+        response["data"]["me"]["bookings"]["edges"][0]["node"]["expiresAt"] is not None
+    )
+    assert response["data"]["me"]["bookings"]["edges"][0]["node"]["expired"] is expired
+
+
+@pytest.mark.django_db
 def test_bookings_price_break_down(gql_client):  # pylint: disable=too-many-locals
     booking = BookingFactory()
 
