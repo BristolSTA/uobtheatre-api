@@ -319,6 +319,7 @@ type PerformanceNode implements Node {
   isInperson: Boolean!
   isOnline: Boolean!
   soldOut: Boolean!
+  isBookable: Boolean!
   ticketsBreakdown: PerformanceTicketsBreakdown!
 }
 

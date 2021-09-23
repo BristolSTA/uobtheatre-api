@@ -469,6 +469,12 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
                 code=422,
             )
 
+        # Check performance is bookable
+        if not performance.is_bookable:
+            raise GQLException(
+                message="This performance is not able to be booked at the moment"
+            )
+
         ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))
 
         # Check the capacity of the show and its seat_groups

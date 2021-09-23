@@ -251,6 +251,34 @@ def test_create_booking_with_too_many_tickets(gql_client, with_boxoffice_perms):
 
 
 @pytest.mark.django_db
+def test_cant_create_booking_with_unbookable_performance(gql_client):
+    performance = PerformanceFactory(end=(timezone.now() - timedelta(days=1)))
+    request = """
+        mutation{
+            createBooking(performanceId: "%s") {
+                success
+                errors {
+                    ... on NonFieldError {
+                        message
+                    }
+                }
+            }
+        }
+    """ % to_global_id(
+        "PerformanceNode", performance.id
+    )
+
+    gql_client.login()
+    response = gql_client.execute(request)
+
+    assert response["data"]["createBooking"]["success"] is False
+    assert (
+        response["data"]["createBooking"]["errors"][0]["message"]
+        == "This performance is not able to be booked at the moment"
+    )
+
+
+@pytest.mark.django_db
 def test_create_booking_with_taget_user_without_perms(gql_client):
 
     psg = PerformanceSeatingFactory()
@@ -371,6 +399,7 @@ def test_create_booking_with_new_taget_user(gql_client):
 @pytest.mark.django_db
 def test_create_booking_admin_discount_without_perms(gql_client):
     performance = PerformanceFactory()
+    PerformanceSeatingFactory(performance=performance)
     request = """
         mutation {
           createBooking(
@@ -418,6 +447,7 @@ def test_create_booking_admin_discount_without_perms(gql_client):
 )
 def test_create_booking_admin_discount(gql_client, discount, should_be_valid):
     performance = PerformanceFactory()
+    PerformanceSeatingFactory(performance=performance)
     request = """
         mutation {
           createBooking(
@@ -1138,11 +1168,15 @@ def test_update_paid_booking_fails(gql_client):
 
 
 @pytest.mark.django_db
-def test_create_booking_capacity_error(gql_client):
+def test_booking_with_invalid_seat_group(gql_client):
 
     seat_group = SeatGroupFactory()
+    real_seatgroup = SeatGroupFactory(name="My seat group")
     concession_type = ConcessionTypeFactory()
     booking = BookingFactory(user=gql_client.login())
+    PerformanceSeatingFactory(
+        performance=booking.performance, seat_group=real_seatgroup, capacity=1
+    )
     request_query = """
         mutation {
             createBooking (
@@ -1182,7 +1216,7 @@ def test_create_booking_capacity_error(gql_client):
                 "errors": [
                     {
                         "__typename": "NonFieldError",
-                        "message": f"You cannot book a seat group that is not assigned to this performance, you have booked {seat_group} but the performance only has ",
+                        "message": f"You cannot book a seat group that is not assigned to this performance, you have booked {seat_group} but the performance only has My seat group",
                         "code": "400",
                     }
                 ],
