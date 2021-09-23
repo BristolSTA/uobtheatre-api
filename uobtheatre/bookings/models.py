@@ -167,6 +167,11 @@ class BookingQuerySet(QuerySet):
         return self.filter(Q(status="PAID") | Q(expires_at__gt=timezone.now()))
 
 
+def generate_expires_at():
+    """Generates the expires at timestamp for a booking"""
+    return timezone.now() + timezone.timedelta(minutes=15)
+
+
 class Booking(TimeStampedMixin, Payable, models.Model):
     """A booking for a performance
 
@@ -226,9 +231,7 @@ class Booking(TimeStampedMixin, Payable, models.Model):
         default=0, validators=[validate_percentage]
     )
 
-    expires_at = models.DateTimeField(
-        default=timezone.now() + timezone.timedelta(minutes=15)
-    )
+    expires_at = models.DateTimeField(default=generate_expires_at)
 
     @property
     def payment_reference_id(self):
