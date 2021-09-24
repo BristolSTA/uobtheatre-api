@@ -638,39 +638,39 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         if booking.tickets.count() == 0:
             raise GQLException(message="The booking must have at least one ticket")
 
-        # If the booking isn't free, we care about the payment provider. Otherwise, we don't
-        if booking.total() > 0:
-            if payment_provider == SquareOnline.name:
-                if not nonce:
-                    raise GQLException(
-                        message=f"A nonce is required when using {payment_provider} provider.",
-                        field="nonce",
-                        code="missing_required",
-                    )
-                payment_method = SquareOnline(nonce, booking.id)
+        # If the booking is free, we don't care about the payment provider. Otherwise, we do
+        if booking.total() == 0:
+            booking.complete()
+            return PayBooking(booking=booking)
 
-            elif payment_provider == SquarePOS.name:
-                if not device_id:
-                    raise GQLException(
-                        message=f"A device_id is required when using {payment_provider} provider.",
-                        field="device_id",
-                        code="missing_required",
-                    )
-                payment_method = SquarePOS(device_id)
-            elif payment_provider == Cash.name:
-                payment_method = Cash()
-            elif payment_provider == Card.name:
-                payment_method = Card()
-            else:
-                raise GQLException(  # pragma: no cover
-                    message=f"Unsupported payment provider {payment_provider}."
+        if payment_provider == SquareOnline.name:
+            if not nonce:
+                raise GQLException(
+                    message=f"A nonce is required when using {payment_provider} provider.",
+                    field="nonce",
+                    code="missing_required",
                 )
+            payment_method = SquareOnline(nonce, booking.id)
 
-            payment = booking.pay(payment_method)
-            return PayBooking(booking=booking, payment=payment)
+        elif payment_provider == SquarePOS.name:
+            if not device_id:
+                raise GQLException(
+                    message=f"A device_id is required when using {payment_provider} provider.",
+                    field="device_id",
+                    code="missing_required",
+                )
+            payment_method = SquarePOS(device_id)
+        elif payment_provider == Cash.name:
+            payment_method = Cash()
+        elif payment_provider == Card.name:
+            payment_method = Card()
+        else:
+            raise GQLException(  # pragma: no cover
+                message=f"Unsupported payment provider {payment_provider}."
+            )
 
-        booking.complete()
-        return PayBooking(booking=booking)
+        payment = booking.pay(payment_method)
+        return PayBooking(booking=booking, payment=payment)
 
 
 class CheckInBooking(AuthRequiredMixin, SafeMutation):

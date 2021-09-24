@@ -10,9 +10,9 @@ from uobtheatre.bookings.test.factories import (
     BookingFactory,
     PerformanceSeatingFactory,
     TicketFactory,
+    add_ticket_to_booking,
 )
-from uobtheatre.discounts.models import DiscountRequirement
-from uobtheatre.discounts.test.factories import ConcessionTypeFactory, DiscountFactory
+from uobtheatre.discounts.test.factories import ConcessionTypeFactory
 from uobtheatre.payments.payment_methods import SquareOnline, SquarePOS
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.models import User
@@ -20,19 +20,6 @@ from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.utils.exceptions import AuthorizationException, GQLException
 from uobtheatre.utils.test_utils import ticket_dict_list_dict_gen, ticket_list_dict_gen
 from uobtheatre.venues.test.factories import SeatFactory, SeatGroupFactory
-
-
-def add_ticket_to_booking(booking):
-    """Adds a ticket of price 100 to the booking"""
-    ticket = TicketFactory(booking=booking)
-    PerformanceSeatingFactory(
-        performance=booking.performance, seat_group=ticket.seat_group, price=100
-    )
-    discount = DiscountFactory(percentage=0)
-    discount.performances.set([booking.performance])
-    DiscountRequirement(
-        number=1, concession_type=ticket.concession_type, discount=discount
-    )
 
 
 @pytest.mark.django_db
