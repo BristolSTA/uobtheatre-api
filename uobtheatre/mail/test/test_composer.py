@@ -1,9 +1,9 @@
 import importlib.resources as pkg_resources
 
-import fixtures
 import pytest
 from django.template.loader import get_template
 
+import uobtheatre.mail.test.fixtures as fixtures
 from uobtheatre.mail.composer import Action, Heading, Image, Line, MailComposer
 
 
