@@ -126,7 +126,7 @@ class MailComposer:
     def to_plain_text(self):
         """Generate the plain text version of the email"""
         return """{}""".format(
-            "\n".join([item.to_text() or "" for item in self.get_complete_items()])
+            "\n\n".join([item.to_text() for item in self.get_complete_items() if item.to_text()])
         )
 
     def to_html(self):
