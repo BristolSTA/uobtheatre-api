@@ -41,6 +41,9 @@ down: ## Down
 dump: ## dumps databse objects into fixture
 	docker-compose run --rm api python manage.py dumpdata users images addresses venues societies productions discounts bookings payments --indent 2 > db.json
 
+dump-prod: ## dumps databse objects into fixture
+	docker-compose run --rm api python manage.py dumpdata users images addresses venues societies productions discounts bookings payments --indent 2 > db-prod.json
+
 migrations: ## Make the migrations
 	docker-compose run --rm api python manage.py makemigrations
 
@@ -58,6 +61,9 @@ seed: ## Seed the db with some example data
 
 seed-testfixtures: ## Seed the data for e2e testing
 	docker-compose run api python manage.py loaddata db.json
+
+seed-prod: ## Seed the data for e2e testing
+	docker-compose run api python manage.py loaddata db-prod.json
 
 superuser: ## Seed the db with admin superuser
 	docker-compose run api python manage.py loaddata uobtheatre/users/fixtures.json
@@ -133,3 +139,6 @@ build:
 
 django-shell: ## Open django shell
 	docker-compose run --rm api python manage.py shell
+
+flush:
+	docker-compose run api python manage.py flush
