@@ -19,7 +19,7 @@ class Society(TimeStampedMixin, models.Model):
         Image, on_delete=models.RESTRICT, related_name="society_banners"
     )
 
-    members = models.ManyToManyField("users.User", related_name="societies")
+    members = models.ManyToManyField("users.User", related_name="societies", blank=True)
 
     def __str__(self):
         return str(self.name)
