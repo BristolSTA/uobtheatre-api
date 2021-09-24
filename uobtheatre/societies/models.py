@@ -19,6 +19,9 @@ class Society(TimeStampedMixin, models.Model):
         Image, on_delete=models.RESTRICT, related_name="society_banners"
     )
 
+    website = models.CharField(max_length=255, blank=True, null=True)
+    contact = models.CharField(max_length=255, blank=True, null=True)
+
     members = models.ManyToManyField("users.User", related_name="societies", blank=True)
 
     def __str__(self):
