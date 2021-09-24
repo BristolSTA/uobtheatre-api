@@ -89,8 +89,9 @@ class Action(ComposerItemInterface):
 class MailComposer:
     """Compose a mail notificaiton"""
 
-    items: List[ComposerItemInterface] = []
-    subcopy: List[Line] = []
+    def __init__(self) -> None:
+        self.items: List[ComposerItemInterface] = []
+        self.subcopy: List[Line] = []
 
     def line(self, text: str):
         """A line (paragraph) of text. May contain simple HTML, which will be stripped for plain text version"""
@@ -126,7 +127,9 @@ class MailComposer:
     def to_plain_text(self):
         """Generate the plain text version of the email"""
         return """{}""".format(
-            "\n\n".join([item.to_text() for item in self.get_complete_items() if item.to_text()])
+            "\n\n".join(
+                [item.to_text() for item in self.get_complete_items() if item.to_text()]
+            )
         )
 
     def to_html(self):
