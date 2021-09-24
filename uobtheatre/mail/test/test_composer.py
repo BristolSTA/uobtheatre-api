@@ -35,13 +35,11 @@ def test_it_generates_correct_html():
         .line("This is the final paragraph")
     )
 
-    assert Heading("This is a heading").to_html() in composer.to_html()
-    assert Line("This is a paragraph").to_html() in composer.to_html()
+    assert ">This is a heading</h1>" in composer.to_html()
+    assert ">This is a paragraph</p>" in composer.to_html()
     assert Image("http://example.org/my/image").to_html() in composer.to_html()
-    assert (
-        Action("https://example.org/call/to/action", "Call to Action").to_html()
-        in composer.to_html()
-    )
+    assert 'href="https://example.org/call/to/action"' in composer.to_html()
+    assert ">Call to Action</a>" in composer.to_html()
 
 
 @pytest.mark.django_db
@@ -71,6 +69,12 @@ def test_line_item():
     line = Line("My paragraph text")
     assert line.to_html() == "<p>My paragraph text</p>"
     assert line.to_text() == "My paragraph text"
+
+
+def test_line_item_with_html():
+    line = Line("My <strong>strong</strong> paragraph text")
+    assert line.to_html() == "<p>My <strong>strong</strong> paragraph text</p>"
+    assert line.to_text() == "My strong paragraph text"
 
 
 def test_image_item():

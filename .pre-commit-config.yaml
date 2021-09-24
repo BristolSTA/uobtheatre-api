@@ -83,4 +83,5 @@ repos:
             django-guardian,
             djangorestframework,
             django_tiptap,
+            django_inlinecss,
           ]

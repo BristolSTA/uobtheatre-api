@@ -34,6 +34,7 @@ INSTALLED_APPS = (
     "guardian",
     "django_tiptap",
     "rest_framework",
+    "django_inlinecss",
     # Your apps
     "uobtheatre.users",
     "uobtheatre.productions",
