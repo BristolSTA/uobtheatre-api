@@ -297,7 +297,7 @@ class SquareOnline(PaymentMethod):
             SquareException: If the request was unsuccessful.
         """
         body = {
-            "idempotency_key": self.idempotency_key,
+            "idempotency_key": str(self.idempotency_key),
             "source_id": self.nonce,
             "amount_money": {"amount": value, "currency": "GBP"},
             "reference_id": pay_object.payment_reference_id,

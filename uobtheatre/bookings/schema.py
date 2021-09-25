@@ -605,6 +605,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
             "uobtheatre.payments.schema.PaymentMethodsEnum"
         )
         device_id = graphene.String(required=False)
+        idempotency_key = graphene.String(required=False)
 
     @classmethod
     def resolve_mutation(  # pylint: disable=too-many-arguments
@@ -616,6 +617,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         nonce=None,
         payment_provider=SquareOnline.name,
         device_id=None,
+        idempotency_key=None,
     ):
 
         # Get the performance and if it doesn't exist throw an error
@@ -647,7 +649,13 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
                     field="nonce",
                     code="missing_required",
                 )
-            payment_method = SquareOnline(nonce, booking.id)
+            if not idempotency_key:
+                raise GQLException(
+                    message=f"An idempotency key is required when using {payment_provider} provider.",
+                    field="idempotency_key",
+                    code="missing_required",
+                )
+            payment_method = SquareOnline(nonce, idempotency_key)
 
         elif payment_provider == SquarePOS.name:
             if not device_id:
