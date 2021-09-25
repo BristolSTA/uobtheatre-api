@@ -4,12 +4,29 @@ from unittest.mock import patch
 import pytest
 from django.http.response import HttpResponse
 from django.test import TestCase
+from django.test.client import RequestFactory
 from django.urls import reverse
 from graphql_relay.node.node import to_global_id
 
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.reports.utils import ExcelReport, generate_report_download_signature
+from uobtheatre.reports.views import ValidSignatureMiddleware
 from uobtheatre.users.test.factories import UserFactory
+
+
+@pytest.mark.django_db
+def test_validate_signature_middleware_invalid_reportname():
+    middleware = ValidSignatureMiddleware(None, "MyReport")
+
+    request = RequestFactory().get(
+        "/?signature="
+        + generate_report_download_signature(UserFactory(), "AnotherReport")
+    )
+    response = middleware.process_request(request)
+
+    assert isinstance(response, HttpResponse)
+    assert response.status_code == 403
+    assert response.content == b"Invalid signature. Maybe this link has expired?"
 
 
 # pylint: disable=missing-class-docstring
