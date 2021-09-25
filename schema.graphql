@@ -188,7 +188,7 @@ type MiscCostNode implements Node {
 type Mutation {
   createBooking(adminDiscountPercentage: Float, performanceId: IdInputField, targetUserEmail: String, tickets: [CreateTicketInput]): CreateBooking
   updateBooking(adminDiscountPercentage: Float, bookingId: IdInputField, targetUserEmail: String, tickets: [UpdateTicketInput]): UpdateBooking
-  payBooking(bookingId: IdInputField!, deviceId: String, nonce: String, paymentProvider: PaymentMethod, price: Int!): PayBooking
+  payBooking(bookingId: IdInputField!, deviceId: String, idempotencyKey: String, nonce: String, paymentProvider: PaymentMethod, price: Int!): PayBooking
   checkInBooking(bookingReference: String!, performanceId: IdInputField!, tickets: [TicketIDInput]!): CheckInBooking
   uncheckInBooking(bookingReference: String!, performanceId: IdInputField!, tickets: [TicketIDInput]!): UnCheckInBooking
   register(email: String!, firstName: String!, lastName: String!, password1: String!, password2: String!): Register
