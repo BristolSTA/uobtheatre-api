@@ -25,10 +25,13 @@ from uobtheatre.reports.reports import (
     PerformanceBookings,
     PeriodTotalsBreakdown,
     Report,
+    get_option,
+    require_option,
 )
 from uobtheatre.societies.models import Society
 from uobtheatre.societies.test.factories import SocietyFactory
 from uobtheatre.users.test.factories import UserFactory
+from uobtheatre.utils.exceptions import GQLException
 from uobtheatre.venues.test.factories import SeatGroupFactory
 
 
@@ -160,6 +163,24 @@ def test_abstract_report():
     assert report.dataset_by_name("My Missing Dataset") is None
 
     assert report.get_meta_array() == [["Name", "Value"]]
+
+
+def test_get_option():
+    assert get_option([{"name": "MyName", "value": "MyValue"}], "MyName") == "MyValue"
+    assert get_option([{"name": "MyName", "value": "MyValue"}], "MyOtherName") is None
+    assert (
+        get_option([{"name": "MyName", "value": "MyValue"}], "MyOtherName", "foo")
+        == "foo"
+    )
+
+
+def test_require_option():
+    options = [{"name": "MyName", "value": "MyValue"}]
+    assert require_option(options, "MyName") is None
+
+    with pytest.raises(GQLException) as exception:
+        require_option(options, "MyOtherName")
+        assert exception.message == "You must supply the MyOtherName option"
 
 
 @pytest.mark.django_db

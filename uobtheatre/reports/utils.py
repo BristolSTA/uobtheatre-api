@@ -182,7 +182,7 @@ def generate_report_download_signature(
     Returns:
         str: The signed hash
     """
-    return signer.sign_object(
+    return signer.sign_object(  # type: ignore
         {"user_id": str(user.id), "report": report_name, "options": options}
     )
 
@@ -203,7 +203,7 @@ def validate_report_download_signature(signature: str):
         raise InvalidReportSignature
 
     try:
-        return signer.unsign_object(signature, max_age=timedelta(minutes=10))
+        return signer.unsign_object(signature, max_age=timedelta(minutes=10))  # type: ignore
 
     except (signing.BadSignature, signing.SignatureExpired) as error:
         raise InvalidReportSignature from error

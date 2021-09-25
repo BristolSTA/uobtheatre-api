@@ -1,9 +1,8 @@
 from abc import ABC
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import List, Union
+from typing import Dict, List, Union
 
-from django.db import connection
 from graphql_relay.node.node import from_global_id
 
 from uobtheatre.bookings.models import Booking
@@ -13,13 +12,13 @@ from uobtheatre.users.models import User
 from uobtheatre.utils.exceptions import AuthorizationException, GQLException
 
 
-def get_option(options: List, name: str, default=None):
+def get_option(options: List[Dict[str, str]], name: str, default=None):
     return next(
         (option["value"] for option in options if option["name"] == name), default
     )
 
 
-def require_option(options: List, option_name):
+def require_option(options: List[Dict[str, str]], option_name):
     if not get_option(options, option_name):
         raise GQLException(
             message="You must supply the %s option" % option_name, field="options"
@@ -243,7 +242,6 @@ class PerformanceBookings(Report):
         )
 
         self.meta.append(MetaItem("Performance", str(performance)))
-        print(len(connection.queries))
         for booking in (
             performance.bookings.filter(status=Booking.BookingStatus.PAID)
             .prefetch_related(
@@ -261,8 +259,6 @@ class PerformanceBookings(Report):
                     str(booking.total_paid),
                 ]
             )
-        print(len(connection.queries))
-        print(connection.queries)
 
         self.datasets.append(bookings_dataset)
 

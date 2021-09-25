@@ -70,10 +70,12 @@ def test_unauthorized_cant_generate_finance_reports(gql_client, report_name):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "without_perm",
-    [False, True],
+    "without_perm,invalid_id",
+    [(False, False), (True, False), (False, True)],
 )
-def test_can_generate_report_for_performance_bookings(gql_client, without_perm):
+def test_can_generate_report_for_performance_bookings(
+    gql_client, without_perm, invalid_id
+):
     performance = PerformanceFactory()
     request = """
         mutation{
@@ -83,11 +85,15 @@ def test_can_generate_report_for_performance_bookings(gql_client, without_perm):
                 ... on NonFieldError {
                     message
                 }
+                ... on FieldError {
+                    message
+                    field
+                }
                 }
             }
         }
     """ % to_global_id(
-        "PerformanceNode", performance.id
+        "PerformanceNode", performance.id if not invalid_id else performance.id + 1
     )
 
     gql_client.login()
@@ -101,6 +107,11 @@ def test_can_generate_report_for_performance_bookings(gql_client, without_perm):
             response["data"]["generateReport"]["errors"][0]["message"]
             == "You are not authorized to perform this action"
         )
+    elif invalid_id:
+        assert response["data"]["generateReport"]["errors"][0] == {
+            "message": "Invalid performance ID option",
+            "field": "options",
+        }
     else:
         split_url = response["data"]["generateReport"]["downloadUri"].split("?")
         assert split_url[0] == "/reports/performance_bookings"

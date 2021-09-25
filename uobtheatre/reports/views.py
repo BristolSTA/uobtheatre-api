@@ -25,7 +25,10 @@ class ValidSignatureMiddleware:
                 raise InvalidReportSignature()
             return None
         except InvalidReportSignature:
-            return HttpResponse("Invalid signature. Maybe this link has expired?")
+            return HttpResponse(
+                content="Invalid signature. Maybe this link has expired?",
+                status=403,
+            )
 
     def process_view(self, request, _, __, ___):
         """Before view render hook"""
