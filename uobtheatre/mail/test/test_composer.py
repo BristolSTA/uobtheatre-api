@@ -4,7 +4,7 @@ import pytest
 from django.template.loader import get_template
 
 import uobtheatre.mail.test.fixtures as fixtures
-from uobtheatre.mail.composer import Action, Heading, Image, Line, MailComposer
+from uobtheatre.mail.composer import Action, Heading, Image, Line, MailComposer, Panel
 
 
 def test_it_generates_correct_plain_text():
@@ -93,6 +93,16 @@ def test_action_item():
         {"url": "http://example.org/call/to/action", "text": "Call to Action"}
     )
     assert action.to_text() == "Call to Action (http://example.org/call/to/action)"
+
+
+def test_panel_item():
+    panel = Panel()
+    panel.line("Test text")
+
+    assert panel.to_text() == "Test text"
+    assert panel.to_html() == get_template("components/panel.html").render(
+        {"content": Line("Test text").to_html()}
+    )
 
 
 @pytest.mark.parametrize("size", [1, 2, 3])

@@ -25,6 +25,58 @@ class ComposerItemInterface(abc.ABC):
         raise NotImplementedError()
 
 
+class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
+    """Abstract container of composer items"""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.items: List[ComposerItemInterface] = []
+        self.subcopy: List[Line] = []
+
+    def line(self, text: str):
+        """A line (paragraph) of text. May contain simple HTML, which will be stripped for plain text version"""
+        self.items.append(Line(text))
+        return self
+
+    def action(self, url, text):
+        """Create an action button"""
+        action = Action(url, text)
+        self.items.append(action)
+        self.subcopy.append(
+            Line(
+                "Can't click the '%s' button? Copy the following into your browser: '<a href='%s'>%s</a>'"
+                % (text, action.url, action.url)
+            )
+        )
+        return self
+
+    def heading(self, text):
+        """Create a heading (title)"""
+        self.items.append(Heading(text))
+        return self
+
+    def image(self, url):
+        """Create a full-width image"""
+        self.items.append(Image(url))
+        return self
+
+    def append(self, item):
+        self.items.append(item)
+        return self
+
+    def to_text(self) -> Union[str, None]:
+        """Generate the plain text version of this item"""
+        return """{}""".format(
+            "\n\n".join(
+                [item.to_text() for item in self.items if item.to_text()]  # type: ignore
+            )
+        )
+
+    def to_html(self) -> str:
+        """Generate the HTML version of this item"""
+        return """{}""".format("\n".join([item.to_html() or "" for item in self.items]))
+
+
 class Heading(ComposerItemInterface):
     """A heading (i.e. <hX>) composer item"""
 
@@ -86,39 +138,15 @@ class Action(ComposerItemInterface):
         return template.render({"url": self.url, "text": self.text})
 
 
-class MailComposer:
+class Panel(ComposerItemsContainer):
+    def to_html(self) -> str:
+        content = super().to_html()
+
+        return get_template("components/panel.html").render({"content": content})
+
+
+class MailComposer(ComposerItemsContainer):
     """Compose a mail notificaiton"""
-
-    def __init__(self) -> None:
-        self.items: List[ComposerItemInterface] = []
-        self.subcopy: List[Line] = []
-
-    def line(self, text: str):
-        """A line (paragraph) of text. May contain simple HTML, which will be stripped for plain text version"""
-        self.items.append(Line(text))
-        return self
-
-    def action(self, url, text):
-        """Create an action button"""
-        action = Action(url, text)
-        self.items.append(action)
-        self.subcopy.append(
-            Line(
-                "Can't click the '%s' button? Copy the following into your browser: '<a href='%s'>%s</a>'"
-                % (text, action.url, action.url)
-            )
-        )
-        return self
-
-    def heading(self, text):
-        """Create a heading (title)"""
-        self.items.append(Heading(text))
-        return self
-
-    def image(self, url):
-        """Create a full-width image"""
-        self.items.append(Image(url))
-        return self
 
     def get_complete_items(self):
         """Get the email body items (including any signature/signoff)"""

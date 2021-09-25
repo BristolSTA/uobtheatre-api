@@ -536,7 +536,17 @@ class Booking(TimeStampedMixin, Payable, models.Model):
             )
         ).action(
             "/user/booking/%s" % self.reference, "View Tickets & Booking"
-        ).line(
+        )
+
+        payment = self.payments.first()
+        # If this booking includes a payment, we will include details of this payment as a reciept
+        if payment:
+            composer.heading("Payment Information").line(
+                "{:.2f}".format(payment.value / 100)
+                + f" {payment.currency} paid ({payment.provider}{' - ID' + payment.provider_payment_id if payment.provider_payment_id else '' })"
+            )
+
+        composer.line(
             "If you have any accessability concerns, or otherwise need help, please contact <a href='mailto:support@uobtheatre.com'>support@uobtheatre.com</a>."
         )
 
