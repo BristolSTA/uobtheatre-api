@@ -250,16 +250,23 @@ class Production(TimeStampedMixin, models.Model):
             performance.sales_breakdown for performance in self.performances.all()
         ]
 
+        card_takings = sum(
+            [breakdown["card_payments_total"] for breakdown in sale_breakdowns]
+        )
+        misc_costs_total = sum(
+            [breakdown["misc_costs_total"] for breakdown in sale_breakdowns]
+        )
+
         return {
             "payments_total": sum(
                 [breakdown["payments_total"] for breakdown in sale_breakdowns]
             ),
-            "misc_costs_total": sum(
-                [breakdown["misc_costs_total"] for breakdown in sale_breakdowns]
-            ),
+            "card_payments_total": card_takings,
+            "misc_costs_total": misc_costs_total,
             "society_income_total": sum(
                 [breakdown["society_income_total"] for breakdown in sale_breakdowns]
             ),
+            "society_card_income_total": card_takings - misc_costs_total,
         }
 
     @property
@@ -378,7 +385,9 @@ class PerformanceQuerySet(QuerySet):
         return self.exclude(production__in=production_with_perm)
 
 
-class Performance(TimeStampedMixin, models.Model):
+class Performance(
+    TimeStampedMixin, models.Model
+):  # pylint: disable=too-many-public-methods
     """The model for a Performance of a Production.
 
     A performance is a discrete event when the show takes place eg 7pm on
@@ -767,6 +776,14 @@ class Performance(TimeStampedMixin, models.Model):
         total_payments = (
             bookings.aggregate(Sum("payments__value"))["payments__value__sum"] or 0
         )
+        total_card_payments = sum(
+            [
+                payment.value
+                for booking in bookings
+                for payment in booking.payments.all()
+                if payment.provider != "CASH"
+            ]
+        )
         total_misc_costs = sum(
             [
                 booking.misc_costs_value()
@@ -779,6 +796,7 @@ class Performance(TimeStampedMixin, models.Model):
 
         return {
             "payments_total": total_payments,
+            "card_payments_total": total_card_payments,
             "misc_costs_total": total_misc_costs,
             "society_income_total": total_payments - total_misc_costs,
         }

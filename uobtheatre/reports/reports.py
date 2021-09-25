@@ -80,11 +80,12 @@ class PeriodTotalsBreakdown(Report):
     def __init__(self, start: datetime, end: datetime) -> None:
         super().__init__()
         production_totals_set = DataSet(
-            "Production Totals", ["Production ID", "Production Name", "Total Income"]
+            "Production Totals",
+            ["Production ID", "Production Name", "Total Income (Pence)"],
         )
 
         provider_totals_set = DataSet(
-            "Provider Totals", ["Provider Name", "Total Income"]
+            "Provider Totals", ["Provider Name", "Total Income (Pence)"]
         )
 
         payments = (
@@ -132,13 +133,22 @@ class PeriodTotalsBreakdown(Report):
                 production_totals_set,
                 DataSet(
                     "Payments",
-                    ["Payment ID", "Timestamp", "Pay Object ID", "Payment Value"],
+                    [
+                        "Payment ID",
+                        "Timestamp",
+                        "Pay Object ID",
+                        "Payment Value",
+                        "Provider",
+                        "Provider ID",
+                    ],
                     [
                         [
                             str(payment.id),
                             payment.created_at.strftime("%Y-%m-%d %H:%M:%S"),
                             str(payment.pay_object.id) if payment.pay_object else "",
                             str(payment.value),
+                            str(payment.provider),
+                            str(payment.provider_payment_id or ""),
                         ]
                         for payment in payments
                     ],
@@ -164,8 +174,10 @@ class OutstandingSocietyPayments(Report):
                 "Production Name",
                 "Society ID",
                 "Society Name",
-                "Society Net Income",
+                "Total Takings",
+                "Takings of which card",
                 "STA Fees",
+                "Society Payment Due (Pence)",
             ],
         )
 
@@ -186,9 +198,7 @@ class OutstandingSocietyPayments(Report):
         sta_total_due = 0
 
         for production in productions:
-            production_society_net_income = production.sales_breakdown[
-                "society_income_total"
-            ]
+            sales_breakdown = production.sales_breakdown
             production_sta_fees = production.sales_breakdown["misc_costs_total"]
             sta_total_due += production_sta_fees
 
@@ -199,8 +209,10 @@ class OutstandingSocietyPayments(Report):
                     production.name,
                     production.society.id,
                     production.society.name,
-                    production_society_net_income,
+                    sales_breakdown["payments_total"],
+                    sales_breakdown["card_payments_total"],
                     production_sta_fees,
+                    sales_breakdown["society_card_income_total"],
                 ],
             )
 
@@ -212,7 +224,7 @@ class OutstandingSocietyPayments(Report):
                     0,
                 ],
             )
-            row[2] += production_society_net_income
+            row[2] += sales_breakdown["society_card_income_total"]
 
         societies_dataset.add_row(["", "Stage Technicians' Association", sta_total_due])
         self.meta.append(

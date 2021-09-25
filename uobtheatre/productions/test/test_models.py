@@ -847,8 +847,13 @@ def test_sales_breakdown_on_production():
         production, payments_value, misc_costs_value, society_income
     ):
         assert production.sales_breakdown["payments_total"] == payments_value
+        assert production.sales_breakdown["card_payments_total"] == payments_value
         assert production.sales_breakdown["misc_costs_total"] == misc_costs_value
         assert production.sales_breakdown["society_income_total"] == society_income
+        assert (
+            production.sales_breakdown["society_card_income_total"]
+            == payments_value - misc_costs_value
+        )
 
     # Blank production should have no sales
     asser_breakdown_values(production, 0, 0, 0)
@@ -888,15 +893,20 @@ def test_sales_breakdown_on_production():
 def test_sales_breakdown_on_performance():
     performance = PerformanceFactory()
 
-    def asser_breakdown_values(
-        performance, payments_total, misc_costs_total, society_income
+    def assert_breakdown_values(
+        performance,
+        payments_total,
+        misc_costs_total,
+        society_income,
+        card_payments_total,
     ):
         assert performance.sales_breakdown["payments_total"] == payments_total
+        assert performance.sales_breakdown["card_payments_total"] == card_payments_total
         assert performance.sales_breakdown["misc_costs_total"] == misc_costs_total
         assert performance.sales_breakdown["society_income_total"] == society_income
 
     # Blank performance should have no sales
-    asser_breakdown_values(performance, 0, 0, 0)
+    assert_breakdown_values(performance, 0, 0, 0, 0)
 
     # Add a performance with 1 draft, 1 paid and one comp booking
     perf_seat_group = PerformanceSeatingFactory(performance=performance, price=150)
@@ -925,4 +935,16 @@ def test_sales_breakdown_on_performance():
     TicketFactory(booking=booking_3, seat_group=perf_seat_group.seat_group)
     PaymentFactory(pay_object=booking_2, value=booking_2.total())
 
-    asser_breakdown_values(performance, 400, 100, 300)
+    assert_breakdown_values(performance, 400, 100, 300, 400)
+
+    # Box office cash booking, cost of 150 + 100 misc cost = 250
+    booking_4 = BookingFactory(
+        status=Booking.BookingStatus.PAID,
+        performance=performance,
+    )
+    TicketFactory(booking=booking_4, seat_group=perf_seat_group.seat_group)
+    PaymentFactory(pay_object=booking_4, value=booking_4.total(), provider="CASH")
+
+    assert_breakdown_values(
+        performance, 650, 200, 450, 400
+    )  # Notice how the card total has not gone up

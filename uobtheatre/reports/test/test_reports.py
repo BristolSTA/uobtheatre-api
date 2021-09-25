@@ -119,11 +119,14 @@ def create_fixtures():
         pay_object=booking_1,
         value=booking_1.total(),
         provider=payment_methods.SquarePOS.__name__,
+        provider_payment_id="square_id",
     )
     payment_1.created_at = "2021-09-08T00:00:01"
     payment_1.save()
 
-    payment_2 = PaymentFactory(pay_object=booking_2, value=booking_2.total())
+    payment_2 = PaymentFactory(
+        pay_object=booking_2, value=booking_2.total(), provider="CASH"
+    )
     payment_2.created_at = "2021-09-05T12:00:01"
     payment_2.save()
 
@@ -207,7 +210,10 @@ def test_period_totals_breakdown_report():
 
     assert report.datasets[0].name == "Provider Totals"
     assert len(report.datasets[0].headings) == 2
-    assert report.datasets[0].data == [["SquarePOS", 1100], ["SquareOnline", 580]]
+    assert report.datasets[0].data == [
+        ["SquarePOS", 1100],
+        ["SQUARE_ONLINE", 580],
+    ]
 
     assert report.datasets[1].name == "Production Totals"
     assert len(report.datasets[1].headings) == 3
@@ -225,19 +231,23 @@ def test_period_totals_breakdown_report():
     ]
 
     assert report.datasets[2].name == "Payments"
-    assert len(report.datasets[2].headings) == 4
+    assert len(report.datasets[2].headings) == 6
     assert report.datasets[2].data == [
         [
             str(payment_1.id),
             "2021-09-08 00:00:01",
             str(booking_1.id),
             "1100",
+            "SquarePOS",
+            "square_id",
         ],
         [
             str(payment_3.id),
             "2021-09-08 12:00:01",
             str(booking_3.id),
             "580",
+            "SQUARE_ONLINE",
+            "",
         ],
     ]
 
@@ -255,12 +265,16 @@ def test_outstanding_society_payments_report():
 
     assert len(report.meta) == 1
     assert report.meta[0].name == "Total Outstanding"
-    assert report.meta[0].value == "3200.0"
+    assert report.meta[0].value == "1100.0"
 
     assert report.datasets[0].name == "Societies"
     assert len(report.datasets[0].headings) == 3
     assert report.datasets[0].data == [
-        [society_1.id, "Society 1", 3000],  # 3200 - 200 (misc cost),
+        [
+            society_1.id,
+            "Society 1",
+            900,
+        ],  # 1100 (card payments) - 200 (misc costs on all payments),
         [
             "",
             "Stage Technicians' Association",
@@ -269,9 +283,18 @@ def test_outstanding_society_payments_report():
     ]
 
     assert report.datasets[1].name == "Productions"
-    assert len(report.datasets[1].headings) == 6
+    assert len(report.datasets[1].headings) == 8
     assert report.datasets[1].data == [
-        [production_1.id, "Amazing Show 1", society_1.id, "Society 1", 3000, 200]
+        [
+            production_1.id,
+            "Amazing Show 1",
+            society_1.id,
+            "Society 1",
+            3200,  # Payments total (1100 + 2100)
+            1100,  # Of which card: 1100
+            200,  # Total misc costs (2 bookings * 100)
+            900,  # Card payments (1100) - Total Misc costs (200)
+        ]
     ]
 
 

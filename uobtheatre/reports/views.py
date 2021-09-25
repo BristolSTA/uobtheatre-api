@@ -67,7 +67,7 @@ def period_totals(request, start_time, end_time):
             "This report provides summaries and totals of payments taken and recorded.",
             "Totals are calcualted by summing the payments (which are positive in the chase of a charge, or negative for a refund).",
             "Totals are inclusive of any costs and fees that are charged to the society. Hence, these figures should not be used to calculate account transfers to societies.",
-            "All currency is GBP.",
+            "All currency is PENCE (i.e. 100 = £1.00)",
         ],
         [
             ["Period From", str(start_time)],
@@ -88,9 +88,11 @@ def outstanding_society_payments(request):
     excel = ExcelReport(
         "Outstanding Society Payments",
         [
-            "This report details the production income due to societies at the time the report is generated.",
+            "This report details the production income at the time the report is generated.",
             "Once the payment has been made, this MUST be recorded on the system in order to remove the balance.",
-            "All currency is GBP.",
+            "If the balance for a certain production shows negative, this is because this society owes the STA money. Please do not action negative balances.",
+            "The balance that should be transfered to a production's society is indicated in the 'Society Payment Due' column.",
+            "All currency is PENCE (i.e. 100 = £1.00)",
         ],
         report.get_meta_array(),
         request.user,
