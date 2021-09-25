@@ -22,7 +22,9 @@ from uobtheatre.discounts.test.factories import (
     DiscountFactory,
     DiscountRequirementFactory,
 )
+from uobtheatre.payments import payment_methods
 from uobtheatre.payments.models import Payment
+from uobtheatre.payments.test.factories import PaymentFactory
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.utils.test_utils import ticket_dict_list_dict_gen, ticket_list_dict_gen
@@ -982,7 +984,11 @@ def test_complete():
 
 
 @pytest.mark.django_db
-def test_send_confirmation_email(mailoutbox):
+@pytest.mark.parametrize(
+    "with_payment, provider_payment_id",
+    [(True, "SQUARE_PAYMENT_ID"), (True, None), (False, None)],
+)
+def test_send_confirmation_email(mailoutbox, with_payment, provider_payment_id):
     production = ProductionFactory(name="Legally Ginger")
     performance = PerformanceFactory(
         doors_open=datetime.datetime(
@@ -1008,6 +1014,15 @@ def test_send_confirmation_email(mailoutbox):
         reference="abc",
         performance=performance,
     )
+
+    if with_payment:
+        PaymentFactory(
+            pay_object=booking,
+            value=1000,
+            provider=payment_methods.SquareOnline.__name__,
+            provider_payment_id=provider_payment_id,
+        )
+
     booking.send_confirmation_email()
 
     assert len(mailoutbox) == 1
@@ -1016,3 +1031,13 @@ def test_send_confirmation_email(mailoutbox):
     assert "https://example.com/user/booking/abc" in email.body
     assert "Legally Ginger" in email.body
     assert "opens at 20 October 2021 18:15 UTC for a 19:15 UTC start" in email.body
+    if with_payment:
+        assert "Payment Information" in email.body
+        assert "10.00 GBP" in email.body
+        assert (
+            "(SquareOnline - ID SQUARE_PAYMENT_ID)"
+            if provider_payment_id
+            else "(SquareOnline)" in email.body
+        )
+    else:
+        assert "Payment Information" not in email.body
