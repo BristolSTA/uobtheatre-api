@@ -379,7 +379,10 @@ def parse_target_user_email(
 
     # If a target user is provided get that user, if not then this booking is intended for the user that is logged in
     if target_user_email:
-        target_user, _ = User.objects.get_or_create(email=target_user_email)
+        target_user, _ = User.objects.get_or_create(
+            email=target_user_email,
+            defaults={"first_name": "Anonymous", "last_name": "User"},
+        )
         return target_user
     return creator_user
 

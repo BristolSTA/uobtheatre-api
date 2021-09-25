@@ -1014,6 +1014,7 @@ def test_send_confirmation_email(mailoutbox, with_payment, provider_payment_id):
         reference="abc",
         performance=performance,
     )
+    booking.user.status.verified = True
 
     if with_payment:
         PaymentFactory(
@@ -1041,3 +1042,42 @@ def test_send_confirmation_email(mailoutbox, with_payment, provider_payment_id):
         )
     else:
         assert "Payment Information" not in email.body
+
+
+@pytest.mark.django_db
+def test_send_confirmation_email_for_anonymous(mailoutbox):
+    production = ProductionFactory(name="Legally Ginger")
+    performance = PerformanceFactory(
+        doors_open=datetime.datetime(
+            day=20,
+            month=10,
+            year=2021,
+            hour=18,
+            minute=15,
+            tzinfo=timezone.get_current_timezone(),
+        ),
+        start=datetime.datetime(
+            day=20,
+            month=10,
+            year=2021,
+            hour=19,
+            minute=15,
+            tzinfo=timezone.get_current_timezone(),
+        ),
+        production=production,
+    )
+    booking = BookingFactory(
+        status=Booking.BookingStatus.IN_PROGRESS,
+        reference="abc",
+        performance=performance,
+    )
+
+    booking.send_confirmation_email()
+
+    assert len(mailoutbox) == 1
+    email = mailoutbox[0]
+    assert email.subject == "Your booking is confirmed!"
+    assert "https://example.com/user/booking/abc" not in email.body
+    assert "Legally Ginger" in email.body
+    assert "opens at 20 October 2021 18:15 UTC for a 19:15 UTC start" in email.body
+    assert "reference (abc)" in email.body

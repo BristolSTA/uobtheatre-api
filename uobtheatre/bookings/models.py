@@ -525,18 +525,35 @@ class Booking(TimeStampedMixin, Payable, models.Model):
         Send email confirmation which includes a link to the booking.
         """
         composer = MailComposer()
-        composer.heading("Hi %s" % self.user.first_name.capitalize()).line(
+
+        # Add greating
+        composer.heading(
+            "Hi %s" % self.user.first_name.capitalize()
+            if self.user.status.verified
+            else "Hello"
+        )
+
+        composer.line(
             "Your booking to %s has been confirmed!" % self.performance.production.name
-        ).image(self.performance.production.featured_image.file.url).line(
-            "This event opens at %s for a %s start. Please bring your tickets (printed or on your phone) or your booking reference (<strong>%s</strong>)."
+        ).image(self.performance.production.featured_image.file.url)
+
+        composer.line(
+            (
+                "This event opens at %s for a %s start. Please bring your tickets (printed or on your phone) or your booking reference (<strong>%s</strong>)."
+                if self.user.status.verified
+                else "This event opens at %s for a %s start. Please bring your booking reference (<strong>%s</strong>)."
+            )
             % (
                 self.performance.doors_open.strftime("%d %B %Y %H:%M %Z"),
                 self.performance.start.strftime("%H:%M %Z"),
                 self.reference,
             )
-        ).action(
-            "/user/booking/%s" % self.reference, "View Tickets & Booking"
         )
+
+        if self.user.status.verified:
+            composer.action(
+                "/user/booking/%s" % self.reference, "View Tickets & Booking"
+            )
 
         payment = self.payments.first()
         # If this booking includes a payment, we will include details of this payment as a reciept
