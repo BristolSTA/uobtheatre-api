@@ -105,6 +105,14 @@ def test_panel_item():
     )
 
 
+def test_append():
+    line = Line("Test")
+    composer = MailComposer()
+    assert composer.items == []
+    composer.append(line)
+    assert composer.items == [line]
+
+
 @pytest.mark.parametrize("size", [1, 2, 3])
 def test_heading_item(size):
     heading = Heading("My Heading %s" % size, size)
