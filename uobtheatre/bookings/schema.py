@@ -642,6 +642,15 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         if booking.status != Booking.BookingStatus.IN_PROGRESS:
             raise GQLException(message="The booking is not in progress")
 
+        # Booking must have at least one ticket
+        if booking.tickets.count() == 0:
+            raise GQLException(message="The booking must have at least one ticket")
+
+        # If the booking is free, we don't care about the payment provider. Otherwise, we do
+        if booking.total() == 0:
+            booking.complete()
+            return PayBooking(booking=booking)
+
         if payment_provider == SquareOnline.name:
             if not nonce:
                 raise GQLException(
@@ -670,7 +679,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         elif payment_provider == Card.name:
             payment_method = Card()
         else:
-            raise GQLException(
+            raise GQLException(  # pragma: no cover
                 message=f"Unsupported payment provider {payment_provider}."
             )
 

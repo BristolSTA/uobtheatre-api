@@ -1,6 +1,8 @@
 import factory
 
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
+from uobtheatre.discounts.models import DiscountRequirement
+from uobtheatre.discounts.test.factories import DiscountFactory
 from uobtheatre.productions.models import PerformanceSeatGroup
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
@@ -57,3 +59,16 @@ class TicketFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = Ticket
+
+
+def add_ticket_to_booking(booking):
+    """Adds a ticket of price 100 to the booking"""
+    ticket = TicketFactory(booking=booking)
+    PerformanceSeatingFactory(
+        performance=booking.performance, seat_group=ticket.seat_group, price=100
+    )
+    discount = DiscountFactory(percentage=0)
+    discount.performances.set([booking.performance])
+    DiscountRequirement(
+        number=1, concession_type=ticket.concession_type, discount=discount
+    )
