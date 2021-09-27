@@ -58,6 +58,22 @@
   }
 },
 {
+  "model": "images.image",
+  "pk": 4,
+  "fields": {
+    "file": "Dramsoc_Logo_WB.png",
+    "alt_text": "dramsoc-logo"
+  }
+},
+{
+  "model": "images.image",
+  "pk": 5,
+  "fields": {
+    "file": "Dramsoc_Banner2.png",
+    "alt_text": "dramsoc-banner"
+  }
+},
+{
   "model": "addresses.address",
   "pk": 1,
   "fields": {
@@ -168,12 +184,14 @@
   "pk": 1,
   "fields": {
     "created_at": "2021-03-17T21:20:10.644Z",
-    "updated_at": "2021-09-23T15:50:40.104Z",
+    "updated_at": "2021-09-25T14:50:08.305Z",
     "name": "Stage Technicians Association",
     "slug": "mtb",
     "description": "<p style=\"text-align: left; margin-left: 0px!important;\">A friendly, fun and FREE society for anyone who enjoys the \"dark side\" of theatre!</p><p style=\"text-align: left; margin-left: 0px!important;\">We design, rig and crew Union shows, so whether you're interested in stage management, lighting, sound or even carpentry; whether you have years' experience or none; we are the society for you! Find us always in the theatre...</p><p style=\"text-align: start; margin-left: 0px!important;\"></p><p style=\"text-align: start; margin-left: 0px!important;\">Website:&nbsp;<strong>http://bristolsta.com</strong> </p>",
     "logo": 2,
     "banner": 3,
+    "website": null,
+    "contact": null,
     "members": []
   }
 },
@@ -182,12 +200,14 @@
   "pk": 2,
   "fields": {
     "created_at": "2021-09-23T14:24:53.278Z",
-    "updated_at": "2021-09-23T14:24:57.328Z",
+    "updated_at": "2021-09-25T14:50:20.222Z",
     "name": "Dramsoc",
     "slug": "dramsoc",
-    "description": "<p style=\"text-align: left; margin-left: 0px!important;\">Bristol's largest and oldest performing arts society. Something for everyone interested in theatre: acting, directing, producing, writing, reviewing or watching. From \"TRASH\", eight 10-minute extracts back-to-back, to full length plays, in the Union, Bristol and beyond. Opportunities to go up to Edinburgh, participate in workshops and write plays.</p><p style=\"text-align: left; margin-left: 0px!important;\">Website: https://www.bristoldramasociety.co.uk/</p><p style=\"text-align: left; margin-left: 0px!important;\">Contact: bristoldramsoc@gmail.com</p>",
-    "logo": 2,
-    "banner": 3,
+    "description": "<p style=\"text-align: left; margin-left: 0px!important;\">Dramsoc is the University of Bristol's longest running, largest and most prestigious performing arts society. Committed to student theatre, our aim is to nurture talent, produce high quality productions and cultivate a welcoming and inclusive environment.</p><p style=\"text-align: left; margin-left: 0px!important;\">We offer a wide variety of activities for our members including shows, workshops, schemes and socials.</p><p style=\"text-align: left; margin-left: 0px!important;\">We put on an average of 6 shows a year inside the Student’s Union and at external venues. This means that there are a variety of spaces available to you as a Dramsoc member – from the huge Winston Theatre or Pegg Studio within the Union, to the reputable Tobacco Factory or the atmospheric Lost Horizons. We always look to expand the range of opportunities available to our members. From showcases to an assortment of workshops and socials, involvement with Dramsoc always guarantees a chance for something new and fun. Moving further afield, we also fund teams to go to the Edinburgh Fringe Festival every summer.</p><p style=\"text-align: left; margin-left: 0px!important;\">Everyone is welcome at the many auditions we run throughout the year and absolutely anyone can propose for a slot to put on anything of their choosing, securing the funding on offer. This means that no two shows are the same and that there is opportunity to get involved on whatever level you would like.</p>",
+    "logo": 4,
+    "banner": 5,
+    "website": "https://www.bristoldramasociety.co.uk/",
+    "contact": "bristoldramsoc@gmail.com",
     "members": []
   }
 },
@@ -196,12 +216,14 @@
   "pk": 3,
   "fields": {
     "created_at": "2021-09-23T14:27:39.919Z",
-    "updated_at": "2021-09-23T18:53:18.571Z",
+    "updated_at": "2021-09-24T14:20:31.251Z",
     "name": "Musical Theatre Bristol",
     "slug": "musical-theatre-bristol",
-    "description": "<p style=\"text-align: left; margin-left: 0px!important;\">Welcome to <strong>Music Theatre Bristol</strong>, a student theatre company from the University of Bristol! From cabarets to showcases, small-scale shows to full-scale musical productions, MTB is proud to be one of the most successful performing arts societies at the university.</p><ul><li><p style=\"text-align: left; margin-left: 0px!important;\">f</p></li><li><p style=\"text-align: left; margin-left: 0px!important;\">fg</p></li></ul><p style=\"text-align: left; margin-left: 0px!important;\">Website: <em>http://www.musictheatrebristol.com</em></p><p style=\"text-align: left; margin-left: 0px!important;\">Contact: <em>president@musictheatrebristol.com</em></p>",
+    "description": "<p style=\"text-align: left; margin-left: 0px!important;\">Welcome to <strong>Music Theatre Bristol</strong>, a student theatre company from the University of Bristol! From cabarets to showcases, small-scale shows to full-scale musical productions, MTB is proud to be one of the most successful performing arts societies at the university.</p>",
     "logo": 2,
     "banner": 3,
+    "website": "http://www.musictheatrebristol.com",
+    "contact": "president@musictheatrebristol.com",
     "members": []
   }
 },
@@ -216,6 +238,8 @@
     "description": "<p style=\"text-align: left; margin-left: 0px!important;\">Everyone is guaranteed a part! We perform several pantomimes a year, including our epic Christmas show and our Panto-in-a-day, all written by society members.</p><p style=\"text-align: left; margin-left: 0px!important;\">If you want to get involved in Bristol's friendliest society, whether it's on stage, backstage or enjoying crazy socials, then this is the place for you!</p><p style=\"text-align: left; margin-left: 0px!important;\">Website: http://www.pantosoc.co.uk/</p><p style=\"text-align: left; margin-left: 0px!important;\">Contact: president@pantosoc.co.uk</p>",
     "logo": 2,
     "banner": 3,
+    "website": null,
+    "contact": null,
     "members": []
   }
 },
@@ -230,6 +254,8 @@
     "description": "<p style=\"text-align: left; margin-left: 0px!important;\">Spotlights specialises in taking risks, finding challenges and discovering new talent. Whether you enjoy writing, directing, performing or the process of devising a piece of theatre, Spotlights is here to encourage, and make sure that you are able to create whatever the vision is that you have in your mind!</p><p style=\"text-align: left; margin-left: 0px!important;\">Contact:&nbsp;<strong>bristolspotlights@gmail.com</strong></p>",
     "logo": 2,
     "banner": 3,
+    "website": null,
+    "contact": null,
     "members": []
   }
 },
@@ -244,6 +270,8 @@
     "description": "<p style=\"text-align: left; margin-left: 0px!important;\">Bristol University Operatic Society provides many opportunities to get involved in the world of opera.</p><p style=\"text-align: left; margin-left: 0px!important;\">With full-scale productions in the Winston Theatre and a number of smaller events, we are always on the lookout for singers, instrumentalists, conductors and directors.directors.</p><p style=\"text-align: start; margin-left: 0px!important;\">Website:&nbsp;https://www.bristoluniversityoperaticsociety.com Contact:&nbsp;president.bops@gmail.com</p>",
     "logo": 2,
     "banner": 3,
+    "website": null,
+    "contact": null,
     "members": []
   }
 },
@@ -258,6 +286,8 @@
     "description": "<p style=\"text-align: left; margin-left: 0px!important;\">UoB Dance Society offers members a full weekly time-table of professionally-led dance classes for all interests and abilities. The society holds a massive annual dance show, additional to smaller performances and competition opportunities. UoB Dance Society enjoys an enthusiastic atmosphere encouraged by various socials arranged throughout the year.</p><p style=\"text-align: start; margin-left: 0px!important;\">Website:&nbsp;https://www.bristolsu.org.uk/groups/dance-society-1045 Contact:&nbsp;bristoldancesoc@gmail.com</p>",
     "logo": 2,
     "banner": 3,
+    "website": null,
+    "contact": null,
     "members": []
   }
 },
@@ -272,6 +302,8 @@
     "description": "<p style=\"text-align: left; margin-left: 0px!important;\">Improvsoc is for all those with an inventive bone in them!</p><p style=\"text-align: left; margin-left: 0px!important;\">We're all about improvisation; improvised comedy in particular - running workshops to help give you the skills, and putting on shows to give you the thrills. If you love comedy, drama or spontaneity, we're the society for you!</p><p style=\"text-align: start; margin-left: 0px!important;\"></p><p style=\"text-align: start; margin-left: 0px!important;\">Website:&nbsp;http://www.bristolimprov.co.uk/ </p><p style=\"text-align: start; margin-left: 0px!important;\">Contact:&nbsp;improvbristol@gmail.com</p>",
     "logo": 2,
     "banner": 3,
+    "website": null,
+    "contact": null,
     "members": []
   }
 },
@@ -286,6 +318,8 @@
     "description": "<p style=\"text-align: left; margin-left: 0px!important;\">University of Bristol A Cappella Society gives absolutely anyone who wants to sing the chance to get involved in any of our groups, which include both auditioned and unauditioned groups. Our groups put on and participate in several concerts a year, showcasing Bristol as one of the hottest spots for UK a cappella!</p><p style=\"text-align: start; margin-left: 0px!important;\">Website:&nbsp;<strong>http://www.uobacappella.org.uk/</strong> </p><p style=\"text-align: start; margin-left: 0px!important;\">Contact:&nbsp;<strong>contact@uobacappella.org.uk</strong></p>",
     "logo": 2,
     "banner": 3,
+    "website": null,
+    "contact": null,
     "members": []
   }
 },
@@ -300,6 +334,8 @@
     "description": "<p style=\"text-align: left; margin-left: 0px!important;\">The South-West's Comedy Crèche. We write, direct and perform our own sketch comedy. If you fancy getting involved, come along to our weekly workshops and join us in creating brand new sketches. We do lots of shows and every year take two up to the Edinburgh Festival Fringe. We also host many scratch nights, giving budding non-sketch comedians the chance to perform with us as well, so whatever kind of comedy you're into, there's loads of opportunity to get involved. Become a member with the Bristol Revunions to be kept up to date with all of this and more.</p><p style=\"text-align: start; margin-left: 0px!important;\">Twitter:&nbsp;<strong>@BrisRevunions</strong></p><p style=\"text-align: start; margin-left: 0px!important;\">Website:&nbsp;<strong>http://www.bristolrevunions.com/</strong> </p><p style=\"text-align: start; margin-left: 0px!important;\">Contact:&nbsp;<strong>revunions@gmail.com</strong></p>",
     "logo": 2,
     "banner": 3,
+    "website": null,
+    "contact": null,
     "members": []
   }
 },
@@ -438,6 +474,86 @@
       4,
       5
     ]
+  }
+},
+{
+  "model": "productions.production",
+  "pk": 5,
+  "fields": {
+    "created_at": "2021-09-24T14:21:51.747Z",
+    "updated_at": "2021-09-24T14:21:51.747Z",
+    "name": "sezwefesezrdfghtb",
+    "subtitle": null,
+    "description": "<p style=\"text-align: left; margin-left: 0px!important;\">zrgzd</p>",
+    "society": 3,
+    "cover_image": 3,
+    "poster_image": 1,
+    "featured_image": 3,
+    "status": "PUBLISHED",
+    "age_rating": null,
+    "facebook_event": null,
+    "slug": "sezwefesezrdfghtb",
+    "warnings": []
+  }
+},
+{
+  "model": "productions.production",
+  "pk": 8,
+  "fields": {
+    "created_at": "2021-09-24T14:23:11.115Z",
+    "updated_at": "2021-09-24T14:23:36.412Z",
+    "name": "drg",
+    "subtitle": null,
+    "description": "<p style=\"text-align: left; margin-left: 0px!important;\">zrdg</p>",
+    "society": 3,
+    "cover_image": null,
+    "poster_image": 1,
+    "featured_image": 3,
+    "status": "PUBLISHED",
+    "age_rating": null,
+    "facebook_event": null,
+    "slug": "drg",
+    "warnings": []
+  }
+},
+{
+  "model": "productions.production",
+  "pk": 9,
+  "fields": {
+    "created_at": "2021-09-24T14:24:18.010Z",
+    "updated_at": "2021-09-24T14:24:18.010Z",
+    "name": "drdth",
+    "subtitle": null,
+    "description": "<p style=\"text-align: left; margin-left: 0px!important;\">dttcfh</p>",
+    "society": 3,
+    "cover_image": null,
+    "poster_image": 3,
+    "featured_image": 1,
+    "status": "PUBLISHED",
+    "age_rating": null,
+    "facebook_event": null,
+    "slug": "drdth",
+    "warnings": []
+  }
+},
+{
+  "model": "productions.production",
+  "pk": 10,
+  "fields": {
+    "created_at": "2021-09-24T14:36:13.666Z",
+    "updated_at": "2021-09-24T14:36:13.666Z",
+    "name": "nhfdg",
+    "subtitle": null,
+    "description": "<p style=\"text-align: left; margin-left: 0px!important;\">gdsfhc</p>",
+    "society": 3,
+    "cover_image": null,
+    "poster_image": 1,
+    "featured_image": 3,
+    "status": "PUBLISHED",
+    "age_rating": null,
+    "facebook_event": null,
+    "slug": "nhfdg",
+    "warnings": []
   }
 },
 {
