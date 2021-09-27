@@ -1102,6 +1102,7 @@ def test_pay_booking_square_error(mock_square, gql_client):
             bookingId: "%s"
             price: 0
             nonce: "cnon:card-nonce-ok"
+            idempotencyKey: "my_idempotency_key_string"
         ) {
             success
             errors {
@@ -1121,6 +1122,7 @@ def test_pay_booking_square_error(mock_square, gql_client):
         success=False,
         reason_phrase="Some phrase",
         status_code=400,
+        errors=[{"category": "", "detail": "", "code": "MY_CODE"}],
     ):
         response = gql_client.execute(
             request_query % to_global_id("BookingNode", booking.id)
@@ -1133,7 +1135,7 @@ def test_pay_booking_square_error(mock_square, gql_client):
                 "errors": [
                     {
                         "__typename": "NonFieldError",
-                        "message": "Some phrase",
+                        "message": "There was an issue processing your payment (MY_CODE)",
                         "code": "400",
                     }
                 ],
@@ -1229,6 +1231,50 @@ def test_pay_booking_mutation_unauthorized_provider(gql_client):
 
 
 @pytest.mark.django_db
+def test_pay_booking_mutation_online_without_idempotency_key(gql_client):
+    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    gql_client.login()
+
+    request_query = """
+    mutation {
+	payBooking(
+            bookingId: "%s"
+            price: 0
+            nonce: "cnon:card-nonce-ok"
+        ) {
+            success
+            errors {
+              __typename
+              ... on FieldError {
+                message
+                code
+                field
+              }
+            }
+          }
+        }
+    """
+    response = gql_client.execute(
+        request_query % to_global_id("BookingNode", booking.id)
+    )
+    assert response == {
+        "data": {
+            "payBooking": {
+                "success": False,
+                "errors": [
+                    {
+                        "__typename": "FieldError",
+                        "message": "An idempotency key is required when using SQUARE_ONLINE provider.",
+                        "code": "missing_required",
+                        "field": "idempotencyKey",
+                    }
+                ],
+            }
+        }
+    }
+
+
+@pytest.mark.django_db
 def test_pay_booking_mutation_online_without_nonce(gql_client):
     booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
     gql_client.login()
@@ -1282,6 +1328,7 @@ def test_pay_booking_success(mock_square, gql_client):
             bookingId: "%s"
             price: 0
             nonce: "cnon:card-nonce-ok"
+            idempotencyKey: "my_idempotency_key_string"
         ) {
             success
             errors {
