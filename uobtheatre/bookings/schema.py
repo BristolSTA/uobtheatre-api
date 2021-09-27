@@ -454,6 +454,12 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
         # Get the performance and if it doesn't exist throw an error
         performance = Performance.objects.get(id=performance_id)
 
+        # Check performance is bookable
+        if not performance.is_bookable:
+            raise GQLException(
+                message="This performance is not able to be booked at the moment"
+            )
+
         ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))
 
         # Check the capacity of the show and its seat_groups
@@ -602,6 +608,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
             "uobtheatre.payments.schema.PaymentMethodsEnum"
         )
         device_id = graphene.String(required=False)
+        idempotency_key = graphene.String(required=False)
 
     @classmethod
     def resolve_mutation(  # pylint: disable=too-many-arguments
@@ -613,6 +620,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         nonce=None,
         payment_provider=SquareOnline.name,
         device_id=None,
+        idempotency_key=None,
     ):
 
         # Get the performance and if it doesn't exist throw an error
@@ -637,6 +645,15 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         if booking.status != Booking.BookingStatus.IN_PROGRESS:
             raise GQLException(message="The booking is not in progress")
 
+        # Booking must have at least one ticket
+        if booking.tickets.count() == 0:
+            raise GQLException(message="The booking must have at least one ticket")
+
+        # If the booking is free, we don't care about the payment provider. Otherwise, we do
+        if booking.total() == 0:
+            booking.complete()
+            return PayBooking(booking=booking)
+
         if payment_provider == SquareOnline.name:
             if not nonce:
                 raise GQLException(
@@ -644,7 +661,13 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
                     field="nonce",
                     code="missing_required",
                 )
-            payment_method = SquareOnline(nonce, booking.id)
+            if not idempotency_key:
+                raise GQLException(
+                    message=f"An idempotency key is required when using {payment_provider} provider.",
+                    field="idempotency_key",
+                    code="missing_required",
+                )
+            payment_method = SquareOnline(nonce, idempotency_key)
         elif payment_provider == SquarePOS.name:
             if not device_id:
                 raise GQLException(
@@ -658,7 +681,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         elif payment_provider == Card.name:
             payment_method = Card()
         else:
-            raise GQLException(
+            raise GQLException(  # pragma: no cover
                 message=f"Unsupported payment provider {payment_provider}."
             )
 

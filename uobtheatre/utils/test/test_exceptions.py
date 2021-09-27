@@ -1,5 +1,6 @@
 import pytest
 
+from uobtheatre.payments.test.factories import MockApiResponse
 from uobtheatre.utils.exceptions import (
     AuthOutput,
     FieldError,
@@ -12,10 +13,14 @@ from uobtheatre.utils.exceptions import (
 
 
 def compare_gql_objects(object1, object2):
+    """Compares two graphene objects to ensure they are equal"""
     assert type(object1) == type(object2)  # pylint: disable=unidiomatic-typecheck
+
     assert (
         object1._meta.fields == object2._meta.fields  # pylint: disable=protected-access
     )
+    for field in object1._meta.fields:  # pylint: disable=protected-access
+        assert getattr(object1, field) == getattr(object2, field)
 
 
 def test_auth_error_handling_failure():
@@ -81,16 +86,49 @@ def test_gql_exceptions():
 
 
 def test_square_exception():
-    class MockApiResponse:  # pylint: disable=missing-class-docstring
-        def __init__(self):
-            self.reason_phrase = "Some phrase"
-            self.status_code = 404
-
-        def is_success(self):
-            return False
-
     exception = SquareException(MockApiResponse())
     assert len(exception.resolve()) == 1
     compare_gql_objects(
-        exception.resolve()[0], NonFieldError(message="Some phrase", code=404)
+        exception.resolve()[0], NonFieldError(message="Some phrase", code=400)
+    )
+
+
+def test_square_exception_with_payment_method_error():
+    exception = SquareException(
+        MockApiResponse(
+            errors=[
+                {
+                    "category": "PAYMENT_METHOD_ERROR",
+                    "code": "SOMETHING_WRONG",
+                    "detail": "Detailed error message",
+                }
+            ]
+        )
+    )
+    assert len(exception.resolve()) == 1
+    compare_gql_objects(
+        exception.resolve()[0],
+        NonFieldError(message="Detailed error message", code=400),
+    )
+
+
+def test_square_exception_with_non_payment_method_error():
+    exception = SquareException(
+        MockApiResponse(
+            errors=[
+                {
+                    "category": "API_ERROR",
+                    "code": "SOMETHING_WRONG",
+                    "detail": "Detailed error message",
+                }
+            ]
+        )
+    )
+    assert len(exception.resolve()) == 1
+    compare_gql_objects(
+        exception.resolve()[0],
+        NonFieldError(
+            message="There was an issue processing your payment (SOMETHING_WRONG)",
+            code=400,
+        ),
     )

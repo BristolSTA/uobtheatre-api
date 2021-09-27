@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 from types import SimpleNamespace
-from typing import Optional
+from typing import List, Optional
 from unittest.mock import patch
 
 import pytest
@@ -9,6 +9,7 @@ from django.test import RequestFactory
 from graphene.test import Client as GQLClient
 from rest_framework.test import APIClient
 
+from uobtheatre.payments.test.factories import MockApiResponse
 from uobtheatre.schema import schema as app_schema
 from uobtheatre.users.test.factories import UserFactory
 
@@ -63,22 +64,6 @@ def mock_square():
     Used to mock the square client
     """
 
-    class MockApiResponse:
-        """
-        Mock of the square API Response CLass
-        """
-
-        def __init__(
-            self, reason_phrase="Some phrase", status_code=400, success=False, body=None
-        ):
-            self.reason_phrase = reason_phrase
-            self.status_code = status_code
-            self.success = success
-            self.body = body
-
-        def is_success(self):
-            return self.success
-
     @contextmanager
     def mock_client(  # pylint: disable=too-many-arguments
         square_client_api,
@@ -87,6 +72,7 @@ def mock_square():
         success: Optional[bool] = None,
         reason_phrase: Optional[str] = None,
         status_code: Optional[int] = None,
+        errors: Optional[List] = None,
     ):
         """
         Mock a provided square client object
@@ -100,6 +86,7 @@ def mock_square():
                 success=success,
                 reason_phrase=reason_phrase,
                 status_code=status_code,
+                errors=errors,
             )
             yield mocked_square
 

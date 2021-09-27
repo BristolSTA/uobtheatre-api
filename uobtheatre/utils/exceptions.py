@@ -119,8 +119,28 @@ class GQLExceptions(MutationException):
 
 
 class SquareException(GQLException):
+    """An exception with the square API"""
+
     def __init__(self, square_response):
-        super().__init__(square_response.reason_phrase, square_response.status_code)
+        passthrough_error_categories = [
+            "PAYMENT_METHOD_ERROR",
+        ]
+        error = (
+            square_response.errors[0]
+            if square_response.errors and len(square_response.errors)
+            else None
+        )
+        message = (
+            (
+                error["detail"]
+                if error["category"] in passthrough_error_categories
+                else "There was an issue processing your payment (%s)" % error["code"]
+            )
+            if error
+            else square_response.reason_phrase
+        )
+
+        super().__init__(message, square_response.status_code)
 
 
 class AuthException(GQLException):
