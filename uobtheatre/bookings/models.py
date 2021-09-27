@@ -3,17 +3,15 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.aggregates import BoolAnd
-from django.contrib.sites.models import Site
-from django.core.mail import EmailMultiAlternatives
 from django.db import models
 from django.db.models import Case, F, FloatField, Q, Value, When
 from django.db.models.functions import Cast
 from django.db.models.query import QuerySet
-from django.template.loader import get_template
 from django.utils import timezone
 from django.utils.functional import cached_property
 
 from uobtheatre.discounts.models import ConcessionType, DiscountCombination
+from uobtheatre.mail.composer import MailComposer
 from uobtheatre.payments.models import Payment
 from uobtheatre.payments.payables import Payable
 from uobtheatre.productions.models import Performance
@@ -526,30 +524,50 @@ class Booking(TimeStampedMixin, Payable, models.Model):
         """
         Send email confirmation which includes a link to the booking.
         """
-        plaintext_template = get_template("emails/booking_confirmation_email.txt")
-        html_template = get_template("emails/booking_confirmation_email.html")
-        site = Site.objects.get_current()
+        composer = MailComposer()
 
-        context = {
-            "booking": self,
-            "user_name": self.user.first_name.capitalize(),
-            "production_name": self.performance.production.name,
-            "start": self.performance.start,
-            "protocol": "https",
-            "domain": site.domain,
-        }
-
-        subject, from_email, to_email = (
-            "Your booking is confirmed!",
-            '"UOB Theatre" <tickets@uobtheatre.com>',
-            self.user.email,
+        # Add greating
+        composer.heading(
+            "Hi %s" % self.user.first_name.capitalize()
+            if self.user.status.verified
+            else "Hello"
         )
-        text_content = plaintext_template.render(context)
-        html_content = html_template.render(context)
 
-        msg = EmailMultiAlternatives(subject, text_content, from_email, [to_email])
-        msg.attach_alternative(html_content, "text/html")
-        msg.send()
+        composer.line(
+            "Your booking to %s has been confirmed!" % self.performance.production.name
+        ).image(self.performance.production.featured_image.file.url)
+
+        composer.line(
+            (
+                "This event opens at %s for a %s start. Please bring your tickets (printed or on your phone) or your booking reference (<strong>%s</strong>)."
+                if self.user.status.verified
+                else "This event opens at %s for a %s start. Please bring your booking reference (<strong>%s</strong>)."
+            )
+            % (
+                self.performance.doors_open.strftime("%d %B %Y %H:%M %Z"),
+                self.performance.start.strftime("%H:%M %Z"),
+                self.reference,
+            )
+        )
+
+        if self.user.status.verified:
+            composer.action(
+                "/user/booking/%s" % self.reference, "View Tickets & Booking"
+            )
+
+        payment = self.payments.first()
+        # If this booking includes a payment, we will include details of this payment as a reciept
+        if payment:
+            composer.heading("Payment Information").line(
+                "{:.2f}".format(payment.value / 100)
+                + f" {payment.currency} paid ({payment.provider}{' - ID' + payment.provider_payment_id if payment.provider_payment_id else '' })"
+            )
+
+        composer.line(
+            "If you have any accessability concerns, or otherwise need help, please contact <a href='mailto:support@uobtheatre.com'>support@uobtheatre.com</a>."
+        )
+
+        composer.send("Your booking is confirmed!", self.user.email)
 
 
 class Ticket(models.Model):

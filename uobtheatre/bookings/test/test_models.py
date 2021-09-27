@@ -22,7 +22,9 @@ from uobtheatre.discounts.test.factories import (
     DiscountFactory,
     DiscountRequirementFactory,
 )
+from uobtheatre.payments import payment_methods
 from uobtheatre.payments.models import Payment
+from uobtheatre.payments.test.factories import PaymentFactory
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.utils.test_utils import ticket_dict_list_dict_gen, ticket_list_dict_gen
@@ -982,10 +984,29 @@ def test_complete():
 
 
 @pytest.mark.django_db
-def test_send_confirmation_email(mailoutbox):
+@pytest.mark.parametrize(
+    "with_payment, provider_payment_id",
+    [(True, "SQUARE_PAYMENT_ID"), (True, None), (False, None)],
+)
+def test_send_confirmation_email(mailoutbox, with_payment, provider_payment_id):
     production = ProductionFactory(name="Legally Ginger")
     performance = PerformanceFactory(
-        start=datetime.datetime(day=20, month=10, year=2021, hour=19, minute=15),
+        doors_open=datetime.datetime(
+            day=20,
+            month=10,
+            year=2021,
+            hour=18,
+            minute=15,
+            tzinfo=timezone.get_current_timezone(),
+        ),
+        start=datetime.datetime(
+            day=20,
+            month=10,
+            year=2021,
+            hour=19,
+            minute=15,
+            tzinfo=timezone.get_current_timezone(),
+        ),
         production=production,
     )
     booking = BookingFactory(
@@ -993,6 +1014,16 @@ def test_send_confirmation_email(mailoutbox):
         reference="abc",
         performance=performance,
     )
+    booking.user.status.verified = True
+
+    if with_payment:
+        PaymentFactory(
+            pay_object=booking,
+            value=1000,
+            provider=payment_methods.SquareOnline.__name__,
+            provider_payment_id=provider_payment_id,
+        )
+
     booking.send_confirmation_email()
 
     assert len(mailoutbox) == 1
@@ -1000,4 +1031,53 @@ def test_send_confirmation_email(mailoutbox):
     assert email.subject == "Your booking is confirmed!"
     assert "https://example.com/user/booking/abc" in email.body
     assert "Legally Ginger" in email.body
-    assert "on Wednesday, 20 October 2021" in email.body
+    assert "opens at 20 October 2021 18:15 UTC for a 19:15 UTC start" in email.body
+    if with_payment:
+        assert "Payment Information" in email.body
+        assert "10.00 GBP" in email.body
+        assert (
+            "(SquareOnline - ID SQUARE_PAYMENT_ID)"
+            if provider_payment_id
+            else "(SquareOnline)" in email.body
+        )
+    else:
+        assert "Payment Information" not in email.body
+
+
+@pytest.mark.django_db
+def test_send_confirmation_email_for_anonymous(mailoutbox):
+    production = ProductionFactory(name="Legally Ginger")
+    performance = PerformanceFactory(
+        doors_open=datetime.datetime(
+            day=20,
+            month=10,
+            year=2021,
+            hour=18,
+            minute=15,
+            tzinfo=timezone.get_current_timezone(),
+        ),
+        start=datetime.datetime(
+            day=20,
+            month=10,
+            year=2021,
+            hour=19,
+            minute=15,
+            tzinfo=timezone.get_current_timezone(),
+        ),
+        production=production,
+    )
+    booking = BookingFactory(
+        status=Booking.BookingStatus.IN_PROGRESS,
+        reference="abc",
+        performance=performance,
+    )
+
+    booking.send_confirmation_email()
+
+    assert len(mailoutbox) == 1
+    email = mailoutbox[0]
+    assert email.subject == "Your booking is confirmed!"
+    assert "https://example.com/user/booking/abc" not in email.body
+    assert "Legally Ginger" in email.body
+    assert "opens at 20 October 2021 18:15 UTC for a 19:15 UTC start" in email.body
+    assert "reference (abc)" in email.body

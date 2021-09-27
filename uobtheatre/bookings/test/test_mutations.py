@@ -1237,13 +1237,14 @@ def test_pay_booking_mutation_unauthorized_provider(gql_client):
 @pytest.mark.django_db
 def test_pay_booking_mutation_online_without_idempotency_key(gql_client):
     booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    add_ticket_to_booking(booking)
     gql_client.login()
 
     request_query = """
     mutation {
 	payBooking(
             bookingId: "%s"
-            price: 0
+            price: 100
             nonce: "cnon:card-nonce-ok"
         ) {
             success

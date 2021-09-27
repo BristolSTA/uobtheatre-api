@@ -125,3 +125,5 @@ The API image will then need rebuilding to add this dependency. Run:
 ```
 make build
 ```
+
+If mypy gives an error about not being able to find the new package, add it to the list of "additional_dependencies" in `.pre-commit-config.yaml`.
