@@ -53,6 +53,11 @@ class Payment(TimeStampedMixin, models.Model):
     card_brand = models.CharField(max_length=20, null=True, blank=True)
     last_4 = models.CharField(max_length=4, null=True, blank=True)
 
+    # Amount charged by payment provider in GBP
+    provider_fee = models.IntegerField(null=True, blank=True)
+    # Amount charged by us to process payment
+    app_fee = models.IntegerField(null=True, blank=True)
+
     def url(self):
         """Payment provider transaction link.
 

@@ -27,7 +27,7 @@ help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 up: ## Run background
-	docker-compose up -d api db
+	docker-compose up -d api postgres
 
 up-v: ## Run verbose
 	docker-compose up
