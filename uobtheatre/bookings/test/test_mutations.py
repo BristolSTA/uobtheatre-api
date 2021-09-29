@@ -1409,7 +1409,6 @@ def test_pay_booking_success(mock_square, gql_client):
         response = gql_client.execute(
             request_query % to_global_id("BookingNode", booking.id)
         )
-        print(response)
 
     assert response == {
         "data": {
