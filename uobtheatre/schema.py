@@ -6,8 +6,8 @@ import graphene
 
 import uobtheatre.bookings.schema as bookings_schema
 import uobtheatre.payments.schema as payments_schema
-import uobtheatre.productions.schema as productions_schema
 import uobtheatre.productions.mutations as productions_mutations
+import uobtheatre.productions.schema as productions_schema
 import uobtheatre.societies.schema as societies_schema
 import uobtheatre.users.schema as users_schema
 import uobtheatre.venues.schema as venues_schema
