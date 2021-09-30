@@ -281,6 +281,7 @@ GRAPHENE = {
     "SCHEMA": "uobtheatre.schema.schema",
     "MIDDLEWARE": [
         "graphql_jwt.middleware.JSONWebTokenMiddleware",
+        "uobtheatre.schema.ExceptionMiddleware",
     ],
 }
 

@@ -11,6 +11,7 @@ from django.views.generic.base import RedirectView
 from graphene_django.views import GraphQLView
 
 from config.settings.common import SQUARE_SETTINGS
+from uobtheatre.images.views import ImageView
 from uobtheatre.payments.square_webhooks import SquareWebhooks
 
 urlpatterns = [
@@ -22,4 +23,5 @@ urlpatterns = [
     path(SQUARE_SETTINGS["PATH"], SquareWebhooks.as_view()),
     # Redirect root to graphql
     re_path(r"^$", RedirectView.as_view(url="graphql/", permanent=False)),
+    re_path(r"^upload/$", ImageView.as_view(), name="file-upload"),
 ] + static(settings.MEDIA_PATH, document_root=settings.MEDIA_ROOT)

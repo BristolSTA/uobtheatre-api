@@ -1,4 +1,5 @@
 from django.db import models
+from graphql_relay.node.node import to_global_id
 
 
 class Image(models.Model):
@@ -10,3 +11,7 @@ class Image(models.Model):
 
     file = models.ImageField()
     alt_text = models.CharField(max_length=50, null=True, blank=True)
+
+    @property
+    def global_id(self) -> str:
+        return to_global_id("ImageNode", self.id)
