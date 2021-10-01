@@ -739,8 +739,11 @@ class Performance(TimeStampedMixin, models.Model):
         return False
 
     def sales_breakdown(self):
+        from uobtheatre.bookings.models import Booking
+
         return Payment.objects.filter(
-            pay_object__in=self.bookings.all()
+            pay_object_id__in=self.bookings.values_list("id", flat=True),
+            pay_object_type=ContentType.objects.get_for_model(Booking),
         ).annotate_sales_breakdown()
 
     def __str__(self):

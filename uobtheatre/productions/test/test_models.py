@@ -810,7 +810,7 @@ def test_has_group_discounts():
 
 
 @pytest.mark.django_db
-def test_sales_breakdown():
+def test_sales_breakdown_production():
     production = ProductionFactory()
     performance_1 = PerformanceFactory(production=production)
     performance_2 = PerformanceFactory(production=production)
@@ -832,6 +832,45 @@ def test_sales_breakdown():
     )
 
     assert production.sales_breakdown() == {
+        "app_payment_value": 434,
+        "provider_payment_value": 16,
+        "society_revenue": 750,
+        "society_transfer_value": 550,
+        "total_card_sales": 1000,
+        "total_sales": 1200,
+    }
+
+
+@pytest.mark.django_db
+def test_sales_breakdown_performance():
+    performance = PerformanceFactory()
+    booking_1 = BookingFactory(performance=performance)
+    booking_2 = BookingFactory(performance=performance)
+    booking_3 = BookingFactory()
+
+    PaymentFactory(
+        pay_object=booking_1, provider_fee=2, app_fee=100, value=200, provider=Cash.name
+    )
+    PaymentFactory(
+        pay_object=booking_1, provider_fee=4, app_fee=200, value=600, provider=Card.name
+    )
+    PaymentFactory(
+        pay_object=booking_2,
+        provider_fee=10,
+        app_fee=150,
+        value=400,
+        provider=SquareOnline.name,
+    )
+
+    PaymentFactory(
+        pay_object=booking_3,
+        provider_fee=10,
+        app_fee=150,
+        value=400,
+        provider=SquareOnline.name,
+    )
+
+    assert performance.sales_breakdown() == {
         "app_payment_value": 434,
         "provider_payment_value": 16,
         "society_revenue": 750,
