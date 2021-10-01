@@ -108,6 +108,45 @@ def test_bookings_schema(gql_client):
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    "expired",
+    [False, True],
+)
+def test_booking_expires_at(gql_client, expired):
+    gql_client.login()
+    booking = BookingFactory(
+        status=Booking.BookingStatus.IN_PROGRESS, user=gql_client.user
+    )
+    if expired:
+        booking.expires_at = timezone.now() - datetime.timedelta(minutes=30)
+        booking.save()
+
+    request_query = """
+        {
+            me {
+              bookings(id: "%s") {
+                  edges {
+                    node {
+                      expiresAt
+                      expired
+                    }
+                  }
+              }
+            }
+        }
+        """
+
+    response = gql_client.execute(
+        request_query % to_global_id("BookingNode", booking.id)
+    )
+
+    assert (
+        response["data"]["me"]["bookings"]["edges"][0]["node"]["expiresAt"] is not None
+    )
+    assert response["data"]["me"]["bookings"]["edges"][0]["node"]["expired"] is expired
+
+
+@pytest.mark.django_db
 def test_bookings_price_break_down(gql_client):  # pylint: disable=too-many-locals
     booking = BookingFactory()
 
@@ -411,6 +450,44 @@ def test_booking_in_progress(gql_client):
             }
         }
     }
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("expired", [False, True])
+def test_booking_expired(gql_client, expired):
+    gql_client.login()
+
+    expired_booking = BookingFactory(
+        user=gql_client.user,
+        status=Booking.BookingStatus.IN_PROGRESS,
+        expires_at=timezone.now() - datetime.timedelta(minutes=20),
+    )
+    not_expired_booking = BookingFactory(
+        user=gql_client.user, status=Booking.BookingStatus.IN_PROGRESS
+    )
+
+    request = (
+        """
+      {
+        me {
+          bookings(expired: %s) {
+            edges {
+              node {
+                id
+              }
+            }
+          }
+        }
+      }
+    """
+        % str(expired).lower()
+    )
+
+    response = gql_client.execute(request)
+    assert len(response["data"]["me"]["bookings"]["edges"]) == 1
+    assert response["data"]["me"]["bookings"]["edges"][0]["node"]["id"] == to_global_id(
+        "BookingNode", expired_booking.id if expired else not_expired_booking.id
+    )
 
 
 @pytest.mark.django_db

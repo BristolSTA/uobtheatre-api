@@ -150,6 +150,25 @@ class BookingQuerySet(QuerySet):
 
         return query_set
 
+    def expired(self, bool_val=False) -> QuerySet:
+        """Bookings that are not expired will be returned
+
+        Args:
+            bool_val (bool): when True: return only expired bookings,
+            when False: return only non-expired bookings
+
+        Returns:
+            QuerySet: the filtered queryset
+        """
+        if bool_val:
+            return self.exclude(status="PAID").filter(expires_at__lt=timezone.now())
+        return self.filter(Q(status="PAID") | Q(expires_at__gt=timezone.now()))
+
+
+def generate_expires_at():
+    """Generates the expires at timestamp for a booking"""
+    return timezone.now() + timezone.timedelta(minutes=15)
+
 
 class Booking(TimeStampedMixin, Payable, models.Model):
     """A booking for a performance
@@ -169,7 +188,7 @@ class Booking(TimeStampedMixin, Payable, models.Model):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["status", "performance"],
+                fields=["status", "performance", "user_id"],
                 condition=models.Q(status="IN_PROGRESS"),
                 name="one_in_progress_booking_per_user_per_performance",
             )
@@ -209,6 +228,8 @@ class Booking(TimeStampedMixin, Payable, models.Model):
     admin_discount_percentage = models.FloatField(
         default=0, validators=[validate_percentage]
     )
+
+    expires_at = models.DateTimeField(default=generate_expires_at)
 
     @property
     def payment_reference_id(self):
@@ -444,7 +465,7 @@ class Booking(TimeStampedMixin, Payable, models.Model):
 
     def get_ticket_diff(
         self, tickets: List["Ticket"]
-    ) -> Tuple[List["Ticket"], List["Ticket"]]:
+    ) -> Tuple[List["Ticket"], List["Ticket"], int]:
         """Difference between Booking Tickets and list of Tickets
 
         Given a list of Tickets return the difference between the two lists.
@@ -465,6 +486,7 @@ class Booking(TimeStampedMixin, Payable, models.Model):
                 not in the Booking.
             list of Ticket: The tickets which are in the booking but not in
                 the provided list.
+            int: The total number of tickets if this operation is applied
         """
         add_tickets: List["Ticket"] = []
         delete_tickets: List["Ticket"] = []
@@ -490,7 +512,11 @@ class Booking(TimeStampedMixin, Payable, models.Model):
                 # if the ticket exists in the booking, but not in the requested tickets - delete it.
                 delete_tickets.append(ticket)
 
-        return add_tickets, delete_tickets
+        return (
+            add_tickets,
+            delete_tickets,
+            (len(self.tickets.all()) + len(add_tickets) - len(delete_tickets)),
+        )
 
     def pay(self, payment_method: "PaymentMethod") -> Optional["Payment"]:
         """
@@ -569,6 +595,28 @@ class Booking(TimeStampedMixin, Payable, models.Model):
 
         composer.send("Your booking is confirmed!", self.user.email)
 
+    @property
+    def is_reservation_expired(self):
+        """Returns whether the booking is considered expired"""
+
+        return (
+            self.status == self.BookingStatus.IN_PROGRESS
+            and self.expires_at
+            and timezone.now() > self.expires_at
+        )
+
+
+class TicketQuerySet(QuerySet):
+    """A custom Manager for ticket queries"""
+
+    def sold_or_reserved(self) -> QuerySet:
+        return self.filter(
+            Q(booking__status="PAID") | Q(booking__expires_at__gt=timezone.now())
+        )
+
+    def sold(self) -> QuerySet:
+        return self.filter(Q(booking__status="PAID"))
+
 
 class Ticket(models.Model):
     """A booking of a single seat.
@@ -576,6 +624,8 @@ class Ticket(models.Model):
     A Ticket is the reservation of a seat for a performance. The performance is
     defined by the Booking.
     """
+
+    objects = TicketQuerySet.as_manager()
 
     seat_group = models.ForeignKey(
         SeatGroup, on_delete=models.RESTRICT, related_name="tickets"
@@ -641,3 +691,8 @@ class Ticket(models.Model):
         """
         self.checked_in = False
         self.save()
+
+
+def max_tickets_per_booking() -> int:
+    """Get the maximum number of a tickets a "normal" user can have per booking"""
+    return 10
