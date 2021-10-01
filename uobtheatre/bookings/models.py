@@ -503,7 +503,7 @@ class Booking(TimeStampedMixin, Payable, models.Model):
         Returns:
             Payment: The payment created by the checkout (optional)
         """
-        payment = payment_method.pay(self.total(), self)
+        payment = payment_method.pay(self.total(), self.misc_costs_value(), self)
 
         # If a payment is created set the booking as paid
         if payment:

@@ -12,6 +12,7 @@ from uobtheatre.bookings.test.factories import (
     BookingFactory,
     PerformanceSeatingFactory,
     TicketFactory,
+    ValueMiscCostFactory,
     add_ticket_to_booking,
 )
 from uobtheatre.discounts.test.factories import ConcessionTypeFactory
@@ -1327,13 +1328,14 @@ def test_pay_booking_mutation_online_without_nonce(gql_client):
 def test_pay_booking_success(mock_square, gql_client):
     booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
     add_ticket_to_booking(booking)
+    ValueMiscCostFactory(value=25)
     gql_client.login()
 
     request_query = """
     mutation {
 	payBooking(
             bookingId: "%s"
-            price: 100
+            price: 125
             nonce: "cnon:card-nonce-ok"
             idempotencyKey: "my_idempotency_key_string"
         ) {
@@ -1363,6 +1365,8 @@ def test_pay_booking_success(mock_square, gql_client):
               }
               currency
               value
+              providerFee
+              appFee
             }
           }
         }
@@ -1385,6 +1389,20 @@ def test_pay_booking_success(mock_square, gql_client):
                     "amount": 0,
                 },
             }
+        },
+        success=True,
+    ), mock_square(
+        SquareOnline.client.payments,
+        "get_payment",
+        body={
+            "id": "abc",
+            "processing_fee": [
+                {
+                    "effective_at": "2021-09-30T06:53:50.000Z",
+                    "type": "INITIAL",
+                    "amount_money": {"amount": 12, "currency": "GBP"},
+                },
+            ],
         },
         success=True,
     ):
@@ -1419,6 +1437,8 @@ def test_pay_booking_success(mock_square, gql_client):
                     },
                     "currency": "GBP",
                     "value": 0,
+                    "providerFee": 12,
+                    "appFee": 25,
                 },
                 "success": True,
                 "errors": None,

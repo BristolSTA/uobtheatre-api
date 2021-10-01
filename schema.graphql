@@ -280,6 +280,8 @@ type PaymentNode implements Node {
   currency: String!
   cardBrand: String
   last4: String
+  providerFee: Int
+  appFee: Int
   url: String
   payObject: PayObjectUnion
 }

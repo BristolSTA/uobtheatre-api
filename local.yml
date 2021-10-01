@@ -17,7 +17,6 @@ services:
       - .:/app/uobtheatre-api:z
     env_file:
       - ./.envs/.local/.django
-      - .env
       - ./.envs/.local/.postgres
     ports:
       - "8000:8000"
