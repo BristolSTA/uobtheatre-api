@@ -1,9 +1,27 @@
+from typing import Any
+
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.db.models import Q, Sum
+from django.db.models.query import QuerySet
 
 from uobtheatre.payments import payment_methods
+from uobtheatre.payments.payment_methods import Cash
 from uobtheatre.utils.models import TimeStampedMixin
+
+
+class PaymentQuerySet(QuerySet):
+    """The query set for payments"""
+
+    def annotate_sales_breakdown(self, breakdowns: list[str] = None):
+        """Annotate sales breakdown onto payments"""
+        annotations = {
+            k: v
+            for k, v in SALE_BREAKDOWN_ANNOTATIOS.items()
+            if breakdowns is None or k in breakdowns
+        }
+        return self.aggregate(**annotations)
 
 
 class Payment(TimeStampedMixin, models.Model):
@@ -19,6 +37,8 @@ class Payment(TimeStampedMixin, models.Model):
 
         PURCHASE = "PURCHASE", "Purchase payment"
         REFUND = "REFUND", "Refund payment"
+
+    objects = PaymentQuerySet.as_manager()
 
     # List of models which can be paid for
     payables = models.Q(app_label="bookings", model="booking")
@@ -67,3 +87,34 @@ class Payment(TimeStampedMixin, models.Model):
         if self.provider == payment_methods.SquareOnline.name:
             return f"https://squareupsandbox.com/dashboard/sales/transactions/{self.provider_payment_id}"
         return None
+
+
+SALE_BREAKDOWN_ANNOTATIOS: dict[str, Any] = {
+    "total_sales": Sum("value", filter=Q(type=Payment.PaymentType.PURCHASE)),
+    "total_card_sales": Sum(
+        "value", filter=(~Q(provider=Cash.name) & Q(type=Payment.PaymentType.PURCHASE))
+    ),
+    # Amount charged by the payment provider (square) for these payments
+    "provider_payment_value": Sum(
+        "provider_fee", filter=Q(type=Payment.PaymentType.PURCHASE)
+    ),
+    # Amount we take from net payment - provider cut
+    "app_payment_value": (
+        Sum("app_fee", filter=Q(type=Payment.PaymentType.PURCHASE))
+        - Sum("provider_fee", filter=Q(type=Payment.PaymentType.PURCHASE))
+    ),
+    "society_transfer_value": (
+        Sum(
+            "value",
+            filter=(~Q(provider=Cash.name) & Q(type=Payment.PaymentType.PURCHASE)),
+        )
+        - Sum("app_fee")
+    ),
+    "society_revenue": (
+        Sum(
+            "value",
+            filter=(Q(type=Payment.PaymentType.PURCHASE)),
+        )
+        - Sum("app_fee")
+    ),
+}

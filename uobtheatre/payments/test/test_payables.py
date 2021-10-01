@@ -1,6 +1,7 @@
 import pytest
 
 from uobtheatre.bookings.test.factories import BookingFactory
+from uobtheatre.payments.payment_methods import Card, Cash, SquareOnline
 from uobtheatre.payments.test.factories import PaymentFactory
 
 
@@ -31,4 +32,17 @@ def test_payable_society_payment_value():
     PaymentFactory(pay_object=booking, app_fee=100, value=200)
     PaymentFactory(pay_object=booking, app_fee=150, value=400)
 
-    assert booking.society_payment_value == 350
+    assert booking.society_revenue == 350
+
+
+@pytest.mark.django_db
+def test_society_transfer_value():
+    booking = BookingFactory()
+
+    PaymentFactory(pay_object=booking, app_fee=100, value=200, provider=Cash.name)
+    PaymentFactory(pay_object=booking, app_fee=200, value=600, provider=Card.name)
+    PaymentFactory(
+        pay_object=booking, app_fee=150, value=400, provider=SquareOnline.name
+    )
+
+    assert booking.society_transfer_value == 550
