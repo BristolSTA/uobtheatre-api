@@ -14,6 +14,8 @@ from uobtheatre.bookings.test.factories import (
     BookingFactory,
     PerformanceSeatingFactory,
     TicketFactory,
+    ValueMiscCostFactory,
+    add_ticket_to_booking,
 )
 from uobtheatre.discounts.test.factories import ConcessionTypeFactory
 from uobtheatre.payments.payment_methods import SquareOnline, SquarePOS
@@ -1324,7 +1326,7 @@ def test_pay_booking_square_pos_no_device_id(gql_client):
     mutation {
 	payBooking(
             bookingId: "%s"
-            price: 0
+            price: 100
             paymentProvider: SQUARE_POS
         ) {
             success
@@ -1341,6 +1343,8 @@ def test_pay_booking_square_pos_no_device_id(gql_client):
     """
     gql_client.login()
     booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    add_ticket_to_booking(booking)
+
     assign_perm("boxoffice", gql_client.user, booking.performance.production)
     response = gql_client.execute(
         request_query % to_global_id("BookingNode", booking.id)
@@ -1368,13 +1372,15 @@ def test_pay_booking_square_error(mock_square, gql_client):
     booking = BookingFactory(
         status=Booking.BookingStatus.IN_PROGRESS, user=gql_client.user
     )
+    add_ticket_to_booking(booking)
 
     request_query = """
     mutation {
 	payBooking(
             bookingId: "%s"
-            price: 0
+            price: 100
             nonce: "cnon:card-nonce-ok"
+            idempotencyKey: "my_idempotency_key_string"
         ) {
             success
             errors {
@@ -1394,6 +1400,7 @@ def test_pay_booking_square_error(mock_square, gql_client):
         success=False,
         reason_phrase="Some phrase",
         status_code=400,
+        errors=[{"category": "", "detail": "", "code": "MY_CODE"}],
     ):
         response = gql_client.execute(
             request_query % to_global_id("BookingNode", booking.id)
@@ -1406,7 +1413,7 @@ def test_pay_booking_square_error(mock_square, gql_client):
                 "errors": [
                     {
                         "__typename": "NonFieldError",
-                        "message": "Some phrase",
+                        "message": "There was an issue processing your payment (MY_CODE)",
                         "code": "400",
                     }
                 ],
@@ -1546,17 +1553,65 @@ def test_pay_booking_mutation_expired_booking(gql_client):
 
 
 @pytest.mark.django_db
-def test_pay_booking_mutation_online_without_nonce(gql_client):
+def test_pay_booking_mutation_online_without_idempotency_key(gql_client):
     gql_client.login()
     booking = BookingFactory(
         status=Booking.BookingStatus.IN_PROGRESS, user=gql_client.user
     )
+    add_ticket_to_booking(booking)
 
     request_query = """
     mutation {
 	payBooking(
             bookingId: "%s"
-            price: 0
+            price: 100
+            nonce: "cnon:card-nonce-ok"
+        ) {
+            success
+            errors {
+              __typename
+              ... on FieldError {
+                message
+                code
+                field
+              }
+            }
+          }
+        }
+    """
+    response = gql_client.execute(
+        request_query % to_global_id("BookingNode", booking.id)
+    )
+    assert response == {
+        "data": {
+            "payBooking": {
+                "success": False,
+                "errors": [
+                    {
+                        "__typename": "FieldError",
+                        "message": "An idempotency key is required when using SQUARE_ONLINE provider.",
+                        "code": "missing_required",
+                        "field": "idempotencyKey",
+                    }
+                ],
+            }
+        }
+    }
+
+
+@pytest.mark.django_db
+def test_pay_booking_mutation_online_without_nonce(gql_client):
+    gql_client.login()
+    booking = BookingFactory(
+        status=Booking.BookingStatus.IN_PROGRESS, user=gql_client.user
+    )
+    add_ticket_to_booking(booking)
+
+    request_query = """
+    mutation {
+	payBooking(
+            bookingId: "%s"
+            price: 100
         ) {
             success
             errors {
@@ -1592,16 +1647,20 @@ def test_pay_booking_mutation_online_without_nonce(gql_client):
 
 @pytest.mark.django_db
 def test_pay_booking_success(mock_square, gql_client):
+    gql_client.login()
     booking = BookingFactory(
-        status=Booking.BookingStatus.IN_PROGRESS, user=gql_client.login()
+        status=Booking.BookingStatus.IN_PROGRESS, user=gql_client.user
     )
+    add_ticket_to_booking(booking)
+    ValueMiscCostFactory(value=25)
 
     request_query = """
     mutation {
 	payBooking(
             bookingId: "%s"
-            price: 0
+            price: 125
             nonce: "cnon:card-nonce-ok"
+            idempotencyKey: "my_idempotency_key_string"
         ) {
             success
             errors {
@@ -1629,6 +1688,8 @@ def test_pay_booking_success(mock_square, gql_client):
               }
               currency
               value
+              providerFee
+              appFee
             }
           }
         }
@@ -1651,6 +1712,20 @@ def test_pay_booking_success(mock_square, gql_client):
                     "amount": 0,
                 },
             }
+        },
+        success=True,
+    ), mock_square(
+        SquareOnline.client.payments,
+        "get_payment",
+        body={
+            "id": "abc",
+            "processing_fee": [
+                {
+                    "effective_at": "2021-09-30T06:53:50.000Z",
+                    "type": "INITIAL",
+                    "amount_money": {"amount": 12, "currency": "GBP"},
+                },
+            ],
         },
         success=True,
     ):
@@ -1685,6 +1760,8 @@ def test_pay_booking_success(mock_square, gql_client):
                     },
                     "currency": "GBP",
                     "value": 0,
+                    "providerFee": 12,
+                    "appFee": 25,
                 },
                 "success": True,
                 "errors": None,
@@ -1696,6 +1773,7 @@ def test_pay_booking_success(mock_square, gql_client):
 @pytest.mark.django_db
 def test_pay_booking_success_square_pos(mock_square, gql_client):
     booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    add_ticket_to_booking(booking)
     gql_client.login()
     assign_perm("boxoffice", gql_client.user, booking.performance.production)
 
@@ -1703,7 +1781,7 @@ def test_pay_booking_success_square_pos(mock_square, gql_client):
     mutation {
 	payBooking(
             bookingId: "%s"
-            price: 0
+            price: 100
             deviceId: "abc"
             paymentProvider: SQUARE_POS
         ) {
@@ -1786,6 +1864,7 @@ def test_pay_booking_success_square_pos(mock_square, gql_client):
 @pytest.mark.parametrize("payment_method", ["CARD", "CASH"])
 def test_pay_booking_manual(gql_client, payment_method):
     booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    add_ticket_to_booking(booking)
     gql_client.login()
     assign_perm("boxoffice", gql_client.user, booking.performance.production)
 
@@ -1793,7 +1872,7 @@ def test_pay_booking_manual(gql_client, payment_method):
     mutation {
 	payBooking(
             bookingId: "%s"
-            price: 0
+            price: 100
             paymentProvider: %s
         ) {
             success
@@ -1862,7 +1941,7 @@ def test_pay_booking_manual(gql_client, payment_method):
                         "value": payment_method,
                     },
                     "currency": "GBP",
-                    "value": 0,
+                    "value": 100,
                 },
                 "success": True,
                 "errors": None,
@@ -1872,7 +1951,85 @@ def test_pay_booking_manual(gql_client, payment_method):
 
 
 @pytest.mark.django_db
-def test_pay_booking_unsupported_payment_provider(info):
+def test_pay_booking_with_no_tickets(gql_client):
+    gql_client.login()
+    booking = BookingFactory(
+        status=Booking.BookingStatus.IN_PROGRESS, user=gql_client.user
+    )
+
+    request_query = """
+    mutation {
+        payBooking(
+                bookingId: "%s"
+                price: 0
+            ) {
+                success
+                errors {
+                    ... on NonFieldError {
+                        message
+                    }
+                }
+            }
+        }
+    """
+
+    response = gql_client.execute(
+        request_query % to_global_id("BookingNode", booking.id)
+    )
+
+    assert response == {
+        "data": {
+            "payBooking": {
+                "success": False,
+                "errors": [{"message": "The booking must have at least one ticket"}],
+            }
+        }
+    }
+
+
+@pytest.mark.django_db
+def test_pay_booking_when_free(gql_client):
+    gql_client.login()
+    booking = BookingFactory(
+        status=Booking.BookingStatus.IN_PROGRESS,
+        admin_discount_percentage=1,
+        user=gql_client.user,
+    )
+    add_ticket_to_booking(booking)
+
+    request_query = """
+    mutation {
+        payBooking(
+                bookingId: "%s"
+                price: 0
+            ) {
+                success
+                booking {
+                    payments {
+                        edges {
+                            node {
+                                id
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    """
+
+    response = gql_client.execute(
+        request_query % to_global_id("BookingNode", booking.id)
+    )
+
+    assert response == {
+        "data": {
+            "payBooking": {"success": True, "booking": {"payments": {"edges": []}}}
+        }
+    }
+
+
+@pytest.mark.django_db
+def test_paybooking_unsupported_payment_provider(info):
     booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
     assign_perm("boxoffice", info.context.user, booking.performance.production)
 

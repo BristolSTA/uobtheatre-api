@@ -190,7 +190,7 @@ type MiscCostNode implements Node {
 type Mutation {
   createBooking(adminDiscountPercentage: Float, performanceId: IdInputField, targetUserEmail: String, tickets: [CreateTicketInput]): CreateBooking
   updateBooking(adminDiscountPercentage: Float, bookingId: IdInputField, targetUserEmail: String, tickets: [UpdateTicketInput]): UpdateBooking
-  payBooking(bookingId: IdInputField!, deviceId: String, nonce: String, paymentProvider: PaymentMethod, price: Int!): PayBooking
+  payBooking(bookingId: IdInputField!, deviceId: String, idempotencyKey: String, nonce: String, paymentProvider: PaymentMethod, price: Int!): PayBooking
   checkInBooking(bookingReference: String!, performanceId: IdInputField!, tickets: [TicketIDInput]!): CheckInBooking
   uncheckInBooking(bookingReference: String!, performanceId: IdInputField!, tickets: [TicketIDInput]!): UnCheckInBooking
   register(email: String!, firstName: String!, lastName: String!, password1: String!, password2: String!): Register
@@ -282,6 +282,8 @@ type PaymentNode implements Node {
   currency: String!
   cardBrand: String
   last4: String
+  providerFee: Int
+  appFee: Int
   url: String
   payObject: PayObjectUnion
 }
@@ -504,6 +506,8 @@ type SocietyNode implements Node {
   description: String!
   logo: ImageNode!
   banner: ImageNode!
+  website: String
+  contact: String
   members: [ExtendedUserNode!]!
   productions(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, society: ID, status: String, ageRating: Int, facebookEvent: String, warnings: [ID], slug: String, id: ID, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, orderBy: String): ProductionNodeConnection!
 }

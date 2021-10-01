@@ -60,7 +60,7 @@ def test_generate_name(input_name, expected_output_name):
 @pytest.mark.django_db
 def test_create_paymnet_object():
     booking = BookingFactory()
-    SquareOnline.create_payment_object(booking, 10, currency="ABC")
+    SquareOnline.create_payment_object(booking, 10, 5, currency="ABC")
 
     assert Payment.objects.count() == 1
     payment = Payment.objects.first()
@@ -69,6 +69,7 @@ def test_create_paymnet_object():
     assert payment.pay_object == booking
     assert payment.value == 10
     assert payment.currency == "ABC"
+    assert payment.app_fee == 5
 
 
 @pytest.mark.django_db
@@ -85,7 +86,7 @@ def test_square_online_pay_failure(mock_square):
     ):
         payment_method = SquareOnline("nonce", "abc")
         with pytest.raises(SquareException):
-            payment_method.pay(100, BookingFactory())
+            payment_method.pay(100, 0, BookingFactory())
 
     # Assert no payments are created
     assert Payment.objects.count() == 0
@@ -115,10 +116,29 @@ def test_square_online_pay_success(mock_square):
             }
         },
         success=True,
+    ), mock_square(
+        SquareOnline.client.payments,
+        "get_payment",
+        body={
+            "id": "1GkfsosCaWWIpapKt61Xq2tt4lEZY",
+            "processing_fee": [
+                {
+                    "effective_at": "2021-09-30T06:53:50.000Z",
+                    "type": "INITIAL",
+                    "amount_money": {"amount": 29, "currency": "GBP"},
+                },
+                {
+                    "effective_at": "2021-09-30T06:53:50.000Z",
+                    "type": "INITIAL",
+                    "amount_money": {"amount": 12, "currency": "GBP"},
+                },
+            ],
+        },
+        success=True,
     ):
         booking = BookingFactory()
         payment_method = SquareOnline("nonce", "key")
-        payment = payment_method.pay(20, booking)
+        payment = payment_method.pay(20, 10, booking)
 
     # Assert the returned payment gets saved
     assert Payment.objects.count() == 1
@@ -134,6 +154,51 @@ def test_square_online_pay_success(mock_square):
     assert payment.provider_payment_id == "abc"
     assert payment.provider == "SQUARE_ONLINE"
     assert payment.type == Payment.PaymentType.PURCHASE
+    assert payment.app_fee == 10
+
+    assert payment.provider_fee == 41  # 12 + 29
+
+
+@pytest.mark.django_db
+def test_square_online_get_processing_fee_failure(mock_square):
+    """
+    Test failed fetching processing fee
+    """
+    with mock_square(
+        SquareOnline.client.payments,
+        "create_payment",
+        body={
+            "payment": {
+                "id": "abc",
+                "card_details": {
+                    "card": {
+                        "card_brand": "MASTERCARD",
+                        "last_4": "1234",
+                    }
+                },
+                "amount_money": {
+                    "currency": "GBP",
+                    "amount": 10,
+                },
+            }
+        },
+        success=True,
+    ), mock_square(
+        SquareOnline.client.payments,
+        "get_payment",
+        reason_phrase="Some phrase",
+        status_code=400,
+        success=False,
+    ):
+        payment_method = SquareOnline("nonce", "abc")
+        with pytest.raises(SquareException):
+            payment_method.pay(100, 0, BookingFactory())
+
+    # Assert no payments are created
+    assert Payment.objects.count() == 1
+
+    payment = Payment.objects.first()
+    assert payment.provider_fee is None
 
 
 @pytest.mark.django_db
@@ -143,7 +208,7 @@ def test_square_online_pay_success(mock_square):
 )
 def test_manual_pay(payment_method, value, expected_method_str):
     booking = BookingFactory()
-    payment = payment_method.pay(value, booking)
+    payment = payment_method.pay(value, 12, booking)
 
     assert Payment.objects.count() == 1
     assert Payment.objects.first() == payment
@@ -153,6 +218,7 @@ def test_manual_pay(payment_method, value, expected_method_str):
     assert payment.currency == "GBP"
     assert payment.provider == expected_method_str
     assert payment.type == Payment.PaymentType.PURCHASE
+    assert payment.app_fee == 12
 
 
 @pytest.mark.django_db
@@ -164,7 +230,7 @@ def test_square_pos_pay_success(mock_square):
         success=True,
     ):
         payment_method = SquarePOS("device_id")
-        payment_method.pay(100, BookingFactory())
+        payment_method.pay(100, 14, BookingFactory())
 
     # Assert no payments are created. A payment should only be created by the
     # webhook.
@@ -182,7 +248,7 @@ def test_square_pos_pay_failure(mock_square):
     ):
         with pytest.raises(SquareException):
             payment_method = SquarePOS("device_id")
-            payment_method.pay(100, BookingFactory())
+            payment_method.pay(100, 0, BookingFactory())
 
     # Assert no payments are created
     assert Payment.objects.count() == 0

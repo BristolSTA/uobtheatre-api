@@ -1,8 +1,10 @@
+# pylint: disable=too-many-public-methods
 import datetime
 import math
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from autoslug import AutoSlugField
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Max, Min, Sum
 from django.db.models.query import Q, QuerySet
@@ -12,6 +14,7 @@ from django_tiptap.fields import TipTapTextField
 from guardian.shortcuts import get_objects_for_user
 
 from uobtheatre.images.models import Image
+from uobtheatre.payments.models import Payment
 from uobtheatre.societies.models import Society
 from uobtheatre.utils.models import TimeStampedMixin
 from uobtheatre.venues.models import SeatGroup, Venue
@@ -157,6 +160,12 @@ class Production(TimeStampedMixin, models.Model):
 
     slug = AutoSlugField(populate_from="name", unique=True, blank=True)
 
+    @property
+    def bookings(self):
+        from uobtheatre.bookings.models import Booking
+
+        return Booking.objects.filter(performance__in=self.performances.all())
+
     def __str__(self):
         return str(self.name)
 
@@ -240,6 +249,14 @@ class Production(TimeStampedMixin, models.Model):
         if not performances:
             return None
         return min(performance.duration() for performance in performances)
+
+    def sales_breakdown(self):
+        from uobtheatre.bookings.models import Booking
+
+        return Payment.objects.filter(
+            pay_object_id__in=self.bookings.values_list("id", flat=True),
+            pay_object_type=ContentType.objects.get_for_model(Booking),
+        ).annotate_sales_breakdown()
 
     class Meta:
         ordering = ["id"]
@@ -744,6 +761,14 @@ class Performance(
         if user.has_perm("productions.boxoffice", self.production):
             return True
         return False
+
+    def sales_breakdown(self):
+        from uobtheatre.bookings.models import Booking
+
+        return Payment.objects.filter(
+            pay_object_id__in=self.bookings.values_list("id", flat=True),
+            pay_object_type=ContentType.objects.get_for_model(Booking),
+        ).annotate_sales_breakdown()
 
     def __str__(self):
         if self.start is None:
