@@ -22,6 +22,13 @@ class Payable(metaclass=AbstractModelMeta):
         raise NotImplementedError
 
     @property
+    def total_sales(self) -> int:
+        """The amount paid by the user for this object."""
+        return self.payments.annotate_sales_breakdown(["total_sales"])[  # type: ignore
+            "total_sales"
+        ]
+
+    @property
     def provider_payment_value(self) -> int:
         """The amount taken by the payment provider in paying for this object."""
         return self.payments.annotate_sales_breakdown(["provider_payment_value"])[  # type: ignore

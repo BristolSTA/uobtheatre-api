@@ -251,13 +251,15 @@ class Production(TimeStampedMixin, models.Model):
         return min(performance.duration() for performance in performances)
 
     @property
-    def total_capacity(self):
+    def total_capacity(self) -> int:
+        """The total number of tickets which can be sold across all performances"""
         return sum(
             [performance.total_capacity for performance in self.performances.all()]
         )
 
     @property
-    def total_tickets_sold(self):
+    def total_tickets_sold(self) -> int:
+        """The total number of tickets sold across all performances"""
         return sum(
             [
                 performance.total_tickets_sold()
@@ -265,7 +267,7 @@ class Production(TimeStampedMixin, models.Model):
             ]
         )
 
-    def sales_breakdown(self, breakdowns: list[str] = None):
+    def sales_breakdown(self, breakdowns: list[str] = None) -> dict:
         """Generates a breakdown of the sales of this production"""
         from uobtheatre.bookings.models import Booking
 

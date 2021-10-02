@@ -5,7 +5,6 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.aggregates import BoolAnd
 from django.db import models
 from django.db.models import Case, F, FloatField, Q, Value, When
-from django.db.models.aggregates import Sum
 from django.db.models.functions import Cast
 from django.db.models.query import QuerySet
 from django.utils import timezone
@@ -463,15 +462,6 @@ class Booking(TimeStampedMixin, Payable, models.Model):
         if subtotal == 0:  # pylint: disable=comparison-with-callable
             return 0
         return math.ceil(subtotal + self.misc_costs_value())
-
-    @property
-    def total_paid(self) -> int:
-        """The total amount that has been paid for this booking (including any refunds,e tc)
-
-        Returns:
-            int: The total sum of all payments
-        """
-        return self.payments.aggregate(Sum("value"))["value__sum"] or 0
 
     def get_ticket_diff(
         self, tickets: List["Ticket"]
