@@ -28,6 +28,8 @@ AWS_AUTO_CREATE_BUCKET = True
 AWS_QUERYSTRING_AUTH = False
 MEDIA_URL = f"https://s3.amazonaws.com/{AWS_STORAGE_BUCKET_NAME}/"
 
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 if sentry_dns := os.getenv("SENTRY_DNS"):
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
