@@ -1718,14 +1718,16 @@ def test_pay_booking_success(mock_square, gql_client):
         SquareOnline.client.payments,
         "get_payment",
         body={
-            "id": "abc",
-            "processing_fee": [
-                {
-                    "effective_at": "2021-09-30T06:53:50.000Z",
-                    "type": "INITIAL",
-                    "amount_money": {"amount": 12, "currency": "GBP"},
-                },
-            ],
+            "payment": {
+                "id": "abc",
+                "processing_fee": [
+                    {
+                        "effective_at": "2021-09-30T06:53:50.000Z",
+                        "type": "INITIAL",
+                        "amount_money": {"amount": 12, "currency": "GBP"},
+                    },
+                ],
+            },
         },
         success=True,
     ):
