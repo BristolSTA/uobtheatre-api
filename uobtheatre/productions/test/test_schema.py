@@ -996,10 +996,11 @@ def test_production_and_performance_sales_breakdowns(gql_client):
         """
 
     # First, test as unauthenticated/unauthorised
+    user = UserFactory()
+    gql_client.login(user)
     response = gql_client.execute(
         request % to_global_id("ProductionNode", performance.production.id)
     )
-    print(response)
     assert response["data"]["productions"]["edges"][0]["node"]["salesBreakdown"] is None
     assert (
         response["data"]["productions"]["edges"][0]["node"]["performances"]["edges"][0][
@@ -1008,8 +1009,9 @@ def test_production_and_performance_sales_breakdowns(gql_client):
         is None
     )
 
-    # Second, as superuser  TODO: Make this not a super user, but a user with the correct permission
-    response = gql_client.login(user=UserFactory(is_superuser=True)).execute(
+    # Second, add permission to view sales for production
+    assign_perm("sales", user, performance.production)
+    response = gql_client.execute(
         request % to_global_id("ProductionNode", performance.production.id)
     )
     assert response["data"]["productions"]["edges"][0]["node"]["salesBreakdown"] == {
