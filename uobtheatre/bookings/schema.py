@@ -485,14 +485,14 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
         if err:
             raise GQLException(message=err, code=400)
 
-        # If draft booking(s) already exists remove the bookings
-        info.context.user.bookings.filter(
-            status=Booking.BookingStatus.IN_PROGRESS, performance_id=performance_id
-        ).delete()
-
         user = parse_target_user_email(
             target_user_email, info.context.user, performance
         )
+        
+        # If draft booking(s) already exists remove the bookings
+        user.bookings.filter(
+            status=Booking.BookingStatus.IN_PROGRESS, performance_id=performance_id
+        ).delete()
 
         # Create the booking
         extra_args = {}
