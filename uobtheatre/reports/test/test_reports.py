@@ -120,12 +120,17 @@ def create_fixtures():
         value=booking_1.total(),
         provider=payment_methods.SquarePOS.__name__,
         provider_payment_id="square_id",
+        app_fee=booking_1.misc_costs_value(),
+        provider_fee=10,
     )
     payment_1.created_at = "2021-09-08T00:00:01"
     payment_1.save()
 
     payment_2 = PaymentFactory(
-        pay_object=booking_2, value=booking_2.total(), provider="CASH"
+        pay_object=booking_2,
+        value=booking_2.total(),
+        provider="CASH",
+        app_fee=booking_2.misc_costs_value(),
     )
     payment_2.created_at = "2021-09-05T12:00:01"
     payment_2.save()
@@ -253,7 +258,7 @@ def test_period_totals_breakdown_report():
 
 
 @pytest.mark.django_db
-def test_outstanding_society_payments_report_without_misc_cost():
+def test_outstanding_society_payments_report():
     create_fixtures()
     society_1 = Society.objects.all()[0]
     production_1 = Production.objects.all()[0]
@@ -265,7 +270,7 @@ def test_outstanding_society_payments_report_without_misc_cost():
 
     assert len(report.meta) == 1
     assert report.meta[0].name == "Total Outstanding"
-    assert report.meta[0].value == "1100"
+    assert report.meta[0].value == "1090"
 
     assert report.datasets[0].name == "Societies"
     assert len(report.datasets[0].headings) == 3
@@ -273,12 +278,12 @@ def test_outstanding_society_payments_report_without_misc_cost():
         [
             society_1.id,
             "Society 1",
-            1100,
+            900,
         ],
         [
             "",
             "Stage Technicians' Association",
-            0,
+            190,
         ],  # Our fee
     ]
 
@@ -292,8 +297,8 @@ def test_outstanding_society_payments_report_without_misc_cost():
             "Society 1",
             3200,  # Payments total (1100 + 2100)
             1100,  # Of which card: 1100
-            0,  # Total misc costs (2 bookings * 100)
-            1100,  # Card payments (1100) - Total Misc costs (200)
+            190,  # Total misc costs (2 bookings * 100) - square fee
+            900,  # Card payments (1100) - Total Misc costs (200)
         ]
     ]
 
