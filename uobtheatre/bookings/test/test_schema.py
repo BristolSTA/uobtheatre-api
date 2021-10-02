@@ -534,7 +534,7 @@ def test_booking_orderby(order_by, expected_order, gql_client):
 
 @pytest.mark.django_db
 def test_bookings_auth(gql_client):
-    user = gql_client.login()
+    user = gql_client.login().user
     BookingFactory(user=user)
 
     request_query = """
@@ -616,7 +616,7 @@ def test_bookings_search(search_phrase, expected_filtered_bookings, gql_client):
     )
 
     boxoffice_perm = Permission.objects.get(codename="boxoffice")
-    gql_client.login().user_permissions.add(boxoffice_perm)
+    gql_client.login().user.user_permissions.add(boxoffice_perm)
 
     response = gql_client.execute(request)
     assert [node["node"]["id"] for node in response["data"]["bookings"]["edges"]] == [
@@ -632,7 +632,7 @@ def test_bookings_qs(gql_client):
     """
 
     # Booking owned by user
-    BookingFactory(id=1, user=gql_client.login())
+    BookingFactory(id=1, user=gql_client.login().user)
 
     # Booking user does not have permission to acess
     BookingFactory(id=2)
@@ -672,7 +672,7 @@ def test_bookings_qs(gql_client):
 def test_booking_filter_checked_in(gql_client):
 
     # No tickets booking
-    _ = BookingFactory(user=gql_client.login())
+    _ = BookingFactory(user=gql_client.login().user)
 
     # None checked in
     booking_none = BookingFactory(user=gql_client.user)
@@ -739,7 +739,7 @@ def test_booking_filter_active(gql_client):
     )
 
     booking_future = BookingFactory(
-        user=gql_client.login(), performance=performance_future
+        user=gql_client.login().user, performance=performance_future
     )
     booking_past = BookingFactory(user=gql_client.user, performance=performance_past)
 
@@ -778,7 +778,7 @@ def test_booking_filter_active(gql_client):
 def test_booking_order_checked_in(gql_client):
 
     # None checked in
-    booking_none = BookingFactory(user=gql_client.login())
+    booking_none = BookingFactory(user=gql_client.login().user)
     TicketFactory(booking=booking_none)
     TicketFactory(booking=booking_none)
 
@@ -840,7 +840,7 @@ def test_booking_order_start(gql_client):
     # First
     performance_soonest = PerformanceFactory(start=now + datetime.timedelta(days=2))
     booking_soonest = BookingFactory(
-        user=gql_client.login(), performance=performance_soonest
+        user=gql_client.login().user, performance=performance_soonest
     )
 
     # Second

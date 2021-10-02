@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import datetime
 import math
 
@@ -6,6 +7,7 @@ from django.utils import timezone
 from graphql_relay.node.node import to_global_id
 from guardian.shortcuts import assign_perm
 
+from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
     PerformanceSeatingFactory,
@@ -15,6 +17,7 @@ from uobtheatre.discounts.test.factories import (
     DiscountFactory,
     DiscountRequirementFactory,
 )
+from uobtheatre.payments.test.factories import PaymentFactory
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.productions.test.factories import (
     AudienceWarningFactory,
@@ -25,6 +28,7 @@ from uobtheatre.productions.test.factories import (
     ProductionTeamMemberFactory,
     create_production,
 )
+from uobtheatre.users.test.factories import UserFactory
 
 
 @pytest.mark.django_db
@@ -863,7 +867,9 @@ def test_draft_productions_not_shown_publically(logged_in, gql_client):
 def test_draft_production_shown_with_permission(gql_client):
     _ = [ProductionFactory() for _ in range(3)]
     draft_production = ProductionFactory(status=Production.Status.DRAFT)
-    assign_perm("productions.change_production", gql_client.login(), draft_production)
+    assign_perm(
+        "productions.change_production", gql_client.login().user, draft_production
+    )
 
     request = """
         {
@@ -944,3 +950,115 @@ def test_performance_has_permission(gql_client):
         {"node": {"id": to_global_id("PerformanceNode", perm.id)}}
         for perm in performances[1:]
     ]
+
+
+@pytest.mark.django_db
+def test_production_and_performance_sales_breakdowns(gql_client):
+    performance = PerformanceFactory()
+    booking = BookingFactory(
+        performance=performance, status=Booking.BookingStatus.IN_PROGRESS
+    )
+    perf_seat_group = PerformanceSeatingFactory(performance=performance, price=100)
+    TicketFactory(booking=booking, seat_group=perf_seat_group.seat_group)
+    PaymentFactory(pay_object=booking, value=booking.total())
+
+    request = """
+        {
+          productions(id: "%s") {
+            edges {
+                node {
+                    salesBreakdown {
+                        totalSales
+                        totalCardSales
+                        providerPaymentValue
+                        appPaymentValue
+                        societyTransferValue
+                        societyRevenue
+                    }
+                    performances {
+                        edges {
+                            node {
+                                salesBreakdown {
+                                    totalSales
+                                    totalCardSales
+                                    providerPaymentValue
+                                    appPaymentValue
+                                    societyTransferValue
+                                    societyRevenue
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        }
+        """
+
+    # First, test as unauthenticated/unauthorised
+    user = UserFactory()
+    gql_client.login(user)
+    response = gql_client.execute(
+        request % to_global_id("ProductionNode", performance.production.id)
+    )
+    assert response["data"]["productions"]["edges"][0]["node"]["salesBreakdown"] is None
+    assert (
+        response["data"]["productions"]["edges"][0]["node"]["performances"]["edges"][0][
+            "node"
+        ]["salesBreakdown"]
+        is None
+    )
+
+    # Second, add permission to view sales for production
+    assign_perm("sales", user, performance.production)
+    response = gql_client.execute(
+        request % to_global_id("ProductionNode", performance.production.id)
+    )
+    assert response["data"]["productions"]["edges"][0]["node"]["salesBreakdown"] == {
+        "appPaymentValue": 0,
+        "providerPaymentValue": 0,
+        "societyRevenue": 100,
+        "societyTransferValue": 100,
+        "totalCardSales": 100,
+        "totalSales": 100,
+    }
+    assert response["data"]["productions"]["edges"][0]["node"]["performances"]["edges"][
+        0
+    ]["node"]["salesBreakdown"] == {
+        "appPaymentValue": 0,
+        "providerPaymentValue": 0,
+        "societyRevenue": 100,
+        "societyTransferValue": 100,
+        "totalCardSales": 100,
+        "totalSales": 100,
+    }
+
+
+@pytest.mark.django_db
+def test_production_totals(gql_client):
+    perf_1 = PerformanceFactory(capacity=100)
+    perf_2 = PerformanceFactory(production=perf_1.production, capacity=150)
+    PerformanceSeatingFactory(performance=perf_1, capacity=1000)
+    PerformanceSeatingFactory(performance=perf_2, capacity=140)
+
+    booking_1 = BookingFactory(performance=perf_1)
+    TicketFactory(booking=booking_1)
+
+    request = """
+        {
+          productions(id: "%s") {
+            edges {
+                node {
+                    totalCapacity
+                    totalTicketsSold
+                }
+            }
+        }
+        }
+        """
+
+    response = gql_client.login(user=UserFactory(is_superuser=True)).execute(
+        request % to_global_id("ProductionNode", perf_1.production.id)
+    )
+    assert response["data"]["productions"]["edges"][0]["node"]["totalCapacity"] == 240
+    assert response["data"]["productions"]["edges"][0]["node"]["totalTicketsSold"] == 1

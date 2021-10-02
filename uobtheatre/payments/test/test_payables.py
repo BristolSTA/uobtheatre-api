@@ -36,6 +36,16 @@ def test_payable_society_payment_value():
 
 
 @pytest.mark.django_db
+def test_payable_total_sales():
+    booking = BookingFactory()
+
+    PaymentFactory(pay_object=booking, app_fee=100, value=200)
+    PaymentFactory(pay_object=booking, app_fee=150, value=400)
+
+    assert booking.total_sales == 600
+
+
+@pytest.mark.django_db
 def test_society_transfer_value():
     booking = BookingFactory()
 
