@@ -11,11 +11,11 @@ from uobtheatre.productions.test.factories import PerformanceFactory
     [
         (
             "PeriodTotals",
-            "/reports/period_totals/2020-01-01%2000:00:00/2021-01-01%2000:00:00",
+            "https://example.com/reports/period_totals/2020-01-01%2000:00:00/2021-01-01%2000:00:00",
         ),
         (
             "OutstandingPayments",
-            "/reports/outstanding_society_payments",
+            "https://example.com/reports/outstanding_society_payments",
         ),
     ],
 )
@@ -114,7 +114,7 @@ def test_can_generate_report_for_performance_bookings(
         }
     else:
         split_url = response["data"]["generateReport"]["downloadUri"].split("?")
-        assert split_url[0] == "/reports/performance_bookings"
+        assert split_url[0] == "https://example.com/reports/performance_bookings"
         assert split_url[1] is not None
 
 
@@ -173,3 +173,78 @@ def test_cant_generate_when_not_logged_in(gql_client):
         response["data"]["generateReport"]["errors"][0]["message"]
         == "Authentication Error"
     )
+
+
+@pytest.mark.django_db
+def test_cannot_generate_report_with_end_data_before_start(gql_client):
+    request = """
+        mutation{
+            generateReport(name: "PeriodTotals", endTime: "2020-01-01T00:00:00", startTime:"2021-01-01T00:00:00") {
+                downloadUri
+                errors {
+                    __typename
+                    ... on NonFieldError {
+                        message
+                    }
+                }
+            }
+        }
+    """
+    gql_client.login()
+    assign_perm("reports.finance_reports", gql_client.user)
+    response = gql_client.execute(request)
+
+    assert (
+        response["data"]["generateReport"]["errors"][0]["message"]
+        == "The end time must be after the start time"
+    )
+
+
+@pytest.mark.django_db
+def test_cannot_generate_report_with_start_but_no_end(gql_client):
+    request = """
+        mutation{
+            generateReport(name: "PeriodTotals", startTime:"2021-01-01T00:00:00") {
+                downloadUri
+                errors {
+                    ... on FieldError {
+                        message
+                        field
+                    }
+                }
+            }
+        }
+    """
+    gql_client.login()
+    assign_perm("reports.finance_reports", gql_client.user)
+    response = gql_client.execute(request)
+
+    assert response["data"]["generateReport"]["errors"][0] == {
+        "message": "An end time must be provided when using a start time",
+        "field": "endTime",
+    }
+
+
+@pytest.mark.django_db
+def test_cannot_generate_report_with_end_but_no_start(gql_client):
+    request = """
+        mutation{
+            generateReport(name: "PeriodTotals", endTime:"2021-01-01T00:00:00") {
+                downloadUri
+                errors {
+                    ... on FieldError {
+                        message
+                        field
+                    }
+                }
+            }
+        }
+    """
+    gql_client.login()
+    assign_perm("reports.finance_reports", gql_client.user)
+    response = gql_client.execute(request)
+
+    assert response["data"]["generateReport"]["errors"][0] == {
+        "message": "A start time must be provided when using an end time",
+        "field": "startTime",
+    }

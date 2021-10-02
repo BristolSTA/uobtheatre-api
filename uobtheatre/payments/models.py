@@ -39,7 +39,7 @@ class Payment(TimeStampedMixin, models.Model):
         PURCHASE = "PURCHASE", "Purchase payment"
         REFUND = "REFUND", "Refund payment"
 
-    objects = models.Manager.from_queryset(PaymentQuerySet)
+    objects = PaymentQuerySet.as_manager()
 
     # List of models which can be paid for
     payables = models.Q(app_label="bookings", model="booking")

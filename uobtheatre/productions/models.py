@@ -272,7 +272,9 @@ class Production(TimeStampedMixin, models.Model):
         return Payment.objects.filter(
             pay_object_id__in=self.bookings.values_list("id", flat=True),
             pay_object_type=ContentType.objects.get_for_model(Booking),
-        ).annotate_sales_breakdown(breakdowns)
+        ).annotate_sales_breakdown(  # type: ignore
+            breakdowns
+        )
 
     class Meta:
         ordering = ["id"]
@@ -788,7 +790,9 @@ class Performance(
         return Payment.objects.filter(
             pay_object_id__in=self.bookings.values_list("id", flat=True),
             pay_object_type=ContentType.objects.get_for_model(Booking),
-        ).annotate_sales_breakdown(breakdowns)
+        ).annotate_sales_breakdown(  # type: ignore
+            breakdowns
+        )
 
     def __str__(self):
         if self.start is None:

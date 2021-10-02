@@ -1,6 +1,7 @@
 from typing import List
 
 import graphene
+from django.contrib.sites.models import Site
 from django.urls import reverse
 from django.urls.exceptions import NoReverseMatch
 from graphene.types.datetime import DateTime
@@ -58,13 +59,28 @@ class GenerateReport(AuthRequiredMixin, SafeMutation):
                 message="No report found matching '%s'" % name, field="name"
             )
 
+        # If a date range is provided
+        if end_time or start_time:
+            # Validate both end and start are provided
+            if end_time is None:
+                raise GQLException(
+                    message="An end time must be provided when using a start time",
+                    field="end_time",
+                )
+            if start_time is None:
+                raise GQLException(
+                    message="A start time must be provided when using an end time",
+                    field="start_time",
+                )
+            # And that end time is after start time
+            if end_time <= start_time:
+                raise GQLException(message="The end time must be after the start time")
+
         matching_report = available_reports[name]
 
         # Validate and authorize
         matching_report["cls"].validate_options(options)  # type: ignore
         matching_report["cls"].authorize_user(info.context.user, options)  # type: ignore
-
-        download_uri = None
 
         # Generate signature to authorize user to access
         signature = generate_report_download_signature(info.context.user, name, options)
@@ -78,7 +94,10 @@ class GenerateReport(AuthRequiredMixin, SafeMutation):
                 str(matching_report["uri"]),
             )
 
-        return GenerateReport(download_uri=download_uri + "?signature=" + signature)
+        domain = "https://" + Site.objects.get_current().domain
+        return GenerateReport(
+            download_uri=domain + download_uri + "?signature=" + signature
+        )
 
 
 class Mutation(graphene.ObjectType):

@@ -13,8 +13,6 @@ class PaymentFactory(factory.django.DjangoModelFactory):
     currency = "GBP"
     card_brand = "MASTERCARD"
     last_4 = "1111"
-    # provider_fee = 0
-    # app_fee = 0
 
     class Meta:
         model = Payment
