@@ -112,11 +112,11 @@ class SquarePOS(PaymentMethod):
     description = "Square terminal card payment"
     client = Client(
         square_version="2020-11-18",
-        access_token=settings.SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],
-        environment=settings.SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],
+        access_token=settings.SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],  # type: ignore
+        environment=settings.SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],  # type: ignore
     )
-    webhook_signature_key = settings.SQUARE_SETTINGS["SQUARE_WEBHOOK_SIGNATURE_KEY"]
-    webhook_url = f"{settings.BASE_URL}/{settings.SQUARE_SETTINGS['PATH']}"
+    webhook_signature_key = settings.SQUARE_SETTINGS["SQUARE_WEBHOOK_SIGNATURE_KEY"]  # type: ignore
+    webhook_url = f"{settings.BASE_URL}/{settings.SQUARE_SETTINGS['PATH']}"  # type: ignore
 
     def __init__(self, device_id: str) -> None:
         self.device_id = device_id
@@ -275,8 +275,8 @@ class SquareOnline(PaymentMethod):
     description = "Square online card payment"
     client = Client(
         square_version="2020-11-18",
-        access_token=settings.SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],
-        environment=settings.SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],
+        access_token=settings.SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],  # type: ignore
+        environment=settings.SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],  # type: ignore
     )
 
     def __init__(self, nonce: str, idempotency_key: str) -> None:

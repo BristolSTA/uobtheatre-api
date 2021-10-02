@@ -7,7 +7,7 @@ from django.urls.exceptions import NoReverseMatch
 from graphene.types.datetime import DateTime
 from graphene.types.scalars import String
 
-import uobtheatre.reports.reports as reports
+from uobtheatre.reports import reports
 from uobtheatre.reports.utils import generate_report_download_signature
 from uobtheatre.utils.exceptions import GQLException, SafeMutation
 from uobtheatre.utils.schema import AuthRequiredMixin

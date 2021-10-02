@@ -247,7 +247,10 @@ class Booking(TimeStampedMixin, Payable, models.Model):
         """
         booking_concessions: Dict = {}
         for ticket in self.tickets.all():
-            if not ticket.concession_type in booking_concessions.keys():
+            if (
+                not ticket.concession_type
+                in booking_concessions.keys()  # pylint: disable=consider-iterating-dictionary
+            ):
                 booking_concessions[ticket.concession_type] = 0
             booking_concessions[ticket.concession_type] += 1
         return booking_concessions
