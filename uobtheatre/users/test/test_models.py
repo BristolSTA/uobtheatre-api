@@ -3,7 +3,7 @@ from django.contrib.auth.models import Group, Permission
 from guardian.shortcuts import assign_perm
 
 from conftest import AuthenticateableGQLClient
-from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
+from uobtheatre.productions.test.factories import ProductionFactory
 from uobtheatre.users.models import User
 from uobtheatre.users.test.factories import UserFactory
 
