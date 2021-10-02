@@ -8,6 +8,7 @@ from .local import *  # noqa: F403,F401
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#secret-key
 TEST_RUNNER = "django.test.runner.DiscoverRunner"
+BASE_URL = "https://example.com"
 
 # CACHES
 # ------------------------------------------------------------------------------
