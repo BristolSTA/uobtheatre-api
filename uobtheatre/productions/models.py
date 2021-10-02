@@ -267,7 +267,7 @@ class Production(TimeStampedMixin, models.Model):
             ]
         )
 
-    def sales_breakdown(self, breakdowns: list[str] = None) -> dict:
+    def sales_breakdown(self, breakdowns: list[str] = None):
         """Generates a breakdown of the sales of this production"""
         from uobtheatre.bookings.models import Booking
 
