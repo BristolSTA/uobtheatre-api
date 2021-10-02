@@ -120,19 +120,21 @@ def test_square_online_pay_success(mock_square):
         SquareOnline.client.payments,
         "get_payment",
         body={
-            "id": "1GkfsosCaWWIpapKt61Xq2tt4lEZY",
-            "processing_fee": [
-                {
-                    "effective_at": "2021-09-30T06:53:50.000Z",
-                    "type": "INITIAL",
-                    "amount_money": {"amount": 29, "currency": "GBP"},
-                },
-                {
-                    "effective_at": "2021-09-30T06:53:50.000Z",
-                    "type": "INITIAL",
-                    "amount_money": {"amount": 12, "currency": "GBP"},
-                },
-            ],
+            "payment": {
+                "id": "1GkfsosCaWWIpapKt61Xq2tt4lEZY",
+                "processing_fee": [
+                    {
+                        "effective_at": "2021-09-30T06:53:50.000Z",
+                        "type": "INITIAL",
+                        "amount_money": {"amount": 29, "currency": "GBP"},
+                    },
+                    {
+                        "effective_at": "2021-09-30T06:53:50.000Z",
+                        "type": "INITIAL",
+                        "amount_money": {"amount": 12, "currency": "GBP"},
+                    },
+                ],
+            }
         },
         success=True,
     ):
