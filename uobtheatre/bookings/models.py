@@ -692,6 +692,9 @@ class Ticket(models.Model):
         self.checked_in = False
         self.save()
 
+    def __str__(self):
+        return "%s | %s" % (self.seat_group.name, self.concession_type.name)
+
 
 def max_tickets_per_booking() -> int:
     """Get the maximum number of a tickets a "normal" user can have per booking"""

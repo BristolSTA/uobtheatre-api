@@ -9,7 +9,7 @@ class PaymentFactory(factory.django.DjangoModelFactory):
 
     pay_object = factory.SubFactory(BookingFactory)
     type = Payment.PaymentType.PURCHASE
-    provider = payment_methods.SquareOnline.__name__
+    provider = payment_methods.SquareOnline.name
     value = factory.Faker("pyint", min_value=0)
     currency = "GBP"
     card_brand = "MASTERCARD"

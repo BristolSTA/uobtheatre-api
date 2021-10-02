@@ -250,17 +250,40 @@ class Production(TimeStampedMixin, models.Model):
             return None
         return min(performance.duration() for performance in performances)
 
-    def sales_breakdown(self):
+    @property
+    def total_capacity(self) -> int:
+        """The total number of tickets which can be sold across all performances"""
+        return sum(
+            [performance.total_capacity for performance in self.performances.all()]
+        )
+
+    @property
+    def total_tickets_sold(self) -> int:
+        """The total number of tickets sold across all performances"""
+        return sum(
+            [
+                performance.total_tickets_sold()
+                for performance in self.performances.all()
+            ]
+        )
+
+    def sales_breakdown(self, breakdowns: list[str] = None):
+        """Generates a breakdown of the sales of this production"""
         from uobtheatre.bookings.models import Booking
 
         return Payment.objects.filter(
             pay_object_id__in=self.bookings.values_list("id", flat=True),
             pay_object_type=ContentType.objects.get_for_model(Booking),
-        ).annotate_sales_breakdown()
+        ).annotate_sales_breakdown(  # type: ignore
+            breakdowns
+        )
 
     class Meta:
         ordering = ["id"]
-        permissions = (("boxoffice", "Can use boxoffice for this show"),)
+        permissions = (
+            ("boxoffice", "Can use boxoffice for this production"),
+            ("sales", "Can view sales for this production"),
+        )
 
 
 class CastMember(models.Model):
@@ -762,13 +785,16 @@ class Performance(
             return True
         return False
 
-    def sales_breakdown(self):
+    def sales_breakdown(self, breakdowns: list[str] = None):
+        """Generates a breakdown of the sales of this performance"""
         from uobtheatre.bookings.models import Booking
 
         return Payment.objects.filter(
             pay_object_id__in=self.bookings.values_list("id", flat=True),
             pay_object_type=ContentType.objects.get_for_model(Booking),
-        ).annotate_sales_breakdown()
+        ).annotate_sales_breakdown(  # type: ignore
+            breakdowns
+        )
 
     def __str__(self):
         if self.start is None:

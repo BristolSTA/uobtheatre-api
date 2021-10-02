@@ -46,6 +46,7 @@ INSTALLED_APPS = (
     "uobtheatre.addresses",
     "uobtheatre.payments",
     "uobtheatre.images",
+    "uobtheatre.reports",
     "uobtheatre.mail",
     "uobtheatre",
 )

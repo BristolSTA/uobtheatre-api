@@ -12,6 +12,7 @@ from uobtheatre.bookings.test.factories import (
     BookingFactory,
     PerformanceSeatingFactory,
     TicketFactory,
+    ValueMiscCostFactory,
 )
 from uobtheatre.discounts.test.factories import (
     ConcessionTypeFactory,
@@ -271,6 +272,36 @@ def test_production_min_price_no_perfs():
     production = ProductionFactory()
 
     assert production.min_seat_price() is None
+
+
+@pytest.mark.django_db
+def test_production_total_capacity():
+    perf_1 = PerformanceFactory(capacity=100)
+    perf_2 = PerformanceFactory(production=perf_1.production, capacity=150)
+    PerformanceSeatingFactory(performance=perf_1, capacity=1000)
+    PerformanceSeatingFactory(performance=perf_2, capacity=140)
+
+    assert perf_1.production.total_capacity == 240
+
+
+@pytest.mark.django_db
+def test_production_total_tickets_sold():
+    perf_1 = PerformanceFactory()
+    perf_2 = PerformanceFactory(production=perf_1.production)
+    booking_1 = BookingFactory(performance=perf_1)
+    booking_2 = BookingFactory(performance=perf_2)
+
+    # 2 tickets in the performance 1
+    TicketFactory(booking=booking_1)
+    TicketFactory(booking=booking_1)
+
+    # 1 tickets in the performance 1
+    TicketFactory(booking=booking_2)
+
+    # A ticket not in the booking
+    TicketFactory()
+
+    assert perf_1.production.total_tickets_sold == 3
 
 
 @pytest.mark.django_db
@@ -941,4 +972,21 @@ def test_sales_breakdown_performance():
         "society_transfer_value": 550,
         "total_card_sales": 1000,
         "total_sales": 1200,
+    }
+
+
+@pytest.mark.django_db
+def test_sales_breakdown_with_blank_fees():
+    performance = PerformanceFactory()
+    booking = BookingFactory(performance=performance)
+
+    PaymentFactory(pay_object=booking, value=200)
+
+    assert performance.sales_breakdown() == {
+        "app_payment_value": 0,
+        "provider_payment_value": 0,
+        "society_revenue": 200,
+        "society_transfer_value": 200,
+        "total_card_sales": 200,
+        "total_sales": 200,
     }
