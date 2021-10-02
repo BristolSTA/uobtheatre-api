@@ -361,7 +361,7 @@ class SquareOnline(PaymentMethod):
         full_response = self.get_payment(square_payment_id)
         payment.provider_fee = sum(
             fee["amount_money"]["amount"]
-            for fee in full_response.body["processing_fee"]
+            for fee in full_response.body["payment"]["processing_fee"]
         )
         payment.save()
 
