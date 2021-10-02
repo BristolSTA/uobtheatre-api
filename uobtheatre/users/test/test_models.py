@@ -63,15 +63,3 @@ def test_boxoffice_permissions_model_level_group(
 
     assert user.has_perm("productions.boxoffice")
     assert user.has_perm("productions.boxoffice", production)
-
-
-@pytest.mark.django_db
-def test_can_boxoffice():
-    performance = PerformanceFactory()
-    PerformanceFactory()
-
-    user = UserFactory()
-    assert not user.can_boxoffice
-
-    assign_perm("boxoffice", user, performance.production)
-    assert user.can_boxoffice
