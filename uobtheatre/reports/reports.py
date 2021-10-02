@@ -198,8 +198,8 @@ class OutstandingSocietyPayments(Report):
         sta_total_due = 0
 
         for production in productions:
-            sales_breakdown = production.sales_breakdown
-            production_sta_fees = production.sales_breakdown["misc_costs_total"]
+            sales_breakdown = production.sales_breakdown()
+            production_sta_fees = sales_breakdown["app_payment_value"]
             sta_total_due += production_sta_fees
 
             productions_dataset.find_or_create_row_by_first_column(
@@ -209,10 +209,10 @@ class OutstandingSocietyPayments(Report):
                     production.name,
                     production.society.id,
                     production.society.name,
-                    sales_breakdown["payments_total"],
-                    sales_breakdown["card_payments_total"],
+                    sales_breakdown["total_sales"],
+                    sales_breakdown["total_card_sales"],
                     production_sta_fees,
-                    sales_breakdown["society_card_income_total"],
+                    sales_breakdown["society_transfer_value"],
                 ],
             )
 
@@ -224,7 +224,7 @@ class OutstandingSocietyPayments(Report):
                     0,
                 ],
             )
-            row[2] += sales_breakdown["society_card_income_total"]
+            row[2] += sales_breakdown["society_transfer_value"]
 
         societies_dataset.add_row(["", "Stage Technicians' Association", sta_total_due])
         self.meta.append(

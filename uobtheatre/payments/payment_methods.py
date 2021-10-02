@@ -50,7 +50,7 @@ class PaymentMethod(abc.ABC):
 
     @abc.abstractmethod
     def pay(
-        self, value: int, pay_object: "Payable"
+        self, value: int, app_fee: int, pay_object: "Payable"
     ) -> Optional["payment_models.Payment"]:
         raise NotImplementedError
 
@@ -60,28 +60,39 @@ class PaymentMethod(abc.ABC):
         raise NotImplementedError
 
     @classmethod
-    def create_payment_object(cls, pay_object: "Payable", value: int, **kwargs):
+    def create_payment_object(
+        cls, pay_object: "Payable", value: int, app_fee, **kwargs
+    ):
         return payment_models.Payment.objects.create(
             provider=cls.name,
             type=payment_models.Payment.PaymentType.PURCHASE,
             pay_object=pay_object,
             value=value,
+            app_fee=app_fee,
             **kwargs,
         )
 
 
 class Cash(PaymentMethod):
+    """Manual cash payment method"""
+
     description = "Manual cash payment"
 
-    def pay(self, value: int, pay_object: "Payable") -> "payment_models.Payment":
-        return self.create_payment_object(pay_object, value)
+    def pay(
+        self, value: int, app_fee: int, pay_object: "Payable"
+    ) -> "payment_models.Payment":
+        return self.create_payment_object(pay_object, value, app_fee)
 
 
 class Card(PaymentMethod):
+    """Manual card payment method"""
+
     description = "Manual card payment"
 
-    def pay(self, value: int, pay_object: "Payable") -> "payment_models.Payment":
-        return self.create_payment_object(pay_object, value)
+    def pay(
+        self, value: int, app_fee: int, pay_object: "Payable"
+    ) -> "payment_models.Payment":
+        return self.create_payment_object(pay_object, value, app_fee)
 
 
 class SquarePOS(PaymentMethod):
@@ -111,11 +122,12 @@ class SquarePOS(PaymentMethod):
         self.device_id = device_id
         super().__init__()
 
-    def pay(self, value: int, pay_object: "Payable") -> None:
+    def pay(self, value: int, app_fee: int, pay_object: "Payable") -> None:
         """Send payment to point of sale device.
 
         Parameters:
             value (int): Amount of money being payed
+            app_fee (int): The amount we charge for the payment.
             pay_object (Payable): The object being payed for
 
         Raises:
@@ -173,6 +185,7 @@ class SquarePOS(PaymentMethod):
             cls.create_payment_object(
                 booking,
                 checkout["amount_money"]["amount"],
+                booking.misc_costs_value(),
                 provider_payment_id=checkout["payment_ids"][0],
                 currency=checkout["amount_money"]["currency"],
             )
@@ -269,11 +282,11 @@ class SquareOnline(PaymentMethod):
     def __init__(self, nonce: str, idempotency_key: str) -> None:
         """
         Args:
-            idempotency_key (string): This value is as unique indicator of
+            idempotency_key (str): This value is as unique indicator of
                 the payment request and is used to ensure a payment can only be
                 made once. I.e. if another payment is made with the same key
                 the previous payment will be returned.
-            nonce (string): The nonce is a reference to the completed payment
+            nonce (str): The nonce is a reference to the completed payment
                 form on the front-end. This allows square to determine the
                 payment details to use.
         """
@@ -281,13 +294,35 @@ class SquareOnline(PaymentMethod):
         self.idempotency_key = idempotency_key
         super().__init__()
 
-    def pay(self, value: int, pay_object: "Payable") -> "payment_models.Payment":
+    def get_payment(self, payment_id: str):
+        """Get full payment info from square for a given payment id.
+
+        Args:
+            payment_id (str): The id of the payment to be fetched
+
+        Returns:
+            dict: Payment response from square
+
+        Raises:
+            SquareException: When response is not successful
+        """
+        response = self.client.payments.get_payment(payment_id)
+
+        if not response.is_success():
+            raise SquareException(response)
+
+        return response
+
+    def pay(
+        self, value: int, app_fee: int, pay_object: "Payable"
+    ) -> "payment_models.Payment":
         """Make a payment using Square
 
         This makes a request to square to make a payment.
 
         Args:
             value (int): The value of the payment in pennies
+            app_fee (int): The amount we charge for the payment.
             pay_object (Payable): The object being payed for
 
         Returns:
@@ -297,7 +332,7 @@ class SquareOnline(PaymentMethod):
             SquareException: If the request was unsuccessful.
         """
         body = {
-            "idempotency_key": self.idempotency_key,
+            "idempotency_key": str(self.idempotency_key),
             "source_id": self.nonce,
             "amount_money": {"amount": value, "currency": "GBP"},
             "reference_id": pay_object.payment_reference_id,
@@ -310,11 +345,24 @@ class SquareOnline(PaymentMethod):
         card_details = response.body["payment"]["card_details"]["card"]
         amount_details = response.body["payment"]["amount_money"]
 
-        return self.create_payment_object(
+        # Create payment object with info that is returned
+        square_payment_id = response.body["payment"]["id"]
+        payment = self.create_payment_object(
             pay_object,
             amount_details["amount"],
+            app_fee,
             card_brand=card_details["card_brand"],
             last_4=card_details["last_4"],
-            provider_payment_id=response.body["payment"]["id"],
+            provider_payment_id=square_payment_id,
             currency=amount_details["currency"],
         )
+
+        # Fetch full payment object to add processing fee to payment object
+        full_response = self.get_payment(square_payment_id)
+        payment.provider_fee = sum(
+            fee["amount_money"]["amount"]
+            for fee in full_response.body["processing_fee"]
+        )
+        payment.save()
+
+        return payment

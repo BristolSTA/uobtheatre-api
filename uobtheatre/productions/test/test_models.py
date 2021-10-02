@@ -19,6 +19,7 @@ from uobtheatre.discounts.test.factories import (
     DiscountFactory,
     DiscountRequirementFactory,
 )
+from uobtheatre.payments.payment_methods import Card, Cash, SquareOnline
 from uobtheatre.payments.test.factories import PaymentFactory
 from uobtheatre.productions.models import Performance, PerformanceSeatGroup
 from uobtheatre.productions.test.factories import (
@@ -379,16 +380,63 @@ def test_performance_unchecked_in_tickets():
 
 @pytest.mark.django_db
 def test_performance_total_tickets_sold():
+    # Booking with 2 tickets
     booking = BookingFactory()
-
-    # 2 tickets in the performance
     TicketFactory(booking=booking)
     TicketFactory(booking=booking)
 
-    # A ticket not in the booking
+    # Draft booking with 3 tickets (shouldn't be counted)
+    draft_booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    TicketFactory(booking=draft_booking)
+    TicketFactory(booking=draft_booking)
+    TicketFactory(booking=draft_booking)
+
+    # Expired Booking with 4 tickets (shouldn't be counted)
+    expires_draft_booking = BookingFactory(
+        expires_at=timezone.now() - timedelta(minutes=16),
+        status=Booking.BookingStatus.IN_PROGRESS,
+    )
+    TicketFactory(booking=expires_draft_booking)
+    TicketFactory(booking=expires_draft_booking)
+    TicketFactory(booking=expires_draft_booking)
+    TicketFactory(booking=expires_draft_booking)
+
+    # A ticket not in any of the bookings (shouldn't be counted)
     TicketFactory()
 
     assert booking.performance.total_tickets_sold() == 2
+
+
+@pytest.mark.django_db
+def test_performance_total_tickets_sold_or_reserved():
+    # Booking with 2 tickets
+    booking = BookingFactory()
+    TicketFactory(booking=booking)
+    TicketFactory(booking=booking)
+
+    # Draft booking with 3 tickets
+    draft_booking = BookingFactory(
+        status=Booking.BookingStatus.IN_PROGRESS, performance=booking.performance
+    )
+    TicketFactory(booking=draft_booking)
+    TicketFactory(booking=draft_booking)
+    TicketFactory(booking=draft_booking)
+
+    # Expired Booking with 4 tickets (shouldn't be counted)
+    expires_draft_booking = BookingFactory(
+        expires_at=timezone.now() - timedelta(minutes=16),
+        status=Booking.BookingStatus.IN_PROGRESS,
+        performance=booking.performance,
+    )
+    TicketFactory(booking=expires_draft_booking)
+    TicketFactory(booking=expires_draft_booking)
+    TicketFactory(booking=expires_draft_booking)
+    TicketFactory(booking=expires_draft_booking)
+
+    # A ticket not in any of the bookings (shouldn't be counted)
+    TicketFactory()
+
+    assert booking.performance.total_tickets_sold_or_reserved() == 2 + 3
 
 
 @pytest.mark.django_db
@@ -454,6 +502,23 @@ def test_performance_capacity_remaining():
         == perf.total_seat_group_capacity(seat_group) - 5
     )
     assert perf.capacity_remaining() == perf.total_capacity - 5
+
+    # Check an expired booking with tickets (should not be included)
+    booking_3 = BookingFactory(
+        performance=perf,
+        status=Booking.BookingStatus.IN_PROGRESS,
+        expires_at=timezone.now() - timedelta(minutes=16),
+    )
+    TicketFactory(booking=booking_3, seat_group=seat_group)
+    assert perf.capacity_remaining() == perf.total_capacity - 5
+
+    # Check a draft booking with tickets
+    booking_4 = BookingFactory(
+        performance=perf, status=Booking.BookingStatus.IN_PROGRESS
+    )
+    TicketFactory(booking=booking_4, seat_group=seat_group)
+    TicketFactory(booking=booking_4, seat_group=seat_group)
+    assert perf.capacity_remaining() == perf.total_capacity - 7
 
 
 @pytest.mark.django_db
@@ -840,111 +905,88 @@ def test_has_group_discounts():
 
 
 @pytest.mark.django_db
-def test_sales_breakdown_on_production():
+def test_sales_breakdown_production():
     production = ProductionFactory()
+    performance_1 = PerformanceFactory(production=production)
+    performance_2 = PerformanceFactory(production=production)
+    booking_1 = BookingFactory(performance=performance_1)
+    booking_2 = BookingFactory(performance=performance_2)
 
-    def asser_breakdown_values(
-        production, payments_value, misc_costs_value, society_income
-    ):
-        assert production.sales_breakdown["payments_total"] == payments_value
-        assert production.sales_breakdown["card_payments_total"] == payments_value
-        assert production.sales_breakdown["misc_costs_total"] == misc_costs_value
-        assert production.sales_breakdown["society_income_total"] == society_income
-        assert (
-            production.sales_breakdown["society_card_income_total"]
-            == payments_value - misc_costs_value
-        )
-
-    # Blank production should have no sales
-    asser_breakdown_values(production, 0, 0, 0)
-
-    # Add a performance with 1 draft, 1 paid and one comp booking
-    performance = PerformanceFactory(production=production)
-    perf_seat_group = PerformanceSeatingFactory(performance=performance, price=100)
-
-    # Make a misc cost
-    ValueMiscCostFactory(value=100)
-
-    booking_1 = BookingFactory(
-        status=Booking.BookingStatus.IN_PROGRESS, performance=performance
+    PaymentFactory(
+        pay_object=booking_1, provider_fee=2, app_fee=100, value=200, provider=Cash.name
+    )
+    PaymentFactory(
+        pay_object=booking_1, provider_fee=4, app_fee=200, value=600, provider=Card.name
+    )
+    PaymentFactory(
+        pay_object=booking_2,
+        provider_fee=10,
+        app_fee=150,
+        value=400,
+        provider=SquareOnline.name,
     )
 
-    # Both bookings have a tickets value of 200, and a misc cost of 0
-    booking_2 = BookingFactory(
-        status=Booking.BookingStatus.PAID, performance=performance
-    )
-    booking_3 = BookingFactory(
-        status=Booking.BookingStatus.PAID,
-        admin_discount_percentage=1,
-        performance=performance,
-    )
-
-    TicketFactory(booking=booking_1, seat_group=perf_seat_group.seat_group)
-    TicketFactory(booking=booking_2, seat_group=perf_seat_group.seat_group)
-    TicketFactory(booking=booking_2, seat_group=perf_seat_group.seat_group)
-    TicketFactory(booking=booking_3, seat_group=perf_seat_group.seat_group)
-    TicketFactory(booking=booking_3, seat_group=perf_seat_group.seat_group)
-    PaymentFactory(pay_object=booking_2, value=booking_2.total())
-
-    asser_breakdown_values(production, 300, 100, 200)
+    assert production.sales_breakdown() == {
+        "app_payment_value": 434,
+        "provider_payment_value": 16,
+        "society_revenue": 750,
+        "society_transfer_value": 550,
+        "total_card_sales": 1000,
+        "total_sales": 1200,
+    }
 
 
 @pytest.mark.django_db
-def test_sales_breakdown_on_performance():
+def test_sales_breakdown_performance():
     performance = PerformanceFactory()
+    booking_1 = BookingFactory(performance=performance)
+    booking_2 = BookingFactory(performance=performance)
+    booking_3 = BookingFactory()
 
-    def assert_breakdown_values(
-        performance,
-        payments_total,
-        misc_costs_total,
-        society_income,
-        card_payments_total,
-    ):
-        assert performance.sales_breakdown["payments_total"] == payments_total
-        assert performance.sales_breakdown["card_payments_total"] == card_payments_total
-        assert performance.sales_breakdown["misc_costs_total"] == misc_costs_total
-        assert performance.sales_breakdown["society_income_total"] == society_income
-
-    # Blank performance should have no sales
-    assert_breakdown_values(performance, 0, 0, 0, 0)
-
-    # Add a performance with 1 draft, 1 paid and one comp booking
-    perf_seat_group = PerformanceSeatingFactory(performance=performance, price=150)
-
-    # Make a misc cost
-    ValueMiscCostFactory(value=100)
-
-    booking_1 = BookingFactory(
-        status=Booking.BookingStatus.IN_PROGRESS, performance=performance
+    PaymentFactory(
+        pay_object=booking_1, provider_fee=2, app_fee=100, value=200, provider=Cash.name
+    )
+    PaymentFactory(
+        pay_object=booking_1, provider_fee=4, app_fee=200, value=600, provider=Card.name
+    )
+    PaymentFactory(
+        pay_object=booking_2,
+        provider_fee=10,
+        app_fee=150,
+        value=400,
+        provider=SquareOnline.name,
     )
 
-    # Both bookings have a tickets value of 200, and a misc cost of 0
-    booking_2 = BookingFactory(
-        status=Booking.BookingStatus.PAID, performance=performance
-    )
-    booking_3 = BookingFactory(
-        status=Booking.BookingStatus.PAID,
-        admin_discount_percentage=1,
-        performance=performance,
+    PaymentFactory(
+        pay_object=booking_3,
+        provider_fee=10,
+        app_fee=150,
+        value=400,
+        provider=SquareOnline.name,
     )
 
-    TicketFactory(booking=booking_1, seat_group=perf_seat_group.seat_group)
-    TicketFactory(booking=booking_2, seat_group=perf_seat_group.seat_group)
-    TicketFactory(booking=booking_2, seat_group=perf_seat_group.seat_group)
-    TicketFactory(booking=booking_3, seat_group=perf_seat_group.seat_group)
-    TicketFactory(booking=booking_3, seat_group=perf_seat_group.seat_group)
-    PaymentFactory(pay_object=booking_2, value=booking_2.total())
+    assert performance.sales_breakdown() == {
+        "app_payment_value": 434,
+        "provider_payment_value": 16,
+        "society_revenue": 750,
+        "society_transfer_value": 550,
+        "total_card_sales": 1000,
+        "total_sales": 1200,
+    }
 
-    assert_breakdown_values(performance, 400, 100, 300, 400)
 
-    # Box office cash booking, cost of 150 + 100 misc cost = 250
-    booking_4 = BookingFactory(
-        status=Booking.BookingStatus.PAID,
-        performance=performance,
-    )
-    TicketFactory(booking=booking_4, seat_group=perf_seat_group.seat_group)
-    PaymentFactory(pay_object=booking_4, value=booking_4.total(), provider="CASH")
+@pytest.mark.django_db
+def test_sales_breakdown_with_blank_fees():
+    performance = PerformanceFactory()
+    booking = BookingFactory(performance=performance)
 
-    assert_breakdown_values(
-        performance, 650, 200, 450, 400
-    )  # Notice how the card total has not gone up
+    PaymentFactory(pay_object=booking, value=200)
+
+    assert performance.sales_breakdown() == {
+        "app_payment_value": 0,
+        "provider_payment_value": 0,
+        "society_revenue": 200,
+        "society_transfer_value": 200,
+        "total_card_sales": 200,
+        "total_sales": 200,
+    }

@@ -253,19 +253,19 @@ def test_period_totals_breakdown_report():
 
 
 @pytest.mark.django_db
-def test_outstanding_society_payments_report():
+def test_outstanding_society_payments_report_without_misc_cost():
     create_fixtures()
     society_1 = Society.objects.all()[0]
     production_1 = Production.objects.all()[0]
     # NB: As production 2 is not "closed", it shouldn't show in this report
-
+    print(production_1.sales_breakdown())
     report = OutstandingSocietyPayments()
 
     assert len(report.datasets) == 2
 
     assert len(report.meta) == 1
     assert report.meta[0].name == "Total Outstanding"
-    assert report.meta[0].value == "1100.0"
+    assert report.meta[0].value == "1100"
 
     assert report.datasets[0].name == "Societies"
     assert len(report.datasets[0].headings) == 3
@@ -273,12 +273,12 @@ def test_outstanding_society_payments_report():
         [
             society_1.id,
             "Society 1",
-            900,
-        ],  # 1100 (card payments) - 200 (misc costs on all payments),
+            1100,
+        ],
         [
             "",
             "Stage Technicians' Association",
-            200,
+            0,
         ],  # Our fee
     ]
 
@@ -292,8 +292,8 @@ def test_outstanding_society_payments_report():
             "Society 1",
             3200,  # Payments total (1100 + 2100)
             1100,  # Of which card: 1100
-            200,  # Total misc costs (2 bookings * 100)
-            900,  # Card payments (1100) - Total Misc costs (200)
+            0,  # Total misc costs (2 bookings * 100)
+            1100,  # Card payments (1100) - Total Misc costs (200)
         ]
     ]
 

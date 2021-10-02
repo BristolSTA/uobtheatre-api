@@ -61,8 +61,8 @@ class GenerateReport(AuthRequiredMixin, SafeMutation):
         matching_report = available_reports[name]
 
         # Validate and authorize
-        matching_report["cls"].validate_options(options)
-        matching_report["cls"].authorize_user(info.context.user, options)
+        matching_report["cls"].validate_options(options)  # type: ignore
+        matching_report["cls"].authorize_user(info.context.user, options)  # type: ignore
 
         download_uri = None
 

@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 volumes:
   uobtheatre_local_postgres_data: {}

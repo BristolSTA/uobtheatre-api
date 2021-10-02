@@ -34,6 +34,7 @@ INSTALLED_APPS = (
     "guardian",
     "django_tiptap",
     "rest_framework",
+    "django_inlinecss",
     # Your apps
     "uobtheatre.users",
     "uobtheatre.productions",
@@ -46,6 +47,7 @@ INSTALLED_APPS = (
     "uobtheatre.payments",
     "uobtheatre.images",
     "uobtheatre.reports",
+    "uobtheatre.mail",
     "uobtheatre",
 )
 
@@ -71,6 +73,11 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 # Email
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.getenv("EMAIL_HOST", "localhost")
+EMAIL_PORT = os.getenv("EMAIL_PORT") or 1025
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+DEFAULT_FROM_EMAIL = "UOB Theatre <no-reply@uobtheatre.com>"
 
 ADMINS = (("Author", "webmaster@bristolsta.com"),)
 
@@ -254,8 +261,12 @@ GRAPHQL_AUTH = {
     "REGISTER_MUTATION_FIELDS": ["email", "first_name", "last_name"],
     "REGISTER_MUTATION_FIELDS_OPTIONAL": [],
     "ALLOW_LOGIN_NOT_VERIFIED": False,
-    "ACTIVATION_PATH_ON_EMAIL": "user/email-verify",
+    "ACTIVATION_PATH_ON_EMAIL": "login/activate",
+    "ACTIVATION_SECONDARY_EMAIL_PATH_ON_EMAIL": "user/email-verify",
+    "PASSWORD_RESET_PATH_ON_EMAIL": "login/forgot",
     "EMAIL_TEMPLATE_ACTIVATION": "emails/activation_email.html",
+    "EMAIL_TEMPLATE_SECONDARY_EMAIL_ACTIVATION": "emails/activation_email.html",
+    "EMAIL_TEMPLATE_PASSWORD_RESET": "emails/password_reset_email.html",
 }
 
 

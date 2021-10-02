@@ -7,6 +7,7 @@ from django.utils import timezone
 from graphql_relay.node.node import to_global_id
 from guardian.shortcuts import assign_perm
 
+from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
     PerformanceSeatingFactory,
@@ -124,7 +125,6 @@ def test_productions_schema(gql_client):
         }
         """
     )
-    print(f"{response=}")
 
     assert response == {
         "data": {
@@ -955,7 +955,9 @@ def test_performance_has_permission(gql_client):
 @pytest.mark.django_db
 def test_production_and_performance_sales_breakdowns(gql_client):
     performance = PerformanceFactory()
-    booking = BookingFactory(performance=performance)
+    booking = BookingFactory(
+        performance=performance, status=Booking.BookingStatus.IN_PROGRESS
+    )
     perf_seat_group = PerformanceSeatingFactory(performance=performance, price=100)
     TicketFactory(booking=booking, seat_group=perf_seat_group.seat_group)
     PaymentFactory(pay_object=booking, value=booking.total())
@@ -966,17 +968,23 @@ def test_production_and_performance_sales_breakdowns(gql_client):
             edges {
                 node {
                     salesBreakdown {
-                        totalPaymentsValue
-                        totalMiscCostsValue
-                        totalSocietyIncomeValue
+                        totalSales
+                        totalCardSales
+                        providerPaymentValue
+                        appPaymentValue
+                        societyTransferValue
+                        societyRevenue
                     }
                     performances {
                         edges {
                             node {
                                 salesBreakdown {
-                                    totalPaymentsValue
-                                    totalMiscCostsValue
-                                    totalSocietyIncomeValue
+                                    totalSales
+                                    totalCardSales
+                                    providerPaymentValue
+                                    appPaymentValue
+                                    societyTransferValue
+                                    societyRevenue
                                 }
                             }
                         }
@@ -991,6 +999,7 @@ def test_production_and_performance_sales_breakdowns(gql_client):
     response = gql_client.execute(
         request % to_global_id("ProductionNode", performance.production.id)
     )
+    print(response)
     assert response["data"]["productions"]["edges"][0]["node"]["salesBreakdown"] is None
     assert (
         response["data"]["productions"]["edges"][0]["node"]["performances"]["edges"][0][
@@ -1004,16 +1013,22 @@ def test_production_and_performance_sales_breakdowns(gql_client):
         request % to_global_id("ProductionNode", performance.production.id)
     )
     assert response["data"]["productions"]["edges"][0]["node"]["salesBreakdown"] == {
-        "totalPaymentsValue": 100,
-        "totalMiscCostsValue": 0,
-        "totalSocietyIncomeValue": 100,
+        "appPaymentValue": 0,
+        "providerPaymentValue": 0,
+        "societyRevenue": 100,
+        "societyTransferValue": 100,
+        "totalCardSales": 100,
+        "totalSales": 100,
     }
     assert response["data"]["productions"]["edges"][0]["node"]["performances"]["edges"][
         0
     ]["node"]["salesBreakdown"] == {
-        "totalPaymentsValue": 100,
-        "totalMiscCostsValue": 0,
-        "totalSocietyIncomeValue": 100,
+        "appPaymentValue": 0,
+        "providerPaymentValue": 0,
+        "societyRevenue": 100,
+        "societyTransferValue": 100,
+        "totalCardSales": 100,
+        "totalSales": 100,
     }
 
 

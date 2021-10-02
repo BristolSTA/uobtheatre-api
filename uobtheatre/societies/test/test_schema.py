@@ -30,6 +30,8 @@ def test_societies_schema(gql_client):
                 banner {
                   url
                 }
+                website
+                contact
                 productions {
                   edges {
                     node {
@@ -62,6 +64,8 @@ def test_societies_schema(gql_client):
                             "banner": {
                                 "url": society.banner.file.url,
                             },
+                            "website": society.website,
+                            "contact": society.contact,
                             "productions": {
                                 "edges": [
                                     {

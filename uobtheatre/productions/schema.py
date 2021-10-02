@@ -126,10 +126,13 @@ class ProductionFilter(FilterSet):
     order_by = ProductionByMethodOrderingFilter()
 
 
-class SalesBreakdown(graphene.ObjectType):
-    total_payments_value = graphene.Int(required=True)
-    total_misc_costs_value = graphene.Int(required=True)
-    total_society_income_value = graphene.Int(required=True)
+class SalesBreakdownNode(graphene.ObjectType):
+    total_sales = graphene.Int(required=True)
+    total_card_sales = graphene.Int(required=True)
+    provider_payment_value = graphene.Int(required=True)
+    app_payment_value = graphene.Int(required=True)
+    society_transfer_value = graphene.Int(required=True)
+    society_revenue = graphene.Int(required=True)
 
 
 class ProductionNode(PermissionsMixin, GrapheneEnumMixin, DjangoObjectType):
@@ -144,7 +147,7 @@ class ProductionNode(PermissionsMixin, GrapheneEnumMixin, DjangoObjectType):
     is_bookable = graphene.Boolean(required=True)
     min_seat_price = graphene.Int()
 
-    sales_breakdown = graphene.Field(SalesBreakdown)
+    sales_breakdown = graphene.Field(SalesBreakdownNode)
     total_capacity = graphene.Int(required=True)
     total_tickets_sold = graphene.Int(required=True)
 
@@ -161,23 +164,15 @@ class ProductionNode(PermissionsMixin, GrapheneEnumMixin, DjangoObjectType):
         return self.min_seat_price()
 
     def resolve_sales_breakdown(self, info):
-        if not info.context.user.has_perm(
-            "productions.sales", self  # TODO: Use real permission here
-        ):
+        if not info.context.user.has_perm("productions.sales", self):
             return None
 
-        return SalesBreakdown(
-            total_payments_value=self.sales_breakdown["payments_total"],
-            total_misc_costs_value=self.sales_breakdown["misc_costs_total"],
-            total_society_income_value=self.sales_breakdown["society_income_total"],
-        )
+        return SalesBreakdownNode(**self.sales_breakdown())
 
     def resolve_total_capacity(self, info):
-        # TODO: This should have a permission
         return self.total_capacity
 
     def resolve_total_tickets_sold(self, info):
-        # TODO: This should have a permission
         return self.total_tickets_sold
 
     class Meta:
@@ -274,7 +269,7 @@ class PerformanceNode(DjangoObjectType):
     is_bookable = graphene.Boolean(required=True)
     discounts = DjangoListField(DiscountNode)
     tickets_breakdown = graphene.Field(PerformanceTicketsBreakdown, required=True)
-    sales_breakdown = graphene.Field(SalesBreakdown)
+    sales_breakdown = graphene.Field(SalesBreakdownNode)
 
     def resolve_ticket_options(self, info):
         return self.performance_seat_groups.all()
@@ -298,7 +293,6 @@ class PerformanceNode(DjangoObjectType):
         return self.is_sold_out
 
     def resolve_tickets_breakdown(self, info):
-        # TODO: This should have a permission
         return PerformanceTicketsBreakdown(
             self.total_capacity,
             self.total_tickets_sold(),
@@ -310,15 +304,11 @@ class PerformanceNode(DjangoObjectType):
     def resolve_sales_breakdown(self, info):
         if not info.context.user.has_perm(
             "productions.sales",
-            self.production,  # TODO: Use real permission here #pylint: disable=fixme
+            self.production,
         ):
             return None
 
-        return SalesBreakdown(
-            total_payments_value=self.sales_breakdown["payments_total"],
-            total_misc_costs_value=self.sales_breakdown["misc_costs_total"],
-            total_society_income_value=self.sales_breakdown["society_income_total"],
-        )
+        return SalesBreakdownNode(**self.sales_breakdown())
 
     def resolve_is_bookable(self, info):
         return self.is_bookable

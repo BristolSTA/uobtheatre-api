@@ -22,7 +22,9 @@ from uobtheatre.discounts.test.factories import (
     DiscountFactory,
     DiscountRequirementFactory,
 )
+from uobtheatre.payments import payment_methods
 from uobtheatre.payments.models import Payment
+from uobtheatre.payments.test.factories import PaymentFactory
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.utils.test_utils import ticket_dict_list_dict_gen, ticket_list_dict_gen
@@ -600,7 +602,7 @@ def test_misc_cost_constraints(value, percentage, error):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "existing_list, new_list, add_list, delete_list",
+    "existing_list, new_list, add_list, delete_list, expected_total_number_of_tickets",
     [
         # SAME, SAME, null, null  - SAME
         (
@@ -634,6 +636,7 @@ def test_misc_cost_constraints(value, percentage, error):
             ],
             [],
             [],
+            2,
         ),
         # 1&2, 1, null, 2 - DELETE 1
         (
@@ -668,6 +671,7 @@ def test_misc_cost_constraints(value, percentage, error):
                     "id": 2,
                 }
             ],
+            1,
         ),
         # 1, 1&2, 2, null - ADD 1
         (
@@ -700,6 +704,7 @@ def test_misc_cost_constraints(value, percentage, error):
                 }
             ],
             [],
+            2,
         ),
         # 1&2, null, null, 1&2 - DELETE ALL
         (
@@ -733,6 +738,7 @@ def test_misc_cost_constraints(value, percentage, error):
                     "id": 2,
                 },
             ],
+            0,
         ),
         # null, 1&2, 1&2, null - ADD ALL
         (
@@ -762,6 +768,7 @@ def test_misc_cost_constraints(value, percentage, error):
                 },
             ],
             [],
+            2,
         ),
         # 1, 2, 2, 1 - SWAP
         (
@@ -795,10 +802,13 @@ def test_misc_cost_constraints(value, percentage, error):
                     "id": 1,
                 },
             ],
+            1,
         ),
     ],
 )
-def test_booking_ticket_diff(existing_list, new_list, add_list, delete_list):
+def test_booking_ticket_diff(
+    existing_list, new_list, add_list, delete_list, expected_total_number_of_tickets
+):
     SeatGroupFactory(id=1)
     SeatGroupFactory(id=2)
     ConcessionTypeFactory(id=1)
@@ -813,7 +823,9 @@ def test_booking_ticket_diff(existing_list, new_list, add_list, delete_list):
     add_tickets = [Ticket(**ticket) for ticket in add_list]
     delete_tickets = [Ticket(**ticket) for ticket in delete_list]
 
-    add_tickets, delete_tickets = booking.get_ticket_diff(new_tickets)
+    add_tickets, delete_tickets, total_number_of_tickets = booking.get_ticket_diff(
+        new_tickets
+    )
     expected_add_tickets, expected_delete_tickets = map(
         ticket_dict_list_dict_gen,
         [
@@ -830,6 +842,7 @@ def test_booking_ticket_diff(existing_list, new_list, add_list, delete_list):
     )
     assert expected_add_tickets == actual_add_tickets
     assert expected_delete_tickets == actual_delete_tickets
+    assert total_number_of_tickets == expected_total_number_of_tickets
 
 
 @pytest.mark.django_db
@@ -971,6 +984,29 @@ def test_filter_by_active():
 
 
 @pytest.mark.django_db
+def test_booking_expiration():
+    unexpired_booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+
+    expired_booking = BookingFactory(
+        status=Booking.BookingStatus.IN_PROGRESS,
+        expires_at=timezone.now() - datetime.timedelta(minutes=16),
+    )
+
+    assert unexpired_booking.expires_at > timezone.now() + datetime.timedelta(
+        minutes=14
+    )
+    assert unexpired_booking.expires_at < timezone.now() + datetime.timedelta(
+        minutes=16
+    )
+
+    assert not unexpired_booking.is_reservation_expired
+    assert expired_booking.is_reservation_expired
+
+    expired_booking.status = Booking.BookingStatus.PAID
+    assert not expired_booking.is_reservation_expired
+
+
+@pytest.mark.django_db
 def test_complete():
     booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
     with patch.object(booking, "send_confirmation_email") as mock_send_email:
@@ -982,10 +1018,29 @@ def test_complete():
 
 
 @pytest.mark.django_db
-def test_send_confirmation_email(mailoutbox):
+@pytest.mark.parametrize(
+    "with_payment, provider_payment_id",
+    [(True, "SQUARE_PAYMENT_ID"), (True, None), (False, None)],
+)
+def test_send_confirmation_email(mailoutbox, with_payment, provider_payment_id):
     production = ProductionFactory(name="Legally Ginger")
     performance = PerformanceFactory(
-        start=datetime.datetime(day=20, month=10, year=2021, hour=19, minute=15),
+        doors_open=datetime.datetime(
+            day=20,
+            month=10,
+            year=2021,
+            hour=18,
+            minute=15,
+            tzinfo=timezone.get_current_timezone(),
+        ),
+        start=datetime.datetime(
+            day=20,
+            month=10,
+            year=2021,
+            hour=19,
+            minute=15,
+            tzinfo=timezone.get_current_timezone(),
+        ),
         production=production,
     )
     booking = BookingFactory(
@@ -993,6 +1048,16 @@ def test_send_confirmation_email(mailoutbox):
         reference="abc",
         performance=performance,
     )
+    booking.user.status.verified = True
+
+    if with_payment:
+        PaymentFactory(
+            pay_object=booking,
+            value=1000,
+            provider=payment_methods.SquareOnline.__name__,
+            provider_payment_id=provider_payment_id,
+        )
+
     booking.send_confirmation_email()
 
     assert len(mailoutbox) == 1
@@ -1000,4 +1065,53 @@ def test_send_confirmation_email(mailoutbox):
     assert email.subject == "Your booking is confirmed!"
     assert "https://example.com/user/booking/abc" in email.body
     assert "Legally Ginger" in email.body
-    assert "on Wednesday, 20 October 2021" in email.body
+    assert "opens at 20 October 2021 18:15 UTC for a 19:15 UTC start" in email.body
+    if with_payment:
+        assert "Payment Information" in email.body
+        assert "10.00 GBP" in email.body
+        assert (
+            "(SquareOnline - ID SQUARE_PAYMENT_ID)"
+            if provider_payment_id
+            else "(SquareOnline)" in email.body
+        )
+    else:
+        assert "Payment Information" not in email.body
+
+
+@pytest.mark.django_db
+def test_send_confirmation_email_for_anonymous(mailoutbox):
+    production = ProductionFactory(name="Legally Ginger")
+    performance = PerformanceFactory(
+        doors_open=datetime.datetime(
+            day=20,
+            month=10,
+            year=2021,
+            hour=18,
+            minute=15,
+            tzinfo=timezone.get_current_timezone(),
+        ),
+        start=datetime.datetime(
+            day=20,
+            month=10,
+            year=2021,
+            hour=19,
+            minute=15,
+            tzinfo=timezone.get_current_timezone(),
+        ),
+        production=production,
+    )
+    booking = BookingFactory(
+        status=Booking.BookingStatus.IN_PROGRESS,
+        reference="abc",
+        performance=performance,
+    )
+
+    booking.send_confirmation_email()
+
+    assert len(mailoutbox) == 1
+    email = mailoutbox[0]
+    assert email.subject == "Your booking is confirmed!"
+    assert "https://example.com/user/booking/abc" not in email.body
+    assert "Legally Ginger" in email.body
+    assert "opens at 20 October 2021 18:15 UTC for a 19:15 UTC start" in email.body
+    assert "reference (abc)" in email.body
