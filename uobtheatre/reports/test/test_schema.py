@@ -11,11 +11,11 @@ from uobtheatre.productions.test.factories import PerformanceFactory
     [
         (
             "PeriodTotals",
-            "https://example.com/reports/period_totals/2020-01-01%2000:00:00/2021-01-01%2000:00:00",
+            "https://api.example.com/reports/period_totals/2020-01-01%2000:00:00/2021-01-01%2000:00:00",
         ),
         (
             "OutstandingPayments",
-            "https://example.com/reports/outstanding_society_payments",
+            "https://api.example.com/reports/outstanding_society_payments",
         ),
     ],
 )
@@ -114,7 +114,7 @@ def test_can_generate_report_for_performance_bookings(
         }
     else:
         split_url = response["data"]["generateReport"]["downloadUri"].split("?")
-        assert split_url[0] == "https://example.com/reports/performance_bookings"
+        assert split_url[0] == "https://api.example.com/reports/performance_bookings"
         assert split_url[1] is not None
 
 

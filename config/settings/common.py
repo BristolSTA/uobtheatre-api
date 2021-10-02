@@ -316,3 +316,5 @@ SQUARE_SETTINGS = {
     ),
     "PATH": "square",
 }
+
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"

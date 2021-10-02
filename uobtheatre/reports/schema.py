@@ -1,13 +1,13 @@
 from typing import List
 
 import graphene
-from django.contrib.sites.models import Site
+from django.conf import settings
 from django.urls import reverse
 from django.urls.exceptions import NoReverseMatch
 from graphene.types.datetime import DateTime
 from graphene.types.scalars import String
 
-import uobtheatre.reports.reports as reports
+from uobtheatre.reports import reports
 from uobtheatre.reports.utils import generate_report_download_signature
 from uobtheatre.utils.exceptions import GQLException, SafeMutation
 from uobtheatre.utils.schema import AuthRequiredMixin
@@ -94,9 +94,8 @@ class GenerateReport(AuthRequiredMixin, SafeMutation):
                 str(matching_report["uri"]),
             )
 
-        domain = "https://" + Site.objects.get_current().domain
         return GenerateReport(
-            download_uri=domain + download_uri + "?signature=" + signature
+            download_uri=settings.BASE_URL + download_uri + "?signature=" + signature
         )
 
 

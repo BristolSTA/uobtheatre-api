@@ -158,7 +158,6 @@ type ExtendedUserNode {
   verified: Boolean
   secondaryEmail: String
   permissions: [String]
-  canBoxoffice: Boolean!
 }
 
 type FieldError {
