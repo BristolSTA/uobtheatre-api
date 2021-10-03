@@ -1714,27 +1714,11 @@ def test_pay_booking_success(mock_square, gql_client):
             }
         },
         success=True,
-    ), mock_square(
-        SquareOnline.client.payments,
-        "get_payment",
-        body={
-            "payment": {
-                "id": "abc",
-                "processing_fee": [
-                    {
-                        "effective_at": "2021-09-30T06:53:50.000Z",
-                        "type": "INITIAL",
-                        "amount_money": {"amount": 12, "currency": "GBP"},
-                    },
-                ],
-            },
-        },
-        success=True,
     ):
         response = gql_client.execute(
             request_query % to_global_id("BookingNode", booking.id)
         )
-    print(response)
+
     assert response == {
         "data": {
             "payBooking": {
@@ -1762,7 +1746,7 @@ def test_pay_booking_success(mock_square, gql_client):
                     },
                     "currency": "GBP",
                     "value": 0,
-                    "providerFee": 12,
+                    "providerFee": None,
                     "appFee": 25,
                 },
                 "success": True,
