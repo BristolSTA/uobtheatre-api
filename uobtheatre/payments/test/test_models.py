@@ -20,7 +20,7 @@ def test_payment_url_none():
 
 @pytest.mark.django_db
 def test_update_payment_from_square(mock_square):
-    payment = PaymentFactory(provider_fee=0)
+    payment = PaymentFactory(provider_fee=0, provider_payment_id="abc")
     with mock_square(
         SquareOnline.client.payments,
         "get_payment",
@@ -49,3 +49,16 @@ def test_update_payment_from_square(mock_square):
 
     payment.refresh_from_db()
     assert payment.provider_fee == 58
+
+
+@pytest.mark.django_db
+def test_update_payment_from_square_no_provider_id(mock_square):
+    payment = PaymentFactory(provider_fee=0, provider_payment_id=None)
+    with mock_square(
+        SquareOnline.client.payments,
+        "get_payment",
+    ) as mock:
+        payment.update_from_square()
+
+    mock.assert_not_called()
+    assert payment.provider_fee == 0
