@@ -13,7 +13,7 @@ django-filter==21.1
 Pillow>=8.1.2
 
 # timezone package
-pytz==2021.1
+pytz==2021.3
 
 # Cors
 django-cors-headers==3.9.0
