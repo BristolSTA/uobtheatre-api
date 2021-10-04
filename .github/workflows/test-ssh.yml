@@ -6,10 +6,7 @@ on:
 
 jobs:
   deploy:
-    needs: build
-    if: ${{github.event.action}} != "workflow-dispatch"
     runs-on: ubuntu-latest
-
     steps:
       - name: executing remote ssh commands using ssh key
         uses: appleboy/ssh-action@master
