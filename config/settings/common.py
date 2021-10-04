@@ -84,12 +84,7 @@ ADMINS = (("Author", "webmaster@bristolsta.com"),)
 
 # Postgres
 if os.getenv("DATABASE_URL"):  # ignore:
-    DATABASES = {
-        "default": env.db(
-            "DATABASE_URL",
-            "postgresql://postgres:postgres@postgres:5432/uobtheatre_api",
-        )
-    }
+    DATABASES = {"default": env.db("DATABASE_URL", "")}
 else:
     DATABASES = {
         "default": {
