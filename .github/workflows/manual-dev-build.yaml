@@ -2,7 +2,7 @@ name: Trigger dev build
 
 on:
   pull_request:
-    types: [opened, reopened]
+    types: [opened]
   issue_comment:
     types: [created]
 
@@ -22,7 +22,6 @@ jobs:
       - name: Invoke workflow without inputs
         uses: benc-uk/workflow-dispatch@v1
         with:
-          workflow: Docker build and push
-          inputs: '{ "api-dev": "true" }'
+          workflow: Dev build and push
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: ${{ github.event.pull_request.head.ref }}
