@@ -37,7 +37,7 @@ jobs:
       - name: Deploy new image
         uses: appleboy/ssh-action@master
         env:
-          SERVICE_NAME: ${{ SERVICE_NAME }}
+          SERVICE_NAME: ${{ env.SERVICE_NAME }}
         with:
           host: ${{ secrets.SERVER_SSH_HOST }}
           username: ${{ secrets.SERVER_SSH_USER }}
