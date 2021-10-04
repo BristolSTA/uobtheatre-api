@@ -17,10 +17,9 @@ jobs:
           reaction: rocket
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
-      - run: 'echo Found it!'
-        if: steps.check.outputs.triggered == 'true'
       - name: Invoke workflow without inputs
         uses: benc-uk/workflow-dispatch@v1
+        if: steps.check.outputs.triggered == 'true'
         with:
           workflow: Dev build and push
           token: ${{ secrets.GITHUB_TOKEN }}
