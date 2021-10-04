@@ -62,3 +62,18 @@ jobs:
 
       - name: Push image
         run: docker push ghcr.io/$IMAGE_OWNER/$DEV_IMAGE_NAME:latest
+
+  deploy:
+    needs: build
+    if: ${{github.event.action}} != "workflow-dispatch"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: executing remote ssh commands using ssh key
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_SSH_HOST }}
+          username: ${{ secrets.SERVER_SSH_USERNAME }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_SSH_PORT }}
+          script: whoami
