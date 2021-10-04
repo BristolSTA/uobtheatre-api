@@ -9,6 +9,7 @@ omit = *migrations*,
        ./uobtheatre-api/wsgi.py,
        *__init__*
        ./uobtheatre/management/*
+       ./uobtheatre/storages.py
 
 [report]
 exclude_lines =
