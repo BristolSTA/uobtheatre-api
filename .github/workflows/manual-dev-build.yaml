@@ -5,7 +5,7 @@ on:
     types: [created]
 
 jobs:
-  deploy:
+  trigger-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: khan/pull-request-comment-trigger@master
@@ -23,3 +23,4 @@ jobs:
           workflow: Docker build and push
           inputs: '{ "api-dev": "true" }'
           token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.event.pull_request.head.ref }}
