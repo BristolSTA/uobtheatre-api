@@ -10,10 +10,12 @@ on:
     inputs:
       api-dev:
         description: 'Whether to build the api-dev container'
-        default: false
+        required: false
+        default: "false"
       api:
         description: 'Whether to build the api container'
-        default: false
+        required: false
+        default: "false"
 
 env:
   IMAGE_NAME: api
@@ -22,6 +24,7 @@ env:
 
 jobs:
   build:
+    if: ${{github.event.action}} != "workflow-dispatch" || ${{ github.event.inputs.api }} == "true"
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -41,6 +44,7 @@ jobs:
         run: docker push ghcr.io/$IMAGE_OWNER/$IMAGE_NAME:latest
 
   build-dev:
+    if: ${{github.event.action}} != "workflow-dispatch" || ${{ github.event.inputs.api-dev }} == "true"
     runs-on: ubuntu-latest
     permissions:
       packages: write
