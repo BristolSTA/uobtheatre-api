@@ -21,6 +21,6 @@ jobs:
         uses: benc-uk/workflow-dispatch@v1
         if: steps.check.outputs.triggered == 'true'
         with:
-          workflow: Dev build and push
+          workflow: Dev image build and push
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: ${{ github.event.pull_request.head.ref }}
