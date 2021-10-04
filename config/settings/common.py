@@ -83,23 +83,25 @@ ADMINS = (("Author", "webmaster@bristolsta.com"),)
 
 
 # Postgres
-DATABASES = {
-    "default": env.db(
-        "DATABASE_URL", "postgresql://postgres:postgres@postgres:5432/uobtheatre_api"
-    )
-}
+if os.getenv("DATABASE_URL"):  # ignore:
+    DATABASES = {
+        "default": env.db(
+            "DATABASE_URL",
+            "postgresql://postgres:postgres@postgres:5432/uobtheatre_api",
+        )
+    }
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql_psycopg2",
+            "NAME": os.getenv("POSTGRES_DB", default="postgres"),
+            "USER": os.getenv("POSTGRES_USER", default="postgres"),
+            "PASSWORD": os.getenv("POSTGRES_PASSWORD", default="postgres"),
+            "HOST": os.getenv("POSTGRES_HOST", default="postgres"),
+            "PORT": os.getenv("POSTGRES_PORT", default="5432"),
+        }
+    }
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
-# DATABASES = {
-#     "default"
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql_psycopg2",
-#         "NAME": os.getenv("DATABASE_NAME", default="postgres"),
-#         "USER": os.getenv("DATABASE_USER", default="postgres"),
-#         "PASSWORD": os.getenv("DATABASE_PASSWORD", default="postgres"),
-#         "HOST": os.getenv("DATABASE_HOST", default="postgres"),
-#         "PORT": os.getenv("DATABASE_PORT", default=5432),
-#     }
-# }
 
 # General
 APPEND_SLASH = False
