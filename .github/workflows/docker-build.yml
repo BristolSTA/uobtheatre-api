@@ -6,6 +6,15 @@ on:
     branches:
       - main
 
+  workflow_dispatch:
+    inputs:
+      api-dev:
+        description: 'Whether to build the api-dev container'
+        default: false
+      api:
+        description: 'Whether to build the api container'
+        default: false
+
 env:
   IMAGE_NAME: api
   DEV_IMAGE_NAME: api-dev
