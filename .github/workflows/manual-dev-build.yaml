@@ -17,3 +17,9 @@ jobs:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
       - run: 'echo Found it!'
         if: steps.check.outputs.triggered == 'true'
+      - name: Invoke workflow without inputs
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: Docker build and push
+          inputs: '{ "api-dev": true }'
+          token: ${{ secrets.GITHUB_TOKEN }}
