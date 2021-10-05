@@ -1,4 +1,6 @@
 on:
+  pull_request:
+    branches: [ dev ]
   schedule:
     # Run at 3am every day
     - cron:  '00 03 * * *'
