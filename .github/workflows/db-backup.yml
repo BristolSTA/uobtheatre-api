@@ -24,8 +24,8 @@ jobs:
           SERVICE_NAME: ${{ matrix.service }}
           AWS_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ envs.AWS_DEFAULT_REGION }}
-          S3_BUCKET: ${{ envs.BACKUPS_BUCKET }}
+          AWS_DEFAULT_REGION: ${{ env.AWS_DEFAULT_REGION }}
+          S3_BUCKET: ${{ env.BACKUPS_BUCKET }}
         with:
           host: ${{ secrets.SERVER_SSH_HOST }}
           username: ${{ secrets.SERVER_SSH_USER }}
