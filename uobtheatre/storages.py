@@ -1,4 +1,3 @@
-# pragma: no cover
 # type: ignore
 
 from django.conf import settings
