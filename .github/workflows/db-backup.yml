@@ -26,14 +26,15 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
           AWS_DEFAULT_REGION: ${{ env.AWS_DEFAULT_REGION }}
           S3_BUCKET: ${{ env.BACKUPS_BUCKET }}
+          COMPOSE_INTERACTIVE_NO_CLI: 1
         with:
           host: ${{ secrets.SERVER_SSH_HOST }}
           username: ${{ secrets.SERVER_SSH_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_SSH_PORT }}
-          envs: SERVICE_NAME,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_DEFAULT_REGION,S3_BUCKET
+          envs: SERVICE_NAME,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_DEFAULT_REGION,S3_BUCKET,COMPOSE_INTERACTIVE_NO_CLI
           script: |
             cd /var/sta
             export BACKUP_NAME=dump_`echo $SERVICE_NAME`_`date +%d-%m-%Y"_"%H_%M_%S`.sql.gz
-            docker-compose exec -T $SERVICE_NAME pg_dumpall -c -U postgres | gzip > dump.sql.gz
+            docker-compose exec $SERVICE_NAME pg_dumpall -c -U postgres | gzip > dump.sql.gz
             cat dump.sql.gz | aws s3 cp - s3://$S3_BUCKET/$SERVICE_NAME/$BACKUP_NAME || exit 2
