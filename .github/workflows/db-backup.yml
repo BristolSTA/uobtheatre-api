@@ -38,5 +38,5 @@ jobs:
             export BACKUP_NAME=dump_`echo $SERVICE_NAME`_`date +%d-%m-%Y"_"%H_%M_%S`.sql.gz
             echo $AWS_ACCESS_KEY_ID > testkeyid.output
             echo $AWS_SECRET_ACCESS_KEY > testkeyid.output
-            docker-compose exec $SERVICE_NAME pg_dumpall -c | gzip > dump.sql.gz
+            docker-compose exec -T $SERVICE_NAME "pg_dumpall -c" | gzip > dump.sql.gz
             cat dump.sql.gz | aws s3 cp - s3://$S3_BUCKET/$SERVICE_NAME/$BACKUP_NAME || exit 2
