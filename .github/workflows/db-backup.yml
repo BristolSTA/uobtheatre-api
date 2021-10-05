@@ -7,7 +7,6 @@ on:
 
 env:
   BACKUPS_BUCKET: "uob-sta-backups"
-  AWS_DEFAULT_REGION: "eu-west-2"
 
 jobs:
   # https://github.com/schickling/dockerfiles/blob/master/postgres-backup-s3/backup.sh
@@ -16,15 +15,12 @@ jobs:
 
     strategy:
       matrix:
-        service: ["uobtheatre-postgres-staging", "uobtheatre-postgres", "bristolsta-db"]
+        service: ["uobtheatre-postgres-staging", "uobtheatre-postgres", "bristolsta-db", "wiki-db"]
     steps:
       - name: Back up postgres service
         uses: appleboy/ssh-action@master
         env:
           SERVICE_NAME: ${{ matrix.service }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: ${{ env.AWS_DEFAULT_REGION }}
           S3_BUCKET: ${{ env.BACKUPS_BUCKET }}
           COMPOSE_INTERACTIVE_NO_CLI: 1
         with:
@@ -36,7 +32,5 @@ jobs:
           script: |
             cd /var/sta
             export BACKUP_NAME=dump_`echo $SERVICE_NAME`_`date +%d-%m-%Y"_"%H_%M_%S`.sql.gz
-            echo $AWS_ACCESS_KEY_ID > testkeyid.output
-            echo $AWS_SECRET_ACCESS_KEY > testkeyid.output
-            docker-compose exec -T $SERVICE_NAME "pg_dumpall -c" | gzip > dump.sql.gz
-            cat dump.sql.gz | aws s3 cp - s3://$S3_BUCKET/$SERVICE_NAME/$BACKUP_NAME || exit 2
+            docker-compose exec -T $SERVICE_NAME "pg_dumpall -c" | gzip > dump.$SERVICE_NAME.sql.gz
+            cat dump.$SERVICE_NAME.sql.gz | aws s3 cp - s3://$S3_BUCKET/$SERVICE_NAME/$BACKUP_NAME || exit 2
