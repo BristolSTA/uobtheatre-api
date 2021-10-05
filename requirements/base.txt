@@ -13,10 +13,10 @@ django-filter==21.1
 Pillow>=8.1.2
 
 # timezone package
-pytz==2021.1
+pytz==2021.3
 
 # Cors
-django-cors-headers==3.9.0
+django-cors-headers==3.10.0
 
 # TODO check if required
 django-configurations==2.2
@@ -25,7 +25,7 @@ django-configurations==2.2
 django-environ==0.7.0  # https://github.com/joke2k/django-environ
 
 # Spreadsheet generation
-xlsxwriter==1.4.5
+xlsxwriter==3.0.1
 
 #=== Database ===#
 
@@ -33,7 +33,7 @@ psycopg2==2.9.1  # https://github.com/psycopg/psycopg2
 
 #=== Django core ===#
 
-django==3.2.7
+django==3.2.8
 
 #=== Django Extras ===#
 
