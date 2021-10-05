@@ -36,5 +36,6 @@ jobs:
           script: |
             cd /var/sta
             export BACKUP_NAME=dump_`echo $SERVICE_NAME`_`date +%d-%m-%Y"_"%H_%M_%S`.sql.gz
-            docker-compose exec $SERVICE_NAME pg_dumpall -c -U postgres | gzip > dump.sql.gz
+            echo $AWS_ACCESS_KEY_ID
+            docker-compose exec $SERVICE_NAME pg_dumpall -c | gzip > dump.sql.gz
             cat dump.sql.gz | aws s3 cp - s3://$S3_BUCKET/$SERVICE_NAME/$BACKUP_NAME || exit 2
