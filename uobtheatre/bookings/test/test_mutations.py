@@ -2116,6 +2116,8 @@ def test_check_in_booking(
         user=gql_client.user,
     )
 
+    assign_perm("boxoffice", gql_client.user, performance.production)
+
     # Expected to check in and pass
     check_in_tickets = []
     for ticket_id in check_in_ticket_id_list:
@@ -2243,9 +2245,62 @@ def test_check_in_booking(
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize("prefix", ["check", "uncheck"])
+def test_cannot_check_in_booking_without_boxoffice_perm(prefix, gql_client):
+    booking = BookingFactory(user=gql_client.login().user)
+    request_query = """
+    mutation {
+      %sInBooking(
+        bookingReference: "%s"
+        performanceId: "%s"
+        tickets: []
+      ) {
+        success
+        errors {
+        __typename
+        ... on NonFieldError {
+              message
+            }
+        }
+      }
+    }
+    """
+
+    response = gql_client.execute(
+        request_query
+        % (
+            prefix,
+            booking.reference,
+            to_global_id("PerformanceNode", booking.performance.id),
+        )
+    )
+
+    assert (
+        response["data"][f"{prefix}InBooking"]["errors"][0]["message"]
+        == f"You do not have permission to {prefix} in this booking."
+    )
+    assert response == {
+        "data": {
+            f"{prefix}InBooking": {
+                "success": False,
+                "errors": [
+                    {
+                        "__typename": "NonFieldError",
+                        "message": f"You do not have permission to {prefix} in this booking.",
+                    }
+                ],
+            }
+        }
+    }
+
+
+@pytest.mark.django_db
 def test_check_in_booking_fails_if_already_checked_in(gql_client):
     performance = PerformanceFactory()
-    booking = BookingFactory(performance=performance, user=gql_client.login().user)
+    gql_client.login()
+    assign_perm("boxoffice", gql_client.user, performance.production)
+
+    booking = BookingFactory(performance=performance, user=gql_client.user)
 
     checked_in_ticket = TicketFactory(booking=booking, checked_in=True)
 
@@ -2296,6 +2351,9 @@ def test_check_in_booking_fails_if_already_checked_in(gql_client):
 @pytest.mark.django_db
 def test_uncheck_in_booking(gql_client):
     performance = PerformanceFactory()
+    gql_client.login()
+    assign_perm("boxoffice", gql_client.user, performance.production)
+
     booking = BookingFactory(performance=performance, user=gql_client.login().user)
 
     checked_in_ticket = TicketFactory(booking=booking, checked_in=True)
@@ -2322,6 +2380,9 @@ def test_uncheck_in_booking(gql_client):
         }
     }
     """
+
+    gql_client.login()
+    assign_perm("boxoffice", gql_client.user, performance.production)
     response = gql_client.execute(
         request_query
         % (
@@ -2364,6 +2425,11 @@ def test_uncheck_in_booking_incorrect_performance(gql_client):
         }
     }
     """
+
+    gql_client.login()
+    assign_perm("boxoffice", gql_client.user, performance.production)
+    assign_perm("boxoffice", gql_client.user, wrong_performance.production)
+
     response = gql_client.execute(
         request_query
         % (
@@ -2390,11 +2456,15 @@ def test_uncheck_in_booking_incorrect_performance(gql_client):
 @pytest.mark.django_db
 def test_uncheck_in_booking_incorrect_ticket(gql_client):
     performance = PerformanceFactory()
+    gql_client.login()
+
     booking = BookingFactory(performance=performance, user=gql_client.login().user)
     incorrect_booking = BookingFactory(
         performance=performance,
         user=gql_client.user,
     )
+
+    assign_perm("boxoffice", gql_client.user, performance.production)
 
     checked_in_ticket = TicketFactory(booking=incorrect_booking, checked_in=True)
 

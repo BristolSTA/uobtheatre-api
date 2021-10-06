@@ -488,7 +488,7 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
         user = parse_target_user_email(
             target_user_email, info.context.user, performance
         )
-        
+
         # If draft booking(s) already exists remove the bookings
         user.bookings.filter(
             status=Booking.BookingStatus.IN_PROGRESS, performance_id=performance_id
@@ -789,6 +789,14 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
             )
             # raise booking performance does not match performance given
 
+        # Check user has permission to check in this booking
+        if not info.context.user.has_perm(
+            "productions.boxoffice", performance.production
+        ):
+            raise AuthorizationException(
+                message="You do not have permission to check in this booking.",
+            )
+
         ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))
 
         tickets_not_in_booking = [
@@ -856,11 +864,19 @@ class UnCheckInBooking(AuthRequiredMixin, SafeMutation):
 
         # check if the booking pertains to the correct performance
         if booking.performance != performance:
+            # raise booking performance does not match performance given
             raise GQLException(
                 field="performance_id",
                 message="The booking performance does not match the given performance.",
             )
-            # raise booking performance does not match performance given
+
+        # Check user has permission to check in this booking
+        if not info.context.user.has_perm(
+            "productions.boxoffice", performance.production
+        ):
+            raise AuthorizationException(
+                message="You do not have permission to uncheck in this booking.",
+            )
 
         ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))
         # loop through the ticket IDs given
