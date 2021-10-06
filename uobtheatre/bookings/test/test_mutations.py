@@ -948,7 +948,6 @@ def test_update_booking_no_tickets(gql_client):
 
 @pytest.mark.django_db
 def test_update_booking_set_target_user(gql_client):
-
     creator = gql_client.login().user
     booking = BookingFactory(user=creator, status=Booking.BookingStatus.IN_PROGRESS)
 
@@ -956,6 +955,12 @@ def test_update_booking_set_target_user(gql_client):
     creator.save()
 
     user = UserFactory(email="user@email.com")
+    # Give the user and existing draft booking
+    BookingFactory(
+        user=user,
+        performance=booking.performance,
+        status=Booking.BookingStatus.IN_PROGRESS,
+    )
 
     assert creator.bookings.count() == 1
     request_query = """
@@ -975,9 +980,9 @@ def test_update_booking_set_target_user(gql_client):
 
     gql_client.execute(request_query)
 
-    # Assert the bookings ticket have not changed
     assert creator.bookings.count() == 0
     assert user.bookings.count() == 1
+    assert user.bookings.first().id == booking.id
 
 
 @pytest.mark.django_db
@@ -2021,7 +2026,7 @@ def test_paybooking_unsupported_payment_provider(info):
 
     with pytest.raises(GQLException) as exc:
         PayBooking.resolve_mutation(
-            None, info, booking.id, booking.total(), payment_provider="NOT_A_THING"
+            None, info, booking.id, booking.total, payment_provider="NOT_A_THING"
         )
         assert exc.message == "Unsupported payment provider NOT_A_THING."
 
