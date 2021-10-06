@@ -10,11 +10,26 @@ error: Union[FieldError, NonFieldError])
 """
 
 
+import traceback
 from typing import List, Union
 
 import graphene
 from django.db import transaction
 from graphene.utils.str_converters import to_camel_case
+
+
+class ExceptionMiddleware:  # pragma: no cover
+    """
+    Middleware to print exception traceback when an exception is caught by
+    graphene.
+    """
+
+    def on_error(self, exc):
+        traceback.print_tb(exc.__traceback__)
+        raise exc
+
+    def resolve(self, next, root, info, **kwargs):  # pylint: disable=redefined-builtin
+        return next(root, info, **kwargs).catch(self.on_error)
 
 
 class NonFieldError(graphene.ObjectType):
