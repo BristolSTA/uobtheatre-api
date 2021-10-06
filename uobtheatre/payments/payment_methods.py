@@ -205,7 +205,7 @@ class SquarePOS(PaymentMethod):
         )
         if not response.is_success():
             raise SquareException(response)
-        return response.body["device_codes"]
+        return response.body.get("device_codes") or []
 
 
 class SquareOnline(PaymentMethod):
