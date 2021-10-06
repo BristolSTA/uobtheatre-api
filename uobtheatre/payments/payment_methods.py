@@ -70,6 +70,45 @@ class PaymentMethod(abc.ABC):
         )
 
 
+class SquarePaymentMethodMixin(abc.ABC):
+    """
+    Mixin for SquarePayment method classes which adds client and helper
+    function. Sub-classes should import this mixin and the main PaymentMethod
+    class.
+    """
+
+    client = Client(
+        square_version="2020-11-18",
+        access_token=settings.SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],  # type: ignore
+        environment=settings.SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],  # type: ignore
+    )
+
+    @classmethod
+    def get_payment(cls, payment_id: str):
+        """Get full payment info from square for a given payment id.
+
+        Args:
+            payment_id (str): The id of the payment to be fetched
+
+        Returns:
+            dict: Payment response from square
+
+        Raises:
+            SquareException: When response is not successful
+        """
+        response = cls.client.payments.get_payment(payment_id)
+
+        if not response.is_success():
+            raise SquareException(response)
+
+        return response.body["payment"]
+
+    @classmethod
+    def payment_is_completed(cls, payment_id: str):
+        payment = cls.get_payment(payment_id)
+        return payment["status"] == "COMPLETED"
+
+
 class Cash(PaymentMethod):
     """Manual cash payment method"""
 
@@ -92,7 +131,7 @@ class Card(PaymentMethod):
         return self.create_payment_object(pay_object, value, app_fee)
 
 
-class SquarePOS(PaymentMethod):
+class SquarePOS(PaymentMethod, SquarePaymentMethodMixin):
     """
     Uses Square terminal api to create payment. Used for inperson card
     transactions.
@@ -107,11 +146,6 @@ class SquarePOS(PaymentMethod):
     """
 
     description = "Square terminal card payment"
-    client = Client(
-        square_version="2020-11-18",
-        access_token=settings.SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],  # type: ignore
-        environment=settings.SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],  # type: ignore
-    )
 
     def __init__(self, device_id: str) -> None:
         self.device_id = device_id
@@ -173,11 +207,24 @@ class SquarePOS(PaymentMethod):
         booking = Booking.objects.get(reference=checkout["reference_id"])
 
         if checkout["status"] == "COMPLETED":
+            payment_id = next(
+                (
+                    payment_id
+                    for payment_id in checkout["payment_ids"]
+                    if cls.payment_is_completed(payment_id)
+                ),
+                None,
+            )
+            # If there are no completed payments in this update then we should
+            # not set the booking to paid.
+            if not payment_id:
+                return
+
             cls.create_payment_object(
                 booking,
                 checkout["amount_money"]["amount"],
                 booking.misc_costs_value(),
-                provider_payment_id=checkout["payment_ids"][0],
+                provider_payment_id=payment_id,
                 currency=checkout["amount_money"]["currency"],
             )
             booking.complete()
@@ -208,7 +255,7 @@ class SquarePOS(PaymentMethod):
         return response.body.get("device_codes") or []
 
 
-class SquareOnline(PaymentMethod):
+class SquareOnline(PaymentMethod, SquarePaymentMethodMixin):
     """
     Uses Square checkout api to create payment. Used for online transactions.
 
@@ -222,11 +269,6 @@ class SquareOnline(PaymentMethod):
     """
 
     description = "Square online card payment"
-    client = Client(
-        square_version="2020-11-18",
-        access_token=settings.SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],  # type: ignore
-        environment=settings.SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],  # type: ignore
-    )
 
     def __init__(self, nonce: str, idempotency_key: str) -> None:
         """
@@ -242,26 +284,6 @@ class SquareOnline(PaymentMethod):
         self.nonce = nonce
         self.idempotency_key = idempotency_key
         super().__init__()
-
-    @classmethod
-    def get_payment(cls, payment_id: str):
-        """Get full payment info from square for a given payment id.
-
-        Args:
-            payment_id (str): The id of the payment to be fetched
-
-        Returns:
-            dict: Payment response from square
-
-        Raises:
-            SquareException: When response is not successful
-        """
-        response = cls.client.payments.get_payment(payment_id)
-
-        if not response.is_success():
-            raise SquareException(response)
-
-        return response
 
     def pay(
         self, value: int, app_fee: int, pay_object: "Payable"

@@ -10,6 +10,7 @@ from uobtheatre.payments.payment_methods import (
     Cash,
     PaymentMethod,
     SquareOnline,
+    SquarePaymentMethodMixin,
     SquarePOS,
 )
 from uobtheatre.payments.square_webhooks import SquareWebhooks
@@ -237,9 +238,9 @@ def test_square_get_payment(mock_square):
         "get_payment",
         status_code=200,
         success=True,
-        body={"abc": "def"},
+        body={"payment": {"abc": "def"}},
     ):
-        assert SquareOnline.get_payment("abc").body == {"abc": "def"}
+        assert SquareOnline.get_payment("abc") == {"abc": "def"}
 
 
 @pytest.mark.parametrize(
@@ -329,7 +330,7 @@ def test_is_valid_callback(body, signature, signature_key, webhook_url, valid):
 
 
 @pytest.mark.django_db
-def test_handle_terminal_checkout_updated_webhook_completed():
+def test_handle_terminal_checkout_updated_webhook_completed(mock_square):
     booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
     data = {
         "object": {
@@ -341,7 +342,21 @@ def test_handle_terminal_checkout_updated_webhook_completed():
             }
         },
     }
-    SquarePOS.handle_terminal_checkout_updated_webhook(data)
+
+    with mock_square(
+        SquarePaymentMethodMixin.client.payments,
+        "get_payment",
+        status_code=200,
+        success=True,
+        body={
+            "payment": {
+                "status": "COMPLETED",
+            }
+        },
+    ) as mock:
+        SquarePOS.handle_terminal_checkout_updated_webhook(data)
+
+    mock.assert_called_once_with("dgzrZTeIeVuOGwYgekoTHsPouaB")
     booking.refresh_from_db()
     assert booking.status == Booking.BookingStatus.PAID
     assert Payment.objects.count() == 1
@@ -350,6 +365,43 @@ def test_handle_terminal_checkout_updated_webhook_completed():
     payment.provider_payment_id = "dgzrZTeIeVuOGwYgekoTHsPouaB"
     payment.value = 111
     payment.currency = "USD"
+
+
+@pytest.mark.django_db
+def test_handle_terminal_checkout_updated_webhook_completed_no_completed_payments(
+    mock_square,
+):
+    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    data = {
+        "object": {
+            "checkout": {
+                "amount_money": {"amount": 111, "currency": "USD"},
+                "reference_id": booking.payment_reference_id,
+                "payment_ids": [
+                    "dgzrZTeIeVuOGwYgekoTHsPouaB",
+                    "dgzrZTeIeVuOGwYgekoTHsPouaC",
+                ],
+                "status": "COMPLETED",
+            }
+        },
+    }
+
+    # Mock get_payment to return all payments as pending
+    with mock_square(
+        SquarePaymentMethodMixin.client.payments,
+        "get_payment",
+        status_code=200,
+        success=True,
+        body={
+            "payment": {
+                "status": "PENDING",
+            }
+        },
+    ):
+        SquarePOS.handle_terminal_checkout_updated_webhook(data)
+        booking.refresh_from_db()
+        assert booking.status == Booking.BookingStatus.IN_PROGRESS
+        assert Payment.objects.count() == 0
 
 
 @pytest.mark.django_db

@@ -111,10 +111,8 @@ class Payment(TimeStampedMixin, models.Model):
 
     def update_from_square(self):
         if self.provider_payment_id is not None:
-            response = payment_methods.SquareOnline.get_payment(
-                self.provider_payment_id
-            )
-            self.update_from_square_payment(response.body["payment"])
+            payment = payment_methods.SquareOnline.get_payment(self.provider_payment_id)
+            self.update_from_square_payment(payment)
 
 
 TOTAL_PROVIDER_FEE = Coalesce(
