@@ -81,7 +81,7 @@ class PriceBreakdownNode(DjangoObjectType):
         return self.misc_costs_value()
 
     def resolve_total_price(self, info):
-        return self.total()
+        return self.total
 
     def resolve_tickets_discounted_price(self, info):
         return self.subtotal
@@ -427,6 +427,13 @@ def parse_admin_discount_percentage(
     return admin_discount_percentage
 
 
+def delete_user_drafts(user, performance_id):
+    """Remove's the users exisiting draft booking for the given performance"""
+    user.bookings.filter(
+        status=Booking.BookingStatus.IN_PROGRESS, performance_id=performance_id
+    ).delete()
+
+
 class CreateBooking(AuthRequiredMixin, SafeMutation):
     """Mutation to create a Booking
 
@@ -489,10 +496,7 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
             target_user_email, info.context.user, performance
         )
 
-        # If draft booking(s) already exists remove the bookings
-        user.bookings.filter(
-            status=Booking.BookingStatus.IN_PROGRESS, performance_id=performance_id
-        ).delete()
+        delete_user_drafts(user, performance_id)
 
         # Create the booking
         extra_args = {}
@@ -579,6 +583,7 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
             user = parse_target_user_email(
                 target_user_email, info.context.user, booking.performance
             )
+            delete_user_drafts(user, booking.performance_id)
             booking.user = user
             booking.save()
 
@@ -699,7 +704,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
                 field="payment_provider",
             )
 
-        if booking.total() != price:
+        if booking.total != price:
             raise GQLException(
                 message="The booking price does not match the expected price"
             )
@@ -709,7 +714,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
             raise GQLException(message="The booking must have at least one ticket")
 
         # If the booking is free, we don't care about the payment provider. Otherwise, we do
-        if booking.total() == 0:
+        if booking.total == 0:
             booking.complete()
             return PayBooking(booking=booking)
 

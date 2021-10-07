@@ -294,7 +294,7 @@ def test_bookings_price_break_down(gql_client):  # pylint: disable=too-many-loca
         "discountsValue": booking.discount_value(),
         "subtotalPrice": booking.subtotal,
         "miscCostsValue": int(booking.misc_costs_value()),
-        "totalPrice": booking.total(),
+        "totalPrice": booking.total,
         "ticketsDiscountedPrice": booking.subtotal,
     }
 
