@@ -1,10 +1,11 @@
-name: Docker build and push
+name: Dev image build and push
 
 on:
   push:
-    # Publish `main` as Docker `latest` image.
     branches:
-      - [ dev ]
+      - dev
+
+  workflow_dispatch:
 
 env:
   IMAGE_NAME: api-dev
