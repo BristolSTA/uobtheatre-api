@@ -41,7 +41,7 @@ If this case every commit should trigger the precommit hook. You will always nee
 
 ## Visual Studio Dev Container
 
-This repository has first-class support for users of VS Code. If you use VS Code and have Docker and the "Remote Containers" extension installed, you can get started in under 5 minutes:
+This repository has support for users of VS Code. If you use VS Code and have Docker and the "Remote Containers" extension installed, you can get started in under 5 minutes:
 * Clone this repository somewhere on your computer (If using WSL, this should be inside your WSL environment)
 * Either: a) open the folder through VS Code or b) navgiate to the folder in a CLI and type `code .`
 * If you have the correct extensions installed, you will see a popup on the bottom right asking if you would like to open in a remote container. Click this, and sit back!
