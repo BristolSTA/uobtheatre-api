@@ -294,7 +294,7 @@ def test_bookings_price_break_down(gql_client):  # pylint: disable=too-many-loca
         "discountsValue": booking.discount_value(),
         "subtotalPrice": booking.subtotal,
         "miscCostsValue": int(booking.misc_costs_value()),
-        "totalPrice": booking.total(),
+        "totalPrice": booking.total,
         "ticketsDiscountedPrice": booking.subtotal,
     }
 
@@ -619,10 +619,17 @@ def test_bookings_search(search_phrase, expected_filtered_bookings, gql_client):
     gql_client.login().user.user_permissions.add(boxoffice_perm)
 
     response = gql_client.execute(request)
-    assert [node["node"]["id"] for node in response["data"]["bookings"]["edges"]] == [
+
+    response_bookings_id = [
+        node["node"]["id"] for node in response["data"]["bookings"]["edges"]
+    ]
+    expected_booking_ids = [
         to_global_id("BookingNode", booking_id)
         for booking_id in expected_filtered_bookings
     ]
+
+    assert len(response_bookings_id) == len(expected_booking_ids)
+    assert set(response_bookings_id) == set(expected_booking_ids)
 
 
 @pytest.mark.django_db

@@ -48,7 +48,10 @@ migrations-without-user: ## Make the migrations without setting the user (the us
 	docker-compose run --rm api python manage.py makemigrations
 
 migrate: ## Do the migrations
-	docker-compose run api python manage.py migrate
+	docker-compose run --rm api python manage.py migrate
+
+collect-static:
+	docker-compose run --rm api python manage.py collectstatic
 
 check-users: ## Do the migrations
 	docker-compose run api `python manage.py number_of_users | tail -n 1` | grep 0

@@ -1,9 +1,11 @@
 import pytest
 from graphql_relay.node.node import to_global_id
+from guardian.shortcuts import assign_perm
 
 from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.payments.payment_methods import SquarePOS
 from uobtheatre.payments.test.factories import PaymentFactory
+from uobtheatre.productions.test.factories import PerformanceFactory
 
 
 @pytest.mark.django_db
@@ -117,6 +119,9 @@ def test_payment_schema(gql_client):
 
 @pytest.mark.django_db
 def test_list_devices(gql_client, mock_square):
+    PerformanceFactory()
+    gql_client.login()
+    assign_perm("productions.boxoffice", gql_client.user)
 
     with mock_square(
         SquarePOS.client.devices,
@@ -193,21 +198,74 @@ def test_list_devices(gql_client, mock_square):
     }
 
 
-class MockApiResponse:
+@pytest.mark.django_db
+def test_list_devices_without_boxoffice_permissions(gql_client, mock_square):
     """
-    Mock of the square API Response CLass
+    Test that an error is returned if a user tried to list devices without
+    permissions to access the boxoffice.
     """
-
-    def __init__(
-        self, reason_phrase="Some phrase", status_code=400, success=False, body=None
+    with mock_square(
+        SquarePOS.client.devices,
+        "list_device_codes",
+        body={
+            "data": {
+                "paymentDevices": [
+                    {
+                        "id": "X12GC60W7P7V8",
+                        "name": "Boxoffice Terminal",
+                        "code": "SGEKNB",
+                        "deviceId": "121CS145A5000029",
+                        "status": "PAIRED",
+                        "productType": "TERMINAL_API",
+                        "locationId": "LMHP97T10P8JV",
+                    },
+                ]
+            }
+        },
+        status_code=200,
+        success=True,
     ):
-        self.reason_phrase = reason_phrase
-        self.status_code = status_code
-        self.success = success
-        self.body = body
+        response = gql_client.execute(
+            """
+            query {
+              paymentDevices {
+                id
+              }
+            }
+            """
+        )
 
-    def is_success(self):
-        return self.success
+    assert response == {
+        "data": {
+            "paymentDevices": None,
+        }
+    }
+
+
+@pytest.mark.django_db
+def test_list_devices_empty_response(gql_client, mock_square):
+    PerformanceFactory()
+    gql_client.login()
+    assign_perm("productions.boxoffice", gql_client.user)
+
+    with mock_square(
+        SquarePOS.client.devices,
+        "list_device_codes",
+        body={},
+        status_code=200,
+        success=True,
+    ):
+        response = gql_client.execute(
+            """
+            query {
+              paymentDevices {
+                id
+              }
+            }
+            """
+        )
+
+    assert response == {"data": {"paymentDevices": []}}
 
 
 @pytest.mark.django_db
@@ -235,6 +293,10 @@ class MockApiResponse:
 def test_filter_list_devices(
     gql_client, mock_square, filters, expect_called, expected_args
 ):
+
+    PerformanceFactory()
+    gql_client.login()
+    assign_perm("productions.boxoffice", gql_client.user)
 
     with mock_square(
         SquarePOS.client.devices,

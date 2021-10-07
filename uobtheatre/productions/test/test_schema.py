@@ -960,7 +960,7 @@ def test_production_and_performance_sales_breakdowns(gql_client):
     )
     perf_seat_group = PerformanceSeatingFactory(performance=performance, price=100)
     TicketFactory(booking=booking, seat_group=perf_seat_group.seat_group)
-    PaymentFactory(pay_object=booking, value=booking.total())
+    PaymentFactory(pay_object=booking, value=booking.total)
 
     request = """
         {

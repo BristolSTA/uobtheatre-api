@@ -5,6 +5,7 @@ from graphene_django import DjangoObjectType
 from uobtheatre.bookings.schema import BookingNode
 from uobtheatre.payments.models import Payment
 from uobtheatre.payments.payment_methods import PaymentMethod, SquarePOS
+from uobtheatre.users.abilities import OpenBoxoffice
 from uobtheatre.utils.enums import GrapheneEnumMixin
 from uobtheatre.utils.filters import FilterSet
 
@@ -62,7 +63,7 @@ class Query(graphene.ObjectType):
     )
 
     def resolve_payment_devices(
-        self, _, payment_provider: str = None, paired: bool = None
+        self, info, payment_provider: str = None, paired: bool = None
     ):
         """
         Returns square payment devices.
@@ -78,6 +79,8 @@ class Query(graphene.ObjectType):
 
         devices = []
         include_all = not payment_provider
+        if not OpenBoxoffice.user_has(info.context.user, None):
+            return None
 
         if include_all or payment_provider == SquarePOS.name:
             status = None if paired is None else "PAIRED" if paired else "UNPAIRED"

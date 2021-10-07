@@ -1,4 +1,4 @@
-version: "3"
+version: '3'
 
 volumes:
   uobtheatre_local_postgres_data: {}
@@ -19,7 +19,7 @@ services:
       - ./.envs/.local/.django
       - ./.envs/.local/.postgres
     ports:
-      - "8000:8000"
+      - '8000:8000'
     command: /start
 
   postgres:

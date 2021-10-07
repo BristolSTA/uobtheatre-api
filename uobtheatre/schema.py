@@ -2,6 +2,7 @@
 Defines base schema for api
 """
 
+
 import graphene
 
 import uobtheatre.bookings.schema as bookings_schema
