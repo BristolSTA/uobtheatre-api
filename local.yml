@@ -20,7 +20,7 @@ services:
       - ./.envs/.local/.postgres
     ports:
       - '8000:8000'
-    command: /start --single-seed-e2e
+    command: /start
 
   postgres:
     build:
