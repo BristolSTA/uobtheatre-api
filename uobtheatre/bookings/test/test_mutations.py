@@ -956,7 +956,7 @@ def test_update_booking_set_target_user(gql_client):
 
     user = UserFactory(email="user@email.com")
     # Give the user an existing draft booking
-    old_booking = BookingFactory(
+    BookingFactory(
         user=user,
         performance=booking.performance,
         status=Booking.BookingStatus.IN_PROGRESS,
@@ -982,8 +982,8 @@ def test_update_booking_set_target_user(gql_client):
 
     assert creator.bookings.count() == 0
     assert user.bookings.count() == 1
+    assert Booking.objects.count() == 1
     assert user.bookings.first().id == booking.id
-    assert old_booking.exists() is False
 
 
 @pytest.mark.django_db
