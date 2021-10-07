@@ -8,8 +8,12 @@ import environ
 
 env = environ.Env()
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BASE_URL = os.getenv(
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Take environment variables from .env file
+environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
+
+BASE_URL = env(
     "BASE_URL",
     default="http://localhost:8000",
 )
@@ -65,7 +69,7 @@ MIDDLEWARE = (
 
 ALLOWED_HOSTS = ["*"]
 ROOT_URLCONF = "uobtheatre.urls"
-SECRET_KEY = os.getenv(
+SECRET_KEY = env(
     "DJANGO_SECRET_KEY",
     default="Ha57AUXmBdFS48TKYPMhauspK7BhwpveyvM9PGsCwwcT7RfwUN2rVkYnbuXkWhcU",
 )
@@ -73,27 +77,27 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 # Email
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = os.getenv("EMAIL_HOST", "localhost")
-EMAIL_PORT = os.getenv("EMAIL_PORT") or 1025
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+EMAIL_HOST = env("EMAIL_HOST", default="localhost")
+EMAIL_PORT = env("EMAIL_PORT", default=1025)
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default=None)
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default=None)
 DEFAULT_FROM_EMAIL = "UOB Theatre <no-reply@uobtheatre.com>"
 
 ADMINS = (("Author", "webmaster@bristolsta.com"),)
 
 
 # Postgres
-if os.getenv("DATABASE_URL"):  # ignore:
-    DATABASES = {"default": env.db("DATABASE_URL", "")}
+if env("DATABASE_URL", default=None):  # ignore:
+    DATABASES = {"default": env.db("DATABASE_URL", default="")}
 else:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.postgresql_psycopg2",
-            "NAME": os.getenv("POSTGRES_DB", default="postgres"),
-            "USER": os.getenv("POSTGRES_USER", default="postgres"),
-            "PASSWORD": os.getenv("POSTGRES_PASSWORD", default="postgres"),
-            "HOST": os.getenv("POSTGRES_HOST", default="postgres"),
-            "PORT": os.getenv("POSTGRES_PORT", default="5432"),
+            "NAME": env("POSTGRES_DB", default="postgres"),
+            "USER": env("POSTGRES_USER", default="postgres"),
+            "PASSWORD": env("POSTGRES_PASSWORD", default="postgres"),
+            "HOST": env("POSTGRES_HOST", default="postgres"),
+            "PORT": env("POSTGRES_PORT", default="5432"),
         }
     }
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
@@ -143,7 +147,7 @@ TEMPLATES = [
 
 # Set DEBUG to False as a default for safety
 # https://docs.djangoproject.com/en/dev/ref/settings/#debug
-DEBUG = strtobool(os.getenv("DJANGO_DEBUG", "no"))
+DEBUG = strtobool(env("DJANGO_DEBUG", default="no"))
 
 # Password Validation
 # https://docs.djangoproject.com/en/2.0/topics/auth/passwords/#module-django.contrib.auth.password_validation
@@ -298,19 +302,19 @@ GRAPHENE = {
 
 # Square payments
 SQUARE_SETTINGS = {
-    "SQUARE_ACCESS_TOKEN": os.getenv(
+    "SQUARE_ACCESS_TOKEN": env(
         "SQUARE_ACCESS_TOKEN",
         default="",
     ),
-    "SQUARE_ENVIRONMENT": os.getenv(
+    "SQUARE_ENVIRONMENT": env(
         "SQUARE_ENVIRONMENT",
         default="sandbox",
     ),
-    "SQUARE_LOCATION": os.getenv(
+    "SQUARE_LOCATION": env(
         "SQUARE_LOCATION",
         default="",
     ),
-    "SQUARE_WEBHOOK_SIGNATURE_KEY": os.getenv(
+    "SQUARE_WEBHOOK_SIGNATURE_KEY": env(
         "SQUARE_WEBHOOK_SIGNATURE_KEY",
         default="",
     ),
