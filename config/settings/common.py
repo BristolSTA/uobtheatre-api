@@ -87,7 +87,7 @@ ADMINS = (("Author", "webmaster@bristolsta.com"),)
 
 
 # Postgres
-if env("DATABASE_URL"):  # ignore:
+if env("DATABASE_URL", default=None):  # ignore:
     DATABASES = {"default": env.db("DATABASE_URL", default="")}
 else:
     DATABASES = {
