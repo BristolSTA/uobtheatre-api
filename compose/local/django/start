@@ -17,10 +17,11 @@ fi
 # Seed the db if not already seeded
 if [[ $* == *--single-seed-e2e ]]
 then
-   if python manage.py number_of_users | tail -n 1 | grep 0
+   if [[ $(python manage.py number_of_users) != 1 ]] # This is one because django seems to auto seed an anonymous user
    then
       echo "Skipping seeding as users in db"
    else
+      echo "Seeding DB"
       python manage.py loaddata db.json
    fi
 fi
