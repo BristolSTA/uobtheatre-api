@@ -27,7 +27,7 @@ help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 up: ## Run background
-	docker-compose up -d api db
+	docker-compose up -d api postgres
 
 up-v: ## Run verbose
 	docker-compose up
@@ -51,7 +51,10 @@ migrations-without-user: ## Make the migrations without setting the user (the us
 	docker-compose run --rm api python manage.py makemigrations
 
 migrate: ## Do the migrations
-	docker-compose run api python manage.py migrate
+	docker-compose run --rm api python manage.py migrate
+
+collect-static:
+	docker-compose run --rm api python manage.py collectstatic
 
 check-users: ## Do the migrations
 	docker-compose run api `python manage.py number_of_users | tail -n 1` | grep 0

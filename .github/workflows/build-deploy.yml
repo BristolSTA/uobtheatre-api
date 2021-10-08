@@ -1,0 +1,51 @@
+name: Build, push, deploy
+
+on:
+  push:
+      branches: [dev, main]
+
+env:
+  IMAGE_NAME: api
+  IMAGE_OWNER: bristolsta
+
+  SERVICE_NAME: "${{ github.ref == 'refs/heads/main' && 'uobtheatre-api' || 'uobtheatre-api-staging' }}"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Build image
+        run: docker build . --file compose/production/django/Dockerfile --tag ghcr.io/$IMAGE_OWNER/$IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}"
+
+      - name: Log into registry
+        # This is where you will update the PAT to GITHUB_TOKEN
+        run: echo "${{ secrets.BRISTOLSTA_REGISTRY_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Push image
+        run: docker push ghcr.io/$IMAGE_OWNER/$IMAGE_NAME:latest
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy new image
+        uses: appleboy/ssh-action@master
+        env:
+          SERVICE_NAME: ${{ env.SERVICE_NAME }}
+        with:
+          host: ${{ secrets.SERVER_SSH_HOST }}
+          username: ${{ secrets.SERVER_SSH_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_SSH_PORT }}
+          envs: SERVICE_NAME
+          script: |
+            cd /var/sta
+            docker-compose pull $SERVICE_NAME
+            docker-compose up -d $SERVICE_NAME
+            docker-compose exec -T $SERVICE_NAME python manage.py migrate

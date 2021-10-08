@@ -10,11 +10,26 @@ error: Union[FieldError, NonFieldError])
 """
 
 
+import traceback
 from typing import List, Union
 
 import graphene
 from django.db import transaction
 from graphene.utils.str_converters import to_camel_case
+
+
+class ExceptionMiddleware:  # pragma: no cover
+    """
+    Middleware to print exception traceback when an exception is caught by
+    graphene.
+    """
+
+    def on_error(self, exc):
+        traceback.print_tb(exc.__traceback__)
+        raise exc
+
+    def resolve(self, next, root, info, **kwargs):  # pylint: disable=redefined-builtin
+        return next(root, info, **kwargs).catch(self.on_error)
 
 
 class NonFieldError(graphene.ObjectType):
@@ -119,8 +134,28 @@ class GQLExceptions(MutationException):
 
 
 class SquareException(GQLException):
+    """An exception with the square API"""
+
     def __init__(self, square_response):
-        super().__init__(square_response.reason_phrase, square_response.status_code)
+        passthrough_error_categories = [
+            "PAYMENT_METHOD_ERROR",
+        ]
+        error = (
+            square_response.errors[0]
+            if square_response.errors and len(square_response.errors)
+            else None
+        )
+        message = (
+            (
+                error["detail"]
+                if error["category"] in passthrough_error_categories
+                else "There was an issue processing your payment (%s)" % error["code"]
+            )
+            if error
+            else square_response.reason_phrase
+        )
+
+        super().__init__(message, square_response.status_code)
 
 
 class AuthException(GQLException):

@@ -1,14 +1,11 @@
 import abc
-import base64
-import hmac
-import json
 import re
 import uuid
 from typing import TYPE_CHECKING, Optional, Type
 
+from django.conf import settings
 from square.client import Client
 
-from config.settings.common import BASE_URL, SQUARE_SETTINGS
 from uobtheatre.payments import models as payment_models
 from uobtheatre.utils.exceptions import SquareException
 from uobtheatre.utils.utils import classproperty
@@ -50,7 +47,7 @@ class PaymentMethod(abc.ABC):
 
     @abc.abstractmethod
     def pay(
-        self, value: int, pay_object: "Payable"
+        self, value: int, app_fee: int, pay_object: "Payable"
     ) -> Optional["payment_models.Payment"]:
         raise NotImplementedError
 
@@ -60,28 +57,39 @@ class PaymentMethod(abc.ABC):
         raise NotImplementedError
 
     @classmethod
-    def create_payment_object(cls, pay_object: "Payable", value: int, **kwargs):
+    def create_payment_object(
+        cls, pay_object: "Payable", value: int, app_fee, **kwargs
+    ):
         return payment_models.Payment.objects.create(
             provider=cls.name,
             type=payment_models.Payment.PaymentType.PURCHASE,
             pay_object=pay_object,
             value=value,
+            app_fee=app_fee,
             **kwargs,
         )
 
 
 class Cash(PaymentMethod):
+    """Manual cash payment method"""
+
     description = "Manual cash payment"
 
-    def pay(self, value: int, pay_object: "Payable") -> "payment_models.Payment":
-        return self.create_payment_object(pay_object, value)
+    def pay(
+        self, value: int, app_fee: int, pay_object: "Payable"
+    ) -> "payment_models.Payment":
+        return self.create_payment_object(pay_object, value, app_fee)
 
 
 class Card(PaymentMethod):
+    """Manual card payment method"""
+
     description = "Manual card payment"
 
-    def pay(self, value: int, pay_object: "Payable") -> "payment_models.Payment":
-        return self.create_payment_object(pay_object, value)
+    def pay(
+        self, value: int, app_fee: int, pay_object: "Payable"
+    ) -> "payment_models.Payment":
+        return self.create_payment_object(pay_object, value, app_fee)
 
 
 class SquarePOS(PaymentMethod):
@@ -101,21 +109,20 @@ class SquarePOS(PaymentMethod):
     description = "Square terminal card payment"
     client = Client(
         square_version="2020-11-18",
-        access_token=SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],
-        environment=SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],
+        access_token=settings.SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],  # type: ignore
+        environment=settings.SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],  # type: ignore
     )
-    webhook_signature_key = SQUARE_SETTINGS["SQUARE_WEBHOOK_SIGNATURE_KEY"]
-    webhook_url = f"{BASE_URL}/{SQUARE_SETTINGS['PATH']}"
 
     def __init__(self, device_id: str) -> None:
         self.device_id = device_id
         super().__init__()
 
-    def pay(self, value: int, pay_object: "Payable") -> None:
+    def pay(self, value: int, app_fee: int, pay_object: "Payable") -> None:
         """Send payment to point of sale device.
 
         Parameters:
             value (int): Amount of money being payed
+            app_fee (int): The amount we charge for the payment.
             pay_object (Payable): The object being payed for
 
         Raises:
@@ -139,19 +146,15 @@ class SquarePOS(PaymentMethod):
             raise SquareException(response)
 
     @classmethod
-    def handle_webhook(cls, data: dict, signature: str):
+    def handle_webhook(cls, data: dict):
         """Handle checkout event for terminal api.
 
         Args:
             data (dict): The data provided in the webhook event
-            signature (str): The signature of the requeset
 
         Raises:
             ValueError: If the signature is invalid
         """
-        if not cls.is_valid_callback(data, signature):
-            raise ValueError("Invalid signature")
-
         if data["type"] == "terminal.checkout.updated":
             cls.handle_terminal_checkout_updated_webhook(data["data"])
 
@@ -173,6 +176,7 @@ class SquarePOS(PaymentMethod):
             cls.create_payment_object(
                 booking,
                 checkout["amount_money"]["amount"],
+                booking.misc_costs_value(),
                 provider_payment_id=checkout["payment_ids"][0],
                 currency=checkout["amount_money"]["currency"],
             )
@@ -201,49 +205,7 @@ class SquarePOS(PaymentMethod):
         )
         if not response.is_success():
             raise SquareException(response)
-        return response.body["device_codes"]
-
-    @classmethod
-    def is_valid_callback(cls, callback_body: dict, callback_signature: str) -> bool:
-        """
-        When square sends a webhook to the api, it is import to check the
-        webhook is actually from square. This uses the provided square webhook
-        secret to validate this requeset is from them.
-
-        The secret is provided by the "SQUARE_WEBHOOK_SIGNATURE_KEY"
-        environment varaible.
-
-        Args:
-            callback_body (dict): The body of the webhook
-            callback_signature (str): The provided signature
-
-        Returns:
-            bool: True if the signature is valid and therefore the message is
-                from square
-        """
-
-        # Combine your webhook notification URL and the JSON body of the
-        # incoming request into a single string
-        clean_request = json.dumps(callback_body, separators=(",", ":"))
-        url_request_bytes = cls.webhook_url.encode("utf-8") + clean_request.encode(
-            "utf-8"
-        )
-
-        # Generate the HMAC-SHA1 signature of the string, signed with the
-        # webhook signature key
-        hmac_code = hmac.new(
-            key=cls.webhook_signature_key.encode("utf-8"),
-            msg=None,
-            digestmod="sha1",
-        )
-        hmac_code.update(url_request_bytes)
-        generated_hash = hmac_code.digest()
-
-        # Compare the generated signature with the signature included in the
-        # request
-        return hmac.compare_digest(
-            base64.b64encode(generated_hash), callback_signature.encode("utf-8")
-        )
+        return response.body.get("device_codes") or []
 
 
 class SquareOnline(PaymentMethod):
@@ -262,18 +224,18 @@ class SquareOnline(PaymentMethod):
     description = "Square online card payment"
     client = Client(
         square_version="2020-11-18",
-        access_token=SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],
-        environment=SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],
+        access_token=settings.SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],  # type: ignore
+        environment=settings.SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],  # type: ignore
     )
 
     def __init__(self, nonce: str, idempotency_key: str) -> None:
         """
         Args:
-            idempotency_key (string): This value is as unique indicator of
+            idempotency_key (str): This value is as unique indicator of
                 the payment request and is used to ensure a payment can only be
                 made once. I.e. if another payment is made with the same key
                 the previous payment will be returned.
-            nonce (string): The nonce is a reference to the completed payment
+            nonce (str): The nonce is a reference to the completed payment
                 form on the front-end. This allows square to determine the
                 payment details to use.
         """
@@ -281,13 +243,36 @@ class SquareOnline(PaymentMethod):
         self.idempotency_key = idempotency_key
         super().__init__()
 
-    def pay(self, value: int, pay_object: "Payable") -> "payment_models.Payment":
+    @classmethod
+    def get_payment(cls, payment_id: str):
+        """Get full payment info from square for a given payment id.
+
+        Args:
+            payment_id (str): The id of the payment to be fetched
+
+        Returns:
+            dict: Payment response from square
+
+        Raises:
+            SquareException: When response is not successful
+        """
+        response = cls.client.payments.get_payment(payment_id)
+
+        if not response.is_success():
+            raise SquareException(response)
+
+        return response
+
+    def pay(
+        self, value: int, app_fee: int, pay_object: "Payable"
+    ) -> "payment_models.Payment":
         """Make a payment using Square
 
         This makes a request to square to make a payment.
 
         Args:
             value (int): The value of the payment in pennies
+            app_fee (int): The amount we charge for the payment.
             pay_object (Payable): The object being payed for
 
         Returns:
@@ -297,7 +282,7 @@ class SquareOnline(PaymentMethod):
             SquareException: If the request was unsuccessful.
         """
         body = {
-            "idempotency_key": self.idempotency_key,
+            "idempotency_key": str(self.idempotency_key),
             "source_id": self.nonce,
             "amount_money": {"amount": value, "currency": "GBP"},
             "reference_id": pay_object.payment_reference_id,
@@ -310,11 +295,14 @@ class SquareOnline(PaymentMethod):
         card_details = response.body["payment"]["card_details"]["card"]
         amount_details = response.body["payment"]["amount_money"]
 
+        # Create payment object with info that is returned
+        square_payment_id = response.body["payment"]["id"]
         return self.create_payment_object(
             pay_object,
             amount_details["amount"],
+            app_fee,
             card_brand=card_details["card_brand"],
             last_4=card_details["last_4"],
-            provider_payment_id=response.body["payment"]["id"],
+            provider_payment_id=square_payment_id,
             currency=amount_details["currency"],
         )

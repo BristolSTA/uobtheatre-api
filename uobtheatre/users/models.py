@@ -30,14 +30,6 @@ class User(AbilitiesMixin, AbstractUser):
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS: list[str] = ["first_name", "last_name"]
 
-    @property
-    def can_boxoffice(self):
-        """
-        Returns whether the user can access the boxoffice region of the
-        website.
-        """
-        return Performance.objects.has_boxoffice_permission(self).count() > 0
-
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
 

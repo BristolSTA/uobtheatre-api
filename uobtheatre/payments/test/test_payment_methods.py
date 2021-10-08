@@ -12,6 +12,7 @@ from uobtheatre.payments.payment_methods import (
     SquareOnline,
     SquarePOS,
 )
+from uobtheatre.payments.square_webhooks import SquareWebhooks
 from uobtheatre.utils.exceptions import SquareException
 
 
@@ -60,7 +61,7 @@ def test_generate_name(input_name, expected_output_name):
 @pytest.mark.django_db
 def test_create_paymnet_object():
     booking = BookingFactory()
-    SquareOnline.create_payment_object(booking, 10, currency="ABC")
+    SquareOnline.create_payment_object(booking, 10, 5, currency="ABC")
 
     assert Payment.objects.count() == 1
     payment = Payment.objects.first()
@@ -69,6 +70,7 @@ def test_create_paymnet_object():
     assert payment.pay_object == booking
     assert payment.value == 10
     assert payment.currency == "ABC"
+    assert payment.app_fee == 5
 
 
 @pytest.mark.django_db
@@ -85,7 +87,7 @@ def test_square_online_pay_failure(mock_square):
     ):
         payment_method = SquareOnline("nonce", "abc")
         with pytest.raises(SquareException):
-            payment_method.pay(100, BookingFactory())
+            payment_method.pay(100, 0, BookingFactory())
 
     # Assert no payments are created
     assert Payment.objects.count() == 0
@@ -118,7 +120,7 @@ def test_square_online_pay_success(mock_square):
     ):
         booking = BookingFactory()
         payment_method = SquareOnline("nonce", "key")
-        payment = payment_method.pay(20, booking)
+        payment = payment_method.pay(20, 10, booking)
 
     # Assert the returned payment gets saved
     assert Payment.objects.count() == 1
@@ -134,6 +136,9 @@ def test_square_online_pay_success(mock_square):
     assert payment.provider_payment_id == "abc"
     assert payment.provider == "SQUARE_ONLINE"
     assert payment.type == Payment.PaymentType.PURCHASE
+    assert payment.app_fee == 10
+
+    assert payment.provider_fee is None
 
 
 @pytest.mark.django_db
@@ -143,7 +148,7 @@ def test_square_online_pay_success(mock_square):
 )
 def test_manual_pay(payment_method, value, expected_method_str):
     booking = BookingFactory()
-    payment = payment_method.pay(value, booking)
+    payment = payment_method.pay(value, 12, booking)
 
     assert Payment.objects.count() == 1
     assert Payment.objects.first() == payment
@@ -153,6 +158,7 @@ def test_manual_pay(payment_method, value, expected_method_str):
     assert payment.currency == "GBP"
     assert payment.provider == expected_method_str
     assert payment.type == Payment.PaymentType.PURCHASE
+    assert payment.app_fee == 12
 
 
 @pytest.mark.django_db
@@ -164,7 +170,7 @@ def test_square_pos_pay_success(mock_square):
         success=True,
     ):
         payment_method = SquarePOS("device_id")
-        payment_method.pay(100, BookingFactory())
+        payment_method.pay(100, 14, BookingFactory())
 
     # Assert no payments are created. A payment should only be created by the
     # webhook.
@@ -182,7 +188,7 @@ def test_square_pos_pay_failure(mock_square):
     ):
         with pytest.raises(SquareException):
             payment_method = SquarePOS("device_id")
-            payment_method.pay(100, BookingFactory())
+            payment_method.pay(100, 0, BookingFactory())
 
     # Assert no payments are created
     assert Payment.objects.count() == 0
@@ -210,6 +216,30 @@ def test_square_pos_list_devices_failure(mock_square):
     ):
         with pytest.raises(SquareException):
             SquarePOS.list_devices()
+
+
+@pytest.mark.django_db
+def test_square_get_payments_error(mock_square):
+    with mock_square(
+        SquareOnline.client.payments,
+        "get_payment",
+        status_code=400,
+        success=False,
+    ):
+        with pytest.raises(SquareException):
+            SquareOnline.get_payment("abc")
+
+
+@pytest.mark.django_db
+def test_square_get_payment(mock_square):
+    with mock_square(
+        SquareOnline.client.payments,
+        "get_payment",
+        status_code=200,
+        success=True,
+        body={"abc": "def"},
+    ):
+        assert SquareOnline.get_payment("abc").body == {"abc": "def"}
 
 
 @pytest.mark.parametrize(
@@ -289,13 +319,13 @@ def test_square_pos_list_devices_failure(mock_square):
 )
 def test_is_valid_callback(body, signature, signature_key, webhook_url, valid):
     with patch.object(
-        SquarePOS, "webhook_signature_key", new_callable=PropertyMock
+        SquareWebhooks, "webhook_signature_key", new_callable=PropertyMock
     ) as key_mock, patch.object(
-        SquarePOS, "webhook_url", new_callable=PropertyMock
+        SquareWebhooks, "webhook_url", new_callable=PropertyMock
     ) as url_mock:
         key_mock.return_value = signature_key
         url_mock.return_value = webhook_url
-        assert SquarePOS.is_valid_callback(body, signature) == valid
+        assert SquareWebhooks.is_valid_callback(body, signature) == valid
 
 
 @pytest.mark.django_db
@@ -341,20 +371,8 @@ def test_square_pos_handle_terminal_checkout_updated_webhook_not_completed():
     assert Payment.objects.count() == 0
 
 
-@pytest.mark.django_db
-def test_square_pos_handle_webhook_invalid_webhook():
-    with pytest.raises(ValueError, match="Invalid signature"), patch.object(
-        SquarePOS, "is_valid_callback"
-    ) as is_valid_callback_mock:
-        is_valid_callback_mock.return_value = False
-        SquarePOS.handle_webhook({}, signature="signature")
-
-
 def test_square_pos_handle_webhook_terminal_checkout_updated():
-    with patch.object(
-        SquarePOS, "handle_terminal_checkout_updated_webhook"
-    ) as mock, patch.object(SquarePOS, "is_valid_callback") as is_valid_callback_mock:
-        is_valid_callback_mock.return_value = True
+    with patch.object(SquarePOS, "handle_terminal_checkout_updated_webhook") as mock:
         SquarePOS.handle_webhook(
             {
                 "type": "terminal.checkout.updated",
@@ -363,7 +381,6 @@ def test_square_pos_handle_webhook_terminal_checkout_updated():
                     "extra": "data",
                 },
             },
-            "signature",
         )
 
     mock.assert_called_once_with(
@@ -375,10 +392,7 @@ def test_square_pos_handle_webhook_terminal_checkout_updated():
 
 
 def test_square_pos_handle_webhook_other_type():
-    with patch.object(
-        SquarePOS, "handle_terminal_checkout_updated_webhook"
-    ) as mock, patch.object(SquarePOS, "is_valid_callback") as is_valid_callback_mock:
-        is_valid_callback_mock.return_value = True
-        SquarePOS.handle_webhook({"type": "other"}, "signature")
+    with patch.object(SquarePOS, "handle_terminal_checkout_updated_webhook") as mock:
+        SquarePOS.handle_webhook({"type": "other"})
 
     mock.assert_not_called()

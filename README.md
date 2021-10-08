@@ -39,9 +39,12 @@ Install precommit with (make sure you are in venv):
 
 If this case every commit should trigger the precommit hook. You will always need to be commit from within the venv for this to work.
 
-## Visual studio dev container
+## Visual Studio Dev Container
 
-TODO if people care
+This repository has support for users of VS Code. If you use VS Code and have Docker and the "Remote Containers" extension installed, you can get started in under 5 minutes:
+* Clone this repository somewhere on your computer (If using WSL, this should be inside your WSL environment)
+* Either: a) open the folder through VS Code or b) navgiate to the folder in a CLI and type `code .`
+* If you have the correct extensions installed, you will see a popup on the bottom right asking if you would like to open in a remote container. Click this, and sit back!
 
 # Local Development :computer:
 
@@ -52,6 +55,8 @@ To start the dev server for local development:
 ```bash
 make up
 ```
+
+If you would like to set some environment variables, you can copy the `.env.example` in the root of the project to `.env`.
 
 ## Migrations :twisted_rightwards_arrows:
 
@@ -125,3 +130,5 @@ The API image will then need rebuilding to add this dependency. Run:
 ```
 make build
 ```
+
+If mypy gives an error about not being able to find the new package, add it to the list of "additional_dependencies" in `.pre-commit-config.yaml`.

@@ -2,11 +2,13 @@
 Defines base schema for api
 """
 
+
 import graphene
 
 import uobtheatre.bookings.schema as bookings_schema
 import uobtheatre.payments.schema as payments_schema
 import uobtheatre.productions.schema as productions_schema
+import uobtheatre.reports.schema as reports_schema
 import uobtheatre.societies.schema as societies_schema
 import uobtheatre.users.schema as users_schema
 import uobtheatre.venues.schema as venues_schema
@@ -29,6 +31,7 @@ class Query(
 class Mutation(
     users_schema.Mutation,
     bookings_schema.Mutation,
+    reports_schema.Mutation,
     graphene.ObjectType,
 ):
     """

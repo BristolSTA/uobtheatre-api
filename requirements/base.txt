@@ -7,16 +7,16 @@ django-autoslug==1.9.8
 shortuuid>=1.0.1
 
 # Filtering
-django-filter==2.4.0
+django-filter==21.1
 
 # Something to do with images
 Pillow>=8.1.2
 
 # timezone package
-pytz==2021.1
+pytz==2021.3
 
 # Cors
-django-cors-headers==3.8.0
+django-cors-headers==3.10.0
 
 # TODO check if required
 django-configurations==2.2
@@ -24,13 +24,16 @@ django-configurations==2.2
 # Django config
 django-environ==0.7.0  # https://github.com/joke2k/django-environ
 
+# Spreadsheet generation
+xlsxwriter==3.0.1
+
 #=== Database ===#
 
 psycopg2==2.9.1  # https://github.com/psycopg/psycopg2
 
 #=== Django core ===#
 
-django==3.2.7
+django==3.2.8
 
 #=== Django Extras ===#
 
@@ -56,8 +59,9 @@ squareup>=9.0.0.20210226
 
 #=== Logging ===#
 
-sentry-sdk==1.3.1
+sentry-sdk==1.4.3
 whitenoise==5.3.0  # https://github.com/evansd/whitenoise
 
-
+#=== Email ===#
 django-anymail[amazon_ses]==8.4  # https://github.com/anymail/django-anymail
+django-inlinecss==0.3.0

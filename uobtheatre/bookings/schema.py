@@ -12,15 +12,14 @@ from graphene_django import DjangoListField, DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
 from graphql_auth.schema import UserNode
 
-from uobtheatre.bookings.models import Booking, MiscCost, Ticket
-from uobtheatre.discounts.models import ConcessionType
-from uobtheatre.payments.payment_methods import (
-    Card,
-    Cash,
-    PaymentMethod,
-    SquareOnline,
-    SquarePOS,
+from uobtheatre.bookings.models import (
+    Booking,
+    MiscCost,
+    Ticket,
+    max_tickets_per_booking,
 )
+from uobtheatre.discounts.models import ConcessionType
+from uobtheatre.payments.payment_methods import Card, Cash, SquareOnline, SquarePOS
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.users.models import User
 from uobtheatre.utils.enums import GrapheneEnumMixin
@@ -82,7 +81,7 @@ class PriceBreakdownNode(DjangoObjectType):
         return self.misc_costs_value()
 
     def resolve_total_price(self, info):
-        return self.total()
+        return self.total
 
     def resolve_tickets_discounted_price(self, info):
         return self.subtotal
@@ -204,6 +203,9 @@ class BookingFilter(FilterSet):
     active = django_filters.BooleanFilter(
         method="filter_active", label="Active Bookings"
     )
+    expired = django_filters.BooleanFilter(
+        method="filter_expired", label="Expired Bookings"
+    )
 
     class Meta:
         model = Booking
@@ -261,6 +263,9 @@ class BookingFilter(FilterSet):
     def filter_active(self, queryset, _, value):
         return queryset.active(value)
 
+    def filter_expired(self, queryset, _, value):
+        return queryset.expired(value)
+
     order_by = BookingByMethodOrderingFilter()
 
 
@@ -272,12 +277,16 @@ class BookingNode(GrapheneEnumMixin, DjangoObjectType):
     tickets = DjangoListField(TicketNode)
     user = graphene.Field(UserNode)
     payments = DjangoFilterConnectionField("uobtheatre.payments.schema.PaymentNode")
+    expired = graphene.Boolean(required=True)
 
     def resolve_payments(self, info):
         return self.payments.all()
 
     def resolve_price_breakdown(self, info):
         return self
+
+    def resolve_expired(self, info):
+        return self.is_reservation_expired
 
     class Meta:
         model = Booking
@@ -379,7 +388,10 @@ def parse_target_user_email(
 
     # If a target user is provided get that user, if not then this booking is intended for the user that is logged in
     if target_user_email:
-        target_user, _ = User.objects.get_or_create(email=target_user_email)
+        target_user, _ = User.objects.get_or_create(
+            email=target_user_email,
+            defaults={"first_name": "Anonymous", "last_name": "User"},
+        )
         return target_user
     return creator_user
 
@@ -413,6 +425,13 @@ def parse_admin_discount_percentage(
             field="admin_discount_percentage",
         ) from error
     return admin_discount_percentage
+
+
+def delete_user_drafts(user, performance_id):
+    """Remove's the users exisiting draft booking for the given performance"""
+    user.bookings.filter(
+        status=Booking.BookingStatus.IN_PROGRESS, performance_id=performance_id
+    ).delete()
 
 
 class CreateBooking(AuthRequiredMixin, SafeMutation):
@@ -451,6 +470,15 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
         # Get the performance and if it doesn't exist throw an error
         performance = Performance.objects.get(id=performance_id)
 
+        if len(tickets) > max_tickets_per_booking() and not info.context.user.has_perm(
+            "boxoffice", performance.production
+        ):
+            raise GQLException(
+                message="You may only book a maximum of %s tickets"
+                % max_tickets_per_booking(),
+                code=422,
+            )
+
         # Check performance is bookable
         if not performance.is_bookable:
             raise GQLException(
@@ -464,14 +492,11 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
         if err:
             raise GQLException(message=err, code=400)
 
-        # If draft booking(s) already exists remove the bookings
-        Booking.objects.filter(
-            status=Booking.BookingStatus.IN_PROGRESS, performance_id=performance_id
-        ).delete()
-
         user = parse_target_user_email(
             target_user_email, info.context.user, performance
         )
+
+        delete_user_drafts(user, performance_id)
 
         # Create the booking
         extra_args = {}
@@ -526,12 +551,24 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
 
         booking = Booking.objects.get(id=booking_id)
 
+        # Can only edit this booking if belongs to the user, or is box office
         if booking.user.id != info.context.user.id and not info.context.user.has_perm(
             "boxoffice", booking.performance.production
         ):
             raise AuthorizationException(
                 message="You do not have permission to access this booking.",
-                field="booking",
+            )
+
+        # Booking must be in progress to update
+        if booking.status != Booking.BookingStatus.IN_PROGRESS:
+            raise GQLException(
+                message="This booking is not in progress, and so cannot be edited"
+            )
+
+        # Booking must not be expired
+        if booking.is_reservation_expired:
+            raise GQLException(
+                message="This booking has expired. Please create a new booking."
             )
 
         if admin_discount_percentage:
@@ -546,6 +583,7 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
             user = parse_target_user_email(
                 target_user_email, info.context.user, booking.performance
             )
+            delete_user_drafts(user, booking.performance_id)
             booking.user = user
             booking.save()
 
@@ -556,8 +594,22 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
 
         # Convert the given tickets to ticket objects
         ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))
+        add_tickets, delete_tickets, total_number_of_tickets = booking.get_ticket_diff(
+            ticket_objects
+        )
 
-        add_tickets, delete_tickets = booking.get_ticket_diff(ticket_objects)
+        if (
+            total_number_of_tickets > max_tickets_per_booking()
+            and not info.context.user.has_perm(
+                "boxoffice", booking.performance.production
+            )
+        ):
+            raise GQLException(
+                message="You may only book a maximum of %s tickets"
+                % max_tickets_per_booking(),
+                code=422,
+            )
+
         # Check the capacity of the show and its seat_groups
         err = booking.performance.check_capacity(ticket_objects)
         if err:
@@ -605,9 +657,10 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
             "uobtheatre.payments.schema.PaymentMethodsEnum"
         )
         device_id = graphene.String(required=False)
+        idempotency_key = graphene.String(required=False)
 
     @classmethod
-    def resolve_mutation(  # pylint: disable=too-many-arguments
+    def resolve_mutation(  # pylint: disable=too-many-arguments, too-many-branches
         cls,
         _,
         info,
@@ -616,12 +669,31 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         nonce=None,
         payment_provider=SquareOnline.name,
         device_id=None,
+        idempotency_key=None,
     ):
 
         # Get the performance and if it doesn't exist throw an error
         booking = Booking.objects.get(id=booking_id)
 
-        # Only (box office) admins can create a booking for a different user
+        # Verify user can access booking
+        if booking.user.id != info.context.user.id and not info.context.user.has_perm(
+            "boxoffice", booking.performance.production
+        ):
+            raise AuthorizationException(
+                message="You do not have permission to access this booking.",
+            )
+
+        # Booking must not be paid for already
+        if booking.status == Booking.BookingStatus.PAID:
+            raise GQLException(message="This booking has already been paid for")
+
+        # Check if booking hasn't expired
+        if booking.is_reservation_expired:
+            raise GQLException(
+                message="This booking has expired. Please create a new booking."
+            )
+
+        # Verify user can use payment provider
         if not (
             payment_provider == SquareOnline.name
         ) and not info.context.user.has_perm(
@@ -632,13 +704,19 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
                 field="payment_provider",
             )
 
-        if booking.total() != price:
+        if booking.total != price:
             raise GQLException(
                 message="The booking price does not match the expected price"
             )
 
-        if booking.status != Booking.BookingStatus.IN_PROGRESS:
-            raise GQLException(message="The booking is not in progress")
+        # Booking must have at least one ticket
+        if booking.tickets.count() == 0:
+            raise GQLException(message="The booking must have at least one ticket")
+
+        # If the booking is free, we don't care about the payment provider. Otherwise, we do
+        if booking.total == 0:
+            booking.complete()
+            return PayBooking(booking=booking)
 
         if payment_provider == SquareOnline.name:
             if not nonce:
@@ -647,8 +725,13 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
                     field="nonce",
                     code="missing_required",
                 )
-            payment_method = SquareOnline(nonce, booking.id)
-
+            if not idempotency_key:
+                raise GQLException(
+                    message=f"An idempotency key is required when using {payment_provider} provider.",
+                    field="idempotency_key",
+                    code="missing_required",
+                )
+            payment_method = SquareOnline(nonce, idempotency_key)
         elif payment_provider == SquarePOS.name:
             if not device_id:
                 raise GQLException(
@@ -662,7 +745,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         elif payment_provider == Card.name:
             payment_method = Card()
         else:
-            raise GQLException(
+            raise GQLException(  # pragma: no cover
                 message=f"Unsupported payment provider {payment_provider}."
             )
 
@@ -710,6 +793,14 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
                 message="The booking performance does not match the given performance.",
             )
             # raise booking performance does not match performance given
+
+        # Check user has permission to check in this booking
+        if not info.context.user.has_perm(
+            "productions.boxoffice", performance.production
+        ):
+            raise AuthorizationException(
+                message="You do not have permission to check in this booking.",
+            )
 
         ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))
 
@@ -778,11 +869,19 @@ class UnCheckInBooking(AuthRequiredMixin, SafeMutation):
 
         # check if the booking pertains to the correct performance
         if booking.performance != performance:
+            # raise booking performance does not match performance given
             raise GQLException(
                 field="performance_id",
                 message="The booking performance does not match the given performance.",
             )
-            # raise booking performance does not match performance given
+
+        # Check user has permission to check in this booking
+        if not info.context.user.has_perm(
+            "productions.boxoffice", performance.production
+        ):
+            raise AuthorizationException(
+                message="You do not have permission to uncheck in this booking.",
+            )
 
         ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))
         # loop through the ticket IDs given

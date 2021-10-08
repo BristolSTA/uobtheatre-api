@@ -152,6 +152,7 @@ disable=print-statement,
         cyclic-import,
         import-outside-toplevel,
         arguments-renamed,
+        consider-using-f-string,
 
 
 # Enable the message, report, category or checker with the given id(s). You can

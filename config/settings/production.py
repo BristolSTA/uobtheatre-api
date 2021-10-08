@@ -28,6 +28,14 @@ AWS_AUTO_CREATE_BUCKET = True
 AWS_QUERYSTRING_AUTH = False
 MEDIA_URL = f"https://s3.amazonaws.com/{AWS_STORAGE_BUCKET_NAME}/"
 
+STATICFILES_LOCATION = "static"
+STATICFILES_STORAGE = "uobtheatre.storages.StaticStorage"
+
+MEDIAFILES_LOCATION = "media"
+DEFAULT_FILE_STORAGE = "uobtheatre.storages.MediaStorage"
+
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 if sentry_dns := os.getenv("SENTRY_DNS"):
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
@@ -52,4 +60,3 @@ AWS_HEADERS = {
 }
 
 EMAIL_BACKEND = "anymail.backends.amazon_ses.EmailBackend"
-DEFAULT_FROM_EMAIL = "UOB Theatre <no-reply@uobtheatre.com>"

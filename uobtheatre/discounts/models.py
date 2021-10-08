@@ -40,7 +40,10 @@ def get_concession_map(
     """
     concession_requirements: Dict["ConcessionType", int] = {}
     for requirement in requirements:
-        if not requirement.concession_type in concession_requirements.keys():
+        if (
+            not requirement.concession_type
+            in concession_requirements.keys()  # pylint: disable=consider-iterating-dictionary
+        ):
             concession_requirements[requirement.concession_type] = 0
         concession_requirements[requirement.concession_type] += requirement.number
     return concession_requirements

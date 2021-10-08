@@ -7,7 +7,9 @@ from .local import *  # noqa: F403,F401
 # GENERAL
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#secret-key
+DEBUG = True
 TEST_RUNNER = "django.test.runner.DiscoverRunner"
+BASE_URL = "https://api.example.com"
 
 # CACHES
 # ------------------------------------------------------------------------------
@@ -45,3 +47,7 @@ EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 # MEDIA
 # ------------------------------------------------------------------------------
 MEDIA_ROOT = tempfile.mkdtemp()
+
+# This is a very nasty hack. We should find out how to correctly handle
+# static_root in tests without having to run collectstatic before.
+STATIC_ROOT = os.path.normpath(join(BASE_DIR, "static"))

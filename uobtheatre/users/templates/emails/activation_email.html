@@ -1,7 +1,17 @@
-<h3>{{ site_name }}</h3>
-
-<p>Hello {{ user.first_name }}!</p>
+{% extends "base_email.html" %}
+{% block content %}
+{% with protocol|add:"://"|add:domain|add:"/"|add:path|add:"/"|add:token as url %}
+<h1>Hello {{ user.first_name }}!</h1>
 
 <p>Please activate your account with the following link:</p>
+{% with text="Activate Account" %}
+{% include "components/button.html" %}
+{% endwith %}
 
-<p>{{ protocol }}://{{ domain }}/{{ path }}/{{ token }}</p>
+<p>or goto</p>
+<p style="word-break: break-all;">{{url}}</p>
+<p>in your browser.</p>
+
+<p>Thanks,</p>
+<p>The UOBTheatre Team</p>{% endwith %}
+{% endblock %}

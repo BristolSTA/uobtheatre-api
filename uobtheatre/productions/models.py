@@ -1,18 +1,20 @@
+# pylint: disable=too-many-public-methods
 import datetime
 import math
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from autoslug import AutoSlugField
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Max, Min, Sum
-from django.db.models.query import QuerySet
-from django.db.models.query_utils import Q
+from django.db.models.query import Q, QuerySet
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django_tiptap.fields import TipTapTextField
 from guardian.shortcuts import get_objects_for_user
 
 from uobtheatre.images.models import Image
+from uobtheatre.payments.models import Payment
 from uobtheatre.societies.models import Society
 from uobtheatre.utils.models import TimeStampedMixin
 from uobtheatre.venues.models import SeatGroup, Venue
@@ -154,6 +156,12 @@ class Production(TimeStampedMixin, models.Model):
 
     slug = AutoSlugField(populate_from="name", unique=True, blank=True)
 
+    @property
+    def bookings(self):
+        from uobtheatre.bookings.models import Booking
+
+        return Booking.objects.filter(performance__in=self.performances.all())
+
     def __str__(self):
         return str(self.name)
 
@@ -238,9 +246,40 @@ class Production(TimeStampedMixin, models.Model):
             return None
         return min(performance.duration() for performance in performances)
 
+    @property
+    def total_capacity(self) -> int:
+        """The total number of tickets which can be sold across all performances"""
+        return sum(
+            [performance.total_capacity for performance in self.performances.all()]
+        )
+
+    @property
+    def total_tickets_sold(self) -> int:
+        """The total number of tickets sold across all performances"""
+        return sum(
+            [
+                performance.total_tickets_sold()
+                for performance in self.performances.all()
+            ]
+        )
+
+    def sales_breakdown(self, breakdowns: list[str] = None):
+        """Generates a breakdown of the sales of this production"""
+        from uobtheatre.bookings.models import Booking
+
+        return Payment.objects.filter(
+            pay_object_id__in=self.bookings.values_list("id", flat=True),
+            pay_object_type=ContentType.objects.get_for_model(Booking),
+        ).annotate_sales_breakdown(  # type: ignore
+            breakdowns
+        )
+
     class Meta:
         ordering = ["id"]
-        permissions = (("boxoffice", "Can use boxoffice for this show"),)
+        permissions = (
+            ("boxoffice", "Can use boxoffice for this production"),
+            ("sales", "Can view sales for this production"),
+        )
 
 
 class CastMember(models.Model):
@@ -339,7 +378,9 @@ class PerformanceQuerySet(QuerySet):
         return self.exclude(production__in=production_with_perm)
 
 
-class Performance(TimeStampedMixin, models.Model):
+class Performance(
+    TimeStampedMixin, models.Model
+):  # pylint: disable=too-many-public-methods
     """The model for a Performance of a Production.
 
     A performance is a discrete event when the show takes place eg 7pm on
@@ -469,7 +510,30 @@ class Performance(TimeStampedMixin, models.Model):
         Returns:
             int: The number of tickets sold
         """
-        return self.tickets.filter(**kwargs).count()
+        return (
+            self.tickets.sold()
+            .filter(
+                **kwargs,
+            )
+            .count()
+        )
+
+    def total_tickets_sold_or_reserved(self, **kwargs):
+        """The number of tickets available for the performance (i.e. factoring in any draft bookings)
+
+        Args:
+            kwargs (dict): Any additonal kwargs are used to filter the queryset.
+
+        Returns:
+            int: The number of tickets sold
+        """
+        return (
+            self.tickets.sold_or_reserved()
+            .filter(
+                **kwargs,
+            )
+            .count()
+        )
 
     @property
     def total_tickets_checked_in(self):
@@ -511,7 +575,7 @@ class Performance(TimeStampedMixin, models.Model):
         if seat_group:
             return self.total_seat_group_capacity(
                 seat_group=seat_group
-            ) - self.total_tickets_sold(seat_group=seat_group)
+            ) - self.total_tickets_sold_or_reserved(seat_group=seat_group)
 
         seat_groups_remaining_capacity = sum(
             self.capacity_remaining(seat_group=performance_seat_group.seat_group)
@@ -521,7 +585,7 @@ class Performance(TimeStampedMixin, models.Model):
             seat_groups_remaining_capacity
             if not self.capacity
             else min(
-                self.capacity - self.total_tickets_sold(),
+                self.capacity - self.total_tickets_sold_or_reserved(),
                 seat_groups_remaining_capacity,
             )
         )
@@ -716,6 +780,17 @@ class Performance(TimeStampedMixin, models.Model):
         if user.has_perm("productions.boxoffice", self.production):
             return True
         return False
+
+    def sales_breakdown(self, breakdowns: list[str] = None):
+        """Generates a breakdown of the sales of this performance"""
+        from uobtheatre.bookings.models import Booking
+
+        return Payment.objects.filter(
+            pay_object_id__in=self.bookings.values_list("id", flat=True),
+            pay_object_type=ContentType.objects.get_for_model(Booking),
+        ).annotate_sales_breakdown(  # type: ignore
+            breakdowns
+        )
 
     def __str__(self):
         if self.start is None:

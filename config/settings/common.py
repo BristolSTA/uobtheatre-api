@@ -8,8 +8,12 @@ import environ
 
 env = environ.Env()
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BASE_URL = os.getenv(
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Take environment variables from .env file
+environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
+
+BASE_URL = env(
     "BASE_URL",
     default="http://localhost:8000",
 )
@@ -34,6 +38,7 @@ INSTALLED_APPS = (
     "guardian",
     "django_tiptap",
     "rest_framework",
+    "django_inlinecss",
     # Your apps
     "uobtheatre.users",
     "uobtheatre.productions",
@@ -45,6 +50,8 @@ INSTALLED_APPS = (
     "uobtheatre.addresses",
     "uobtheatre.payments",
     "uobtheatre.images",
+    "uobtheatre.reports",
+    "uobtheatre.mail",
     "uobtheatre",
 )
 
@@ -62,7 +69,7 @@ MIDDLEWARE = (
 
 ALLOWED_HOSTS = ["*"]
 ROOT_URLCONF = "uobtheatre.urls"
-SECRET_KEY = os.getenv(
+SECRET_KEY = env(
     "DJANGO_SECRET_KEY",
     default="Ha57AUXmBdFS48TKYPMhauspK7BhwpveyvM9PGsCwwcT7RfwUN2rVkYnbuXkWhcU",
 )
@@ -70,28 +77,30 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 # Email
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = env("EMAIL_HOST", default="localhost")
+EMAIL_PORT = env("EMAIL_PORT", default=1025)
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default=None)
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default=None)
+DEFAULT_FROM_EMAIL = "UOB Theatre <no-reply@uobtheatre.com>"
 
 ADMINS = (("Author", "webmaster@bristolsta.com"),)
 
 
 # Postgres
-DATABASES = {
-    "default": env.db(
-        "DATABASE_URL", "postgresql://postgres:postgres@postgres:5432/uobtheatre_api"
-    )
-}
+if env("DATABASE_URL", default=None):  # ignore:
+    DATABASES = {"default": env.db("DATABASE_URL", default="")}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql_psycopg2",
+            "NAME": env("POSTGRES_DB", default="postgres"),
+            "USER": env("POSTGRES_USER", default="postgres"),
+            "PASSWORD": env("POSTGRES_PASSWORD", default="postgres"),
+            "HOST": env("POSTGRES_HOST", default="postgres"),
+            "PORT": env("POSTGRES_PORT", default="5432"),
+        }
+    }
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
-# DATABASES = {
-#     "default"
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql_psycopg2",
-#         "NAME": os.getenv("DATABASE_NAME", default="postgres"),
-#         "USER": os.getenv("DATABASE_USER", default="postgres"),
-#         "PASSWORD": os.getenv("DATABASE_PASSWORD", default="postgres"),
-#         "HOST": os.getenv("DATABASE_HOST", default="postgres"),
-#         "PORT": os.getenv("DATABASE_PORT", default=5432),
-#     }
-# }
 
 # General
 APPEND_SLASH = False
@@ -106,8 +115,8 @@ LOGIN_REDIRECT_URL = "/"
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
-STATIC_ROOT = os.path.normpath(join(os.path.dirname(BASE_DIR), "static"))
-STATICFILES_DIRS: List[str] = []
+STATIC_ROOT = os.path.normpath(join(BASE_DIR, "staticfiles"))
+STATICFILES_DIRS: List[str] = [os.path.normpath(join(BASE_DIR, "static"))]
 STATIC_URL = "/static/"
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
@@ -115,7 +124,7 @@ STATICFILES_FINDERS = (
 )
 
 # Media files
-MEDIA_ROOT = join(os.path.dirname(BASE_DIR), "media")
+MEDIA_ROOT = join(BASE_DIR, "media")
 MEDIA_PATH = "/media/"
 
 TEMPLATES = [
@@ -136,7 +145,7 @@ TEMPLATES = [
 
 # Set DEBUG to False as a default for safety
 # https://docs.djangoproject.com/en/dev/ref/settings/#debug
-DEBUG = strtobool(os.getenv("DJANGO_DEBUG", "no"))
+DEBUG = strtobool(env("DJANGO_DEBUG", default="no"))
 
 # Password Validation
 # https://docs.djangoproject.com/en/2.0/topics/auth/passwords/#module-django.contrib.auth.password_validation
@@ -253,8 +262,12 @@ GRAPHQL_AUTH = {
     "REGISTER_MUTATION_FIELDS": ["email", "first_name", "last_name"],
     "REGISTER_MUTATION_FIELDS_OPTIONAL": [],
     "ALLOW_LOGIN_NOT_VERIFIED": False,
-    "ACTIVATION_PATH_ON_EMAIL": "user/email-verify",
+    "ACTIVATION_PATH_ON_EMAIL": "login/activate",
+    "ACTIVATION_SECONDARY_EMAIL_PATH_ON_EMAIL": "user/email-verify",
+    "PASSWORD_RESET_PATH_ON_EMAIL": "login/forgot",
     "EMAIL_TEMPLATE_ACTIVATION": "emails/activation_email.html",
+    "EMAIL_TEMPLATE_SECONDARY_EMAIL_ACTIVATION": "emails/activation_email.html",
+    "EMAIL_TEMPLATE_PASSWORD_RESET": "emails/password_reset_email.html",
 }
 
 
@@ -281,26 +294,29 @@ GRAPHENE = {
     "SCHEMA": "uobtheatre.schema.schema",
     "MIDDLEWARE": [
         "graphql_jwt.middleware.JSONWebTokenMiddleware",
+        "uobtheatre.utils.exceptions.ExceptionMiddleware",
     ],
 }
 
 # Square payments
 SQUARE_SETTINGS = {
-    "SQUARE_ACCESS_TOKEN": os.getenv(
+    "SQUARE_ACCESS_TOKEN": env(
         "SQUARE_ACCESS_TOKEN",
         default="",
     ),
-    "SQUARE_ENVIRONMENT": os.getenv(
+    "SQUARE_ENVIRONMENT": env(
         "SQUARE_ENVIRONMENT",
         default="sandbox",
     ),
-    "SQUARE_LOCATION": os.getenv(
+    "SQUARE_LOCATION": env(
         "SQUARE_LOCATION",
         default="",
     ),
-    "SQUARE_WEBHOOK_SIGNATURE_KEY": os.getenv(
+    "SQUARE_WEBHOOK_SIGNATURE_KEY": env(
         "SQUARE_WEBHOOK_SIGNATURE_KEY",
         default="",
     ),
     "PATH": "square",
 }
+
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"

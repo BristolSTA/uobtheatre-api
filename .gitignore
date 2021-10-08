@@ -55,6 +55,7 @@ coverage.xml
 .static_storage/
 .media/
 local_settings.py
+staticfiles/
 
 # Flask stuff:
 instance/
@@ -102,9 +103,6 @@ venv.bak/
 
 # mkdocs documentation
 /site
-
-# django staticfiles
-/static
 
 # mypy
 .mypy_cache/
