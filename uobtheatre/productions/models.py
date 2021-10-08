@@ -158,7 +158,7 @@ class Production(TimeStampedMixin, models.Model):
 
     warnings = models.ManyToManyField(AudienceWarning, blank=True)
 
-    slug = AutoSlugField(populate_from="name", unique=True, blank=True)
+    slug = AutoSlugField(populate_from="name", unique=True, blank=True, editable=True)
 
     @property
     def bookings(self):
