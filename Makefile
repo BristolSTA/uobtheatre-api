@@ -62,9 +62,6 @@ seed: ## Seed the db with some example data
 seed-testfixtures: ## Seed the data for e2e testing
 	docker-compose run api python manage.py loaddata db.json
 
-seed-prod: ## Seed the data for e2e testing
-	docker-compose run api python manage.py loaddata db-prod.json
-
 superuser: ## Seed the db with admin superuser
 	docker-compose run api python manage.py loaddata uobtheatre/users/fixtures.json
 
