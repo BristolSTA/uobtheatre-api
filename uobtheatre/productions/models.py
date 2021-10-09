@@ -120,15 +120,11 @@ class Production(TimeStampedMixin, models.Model):
         Image,
         on_delete=models.RESTRICT,
         related_name="production_poster_images",
-        null=True,
-        blank=True,
     )
     featured_image = models.ForeignKey(
         Image,
         on_delete=models.RESTRICT,
         related_name="production_featured_images",
-        null=True,
-        blank=True,
     )
 
     class Status(models.TextChoices):
