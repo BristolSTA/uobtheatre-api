@@ -138,4 +138,4 @@ django-shell: ## Open django shell
 	docker-compose run --rm api python manage.py shell
 
 flush:
-	docker-compose run api python manage.py flush
+	docker-compose run --rm api python manage.py flush
