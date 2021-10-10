@@ -60,7 +60,7 @@ class OpenAdmin(Ability):
 
     @staticmethod
     def user_has(user, _) -> bool:
-        return user.is_superuser or user.has_any_objects_with_perms(
+        return user.has_any_objects_with_perms(
             [
                 "productions.add_production",
                 "productions.change_production",
