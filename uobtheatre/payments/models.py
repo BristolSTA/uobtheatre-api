@@ -113,11 +113,14 @@ class Payment(TimeStampedMixin, models.Model):
             request (dict): The body of the square webhook
         """
         square_payment = request["object"]["payment"]
+
+        # If the payment is part of a terminal checkout
         if checkout_id := square_payment.get("terminal_checkout_id"):
             payment = Payment.objects.get(provider_payment_id=checkout_id)
             payment.provider_fee = SquarePOS.get_checkout_processing_fee(checkout_id)
             payment.save()
 
+        # Otherwise the payment is from SquareOnline
         else:
             payment = Payment.objects.get(provider_payment_id=square_payment["id"])
             payment.update_from_square_payment(square_payment)

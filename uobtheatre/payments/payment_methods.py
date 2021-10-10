@@ -104,11 +104,6 @@ class SquarePaymentMethodMixin(abc.ABC):
         return response.body["payment"]
 
     @classmethod
-    def payment_is_completed(cls, payment_id: str):
-        payment = cls.get_payment(payment_id)
-        return payment["status"] == "COMPLETED"
-
-    @classmethod
     def payment_processing_fee(cls, square_payment: dict) -> Optional[int]:
         """
         Get processing fee from a square payment dict.
@@ -202,7 +197,7 @@ class SquarePOS(PaymentMethod, SquarePaymentMethodMixin):
             pay_object,
             value,
             app_fee,
-            provider_payment_id=response["checkout"]["id"],
+            provider_payment_id=response.body["checkout"]["id"],
             currency="GBP",
             status=payment_models.Payment.PaymentStatus.PENDING,
         )
@@ -223,7 +218,7 @@ class SquarePOS(PaymentMethod, SquarePaymentMethodMixin):
 
         if checkout["status"] == "COMPLETED":
             payment = payment_models.Payment.objects.get(
-                payment_provider_id=checkout["id"]
+                provider_payment_id=checkout["id"]
             )
 
             payment.status = payment_models.Payment.PaymentStatus.COMPLETED
@@ -268,7 +263,7 @@ class SquarePOS(PaymentMethod, SquarePaymentMethodMixin):
         Raises:
             SquareException: When response is not successful
         """
-        response = cls.client.terminal.get_checkout(checkout_id)
+        response = cls.client.terminal.get_terminal_checkout(checkout_id)
 
         if not response.is_success():
             raise SquareException(response)

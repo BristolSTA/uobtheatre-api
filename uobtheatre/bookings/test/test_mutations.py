@@ -18,6 +18,7 @@ from uobtheatre.bookings.test.factories import (
     add_ticket_to_booking,
 )
 from uobtheatre.discounts.test.factories import ConcessionTypeFactory
+from uobtheatre.payments.models import Payment
 from uobtheatre.payments.payment_methods import SquareOnline, SquarePOS
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.models import User
@@ -1829,6 +1830,7 @@ def test_pay_booking_success_square_pos(mock_square, gql_client):
             request_query % to_global_id("BookingNode", booking.id)
         )
 
+    payment = Payment.objects.first()
     assert response == {
         "data": {
             "payBooking": {
@@ -1836,7 +1838,11 @@ def test_pay_booking_success_square_pos(mock_square, gql_client):
                     "status": {
                         "value": "IN_PROGRESS",
                     },
-                    "payments": {"edges": []},
+                    "payments": {
+                        "edges": [
+                            {"node": {"id": to_global_id("PaymentNode", payment.id)}}
+                        ]
+                    },
                 },
                 "payment": None,
                 "success": True,

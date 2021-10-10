@@ -5,7 +5,6 @@ import pytest
 
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import BookingFactory
-from uobtheatre.payments.payment_methods import SquarePaymentMethodMixin
 from uobtheatre.payments.square_webhooks import SquareWebhooks
 from uobtheatre.payments.test.factories import PaymentFactory
 
@@ -97,7 +96,8 @@ TEST_PAYMENT_UPDATE_PAYLOAD = {
 
 
 @pytest.mark.django_db
-def test_handle_checkout_webhook(rest_client, monkeypatch, mock_square):
+def test_handle_checkout_webhook(rest_client, monkeypatch):
+    PaymentFactory(provider_payment_id="dhgENdnFOPXqO")
     monkeypatch.setenv("SQUARE_WEBHOOK_SIGNATURE_KEY", "Hd_mmQkhER3EPkpRpNQh9Q")
     booking = BookingFactory(
         reference="id72709", status=Booking.BookingStatus.IN_PROGRESS
@@ -107,17 +107,7 @@ def test_handle_checkout_webhook(rest_client, monkeypatch, mock_square):
         SquareWebhooks, "webhook_url", new_callable=PropertyMock
     ) as url_mock, patch.object(
         SquareWebhooks, "webhook_signature_key", new_callable=PropertyMock
-    ) as key_mock, mock_square(
-        SquarePaymentMethodMixin.client.payments,
-        "get_payment",
-        status_code=200,
-        success=True,
-        body={
-            "payment": {
-                "status": "COMPLETED",
-            }
-        },
-    ) as get_payment_mock:
+    ) as key_mock:
         url_mock.return_value = (
             "https://webhook.site/5bca8c49-e6f0-40ed-9415-4035bc05b48d"
         )
@@ -129,8 +119,6 @@ def test_handle_checkout_webhook(rest_client, monkeypatch, mock_square):
             HTTP_X_SQUARE_SIGNATURE="xoa9/2fAXamuULrlhV1HP7C4ai4=",
             format="json",
         )
-
-        get_payment_mock.assert_called_once_with("dgzrZTeIeVuOGwYgekoTHsPouaB")
 
     assert response.status_code == 200
     booking.refresh_from_db()
