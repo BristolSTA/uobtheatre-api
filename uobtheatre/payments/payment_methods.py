@@ -108,6 +108,25 @@ class SquarePaymentMethodMixin(abc.ABC):
         payment = cls.get_payment(payment_id)
         return payment["status"] == "COMPLETED"
 
+    @classmethod
+    def payment_processing_fee(cls, square_payment: dict) -> Optional[int]:
+        """
+        Get processing fee from a square payment dict.
+
+        Args:
+            square_payment (dict): Square object from square.
+
+        Returns:
+            int: Processing fee for payment
+        """
+        # If the processing fee has not be added to the payment
+        if "processing_fee" not in square_payment:
+            return None
+
+        return sum(
+            fee["amount_money"]["amount"] for fee in square_payment["processing_fee"]
+        )
+
 
 class Cash(PaymentMethod):
     """Manual cash payment method"""
@@ -154,7 +173,7 @@ class SquarePOS(PaymentMethod, SquarePaymentMethodMixin):
     def pay(self, value: int, app_fee: int, pay_object: "Payable") -> None:
         """Send payment to point of sale device.
 
-        Parameters:
+        Args:
             value (int): Amount of money being payed
             app_fee (int): The amount we charge for the payment.
             pay_object (Payable): The object being payed for
@@ -235,6 +254,44 @@ class SquarePOS(PaymentMethod, SquarePaymentMethodMixin):
         if not response.is_success():
             raise SquareException(response)
         return response.body.get("device_codes") or []
+
+    @classmethod
+    def get_checkout(cls, checkout_id: str):
+        """Get checkout info from square for a given checkout id.
+
+        Args:
+            checkout_id (str): The id of the checkout to be fetched
+
+        Returns:
+            dict: Checkout response from square
+
+        Raises:
+            SquareException: When response is not successful
+        """
+        response = cls.client.terminal.get_checkout(checkout_id)
+
+        if not response.is_success():
+            raise SquareException(response)
+
+        return response.body["checkout"]
+
+    @classmethod
+    def get_checkout_processing_fee(cls, checkout_id: str) -> Optional[int]:
+        """
+        Get processing fee for a square checkout.
+
+        Args:
+            checkout_id (str): The id of the square checkout
+
+        Returns:
+            int: The processing fee
+        """
+        checkout = cls.get_checkout(checkout_id)
+        processing_fees = [
+            cls.payment_processing_fee(cls.get_payment(payment_id))
+            for payment_id in checkout["payment_ids"]
+        ]
+        return sum(filter(None, processing_fees))
 
 
 class SquareOnline(PaymentMethod, SquarePaymentMethodMixin):

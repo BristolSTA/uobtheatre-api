@@ -8,7 +8,11 @@ from django.db.models.functions import Coalesce
 from django.db.models.query import QuerySet
 
 from uobtheatre.payments import payment_methods
-from uobtheatre.payments.payment_methods import Cash
+from uobtheatre.payments.payment_methods import (
+    Cash,
+    SquarePaymentMethodMixin,
+    SquarePOS,
+)
 from uobtheatre.utils.models import TimeStampedMixin
 
 
@@ -42,7 +46,7 @@ class Payment(TimeStampedMixin, models.Model):
     class PaymentStatus(models.TextChoices):
         """The status of the payment."""
 
-        PENDING = "PENDING", "Still in progress"
+        PENDING = "PENDING", "In progress"
         COMPLETED = "COMPLETED", "Completed"
 
     objects = PaymentQuerySet.as_manager()
@@ -102,22 +106,33 @@ class Payment(TimeStampedMixin, models.Model):
 
     @staticmethod
     def handle_update_payment_webhook(request):
+        """
+        Handle a update payment webhook from square.
+
+        Args:
+            request (dict): The body of the square webhook
+        """
         square_payment = request["object"]["payment"]
-        payment = Payment.objects.get(provider_payment_id=square_payment["id"])
-        payment.update_from_square_payment(square_payment)
+        if checkout_id := square_payment.get("terminal_checkout_id"):
+            payment = Payment.objects.get(provider_payment_id=checkout_id)
+            payment.provider_fee = SquarePOS.get_checkout_processing_fee(checkout_id)
+            payment.save()
+
+        else:
+            payment = Payment.objects.get(provider_payment_id=square_payment["id"])
+            payment.update_from_square_payment(square_payment)
 
     def update_from_square_payment(self, square_payment: dict):
         """
         Given a square payment object, update the payment details.
 
-        Parameters:
+        Args:
             square_payment (dict): Payment object returned from square
         """
         # Set processing fee
-        if processing_fee := square_payment.get("processing_fee"):
-            self.provider_fee = sum(
-                fee["amount_money"]["amount"] for fee in processing_fee
-            )
+        self.provider_fee = SquarePaymentMethodMixin.payment_processing_fee(
+            square_payment
+        )
         self.save()
 
     def update_from_square(self):
