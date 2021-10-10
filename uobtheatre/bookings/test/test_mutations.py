@@ -1329,6 +1329,7 @@ def test_pay_booking_square_pos_no_device_id(gql_client):
             bookingId: "%s"
             price: 100
             paymentProvider: SQUARE_POS
+            idempotencyKey: "my_idempotency_key_string"
         ) {
             success
             errors {
@@ -1613,6 +1614,7 @@ def test_pay_booking_mutation_online_without_nonce(gql_client):
 	payBooking(
             bookingId: "%s"
             price: 100
+            idempotencyKey: "my_idempotency_key_string"
         ) {
             success
             errors {
@@ -1771,6 +1773,7 @@ def test_pay_booking_success_square_pos(mock_square, gql_client):
             price: 100
             deviceId: "abc"
             paymentProvider: SQUARE_POS
+            idempotencyKey: "my_idempotency_key_string"
         ) {
             success
             errors {

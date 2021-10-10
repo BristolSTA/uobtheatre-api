@@ -713,17 +713,21 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
             booking.complete()
             return PayBooking(booking=booking)
 
+        if not idempotency_key and payment_provider in [
+            SquareOnline.name,
+            SquarePOS.name,
+        ]:
+            raise GQLException(
+                message=f"An idempotency key is required when using {payment_provider} provider.",
+                field="idempotency_key",
+                code="missing_required",
+            )
+
         if payment_provider == SquareOnline.name:
             if not nonce:
                 raise GQLException(
                     message=f"A nonce is required when using {payment_provider} provider.",
                     field="nonce",
-                    code="missing_required",
-                )
-            if not idempotency_key:
-                raise GQLException(
-                    message=f"An idempotency key is required when using {payment_provider} provider.",
-                    field="idempotency_key",
                     code="missing_required",
                 )
             payment_method = SquareOnline(nonce, idempotency_key)
@@ -734,7 +738,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
                     field="device_id",
                     code="missing_required",
                 )
-            payment_method = SquarePOS(device_id)
+            payment_method = SquarePOS(device_id, idempotency_key)
         elif payment_provider == Cash.name:
             payment_method = Cash()
         elif payment_provider == Card.name:

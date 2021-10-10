@@ -1,6 +1,5 @@
 import abc
 import re
-import uuid
 from typing import TYPE_CHECKING, Optional, Type
 
 from django.conf import settings
@@ -161,8 +160,9 @@ class SquarePOS(PaymentMethod, SquarePaymentMethodMixin):
 
     description = "Square terminal card payment"
 
-    def __init__(self, device_id: str) -> None:
+    def __init__(self, device_id: str, idempotency_key: str) -> None:
         self.device_id = device_id
+        self.idempotency_key = idempotency_key
         super().__init__()
 
     def pay(self, value: int, app_fee: int, pay_object: "Payable") -> None:
@@ -177,7 +177,7 @@ class SquarePOS(PaymentMethod, SquarePaymentMethodMixin):
             SquareException: If the request was unsuccessful.
         """
         body = {
-            "idempotency_key": str(uuid.uuid4()),
+            "idempotency_key": self.idempotency_key,
             "checkout": {
                 "amount_money": {
                     "amount": value,
