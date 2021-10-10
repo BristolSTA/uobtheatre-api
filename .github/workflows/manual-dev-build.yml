@@ -1,8 +1,6 @@
 name: Trigger dev build
 
 on:
-  pull_request:
-    types: [opened]
   issue_comment:
     types: [created]
 
