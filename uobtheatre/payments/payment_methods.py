@@ -179,18 +179,14 @@ class SquarePOS(PaymentMethod, SquarePaymentMethodMixin):
         if not response.is_success():
             raise SquareException(response)
 
-    @classmethod
-    def handle_webhook(cls, data: dict):
-        """Handle checkout event for terminal api.
-
-        Args:
-            data (dict): The data provided in the webhook event
-
-        Raises:
-            ValueError: If the signature is invalid
-        """
-        if data["type"] == "terminal.checkout.updated":
-            cls.handle_terminal_checkout_updated_webhook(data["data"])
+        self.create_payment_object(
+            pay_object,
+            value,
+            app_fee,
+            provider_payment_id=response["checkout"]["id"],
+            currency="GBP",
+            status=payment_models.Payment.PaymentStatus.PENDING,
+        )
 
     @classmethod
     def handle_terminal_checkout_updated_webhook(cls, data: dict):
@@ -207,26 +203,12 @@ class SquarePOS(PaymentMethod, SquarePaymentMethodMixin):
         booking = Booking.objects.get(reference=checkout["reference_id"])
 
         if checkout["status"] == "COMPLETED":
-            payment_id = next(
-                (
-                    payment_id
-                    for payment_id in checkout["payment_ids"]
-                    if cls.payment_is_completed(payment_id)
-                ),
-                None,
+            payment = payment_models.Payment.objects.get(
+                payment_provider_id=checkout["id"]
             )
-            # If there are no completed payments in this update then we should
-            # not set the booking to paid.
-            if not payment_id:
-                return
 
-            cls.create_payment_object(
-                booking,
-                checkout["amount_money"]["amount"],
-                booking.misc_costs_value(),
-                provider_payment_id=payment_id,
-                currency=checkout["amount_money"]["currency"],
-            )
+            payment.status = payment_models.Payment.PaymentStatus.COMPLETED
+            payment.save()
             booking.complete()
 
     @classmethod

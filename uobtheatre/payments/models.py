@@ -39,6 +39,12 @@ class Payment(TimeStampedMixin, models.Model):
         PURCHASE = "PURCHASE", "Purchase payment"
         REFUND = "REFUND", "Refund payment"
 
+    class PaymentStatus(models.TextChoices):
+        """The status of the payment."""
+
+        PENDING = "PENDING", "Still in progress"
+        COMPLETED = "COMPLETED", "Completed"
+
     objects = PaymentQuerySet.as_manager()
 
     # List of models which can be paid for
@@ -61,6 +67,11 @@ class Payment(TimeStampedMixin, models.Model):
         max_length=20,
         choices=PaymentType.choices,
         default=PaymentType.PURCHASE,
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=PaymentStatus.choices,
+        default=PaymentStatus.COMPLETED,
     )
 
     provider_payment_id = models.CharField(max_length=40, null=True, blank=True)

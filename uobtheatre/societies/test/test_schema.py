@@ -7,9 +7,9 @@ from uobtheatre.societies.test.factories import SocietyFactory
 
 @pytest.mark.django_db
 def test_societies_schema(gql_client):
-    societies = [SocietyFactory() for i in range(3)]
+    societies = [SocietyFactory() for _ in range(3)]
     society_productions = [
-        [ProductionFactory(society=society) for i in range(10)] for society in societies
+        [ProductionFactory(society=society) for _ in range(1)] for society in societies
     ]
 
     response = gql_client.execute(

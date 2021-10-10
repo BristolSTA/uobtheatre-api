@@ -169,13 +169,29 @@ def test_square_pos_pay_success(mock_square):
         "create_terminal_checkout",
         status_code=200,
         success=True,
+        body={
+            "checkout": {
+                "id": "ScegTcoaJ0kqO",
+                "amount_money": {"amount": 100, "currency": "GBP"},
+                "device_options": {
+                    "device_id": "121CS145A5000029",
+                },
+                "status": "PENDING",
+            }
+        },
     ):
         payment_method = SquarePOS("device_id")
         payment_method.pay(100, 14, BookingFactory())
 
     # Assert no payments are created. A payment should only be created by the
     # webhook.
-    assert Payment.objects.count() == 0
+    assert Payment.objects.count() == 1
+
+    payment = Payment.objects.first()
+    assert payment.value == 100
+    assert payment.status == Payment.PaymentStatus.PENDING
+    assert payment.app_fee == 14
+    assert payment.provider_fee is None
 
 
 @pytest.mark.django_db
