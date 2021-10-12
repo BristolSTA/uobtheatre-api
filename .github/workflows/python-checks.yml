@@ -50,6 +50,10 @@ jobs:
     - name: Install dependencies
       run: pip install -r requirements/local.txt
 
+    # Collect static
+    - name: Collect Static
+      run: ./manage.py collectstatic --noinput
+
     - name: pytest - check tests pass and coverage is 100%
       run: |
         pytest --cov uobtheatre --cov-fail-under 100 -m "not square_integration"
