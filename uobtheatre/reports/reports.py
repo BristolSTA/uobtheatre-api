@@ -129,6 +129,20 @@ class PeriodTotalsBreakdown(Report):
 
         # Sort alphabetically
         provider_totals_set.data.sort(key=lambda provider: provider[0])
+        production_totals_set.data.sort(key=lambda production: production[0])
+
+        payments_data = [
+            [
+                str(payment.id),
+                payment.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                str(payment.pay_object.id) if payment.pay_object else "",
+                str(payment.value),
+                str(payment.provider),
+                str(payment.provider_payment_id or ""),
+            ]
+            for payment in payments
+        ]
+        payments_data.sort(key=lambda payment: payment[1])
 
         self.datasets.extend(
             [
@@ -144,17 +158,7 @@ class PeriodTotalsBreakdown(Report):
                         "Provider",
                         "Provider ID",
                     ],
-                    [
-                        [
-                            str(payment.id),
-                            payment.created_at.strftime("%Y-%m-%d %H:%M:%S"),
-                            str(payment.pay_object.id) if payment.pay_object else "",
-                            str(payment.value),
-                            str(payment.provider),
-                            str(payment.provider_payment_id or ""),
-                        ]
-                        for payment in payments
-                    ],
+                    payments_data,
                 ),
             ]
         )
