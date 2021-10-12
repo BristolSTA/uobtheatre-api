@@ -119,10 +119,6 @@ class ProductionFilter(FilterSet):
         model = Production
         exclude = ("poster_image", "featured_image", "cover_image")
 
-    @property
-    def qs(self):
-        return super().qs.user_can_see(self.request.user)
-
     order_by = ProductionByMethodOrderingFilter()
 
 
@@ -174,6 +170,10 @@ class ProductionNode(PermissionsMixin, GrapheneEnumMixin, DjangoObjectType):
 
     def resolve_total_tickets_sold(self, info):
         return self.total_tickets_sold
+
+    @classmethod
+    def get_queryset(cls, queryset, info):
+        return queryset.user_can_see(info.context.user)
 
     class Meta:
         model = Production
@@ -313,6 +313,10 @@ class PerformanceNode(DjangoObjectType):
     def resolve_is_bookable(self, info):
         return self.is_bookable
 
+    @classmethod
+    def get_queryset(cls, queryset, info):
+        return queryset.user_can_see(info.context.user)
+
     class Meta:
         model = Performance
         filterset_class = PerformanceFilter
@@ -332,8 +336,8 @@ class Query(graphene.ObjectType):
     production = graphene.Field(ProductionNode, slug=graphene.String(required=True))
     performance = relay.Node.Field(PerformanceNode)
 
-    def resolve_production(self, _, slug):
+    def resolve_production(self, info, slug):
         try:
-            return Production.objects.get(slug=slug)
+            return Production.objects.user_can_see(info.context.user).get(slug=slug)
         except Production.DoesNotExist:
             return None
