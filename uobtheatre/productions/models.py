@@ -120,15 +120,11 @@ class Production(TimeStampedMixin, models.Model):
         Image,
         on_delete=models.RESTRICT,
         related_name="production_poster_images",
-        null=True,
-        blank=True,
     )
     featured_image = models.ForeignKey(
         Image,
         on_delete=models.RESTRICT,
         related_name="production_featured_images",
-        null=True,
-        blank=True,
     )
 
     class Status(models.TextChoices):
@@ -158,7 +154,7 @@ class Production(TimeStampedMixin, models.Model):
 
     warnings = models.ManyToManyField(AudienceWarning, blank=True)
 
-    slug = AutoSlugField(populate_from="name", unique=True, blank=True)
+    slug = AutoSlugField(populate_from="name", unique=True, blank=True, editable=True)
 
     @property
     def bookings(self):
@@ -381,6 +377,25 @@ class PerformanceQuerySet(QuerySet):
             return self.filter(production__in=production_with_perm)
         return self.exclude(production__in=production_with_perm)
 
+    def user_can_see(self, user: "User"):
+        """Filter performances which the user can see
+
+        Returns the performances which the provided user has permission to see.
+
+        Args:
+            user (User): The user which is used in the filter.
+
+        Returns:
+            QuerySet: The filtered queryset
+        """
+        productions_user_can_edit = get_objects_for_user(
+            user, "change_production", Production
+        ).values_list("id", flat=True)
+        return self.filter(
+            ~Q(production__status=Production.Status.DRAFT)
+            | Q(production_id__in=productions_user_can_edit)
+        )
+
 
 class Performance(
     TimeStampedMixin, models.Model
@@ -437,7 +452,7 @@ class Performance(
         Returns:
             queryset(Tickets): all tickets for this performance which have been checked in.
         """
-        return self.tickets.filter(checked_in=True)  # type: ignore
+        return self.tickets.sold().filter(checked_in=True)  # type: ignore
 
     @property
     def unchecked_in_tickets(self) -> QuerySet["Ticket"]:
@@ -446,7 +461,7 @@ class Performance(
         Returns:
             queryset(Tickets): all tickets for this performance which have not been checked in.
         """
-        return self.tickets.filter(checked_in=False)  # type: ignore
+        return self.tickets.sold().filter(checked_in=False)  # type: ignore
 
     @property
     def has_group_discounts(self) -> bool:

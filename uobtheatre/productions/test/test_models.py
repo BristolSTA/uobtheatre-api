@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import math
 import random
 from datetime import timedelta
@@ -362,6 +363,12 @@ def test_performance_checked_in_tickets():
     TicketFactory(booking=booking)
     ticket = TicketFactory(booking=booking, checked_in=True)
 
+    # Ticket in an in progress booking - shouldn't be included
+    in_progress_booking = BookingFactory(
+        performance=booking.performance, status=Booking.BookingStatus.IN_PROGRESS
+    )
+    TicketFactory(booking=in_progress_booking)
+
     assert booking.performance.checked_in_tickets.count() == 1
     assert booking.performance.checked_in_tickets.all()[0].id == ticket.id
 
@@ -373,6 +380,12 @@ def test_performance_unchecked_in_tickets():
     # 2 tickets in the performance
     ticket = TicketFactory(booking=booking)
     TicketFactory(booking=booking, checked_in=True)
+
+    # Ticket in an in progress booking - shouldn't be included
+    in_progress_booking = BookingFactory(
+        performance=booking.performance, status=Booking.BookingStatus.IN_PROGRESS
+    )
+    TicketFactory(booking=in_progress_booking)
 
     assert booking.performance.unchecked_in_tickets.count() == 1
     assert booking.performance.unchecked_in_tickets.all()[0].id == ticket.id

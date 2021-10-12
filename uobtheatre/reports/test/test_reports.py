@@ -117,8 +117,8 @@ def create_fixtures():
 
     payment_1 = PaymentFactory(
         pay_object=booking_1,
-        value=booking_1.total(),
-        provider=payment_methods.SquarePOS.__name__,
+        value=booking_1.total,
+        provider=payment_methods.SquarePOS.name,
         provider_payment_id="square_id",
         app_fee=booking_1.misc_costs_value(),
         provider_fee=10,
@@ -128,14 +128,14 @@ def create_fixtures():
 
     payment_2 = PaymentFactory(
         pay_object=booking_2,
-        value=booking_2.total(),
+        value=booking_2.total,
         provider="CASH",
         app_fee=booking_2.misc_costs_value(),
     )
     payment_2.created_at = "2021-09-05T12:00:01"
     payment_2.save()
 
-    payment_3 = PaymentFactory(pay_object=booking_3, value=booking_3.total())
+    payment_3 = PaymentFactory(pay_object=booking_3, value=booking_3.total)
     payment_3.created_at = "2021-09-08T12:00:01"
     payment_3.save()
 
@@ -216,8 +216,8 @@ def test_period_totals_breakdown_report():
     assert report.datasets[0].name == "Provider Totals"
     assert len(report.datasets[0].headings) == 2
     assert report.datasets[0].data == [
-        ["SquarePOS", 1100],
         ["SQUARE_ONLINE", 580],
+        ["SQUARE_POS", 1100],
     ]
 
     assert report.datasets[1].name == "Production Totals"
@@ -243,7 +243,7 @@ def test_period_totals_breakdown_report():
             "2021-09-08 00:00:01",
             str(booking_1.id),
             "1100",
-            "SquarePOS",
+            "SQUARE_POS",
             "square_id",
         ],
         [

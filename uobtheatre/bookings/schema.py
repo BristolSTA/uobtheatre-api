@@ -81,7 +81,7 @@ class PriceBreakdownNode(DjangoObjectType):
         return self.misc_costs_value()
 
     def resolve_total_price(self, info):
-        return self.total()
+        return self.total
 
     def resolve_tickets_discounted_price(self, info):
         return self.subtotal
@@ -211,29 +211,6 @@ class BookingFilter(FilterSet):
         model = Booking
         fields = "__all__"
 
-    # NOTE: When we add back in Bookings endpoint only admin users should be
-    # able to get all bookings otherwise we should return only user bookings.
-    # Booings can be accessed from a performance, if this was not here then the
-    # users would be able all peoples bookings.
-    @property
-    def qs(self):
-        """Restrict the queryset to only return user bookings.
-
-        Returns:
-            Queryset: Booking queryset, filter with only user's bookings.
-
-        """
-        if self.request.user.is_authenticated:
-            return super().qs.filter(
-                Q(
-                    performance__in=Performance.objects.has_boxoffice_permission(
-                        self.request.user
-                    )
-                )
-                | Q(user=self.request.user)
-            )
-        return Booking.objects.none()
-
     def search_bookings(self, queryset, _, value):
         """
         Given a query string, searches through the bookings using first name,
@@ -287,6 +264,21 @@ class BookingNode(GrapheneEnumMixin, DjangoObjectType):
 
     def resolve_expired(self, info):
         return self.is_reservation_expired
+
+    @classmethod
+    def get_queryset(cls, queryset, info):
+        return (
+            queryset.none()
+            if not info.context.user.is_authenticated
+            else queryset.filter(
+                Q(
+                    performance__in=Performance.objects.has_boxoffice_permission(
+                        info.context.user
+                    )
+                )
+                | Q(user=info.context.user)
+            )
+        )
 
     class Meta:
         model = Booking
@@ -427,6 +419,13 @@ def parse_admin_discount_percentage(
     return admin_discount_percentage
 
 
+def delete_user_drafts(user, performance_id):
+    """Remove's the users exisiting draft booking for the given performance"""
+    user.bookings.filter(
+        status=Booking.BookingStatus.IN_PROGRESS, performance_id=performance_id
+    ).delete()
+
+
 class CreateBooking(AuthRequiredMixin, SafeMutation):
     """Mutation to create a Booking
 
@@ -489,10 +488,7 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
             target_user_email, info.context.user, performance
         )
 
-        # If draft booking(s) already exists remove the bookings
-        user.bookings.filter(
-            status=Booking.BookingStatus.IN_PROGRESS, performance_id=performance_id
-        ).delete()
+        delete_user_drafts(user, performance_id)
 
         # Create the booking
         extra_args = {}
@@ -579,6 +575,7 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
             user = parse_target_user_email(
                 target_user_email, info.context.user, booking.performance
             )
+            delete_user_drafts(user, booking.performance_id)
             booking.user = user
             booking.save()
 
@@ -699,7 +696,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
                 field="payment_provider",
             )
 
-        if booking.total() != price:
+        if booking.total != price:
             raise GQLException(
                 message="The booking price does not match the expected price"
             )
@@ -709,7 +706,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
             raise GQLException(message="The booking must have at least one ticket")
 
         # If the booking is free, we don't care about the payment provider. Otherwise, we do
-        if booking.total() == 0:
+        if booking.total == 0:
             booking.complete()
             return PayBooking(booking=booking)
 

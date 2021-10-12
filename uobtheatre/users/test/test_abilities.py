@@ -27,14 +27,12 @@ def test_open_boxoffice():
         (["productions.add_production"], False, True),
         (["productions.change_production"], False, True),
         (["productions.view_production"], False, True),
+        (["productions.view_production", "productions.change_production"], False, True),
         (["productions.boxoffice"], False, False),
     ],
 )
 def test_open_admin(permissions, is_superuser, expected_user_has):
-    user = UserFactory()
-    if is_superuser:
-        user.is_superuser = True
-        user.save()
+    user = UserFactory(is_superuser=is_superuser)
     for permission in permissions:
         assign_perm(permission, user)
 

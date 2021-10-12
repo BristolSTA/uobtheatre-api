@@ -47,7 +47,3 @@ EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 # MEDIA
 # ------------------------------------------------------------------------------
 MEDIA_ROOT = tempfile.mkdtemp()
-
-# This is a very nasty hack. We should find out how to correctly handle
-# static_root in tests without having to run collectstatic before.
-STATIC_ROOT = os.path.normpath(join(os.path.dirname(BASE_DIR), "static"))

@@ -505,7 +505,7 @@ def test_total():
     booking = BookingFactory()
     psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
     ticket = TicketFactory(booking=booking, seat_group=psg.seat_group)
-    assert ticket.booking.total() == 1520
+    assert ticket.booking.total == 1520
 
 
 @pytest.mark.django_db
@@ -524,7 +524,7 @@ def test_total_with_admin_discount(
     psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
     ticket = TicketFactory(booking=booking, seat_group=psg.seat_group)
     assert booking.misc_costs_value() == expected_misc_costs_value
-    assert ticket.booking.total() == expected_price
+    assert ticket.booking.total == expected_price
 
 
 @pytest.mark.django_db

@@ -5,7 +5,6 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from guardian.shortcuts import get_objects_for_user
 
-from uobtheatre.productions.models import Performance
 from uobtheatre.users.abilities import AbilitiesMixin, OpenAdmin, OpenBoxoffice
 
 
@@ -16,6 +15,7 @@ class User(AbilitiesMixin, AbstractUser):
     identified by their email address (usernames are not used).
     """
 
+    username = None  # type: ignore
     abilities = [OpenAdmin, OpenBoxoffice]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -53,7 +53,7 @@ class User(AbilitiesMixin, AbstractUser):
         """
         Returns all the objects which the user has the request permissions for.
         """
-        return get_objects_for_user(self, permissions)
+        return get_objects_for_user(self, permissions, any_perm=True)
 
     def has_any_objects_with_perms(self, permissions: Union[str, list[str]]) -> bool:
         """
