@@ -377,6 +377,25 @@ class PerformanceQuerySet(QuerySet):
             return self.filter(production__in=production_with_perm)
         return self.exclude(production__in=production_with_perm)
 
+    def user_can_see(self, user: "User"):
+        """Filter performances which the user can see
+
+        Returns the performances which the provided user has permission to see.
+
+        Args:
+            user (User): The user which is used in the filter.
+
+        Returns:
+            QuerySet: The filtered queryset
+        """
+        productions_user_can_edit = get_objects_for_user(
+            user, "change_production", Production
+        ).values_list("id", flat=True)
+        return self.filter(
+            ~Q(production__status=Production.Status.DRAFT)
+            | Q(production_id__in=productions_user_can_edit)
+        )
+
 
 class Performance(
     TimeStampedMixin, models.Model
