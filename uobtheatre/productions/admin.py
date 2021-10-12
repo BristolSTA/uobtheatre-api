@@ -15,7 +15,7 @@ from uobtheatre.productions.models import (
 
 
 class ProductionAdmin(GuardedModelAdmin):
-    fields = ('slug',)
+    pass
 
 
 admin.site.register(Production, ProductionAdmin)
