@@ -373,6 +373,27 @@ def test_handle_terminal_checkout_updated_webhook_not_completed():
 
 
 @pytest.mark.django_db
+def test_handle_terminal_checkout_updated_canceled():
+    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    payment = PaymentFactory(provider_payment_id="abc", provider=SquarePOS.name)
+    data = {
+        "object": {
+            "checkout": {
+                "id": "abc",
+                "reference_id": booking.payment_reference_id,
+                "status": "CANCELED",
+            }
+        },
+    }
+
+    SquarePOS.handle_terminal_checkout_updated_webhook(data)
+
+    booking.refresh_from_db()
+    assert booking.status == Booking.BookingStatus.IN_PROGRESS
+    assert not Payment.objects.filter(id=payment.id).exists()
+
+
+@pytest.mark.django_db
 def test_square_online_pay_failure(mock_square):
     """
     Test paying a booking with square

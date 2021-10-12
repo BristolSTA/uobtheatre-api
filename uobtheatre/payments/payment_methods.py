@@ -225,6 +225,13 @@ class SquarePOS(PaymentMethod, SquarePaymentMethodMixin):
             payment.save()
             booking.complete()
 
+        if checkout["status"] == "CANCELED":
+            # Delete any payments that are linked to this checkout
+            print()
+            payment_models.Payment.objects.filter(
+                provider_payment_id=checkout["id"], provider=SquarePOS.name
+            ).delete()
+
     @classmethod
     def list_devices(cls, product_type: str = None, status: str = None) -> list[dict]:
         """List the device codes available on square.
