@@ -46,6 +46,11 @@ type BookingNodeEdge {
   cursor: String!
 }
 
+type CancelPayment {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
 type CastMemberNode implements Node {
   id: ID!
   name: String!
@@ -193,6 +198,7 @@ type MiscCostNode implements Node {
 }
 
 type Mutation {
+  cancelPayment(paymentId: IdInputField!): CancelPayment
   generateReport(endTime: DateTime, name: String!, options: [ReportOption], startTime: DateTime): GenerateReport
   createBooking(adminDiscountPercentage: Float, performanceId: IdInputField, targetUserEmail: String, tickets: [CreateTicketInput]): CreateBooking
   updateBooking(adminDiscountPercentage: Float, bookingId: IdInputField, targetUserEmail: String, tickets: [UpdateTicketInput]): UpdateBooking
@@ -282,6 +288,7 @@ type PaymentNode implements Node {
   createdAt: DateTime!
   updatedAt: DateTime!
   type: EnumNode
+  status: EnumNode
   providerPaymentId: String
   provider: EnumNode
   value: Int!
