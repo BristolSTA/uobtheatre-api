@@ -127,6 +127,9 @@ class PeriodTotalsBreakdown(Report):
             )
             row[1] += payment.value
 
+        # Sort alphabetically
+        provider_totals_set.data.sort(key=lambda provider: provider[0])
+
         self.datasets.extend(
             [
                 provider_totals_set,
