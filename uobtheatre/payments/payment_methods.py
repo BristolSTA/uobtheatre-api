@@ -271,6 +271,21 @@ class SquarePOS(PaymentMethod, SquarePaymentMethodMixin):
         return response.body["checkout"]
 
     @classmethod
+    def cancel_checkout(cls, checkout_id: str) -> None:
+        """Cancel terminal checkout.
+
+        Args:
+            checkout_id (str): The id of the checkout to be canceled
+
+        Raises:
+            SquareException: When request is not successful
+        """
+        response = cls.client.terminal.cancel_terminal_checkout(checkout_id)
+
+        if not response.is_success():
+            raise SquareException(response)
+
+    @classmethod
     def get_checkout_processing_fee(cls, checkout_id: str) -> Optional[int]:
         """
         Get processing fee for a square checkout.

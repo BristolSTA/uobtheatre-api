@@ -414,3 +414,17 @@ def test_square_get_checkout(mock_square):
         body={"checkout": {"abc": "def"}},
     ):
         assert SquarePOS.get_checkout("abc") == {"abc": "def"}
+
+
+@pytest.mark.django_db
+def test_square_pos_cancel_failure(mock_square):
+    with mock_square(
+        SquarePOS.client.terminal,
+        "cancel_terminal_checkout",
+        status_code=400,
+        success=False,
+        reason_phrase="Checkout not found",
+    ):
+        with pytest.raises(SquareException):
+            payment_method = SquarePOS("device_id", "ikey")
+            payment_method.cancel_checkout("checkout_id")
