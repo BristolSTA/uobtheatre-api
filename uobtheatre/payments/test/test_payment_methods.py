@@ -394,6 +394,29 @@ def test_handle_terminal_checkout_updated_canceled():
 
 
 @pytest.mark.django_db
+def test_handle_terminal_checkout_updated_canceled_no_payments():
+    """
+    When square sends a webhook that cancels a checkout. If there is no
+    associated payment then do nothing.
+    """
+    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    data = {
+        "object": {
+            "checkout": {
+                "id": "abc",
+                "reference_id": booking.payment_reference_id,
+                "status": "CANCELED",
+            }
+        },
+    }
+
+    SquarePOS.handle_terminal_checkout_updated_webhook(data)
+
+    booking.refresh_from_db()
+    assert booking.status == Booking.BookingStatus.IN_PROGRESS
+
+
+@pytest.mark.django_db
 def test_square_online_pay_failure(mock_square):
     """
     Test paying a booking with square
