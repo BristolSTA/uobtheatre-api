@@ -211,29 +211,6 @@ class BookingFilter(FilterSet):
         model = Booking
         fields = "__all__"
 
-    # NOTE: When we add back in Bookings endpoint only admin users should be
-    # able to get all bookings otherwise we should return only user bookings.
-    # Booings can be accessed from a performance, if this was not here then the
-    # users would be able all peoples bookings.
-    @property
-    def qs(self):
-        """Restrict the queryset to only return user bookings.
-
-        Returns:
-            Queryset: Booking queryset, filter with only user's bookings.
-
-        """
-        if self.request.user.is_authenticated:
-            return super().qs.filter(
-                Q(
-                    performance__in=Performance.objects.has_boxoffice_permission(
-                        self.request.user
-                    )
-                )
-                | Q(user=self.request.user)
-            )
-        return Booking.objects.none()
-
     def search_bookings(self, queryset, _, value):
         """
         Given a query string, searches through the bookings using first name,
@@ -287,6 +264,21 @@ class BookingNode(GrapheneEnumMixin, DjangoObjectType):
 
     def resolve_expired(self, info):
         return self.is_reservation_expired
+
+    @classmethod
+    def get_queryset(cls, queryset, info):
+        return (
+            queryset.none()
+            if not info.context.user.is_authenticated
+            else queryset.filter(
+                Q(
+                    performance__in=Performance.objects.has_boxoffice_permission(
+                        info.context.user
+                    )
+                )
+                | Q(user=info.context.user)
+            )
+        )
 
     class Meta:
         model = Booking
