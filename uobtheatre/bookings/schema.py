@@ -419,9 +419,12 @@ def parse_admin_discount_percentage(
     return admin_discount_percentage
 
 
-def delete_user_drafts(user, performance_id):
+def delete_user_drafts(user, performance_id, booking_id=None):
     """Remove's the users exisiting draft booking for the given performance"""
-    user.bookings.filter(
+    bookings = user.bookings
+    if booking_id:
+        bookings = bookings.exclude(id=booking_id)
+    bookings.filter(
         status=Booking.BookingStatus.IN_PROGRESS, performance_id=performance_id
     ).delete()
 
@@ -575,7 +578,7 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
             user = parse_target_user_email(
                 target_user_email, info.context.user, booking.performance
             )
-            delete_user_drafts(user, booking.performance_id)
+            delete_user_drafts(user, booking.performance_id, booking.id)
             booking.user = user
             booking.save()
 
