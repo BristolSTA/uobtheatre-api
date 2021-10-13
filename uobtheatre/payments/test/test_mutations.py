@@ -38,7 +38,7 @@ def test_cancel_payment_completed_payment(gql_client):
     assert response["data"]["cancelPayment"]["errors"] == [
         {
             "__typename": "NonFieldError",
-            "message": "A completed payment cannot be canceled.",
+            "message": "A payment must be in progress to be canceled.",
             "code": "400",
         }
     ]

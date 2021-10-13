@@ -307,6 +307,7 @@ class SquarePOS(PaymentMethod, SquarePaymentMethodMixin):
             cls.payment_processing_fee(cls.get_payment(payment_id))
             for payment_id in checkout["payment_ids"]
         ]
+        # Sum all non-none processing fess
         return sum(filter(None, processing_fees))
 
 

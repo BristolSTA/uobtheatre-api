@@ -165,8 +165,7 @@ def test_square_pos_pay_success(mock_square):
         payment_method = SquarePOS("device_id", "ikey")
         payment_method.pay(100, 14, BookingFactory())
 
-    # Assert no payments are created. A payment should only be created by the
-    # webhook.
+    # Assert a payment is created that links to the checkout.
     assert Payment.objects.count() == 1
 
     payment = Payment.objects.first()

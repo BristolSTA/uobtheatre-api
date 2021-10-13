@@ -883,6 +883,29 @@ def test_booking_pay_without_payment():
 
 
 @pytest.mark.django_db
+def test_booking_pay_deletes_pending_payments():
+    """
+    When we try to pay for a booking, pending payments that already exist for
+    this booking should be deleted.
+    """
+
+    class MockPaymentMethod:  # pylint: disable=no-method-argument
+        def pay(*_):
+            return Payment()
+
+    payment_method = MockPaymentMethod()
+    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    pre_payment = PaymentFactory(
+        status=Payment.PaymentStatus.PENDING, pay_object=booking
+    )
+
+    booking.pay(payment_method)  # type: ignore
+
+    assert booking.status == Booking.BookingStatus.PAID
+    assert not Payment.objects.filter(id=pre_payment.id).exists()
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     "initial_state, final_state",
     [(True, True), (False, True)],
