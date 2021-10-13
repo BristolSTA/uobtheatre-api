@@ -540,7 +540,7 @@ class Booking(TimeStampedMixin, Payable, models.Model):
         payment = payment_method.pay(self.total, self.misc_costs_value(), self)
 
         # If a payment is created set the booking as paid
-        if payment:
+        if payment.status == Payment.PaymentStatus.COMPLETED:
             self.complete()
 
         return payment

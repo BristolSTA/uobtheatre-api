@@ -47,7 +47,7 @@ class PaymentMethod(abc.ABC):
     @abc.abstractmethod
     def pay(
         self, value: int, app_fee: int, pay_object: "Payable"
-    ) -> Optional["payment_models.Payment"]:
+    ) -> "payment_models.Payment":
         raise NotImplementedError
 
     @classmethod
@@ -176,7 +176,9 @@ class SquarePOS(PaymentMethod, SquarePaymentMethodMixin):
         self.idempotency_key = idempotency_key
         super().__init__()
 
-    def pay(self, value: int, app_fee: int, pay_object: "Payable") -> None:
+    def pay(
+        self, value: int, app_fee: int, pay_object: "Payable"
+    ) -> "payment_models.Payment":
         """Send payment to point of sale device.
 
         Args:
@@ -186,6 +188,9 @@ class SquarePOS(PaymentMethod, SquarePaymentMethodMixin):
 
         Raises:
             SquareException: If the request was unsuccessful.
+
+        Returns:
+            Payment: Created payment
         """
         body = {
             "idempotency_key": self.idempotency_key,
@@ -204,7 +209,7 @@ class SquarePOS(PaymentMethod, SquarePaymentMethodMixin):
         if not response.is_success():
             raise SquareException(response)
 
-        self.create_payment_object(
+        return self.create_payment_object(
             pay_object,
             value,
             app_fee,
