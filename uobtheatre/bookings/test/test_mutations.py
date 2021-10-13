@@ -988,6 +988,41 @@ def test_update_booking_set_target_user(gql_client):
 
 
 @pytest.mark.django_db
+def test_update_booking_set_target_user_to_same_user(gql_client):
+
+    user = UserFactory(email="user@email.com")
+    creator = gql_client.login().user
+    booking = BookingFactory(user=user, status=Booking.BookingStatus.IN_PROGRESS)
+
+    creator.is_superuser = True
+    creator.save()
+
+    assert user.bookings.count() == 1
+    request_query = """
+        mutation {
+            updateBooking (
+                bookingId: "%s"
+                targetUserEmail: "user@email.com"
+            ){
+                booking{
+                    id
+                }
+            }
+        }
+        """ % (
+        to_global_id("BookingNode", booking.id),
+    )
+
+    response = gql_client.execute(request_query)
+
+    assert user.bookings.count() == 1
+    assert user.bookings.first().id == booking.id
+    assert response["data"]["updateBooking"]["booking"]["id"] == to_global_id(
+        "BookingNode", booking.id
+    )
+
+
+@pytest.mark.django_db
 def test_update_booking_admin_discount_without_perms(gql_client):
     booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
     request = """
