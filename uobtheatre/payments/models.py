@@ -143,6 +143,23 @@ class Payment(TimeStampedMixin, models.Model):
             payment = payment_methods.SquareOnline.get_payment(self.provider_payment_id)
             self.update_from_square_payment(payment)
 
+    def cancel(self):
+        """
+        Cancel payment
+
+        This is currently only possible for SquarePOS payments that are
+        pending.
+        """
+        # Only pending SquarePOS payments can be cancelled
+        if not (
+            self.status == Payment.PaymentStatus.PENDING
+            and self.provider == SquarePOS.name
+        ):
+            return
+
+        SquarePOS.cancel_checkout(self.provider_payment_id)
+        self.delete()
+
 
 TOTAL_PROVIDER_FEE = Coalesce(
     Sum(

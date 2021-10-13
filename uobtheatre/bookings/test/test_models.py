@@ -24,6 +24,7 @@ from uobtheatre.discounts.test.factories import (
 )
 from uobtheatre.payments import payment_methods
 from uobtheatre.payments.models import Payment
+from uobtheatre.payments.payment_methods import SquarePOS
 from uobtheatre.payments.test.factories import PaymentFactory
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.users.test.factories import UserFactory
@@ -883,7 +884,7 @@ def test_booking_pay_without_payment():
 
 
 @pytest.mark.django_db
-def test_booking_pay_deletes_pending_payments():
+def test_booking_pay_deletes_pending_payments(mock_square):
     """
     When we try to pay for a booking, pending payments that already exist for
     this booking should be deleted.
@@ -895,14 +896,34 @@ def test_booking_pay_deletes_pending_payments():
 
     payment_method = MockPaymentMethod()
     booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
-    pre_payment = PaymentFactory(
-        status=Payment.PaymentStatus.PENDING, pay_object=booking
+
+    # Deleted
+    pending_payment = PaymentFactory(
+        status=Payment.PaymentStatus.PENDING,
+        pay_object=booking,
+        provider=SquarePOS.name,
     )
 
-    booking.pay(payment_method)  # type: ignore
+    # Not deleted
+    completed_payment = PaymentFactory(
+        status=Payment.PaymentStatus.COMPLETED, pay_object=booking
+    )
+
+    with mock_square(
+        SquarePOS.client.terminal, "cancel_terminal_checkout", success=True
+    ) as mock:
+        booking.pay(payment_method)  # type: ignore
 
     assert booking.status == Booking.BookingStatus.PAID
-    assert not Payment.objects.filter(id=pre_payment.id).exists()
+
+    # Assert pending payment cancelled with square
+    mock.assert_called_once_with(pending_payment.provider_payment_id)
+
+    # And pending payment deleted
+    assert not Payment.objects.filter(id=pending_payment.id).exists()
+
+    # Assert completed payment is not cancelled
+    assert Payment.objects.filter(id=completed_payment.id).exists()
 
 
 @pytest.mark.django_db

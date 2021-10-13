@@ -150,3 +150,29 @@ def test_handle_update_payment_webhook_checkout(mock_square):
 
     payment.refresh_from_db()
     assert payment.provider_fee == 58 * 2
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "provider, status, is_cancelled",
+    [
+        (SquarePOS.name, Payment.PaymentStatus.PENDING, True),
+        (SquareOnline.name, Payment.PaymentStatus.PENDING, False),
+        (SquarePOS.name, Payment.PaymentStatus.COMPLETED, False),
+    ],
+)
+def test_cancel(provider, status, is_cancelled, mock_square):
+    payment = PaymentFactory(provider=provider, status=status)
+    with mock_square(
+        SquarePOS.client.terminal, "cancel_terminal_checkout", success=True
+    ) as mock:
+        payment.cancel()
+
+    # If cancelled this should have been called
+    if is_cancelled:
+        mock.assert_called_once_with(payment.provider_payment_id)
+    else:
+        mock.assert_not_called()
+
+    # If cancelled this payment should no longer exist
+    assert not Payment.objects.filter(id=payment.id).exists() == is_cancelled

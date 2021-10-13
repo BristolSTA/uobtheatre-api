@@ -263,7 +263,6 @@ def test_outstanding_society_payments_report():
     society_1 = Society.objects.all()[0]
     production_1 = Production.objects.all()[0]
     # NB: As production 2 is not "closed", it shouldn't show in this report
-    print(production_1.sales_breakdown())
     report = OutstandingSocietyPayments()
 
     assert len(report.datasets) == 2

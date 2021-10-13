@@ -79,7 +79,6 @@ def test_cancel_payment_success(gql_client, mock_square):
             % to_global_id("PaymentNode", payment.id)
         )
 
-    print(response)
     assert response["data"]["cancelPayment"]["success"]
     assert not response["data"]["cancelPayment"]["errors"]
 
