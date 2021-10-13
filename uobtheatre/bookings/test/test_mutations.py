@@ -18,6 +18,7 @@ from uobtheatre.bookings.test.factories import (
     add_ticket_to_booking,
 )
 from uobtheatre.discounts.test.factories import ConcessionTypeFactory
+from uobtheatre.payments.models import Payment
 from uobtheatre.payments.payment_methods import SquareOnline, SquarePOS
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.models import User
@@ -1334,6 +1335,7 @@ def test_pay_booking_square_pos_no_device_id(gql_client):
             bookingId: "%s"
             price: 100
             paymentProvider: SQUARE_POS
+            idempotencyKey: "my_idempotency_key_string"
         ) {
             success
             errors {
@@ -1618,6 +1620,7 @@ def test_pay_booking_mutation_online_without_nonce(gql_client):
 	payBooking(
             bookingId: "%s"
             price: 100
+            idempotencyKey: "my_idempotency_key_string"
         ) {
             success
             errors {
@@ -1776,6 +1779,7 @@ def test_pay_booking_success_square_pos(mock_square, gql_client):
             price: 100
             deviceId: "abc"
             paymentProvider: SQUARE_POS
+            idempotencyKey: "my_idempotency_key_string"
         ) {
             success
             errors {
@@ -1796,13 +1800,9 @@ def test_pay_booking_success_square_pos(mock_square, gql_client):
             }
 
             payment {
-              last4
-              cardBrand
               provider {
                 value
               }
-              currency
-              value
             }
           }
         }
@@ -1835,6 +1835,7 @@ def test_pay_booking_success_square_pos(mock_square, gql_client):
             request_query % to_global_id("BookingNode", booking.id)
         )
 
+    payment = Payment.objects.first()
     assert response == {
         "data": {
             "payBooking": {
@@ -1842,9 +1843,15 @@ def test_pay_booking_success_square_pos(mock_square, gql_client):
                     "status": {
                         "value": "IN_PROGRESS",
                     },
-                    "payments": {"edges": []},
+                    "payments": {
+                        "edges": [
+                            {"node": {"id": to_global_id("PaymentNode", payment.id)}}
+                        ]
+                    },
                 },
-                "payment": None,
+                "payment": {
+                    "provider": {"value": "SQUARE_POS"},
+                },
                 "success": True,
                 "errors": None,
             }

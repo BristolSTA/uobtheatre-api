@@ -14,7 +14,6 @@ from uobtheatre.discounts.test.factories import (
     DiscountRequirementFactory,
 )
 from uobtheatre.payments import payment_methods
-from uobtheatre.payments.models import Payment
 from uobtheatre.payments.test.factories import PaymentFactory
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
@@ -118,7 +117,7 @@ def create_fixtures():
     payment_1 = PaymentFactory(
         pay_object=booking_1,
         value=booking_1.total,
-        provider=payment_methods.SquarePOS.__name__,
+        provider=payment_methods.SquarePOS.name,
         provider_payment_id="square_id",
         app_fee=booking_1.misc_costs_value(),
         provider_fee=10,
@@ -138,6 +137,8 @@ def create_fixtures():
     payment_3 = PaymentFactory(pay_object=booking_3, value=booking_3.total)
     payment_3.created_at = "2021-09-08T12:00:01"
     payment_3.save()
+
+    return (payment_1, payment_2, payment_3)
 
 
 def test_dataset_class():
@@ -193,11 +194,9 @@ def test_require_option():
 
 @pytest.mark.django_db
 def test_period_totals_breakdown_report():
-    create_fixtures()
-    booking_1 = Booking.objects.all()[0]
-    booking_3 = Booking.objects.all()[2]
-    payment_1 = Payment.objects.all()[0]
-    payment_3 = Payment.objects.all()[2]
+    (payment_1, _, payment_3) = create_fixtures()
+    booking_1 = payment_1.pay_object
+    booking_3 = payment_3.pay_object
 
     # Generate report that covers this period
     report = PeriodTotalsBreakdown(
@@ -216,8 +215,8 @@ def test_period_totals_breakdown_report():
     assert report.datasets[0].name == "Provider Totals"
     assert len(report.datasets[0].headings) == 2
     assert report.datasets[0].data == [
-        ["SquarePOS", 1100],
         ["SQUARE_ONLINE", 580],
+        ["SQUARE_POS", 1100],
     ]
 
     assert report.datasets[1].name == "Production Totals"
@@ -243,7 +242,7 @@ def test_period_totals_breakdown_report():
             "2021-09-08 00:00:01",
             str(booking_1.id),
             "1100",
-            "SquarePOS",
+            "SQUARE_POS",
             "square_id",
         ],
         [
@@ -263,7 +262,6 @@ def test_outstanding_society_payments_report():
     society_1 = Society.objects.all()[0]
     production_1 = Production.objects.all()[0]
     # NB: As production 2 is not "closed", it shouldn't show in this report
-    print(production_1.sales_breakdown())
     report = OutstandingSocietyPayments()
 
     assert len(report.datasets) == 2

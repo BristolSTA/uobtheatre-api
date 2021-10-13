@@ -97,6 +97,7 @@ TEST_PAYMENT_UPDATE_PAYLOAD = {
 
 @pytest.mark.django_db
 def test_handle_checkout_webhook(rest_client, monkeypatch):
+    PaymentFactory(provider_payment_id="dhgENdnFOPXqO")
     monkeypatch.setenv("SQUARE_WEBHOOK_SIGNATURE_KEY", "Hd_mmQkhER3EPkpRpNQh9Q")
     booking = BookingFactory(
         reference="id72709", status=Booking.BookingStatus.IN_PROGRESS

@@ -8,6 +8,8 @@ export DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES
 
 python manage.py migrate
 
+python manage.py collectstatic --noinput
+
 # Seed the db
 if [[ $* == *--seed-e2e ]]
 then
