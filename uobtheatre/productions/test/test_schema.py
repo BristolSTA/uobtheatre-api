@@ -781,7 +781,7 @@ def test_productions_orderby(order_by, expected_order, gql_client):
         ("end_Lte", 2, [0, 1]),
     ],
 )
-def test_production_filters(filter_name, value_days, expected_outputs, gql_client):
+def test_production_time_filters(filter_name, value_days, expected_outputs, gql_client):
     current_time = timezone.now()
 
     productions = [
@@ -831,6 +831,42 @@ def test_production_filters(filter_name, value_days, expected_outputs, gql_clien
         {"node": {"end": productions[i].end_date().isoformat()}}
         for i in expected_outputs
     ]
+
+
+@pytest.mark.django_db
+def test_production_search_filter(gql_client):
+    ProductionFactory(name="TRASh 2021")
+    ProductionFactory(name="Legally Ginger")
+    request = """
+        {
+          productions(search: "%s") {
+            edges {
+              node {
+                name
+              }
+            }
+          }
+        }
+        """
+
+    response = gql_client.execute(request % "trash")
+    assert response["data"]["productions"]["edges"] == [
+        {"node": {"name": "TRASh 2021"}}
+    ]
+
+    response = gql_client.execute(request % "gin")
+    assert response["data"]["productions"]["edges"] == [
+        {"node": {"name": "Legally Ginger"}}
+    ]
+
+    response = gql_client.execute(request % "Nothing")
+    assert response["data"]["productions"]["edges"] == []
+
+    response = gql_client.execute(request % "")
+    assert {"node": {"name": "Legally Ginger"}} in response["data"]["productions"][
+        "edges"
+    ]
+    assert {"node": {"name": "TRASh 2021"}} in response["data"]["productions"]["edges"]
 
 
 @pytest.mark.django_db
