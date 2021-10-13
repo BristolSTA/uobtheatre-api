@@ -461,6 +461,7 @@ def test_square_get_checkout(mock_square):
 
 @pytest.mark.django_db
 def test_square_pos_cancel_failure(mock_square):
+    payment = PaymentFactory()
     with mock_square(
         SquarePOS.client.terminal,
         "cancel_terminal_checkout",
@@ -470,4 +471,7 @@ def test_square_pos_cancel_failure(mock_square):
     ):
         with pytest.raises(SquareException):
             payment_method = SquarePOS("device_id", "ikey")
-            payment_method.cancel_checkout("checkout_id")
+            payment_method.cancel(payment)
+
+    # Assert payment not deleted
+    assert Payment.objects.filter(id=payment.id).exists()

@@ -174,5 +174,23 @@ def test_cancel(provider, status, is_cancelled, mock_square):
     else:
         mock.assert_not_called()
 
-    # If cancelled this payment should no longer exist
-    assert not Payment.objects.filter(id=payment.id).exists() == is_cancelled
+    # If pending assert this payment is deleted
+    is_pending = status == Payment.PaymentStatus.PENDING
+    assert not Payment.objects.filter(id=payment.id).exists() == is_pending
+
+
+@pytest.mark.parametrize(
+    "provider_name, provider_class",
+    [
+        ("SQUARE_POS", SquarePOS),
+    ],
+)
+def test_provider_class(provider_name, provider_class):
+    payment = Payment(provider=provider_name)
+    assert payment.provider_class == provider_class
+
+
+def test_provider_class_unknown():
+    payment = Payment(provider="abc")
+    with pytest.raises(StopIteration):
+        payment.provider_class  # pylint: disable=pointless-statement

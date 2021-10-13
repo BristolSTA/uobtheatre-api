@@ -1,7 +1,6 @@
 import graphene
 
 from uobtheatre.payments.models import Payment
-from uobtheatre.payments.payment_methods import SquarePOS
 from uobtheatre.utils.exceptions import (
     AuthorizationException,
     GQLException,
@@ -38,11 +37,7 @@ class CancelPayment(AuthRequiredMixin, SafeMutation):
                 "You do not have permission to cancel this payment."
             )
 
-        # If a payment that is not a SquarePOS payment is trying to be canceled
-        if not payment.provider == SquarePOS.name:
-            raise GQLException("This payment method cannot be canceled.", code=400)
-
-        SquarePOS.cancel_checkout(payment.id)
+        payment.cancel()
         return CancelPayment()
 
 

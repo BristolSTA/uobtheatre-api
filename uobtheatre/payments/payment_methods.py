@@ -50,6 +50,17 @@ class PaymentMethod(abc.ABC):
     ) -> Optional["payment_models.Payment"]:
         raise NotImplementedError
 
+    @classmethod
+    def cancel(
+        cls, payment: "payment_models.Payment"  # pylint: disable=unused-argument
+    ):
+        """Cancel the payment
+
+        Most payment methods cannot be cancelled (as they will never be
+        pending) so the default implementation is just to return.
+        """
+        return
+
     @property
     @abc.abstractmethod
     def description(self):
@@ -277,16 +288,18 @@ class SquarePOS(PaymentMethod, SquarePaymentMethodMixin):
         return response.body["checkout"]
 
     @classmethod
-    def cancel_checkout(cls, checkout_id: str) -> None:
+    def cancel(cls, payment: "payment_models.Payment") -> None:
         """Cancel terminal checkout.
 
         Args:
-            checkout_id (str): The id of the checkout to be canceled
+            payment (Payment): The payment to be canceled
 
         Raises:
             SquareException: When request is not successful
         """
-        response = cls.client.terminal.cancel_terminal_checkout(checkout_id)
+        response = cls.client.terminal.cancel_terminal_checkout(
+            payment.provider_payment_id
+        )
 
         if not response.is_success():
             raise SquareException(response)

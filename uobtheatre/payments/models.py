@@ -10,6 +10,7 @@ from django.db.models.query import QuerySet
 from uobtheatre.payments import payment_methods
 from uobtheatre.payments.payment_methods import (
     Cash,
+    PaymentMethod,
     SquarePaymentMethodMixin,
     SquarePOS,
 )
@@ -94,6 +95,12 @@ class Payment(TimeStampedMixin, models.Model):
     # Amount charged by us to process payment
     app_fee = models.IntegerField(null=True, blank=True)
 
+    @property
+    def provider_class(self):
+        return next(
+            method for method in PaymentMethod.__all__ if method.name == self.provider
+        )
+
     def url(self):
         """Payment provider transaction link.
 
@@ -150,15 +157,9 @@ class Payment(TimeStampedMixin, models.Model):
         This is currently only possible for SquarePOS payments that are
         pending.
         """
-        # Only pending SquarePOS payments can be cancelled
-        if not (
-            self.status == Payment.PaymentStatus.PENDING
-            and self.provider == SquarePOS.name
-        ):
-            return
-
-        SquarePOS.cancel_checkout(self.provider_payment_id)
-        self.delete()
+        if self.status == Payment.PaymentStatus.PENDING:
+            self.provider_class.cancel(self)
+            self.delete()
 
 
 TOTAL_PROVIDER_FEE = Coalesce(
