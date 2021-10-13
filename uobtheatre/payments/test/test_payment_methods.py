@@ -374,7 +374,11 @@ def test_handle_terminal_checkout_updated_webhook_not_completed():
 @pytest.mark.django_db
 def test_handle_terminal_checkout_updated_canceled():
     booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
-    payment = PaymentFactory(provider_payment_id="abc", provider=SquarePOS.name)
+    payment = PaymentFactory(
+        provider_payment_id="abc",
+        provider=SquarePOS.name,
+        status=Payment.PaymentStatus.PENDING,
+    )
     data = {
         "object": {
             "checkout": {

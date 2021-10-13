@@ -244,7 +244,9 @@ class SquarePOS(PaymentMethod, SquarePaymentMethodMixin):
         if checkout["status"] == "CANCELED":
             # Delete any payments that are linked to this checkout
             payment_models.Payment.objects.filter(
-                provider_payment_id=checkout["id"], provider=SquarePOS.name
+                provider_payment_id=checkout["id"],
+                provider=SquarePOS.name,
+                status=payment_models.Payment.PaymentStatus.PENDING,
             ).delete()
 
     @classmethod
