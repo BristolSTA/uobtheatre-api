@@ -866,24 +866,6 @@ def test_booking_pay_with_payment():
 
 
 @pytest.mark.django_db
-def test_booking_pay_without_payment():
-    """
-    When the payment_method pay does not return a payment assert the booking is
-    not marked as paid.
-    """
-
-    class MockPaymentMethod:
-        def pay(*_):  # pylint: disable=no-method-argument
-            return None
-
-    payment_method = MockPaymentMethod()
-    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
-
-    booking.pay(payment_method)  # type: ignore
-    assert booking.status != Booking.BookingStatus.PAID
-
-
-@pytest.mark.django_db
 def test_booking_pay_deletes_pending_payments(mock_square):
     """
     When we try to pay for a booking, pending payments that already exist for

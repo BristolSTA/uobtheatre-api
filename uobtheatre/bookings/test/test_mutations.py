@@ -1800,13 +1800,9 @@ def test_pay_booking_success_square_pos(mock_square, gql_client):
             }
 
             payment {
-              last4
-              cardBrand
               provider {
                 value
               }
-              currency
-              value
             }
           }
         }
@@ -1853,7 +1849,9 @@ def test_pay_booking_success_square_pos(mock_square, gql_client):
                         ]
                     },
                 },
-                "payment": None,
+                "payment": {
+                    "provider": {"value": "SQUARE_POS"},
+                },
                 "success": True,
                 "errors": None,
             }
