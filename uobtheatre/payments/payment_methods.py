@@ -1,6 +1,5 @@
 import abc
 import re
-import uuid
 from typing import TYPE_CHECKING, Optional, Type
 
 from django.conf import settings
@@ -48,8 +47,19 @@ class PaymentMethod(abc.ABC):
     @abc.abstractmethod
     def pay(
         self, value: int, app_fee: int, pay_object: "Payable"
-    ) -> Optional["payment_models.Payment"]:
+    ) -> "payment_models.Payment":
         raise NotImplementedError
+
+    @classmethod
+    def cancel(
+        cls, payment: "payment_models.Payment"  # pylint: disable=unused-argument
+    ):
+        """Cancel the payment
+
+        Most payment methods cannot be cancelled (as they will never be
+        pending) so the default implementation is just to return.
+        """
+        return
 
     @property
     @abc.abstractmethod
@@ -67,6 +77,59 @@ class PaymentMethod(abc.ABC):
             value=value,
             app_fee=app_fee,
             **kwargs,
+        )
+
+
+class SquarePaymentMethodMixin(abc.ABC):
+    """
+    Mixin for SquarePayment method classes which adds client and helper
+    function. Sub-classes should import this mixin and the main PaymentMethod
+    class.
+    """
+
+    client = Client(
+        square_version="2020-11-18",
+        access_token=settings.SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],  # type: ignore
+        environment=settings.SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],  # type: ignore
+    )
+
+    @classmethod
+    def get_payment(cls, payment_id: str):
+        """Get full payment info from square for a given payment id.
+
+        Args:
+            payment_id (str): The id of the payment to be fetched
+
+        Returns:
+            dict: Payment response from square
+
+        Raises:
+            SquareException: When response is not successful
+        """
+        response = cls.client.payments.get_payment(payment_id)
+
+        if not response.is_success():
+            raise SquareException(response)
+
+        return response.body["payment"]
+
+    @classmethod
+    def payment_processing_fee(cls, square_payment: dict) -> Optional[int]:
+        """
+        Get processing fee from a square payment dict.
+
+        Args:
+            square_payment (dict): Square object from square.
+
+        Returns:
+            int: Processing fee for payment
+        """
+        # If the processing fee has not be added to the payment
+        if "processing_fee" not in square_payment:
+            return None
+
+        return sum(
+            fee["amount_money"]["amount"] for fee in square_payment["processing_fee"]
         )
 
 
@@ -92,7 +155,7 @@ class Card(PaymentMethod):
         return self.create_payment_object(pay_object, value, app_fee)
 
 
-class SquarePOS(PaymentMethod):
+class SquarePOS(PaymentMethod, SquarePaymentMethodMixin):
     """
     Uses Square terminal api to create payment. Used for inperson card
     transactions.
@@ -107,29 +170,30 @@ class SquarePOS(PaymentMethod):
     """
 
     description = "Square terminal card payment"
-    client = Client(
-        square_version="2020-11-18",
-        access_token=settings.SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],  # type: ignore
-        environment=settings.SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],  # type: ignore
-    )
 
-    def __init__(self, device_id: str) -> None:
+    def __init__(self, device_id: str, idempotency_key: str) -> None:
         self.device_id = device_id
+        self.idempotency_key = idempotency_key
         super().__init__()
 
-    def pay(self, value: int, app_fee: int, pay_object: "Payable") -> None:
+    def pay(
+        self, value: int, app_fee: int, pay_object: "Payable"
+    ) -> "payment_models.Payment":
         """Send payment to point of sale device.
 
-        Parameters:
+        Args:
             value (int): Amount of money being payed
             app_fee (int): The amount we charge for the payment.
             pay_object (Payable): The object being payed for
 
         Raises:
             SquareException: If the request was unsuccessful.
+
+        Returns:
+            Payment: Created payment
         """
         body = {
-            "idempotency_key": str(uuid.uuid4()),
+            "idempotency_key": self.idempotency_key,
             "checkout": {
                 "amount_money": {
                     "amount": value,
@@ -145,18 +209,14 @@ class SquarePOS(PaymentMethod):
         if not response.is_success():
             raise SquareException(response)
 
-    @classmethod
-    def handle_webhook(cls, data: dict):
-        """Handle checkout event for terminal api.
-
-        Args:
-            data (dict): The data provided in the webhook event
-
-        Raises:
-            ValueError: If the signature is invalid
-        """
-        if data["type"] == "terminal.checkout.updated":
-            cls.handle_terminal_checkout_updated_webhook(data["data"])
+        return self.create_payment_object(
+            pay_object,
+            value,
+            app_fee,
+            provider_payment_id=response.body["checkout"]["id"],
+            currency="GBP",
+            status=payment_models.Payment.PaymentStatus.PENDING,
+        )
 
     @classmethod
     def handle_terminal_checkout_updated_webhook(cls, data: dict):
@@ -173,14 +233,19 @@ class SquarePOS(PaymentMethod):
         booking = Booking.objects.get(reference=checkout["reference_id"])
 
         if checkout["status"] == "COMPLETED":
-            cls.create_payment_object(
-                booking,
-                checkout["amount_money"]["amount"],
-                booking.misc_costs_value(),
-                provider_payment_id=checkout["payment_ids"][0],
-                currency=checkout["amount_money"]["currency"],
+            payment = payment_models.Payment.objects.get(
+                provider_payment_id=checkout["id"]
             )
+
+            payment.status = payment_models.Payment.PaymentStatus.COMPLETED
+            payment.save()
             booking.complete()
+
+        if checkout["status"] == "CANCELED":
+            # Delete any payments that are linked to this checkout
+            payment_models.Payment.objects.filter(
+                provider_payment_id=checkout["id"], provider=SquarePOS.name
+            ).delete()
 
     @classmethod
     def list_devices(cls, product_type: str = None, status: str = None) -> list[dict]:
@@ -207,8 +272,64 @@ class SquarePOS(PaymentMethod):
             raise SquareException(response)
         return response.body.get("device_codes") or []
 
+    @classmethod
+    def get_checkout(cls, checkout_id: str):
+        """Get checkout info from square for a given checkout id.
 
-class SquareOnline(PaymentMethod):
+        Args:
+            checkout_id (str): The id of the checkout to be fetched
+
+        Returns:
+            dict: Checkout response from square
+
+        Raises:
+            SquareException: When response is not successful
+        """
+        response = cls.client.terminal.get_terminal_checkout(checkout_id)
+
+        if not response.is_success():
+            raise SquareException(response)
+
+        return response.body["checkout"]
+
+    @classmethod
+    def cancel(cls, payment: "payment_models.Payment") -> None:
+        """Cancel terminal checkout.
+
+        Args:
+            payment (Payment): The payment to be canceled
+
+        Raises:
+            SquareException: When request is not successful
+        """
+        response = cls.client.terminal.cancel_terminal_checkout(
+            payment.provider_payment_id
+        )
+
+        if not response.is_success():
+            raise SquareException(response)
+
+    @classmethod
+    def get_checkout_processing_fee(cls, checkout_id: str) -> Optional[int]:
+        """
+        Get processing fee for a square checkout.
+
+        Args:
+            checkout_id (str): The id of the square checkout
+
+        Returns:
+            int: The processing fee
+        """
+        checkout = cls.get_checkout(checkout_id)
+        processing_fees = [
+            cls.payment_processing_fee(cls.get_payment(payment_id))
+            for payment_id in checkout["payment_ids"]
+        ]
+        # Sum all non-none processing fess
+        return sum(filter(None, processing_fees))
+
+
+class SquareOnline(PaymentMethod, SquarePaymentMethodMixin):
     """
     Uses Square checkout api to create payment. Used for online transactions.
 
@@ -222,11 +343,6 @@ class SquareOnline(PaymentMethod):
     """
 
     description = "Square online card payment"
-    client = Client(
-        square_version="2020-11-18",
-        access_token=settings.SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],  # type: ignore
-        environment=settings.SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],  # type: ignore
-    )
 
     def __init__(self, nonce: str, idempotency_key: str) -> None:
         """
@@ -242,26 +358,6 @@ class SquareOnline(PaymentMethod):
         self.nonce = nonce
         self.idempotency_key = idempotency_key
         super().__init__()
-
-    @classmethod
-    def get_payment(cls, payment_id: str):
-        """Get full payment info from square for a given payment id.
-
-        Args:
-            payment_id (str): The id of the payment to be fetched
-
-        Returns:
-            dict: Payment response from square
-
-        Raises:
-            SquareException: When response is not successful
-        """
-        response = cls.client.payments.get_payment(payment_id)
-
-        if not response.is_success():
-            raise SquareException(response)
-
-        return response
 
     def pay(
         self, value: int, app_fee: int, pay_object: "Payable"

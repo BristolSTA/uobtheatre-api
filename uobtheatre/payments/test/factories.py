@@ -21,7 +21,7 @@ class PaymentFactory(factory.django.DjangoModelFactory):
 
 class MockApiResponse:
     """
-    Mock of the square API Response CLass
+    Mock of the Square API response class.
     """
 
     def __init__(  # pylint: disable=too-many-arguments

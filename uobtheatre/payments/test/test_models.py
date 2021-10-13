@@ -1,6 +1,9 @@
+from unittest.mock import patch
+
 import pytest
 
-from uobtheatre.payments.payment_methods import Cash, SquareOnline
+from uobtheatre.payments.models import Payment
+from uobtheatre.payments.payment_methods import Cash, SquareOnline, SquarePOS
 from uobtheatre.payments.test.factories import PaymentFactory
 
 
@@ -88,3 +91,106 @@ def test_update_payment_from_square_no_processing_fee(mock_square):
 
     payment.refresh_from_db()
     assert payment.provider_fee is None
+
+
+@pytest.mark.django_db
+def test_handle_update_payment_webhook_checkout(mock_square):
+    payment = PaymentFactory(provider_fee=None, provider_payment_id="abc")
+
+    with patch.object(
+        payment, "update_from_square_payment"
+    ) as payment_update_mock, mock_square(
+        SquarePOS.client.terminal,
+        "get_terminal_checkout",
+        success=True,
+        status_code=200,
+        body={
+            "checkout": {
+                "amount_money": {"amount": 100, "currency": "GBP"},
+                "id": "abc",
+                "payment_ids": [
+                    "3fgpz1iUfuxTkK83AqcK9Akx068YY",
+                    "3fgpz1iUfuxTkK83AqcK9Akx068YZ",
+                ],
+                "status": "COMPLETED",
+            },
+        },
+    ), mock_square(
+        SquarePOS.client.payments,
+        "get_payment",
+        success=True,
+        status_code=200,
+        body={
+            "payment": {
+                "id": "3fgpz1iUfuxTkK83AqcK9Akx068YY",
+                "status": "COMPLETED",
+                "processing_fee": [
+                    {
+                        "amount_money": {"amount": 58, "currency": "GBP"},
+                    }
+                ],
+                "total_money": {"amount": 1990, "currency": "GBP"},
+                "approved_money": {"amount": 1990, "currency": "GBP"},
+            }
+        },
+    ):
+        Payment.handle_update_payment_webhook(
+            {
+                "type": "payment",
+                "object": {
+                    "payment": {
+                        "id": "notabc",
+                        "terminal_checkout_id": "abc",
+                    }
+                },
+            },
+        )
+
+    payment_update_mock.assert_not_called()
+
+    payment.refresh_from_db()
+    assert payment.provider_fee == 58 * 2
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "provider, status, is_cancelled",
+    [
+        (SquarePOS.name, Payment.PaymentStatus.PENDING, True),
+        (SquareOnline.name, Payment.PaymentStatus.PENDING, False),
+        (SquarePOS.name, Payment.PaymentStatus.COMPLETED, False),
+    ],
+)
+def test_cancel(provider, status, is_cancelled, mock_square):
+    payment = PaymentFactory(provider=provider, status=status)
+    with mock_square(
+        SquarePOS.client.terminal, "cancel_terminal_checkout", success=True
+    ) as mock:
+        payment.cancel()
+
+    # If cancelled this should have been called
+    if is_cancelled:
+        mock.assert_called_once_with(payment.provider_payment_id)
+    else:
+        mock.assert_not_called()
+
+    # If pending assert this payment is deleted
+    is_pending = status == Payment.PaymentStatus.PENDING
+    assert not Payment.objects.filter(id=payment.id).exists() == is_pending
+
+
+@pytest.mark.parametrize(
+    "provider_name, provider_class",
+    [
+        ("SQUARE_POS", SquarePOS),
+    ],
+)
+def test_provider_class(provider_name, provider_class):
+    payment = Payment(provider=provider_name)
+    assert payment.provider_class == provider_class
+
+
+def test_provider_class_unknown():
+    payment = Payment(provider="abc")
+    with pytest.raises(StopIteration):
+        payment.provider_class  # pylint: disable=pointless-statement
