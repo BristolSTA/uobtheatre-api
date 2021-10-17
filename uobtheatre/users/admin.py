@@ -13,6 +13,11 @@ class UserAdmin(DjangoUserAdmin):
 
     ordering = ("email",)
     exclude = ("username",)
+    search_fields = [
+        "first_name",
+        "last_name",
+        "email",
+    ]
     fieldsets = (
         (
             "Personal info",

@@ -20,5 +20,16 @@ class BookingAdmin(admin.ModelAdmin):
     """
 
     inlines = [SeatBookingInline]
+    list_filter = ("status",)
     readonly_fields = ("subtotal", "total")
-    list_display = ("reference",)
+    list_display = ("reference", "status", ("get_performance_name"))
+    search_fields = [
+        "reference",
+        "performance__production__name",
+        "user__email",
+    ]
+
+    def get_performance_name(self, obj):
+        return obj.performance.production.name
+
+    get_performance_name.short_description = "production"  # type: ignore
