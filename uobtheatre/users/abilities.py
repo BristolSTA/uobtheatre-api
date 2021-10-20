@@ -60,12 +60,15 @@ class OpenAdmin(Ability):
 
     @staticmethod
     def user_has(user, _) -> bool:
-        return user.has_any_objects_with_perms(
-            [
-                "productions.add_production",
-                "productions.change_production",
-                "productions.view_production",
-            ]
+        return (
+            user.has_any_objects_with_perms(
+                [
+                    "productions.add_production",
+                    "productions.change_production",
+                    "productions.view_production",
+                ]
+            )
+            or user.has_perm("reports.finance_reports")
         )
 
 
