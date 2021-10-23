@@ -22,7 +22,7 @@ class BookingAdmin(admin.ModelAdmin):
     inlines = [SeatBookingInline]
     list_filter = ("status",)
     readonly_fields = ("subtotal", "total")
-    list_display = ("reference", "status", ("get_performance_name"))
+    list_display = ("reference", "status", "get_performance_name")
     search_fields = [
         "reference",
         "performance__production__name",
