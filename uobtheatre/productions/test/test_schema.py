@@ -781,7 +781,7 @@ def test_productions_orderby(order_by, expected_order, gql_client):
         ("end_Lte", 2, [0, 1]),
     ],
 )
-def test_production_filters(filter_name, value_days, expected_outputs, gql_client):
+def test_production_time_filters(filter_name, value_days, expected_outputs, gql_client):
     current_time = timezone.now()
 
     productions = [
@@ -831,6 +831,38 @@ def test_production_filters(filter_name, value_days, expected_outputs, gql_clien
         {"node": {"end": productions[i].end_date().isoformat()}}
         for i in expected_outputs
     ]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "query,results",
+    [
+        ("trash", ["TRASh 2021"]),
+        ("gin", ["Legally Ginger"]),
+        ("Nothing", []),
+        ("", ["TRASh 2021", "Legally Ginger"]),
+    ],
+)
+def test_production_search_filter(gql_client, query, results):
+    ProductionFactory(name="TRASh 2021")
+    ProductionFactory(name="Legally Ginger")
+    request = """
+        {
+          productions(search: "%s") {
+            edges {
+              node {
+                name
+              }
+            }
+          }
+        }
+        """
+
+    response = gql_client.execute(request % query)
+    assert len(response["data"]["productions"]["edges"]) == len(results)
+
+    for result in results:
+        assert {"node": {"name": result}} in response["data"]["productions"]["edges"]
 
 
 @pytest.mark.django_db

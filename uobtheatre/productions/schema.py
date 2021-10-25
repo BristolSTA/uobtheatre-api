@@ -1,5 +1,6 @@
 import django_filters
 import graphene
+from django.db.models.query_utils import Q
 from graphene import relay
 from graphene_django import DjangoListField
 from graphene_django.filter import DjangoFilterConnectionField
@@ -109,11 +110,29 @@ class ProductionFilter(FilterSet):
     end__gte = django_filters.DateTimeFilter(method="end_filter")
     end__lte = django_filters.DateTimeFilter(method="end_filter")
 
+    search = django_filters.CharFilter(method="search_productions", label="Search")
+
     def start_filter(self, query_set, value, date=None):
         return query_set.annotate_start().filter(**{value: date})
 
     def end_filter(self, query_set, value, date=None):
         return query_set.annotate_end().filter(**{value: date})
+
+    def search_productions(self, queryset, _, value):
+        """
+        Given a query string, searches through the productions using the name of the production
+
+        Args:
+            queryset (Queryset): The productions queryset.
+            value (str): The search query.
+
+        Returns:
+            Queryset: Filtered booking queryset.
+        """
+        query = Q()
+        for word in value.split():
+            query = query | Q(name__icontains=word)
+        return queryset.filter(query)
 
     class Meta:
         model = Production
