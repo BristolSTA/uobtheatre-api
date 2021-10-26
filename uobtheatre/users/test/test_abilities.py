@@ -27,6 +27,7 @@ def test_open_boxoffice():
         (["productions.add_production"], False, True),
         (["productions.change_production"], False, True),
         (["productions.view_production"], False, True),
+        (["reports.finance_reports"], False, True),
         (["productions.view_production", "productions.change_production"], False, True),
         (["productions.boxoffice"], False, False),
     ],

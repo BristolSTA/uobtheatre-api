@@ -235,12 +235,15 @@ def test_period_totals_breakdown_report():
     ]
 
     assert report.datasets[2].name == "Payments"
-    assert len(report.datasets[2].headings) == 6
+    assert len(report.datasets[2].headings) == 9
     assert report.datasets[2].data == [
         [
             str(payment_1.id),
             "2021-09-08 00:00:01",
             str(booking_1.id),
+            "Booking",
+            str(booking_1.performance.production.id),
+            "Amazing Show 1",
             "1100",
             "SQUARE_POS",
             "square_id",
@@ -249,6 +252,9 @@ def test_period_totals_breakdown_report():
             str(payment_3.id),
             "2021-09-08 12:00:01",
             str(booking_3.id),
+            "Booking",
+            str(booking_3.performance.production.id),
+            "Amazing Show 2",
             "580",
             "SQUARE_ONLINE",
             "",
@@ -286,7 +292,7 @@ def test_outstanding_society_payments_report():
     ]
 
     assert report.datasets[1].name == "Productions"
-    assert len(report.datasets[1].headings) == 8
+    assert len(report.datasets[1].headings) == 9
     assert report.datasets[1].data == [
         [
             production_1.id,
@@ -295,6 +301,7 @@ def test_outstanding_society_payments_report():
             "Society 1",
             3200,  # Payments total (1100 + 2100)
             1100,  # Of which card: 1100
+            10,  # Square fees
             190,  # Total misc costs (2 bookings * 100) - square fee
             900,  # Card payments (1100) - Total Misc costs (200)
         ]

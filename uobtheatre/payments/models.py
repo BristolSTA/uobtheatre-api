@@ -24,7 +24,7 @@ class PaymentQuerySet(QuerySet):
         """Annotate sales breakdown onto payments"""
         annotations = {
             k: Coalesce(v, 0)
-            for k, v in SALE_BREAKDOWN_ANNOTATIOS.items()
+            for k, v in SALE_BREAKDOWN_ANNOTATIONS.items()
             if breakdowns is None or k in breakdowns
         }
         return self.aggregate(**annotations)
@@ -175,7 +175,7 @@ TOTAL_CARD_SALES = Sum(
 )
 APP_FEE = Coalesce(Sum("app_fee", filter=Q(type=Payment.PaymentType.PURCHASE)), 0)
 
-SALE_BREAKDOWN_ANNOTATIOS: dict[str, Any] = {
+SALE_BREAKDOWN_ANNOTATIONS: dict[str, Any] = {
     "total_sales": TOTAL_SALES,
     "total_card_sales": TOTAL_CARD_SALES,
     # Amount charged by the payment provider (square) for these payments
