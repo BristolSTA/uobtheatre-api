@@ -136,6 +136,17 @@ class PeriodTotalsBreakdown(Report):
                 str(payment.id),
                 payment.created_at.strftime("%Y-%m-%d %H:%M:%S"),
                 str(payment.pay_object.id) if payment.pay_object else "",
+                type(payment.pay_object).__name__ if payment.pay_object else "",
+                str(
+                    payment.pay_object.performance.production.id
+                    if isinstance(payment.pay_object, Booking)
+                    else ""
+                ),
+                str(
+                    payment.pay_object.performance.production.name
+                    if isinstance(payment.pay_object, Booking)
+                    else ""
+                ),
                 str(payment.value),
                 str(payment.provider),
                 str(payment.provider_payment_id or ""),
@@ -154,6 +165,9 @@ class PeriodTotalsBreakdown(Report):
                         "Payment ID",
                         "Timestamp",
                         "Pay Object ID",
+                        "Pay Object Type",
+                        "Production ID",
+                        "Production",
                         "Payment Value",
                         "Provider",
                         "Provider ID",
@@ -181,10 +195,11 @@ class OutstandingSocietyPayments(Report):
                 "Production Name",
                 "Society ID",
                 "Society Name",
-                "Total Takings",
-                "Takings of which card",
+                "Gross Takings",
+                "Gross Takings via Square",
+                "Processing Fees",
                 "STA Fees",
-                "Society Payment Due (Pence)",
+                "Society Net Income",
             ],
         )
 
@@ -218,6 +233,7 @@ class OutstandingSocietyPayments(Report):
                     production.society.name,
                     sales_breakdown["total_sales"],
                     sales_breakdown["total_card_sales"],
+                    sales_breakdown["provider_payment_value"],
                     production_sta_fees,
                     sales_breakdown["society_transfer_value"],
                 ],
