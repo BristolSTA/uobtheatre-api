@@ -22,7 +22,8 @@
 
 	"extensions": [
 		"ms-python.python",
-		"njpwerner.autodocstring"
+		"njpwerner.autodocstring",
+		"eamodio.gitlens"
 	],
 
 	"remoteEnv": {
