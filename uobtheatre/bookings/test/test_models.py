@@ -1090,9 +1090,15 @@ def test_send_confirmation_email(mailoutbox, with_payment, provider_payment_id):
     assert len(mailoutbox) == 1
     email = mailoutbox[0]
     assert email.subject == "Your booking is confirmed!"
-    assert "https://example.com/user/booking/abc" in email.body
+    assert "View Booking (https://example.com/user/booking/abc" in email.body
+    assert (
+        "View Tickets (https://example.com%s" % booking.web_tickets_path in email.body
+    )
     assert "Legally Ginger" in email.body
-    assert "opens at 20 October 2021 18:15 UTC for a 19:15 UTC start" in email.body
+    assert (
+        "opens at 20 October 2021 18:15 UTC for a 19:15 UTC start (please note that UTC might not be your current timezone)"
+        in email.body
+    )
     if with_payment:
         assert "Payment Information" in email.body
         assert "10.00 GBP" in email.body
@@ -1138,9 +1144,15 @@ def test_send_confirmation_email_for_anonymous(mailoutbox):
     assert len(mailoutbox) == 1
     email = mailoutbox[0]
     assert email.subject == "Your booking is confirmed!"
-    assert "https://example.com/user/booking/abc" not in email.body
+    assert "View Booking (https://example.com/user/booking/abc" not in email.body
+    assert (
+        "View Tickets (https://example.com%s" % booking.web_tickets_path in email.body
+    )
     assert "Legally Ginger" in email.body
-    assert "opens at 20 October 2021 18:15 UTC for a 19:15 UTC start" in email.body
+    assert (
+        "opens at 20 October 2021 18:15 UTC for a 19:15 UTC start (please note that UTC might not be your current timezone)"
+        in email.body
+    )
     assert "reference (abc)" in email.body
 
 

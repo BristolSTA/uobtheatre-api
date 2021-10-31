@@ -588,13 +588,14 @@ class Booking(TimeStampedMixin, Payable, models.Model):
 
         composer.line(
             (
-                "This event opens at %s for a %s start. Please bring your tickets (printed or on your phone) or your booking reference (<strong>%s</strong>)."
+                "This event opens at %s for a %s start (please note that %s might not be your current timezone). Please bring your tickets (printed or on your phone) or your booking reference (<strong>%s</strong>)."
                 if self.user.status.verified
-                else "This event opens at %s for a %s start. Please bring your booking reference (<strong>%s</strong>)."
+                else "This event opens at %s for a %s start (please note that %s might not be your current timezone). Please bring your booking reference (<strong>%s</strong>)."
             )
             % (
                 self.performance.doors_open.strftime("%d %B %Y %H:%M %Z"),
                 self.performance.start.strftime("%H:%M %Z"),
+                self.performance.start.strftime("%Z"),
                 self.reference,
             )
         )
