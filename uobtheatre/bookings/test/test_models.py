@@ -9,6 +9,7 @@ from django.db.utils import IntegrityError
 from django.utils import timezone
 from graphql_relay.node.node import to_global_id
 
+from uobtheatre.addresses.test.factories import AddressFactory
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
@@ -1051,18 +1052,20 @@ def test_complete():
 )
 def test_send_confirmation_email(mailoutbox, with_payment, provider_payment_id):
     production = ProductionFactory(name="Legally Ginger")
+    venue = VenueFactory(address=AddressFactory(latitude=51.4, longitude=-2.61))
     performance = PerformanceFactory(
+        venue=venue,
         doors_open=datetime.datetime(
-            day=20,
-            month=10,
+            day=4,
+            month=11,
             year=2021,
             hour=18,
             minute=15,
             tzinfo=timezone.get_current_timezone(),
         ),
         start=datetime.datetime(
-            day=20,
-            month=10,
+            day=4,
+            month=11,
             year=2021,
             hour=19,
             minute=15,
@@ -1095,10 +1098,7 @@ def test_send_confirmation_email(mailoutbox, with_payment, provider_payment_id):
         "View Tickets (https://example.com%s" % booking.web_tickets_path in email.body
     )
     assert "Legally Ginger" in email.body
-    assert (
-        "opens at 20 October 2021 18:15 UTC for a 19:15 UTC start (please note that UTC might not be your current timezone)"
-        in email.body
-    )
+    assert "opens at 04 November 2021 18:15 GMT for a 19:15 GMT start" in email.body
     if with_payment:
         assert "Payment Information" in email.body
         assert "10.00 GBP" in email.body
@@ -1114,6 +1114,7 @@ def test_send_confirmation_email(mailoutbox, with_payment, provider_payment_id):
 @pytest.mark.django_db
 def test_send_confirmation_email_for_anonymous(mailoutbox):
     production = ProductionFactory(name="Legally Ginger")
+    venue = VenueFactory(address=AddressFactory(latitude=51.4, longitude=-2.61))
     performance = PerformanceFactory(
         doors_open=datetime.datetime(
             day=20,
@@ -1132,6 +1133,7 @@ def test_send_confirmation_email_for_anonymous(mailoutbox):
             tzinfo=timezone.get_current_timezone(),
         ),
         production=production,
+        venue=venue,
     )
     booking = BookingFactory(
         status=Booking.BookingStatus.IN_PROGRESS,
@@ -1149,10 +1151,7 @@ def test_send_confirmation_email_for_anonymous(mailoutbox):
         "View Tickets (https://example.com%s" % booking.web_tickets_path in email.body
     )
     assert "Legally Ginger" in email.body
-    assert (
-        "opens at 20 October 2021 18:15 UTC for a 19:15 UTC start (please note that UTC might not be your current timezone)"
-        in email.body
-    )
+    assert "opens at 20 October 2021 19:15 BST for a 20:15 BST start" in email.body
     assert "reference (abc)" in email.body
 
 

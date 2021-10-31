@@ -84,4 +84,5 @@ repos:
             djangorestframework,
             django_tiptap,
             django_inlinecss,
+            timezonefinder
           ]
