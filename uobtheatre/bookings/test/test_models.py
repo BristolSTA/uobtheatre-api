@@ -7,6 +7,7 @@ import pytest
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
 from django.utils import timezone
+from graphql_relay.node.node import to_global_id
 
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
 from uobtheatre.bookings.test.factories import (
@@ -1141,3 +1142,18 @@ def test_send_confirmation_email_for_anonymous(mailoutbox):
     assert "Legally Ginger" in email.body
     assert "opens at 20 October 2021 18:15 UTC for a 19:15 UTC start" in email.body
     assert "reference (abc)" in email.body
+
+
+@pytest.mark.django_db
+def test_web_tickets_path_property():
+    booking = BookingFactory(reference="abcd1234")
+    ticket_ids = [
+        to_global_id("TicketNode", ticket.id)
+        for ticket in [TicketFactory(booking=booking) for _ in range(3)]
+    ]
+    performance_id = to_global_id("PerformanceNode", booking.performance.id)
+
+    assert (
+        booking.web_tickets_path
+        == f"/user/booking/abcd1234/tickets?performanceID={performance_id}&ticketID={ticket_ids[0]}&ticketID={ticket_ids[1]}&ticketID={ticket_ids[2]}"
+    )

@@ -9,6 +9,7 @@ from django.db.models.functions import Cast
 from django.db.models.query import QuerySet
 from django.utils import timezone
 from django.utils.functional import cached_property
+from graphql_relay.node.node import to_global_id
 
 from uobtheatre.discounts.models import ConcessionType, DiscountCombination
 from uobtheatre.mail.composer import MailComposer
@@ -554,6 +555,20 @@ class Booking(TimeStampedMixin, Payable, models.Model):
         self.save()
         self.send_confirmation_email()
 
+    @property
+    def web_tickets_path(self):
+        """Generates the path to the public tickets display page on the frontend for this booking"""
+        query_string = "?" + "&".join(
+            [
+                f"performanceID={to_global_id('PerformanceNode', self.performance.id)}",
+            ]
+            + [
+                f"ticketID={to_global_id('TicketNode', id)}"
+                for id in self.tickets.values_list("id", flat=True)
+            ]
+        )
+        return f"/user/booking/{self.reference}/tickets" + query_string
+
     def send_confirmation_email(self):
         """
         Send email confirmation which includes a link to the booking.
@@ -584,10 +599,10 @@ class Booking(TimeStampedMixin, Payable, models.Model):
             )
         )
 
+        composer.action(self.web_tickets_path, "View Tickets")
+
         if self.user.status.verified:
-            composer.action(
-                "/user/booking/%s" % self.reference, "View Tickets & Booking"
-            )
+            composer.action("/user/booking/%s" % self.reference, "View Booking")
 
         payment = self.payments.first()
         # If this booking includes a payment, we will include details of this payment as a reciept
