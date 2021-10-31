@@ -22,7 +22,7 @@ django-cors-headers==3.10.0
 django-configurations==2.2
 
 # Django config
-django-environ==0.8.0  # https://github.com/joke2k/django-environ
+django-environ==0.8.1  # https://github.com/joke2k/django-environ
 
 # Spreadsheet generation
 xlsxwriter==3.0.1
