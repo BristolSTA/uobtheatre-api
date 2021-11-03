@@ -1,10 +1,25 @@
+from typing import List
+from django.forms.models import (
+    ModelChoiceField,
+    model_to_dict,
+)
 import graphene
 from graphene_django import DjangoObjectType
+from graphene_django.forms.mutation import (
+    DjangoModelFormMutation,
+)
 from graphql.language.ast import IntValue, StringValue
 from graphql_relay.node.node import from_global_id
 
 from uobtheatre.utils.enums import GrapheneEnumMixin
-from uobtheatre.utils.exceptions import AuthException, SafeMutation
+from uobtheatre.utils.exceptions import (
+    AuthException,
+    GQLException,
+    GQLExceptions,
+    MutationException,
+    MutationResult,
+    SafeMutation,
+)
 
 
 class CustomDjangoObjectType(GrapheneEnumMixin, DjangoObjectType):
@@ -31,6 +46,81 @@ class AuthRequiredMixin(SafeMutation):
             return cls(errors=exception.resolve(), success=False)
 
         return super().mutate(root, info, **inputs)
+
+
+class SafeFormMutation(MutationResult, DjangoModelFormMutation):
+    class Meta:
+        abstract = True
+
+    @classmethod
+    def authorize_request(cls, root, info, **input):
+        return True
+
+    @classmethod
+    def on_success(cls, info, response):
+        pass
+
+    @classmethod
+    def get_object_instance(cls, root, info, **input):
+        kwargs = cls.get_form_kwargs(root, info, **input)
+
+        try:
+            return kwargs["instance"]
+        except KeyError:
+            return None
+
+    @classmethod
+    def mutate_and_get_payload(cls, root, info, **input):
+        if "id" in input:
+            input["id"] = from_global_id(input["id"])[1]
+
+        # Authorize
+        try:
+            if not cls.authorize_request(root, info, **input):
+                raise GQLException(message="Not authorized", code=401)
+
+        except MutationException as exception:
+            # These are our custom exceptions
+            return cls(errors=exception.resolve(), success=False)
+
+        # Fix for relay. Will convert any Django model input / choice fields from global IDs to local
+        form = cls.get_form(root, info, **input)
+        for (key, field) in form.fields.items():
+            if isinstance(field, ModelChoiceField) and form[key].value():
+                try:
+                    if isinstance(form[key].value(), List):
+                        input[key] = [from_global_id(item)[1] for item in input[key]]
+                    else:
+                        input[key] = from_global_id(form[key].value())[1]
+                except TypeError:
+                    pass
+
+        response = super().mutate_and_get_payload(root, info, **input)
+
+        if len(response.errors):
+            exceptions = GQLExceptions(
+                exceptions=[
+                    GQLException(message, field=error.field)
+                    for error in response.errors
+                    for message in error.messages
+                ]
+            )
+            return cls(errors=exceptions.resolve(), success=False)
+
+        cls.on_success(info, response)
+        return response
+
+    @classmethod
+    def get_form_kwargs(cls, root, info, **input):
+        kwargs = super().get_form_kwargs(root, info, **input)
+        endargs = {
+            "data": {
+                **(model_to_dict(kwargs["instance"]) if "instance" in kwargs else {}),
+                **kwargs["data"],
+            },
+            "instance": kwargs["instance"] if "instance" in kwargs else None,
+        }
+        return endargs
 
 
 class IdInputField(graphene.ID):

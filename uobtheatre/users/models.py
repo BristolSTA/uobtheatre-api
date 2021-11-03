@@ -3,7 +3,7 @@ from typing import Union
 
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from guardian.shortcuts import get_objects_for_user
+from guardian.shortcuts import assign_perm, get_objects_for_user
 
 from uobtheatre.users.abilities import AbilitiesMixin, OpenAdmin, OpenBoxoffice
 
@@ -48,6 +48,9 @@ class User(AbilitiesMixin, AbstractUser):
             bool: Whether the user has permission to access the object/model.
         """
         return super().has_perm(perm) or (super().has_perm(perm, obj) if obj else False)
+
+    def assign_perm(self, perm: str, obj=None):
+        return assign_perm(perm, self, obj)
 
     def get_objects_with_perm(self, permissions: Union[str, list[str]]):
         """

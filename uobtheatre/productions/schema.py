@@ -2,9 +2,10 @@ import django_filters
 import graphene
 from django.db.models.query_utils import Q
 from graphene import relay
+from graphene.types.field import Field
 from graphene_django import DjangoListField
 from graphene_django.filter import DjangoFilterConnectionField
-
+from guardian.shortcuts import assign_perm
 from uobtheatre.discounts.schema import ConcessionTypeNode, DiscountNode
 from uobtheatre.productions.models import (
     AudienceWarning,
@@ -16,9 +17,16 @@ from uobtheatre.productions.models import (
     Production,
     ProductionTeamMember,
 )
+from uobtheatre.productions.forms import CreateProductionForm, UpdateProductionForm
 from uobtheatre.users.abilities import PermissionsMixin
+from uobtheatre.users.schema import AuthMutation
 from uobtheatre.utils.filters import FilterSet
-from uobtheatre.utils.schema import DjangoObjectType, GrapheneEnumMixin
+from uobtheatre.utils.schema import (
+    AuthRequiredMixin,
+    DjangoObjectType,
+    GrapheneEnumMixin,
+    SafeFormMutation,
+)
 
 
 class CrewRoleNode(GrapheneEnumMixin, DjangoObjectType):
@@ -200,6 +208,37 @@ class ProductionNode(PermissionsMixin, GrapheneEnumMixin, DjangoObjectType):
         interfaces = (relay.Node,)
 
 
+class CreateProductionMutation(SafeFormMutation, AuthRequiredMixin):
+    production = Field(ProductionNode)
+
+    @classmethod
+    def authorize_request(cls, root, info, **input):
+        return info.context.user.has_perm("productions.add_production")
+
+    @classmethod
+    def on_success(cls, info, response):
+        info.context.user.assign_perm("view_production", response.production)
+        info.context.user.assign_perm("change_production", response.production)
+        info.context.user.assign_perm("sales", response.production)
+        info.context.user.assign_perm("boxoffice", response.production)
+
+    class Meta:
+        form_class = CreateProductionForm
+        exclude_fields = ("id",)
+
+
+class UpdateProductionMutation(SafeFormMutation, AuthRequiredMixin):
+    production = Field(ProductionNode)
+
+    @classmethod
+    def authorize_request(cls, root, info, **input):
+        production = cls.get_object_instance(root, info, **input)
+        return info.context.user.has_perm("change_production", production)
+
+    class Meta:
+        form_class = UpdateProductionForm
+
+
 class ConcessionTypeBookingType(graphene.ObjectType):
     """Node for ConcessionType which can be Booked.
 
@@ -360,3 +399,8 @@ class Query(graphene.ObjectType):
             return Production.objects.user_can_see(info.context.user).get(slug=slug)
         except Production.DoesNotExist:
             return None
+
+
+class Mutation(AuthMutation, graphene.ObjectType):
+    create_production = CreateProductionMutation.Field()
+    update_production = UpdateProductionMutation.Field()

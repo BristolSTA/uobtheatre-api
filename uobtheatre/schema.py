@@ -34,6 +34,7 @@ class Mutation(
     bookings_schema.Mutation,
     reports_schema.Mutation,
     payments_mutations.Mutation,
+    productions_schema.Mutation,
     graphene.ObjectType,
 ):
     """
