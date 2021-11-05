@@ -435,5 +435,4 @@ class SquareOnline(PaymentMethod, SquarePaymentMethodMixin):
         Returns:
             int: The processing fee
         """
-        print("Getting processing fee")
         return cls.payment_processing_fee(data or cls.get_payment(payment_id))
