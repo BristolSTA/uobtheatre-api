@@ -479,3 +479,7 @@ def test_square_pos_cancel_failure(mock_square):
 
     # Assert payment not deleted
     assert Payment.objects.filter(id=payment.id).exists()
+
+
+def test_manual_payment_method_processing_fee():
+    assert Cash.get_processing_fee(None) is None

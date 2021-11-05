@@ -48,7 +48,7 @@ def test_update_payment_from_square(mock_square):
             }
         },
     ):
-        payment.update_from_square()
+        payment.sync_payment_with_provider()
 
     payment.refresh_from_db()
     assert payment.provider_fee == 58
@@ -61,7 +61,7 @@ def test_update_payment_from_square_no_provider_id(mock_square):
         SquareOnline.client.payments,
         "get_payment",
     ) as mock:
-        payment.update_from_square()
+        payment.sync_payment_with_provider()
 
     mock.assert_not_called()
     assert payment.provider_fee == 0
@@ -87,7 +87,7 @@ def test_update_payment_from_square_no_processing_fee(mock_square):
             }
         },
     ):
-        payment.update_from_square()
+        payment.sync_payment_with_provider()
 
     payment.refresh_from_db()
     assert payment.provider_fee is None
@@ -98,7 +98,7 @@ def test_handle_update_payment_webhook_checkout(mock_square):
     payment = PaymentFactory(provider_fee=None, provider_payment_id="abc")
 
     with patch.object(
-        payment, "update_from_square_payment"
+        payment, "sync_payment_with_provider"
     ) as payment_update_mock, mock_square(
         SquarePOS.client.terminal,
         "get_terminal_checkout",
@@ -194,3 +194,27 @@ def test_provider_class_unknown():
     payment = Payment(provider="abc")
     with pytest.raises(StopIteration):
         payment.provider_class  # pylint: disable=pointless-statement
+
+
+@pytest.mark.django_db
+def test_sync_all_payments():
+    with_payment_fee = PaymentFactory(provider=SquareOnline.name, provider_fee=10)
+    different_provider = PaymentFactory(provider=Cash.name, provider_fee=None)
+
+    to_update = PaymentFactory(provider=SquareOnline.name, provider_fee=None)
+
+    with patch.object(SquareOnline, "get_processing_fee") as online_get, patch.object(
+        Cash, "get_processing_fee"
+    ) as cash_get:
+        online_get.return_value = 20
+        Payment.sync_all_payments()
+        cash_get.assert_not_called()
+        online_get.assert_called_once_with(to_update.provider_payment_id, data=None)
+
+    with_payment_fee.refresh_from_db()
+    different_provider.refresh_from_db()
+    to_update.refresh_from_db()
+
+    assert with_payment_fee.provider_fee == 10
+    assert different_provider.provider_fee is None
+    assert to_update.provider_fee == 20
