@@ -2,6 +2,7 @@
 import datetime
 import math
 from unittest.mock import patch
+from urllib.parse import quote_plus
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -1159,8 +1160,9 @@ def test_send_confirmation_email_for_anonymous(mailoutbox):
 def test_web_tickets_path_property():
     booking = BookingFactory(reference="abcd1234")
     ticket_ids = [
-        to_global_id("TicketNode", ticket.id)
-        for ticket in [TicketFactory(booking=booking) for _ in range(3)]
+        # Get URL safe global ids
+        quote_plus((to_global_id("TicketNode", ticket.id)))
+        for ticket in [TicketFactory(booking=booking, id=i) for i in range(3)]
     ]
     performance_id = to_global_id("PerformanceNode", booking.performance.id)
 

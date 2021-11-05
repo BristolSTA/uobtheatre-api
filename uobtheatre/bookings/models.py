@@ -1,5 +1,6 @@
 import math
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
+from urllib.parse import urlencode
 
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.aggregates import BoolAnd
@@ -558,16 +559,14 @@ class Booking(TimeStampedMixin, Payable, models.Model):
     @property
     def web_tickets_path(self):
         """Generates the path to the public tickets display page on the frontend for this booking"""
-        query_string = "?" + "&".join(
-            [
-                f"performanceID={to_global_id('PerformanceNode', self.performance.id)}",
-            ]
-            + [
-                f"ticketID={to_global_id('TicketNode', id)}"
+        params = {
+            "performanceID": to_global_id("PerformanceNode", self.performance.id),
+            "ticketID": [
+                to_global_id("TicketNode", id)
                 for id in self.tickets.values_list("id", flat=True)
-            ]
-        )
-        return f"/user/booking/{self.reference}/tickets" + query_string
+            ],
+        }
+        return f"/user/booking/{self.reference}/tickets?" + urlencode(params, True)
 
     def send_confirmation_email(self):
         """
