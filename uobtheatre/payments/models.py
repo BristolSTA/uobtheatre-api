@@ -143,7 +143,7 @@ class Payment(TimeStampedMixin, models.Model):
     def sync_payment_with_provider(self, data=None):
         """Sync the payment with the provider payment
 
-        NOTE: Current this method only updates the processing_fee of the
+        NOTE: Currently this method only updates the processing_fee of the
         payment.
         """
         if self.provider_payment_id is not None:
