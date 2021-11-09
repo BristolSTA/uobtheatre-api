@@ -19,7 +19,7 @@ pytz==2021.3
 django-cors-headers==3.10.0
 
 # TODO check if required
-django-configurations==2.2
+django-configurations==2.3.1
 
 # Django config
 django-environ==0.8.1  # https://github.com/joke2k/django-environ
