@@ -90,6 +90,7 @@ class Discount(models.Model):
             discount
             for discount in discounts
             if discount.get_concession_map() == self.get_concession_map()
+            and discount.percentage == self.percentage
         ]
         discounts_with_same_requirements_names = [
             discount.name for discount in discounts_with_same_requirements
