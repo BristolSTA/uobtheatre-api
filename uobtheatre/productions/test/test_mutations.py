@@ -243,7 +243,8 @@ def test_performance_mutation_update(gql_client):
     response = gql_client.execute(request)
     assert response["data"]["performance"]["success"] is True
     assert (
-        response["data"]["performance"]["performance"]["start"] == "2021-11-10T00:00:00"
+        response["data"]["performance"]["performance"]["start"]
+        == "2021-11-10T00:00:00+00:00"
     )
 
 
