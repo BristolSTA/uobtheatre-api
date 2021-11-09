@@ -180,6 +180,74 @@ def test_performance_mutation_create(gql_client, with_permission):
 
 
 @pytest.mark.django_db
+def test_performance_mutation_create_with_no_production(gql_client):
+    request = """
+        mutation {
+          performance(
+            input: {
+                doorsOpen: "2021-11-09T00:00:00"
+                start: "2021-11-09T00:00:00"
+                end: "2021-11-09T00:00:00"
+             }
+          ) {
+            success
+            performance {
+                id
+                production {
+                    name
+                }
+            }
+            errors {
+                ...on FieldError {
+                    message
+                    field
+                }
+                ... on NonFieldError {
+                    message
+                }
+            }
+         }
+        }
+    """
+
+    response = gql_client.login().execute(request)
+    assert response["data"]["performance"]["success"] is False
+    assert (
+        response["data"]["performance"]["errors"][0]["message"]
+        == "You are not authorized to perform this action"
+    )
+
+
+@pytest.mark.django_db
+def test_performance_mutation_update(gql_client):
+    performance = PerformanceFactory()
+    gql_client.login().user.assign_perm("change_production", performance.production)
+    request = """
+        mutation {
+          performance(
+            input: {
+                id: "%s"
+                start: "2021-11-10T00:00:00"
+             }
+          ) {
+            success
+            performance {
+                start
+            }
+         }
+        }
+    """ % (
+        to_global_id("PerformanceNode", performance.id),
+    )
+
+    response = gql_client.execute(request)
+    assert response["data"]["performance"]["success"] is True
+    assert (
+        response["data"]["performance"]["performance"]["start"] == "2021-11-10T00:00:00"
+    )
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     "with_permission,with_bookings", [(True, False), (True, True), (False, False)]
 )
