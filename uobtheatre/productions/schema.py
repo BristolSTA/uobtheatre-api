@@ -5,8 +5,9 @@ from graphene import relay
 from graphene.types.field import Field
 from graphene_django import DjangoListField
 from graphene_django.filter import DjangoFilterConnectionField
-from guardian.shortcuts import assign_perm
+
 from uobtheatre.discounts.schema import ConcessionTypeNode, DiscountNode
+from uobtheatre.productions.forms import PerformanceForm, ProductionForm
 from uobtheatre.productions.models import (
     AudienceWarning,
     CastMember,
@@ -17,7 +18,6 @@ from uobtheatre.productions.models import (
     Production,
     ProductionTeamMember,
 )
-from uobtheatre.productions.forms import CreateProductionForm, UpdateProductionForm
 from uobtheatre.users.abilities import PermissionsMixin
 from uobtheatre.users.schema import AuthMutation
 from uobtheatre.utils.filters import FilterSet
@@ -25,6 +25,7 @@ from uobtheatre.utils.schema import (
     AuthRequiredMixin,
     DjangoObjectType,
     GrapheneEnumMixin,
+    ModelDeletionMutation,
     SafeFormMutation,
 )
 
@@ -208,35 +209,20 @@ class ProductionNode(PermissionsMixin, GrapheneEnumMixin, DjangoObjectType):
         interfaces = (relay.Node,)
 
 
-class CreateProductionMutation(SafeFormMutation, AuthRequiredMixin):
+class ProductionMutation(SafeFormMutation, AuthRequiredMixin):
+    """Mutation to create or update a production"""
+
     production = Field(ProductionNode)
 
     @classmethod
-    def authorize_request(cls, root, info, **input):
-        return info.context.user.has_perm("productions.add_production")
-
-    @classmethod
-    def on_success(cls, info, response):
+    def on_creation(cls, info, response):
         info.context.user.assign_perm("view_production", response.production)
         info.context.user.assign_perm("change_production", response.production)
         info.context.user.assign_perm("sales", response.production)
         info.context.user.assign_perm("boxoffice", response.production)
 
     class Meta:
-        form_class = CreateProductionForm
-        exclude_fields = ("id",)
-
-
-class UpdateProductionMutation(SafeFormMutation, AuthRequiredMixin):
-    production = Field(ProductionNode)
-
-    @classmethod
-    def authorize_request(cls, root, info, **input):
-        production = cls.get_object_instance(root, info, **input)
-        return info.context.user.has_perm("change_production", production)
-
-    class Meta:
-        form_class = UpdateProductionForm
+        form_class = ProductionForm
 
 
 class ConcessionTypeBookingType(graphene.ObjectType):
@@ -382,6 +368,38 @@ class PerformanceNode(DjangoObjectType):
         exclude = ("performance_seat_groups",)
 
 
+class PerformanceMutation(SafeFormMutation, AuthRequiredMixin):
+    """Mutation to create or update a performance"""
+
+    performance = Field(PerformanceNode)
+
+    @classmethod
+    def authorize_request(cls, root, info, **mInput):
+        if not cls.is_creation:
+            # Check the user can access it currently
+            performance = cls.get_object_instance(root, info, **mInput)
+            return info.context.user.has_perm(
+                "change_production", performance.production
+            )
+
+        # Check user can access intended production
+        production = cls.get_python_value(root, info, "production", **mInput)
+        if not production:
+            return False
+
+        return info.context.user.has_perm("change_production", production)
+
+    class Meta:
+        form_class = PerformanceForm
+
+
+class DeletePerformanceMutation(ModelDeletionMutation):
+    """Mutation to delete a performance"""
+
+    class Meta:
+        model = Performance
+
+
 class Query(graphene.ObjectType):
     """Query for production module.
 
@@ -402,5 +420,6 @@ class Query(graphene.ObjectType):
 
 
 class Mutation(AuthMutation, graphene.ObjectType):
-    create_production = CreateProductionMutation.Field()
-    update_production = UpdateProductionMutation.Field()
+    production = ProductionMutation.Field()
+    performance = PerformanceMutation.Field()
+    delete_performance = DeletePerformanceMutation.Field()

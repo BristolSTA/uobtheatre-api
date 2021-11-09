@@ -170,6 +170,17 @@ class AuthorizationException(GQLException):
         super().__init__(message=message, code=403, field=field)
 
 
+class ReferencedException(GQLException):
+    """Thrown when a model can't be deleted because of restricted foreign key relations"""
+
+    def __init__(
+        self,
+        message="This model cannot be deleted because it is referenced by another",
+        field=None,
+    ):
+        super().__init__(message=message, code="REFERR", field=field)
+
+
 class SafeMutation(MutationResult, graphene.Mutation):
     """
     Extended graphene.Mutation.
@@ -189,7 +200,9 @@ class SafeMutation(MutationResult, graphene.Mutation):
             with transaction.atomic():
                 try:
                     return cls.resolve_mutation(root, info, **inputs)
-                except AttributeError:
+                except AttributeError as error:
+                    if not str(error).endswith("'resolve_mutation'"):
+                        raise error
                     return super().mutate(root, info, **inputs)
 
         except MutationException as exception:

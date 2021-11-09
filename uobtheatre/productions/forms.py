@@ -1,20 +1,8 @@
-from django.forms import ModelForm, CharField
-from uobtheatre.productions.models import Production
+from uobtheatre.productions.models import Performance, Production
+from uobtheatre.utils.forms import MutationForm
 
 
-class UpdateForm(ModelForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for (key, _) in self.fields.items():
-            self.fields[key].required = False
-
-    class Meta:
-        abstract = True
-
-
-class CreateProductionForm(ModelForm):
-    name = CharField(required=True)
-
+class ProductionForm(MutationForm):
     class Meta:
         model = Production
         fields = (
@@ -30,16 +18,16 @@ class CreateProductionForm(ModelForm):
         )
 
 
-class UpdateProductionForm(UpdateForm):
+class PerformanceForm(MutationForm):
     class Meta:
-        model = Production
+        model = Performance
         fields = (
-            "name",
-            "subtitle",
+            "venue",
+            "doors_open",
+            "start",
+            "end",
             "description",
-            "cover_image",
-            "poster_image",
-            "featured_image",
-            "age_rating",
-            "facebook_event",
+            "disabled",
+            "capacity",
+            "production",
         )

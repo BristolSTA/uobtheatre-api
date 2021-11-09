@@ -1,23 +1,23 @@
 from typing import List
-from django.forms.models import (
-    ModelChoiceField,
-    model_to_dict,
-)
+
 import graphene
+from django.db.models import RestrictedError
+from django.forms.models import ModelChoiceField
+from graphene.types.mutation import MutationOptions
 from graphene_django import DjangoObjectType
-from graphene_django.forms.mutation import (
-    DjangoModelFormMutation,
-)
+from graphene_django.forms.mutation import DjangoModelFormMutation
 from graphql.language.ast import IntValue, StringValue
 from graphql_relay.node.node import from_global_id
 
 from uobtheatre.utils.enums import GrapheneEnumMixin
 from uobtheatre.utils.exceptions import (
     AuthException,
+    AuthorizationException,
     GQLException,
     GQLExceptions,
     MutationException,
     MutationResult,
+    ReferencedException,
     SafeMutation,
 )
 
@@ -49,20 +49,43 @@ class AuthRequiredMixin(SafeMutation):
 
 
 class SafeFormMutation(MutationResult, DjangoModelFormMutation):
+    """Provides a wrapper around the DjangoModelFormMutation for use with out validation and authorization system"""
+
     class Meta:
         abstract = True
 
     @classmethod
-    def authorize_request(cls, root, info, **input):
-        return True
+    def __init_subclass_with_meta__(cls, *args, **kwargs) -> None:
+        cls.is_creation = True
+        super().__init_subclass_with_meta__(*args, **kwargs)
 
     @classmethod
-    def on_success(cls, info, response):
-        pass
+    # pylint: disable=W0212
+    def authorize_request(cls, root, info, **mInput):
+        """Authorize the request (pre-validation)"""
+        model_name = cls._meta.model._meta.model_name
+        app_label = cls._meta.model._meta.app_label
+        if not cls.is_creation:
+            instance = cls.get_object_instance(root, info, **mInput)
+            return info.context.user.has_perm("change_%s" % model_name, instance)
+        return info.context.user.has_perm("%s.add_%s" % (app_label, model_name))
 
     @classmethod
-    def get_object_instance(cls, root, info, **input):
-        kwargs = cls.get_form_kwargs(root, info, **input)
+    def on_success(cls, info, response, is_creation):
+        """Callback method run when the save is successful"""
+
+    @classmethod
+    def on_creation(cls, info, response):
+        """Callback method run when a creation save is successful"""
+
+    @classmethod
+    def on_update(cls, info, response):
+        """Callback method run when a update save is successful"""
+
+    @classmethod
+    def get_object_instance(cls, root, info, **mInput):
+        """Get the subject object's instance (if exists)"""
+        kwargs = cls.get_form_kwargs(root, info, **mInput)
 
         try:
             return kwargs["instance"]
@@ -70,32 +93,50 @@ class SafeFormMutation(MutationResult, DjangoModelFormMutation):
             return None
 
     @classmethod
-    def mutate_and_get_payload(cls, root, info, **input):
-        if "id" in input:
-            input["id"] = from_global_id(input["id"])[1]
+    def get_field(cls, root, info, key, **mInput):
+        return cls.get_form(root, info, **mInput)[key].field
+
+    @classmethod
+    def get_python_value(cls, root, info, key, **mInput):
+        return cls.get_field(root, info, key, **mInput).to_python(
+            cls.get_key_raw_value(root, info, key, **mInput)
+        )
+
+    @classmethod
+    def get_key_raw_value(cls, root, info, key, **mInput):
+        return cls.get_form(root, info, **mInput)[key].value()
+
+    @classmethod
+    def mutate_and_get_payload(cls, root, info, **mInput):
+        """Mutate and get payload override"""
+        if "id" in mInput:
+            mInput["id"] = from_global_id(mInput["id"])[1]
+            cls.is_creation = False
+        else:
+            cls.is_creation = True
+
+        # Fix for relay. Will convert any Django model input / choice fields from global IDs to local
+        form = cls.get_form(root, info, **mInput)
+        for (key, field) in form.fields.items():
+            if isinstance(field, ModelChoiceField) and form[key].value():
+                try:
+                    if isinstance(form[key].value(), List):
+                        mInput[key] = [from_global_id(item)[1] for item in mInput[key]]
+                    else:
+                        mInput[key] = from_global_id(form[key].value())[1]
+                except TypeError:
+                    pass
 
         # Authorize
         try:
-            if not cls.authorize_request(root, info, **input):
-                raise GQLException(message="Not authorized", code=401)
+            if not cls.authorize_request(root, info, **mInput):
+                raise AuthorizationException
 
         except MutationException as exception:
             # These are our custom exceptions
             return cls(errors=exception.resolve(), success=False)
 
-        # Fix for relay. Will convert any Django model input / choice fields from global IDs to local
-        form = cls.get_form(root, info, **input)
-        for (key, field) in form.fields.items():
-            if isinstance(field, ModelChoiceField) and form[key].value():
-                try:
-                    if isinstance(form[key].value(), List):
-                        input[key] = [from_global_id(item)[1] for item in input[key]]
-                    else:
-                        input[key] = from_global_id(form[key].value())[1]
-                except TypeError:
-                    pass
-
-        response = super().mutate_and_get_payload(root, info, **input)
+        response = super().mutate_and_get_payload(root, info, **mInput)
 
         if len(response.errors):
             exceptions = GQLExceptions(
@@ -107,20 +148,13 @@ class SafeFormMutation(MutationResult, DjangoModelFormMutation):
             )
             return cls(errors=exceptions.resolve(), success=False)
 
-        cls.on_success(info, response)
-        return response
+        cls.on_success(info, response, cls.is_creation)
+        if cls.is_creation:
+            cls.on_creation(info, response)
+        else:
+            cls.on_update(info, response)
 
-    @classmethod
-    def get_form_kwargs(cls, root, info, **input):
-        kwargs = super().get_form_kwargs(root, info, **input)
-        endargs = {
-            "data": {
-                **(model_to_dict(kwargs["instance"]) if "instance" in kwargs else {}),
-                **kwargs["data"],
-            },
-            "instance": kwargs["instance"] if "instance" in kwargs else None,
-        }
-        return endargs
+        return response
 
 
 class IdInputField(graphene.ID):
@@ -150,3 +184,57 @@ class IdInputField(graphene.ID):
         it to the local integer id.
         """
         return from_global_id(ast)[1]
+
+
+class ModelDeletionMutationOptions(MutationOptions):
+    model = None
+
+
+class ModelDeletionMutation(AuthRequiredMixin):
+    """Generic model deletion mutation. Simply set the model in meta and you are away!"""
+
+    class Meta:
+        abstract = True
+
+    class Arguments:
+        id = IdInputField()
+
+    @classmethod
+    def __init_subclass_with_meta__(cls, *args, model=None, **options):
+        """Inits the subclass with meta..."""
+        if not model:
+            raise Exception("model is required for ModelDeletionMutation")
+
+        _meta = ModelDeletionMutationOptions(cls)
+        _meta.model = model
+
+        super().__init_subclass_with_meta__(_meta=_meta, *args, **options)
+
+    @classmethod
+    # pylint: disable=W0212
+    def authorize_request(cls, info, instance):
+        """Authorize the request"""
+        if not info.context.user.has_perm(
+            "delete_%s" % cls._meta.model._meta.model_name, instance
+        ):
+            raise AuthorizationException
+
+    @classmethod
+    # pylint: disable=C0103,W0622
+    def resolve_mutation(
+        cls,
+        _,
+        info,
+        id: int,
+    ):
+        model_instance = cls._meta.model.objects.get(id=id)
+
+        # Authorise
+        cls.authorize_request(info, model_instance)
+
+        try:
+            model_instance.delete()
+        except RestrictedError as error:
+            raise ReferencedException() from error
+
+        return ModelDeletionMutation()
