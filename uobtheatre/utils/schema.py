@@ -89,7 +89,7 @@ class SafeFormMutation(MutationResult, DjangoModelFormMutation):
 
         try:
             return kwargs["instance"]
-        except KeyError:
+        except KeyError:  # pragma: no cover
             return None
 
     @classmethod
@@ -118,7 +118,9 @@ class SafeFormMutation(MutationResult, DjangoModelFormMutation):
         # Fix for relay. Will convert any Django model input / choice fields from global IDs to local
         form = cls.get_form(root, info, **mInput)
         for (key, field) in form.fields.items():
-            if isinstance(field, ModelChoiceField) and form[key].value():
+            if (
+                isinstance(field, ModelChoiceField) and form[key].value()
+            ):  # pragma: no cover
                 try:
                     if isinstance(form[key].value(), List):
                         mInput[key] = [from_global_id(item)[1] for item in mInput[key]]
@@ -200,7 +202,9 @@ class ModelDeletionMutation(AuthRequiredMixin):
         id = IdInputField()
 
     @classmethod
-    def __init_subclass_with_meta__(cls, *args, model=None, **options):
+    def __init_subclass_with_meta__(
+        cls, *args, model=None, **options
+    ):  # pragma: no cover
         """Inits the subclass with meta..."""
         if not model:
             raise Exception("model is required for ModelDeletionMutation")

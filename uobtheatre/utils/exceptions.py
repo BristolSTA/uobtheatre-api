@@ -201,7 +201,9 @@ class SafeMutation(MutationResult, graphene.Mutation):
                 try:
                     return cls.resolve_mutation(root, info, **inputs)
                 except AttributeError as error:
-                    if not str(error).endswith("'resolve_mutation'"):
+                    if not str(error).endswith(
+                        "'resolve_mutation'"
+                    ):  # pragma: no cover
                         raise error
                     return super().mutate(root, info, **inputs)
 

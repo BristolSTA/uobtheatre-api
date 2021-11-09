@@ -24,7 +24,7 @@ class MutationForm(ModelForm):
                 value = field.widget.value_from_datadict(
                     self.data, self.files, self.add_prefix(name)
                 )
-            try:
+            try:  # pragma: no cover
                 if isinstance(field, FileField):
                     initial = self.get_initial_for_field(field, name)
                     value = field.clean(value, initial)
