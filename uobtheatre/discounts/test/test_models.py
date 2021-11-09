@@ -1,7 +1,7 @@
 import pytest
 from django.core.exceptions import ValidationError
 
-from uobtheatre.discounts.models import DiscountRequirement
+from uobtheatre.discounts.models import Discount, DiscountRequirement
 from uobtheatre.discounts.test.factories import (
     ConcessionTypeFactory,
     DiscountFactory,
@@ -55,6 +55,15 @@ def test_discount_with_same_requirements_is_not_unique(num_requirements):
         ],
         bulk=False,
     )
+
+    with pytest.raises(ValidationError):
+        dis_2.validate_unique()
+
+
+@pytest.mark.django_db
+def test_discount_without_exclusion_unique_requirement():
+    DiscountFactory(percentage=0.2)
+    dis_2 = Discount(percentage=0.2)
 
     with pytest.raises(ValidationError):
         dis_2.validate_unique()
