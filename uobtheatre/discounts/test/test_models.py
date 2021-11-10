@@ -43,7 +43,7 @@ def test_cannot_create_2_discounts_with_the_same_requirements():
     "num_requirements,same_performance",
     [(0, False), (1, False), (2, False), (0, True), (1, True), (2, True)],
 )
-def test_discount_with_same_requirements_same_performance(
+def test_discount_with_requirements_and_performances(
     num_requirements, same_performance
 ):
     concessions = [ConcessionTypeFactory() for _ in range(num_requirements)]
