@@ -208,7 +208,7 @@ class OutstandingSocietyPayments(Report):
             [
                 "Society ID",
                 "Society Name",
-                "Total Ammount Due",
+                "Total Amount Due",
             ],
         )
 
