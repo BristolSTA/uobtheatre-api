@@ -7,7 +7,12 @@ from graphene_django import DjangoListField
 from graphene_django.filter import DjangoFilterConnectionField
 
 from uobtheatre.discounts.schema import ConcessionTypeNode, DiscountNode
-from uobtheatre.productions.forms import PerformanceForm, ProductionForm
+from uobtheatre.productions.abilities import EditProductionObjects
+from uobtheatre.productions.forms import (
+    PerformanceForm,
+    PerformanceSeatGroupForm,
+    ProductionForm,
+)
 from uobtheatre.productions.models import (
     AudienceWarning,
     CastMember,
@@ -223,6 +228,7 @@ class ProductionMutation(SafeFormMutation, AuthRequiredMixin):
 
     class Meta:
         form_class = ProductionForm
+        update_ability = EditProductionObjects
 
 
 class ConcessionTypeBookingType(graphene.ObjectType):
@@ -263,6 +269,8 @@ class PerformanceSeatGroupNode(DjangoObjectType):
             "capacity_remaining",
             "concession_types",
             "seat_group",
+            "performance",
+            "price",
         )
         filter_fields = {}  # type: ignore
         interfaces = (relay.Node,)
@@ -375,19 +383,19 @@ class PerformanceMutation(SafeFormMutation, AuthRequiredMixin):
 
     @classmethod
     def authorize_request(cls, root, info, **mInput):
+        intended_production = cls.get_python_value(root, info, "production", **mInput)
         if not cls.is_creation:
             # Check the user can access it currently
-            performance = cls.get_object_instance(root, info, **mInput)
-            return info.context.user.has_perm(
-                "change_production", performance.production
-            )
+            production = cls.get_object_instance(root, info, **mInput).production
+        else:
+            # Check user can access intended production
+            if not intended_production:
+                return False
 
-        # Check user can access intended production
-        production = cls.get_python_value(root, info, "production", **mInput)
-        if not production:
-            return False
-
-        return info.context.user.has_perm("change_production", production)
+        return EditProductionObjects.user_has(
+            info.context.user,
+            intended_production if intended_production else production,
+        )
 
     class Meta:
         form_class = PerformanceForm
@@ -398,6 +406,47 @@ class DeletePerformanceMutation(ModelDeletionMutation):
 
     class Meta:
         model = Performance
+
+
+class PerformanceSeatGroupMutation(SafeFormMutation, AuthRequiredMixin):
+    """Mutation to create or update a performance seat group"""
+
+    performanceSeatGroup = Field(PerformanceSeatGroupNode)
+
+    @classmethod
+    def authorize_request(cls, root, info, **mInput):
+        intended_performance = cls.get_python_value(root, info, "performance", **mInput)
+        if not cls.is_creation:
+            # Check the user can access it currently
+            production = cls.get_object_instance(
+                root, info, **mInput
+            ).performance.production
+        else:
+            # Check user can access intended production
+            if not intended_performance:
+                return False
+
+        return EditProductionObjects.user_has(
+            info.context.user,
+            intended_performance.production if intended_performance else production,
+        )
+
+    class Meta:
+        form_class = PerformanceSeatGroupForm
+
+
+class DeletePerformanceSeatGroupMutation(ModelDeletionMutation):
+    """Mutation to delete a performance seat group"""
+
+    @classmethod
+    def authorize_request(cls, info, instance):
+        return EditProductionObjects.user_has(
+            info.context.user,
+            instance.performance.production,
+        )
+
+    class Meta:
+        model = PerformanceSeatGroup
 
 
 class Query(graphene.ObjectType):
@@ -420,6 +469,12 @@ class Query(graphene.ObjectType):
 
 
 class Mutation(AuthMutation, graphene.ObjectType):
+    """Mutations for the productions module"""
+
     production = ProductionMutation.Field()
+
     performance = PerformanceMutation.Field()
     delete_performance = DeletePerformanceMutation.Field()
+
+    performance_seat_group = PerformanceSeatGroupMutation.Field()
+    delete_performance_seat_group = DeletePerformanceSeatGroupMutation.Field()

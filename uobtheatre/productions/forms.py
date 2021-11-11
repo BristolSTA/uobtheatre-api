@@ -1,4 +1,4 @@
-from uobtheatre.productions.models import Performance, Production
+from uobtheatre.productions.models import Performance, PerformanceSeatGroup, Production
 from uobtheatre.utils.forms import MutationForm
 
 
@@ -30,4 +30,15 @@ class PerformanceForm(MutationForm):
             "disabled",
             "capacity",
             "production",
+        )
+
+
+class PerformanceSeatGroupForm(MutationForm):
+    class Meta:
+        model = PerformanceSeatGroup
+        fields = (
+            "seat_group",
+            "performance",
+            "price",
+            "capacity",
         )

@@ -9,6 +9,7 @@ from graphene_django.forms.mutation import DjangoModelFormMutation
 from graphql.language.ast import IntValue, StringValue
 from graphql_relay.node.node import from_global_id
 
+from uobtheatre.users.abilities import Ability
 from uobtheatre.utils.enums import GrapheneEnumMixin
 from uobtheatre.utils.exceptions import (
     AuthException,
@@ -55,8 +56,13 @@ class SafeFormMutation(MutationResult, DjangoModelFormMutation):
         abstract = True
 
     @classmethod
-    def __init_subclass_with_meta__(cls, *args, **kwargs) -> None:
+    # pylint: disable=C0116
+    def __init_subclass_with_meta__(
+        cls, *args, create_ability=None, update_ability=None, **kwargs
+    ) -> None:
         cls.is_creation = True
+        cls.create_ability = create_ability
+        cls.update_ability = update_ability
         super().__init_subclass_with_meta__(*args, **kwargs)
 
     @classmethod
@@ -65,10 +71,21 @@ class SafeFormMutation(MutationResult, DjangoModelFormMutation):
         """Authorize the request (pre-validation)"""
         model_name = cls._meta.model._meta.model_name
         app_label = cls._meta.model._meta.app_label
+        update_ability: Ability = cls.update_ability
+        create_ability: Ability = cls.create_ability
+
         if not cls.is_creation:
             instance = cls.get_object_instance(root, info, **mInput)
-            return info.context.user.has_perm("change_%s" % model_name, instance)
-        return info.context.user.has_perm("%s.add_%s" % (app_label, model_name))
+            return (
+                info.context.user.has_perm("change_%s" % model_name, instance)
+                if not update_ability
+                else update_ability.user_has(info.context.user, instance)
+            )
+        return (
+            info.context.user.has_perm("%s.add_%s" % (app_label, model_name))
+            if not create_ability
+            else create_ability.user_has(info.context.user, None)
+        )
 
     @classmethod
     def on_success(cls, info, response, is_creation):
@@ -190,6 +207,7 @@ class IdInputField(graphene.ID):
 
 class ModelDeletionMutationOptions(MutationOptions):
     model = None
+    ability = None
 
 
 class ModelDeletionMutation(AuthRequiredMixin):
@@ -203,7 +221,7 @@ class ModelDeletionMutation(AuthRequiredMixin):
 
     @classmethod
     def __init_subclass_with_meta__(
-        cls, *args, model=None, **options
+        cls, *args, model=None, ability=None, **options
     ):  # pragma: no cover
         """Inits the subclass with meta..."""
         if not model:
@@ -211,6 +229,7 @@ class ModelDeletionMutation(AuthRequiredMixin):
 
         _meta = ModelDeletionMutationOptions(cls)
         _meta.model = model
+        _meta.ability = ability
 
         super().__init_subclass_with_meta__(_meta=_meta, *args, **options)
 
@@ -218,10 +237,14 @@ class ModelDeletionMutation(AuthRequiredMixin):
     # pylint: disable=W0212
     def authorize_request(cls, info, instance):
         """Authorize the request"""
+        if cls._meta.ability:
+            return cls._meta.ability.user_has(info.context.user, instance)
+
         if not info.context.user.has_perm(
             "delete_%s" % cls._meta.model._meta.model_name, instance
         ):
             raise AuthorizationException
+        return True
 
     @classmethod
     # pylint: disable=C0103,W0622

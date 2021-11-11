@@ -120,11 +120,15 @@ class Production(TimeStampedMixin, models.Model):
         Image,
         on_delete=models.RESTRICT,
         related_name="production_poster_images",
+        null=True,
+        blank=True,
     )
     featured_image = models.ForeignKey(
         Image,
         on_delete=models.RESTRICT,
         related_name="production_featured_images",
+        null=True,
+        blank=True,
     )
 
     class Status(models.TextChoices):
@@ -279,6 +283,8 @@ class Production(TimeStampedMixin, models.Model):
         permissions = (
             ("boxoffice", "Can use boxoffice for this production"),
             ("sales", "Can view sales for this production"),
+            ("force_change_production", "Can edit production once live"),
+            ("approve_production", "Can edit production once live"),
         )
 
 

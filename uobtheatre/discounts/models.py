@@ -151,7 +151,9 @@ class DiscountRequirement(models.Model):
     discount = models.ForeignKey(
         Discount, on_delete=models.CASCADE, related_name="requirements"
     )
-    concession_type = models.ForeignKey(ConcessionType, on_delete=models.CASCADE)
+    concession_type = models.ForeignKey(
+        ConcessionType, on_delete=models.CASCADE, related_name="discount_requirements"
+    )
 
 
 class DiscountCombination:
