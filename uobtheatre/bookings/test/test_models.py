@@ -2,11 +2,14 @@
 import datetime
 import math
 from unittest.mock import patch
+from urllib.parse import quote_plus
 
 import pytest
 from django.db.utils import IntegrityError
 from django.utils import timezone
+from graphql_relay.node.node import to_global_id
 
+from uobtheatre.addresses.test.factories import AddressFactory
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
@@ -1020,18 +1023,20 @@ def test_complete():
 )
 def test_send_confirmation_email(mailoutbox, with_payment, provider_payment_id):
     production = ProductionFactory(name="Legally Ginger")
+    venue = VenueFactory(address=AddressFactory(latitude=51.4, longitude=-2.61))
     performance = PerformanceFactory(
+        venue=venue,
         doors_open=datetime.datetime(
-            day=20,
-            month=10,
+            day=4,
+            month=11,
             year=2021,
             hour=18,
             minute=15,
             tzinfo=timezone.get_current_timezone(),
         ),
         start=datetime.datetime(
-            day=20,
-            month=10,
+            day=4,
+            month=11,
             year=2021,
             hour=19,
             minute=15,
@@ -1059,9 +1064,12 @@ def test_send_confirmation_email(mailoutbox, with_payment, provider_payment_id):
     assert len(mailoutbox) == 1
     email = mailoutbox[0]
     assert email.subject == "Your booking is confirmed!"
-    assert "https://example.com/user/booking/abc" in email.body
+    assert "View Booking (https://example.com/user/booking/abc" in email.body
+    assert (
+        "View Tickets (https://example.com%s" % booking.web_tickets_path in email.body
+    )
     assert "Legally Ginger" in email.body
-    assert "opens at 20 October 2021 18:15 UTC for a 19:15 UTC start" in email.body
+    assert "opens at 04 November 2021 18:15 GMT for a 19:15 GMT start" in email.body
     if with_payment:
         assert "Payment Information" in email.body
         assert "10.00 GBP" in email.body
@@ -1077,6 +1085,7 @@ def test_send_confirmation_email(mailoutbox, with_payment, provider_payment_id):
 @pytest.mark.django_db
 def test_send_confirmation_email_for_anonymous(mailoutbox):
     production = ProductionFactory(name="Legally Ginger")
+    venue = VenueFactory(address=AddressFactory(latitude=51.4, longitude=-2.61))
     performance = PerformanceFactory(
         doors_open=datetime.datetime(
             day=20,
@@ -1095,6 +1104,7 @@ def test_send_confirmation_email_for_anonymous(mailoutbox):
             tzinfo=timezone.get_current_timezone(),
         ),
         production=production,
+        venue=venue,
     )
     booking = BookingFactory(
         status=Booking.BookingStatus.IN_PROGRESS,
@@ -1107,7 +1117,26 @@ def test_send_confirmation_email_for_anonymous(mailoutbox):
     assert len(mailoutbox) == 1
     email = mailoutbox[0]
     assert email.subject == "Your booking is confirmed!"
-    assert "https://example.com/user/booking/abc" not in email.body
+    assert "View Booking (https://example.com/user/booking/abc" not in email.body
+    assert (
+        "View Tickets (https://example.com%s" % booking.web_tickets_path in email.body
+    )
     assert "Legally Ginger" in email.body
-    assert "opens at 20 October 2021 18:15 UTC for a 19:15 UTC start" in email.body
+    assert "opens at 20 October 2021 19:15 BST for a 20:15 BST start" in email.body
     assert "reference (abc)" in email.body
+
+
+@pytest.mark.django_db
+def test_web_tickets_path_property():
+    booking = BookingFactory(reference="abcd1234")
+    ticket_ids = [
+        # Get URL safe global ids
+        quote_plus((to_global_id("TicketNode", ticket.id)))
+        for ticket in [TicketFactory(booking=booking, id=i) for i in range(3)]
+    ]
+    performance_id = to_global_id("PerformanceNode", booking.performance.id)
+
+    assert (
+        booking.web_tickets_path
+        == f"/user/booking/abcd1234/tickets?performanceID={performance_id}&ticketID={ticket_ids[0]}&ticketID={ticket_ids[1]}&ticketID={ticket_ids[2]}"
+    )
