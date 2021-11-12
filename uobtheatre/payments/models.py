@@ -97,9 +97,18 @@ class Payment(TimeStampedMixin, models.Model):
     app_fee = models.IntegerField(null=True, blank=True)
 
     @classmethod
-    def sync_all_payments(cls):
+    def sync_payments(cls):
+        """
+        Sync all (non manual) payments with their providers. Currently the only
+        syncing we do is for the processing fee.
+        """
+
         for payment in cls.objects.filter(
-            provider_fee=None, provider__in=[SquareOnline.name, SquarePOS.name]
+            provider_fee=None,
+            provider__in=[
+                method.name
+                for method in PaymentMethod.non_manual_methods  # pylint: disable=not-an-iterable
+            ],
         ):
             payment.sync_payment_with_provider()
 

@@ -204,7 +204,7 @@ def test_period_totals_breakdown_report():
     booking_3 = payment_3.pay_object
 
     # Generate report that covers this period
-    with patch.object(Payment, "sync_all_payments") as mock_sync:
+    with patch.object(Payment, "sync_payments") as mock_sync:
         report = PeriodTotalsBreakdown(
             datetime.fromisoformat("2021-09-08T00:00:00"),
             datetime.fromisoformat("2021-09-08T23:00:00"),
@@ -270,7 +270,7 @@ def test_outstanding_society_payments_report():
     society_1 = Society.objects.all()[0]
     production_1 = Production.objects.all()[0]
     # NB: As production 2 is not "closed", it shouldn't show in this report
-    with patch.object(Payment, "sync_all_payments") as mock_sync:
+    with patch.object(Payment, "sync_payments") as mock_sync:
         report = OutstandingSocietyPayments()
 
     mock_sync.assert_called_once()

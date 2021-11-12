@@ -8,6 +8,7 @@ from uobtheatre.payments.models import Payment
 from uobtheatre.payments.payment_methods import (
     Card,
     Cash,
+    ManualPaymentMethodMixin,
     PaymentMethod,
     SquareOnline,
     SquarePaymentMethodMixin,
@@ -25,6 +26,16 @@ def test_payment_method_all():
         SquarePOS,
         SquareOnline,
     ]
+
+
+def test_payment_method_non_manual():
+    assert (
+        PaymentMethod.non_manual_methods  # pylint: disable=comparison-with-callable
+        == [
+            SquarePOS,
+            SquareOnline,
+        ]
+    )
 
 
 def test_payment_method_choice():

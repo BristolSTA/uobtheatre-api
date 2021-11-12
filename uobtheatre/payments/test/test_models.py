@@ -207,7 +207,7 @@ def test_sync_all_payments():
         Cash, "get_processing_fee"
     ) as cash_get:
         online_get.return_value = 20
-        Payment.sync_all_payments()
+        Payment.sync_payments()
         cash_get.assert_not_called()
         online_get.assert_called_once_with(to_update.provider_payment_id, data=None)
 

@@ -33,6 +33,11 @@ class PaymentMethod(abc.ABC):
         cls.name = PaymentMethod.generate_name(cls.__name__)
         cls.__all__.append(cls)
 
+    @classmethod
+    @property
+    def non_manual_methods(cls) -> list[Type["PaymentMethod"]]:
+        return [method for method in cls.__all__ if not method.is_manual]
+
     @staticmethod
     def generate_name(name):
         name = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1_\2", name)
@@ -83,6 +88,11 @@ class PaymentMethod(abc.ABC):
             app_fee=app_fee,
             **kwargs,
         )
+
+    @classmethod
+    @property
+    def is_manual(cls):
+        return issubclass(cls, ManualPaymentMethodMixin)
 
 
 class SquarePaymentMethodMixin(abc.ABC):
