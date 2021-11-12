@@ -867,12 +867,12 @@ def test_production_search_filter(gql_client, query, results):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "logged_in",
-    [(True), (False)],
+    "logged_in,status",
+    [(True, "DRAFT"), (True, "PENDING"), (False, "DRAFT"), (False, "PENDING")],
 )
-def test_productions_are_filtered_out(logged_in, gql_client):
+def test_productions_are_filtered_out(logged_in, status, gql_client):
     _ = [ProductionFactory() for _ in range(3)]
-    draft_production = ProductionFactory(status=Production.Status.DRAFT, slug="my-show")
+    draft_production = ProductionFactory(status=status, slug="my-show")
 
     request = """
         {
@@ -929,14 +929,12 @@ def test_productions_are_shown_with_permission(gql_client):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "logged_in",
-    [(True), (False)],
+    "logged_in,status",
+    [(True, "DRAFT"), (True, "PENDING"), (False, "DRAFT"), (False, "PENDING")],
 )
-def test_performances_are_filtered_out(logged_in, gql_client):
+def test_performances_are_filtered_out(logged_in, status, gql_client):
     _ = [PerformanceFactory() for _ in range(3)]
-    draft_performance = PerformanceFactory(
-        production=ProductionFactory(status=Production.Status.DRAFT)
-    )
+    draft_performance = PerformanceFactory(production=ProductionFactory(status=status))
 
     request = """
         {

@@ -88,7 +88,8 @@ class ProductionQuerySet(QuerySet):
             user, "change_production", self
         ).values_list("id", flat=True)
         return self.filter(
-            ~Q(status=Production.Status.DRAFT) | Q(id__in=productions_user_can_edit)
+            ~Q(status__in=[Production.Status.DRAFT, Production.Status.PENDING])
+            | Q(id__in=productions_user_can_edit)
         )
 
 
