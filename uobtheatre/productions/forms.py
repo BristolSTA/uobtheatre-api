@@ -8,6 +8,7 @@ class ProductionForm(MutationForm):
         fields = (
             "name",
             "subtitle",
+            "society",
             "description",
             "cover_image",
             "poster_image",

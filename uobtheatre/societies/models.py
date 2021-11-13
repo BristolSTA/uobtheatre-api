@@ -26,3 +26,6 @@ class Society(TimeStampedMixin, models.Model):
 
     def __str__(self):
         return str(self.name)
+
+    class Meta:
+        permissions = (("add_production", "Can add productions for this society"),)

@@ -1,9 +1,35 @@
 import pytest
 from guardian.shortcuts import assign_perm
 
-from uobtheatre.productions.abilities import EditProductionObjects
+from uobtheatre.productions.abilities import AddProduction, EditProductionObjects
 from uobtheatre.productions.test.factories import ProductionFactory
+from uobtheatre.societies.test.factories import SocietyFactory
 from uobtheatre.users.test.factories import UserFactory
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "society_permissions,global_permissions,is_superuser,expected_user_has",
+    [
+        ([], [], False, False),
+        ([], [], True, True),
+        (["add_production"], [], False, True),
+        ([], ["societies.add_production"], False, True),
+        ([], ["productions.add_production"], False, True),
+    ],
+)
+def test_add_production(
+    society_permissions, global_permissions, is_superuser, expected_user_has
+):
+    user = UserFactory(is_superuser=is_superuser)
+    society = SocietyFactory()
+
+    for perm in society_permissions:
+        assign_perm(perm, user, society)
+    for perm in global_permissions:
+        assign_perm(perm, user)
+
+    assert AddProduction.user_has(user, None) is expected_user_has
 
 
 @pytest.mark.django_db

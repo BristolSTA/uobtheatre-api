@@ -7,7 +7,7 @@ from graphene_django import DjangoListField
 from graphene_django.filter import DjangoFilterConnectionField
 
 from uobtheatre.discounts.schema import ConcessionTypeNode, DiscountNode
-from uobtheatre.productions.abilities import EditProductionObjects
+from uobtheatre.productions.abilities import AddProduction, EditProductionObjects
 from uobtheatre.productions.forms import (
     PerformanceForm,
     PerformanceSeatGroupForm,
@@ -220,6 +220,23 @@ class ProductionMutation(SafeFormMutation, AuthRequiredMixin):
     production = Field(ProductionNode)
 
     @classmethod
+    def authorize_request(cls, root, info, **mInput):
+        return super().authorize_request(
+            root, info, **mInput
+        ) and cls.authorize_society_part(root, info, **mInput)
+
+    @classmethod
+    def authorize_society_part(cls, root, info, **mInput):
+        """Authorise the society parameter if passed"""
+        new_society = cls.get_python_value(root, info, "society", **mInput)
+        has_perm_new_society = (
+            info.context.user.has_perm("add_production", new_society)
+            if new_society
+            else True
+        )
+        return has_perm_new_society
+
+    @classmethod
     def on_creation(cls, info, response):
         info.context.user.assign_perm("view_production", response.production)
         info.context.user.assign_perm("change_production", response.production)
@@ -228,6 +245,7 @@ class ProductionMutation(SafeFormMutation, AuthRequiredMixin):
 
     class Meta:
         form_class = ProductionForm
+        create_ability = AddProduction
         update_ability = EditProductionObjects
 
 
@@ -383,19 +401,28 @@ class PerformanceMutation(SafeFormMutation, AuthRequiredMixin):
 
     @classmethod
     def authorize_request(cls, root, info, **mInput):
-        intended_production = cls.get_python_value(root, info, "production", **mInput)
-        if not cls.is_creation:
-            # Check the user can access it currently
-            production = cls.get_object_instance(root, info, **mInput).production
-        else:
-            # Check user can access intended production
-            if not intended_production:
-                return False
+        return cls.authorize_production_part(root, info, **mInput)
 
-        return EditProductionObjects.user_has(
-            info.context.user,
-            intended_production if intended_production else production,
+    @classmethod
+    def authorize_production_part(cls, root, info, **mInput):
+        """Authorised the production part (exisiting and prodivded input)"""
+        new_production = cls.get_python_value(root, info, "production", **mInput)
+        has_perm_new_production = (
+            EditProductionObjects.user_has(info.context.user, new_production)
+            if new_production
+            else True
         )
+
+        if cls.is_creation:
+            # If this is a creation operation, we care that there is a new production specified via args, and that the user has edit ability on this production
+            return has_perm_new_production and new_production
+
+        # For update operations, we care that the user has permissions on both the currently assigned production, and the new production (if provided)
+        current_production = cls.get_object_instance(root, info, **mInput).production
+        has_perm_current_production = EditProductionObjects.user_has(
+            info.context.user, current_production
+        )
+        return has_perm_new_production and has_perm_current_production
 
     class Meta:
         form_class = PerformanceForm
@@ -415,21 +442,25 @@ class PerformanceSeatGroupMutation(SafeFormMutation, AuthRequiredMixin):
 
     @classmethod
     def authorize_request(cls, root, info, **mInput):
-        intended_performance = cls.get_python_value(root, info, "performance", **mInput)
-        if not cls.is_creation:
-            # Check the user can access it currently
-            production = cls.get_object_instance(
-                root, info, **mInput
-            ).performance.production
-        else:
-            # Check user can access intended production
-            if not intended_performance:
-                return False
-
-        return EditProductionObjects.user_has(
-            info.context.user,
-            intended_performance.production if intended_performance else production,
+        new_performance = cls.get_python_value(root, info, "performance", **mInput)
+        has_perm_new_performance = (
+            EditProductionObjects.user_has(info.context.user, new_performance)
+            if new_performance
+            else True
         )
+
+        if cls.is_creation:
+            # If this is a creation operation, we care that there is a new performance specified via args, and that the user has edit ability on this production
+            return has_perm_new_performance and new_performance
+
+        # For update operations, we care that the user has permissions on both the currently assigned performance, and the new performance (if provided)
+        current_performance = cls.get_object_instance(
+            root, info, **mInput
+        ).performance.production
+        has_perm_current_performance = EditProductionObjects.user_has(
+            info.context.user, current_performance
+        )
+        return has_perm_new_performance and has_perm_current_performance
 
     class Meta:
         form_class = PerformanceSeatGroupForm

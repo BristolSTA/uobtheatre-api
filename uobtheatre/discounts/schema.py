@@ -6,7 +6,6 @@ from graphene_django import DjangoListField, DjangoObjectType
 from uobtheatre.discounts.abilities import CreateConcessionType, ModifyConcessionType
 from uobtheatre.discounts.forms import ConcessionTypeForm
 from uobtheatre.discounts.models import ConcessionType, Discount, DiscountRequirement
-from uobtheatre.users.schema import AuthMutation
 from uobtheatre.utils.schema import (
     AuthRequiredMixin,
     ModelDeletionMutation,
@@ -54,6 +53,6 @@ class DeleteConcessionTypeMutation(ModelDeletionMutation):
         ability = ModifyConcessionType
 
 
-class Mutation(AuthMutation, graphene.ObjectType):
+class Mutation(graphene.ObjectType):
     concession_type = ConcessionTypeMutation.Field()
     delete_concession_type = DeleteConcessionTypeMutation.Field()

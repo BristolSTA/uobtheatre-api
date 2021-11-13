@@ -60,6 +60,8 @@ class OpenAdmin(Ability):
 
     @staticmethod
     def user_has(user, _) -> bool:
+        from uobtheatre.productions.abilities import AddProduction
+
         return (
             user.has_any_objects_with_perms(
                 [
@@ -68,7 +70,9 @@ class OpenAdmin(Ability):
                     "productions.view_production",
                 ]
             )
+            or user.has_any_objects_with_perms(["societies.add_production"])
             or user.has_perm("reports.finance_reports")
+            or AddProduction.user_has(user, None)
         )
 
 

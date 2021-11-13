@@ -2,6 +2,18 @@ from uobtheatre.productions.models import Production
 from uobtheatre.users.abilities import Ability
 
 
+class AddProduction(Ability):
+    """Whether the user is able to change a production's details and sub-objects"""
+
+    name = "add_production"
+
+    @staticmethod
+    def user_has(user, _) -> bool:
+        return user.has_any_objects_with_perms(
+            ["societies.add_production"]
+        ) or user.has_perm("productions.add_production")
+
+
 class EditProductionObjects(Ability):
     """Whether the user is able to change a production's details and sub-objects"""
 

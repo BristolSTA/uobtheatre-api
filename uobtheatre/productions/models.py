@@ -106,7 +106,7 @@ class Production(TimeStampedMixin, models.Model):
     description = TipTapTextField(null=True)
 
     society = models.ForeignKey(
-        Society, on_delete=models.SET_NULL, null=True, related_name="productions"
+        Society, on_delete=models.RESTRICT, related_name="productions"
     )
 
     cover_image = models.ForeignKey(
@@ -284,7 +284,7 @@ class Production(TimeStampedMixin, models.Model):
             ("boxoffice", "Can use boxoffice for this production"),
             ("sales", "Can view sales for this production"),
             ("force_change_production", "Can edit production once live"),
-            ("approve_production", "Can edit production once live"),
+            ("approve_production", "Can approve production pending productions"),
         )
 
 
