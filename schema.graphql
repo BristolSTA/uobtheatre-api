@@ -90,7 +90,6 @@ type ConcessionTypeNode implements Node {
   id: ID!
   name: String!
   description: String
-  discountRequirements(offset: Int, before: String, after: String, first: Int, last: Int): DiscountRequirementNodeConnection!
   seatBookings(offset: Int, before: String, after: String, first: Int, last: Int): TicketNodeConnection!
 }
 
@@ -143,6 +142,11 @@ type DeleteConcessionTypeMutation {
   errors: [GQLErrorUnion]
 }
 
+type DeleteDiscountMutation {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
 type DeletePerformanceMutation {
   success: Boolean
   errors: [GQLErrorUnion]
@@ -153,9 +157,24 @@ type DeletePerformanceSeatGroupMutation {
   errors: [GQLErrorUnion]
 }
 
+input DiscountMutationInput {
+  percentage: Float
+  performances: [ID]
+  seatGroup: ID
+  id: ID
+  clientMutationId: String
+}
+
+type DiscountMutationPayload {
+  discount: DiscountNode
+  errors: [GQLErrorUnion]
+  success: Boolean
+  clientMutationId: String
+}
+
 type DiscountNode implements Node {
   id: ID!
-  name: String!
+  name: String
   percentage: Float!
   performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, hasBoxofficePermissions: Boolean, runOn: Date, orderBy: String): PerformanceNodeConnection!
   seatGroup: SeatGroupNode
@@ -167,16 +186,6 @@ type DiscountRequirementNode implements Node {
   number: Int!
   discount: DiscountNode!
   concessionType: ConcessionTypeNode!
-}
-
-type DiscountRequirementNodeConnection {
-  pageInfo: PageInfo!
-  edges: [DiscountRequirementNodeEdge]!
-}
-
-type DiscountRequirementNodeEdge {
-  node: DiscountRequirementNode
-  cursor: String!
 }
 
 type EnumNode {
@@ -238,6 +247,10 @@ type MiscCostNode implements Node {
 }
 
 type Mutation {
+  concessionType(input: ConcessionTypeMutationInput!): ConcessionTypeMutationPayload
+  deleteConcessionType(id: IdInputField): DeleteConcessionTypeMutation
+  discount(input: DiscountMutationInput!): DiscountMutationPayload
+  deleteDiscount(id: IdInputField): DeleteDiscountMutation
   register(email: String!, firstName: String!, lastName: String!, password1: String!, password2: String!): Register
   verifyAccount(token: String!): VerifyAccount
   resendActivationEmail(email: String!): ResendActivationEmail
@@ -256,8 +269,6 @@ type Mutation {
   verifyToken(token: String!): VerifyToken
   refreshToken(refreshToken: String!): RefreshToken
   revokeToken(refreshToken: String!): RevokeToken
-  concessionType(input: ConcessionTypeMutationInput!): ConcessionTypeMutationPayload
-  deleteConcessionType(id: IdInputField): DeleteConcessionTypeMutation
   production(input: ProductionMutationInput!): ProductionMutationPayload
   performance(input: PerformanceMutationInput!): PerformanceMutationPayload
   deletePerformance(id: IdInputField): DeletePerformanceMutation
@@ -473,6 +484,7 @@ type PriceBreakdownTicketNode {
 input ProductionMutationInput {
   name: String
   subtitle: String
+  society: ID
   description: String
   coverImage: ID
   posterImage: ID
@@ -498,7 +510,7 @@ type ProductionNode implements Node {
   name: String!
   subtitle: String
   description: String
-  society: SocietyNode
+  society: SocietyNode!
   coverImage: ImageNode
   posterImage: ImageNode
   featuredImage: ImageNode
