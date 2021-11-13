@@ -256,8 +256,14 @@ class ModelDeletionMutation(AuthRequiredMixin):
     ):
         model_instance = cls._meta.model.objects.get(id=id)
 
-        # Authorise
-        cls.authorize_request(info, model_instance)
+        # Authorize
+        try:
+            if not cls.authorize_request(info, model_instance):
+                raise AuthorizationException
+
+        except MutationException as exception:
+            # These are our custom exceptions
+            return cls(errors=exception.resolve(), success=False)
 
         try:
             model_instance.delete()

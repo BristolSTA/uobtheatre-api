@@ -1,6 +1,7 @@
 from typing import Dict, List, Tuple
 
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from uobtheatre.productions.models import Performance
@@ -59,8 +60,10 @@ class Discount(models.Model):
     eligible for a given booking.
     """
 
-    name = models.CharField(max_length=255)
-    percentage = models.FloatField()
+    name = models.CharField(max_length=255, null=True)
+    percentage = models.FloatField(
+        validators=[MaxValueValidator(1), MinValueValidator(0)]
+    )
     performances = models.ManyToManyField(
         Performance,
         blank=True,

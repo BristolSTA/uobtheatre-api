@@ -4,8 +4,9 @@ from graphene import relay
 from graphene_django import DjangoListField, DjangoObjectType
 
 from uobtheatre.discounts.abilities import CreateConcessionType, ModifyConcessionType
-from uobtheatre.discounts.forms import ConcessionTypeForm
+from uobtheatre.discounts.forms import ConcessionTypeForm, DiscountForm
 from uobtheatre.discounts.models import ConcessionType, Discount, DiscountRequirement
+from uobtheatre.productions.abilities import EditProductionObjects
 from uobtheatre.utils.schema import (
     AuthRequiredMixin,
     ModelDeletionMutation,
@@ -53,6 +54,62 @@ class DeleteConcessionTypeMutation(ModelDeletionMutation):
         ability = ModifyConcessionType
 
 
+class DiscountMutation(SafeFormMutation, AuthRequiredMixin):
+    """Create or update a discount"""
+
+    @classmethod
+    def authorize_request(cls, root, info, **mInput):
+        new_performances = (
+            cls.get_python_value(root, info, "performances", **mInput) or []
+        )
+
+        instance = cls.get_object_instance(root, info, **mInput)
+
+        current_performances = (
+            instance.performances.prefetch_related("production").all()
+            if instance
+            else []
+        )
+
+        all_performances = []
+        all_performances.extend(current_performances)
+        all_performances.extend(new_performances)
+
+        if len(all_performances) == 0:
+            return False
+
+        # Authorize user on all of the performance's productions
+        for performance in all_performances:
+            if not EditProductionObjects.user_has(
+                info.context.user, performance.production
+            ):
+                return False
+
+        return True
+
+    class Meta:
+        form_class = DiscountForm
+
+
+class DeleteDiscountMutation(ModelDeletionMutation):
+    """Delete a discount"""
+
+    @classmethod
+    def authorize_request(cls, info, instance):
+        for performance in instance.performances.prefetch_related("production").all():
+            if not EditProductionObjects.user_has(
+                info.context.user, performance.production
+            ):
+                return False
+        return True
+
+    class Meta:
+        model = Discount
+
+
 class Mutation(graphene.ObjectType):
     concession_type = ConcessionTypeMutation.Field()
     delete_concession_type = DeleteConcessionTypeMutation.Field()
+
+    discount = DiscountMutation.Field()
+    delete_discount = DeleteDiscountMutation.Field()
