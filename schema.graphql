@@ -72,10 +72,25 @@ type ConcessionTypeBookingType {
   pricePounds: String
 }
 
+input ConcessionTypeMutationInput {
+  name: String
+  description: String
+  id: ID
+  clientMutationId: String
+}
+
+type ConcessionTypeMutationPayload {
+  concessionType: ConcessionTypeNode
+  errors: [GQLErrorUnion]
+  success: Boolean
+  clientMutationId: String
+}
+
 type ConcessionTypeNode implements Node {
   id: ID!
   name: String!
   description: String
+  discountRequirements(offset: Int, before: String, after: String, first: Int, last: Int): DiscountRequirementNodeConnection!
   seatBookings(offset: Int, before: String, after: String, first: Int, last: Int): TicketNodeConnection!
 }
 
@@ -123,7 +138,17 @@ type DeleteAccount {
   errors: [GQLErrorUnion]
 }
 
+type DeleteConcessionTypeMutation {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
 type DeletePerformanceMutation {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type DeletePerformanceSeatGroupMutation {
   success: Boolean
   errors: [GQLErrorUnion]
 }
@@ -142,6 +167,16 @@ type DiscountRequirementNode implements Node {
   number: Int!
   discount: DiscountNode!
   concessionType: ConcessionTypeNode!
+}
+
+type DiscountRequirementNodeConnection {
+  pageInfo: PageInfo!
+  edges: [DiscountRequirementNodeEdge]!
+}
+
+type DiscountRequirementNodeEdge {
+  node: DiscountRequirementNode
+  cursor: String!
 }
 
 type EnumNode {
@@ -221,9 +256,13 @@ type Mutation {
   verifyToken(token: String!): VerifyToken
   refreshToken(refreshToken: String!): RefreshToken
   revokeToken(refreshToken: String!): RevokeToken
+  concessionType(input: ConcessionTypeMutationInput!): ConcessionTypeMutationPayload
+  deleteConcessionType(id: IdInputField): DeleteConcessionTypeMutation
   production(input: ProductionMutationInput!): ProductionMutationPayload
   performance(input: PerformanceMutationInput!): PerformanceMutationPayload
   deletePerformance(id: IdInputField): DeletePerformanceMutation
+  performanceSeatGroup(input: PerformanceSeatGroupMutationInput!): PerformanceSeatGroupMutationPayload
+  deletePerformanceSeatGroup(id: IdInputField): DeletePerformanceSeatGroupMutation
   cancelPayment(paymentId: IdInputField!): CancelPayment
   generateReport(endTime: DateTime, name: String!, options: [ReportOption], startTime: DateTime): GenerateReport
   createBooking(adminDiscountPercentage: Float, performanceId: IdInputField, targetUserEmail: String, tickets: [CreateTicketInput]): CreateBooking
@@ -377,8 +416,26 @@ type PerformanceNodeEdge {
   cursor: String!
 }
 
+input PerformanceSeatGroupMutationInput {
+  seatGroup: ID
+  performance: ID
+  price: Int
+  capacity: Int
+  id: ID
+  clientMutationId: String
+}
+
+type PerformanceSeatGroupMutationPayload {
+  performanceSeatGroup: PerformanceSeatGroupNode
+  errors: [GQLErrorUnion]
+  success: Boolean
+  clientMutationId: String
+}
+
 type PerformanceSeatGroupNode implements Node {
   seatGroup: SeatGroupNode!
+  performance: PerformanceNode!
+  price: Int!
   capacity: Int!
   id: ID!
   capacityRemaining: Int
@@ -443,8 +500,8 @@ type ProductionNode implements Node {
   description: String
   society: SocietyNode
   coverImage: ImageNode
-  posterImage: ImageNode!
-  featuredImage: ImageNode!
+  posterImage: ImageNode
+  featuredImage: ImageNode
   status: EnumNode
   ageRating: Int
   facebookEvent: String
