@@ -1,10 +1,13 @@
 import pytest
 from graphql_relay.node.node import to_global_id
+from guardian.shortcuts import assign_perm
 
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import BookingFactory, PerformanceSeatingFactory
-from uobtheatre.productions.test.factories import PerformanceFactory
-from uobtheatre.utils.schema import IdInputField
+from uobtheatre.productions.models import Production
+from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
+from uobtheatre.users.test.factories import UserFactory
+from uobtheatre.utils.schema import IdInputField, UserPermissionFilterMixin
 
 
 @pytest.mark.django_db
@@ -82,3 +85,30 @@ def test_id_input_field_parse_value(gql_client):
 
     booking = Booking.objects.first()
     assert booking.performance == performance
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "permission,expected_ids",
+    [
+        (None, [1, 2]),
+        ("add_production", []),
+        ("view_production", [1]),
+        ("productions.view_production", [1]),
+        ("invalid_permission", []),
+    ],
+)
+def test_user_has_permission_mixin(permission, expected_ids):
+    user = UserFactory()
+    prod_1 = ProductionFactory(id=1)
+    ProductionFactory(id=2)
+    assign_perm("view_production", user, prod_1)
+
+    filter_set = UserPermissionFilterMixin(
+        data={"user_has_permission": permission},
+        request=type("", (object,), {"user": user})(),
+        queryset=Production.objects.all(),
+    )
+
+    productions_ids = [production.id for production in filter_set.qs.all()]
+    assert productions_ids == expected_ids
