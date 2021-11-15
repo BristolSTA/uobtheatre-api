@@ -40,7 +40,7 @@ djangorestframework==3.12.4  # https://www.django-rest-framework.org
 
 #=== GQL core ===#
 
-graphene==2.1.9
+graphene==3.0
 graphene-django==2.15.0
 
 #=== Auth ===#
