@@ -782,7 +782,7 @@ def test_productions_orderby(order_by, expected_order, gql_client):
     ],
 )
 def test_production_time_filters(filter_name, value_days, expected_outputs, gql_client):
-    current_time = timezone.now()
+    current_time = timezone.now().replace(microsecond=0, second=0)
 
     productions = [
         create_production(
