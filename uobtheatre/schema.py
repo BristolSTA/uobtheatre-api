@@ -14,6 +14,7 @@ import uobtheatre.reports.schema as reports_schema
 import uobtheatre.societies.schema as societies_schema
 import uobtheatre.users.schema as users_schema
 import uobtheatre.venues.schema as venues_schema
+import uobtheatre.images.schema as image_schema
 
 
 class Query(
@@ -23,6 +24,7 @@ class Query(
     users_schema.Query,
     bookings_schema.Query,
     payments_schema.Query,
+    image_schema.Query,
     graphene.ObjectType,
 ):
     """
