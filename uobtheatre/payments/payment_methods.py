@@ -33,6 +33,11 @@ class PaymentMethod(abc.ABC):
         cls.name = PaymentMethod.generate_name(cls.__name__)
         cls.__all__.append(cls)
 
+    @classmethod
+    @property
+    def non_manual_methods(cls) -> list[Type["PaymentMethod"]]:
+        return [method for method in cls.__all__ if not method.is_manual]
+
     @staticmethod
     def generate_name(name):
         name = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1_\2", name)
@@ -61,6 +66,11 @@ class PaymentMethod(abc.ABC):
         """
         return
 
+    @classmethod
+    @abc.abstractmethod
+    def get_processing_fee(cls, payment_id: str, data: dict = None) -> Optional[int]:
+        raise NotImplementedError
+
     @property
     @abc.abstractmethod
     def description(self):
@@ -78,6 +88,11 @@ class PaymentMethod(abc.ABC):
             app_fee=app_fee,
             **kwargs,
         )
+
+    @classmethod
+    @property
+    def is_manual(cls):
+        return issubclass(cls, ManualPaymentMethodMixin)
 
 
 class SquarePaymentMethodMixin(abc.ABC):
@@ -133,26 +148,32 @@ class SquarePaymentMethodMixin(abc.ABC):
         )
 
 
-class Cash(PaymentMethod):
+class ManualPaymentMethodMixin(abc.ABC):
+    """
+    Mixin for any manual payment method (one with no regiestered
+    provider)
+    """
+
+    def pay(
+        self, value: int, app_fee: int, pay_object: "Payable"
+    ) -> "payment_models.Payment":
+        return self.create_payment_object(pay_object, value, app_fee)  # type: ignore # pylint: disable=arguments-differ
+
+    @classmethod
+    def get_processing_fee(cls, _, __=None) -> Optional[int]:
+        return None
+
+
+class Cash(ManualPaymentMethodMixin, PaymentMethod):
     """Manual cash payment method"""
 
     description = "Manual cash payment"
 
-    def pay(
-        self, value: int, app_fee: int, pay_object: "Payable"
-    ) -> "payment_models.Payment":
-        return self.create_payment_object(pay_object, value, app_fee)
 
-
-class Card(PaymentMethod):
+class Card(ManualPaymentMethodMixin, PaymentMethod):
     """Manual card payment method"""
 
     description = "Manual card payment"
-
-    def pay(
-        self, value: int, app_fee: int, pay_object: "Payable"
-    ) -> "payment_models.Payment":
-        return self.create_payment_object(pay_object, value, app_fee)
 
 
 class SquarePOS(PaymentMethod, SquarePaymentMethodMixin):
@@ -312,17 +333,22 @@ class SquarePOS(PaymentMethod, SquarePaymentMethodMixin):
             raise SquareException(response)
 
     @classmethod
-    def get_checkout_processing_fee(cls, checkout_id: str) -> Optional[int]:
+    def get_processing_fee(  # pylint: disable=arguments-differ
+        cls, checkout_id: str, data: dict = None
+    ) -> Optional[int]:
         """
         Get processing fee for a square checkout.
 
         Args:
             checkout_id (str): The id of the square checkout
+            data (dict, optional): Prefetched checkout reponse. This is used
+                when the checkout has already been fetched from the api and the
+                processing_fee is to be extracted from this response.
 
         Returns:
             int: The processing fee
         """
-        checkout = cls.get_checkout(checkout_id)
+        checkout = data if data else cls.get_checkout(checkout_id)
         processing_fees = [
             cls.payment_processing_fee(cls.get_payment(payment_id))
             for payment_id in checkout["payment_ids"]
@@ -404,3 +430,19 @@ class SquareOnline(PaymentMethod, SquarePaymentMethodMixin):
             provider_payment_id=square_payment_id,
             currency=amount_details["currency"],
         )
+
+    @classmethod
+    def get_processing_fee(cls, payment_id: str, data: dict = None) -> Optional[int]:
+        """
+        Get processing fee for a square payment.
+
+        Args:
+            payment_id (str): The id of the square payment
+            data (dict, optional): Prefetched payment reponse. This is used
+                when the payment has already been fetched from the api and the
+                processing_fee is to be extracted from this response.
+
+        Returns:
+            int: The processing fee
+        """
+        return cls.payment_processing_fee(data or cls.get_payment(payment_id))

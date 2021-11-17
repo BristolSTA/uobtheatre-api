@@ -11,6 +11,7 @@ from uobtheatre.payments import payment_methods
 from uobtheatre.payments.payment_methods import (
     Cash,
     PaymentMethod,
+    SquareOnline,
     SquarePaymentMethodMixin,
     SquarePOS,
 )
@@ -95,6 +96,22 @@ class Payment(TimeStampedMixin, models.Model):
     # Amount charged by us to process payment
     app_fee = models.IntegerField(null=True, blank=True)
 
+    @classmethod
+    def sync_payments(cls):
+        """
+        Sync all (non manual) payments with their providers. Currently the only
+        syncing we do is for the processing fee.
+        """
+
+        for payment in cls.objects.filter(
+            provider_fee=None,
+            provider__in=[
+                method.name
+                for method in PaymentMethod.non_manual_methods  # pylint: disable=not-an-iterable
+            ],
+        ):
+            payment.sync_payment_with_provider()
+
     @property
     def provider_class(self):
         return next(
@@ -124,31 +141,26 @@ class Payment(TimeStampedMixin, models.Model):
         # If the payment is part of a terminal checkout
         if checkout_id := square_payment.get("terminal_checkout_id"):
             payment = Payment.objects.get(provider_payment_id=checkout_id)
-            payment.provider_fee = SquarePOS.get_checkout_processing_fee(checkout_id)
+            payment.provider_fee = SquarePOS.get_processing_fee(checkout_id)
             payment.save()
 
         # Otherwise the payment is from SquareOnline
         else:
             payment = Payment.objects.get(provider_payment_id=square_payment["id"])
-            payment.update_from_square_payment(square_payment)
+            payment.sync_payment_with_provider(data=square_payment)
 
-    def update_from_square_payment(self, square_payment: dict):
+    def sync_payment_with_provider(self, data=None):
+        """Sync the payment with the provider payment
+
+        NOTE: Currently this method only updates the processing_fee of the
+        payment.
         """
-        Given a square payment object, update the payment details.
-
-        Args:
-            square_payment (dict): Payment object returned from square
-        """
-        # Set processing fee
-        self.provider_fee = SquarePaymentMethodMixin.payment_processing_fee(
-            square_payment
-        )
-        self.save()
-
-    def update_from_square(self):
         if self.provider_payment_id is not None:
-            payment = payment_methods.SquareOnline.get_payment(self.provider_payment_id)
-            self.update_from_square_payment(payment)
+            processing_fee = self.provider_class.get_processing_fee(
+                str(self.provider_payment_id), data=data
+            )
+            self.provider_fee = processing_fee
+        self.save()
 
     def cancel(self):
         """
