@@ -1,4 +1,4 @@
-from uobtheatre.discounts.models import ConcessionType, Discount
+from uobtheatre.discounts.models import ConcessionType, Discount, DiscountRequirement
 from uobtheatre.utils.forms import MutationForm
 
 
@@ -18,4 +18,14 @@ class DiscountForm(MutationForm):
             "percentage",
             "performances",
             "seat_group",
+        )
+
+
+class DiscountRequirementForm(MutationForm):
+    class Meta:
+        model = DiscountRequirement
+        fields = (
+            "number",
+            "discount",
+            "concession_type",
         )

@@ -4,7 +4,11 @@ from graphene import relay
 from graphene_django import DjangoListField, DjangoObjectType
 
 from uobtheatre.discounts.abilities import CreateConcessionType, ModifyConcessionType
-from uobtheatre.discounts.forms import ConcessionTypeForm, DiscountForm
+from uobtheatre.discounts.forms import (
+    ConcessionTypeForm,
+    DiscountForm,
+    DiscountRequirementForm,
+)
 from uobtheatre.discounts.models import ConcessionType, Discount, DiscountRequirement
 from uobtheatre.productions.abilities import EditProductionObjects
 from uobtheatre.utils.schema import (
@@ -107,9 +111,66 @@ class DeleteDiscountMutation(ModelDeletionMutation):
         model = Discount
 
 
+class DiscountRequirementMutation(SafeFormMutation, AuthRequiredMixin):
+    """Create or update a discount"""
+
+    @classmethod
+    def authorize_request(cls, root, info, **mInput):
+        new_discount = cls.get_python_value(root, info, "discount", **mInput) or None
+
+        instance = cls.get_object_instance(root, info, **mInput)
+
+        current_performances = (
+            instance.discount.performances.prefetch_related("production").all()
+            if instance
+            else []
+        )
+
+        all_performances = []
+        all_performances.extend(current_performances)
+        if new_discount:
+            all_performances.extend(new_discount.performances.all())
+
+        if len(all_performances) == 0:
+            return False
+
+        # Authorize user on all of the performance's productions
+        for performance in all_performances:
+            if not EditProductionObjects.user_has(
+                info.context.user, performance.production
+            ):
+                return False
+
+        return True
+
+    class Meta:
+        form_class = DiscountRequirementForm
+
+
+class DeleteDiscountRequirementMutation(ModelDeletionMutation):
+    """Delete a discount"""
+
+    @classmethod
+    def authorize_request(cls, info, instance):
+        for performance in instance.discount.performances.prefetch_related(
+            "production"
+        ).all():
+            if not EditProductionObjects.user_has(
+                info.context.user, performance.production
+            ):
+                return False
+        return True
+
+    class Meta:
+        model = DiscountRequirement
+
+
 class Mutation(graphene.ObjectType):
     concession_type = ConcessionTypeMutation.Field()
     delete_concession_type = DeleteConcessionTypeMutation.Field()
 
     discount = DiscountMutation.Field()
     delete_discount = DeleteDiscountMutation.Field()
+
+    discount_requirement = DiscountRequirementMutation.Field()
+    delete_discount_requirement = DeleteDiscountRequirementMutation.Field()
