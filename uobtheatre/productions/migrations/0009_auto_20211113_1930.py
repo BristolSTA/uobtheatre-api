@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
                     ("force_change_production", "Can edit production once live"),
                     (
                         "approve_production",
-                        "Can approve production pending productions",
+                        "Can approve production pending publication",
                     ),
                 ),
             },

@@ -1,4 +1,6 @@
 from typing import List
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 
 import graphene
 from django.db.models import RestrictedError
@@ -8,7 +10,9 @@ from graphene_django import DjangoObjectType
 from graphene_django.forms.mutation import DjangoModelFormMutation
 from graphql.language.ast import IntValue, StringValue
 from graphql_relay.node.node import from_global_id
+from guardian.shortcuts import get_users_with_perms
 
+from uobtheatre.users.schema import ExtendedUserNode
 from uobtheatre.users.abilities import Ability
 from uobtheatre.utils.enums import GrapheneEnumMixin
 from uobtheatre.utils.exceptions import (
@@ -47,6 +51,54 @@ class AuthRequiredMixin(SafeMutation):
             return cls(errors=exception.resolve(), success=False)
 
         return super().mutate(root, info, **inputs)
+
+
+class PermissionNode(graphene.ObjectType):
+    name = graphene.String()
+    description = graphene.String()
+
+
+class UserPermissionsNode(graphene.ObjectType):
+    user = graphene.Field(ExtendedUserNode)
+    assigned_permissions = graphene.List(graphene.String)
+
+
+class AssignedUsersMixin:
+    """Adds schema objects to show assigned users as well as availble permissions. Authorisation is based on the object level change permission"""
+
+    staff = graphene.List(UserPermissionsNode)
+    available_staff_permissions = graphene.List(PermissionNode)
+
+    class PermissionsMeta:
+        schema_assignable_permissions = ()
+
+    def __init__(self, *args, **kwargs) -> None:
+        self._permissions_meta = self.PermissionsMeta()
+        super().__init__(*args, **kwargs)
+
+    def resolve_staff(self, info):
+        if not info.context.user.has_perm("change_" + self._meta.model_name, self):
+            return None
+
+        return [
+            UserPermissionsNode(
+                user=user,
+                assigned_permissions=permissions,
+            )
+            for (user, permissions) in get_users_with_perms(self, True).items()
+        ]
+
+    def resolve_available_staff_permissions(self, info):
+        if not info.context.user.has_perm("change_" + self._meta.model_name, self):
+            return None
+        # TODO: Implement meta to only show certain permissions, and permissions to attach permissions
+        available_perms = Permission.objects.filter(
+            content_type=ContentType.objects.get_for_model(self)
+        ).all()
+        return [
+            PermissionNode(name=permission.codename, description=permission.name)
+            for permission in available_perms
+        ]
 
 
 class SafeFormMutation(MutationResult, DjangoModelFormMutation):

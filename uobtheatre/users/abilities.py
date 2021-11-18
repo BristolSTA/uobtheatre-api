@@ -1,7 +1,9 @@
 import abc
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 
 import graphene
-from guardian.shortcuts import get_perms
+from guardian.shortcuts import get_perms, get_users_with_perms
 
 
 class AbilitiesMixin:

@@ -1,3 +1,5 @@
+from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 import django_filters
 import graphene
 from django.db.models.query_utils import Q
@@ -27,6 +29,7 @@ from uobtheatre.users.abilities import PermissionsMixin
 from uobtheatre.users.schema import AuthMutation
 from uobtheatre.utils.filters import FilterSet
 from uobtheatre.utils.schema import (
+    AssignedUsersMixin,
     AuthRequiredMixin,
     DjangoObjectType,
     GrapheneEnumMixin,
@@ -164,7 +167,9 @@ class SalesBreakdownNode(graphene.ObjectType):
     society_revenue = graphene.Int(required=True)
 
 
-class ProductionNode(PermissionsMixin, GrapheneEnumMixin, DjangoObjectType):
+class ProductionNode(
+    PermissionsMixin, GrapheneEnumMixin, DjangoObjectType, AssignedUsersMixin
+):
     warnings = DjangoListField(WarningNode)
     crew = DjangoListField(CrewMemberNode)
     cast = DjangoListField(CastMemberNode)
