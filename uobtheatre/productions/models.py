@@ -17,7 +17,7 @@ from uobtheatre.images.models import Image
 from uobtheatre.payments.models import Payment
 from uobtheatre.societies.models import Society
 from uobtheatre.utils.models import TimeStampedMixin
-from uobtheatre.utils.validator import RequiredFieldsValidator
+from uobtheatre.utils.validator import RequiredFieldsValidator, Validator
 from uobtheatre.venues.models import SeatGroup, Venue
 
 if TYPE_CHECKING:
@@ -101,16 +101,19 @@ class Production(TimeStampedMixin, models.Model):
     """
 
     # Used to validate if a draft can be submitted for approval
-    DRAFT_VALIDATOR = RequiredFieldsValidator(
-        [
-            "name",
-            "subtitle",
-            "description",
-            "society",
-            "cover_image",
-            "poster_image",
-            "featured_image",
-        ]
+    DRAFT_VALIDATOR = (
+        RequiredFieldsValidator(
+            [
+                "name",
+                "subtitle",
+                "description",
+                "society",
+                "cover_image",
+                "poster_image",
+                "featured_image",
+            ]
+        )
+        & Validator(performances=)
     )
 
     objects = ProductionQuerySet.as_manager()
@@ -175,7 +178,17 @@ class Production(TimeStampedMixin, models.Model):
     slug = AutoSlugField(populate_from="name", unique=True, blank=True, editable=True)
 
     def validate_draft(self):
-        return self.DRAFT_VALIDATOR.validate()
+        required_fields = [
+            "name",
+            "subtitle",
+            "description",
+            "society",
+            "cover_image",
+            "poster_image",
+            "featured_image",
+        ]
+        return all(field is not None for field in required_fields) and all(performance.validate_draft() for performance in self.performances.all())
+        # return self.DRAFT_VALIDATOR.validate()
 
     @property
     def bookings(self):
@@ -429,6 +442,20 @@ class Performance(
     Tuesday.
     """
 
+    DRAFT_VALIDATOR = (
+        RequiredFieldsValidator(
+            [
+                "production",
+                "venue",
+                "doors_open",
+                "start",
+                "end",
+                "poster_image",
+                "seat_groups",
+            ]
+        )
+    )
+
     objects = PerformanceQuerySet.as_manager()
 
     production = models.ForeignKey(
@@ -456,6 +483,9 @@ class Performance(
     seat_groups = models.ManyToManyField(SeatGroup, through="PerformanceSeatGroup")
 
     capacity = models.IntegerField(null=True, blank=True)
+
+    def validate_draft(self):
+        return self.DRAFT_VALIDATOR.validate()
 
     @property
     def tickets(self) -> QuerySet["Ticket"]:
