@@ -17,6 +17,7 @@ from uobtheatre.images.models import Image
 from uobtheatre.payments.models import Payment
 from uobtheatre.societies.models import Society
 from uobtheatre.utils.models import TimeStampedMixin
+from uobtheatre.utils.validator import RequiredFieldsValidator
 from uobtheatre.venues.models import SeatGroup, Venue
 
 if TYPE_CHECKING:
@@ -99,6 +100,19 @@ class Production(TimeStampedMixin, models.Model):
     performaces (these are like the nights).
     """
 
+    # Used to validate if a draft can be submitted for approval
+    DRAFT_VALIDATOR = RequiredFieldsValidator(
+        [
+            "name",
+            "subtitle",
+            "description",
+            "society",
+            "cover_image",
+            "poster_image",
+            "featured_image",
+        ]
+    )
+
     objects = ProductionQuerySet.as_manager()
 
     name = models.CharField(max_length=255)
@@ -159,6 +173,9 @@ class Production(TimeStampedMixin, models.Model):
     warnings = models.ManyToManyField(AudienceWarning, blank=True)
 
     slug = AutoSlugField(populate_from="name", unique=True, blank=True, editable=True)
+
+    def validate_draft(self):
+        return self.DRAFT_VALIDATOR.validate()
 
     @property
     def bookings(self):

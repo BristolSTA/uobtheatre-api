@@ -1003,3 +1003,8 @@ def test_sales_breakdown_with_blank_fees():
         "total_card_sales": 200,
         "total_sales": 200,
     }
+
+
+@pytest.mark.django_db
+def test_validate_draft():
+    pass
