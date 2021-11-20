@@ -1,22 +1,22 @@
 from __future__ import annotations
 import abc
 from typing import Union, Callable, Any
+from dataclasses import dataclass
 
-field_validator_types = Union[Validator, Callable]
 
-
+@dataclass
 class Validator(abc.ABC):
     @abc.abstractmethod
     def validate(self, instance):
         pass
 
-    def __and2__(self, other):
+    def __and__(self, other):
         return AndValidator(self, other)
 
 
-class AttributeValidator(abc.ABC):
-    def __init__(self, attribute: str) -> None:
-        self.attibute = attribute
+@dataclass
+class AttributeValidator(Validator):
+    attibute: str
 
     @abc.abstractmethod
     def validate_attribute(self, value):
@@ -24,14 +24,16 @@ class AttributeValidator(abc.ABC):
 
     def validate(self, instance):
         attribute_value = getattr(instance, self.attibute)
-        self.validate_attribute(attribute_value)
+        return self.validate_attribute(attribute_value)
 
 
+@dataclass
 class RequiredFieldValidator(AttributeValidator):
     def validate_attribute(self, value):
         return value is not None
 
 
+@dataclass
 class AndValidator(Validator):
     def __init__(self, *validators):
         self.validators = validators
@@ -40,6 +42,7 @@ class AndValidator(Validator):
         return all(validator.validate(instance) for validator in self.validators)
 
 
+@dataclass
 class RequiredFieldsValidator(AndValidator):
     def __init__(self, required_attributes):
         self.validators = [
