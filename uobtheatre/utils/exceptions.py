@@ -192,11 +192,18 @@ class SafeMutation(MutationResult, graphene.Mutation):
         abstract = True
 
     @classmethod
+    # pylint: disable=W0212
+    def authorize_request(cls, *args, **kwargs):
+        pass
+
+    @classmethod
     def mutate(cls, root, info, **inputs):
         """
         Calls resolve_mutation, catches error and formats
         """
         try:
+            # TODO I want this
+            # cls.authorize_request(root, info, **inputs)
             with transaction.atomic():
                 try:
                     return cls.resolve_mutation(root, info, **inputs)

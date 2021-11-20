@@ -17,7 +17,11 @@ from uobtheatre.images.models import Image
 from uobtheatre.payments.models import Payment
 from uobtheatre.societies.models import Society
 from uobtheatre.utils.models import TimeStampedMixin
-from uobtheatre.utils.validators import RequiredFieldsValidator, Validator
+from uobtheatre.utils.validators import (
+    RequiredFieldsValidator,
+    ValidationError,
+    Validator,
+)
 from uobtheatre.venues.models import SeatGroup, Venue
 
 if TYPE_CHECKING:
@@ -149,18 +153,22 @@ class Production(TimeStampedMixin, models.Model):
         """The overall status of the production"""
 
         DRAFT = "DRAFT", "Draft"  # Production is in draft
-        PENDING = "PENDING", "Pending"  # Produciton is pending publication/review
+        PENDING = (
+            "PENDING",
+            "Pending approval",
+        )  # Produciton is pending publication/review
+        APPROVED = "Approved", "Approved (not published)"
         PUBLISHED = (
             "PUBLISHED",
-            "Published",
+            "Published (Can view on the site)",
         )  # Production is public
         CLOSED = (
             "CLOSED",
-            "Closed",
+            "Closed (Ready for money transfers)",
         )  # Production has been closed after it's run. No edits allowed.
         COMPLETE = (
             "COMPLETE",
-            "Complete",
+            "Complete (Show finished and all money settled)",
         )  # Production has been closed and paid for/transactions settled
 
     status = models.CharField(
@@ -173,21 +181,6 @@ class Production(TimeStampedMixin, models.Model):
     warnings = models.ManyToManyField(AudienceWarning, blank=True)
 
     slug = AutoSlugField(populate_from="name", unique=True, blank=True, editable=True)
-
-    def validate_draft(self):
-        required_fields = [
-            "name",
-            "subtitle",
-            "description",
-            "society",
-            "cover_image",
-            "poster_image",
-            "featured_image",
-        ]
-        return all(field is not None for field in required_fields) and all(
-            performance.validate_draft() for performance in self.performances.all()
-        )
-        # return self.DRAFT_VALIDATOR.validate()
 
     @property
     def bookings(self):
@@ -307,13 +300,23 @@ class Production(TimeStampedMixin, models.Model):
             breakdowns
         )
 
+    def validate_draft(self) -> list[ValidationError]:
+        return self.DRAFT_VALIDATOR.validate(self)
+
+    def submit_draft(self) -> Optional[list[ValidationError]]:
+        errors = self.DRAFT_VALIDATOR.validate(self)
+        if errors:
+            return errors
+        self.status = Production.Status.PENDING
+        self.save()
+
     class Meta:
         ordering = ["id"]
         permissions = (
             ("boxoffice", "Can use boxoffice for this production"),
             ("sales", "Can view sales for this production"),
             ("force_change_production", "Can edit production once live"),
-            ("approve_production", "Can approve production pending productions"),
+            ("approve_production", "Can approve pending productions"),
         )
 
 

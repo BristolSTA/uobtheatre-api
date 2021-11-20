@@ -34,6 +34,8 @@ from uobtheatre.utils.schema import (
     SafeFormMutation,
 )
 
+ProductionStatusSchema = graphene.Enum.from_enum(Production.Status)
+
 
 class CrewRoleNode(GrapheneEnumMixin, DjangoObjectType):
     class Meta:

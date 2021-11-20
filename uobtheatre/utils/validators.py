@@ -2,12 +2,34 @@ from __future__ import annotations
 import abc
 from typing import Generator, Union, Callable, Any, Optional
 from dataclasses import dataclass
+from uobtheatre.utils import exceptions
+
+import graphene
 
 
 @dataclass
-class ValidationError:
+class ValidationError(exceptions.MutationException):
     message: str
     attribute: Optional[str] = None
+
+    def resolve(self):
+        if self.attribute:
+            return exceptions.FieldError(
+                field=self.attribute, code=400, message=self.message
+            )
+        return exceptions.FieldError(code=400, message=self.message)
+
+
+"""
+        submit_draft
+        approve_pending -> approved (new)
+        publish_approved -> if they can edit
+"""
+
+
+class ValidationErrorNode(graphene.ObjectType):
+    message = graphene.String(required=True)
+    attribute = graphene.String()
 
 
 @dataclass

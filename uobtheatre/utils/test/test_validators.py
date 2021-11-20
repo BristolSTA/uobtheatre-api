@@ -7,8 +7,7 @@ from uobtheatre.utils.validators import (
     ValidationError,
 )
 
-
-@pytest.mark.parametrize(
+required_a_and_b_parameters = (
     "obj,errors",
     [
         (SimpleNamespace(a=1, b=1), []),
@@ -25,8 +24,17 @@ from uobtheatre.utils.validators import (
         ),
     ],
 )
-def test_required_field_validator(obj, errors):
+
+
+@pytest.mark.parametrize(*required_a_and_b_parameters)
+def test_required_fields_validator(obj, errors):
     validator = RequiredFieldsValidator(["a", "b"])
+    assert validator.validate(obj) == errors
+
+
+@pytest.mark.parametrize(*required_a_and_b_parameters)
+def test_and_validator(obj, errors):
+    validator = AndValidator(RequiredFieldValidator("a"), RequiredFieldValidator("b"))
     assert validator.validate(obj) == errors
 
 
