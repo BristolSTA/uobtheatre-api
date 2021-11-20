@@ -17,6 +17,11 @@ from uobtheatre.images.models import Image
 from uobtheatre.payments.models import Payment
 from uobtheatre.societies.models import Society
 from uobtheatre.utils.models import TimeStampedMixin
+from uobtheatre.utils.validators import (
+    RequiredFieldsValidator,
+    ValidationError,
+    Validator,
+)
 from uobtheatre.venues.models import SeatGroup, Venue
 
 if TYPE_CHECKING:
@@ -99,6 +104,19 @@ class Production(TimeStampedMixin, models.Model):
     performaces (these are like the nights).
     """
 
+    # Used to validate if a draft can be submitted for approval
+    DRAFT_VALIDATOR = RequiredFieldsValidator(
+        [
+            "name",
+            "subtitle",
+            "description",
+            "society",
+            "cover_image",
+            "poster_image",
+            "featured_image",
+        ]
+    )
+
     objects = ProductionQuerySet.as_manager()
 
     name = models.CharField(max_length=255)
@@ -135,18 +153,22 @@ class Production(TimeStampedMixin, models.Model):
         """The overall status of the production"""
 
         DRAFT = "DRAFT", "Draft"  # Production is in draft
-        PENDING = "PENDING", "Pending"  # Produciton is pending publication/review
+        PENDING = (
+            "PENDING",
+            "Pending approval",
+        )  # Produciton is pending publication/review
+        APPROVED = "Approved", "Approved (not published)"
         PUBLISHED = (
             "PUBLISHED",
-            "Published",
+            "Published (Can view on the site)",
         )  # Production is public
         CLOSED = (
             "CLOSED",
-            "Closed",
+            "Closed (Ready for money transfers)",
         )  # Production has been closed after it's run. No edits allowed.
         COMPLETE = (
             "COMPLETE",
-            "Complete",
+            "Complete (Show finished and all money settled)",
         )  # Production has been closed and paid for/transactions settled
 
     status = models.CharField(
@@ -278,11 +300,21 @@ class Production(TimeStampedMixin, models.Model):
             breakdowns
         )
 
+    def validate_draft(self) -> list[ValidationError]:
+        return self.DRAFT_VALIDATOR.validate(self)
+
+    def submit_draft(self) -> Optional[list[ValidationError]]:
+        errors = self.DRAFT_VALIDATOR.validate(self)
+        if errors:
+            return errors
+        self.status = Production.Status.PENDING
+        self.save()
+
     class Meta:
         ordering = ["id"]
         permissions = (
-            ("boxoffice", "Can use boxoffice for this production"),
-            ("sales", "Can view sales for this production"),
+            ("boxoffice", "Can use boxoffice for production"),
+            ("sales", "Can view sales for production"),
             ("force_change_production", "Can edit production once live"),
             ("approve_production", "Can approve production pending publication"),
         )
@@ -418,6 +450,18 @@ class Performance(
     Tuesday.
     """
 
+    DRAFT_VALIDATOR = RequiredFieldsValidator(
+        [
+            "production",
+            "venue",
+            "doors_open",
+            "start",
+            "end",
+            "poster_image",
+            "seat_groups",
+        ]
+    )
+
     objects = PerformanceQuerySet.as_manager()
 
     production = models.ForeignKey(
@@ -445,6 +489,9 @@ class Performance(
     seat_groups = models.ManyToManyField(SeatGroup, through="PerformanceSeatGroup")
 
     capacity = models.IntegerField(null=True, blank=True)
+
+    def validate_draft(self):
+        return self.DRAFT_VALIDATOR.validate()
 
     @property
     def tickets(self) -> QuerySet["Ticket"]:
