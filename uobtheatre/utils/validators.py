@@ -1,36 +1,53 @@
 from __future__ import annotations
 import abc
-from typing import Union, Callable, Any
+from typing import Generator, Union, Callable, Any, Optional
 from dataclasses import dataclass
+
+
+@dataclass
+class ValidationError:
+    message: str
+    attribute: Optional[str] = None
 
 
 @dataclass
 class Validator(abc.ABC):
     @abc.abstractmethod
-    def validate(self, instance):
+    def validate(self, instance) -> list[ValidationError]:
         pass
 
     def __and__(self, other):
         return AndValidator(self, other)
 
+    @staticmethod
+    def all_errors(generator: Generator):
+        errors_lists = [errors for errors in generator]
+        return [error for sublist in errors_lists for error in sublist]
+
 
 @dataclass
 class AttributeValidator(Validator):
-    attibute: str
+    attribute: str
 
     @abc.abstractmethod
-    def validate_attribute(self, value):
+    def validate_attribute(self, value) -> list[ValidationError]:
         pass
 
-    def validate(self, instance):
-        attribute_value = getattr(instance, self.attibute)
+    def validate(self, instance) -> list[ValidationError]:
+        attribute_value = getattr(instance, self.attribute)
         return self.validate_attribute(attribute_value)
 
 
 @dataclass
 class RequiredFieldValidator(AttributeValidator):
     def validate_attribute(self, value):
-        return value is not None
+        if value is None:
+            return [
+                ValidationError(
+                    message=f"{self.attribute} is required", attribute=self.attribute
+                )
+            ]
+        return []
 
 
 @dataclass
@@ -39,7 +56,9 @@ class AndValidator(Validator):
         self.validators = validators
 
     def validate(self, instance):
-        return all(validator.validate(instance) for validator in self.validators)
+        return self.all_errors(
+            validator.validate(instance) for validator in self.validators
+        )
 
 
 @dataclass

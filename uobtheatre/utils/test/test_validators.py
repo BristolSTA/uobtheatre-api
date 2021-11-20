@@ -4,20 +4,30 @@ from uobtheatre.utils.validators import (
     RequiredFieldsValidator,
     RequiredFieldValidator,
     AndValidator,
+    ValidationError,
 )
 
 
 @pytest.mark.parametrize(
-    "obj,is_valid",
+    "obj,errors",
     [
-        (SimpleNamespace(a=1, b=1), True),
-        (SimpleNamespace(a=None, b=1), False),
-        (SimpleNamespace(a=None, b=None), False),
+        (SimpleNamespace(a=1, b=1), []),
+        (
+            SimpleNamespace(a=None, b=1),
+            [ValidationError(message="a is required", attribute="a")],
+        ),
+        (
+            SimpleNamespace(a=None, b=None),
+            [
+                ValidationError(message="a is required", attribute="a"),
+                ValidationError(message="b is required", attribute="b"),
+            ],
+        ),
     ],
 )
-def test_and_validator(obj, is_valid):
+def test_required_field_validator(obj, errors):
     validator = RequiredFieldsValidator(["a", "b"])
-    assert validator.validate(obj) == is_valid
+    assert validator.validate(obj) == errors
 
 
 def test_and_validator_method():
