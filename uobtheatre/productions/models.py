@@ -16,7 +16,7 @@ from guardian.shortcuts import get_objects_for_user
 from uobtheatre.images.models import Image
 from uobtheatre.payments.models import Payment
 from uobtheatre.societies.models import Society
-from uobtheatre.utils.models import TimeStampedMixin
+from uobtheatre.utils.models import PermissionableModel, TimeStampedMixin
 from uobtheatre.utils.validators import (
     RequiredFieldsValidator,
     ValidationError,
@@ -97,7 +97,7 @@ class ProductionQuerySet(QuerySet):
         )
 
 
-class Production(TimeStampedMixin, models.Model):
+class Production(TimeStampedMixin, PermissionableModel):
     """The model for a production.
 
     A production is a show (like the 2 weeks things) and can have many
@@ -320,10 +320,12 @@ class Production(TimeStampedMixin, models.Model):
         )
 
     class PermissionsMeta:
-        schema_assignable_permissions = (
-            "boxoffice",
-            ("change_production", "force_change_production"),
-        )
+        schema_assignable_permissions = {
+            "boxoffice": ("change_production", "force_change_production"),
+            "view_production": ("change_production", "force_change_production"),
+            "change_production": ("change_production", "force_change_production"),
+            "sales": ("change_production", "force_change_production"),
+        }
 
 
 class CastMember(models.Model):

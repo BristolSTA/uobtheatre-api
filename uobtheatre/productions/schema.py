@@ -1,5 +1,3 @@
-from django.contrib.auth.models import Permission
-from django.contrib.contenttypes.models import ContentType
 import django_filters
 import graphene
 from django.db.models.query_utils import Q
@@ -30,6 +28,7 @@ from uobtheatre.users.schema import AuthMutation
 from uobtheatre.utils.filters import FilterSet
 from uobtheatre.utils.schema import (
     AssignedUsersMixin,
+    AssignPermissionsMutation,
     AuthRequiredMixin,
     DjangoObjectType,
     GrapheneEnumMixin,
@@ -170,7 +169,7 @@ class SalesBreakdownNode(graphene.ObjectType):
 
 
 class ProductionNode(
-    PermissionsMixin, GrapheneEnumMixin, DjangoObjectType, AssignedUsersMixin
+    PermissionsMixin, GrapheneEnumMixin, AssignedUsersMixin, DjangoObjectType
 ):
     warnings = DjangoListField(WarningNode)
     crew = DjangoListField(CrewMemberNode)
@@ -254,6 +253,11 @@ class ProductionMutation(SafeFormMutation, AuthRequiredMixin):
         form_class = ProductionForm
         create_ability = AddProduction
         update_ability = EditProductionObjects
+
+
+class ProductionPermissionsMutation(AssignPermissionsMutation):
+    class Meta:
+        model = Production
 
 
 class ConcessionTypeBookingType(graphene.ObjectType):
@@ -510,6 +514,7 @@ class Mutation(AuthMutation, graphene.ObjectType):
     """Mutations for the productions module"""
 
     production = ProductionMutation.Field()
+    production_permissions = ProductionPermissionsMutation.Field()
 
     performance = PerformanceMutation.Field()
     delete_performance = DeletePerformanceMutation.Field()

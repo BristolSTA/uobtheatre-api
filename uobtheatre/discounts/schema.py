@@ -11,6 +11,7 @@ from uobtheatre.discounts.forms import (
 )
 from uobtheatre.discounts.models import ConcessionType, Discount, DiscountRequirement
 from uobtheatre.productions.abilities import EditProductionObjects
+from uobtheatre.utils.exceptions import AuthorizationException
 from uobtheatre.utils.schema import (
     AuthRequiredMixin,
     ModelDeletionMutation,
@@ -104,7 +105,7 @@ class DeleteDiscountMutation(ModelDeletionMutation):
             if not EditProductionObjects.user_has(
                 info.context.user, performance.production
             ):
-                return False
+                raise AuthorizationException()
         return True
 
     class Meta:
@@ -158,8 +159,7 @@ class DeleteDiscountRequirementMutation(ModelDeletionMutation):
             if not EditProductionObjects.user_has(
                 info.context.user, performance.production
             ):
-                return False
-        return True
+                raise AuthorizationException()
 
     class Meta:
         model = DiscountRequirement
