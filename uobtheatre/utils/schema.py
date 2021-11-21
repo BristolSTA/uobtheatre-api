@@ -1,6 +1,4 @@
 from typing import List
-from django.contrib.auth.models import Permission
-from django.contrib.contenttypes.models import ContentType
 
 import graphene
 from django.db.models import RestrictedError
@@ -10,10 +8,17 @@ from graphene_django import DjangoObjectType
 from graphene_django.forms.mutation import DjangoModelFormMutation
 from graphql.language.ast import IntValue, StringValue
 from graphql_relay.node.node import from_global_id
-from guardian.shortcuts import get_users_with_perms
+from guardian.shortcuts import (
+    assign,
+    assign_perm,
+    get_user_perms,
+    get_users_with_perms,
+    remove_perm,
+)
 
-from uobtheatre.users.schema import ExtendedUserNode
 from uobtheatre.users.abilities import Ability
+from uobtheatre.users.models import User
+from uobtheatre.users.schema import ExtendedUserNode
 from uobtheatre.utils.enums import GrapheneEnumMixin
 from uobtheatre.utils.exceptions import (
     AuthException,
@@ -25,6 +30,7 @@ from uobtheatre.utils.exceptions import (
     ReferencedException,
     SafeMutation,
 )
+from uobtheatre.utils.models import PermissionableModel
 
 
 class CustomDjangoObjectType(GrapheneEnumMixin, DjangoObjectType):
@@ -56,6 +62,7 @@ class AuthRequiredMixin:
 class PermissionNode(graphene.ObjectType):
     name = graphene.String()
     description = graphene.String()
+    user_can_assign = graphene.Boolean(default_value=False)
 
 
 class UserPermissionsNode(graphene.ObjectType):
@@ -66,17 +73,10 @@ class UserPermissionsNode(graphene.ObjectType):
 class AssignedUsersMixin:
     """Adds schema objects to show assigned users as well as availble permissions. Authorisation is based on the object level change permission"""
 
-    staff = graphene.List(UserPermissionsNode)
-    available_staff_permissions = graphene.List(PermissionNode)
+    assigned_users = graphene.List(UserPermissionsNode)
+    assignable_permissions = graphene.List(PermissionNode)
 
-    class PermissionsMeta:
-        schema_assignable_permissions = ()
-
-    def __init__(self, *args, **kwargs) -> None:
-        self._permissions_meta = self.PermissionsMeta()
-        super().__init__(*args, **kwargs)
-
-    def resolve_staff(self, info):
+    def resolve_assigned_users(self, info):
         if not info.context.user.has_perm("change_" + self._meta.model_name, self):
             return None
 
@@ -88,17 +88,14 @@ class AssignedUsersMixin:
             for (user, permissions) in get_users_with_perms(self, True).items()
         ]
 
-    def resolve_available_staff_permissions(self, info):
-        if not info.context.user.has_perm("change_" + self._meta.model_name, self):
+    def resolve_assignable_permissions(self, info):
+        if not info.context.user.has_perm("change_" + str(self._meta.model_name), self):
             return None
-        # TODO: Implement meta to only show certain permissions, and permissions to attach permissions
-        available_perms = Permission.objects.filter(
-            content_type=ContentType.objects.get_for_model(self)
-        ).all()
-        return [
-            PermissionNode(name=permission.codename, description=permission.name)
-            for permission in available_perms
-        ]
+
+        if not isinstance(self, PermissionableModel):
+            return None
+
+        return self.available_permissions_for_user(info.context.user)
 
 
 class SafeFormMutation(MutationResult, DjangoModelFormMutation):
@@ -269,7 +266,7 @@ class ModelDeletionMutation(AuthRequiredMixin, SafeMutation):
         abstract = True
 
     class Arguments:
-        id = IdInputField()
+        id = IdInputField(required=True)
 
     @classmethod
     def __init_subclass_with_meta__(
@@ -301,7 +298,6 @@ class ModelDeletionMutation(AuthRequiredMixin, SafeMutation):
             "delete_%s" % cls._meta.model._meta.model_name, instance
         ):
             raise AuthorizationException
-        return True
 
     @classmethod
     # pylint: disable=C0103,W0622
@@ -319,3 +315,101 @@ class ModelDeletionMutation(AuthRequiredMixin, SafeMutation):
             raise ReferencedException() from error
 
         return ModelDeletionMutation()
+
+
+class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
+    """Generic model deletion mutation. Simply set the model in meta and you are away!"""
+
+    class Meta:
+        abstract = True
+
+    class Arguments:
+        id = IdInputField(required=True)
+        user_email = graphene.String(required=True)
+        permissions = graphene.List(graphene.String)
+
+    @classmethod
+    def __init_subclass_with_meta__(
+        cls, *args, model=None, ability=None, **options
+    ):  # pragma: no cover
+        """Inits the subclass with meta..."""
+        if not model:
+            raise Exception("model is required for AssignPermissionsMutation")
+
+        if isinstance(model, PermissionableModel):
+            raise Exception("model must be Permissionable")
+
+        _meta = ModelDeletionMutationOptions(cls)
+        _meta.model = model
+        _meta.ability = ability
+
+        super().__init_subclass_with_meta__(_meta=_meta, *args, **options)
+
+    @classmethod
+    # pylint: disable=W0212
+    def authorize_request(
+        cls, info, instance: PermissionableModel, permissions_delta, *_, **__
+    ):
+        """Authorize the request"""
+        available_permissions = instance.available_permissions_for_user(
+            info.context.user
+        )
+
+        if not info.context.user.has_perm(
+            "change_" + cls._meta.model._meta.model_name, instance
+        ):
+            raise AuthorizationException()
+
+        for permission in permissions_delta:
+            # Try and get permission node for permission
+            permission_node = next(
+                (node for node in available_permissions if node.name == permission),
+                None,
+            )
+
+            if not permission_node or not permission_node.user_can_assign:
+                raise GQLException(
+                    message="The permission '%s' does not exisit, or cannot be assigned"
+                    % permission,
+                    field="permissions",
+                )
+
+    @classmethod
+    # pylint: disable=C0103,W0622
+    def resolve_mutation(cls, _, info, id: int, user_email, permissions):
+        model_instance = cls._meta.model.objects.get(id=id)
+
+        # See if user exists
+
+        if not (user := User.objects.filter(email=user_email).first()):
+            raise GQLException(
+                "A user with that email does not exist on our system",
+                field="user_email",
+            )
+
+        available_permissions = [
+            node.name
+            for node in model_instance.available_permissions_for_user(info.context.user)
+        ]
+
+        current_user_permissions = set(
+            get_user_perms(user, model_instance)
+        ).intersection(available_permissions)
+
+        permissions_to_remove = current_user_permissions - set(permissions)
+        permissions_to_add = set(permissions).intersection(available_permissions) - set(
+            current_user_permissions
+        )
+
+        permissions_delta = set(permissions_to_add) | set(permissions_to_remove)
+
+        # Authorize
+        cls.authorize_request(info, model_instance, permissions_delta)
+
+        for permission in permissions_to_add:
+            assign_perm(permission, user, model_instance)
+
+        for permission in permissions_to_remove:
+            remove_perm(permission, user, model_instance)
+
+        return AssignPermissionsMutation()
