@@ -481,7 +481,8 @@ class DeletePerformanceSeatGroupMutation(ModelDeletionMutation):
     """Mutation to delete a performance seat group"""
 
     @classmethod
-    def authorize_request(cls, info, instance):
+    def authorize_request(cls, _, info, id):
+        instance = cls.get_instance(id)
         return EditProductionObjects.user_has(
             info.context.user,
             instance.performance.production,

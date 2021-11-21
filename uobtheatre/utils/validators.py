@@ -17,7 +17,7 @@ class ValidationError(exceptions.MutationException):
             return exceptions.FieldError(
                 field=self.attribute, code=400, message=self.message
             )
-        return exceptions.FieldError(code=400, message=self.message)
+        return exceptions.NonFieldError(code=400, message=self.message)
 
 
 """

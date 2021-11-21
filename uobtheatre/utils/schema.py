@@ -38,7 +38,7 @@ class CustomDjangoObjectType(GrapheneEnumMixin, DjangoObjectType):
         abstract = True
 
 
-class AuthRequiredMixin(SafeMutation):
+class AuthRequiredMixin:
     """Adds check to see if user is logged in before mutation
 
     At the start of mutate, checks if the user is authentacated (logged in to
@@ -259,7 +259,7 @@ class ModelDeletionMutationOptions(MutationOptions):
     ability = None
 
 
-class ModelDeletionMutation(AuthRequiredMixin):
+class ModelDeletionMutation(AuthRequiredMixin, SafeMutation):
     """Generic model deletion mutation. Simply set the model in meta and you are away!"""
 
     class Meta:
@@ -283,9 +283,14 @@ class ModelDeletionMutation(AuthRequiredMixin):
         super().__init_subclass_with_meta__(_meta=_meta, *args, **options)
 
     @classmethod
+    def get_instance(cls, model_id: int):
+        return cls._meta.model.objects.get(id=model_id)
+
+    @classmethod
     # pylint: disable=W0212
-    def authorize_request(cls, info, instance, *_, **__):
+    def authorize_request(cls, _, info, id: int):
         """Authorize the request"""
+        instance = cls.get_instance(id)
         if cls._meta.ability:
             return cls._meta.ability.user_has(info.context.user, instance)
 
@@ -298,14 +303,11 @@ class ModelDeletionMutation(AuthRequiredMixin):
     # pylint: disable=C0103,W0622
     def resolve_mutation(
         cls,
-        _,
+        root,
         info,
         id: int,
     ):
-        model_instance = cls._meta.model.objects.get(id=id)
-
-        # Authorize
-        cls.authorize_request(info, model_instance)
+        model_instance = cls.get_instance(id)
 
         try:
             model_instance.delete()
@@ -315,7 +317,7 @@ class ModelDeletionMutation(AuthRequiredMixin):
         return ModelDeletionMutation()
 
 
-class AssignPermissionsMutation(AuthRequiredMixin):
+class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
     """Generic model deletion mutation. Simply set the model in meta and you are away!"""
 
     class Meta:
