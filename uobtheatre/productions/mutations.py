@@ -18,7 +18,7 @@ class SetProductionStatus(AuthRequiredMixin, SafeMutation):
         )
 
     @classmethod
-    def authorize_request(cls, _, info, production_id, status):
+    def authorize_request(cls, _, info, production_id, update_status):
         production = Production.objects.get(id=production_id)
         user = info.context.user
 
@@ -32,14 +32,14 @@ class SetProductionStatus(AuthRequiredMixin, SafeMutation):
         if EditProductionObjects.user_has(user, production):
             # If the production has been approved they can publish it
             if (
-                status == Production.Status.PUBLISHED
+                update_status == Production.Status.PUBLISHED
                 and production.status == Production.Status.APPROVED
             ):
                 return
 
             # If the production is a draft they can submit it for approval
             if (
-                status == Production.Status.PENDING
+                update_status == Production.Status.PENDING
                 and production.status == Production.Status.DRAFT
             ):
                 return
@@ -47,7 +47,7 @@ class SetProductionStatus(AuthRequiredMixin, SafeMutation):
         # If they have permission to approve and they are tyring to approve a
         # pending.
         if (
-            status == Production.Status.APPROVED
+            update_status == Production.Status.APPROVED
             and production.status == Production.Status.PENDING
             and user.has_perm("productions.approve_production", production)
         ):
@@ -56,7 +56,7 @@ class SetProductionStatus(AuthRequiredMixin, SafeMutation):
         # If they can do finance stuff then they can complete a production if it
         # has been closed.
         if (
-            status == Production.Status.COMPLETE
+            update_status == Production.Status.COMPLETE
             and production.status == Production.Status.CLOSED
             and user.has_perm("reports.finance_reports", production)
         ):
@@ -74,7 +74,7 @@ class SetProductionStatus(AuthRequiredMixin, SafeMutation):
         if status != Production.Status.DRAFT:
             errors = production.validate_draft()
             if errors:
-                raise GQLExceptions(errors)
+                raise GQLExceptions(map(lambda error: error.resolve(), errors))
 
         production.status = status
         production.save()

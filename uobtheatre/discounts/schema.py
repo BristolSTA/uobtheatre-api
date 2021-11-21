@@ -11,6 +11,7 @@ from uobtheatre.discounts.forms import (
 )
 from uobtheatre.discounts.models import ConcessionType, Discount, DiscountRequirement
 from uobtheatre.productions.abilities import EditProductionObjects
+from uobtheatre.utils.exceptions import AuthorizationException
 from uobtheatre.utils.schema import (
     AuthRequiredMixin,
     ModelDeletionMutation,
@@ -99,13 +100,13 @@ class DeleteDiscountMutation(ModelDeletionMutation):
     """Delete a discount"""
 
     @classmethod
-    def authorize_request(cls, info, instance):
-        for performance in instance.performances.prefetch_related("production").all():
+    def authorize_request(cls, _, info, id):
+        discount = cls.get_instance(id)
+        for performance in discount.performances.prefetch_related("production").all():
             if not EditProductionObjects.user_has(
                 info.context.user, performance.production
             ):
-                return False
-        return True
+                raise AuthorizationException()
 
     class Meta:
         model = Discount
@@ -115,10 +116,10 @@ class DiscountRequirementMutation(SafeFormMutation, AuthRequiredMixin):
     """Create or update a discount"""
 
     @classmethod
-    def authorize_request(cls, root, info, **mInput):
-        new_discount = cls.get_python_value(root, info, "discount", **mInput) or None
+    def authorize_request(cls, root, info, **inputs):
+        new_discount = cls.get_python_value(root, info, "discount", **inputs) or None
 
-        instance = cls.get_object_instance(root, info, **mInput)
+        instance = cls.get_object_instance(root, info, **inputs)
 
         current_performances = (
             instance.discount.performances.prefetch_related("production").all()
@@ -151,15 +152,15 @@ class DeleteDiscountRequirementMutation(ModelDeletionMutation):
     """Delete a discount"""
 
     @classmethod
-    def authorize_request(cls, info, instance):
+    def authorize_request(cls, _, info, id):
+        instance = cls.get_instance(id)
         for performance in instance.discount.performances.prefetch_related(
             "production"
         ).all():
             if not EditProductionObjects.user_has(
                 info.context.user, performance.production
             ):
-                return False
-        return True
+                raise AuthorizationException()
 
     class Meta:
         model = DiscountRequirement

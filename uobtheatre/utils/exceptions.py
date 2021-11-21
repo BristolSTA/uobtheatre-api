@@ -11,7 +11,7 @@ error: Union[FieldError, NonFieldError])
 
 
 import traceback
-from typing import List, Union
+from typing import List, Union, Iterable
 
 import graphene
 from django.db import transaction
@@ -116,9 +116,9 @@ class GQLExceptions(MutationException):
     Many GQL errors
     """
 
-    def __init__(self, exceptions: List[MutationException] = None):
+    def __init__(self, exceptions: Iterable[MutationException] = None):
         super().__init__()
-        self.exceptions = exceptions or []
+        self.exceptions = list(exceptions) if exceptions else []
 
     def add_exception(self, exception: MutationException):
         self.exceptions.append(exception)
@@ -193,7 +193,7 @@ class SafeMutation(MutationResult, graphene.Mutation):
 
     @classmethod
     # pylint: disable=W0212
-    def authorize_request(cls, *args, **kwargs):
+    def authorize_request(cls, root, info, **inputs):
         pass
 
     @classmethod
@@ -203,7 +203,7 @@ class SafeMutation(MutationResult, graphene.Mutation):
         """
         try:
             # TODO I want this
-            # cls.authorize_request(root, info, **inputs)
+            cls.authorize_request(root, info, **inputs)
             with transaction.atomic():
                 try:
                     return cls.resolve_mutation(root, info, **inputs)
