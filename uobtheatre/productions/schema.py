@@ -455,7 +455,9 @@ class PerformanceSeatGroupMutation(SafeFormMutation, AuthRequiredMixin):
     def authorize_request(cls, root, info, **mInput):
         new_performance = cls.get_python_value(root, info, "performance", **mInput)
         has_perm_new_performance = (
-            EditProductionObjects.user_has(info.context.user, new_performance)
+            EditProductionObjects.user_has(
+                info.context.user, new_performance.production
+            )
             if new_performance
             else True
         )
