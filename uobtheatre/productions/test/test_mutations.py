@@ -13,6 +13,7 @@ from uobtheatre.productions.mutations import SetProductionStatus
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.societies.test.factories import SocietyFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory, VenueFactory
+from uobtheatre.utils.validators import ValidationError
 
 ###
 # Production Mutations
@@ -720,24 +721,96 @@ def test_set_production_status_authorize_request_force_change(
 def test_set_production_status_draft(status, gql_client):
     production = ProductionFactory(status=Production.Status.PUBLISHED)
 
+    gql_client.login()
     query = """
-    {
-      setProductionStatus(production_id: "%s", status: "%s") {
-      }
-    }
+        mutation {
+          setProductionStatus(productionId: "%s", status: %s) {
+            success
+          }
+        }
     """ % (
         to_global_id("ProductionNode", production.id),
         status,
     )
 
     with patch.object(
-        SetProductionStatus, "authorize_request", return_value=True
-    ), patch.object(Production.VALIDATOR, "validate", return_value=True) as validator:
+        SetProductionStatus, "authorize_request", return_value=None
+    ), patch.object(Production.VALIDATOR, "validate", return_value=[]) as validator:
+        response = gql_client.execute(query)
+        assert response["data"]["setProductionStatus"]["success"]
+
         if status == "DRAFT":
             validator.assert_not_called()
         else:
             validator.assert_called_once()
-        gql_client.execute(query)
 
     production.refresh_from_db()
     assert str(production.status) == status
+
+
+@pytest.mark.django_db
+def test_set_production_status_draft_errors(gql_client):
+    production = ProductionFactory(status=Production.Status.PUBLISHED)
+
+    gql_client.login()
+    query = """
+        mutation {
+          setProductionStatus(productionId: "%s", status: %s) {
+            success
+            errors {
+              __typename
+              ... on NonFieldError {
+                message
+                code
+              }
+              ... on FieldError {
+                message
+                field
+                code
+              }
+            }
+          }
+        }
+    """ % (
+        to_global_id("ProductionNode", production.id),
+        "PENDING",
+    )
+
+    with patch.object(
+        SetProductionStatus, "authorize_request", return_value=None
+    ), patch.object(
+        Production.VALIDATOR,
+        "validate",
+        return_value=[
+            ValidationError(message="We need that thing."),
+            ValidationError(message="Something about the attribute", attribute="abc"),
+        ],
+    ) as validator:
+        response = gql_client.execute(query)
+
+    assert response == {
+        "data": {
+            "setProductionStatus": {
+                "errors": [
+                    {
+                        "__typename": "NonFieldError",
+                        "code": "400",
+                        "message": "We need that thing.",
+                    },
+                    {
+                        "__typename": "FieldError",
+                        "code": "400",
+                        "field": "abc",
+                        "message": "Something about the attribute",
+                    },
+                ],
+                "success": False,
+            },
+        },
+    }
+
+    validator.assert_called_once()
+
+    # Assert production status is unchanged
+    production.refresh_from_db()
+    assert str(production.status) == "PUBLISHED"

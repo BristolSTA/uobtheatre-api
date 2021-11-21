@@ -290,7 +290,7 @@ class Production(TimeStampedMixin, PermissionableModel):
         )
 
     def validate_draft(self) -> list[ValidationError]:
-        return self.DRAFT_VALIDATOR.validate(self)
+        return self.VALIDATOR.validate(self)
 
     class Meta:
         ordering = ["id"]

@@ -5,9 +5,32 @@ from uobtheatre.utils.exceptions import (
     SafeMutation,
     GQLExceptions,
 )
+from uobtheatre.productions.abilities import AddProduction, EditProductionObjects
+from uobtheatre.users.schema import AuthMutation
 from uobtheatre.utils.schema import AuthRequiredMixin, IdInputField
 from uobtheatre.productions.abilities import EditProductionObjects
 from uobtheatre.productions.models import Production
+from uobtheatre.utils.schema import (
+    AuthRequiredMixin,
+    ModelDeletionMutation,
+    SafeFormMutation,
+    AssignPermissionsMutation,
+)
+from uobtheatre.productions.forms import (
+    PerformanceForm,
+    PerformanceSeatGroupForm,
+    ProductionForm,
+)
+from uobtheatre.productions.models import (
+    Performance,
+    PerformanceSeatGroup,
+    Production,
+)
+from uobtheatre.productions.schema import (
+    ProductionNode,
+    PerformanceNode,
+    PerformanceSeatGroupNode,
+)
 
 
 class SetProductionStatus(AuthRequiredMixin, SafeMutation):
@@ -72,10 +95,156 @@ class SetProductionStatus(AuthRequiredMixin, SafeMutation):
 
         # If we are setting this production to anything other than draft it must
         # be valid.
-        if status != Production.Status.DRAFT:
-            errors = production.validate_draft()
-            if errors:
-                raise GQLExceptions(map(lambda error: error.resolve(), errors))
+        if status != Production.Status.DRAFT and (
+            errors := production.validate_draft()
+        ):
+            raise GQLExceptions(errors)
 
         production.status = status
         production.save()
+
+        return cls(success=True)
+
+
+class ProductionMutation(SafeFormMutation, AuthRequiredMixin):
+    """Mutation to create or update a production"""
+
+    production = graphene.Field(ProductionNode)
+
+    @classmethod
+    def authorize_request(cls, root, info, **mInput):
+        return super().authorize_request(
+            root, info, **mInput
+        ) and cls.authorize_society_part(root, info, **mInput)
+
+    @classmethod
+    def authorize_society_part(cls, root, info, **mInput):
+        """Authorise the society parameter if passed"""
+        new_society = cls.get_python_value(root, info, "society", **mInput)
+        has_perm_new_society = (
+            info.context.user.has_perm("add_production", new_society)
+            if new_society
+            else True
+        )
+        return has_perm_new_society
+
+    @classmethod
+    def on_creation(cls, info, response):
+        info.context.user.assign_perm("view_production", response.production)
+        info.context.user.assign_perm("change_production", response.production)
+        info.context.user.assign_perm("sales", response.production)
+        info.context.user.assign_perm("boxoffice", response.production)
+
+    class Meta:
+        form_class = ProductionForm
+        create_ability = AddProduction
+        update_ability = EditProductionObjects
+
+
+class ProductionPermissionsMutation(AssignPermissionsMutation):
+    class Meta:
+        model = Production
+
+
+class PerformanceMutation(SafeFormMutation, AuthRequiredMixin):
+    """Mutation to create or update a performance"""
+
+    performance = graphene.Field(PerformanceNode)
+
+    @classmethod
+    def authorize_request(cls, root, info, **mInput):
+        return cls.authorize_production_part(root, info, **mInput)
+
+    @classmethod
+    def authorize_production_part(cls, root, info, **mInput):
+        """Authorised the production part (exisiting and prodivded input)"""
+        new_production = cls.get_python_value(root, info, "production", **mInput)
+        has_perm_new_production = (
+            EditProductionObjects.user_has(info.context.user, new_production)
+            if new_production
+            else True
+        )
+
+        if cls.is_creation:
+            # If this is a creation operation, we care that there is a new production specified via args, and that the user has edit ability on this production
+            return has_perm_new_production and new_production
+
+        # For update operations, we care that the user has permissions on both the currently assigned production, and the new production (if provided)
+        current_production = cls.get_object_instance(root, info, **mInput).production
+        has_perm_current_production = EditProductionObjects.user_has(
+            info.context.user, current_production
+        )
+        return has_perm_new_production and has_perm_current_production
+
+    class Meta:
+        form_class = PerformanceForm
+
+
+class DeletePerformanceMutation(ModelDeletionMutation):
+    """Mutation to delete a performance"""
+
+    class Meta:
+        model = Performance
+
+
+class PerformanceSeatGroupMutation(SafeFormMutation, AuthRequiredMixin):
+    """Mutation to create or update a performance seat group"""
+
+    performanceSeatGroup = graphene.Field(PerformanceSeatGroupNode)
+
+    @classmethod
+    def authorize_request(cls, root, info, **mInput):
+        new_performance = cls.get_python_value(root, info, "performance", **mInput)
+        has_perm_new_performance = (
+            EditProductionObjects.user_has(
+                info.context.user, new_performance.production
+            )
+            if new_performance
+            else True
+        )
+
+        if cls.is_creation:
+            # If this is a creation operation, we care that there is a new performance specified via args, and that the user has edit ability on this production
+            return has_perm_new_performance and new_performance
+
+        # For update operations, we care that the user has permissions on both the currently assigned performance, and the new performance (if provided)
+        current_performance = cls.get_object_instance(
+            root, info, **mInput
+        ).performance.production
+        has_perm_current_performance = EditProductionObjects.user_has(
+            info.context.user, current_performance
+        )
+        return has_perm_new_performance and has_perm_current_performance
+
+    class Meta:
+        form_class = PerformanceSeatGroupForm
+
+
+class DeletePerformanceSeatGroupMutation(ModelDeletionMutation):
+    """Mutation to delete a performance seat group"""
+
+    @classmethod
+    def authorize_request(cls, _, info, id):
+        instance = cls.get_instance(id)
+        return EditProductionObjects.user_has(
+            info.context.user,
+            instance.performance.production,
+        )
+
+    class Meta:
+        model = PerformanceSeatGroup
+
+
+class Mutation(AuthMutation, graphene.ObjectType):
+    """Mutations for the productions module"""
+
+    production = ProductionMutation.Field()
+    production_permissions = ProductionPermissionsMutation.Field()
+
+    performance = PerformanceMutation.Field()
+    delete_performance = DeletePerformanceMutation.Field()
+
+    performance_seat_group = PerformanceSeatGroupMutation.Field()
+    delete_performance_seat_group = DeletePerformanceSeatGroupMutation.Field()
+
+    set_production_status = SetProductionStatus.Field()

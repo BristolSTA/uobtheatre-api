@@ -10,6 +10,7 @@ import uobtheatre.discounts.schema as discounts_schema
 import uobtheatre.payments.mutations as payments_mutations
 import uobtheatre.payments.schema as payments_schema
 import uobtheatre.productions.schema as productions_schema
+import uobtheatre.productions.mutations as productions_mutations
 import uobtheatre.reports.schema as reports_schema
 import uobtheatre.societies.schema as societies_schema
 import uobtheatre.users.schema as users_schema
@@ -37,7 +38,7 @@ class Mutation(
     bookings_schema.Mutation,
     reports_schema.Mutation,
     payments_mutations.Mutation,
-    productions_schema.Mutation,
+    productions_mutations.Mutation,
     discounts_schema.Mutation,
     graphene.ObjectType,
 ):
