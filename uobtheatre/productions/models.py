@@ -21,6 +21,7 @@ from uobtheatre.utils.validators import (
     RequiredFieldsValidator,
     ValidationError,
     Validator,
+    RelatedObjectsValidator,
 )
 from uobtheatre.venues.models import SeatGroup, Venue
 
@@ -105,18 +106,6 @@ class Production(TimeStampedMixin, models.Model):
     """
 
     # Used to validate if a draft can be submitted for approval
-    DRAFT_VALIDATOR = RequiredFieldsValidator(
-        [
-            "name",
-            "subtitle",
-            "description",
-            "society",
-            "cover_image",
-            "poster_image",
-            "featured_image",
-        ]
-    )
-
     objects = ProductionQuerySet.as_manager()
 
     name = models.CharField(max_length=255)
@@ -303,13 +292,6 @@ class Production(TimeStampedMixin, models.Model):
     def validate_draft(self) -> list[ValidationError]:
         return self.DRAFT_VALIDATOR.validate(self)
 
-    def submit_draft(self) -> Optional[list[ValidationError]]:
-        errors = self.DRAFT_VALIDATOR.validate(self)
-        if errors:
-            return errors
-        self.status = Production.Status.PENDING
-        self.save()
-
     class Meta:
         ordering = ["id"]
         permissions = (
@@ -450,7 +432,7 @@ class Performance(
     Tuesday.
     """
 
-    DRAFT_VALIDATOR = RequiredFieldsValidator(
+    VALIDATOR = RequiredFieldsValidator(
         [
             "production",
             "venue",
@@ -490,8 +472,8 @@ class Performance(
 
     capacity = models.IntegerField(null=True, blank=True)
 
-    def validate_draft(self):
-        return self.DRAFT_VALIDATOR.validate()
+    def validate(self):
+        return self.VALIDATOR.validate(self)
 
     @property
     def tickets(self) -> QuerySet["Ticket"]:
@@ -905,3 +887,19 @@ class PerformanceSeatGroup(models.Model):
             if self.capacity is None:
                 self.capacity = self.seat_group.capacity
         super().save(*args, **kwargs)
+
+
+Production.VALIDATOR = (
+    RequiredFieldsValidator(
+        [
+            "name",
+            "subtitle",
+            "description",
+            "society",
+            "cover_image",
+            "poster_image",
+            "featured_image",
+        ]
+    )
+    & RelatedObjectsValidator(attribute="performances", validator=Performance.VALIDATOR)
+)

@@ -89,3 +89,16 @@ class RequiredFieldsValidator(AndValidator):
         self.validators = [
             RequiredFieldValidator(field) for field in required_attributes
         ]
+
+
+@dataclass
+class RelatedObjectsValidator(Validator):
+    def __init__(self, attribute: str, validator):
+        self.attribute = attribute
+        self.validator = validator
+
+    def validate(self, instance):
+        return self.all_errors(
+            self.validator.validate(related_instance)
+            for related_instance in getattr(instance, self.attribute)
+        )

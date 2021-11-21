@@ -6,8 +6,10 @@ from guardian.shortcuts import assign_perm
 
 from uobtheatre.bookings.test.factories import BookingFactory, PerformanceSeatingFactory
 from uobtheatre.images.test.factories import ImageFactory
+from uobtheatre.utils.exceptions import AuthorizationException
 from uobtheatre.productions.abilities import EditProductionObjects
 from uobtheatre.productions.models import Performance, PerformanceSeatGroup, Production
+from uobtheatre.productions.mutations import SetProductionStatus
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.societies.test.factories import SocietyFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory, VenueFactory
@@ -602,3 +604,140 @@ def test_delete_performance_seat_group_mutation(gql_client):
         ability_mock.assert_called()
         assert response["data"]["deletePerformanceSeatGroup"]["success"] is True
         assert PerformanceSeatGroup.objects.count() == 0
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "permissions, has_edit_ability, current_status, updated_status, has_perm",
+    [
+        # Someone with no perms cannot do anything
+        (
+            [],
+            False,
+            Production.Status.DRAFT,
+            Production.Status.PENDING,
+            False,
+        ),
+        # Force change can do whatever
+        (
+            [
+                "productions.force_change_production",
+            ],
+            False,
+            Production.Status.DRAFT,
+            Production.Status.PUBLISHED,
+            True,
+        ),
+        # Someone who can edit can publish if approved
+        (
+            [],
+            True,
+            Production.Status.APPROVED,
+            Production.Status.PUBLISHED,
+            True,
+        ),
+        # Someone who can edit cannot publish if not approved
+        (
+            [],
+            True,
+            Production.Status.DRAFT,
+            Production.Status.PUBLISHED,
+            False,
+        ),
+        # Someone who can edit can submit for approval
+        (
+            [],
+            True,
+            Production.Status.DRAFT,
+            Production.Status.PENDING,
+            True,
+        ),
+        # Someone who can edit cannot change status of published
+        (
+            [],
+            True,
+            Production.Status.PUBLISHED,
+            Production.Status.PENDING,
+            False,
+        ),
+        # Someone who can approve can approve pending
+        (
+            ["productions.approve_production"],
+            False,
+            Production.Status.PENDING,
+            Production.Status.APPROVED,
+            True,
+        ),
+        # Someone who can approve cannot do other things
+        (
+            ["productions.approve_production"],
+            False,
+            Production.Status.APPROVED,
+            Production.Status.PUBLISHED,
+            False,
+        ),
+        # Fincance can close
+        (
+            ["reports.finance_reports"],
+            False,
+            Production.Status.CLOSED,
+            Production.Status.COMPLETE,
+            True,
+        ),
+        # Fincance cannot do other things
+        (
+            ["reports.finance_reports"],
+            False,
+            Production.Status.PENDING,
+            Production.Status.APPROVED,
+            False,
+        ),
+    ],
+)
+def test_set_production_status_authorize_request_force_change(
+    permissions, has_edit_ability, current_status, updated_status, has_perm, info
+):
+    user = info.context.user
+    production = ProductionFactory(status=current_status)
+
+    with patch.object(EditProductionObjects, "user_has", return_value=has_edit_ability):
+        for permission in permissions:
+            assign_perm(permission, user)
+
+        if not has_perm:
+            with pytest.raises(AuthorizationException):
+                SetProductionStatus.authorize_request(
+                    None, info, production.id, updated_status
+                )
+        else:
+            SetProductionStatus.authorize_request(
+                None, info, production.id, updated_status
+            )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("status", ["DRAFT", "PENDING"])
+def test_set_production_status_draft(status, gql_client):
+    production = ProductionFactory(status=Production.Status.PUBLISHED)
+
+    query = """
+    {
+      setProductionStatus(production_id: "%s", status: "%s") {
+      }
+    }
+    """ % (
+        to_global_id("ProductionNode", production.id),
+        status,
+    )
+
+    with patch.object(
+        SetProductionStatus, "authorize_request", return_value=True
+    ), patch.object(Production.VALIDATOR, "validate", return_value=True) as validator:
+        if status == "DRAFT":
+            validator.assert_not_called()
+        else:
+            validator.assert_called_once()
+        gql_client.execute(query)
+
+    production.refresh_from_db()
+    assert str(production.status) == status

@@ -18,12 +18,13 @@ class SetProductionStatus(AuthRequiredMixin, SafeMutation):
         )
 
     @classmethod
-    def authorize_request(cls, _, info, production_id, update_status):
+    def authorize_request(cls, _, info, production_id, status):
+        update_status = status
         production = Production.objects.get(id=production_id)
         user = info.context.user
 
         # If they have permission to force change then they can change
-        if user.has_perm("force_change_production", production):
+        if user.has_perm("productions.force_change_production", production):
             return
 
         # If the user has permission to edit the production, they can:
@@ -58,7 +59,7 @@ class SetProductionStatus(AuthRequiredMixin, SafeMutation):
         if (
             update_status == Production.Status.COMPLETE
             and production.status == Production.Status.CLOSED
-            and user.has_perm("reports.finance_reports", production)
+            and user.has_perm("reports.finance_reports")
         ):
             return
 
