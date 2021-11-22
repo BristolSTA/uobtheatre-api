@@ -65,8 +65,8 @@ def period_totals(request, start_time, end_time):
         "Period Totals Report",
         [
             "This report provides summaries and totals of payments taken and recorded.",
-            "Totals are calcualted by summing the payments (which are positive in the chase of a charge, or negative for a refund).",
-            "Totals are inclusive of any costs and fees that are charged to the society. Hence, these figures should not be used to calculate account transfers to societies.",
+            "Totals are calcualted by summing the payments (which are positive in the case of a charge, or negative for a refund).",
+            "Totals are the amount collected, without any costs and fees that are charged to the society or the payment deducted. Hence, these figures should not be used to calculate account transfers to societies.",
             "All currency is PENCE (i.e. 100 = £1.00)",
         ],
         [

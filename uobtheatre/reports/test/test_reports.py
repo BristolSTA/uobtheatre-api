@@ -1,4 +1,5 @@
 from datetime import datetime
+from unittest.mock import patch
 
 import pytest
 
@@ -14,6 +15,7 @@ from uobtheatre.discounts.test.factories import (
     DiscountRequirementFactory,
 )
 from uobtheatre.payments import payment_methods
+from uobtheatre.payments.models import Payment
 from uobtheatre.payments.test.factories import PaymentFactory
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
@@ -128,13 +130,16 @@ def create_fixtures():
     payment_2 = PaymentFactory(
         pay_object=booking_2,
         value=booking_2.total,
-        provider="CASH",
+        provider=payment_methods.Cash.name,
         app_fee=booking_2.misc_costs_value(),
     )
     payment_2.created_at = "2021-09-05T12:00:01"
     payment_2.save()
 
-    payment_3 = PaymentFactory(pay_object=booking_3, value=booking_3.total)
+    payment_3 = PaymentFactory(
+        pay_object=booking_3,
+        value=booking_3.total,
+    )
     payment_3.created_at = "2021-09-08T12:00:01"
     payment_3.save()
 
@@ -199,10 +204,13 @@ def test_period_totals_breakdown_report():
     booking_3 = payment_3.pay_object
 
     # Generate report that covers this period
-    report = PeriodTotalsBreakdown(
-        datetime.fromisoformat("2021-09-08T00:00:00"),
-        datetime.fromisoformat("2021-09-08T23:00:00"),
-    )
+    with patch.object(Payment, "sync_payments") as mock_sync:
+        report = PeriodTotalsBreakdown(
+            datetime.fromisoformat("2021-09-08T00:00:00"),
+            datetime.fromisoformat("2021-09-08T23:00:00"),
+        )
+
+    mock_sync.assert_called_once()
 
     assert len(report.datasets) == 3
 
@@ -257,7 +265,7 @@ def test_period_totals_breakdown_report():
             "Amazing Show 2",
             "580",
             "SQUARE_ONLINE",
-            "",
+            payment_3.provider_payment_id,
         ],
     ]
 
@@ -268,7 +276,10 @@ def test_outstanding_society_payments_report():
     society_1 = Society.objects.all()[0]
     production_1 = Production.objects.all()[0]
     # NB: As production 2 is not "closed", it shouldn't show in this report
-    report = OutstandingSocietyPayments()
+    with patch.object(Payment, "sync_payments") as mock_sync:
+        report = OutstandingSocietyPayments()
+
+    mock_sync.assert_called_once()
 
     assert len(report.datasets) == 2
 

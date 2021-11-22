@@ -4,4 +4,4 @@ gunicorn==20.1.0
 
 # Django
 # ------------------------------------------------------------------------------
-django-storages[boto3]==1.12.2  # https://github.com/jschneier/django-storages
+django-storages[boto3]==1.12.3  # https://github.com/jschneier/django-storages

@@ -18,7 +18,11 @@ from uobtheatre.productions.models import (
 )
 from uobtheatre.users.abilities import PermissionsMixin
 from uobtheatre.utils.filters import FilterSet
-from uobtheatre.utils.schema import DjangoObjectType, GrapheneEnumMixin
+from uobtheatre.utils.schema import (
+    DjangoObjectType,
+    GrapheneEnumMixin,
+    UserPermissionFilterMixin,
+)
 
 
 class CrewRoleNode(GrapheneEnumMixin, DjangoObjectType):
@@ -96,7 +100,7 @@ class ProductionByMethodOrderingFilter(django_filters.OrderingFilter):
         return super().filter(query_set, value)
 
 
-class ProductionFilter(FilterSet):
+class ProductionFilter(FilterSet, UserPermissionFilterMixin):
     """Filter for ProductionNode
 
     Extends filterset to include start and end filters.

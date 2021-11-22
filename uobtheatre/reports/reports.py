@@ -79,6 +79,7 @@ class PeriodTotalsBreakdown(Report):
 
     def __init__(self, start: datetime, end: datetime) -> None:
         super().__init__()
+        Payment.sync_payments()
         production_totals_set = DataSet(
             "Production Totals",
             ["Production ID", "Production Name", "Total Income (Pence)"],
@@ -188,6 +189,7 @@ class OutstandingSocietyPayments(Report):
 
     def __init__(self) -> None:
         super().__init__()
+        Payment.sync_payments()
         productions_dataset = DataSet(
             "Productions",
             [
@@ -208,7 +210,7 @@ class OutstandingSocietyPayments(Report):
             [
                 "Society ID",
                 "Society Name",
-                "Total Ammount Due",
+                "Total Amount Due",
             ],
         )
 

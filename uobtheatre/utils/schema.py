@@ -1,7 +1,9 @@
+import django_filters
 import graphene
 from graphene_django import DjangoObjectType
 from graphql.language.ast import IntValue, StringValue
 from graphql_relay.node.node import from_global_id
+from guardian.shortcuts import get_objects_for_user
 
 from uobtheatre.utils.enums import GrapheneEnumMixin
 from uobtheatre.utils.exceptions import AuthException, SafeMutation
@@ -31,6 +33,13 @@ class AuthRequiredMixin(SafeMutation):
             return cls(errors=exception.resolve(), success=False)
 
         return super().mutate(root, info, **inputs)
+
+
+class UserPermissionFilterMixin(django_filters.FilterSet):
+    user_has_permission = django_filters.CharFilter(method="user_has_permission_filter")
+
+    def user_has_permission_filter(self, query_set, _, permission=None):
+        return get_objects_for_user(self.request.user, permission, query_set)
 
 
 class IdInputField(graphene.ID):
