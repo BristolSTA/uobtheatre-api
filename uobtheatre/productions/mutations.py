@@ -28,6 +28,10 @@ from uobtheatre.utils.schema import (
 
 
 class SetProductionStatus(AuthRequiredMixin, SafeMutation):
+    """
+    Mutation to set the status of a production.
+    """
+
     class Arguments:
         production_id = IdInputField(required=True)
         status = graphene.Argument(
@@ -35,6 +39,7 @@ class SetProductionStatus(AuthRequiredMixin, SafeMutation):
         )
 
     @classmethod
+    # pylint: disable=arguments-differ
     def authorize_request(cls, _, info, production_id, status):
         update_status = status
         production = Production.objects.get(id=production_id)
@@ -89,9 +94,7 @@ class SetProductionStatus(AuthRequiredMixin, SafeMutation):
 
         # If we are setting this production to anything other than draft it must
         # be valid.
-        if status != Production.Status.DRAFT and (
-            errors := production.validate_draft()
-        ):
+        if status != Production.Status.DRAFT and (errors := production.validate()):
             raise GQLExceptions(errors)
 
         production.status = status
