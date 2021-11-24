@@ -1006,5 +1006,5 @@ def test_sales_breakdown_with_blank_fees():
 
 
 @pytest.mark.django_db
-def test_validate_():
+def test_validate_abc():
     assert False

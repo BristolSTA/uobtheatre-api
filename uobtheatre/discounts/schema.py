@@ -63,12 +63,12 @@ class DiscountMutation(SafeFormMutation, AuthRequiredMixin):
     """Create or update a discount"""
 
     @classmethod
-    def authorize_request(cls, root, info, **mInput):
+    def authorize_request(cls, root, info, **inputs):
         new_performances = (
-            cls.get_python_value(root, info, "performances", **mInput) or []
+            cls.get_python_value(root, info, "performances", **inputs) or []
         )
 
-        instance = cls.get_object_instance(root, info, **mInput)
+        instance = cls.get_object_instance(root, info, **inputs)
 
         current_performances = (
             instance.performances.prefetch_related("production").all()
@@ -100,8 +100,8 @@ class DeleteDiscountMutation(ModelDeletionMutation):
     """Delete a discount"""
 
     @classmethod
-    def authorize_request(cls, _, info, id):
-        discount = cls.get_instance(id)
+    def authorize_request(cls, _, info, **inputs):
+        discount = cls.get_instance(inputs["id"])
         for performance in discount.performances.prefetch_related("production").all():
             if not EditProductionObjects.user_has(
                 info.context.user, performance.production
@@ -152,8 +152,8 @@ class DeleteDiscountRequirementMutation(ModelDeletionMutation):
     """Delete a discount"""
 
     @classmethod
-    def authorize_request(cls, _, info, id):
-        instance = cls.get_instance(id)
+    def authorize_request(cls, _, info, **inputs):
+        instance = cls.get_instance(inputs["id"])
         for performance in instance.discount.performances.prefetch_related(
             "production"
         ).all():

@@ -1,4 +1,4 @@
-#pylint: disable=R0914
+# pylint: disable=R0914
 
 import pytest
 from graphql_relay.node.node import to_global_id
@@ -8,6 +8,7 @@ from uobtheatre.images.test.factories import ImageFactory
 from uobtheatre.productions.models import Performance, PerformanceSeatGroup
 from uobtheatre.societies.test.factories import SocietyFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory, VenueFactory
+from uobtheatre.users.test.factories import UserFactory
 
 
 @pytest.mark.django_db
@@ -210,3 +211,52 @@ def test_total_production_creation_workflow(gql_client):
     # Assert against performance
     performance = Performance.objects.first()
     assert performance.total_capacity == 150
+
+    # Step 5: Assign permisisons to users
+    UserFactory(email="joe.bloggs@example.org")
+    request = """
+            mutation {
+                productionPermissions(
+                    id: "%s"
+                    userEmail: "joe.bloggs@example.org"
+                    permissions: ["boxoffice"]
+                ) {
+                    success
+                }
+            }
+    """ % (
+        production_gid,
+    )
+
+    response = gql_client.execute(request)
+    assert response["data"]["productionPermissions"]["success"] is True
+
+    # Now try a user that doesn't exist
+    request = """
+            mutation {
+                productionPermissions(
+                    id: "%s"
+                    userEmail: "joe.bloggs.not.exists@example.org"
+                    permissions: ["boxoffice"]
+                ) {
+                    success
+                    errors {
+                        ... on FieldError {
+                            field
+                            message
+                        }
+                    }
+                }
+            }
+    """ % (
+        production_gid,
+    )
+
+    response = gql_client.execute(request)
+    assert response["data"]["productionPermissions"]["success"] is False
+    assert response["data"]["productionPermissions"]["errors"] == [
+        {
+            "message": "A user with that email does not exist on our system",
+            "field": "userEmail",
+        }
+    ]

@@ -4,7 +4,7 @@ import math
 
 import pytest
 from django.utils import timezone
-from graphql_relay.node.node import to_global_id
+from graphql_relay.node.node import from_global_id, to_global_id
 from guardian.shortcuts import assign_perm
 
 from uobtheatre.bookings.models import Booking
@@ -1175,3 +1175,86 @@ def test_production_totals(gql_client):
     )
     assert response["data"]["productions"]["edges"][0]["node"]["totalCapacity"] == 240
     assert response["data"]["productions"]["edges"][0]["node"]["totalTicketsSold"] == 1
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "with_perm,users,expected_users",
+    [
+        (False, [], []),
+        (False, [[], ["change_production"]], []),
+        (True, [], []),
+        (True, [[], ["change_production"]], [1]),
+        (True, [[], ["change_production"], ["boxoffice"]], [1, 2]),
+    ],
+)
+def test_production_assigned_users(gql_client, with_perm, users, expected_users):
+    production = ProductionFactory(slug="my-production")
+    request = """
+        query {
+            production(slug: "my-production") {
+                assignedUsers {
+                    user {
+                        id
+                    }
+                    assignedPermissions 
+                }
+            }
+        }
+    """
+
+    user_models = []
+    for permissions in users:
+        user_model = UserFactory()
+        user_models.append(user_model)
+        for perm in permissions:
+            assign_perm(perm, user_model, production)
+
+    gql_client.login()
+    if with_perm:
+        assign_perm("change_production", gql_client.user, production)
+
+    response = gql_client.execute(request)
+
+    if not with_perm:
+        assert response["data"]["production"]["assignedUsers"] is None
+    else:
+        present_users = [
+            from_global_id(assignedUser["user"]["id"])[1]
+            for assignedUser in response["data"]["production"]["assignedUsers"]
+        ]
+
+        for user_index in expected_users:
+            # Check the user's ID is in the present users
+            assert str(user_models[user_index].id) in present_users
+
+            # Check that the permissions reported are equal to the expected permissions
+            assert (
+                response["data"]["production"]["assignedUsers"][
+                    present_users.index(str(user_models[user_index].id))
+                ]["assignedPermissions"]
+                == users[user_index]
+            )
+
+        assert (
+            str(gql_client.user.id) in present_users
+        )  # They have been assigned change_production too!
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "perms",
+    "can_assign"[
+        ([], False)(["boxoffice"], False)(["boxoffice", "change_production"], True)
+    ],
+)
+def test_assignable_permissions(gql_client, perms):
+    production = ProductionFactory(slug="my-production")
+    gql_client.login()
+
+    for perm in perms:
+        assign_perm(perm, gql_client.user, production)
+
+    request = """
+        
+    """
