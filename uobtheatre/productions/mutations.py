@@ -112,15 +112,15 @@ class ProductionMutation(SafeFormMutation, AuthRequiredMixin):
     production = graphene.Field(ProductionNode)
 
     @classmethod
-    def authorize_request(cls, root, info, **mInput):
+    def authorize_request(cls, root, info, **inputs):
         return super().authorize_request(
-            root, info, **mInput
-        ) and cls.authorize_society_part(root, info, **mInput)
+            root, info, **inputs
+        ) and cls.authorize_society_part(root, info, **inputs)
 
     @classmethod
-    def authorize_society_part(cls, root, info, **mInput):
+    def authorize_society_part(cls, root, info, **inputs):
         """Authorise the society parameter if passed"""
-        new_society = cls.get_python_value(root, info, "society", **mInput)
+        new_society = cls.get_python_value(root, info, "society", **inputs)
         has_perm_new_society = (
             info.context.user.has_perm("add_production", new_society)
             if new_society
@@ -152,13 +152,13 @@ class PerformanceMutation(SafeFormMutation, AuthRequiredMixin):
     performance = graphene.Field(PerformanceNode)
 
     @classmethod
-    def authorize_request(cls, root, info, **mInput):
-        return cls.authorize_production_part(root, info, **mInput)
+    def authorize_request(cls, root, info, **inputs):
+        return cls.authorize_production_part(root, info, **inputs)
 
     @classmethod
-    def authorize_production_part(cls, root, info, **mInput):
+    def authorize_production_part(cls, root, info, **inputs):
         """Authorised the production part (exisiting and prodivded input)"""
-        new_production = cls.get_python_value(root, info, "production", **mInput)
+        new_production = cls.get_python_value(root, info, "production", **inputs)
         has_perm_new_production = (
             EditProductionObjects.user_has(info.context.user, new_production)
             if new_production
@@ -170,7 +170,7 @@ class PerformanceMutation(SafeFormMutation, AuthRequiredMixin):
             return has_perm_new_production and new_production
 
         # For update operations, we care that the user has permissions on both the currently assigned production, and the new production (if provided)
-        current_production = cls.get_object_instance(root, info, **mInput).production
+        current_production = cls.get_object_instance(root, info, **inputs).production
         has_perm_current_production = EditProductionObjects.user_has(
             info.context.user, current_production
         )
@@ -193,8 +193,8 @@ class PerformanceSeatGroupMutation(SafeFormMutation, AuthRequiredMixin):
     performanceSeatGroup = graphene.Field(PerformanceSeatGroupNode)
 
     @classmethod
-    def authorize_request(cls, root, info, **mInput):
-        new_performance = cls.get_python_value(root, info, "performance", **mInput)
+    def authorize_request(cls, root, info, **inputs):
+        new_performance = cls.get_python_value(root, info, "performance", **inputs)
         has_perm_new_performance = (
             EditProductionObjects.user_has(
                 info.context.user, new_performance.production
@@ -209,7 +209,7 @@ class PerformanceSeatGroupMutation(SafeFormMutation, AuthRequiredMixin):
 
         # For update operations, we care that the user has permissions on both the currently assigned performance, and the new performance (if provided)
         current_performance = cls.get_object_instance(
-            root, info, **mInput
+            root, info, **inputs
         ).performance.production
         has_perm_current_performance = EditProductionObjects.user_has(
             info.context.user, current_performance
@@ -224,8 +224,8 @@ class DeletePerformanceSeatGroupMutation(ModelDeletionMutation):
     """Mutation to delete a performance seat group"""
 
     @classmethod
-    def authorize_request(cls, _, info, id):
-        instance = cls.get_instance(id)
+    def authorize_request(cls, _, info, **inputs):
+        instance = cls.get_instance(inputs["id"])
         return EditProductionObjects.user_has(
             info.context.user,
             instance.performance.production,

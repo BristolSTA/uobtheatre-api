@@ -1,3 +1,4 @@
+from functools import cached_property
 from typing import List
 
 import graphene
@@ -116,7 +117,7 @@ class SafeFormMutation(MutationResult, DjangoModelFormMutation):
 
     @classmethod
     # pylint: disable=W0212
-    def authorize_request(cls, root, info, **mInput):
+    def authorize_request(cls, root, info, **inputs):
         """Authorize the request (pre-validation)"""
         model_name = cls._meta.model._meta.model_name
         app_label = cls._meta.model._meta.app_label
@@ -124,7 +125,7 @@ class SafeFormMutation(MutationResult, DjangoModelFormMutation):
         create_ability: Ability = cls.create_ability
 
         if not cls.is_creation:
-            instance = cls.get_object_instance(root, info, **mInput)
+            instance = cls.get_object_instance(root, info, **inputs)
             return (
                 info.context.user.has_perm("change_%s" % model_name, instance)
                 if not update_ability
@@ -149,9 +150,9 @@ class SafeFormMutation(MutationResult, DjangoModelFormMutation):
         """Callback method run when a update save is successful"""
 
     @classmethod
-    def get_object_instance(cls, root, info, **mInput):
+    def get_object_instance(cls, root, info, **inputs):
         """Get the subject object's instance (if exists)"""
-        kwargs = cls.get_form_kwargs(root, info, **mInput)
+        kwargs = cls.get_form_kwargs(root, info, **inputs)
 
         try:
             return kwargs["instance"]
@@ -159,52 +160,52 @@ class SafeFormMutation(MutationResult, DjangoModelFormMutation):
             return None
 
     @classmethod
-    def get_field(cls, root, info, key, **mInput):
-        return cls.get_form(root, info, **mInput)[key].field
+    def get_field(cls, root, info, key, **inputs):
+        return cls.get_form(root, info, **inputs)[key].field
 
     @classmethod
-    def get_python_value(cls, root, info, key, **mInput):
-        return cls.get_field(root, info, key, **mInput).to_python(
-            cls.get_key_raw_value(root, info, key, **mInput)
+    def get_python_value(cls, root, info, key, **inputs):
+        return cls.get_field(root, info, key, **inputs).to_python(
+            cls.get_key_raw_value(root, info, key, **inputs)
         )
 
     @classmethod
-    def get_key_raw_value(cls, root, info, key, **mInput):
-        return cls.get_form(root, info, **mInput)[key].value()
+    def get_key_raw_value(cls, root, info, key, **inputs):
+        return cls.get_form(root, info, **inputs)[key].value()
 
     @classmethod
-    def mutate_and_get_payload(cls, root, info, **mInput):
+    def mutate_and_get_payload(cls, root, info, **inputs):
         """Mutate and get payload override"""
-        if "id" in mInput:
-            mInput["id"] = from_global_id(mInput["id"])[1]
+        if "id" in inputs:
+            inputs["id"] = from_global_id(inputs["id"])[1]
             cls.is_creation = False
         else:
             cls.is_creation = True
 
         # Fix for relay. Will convert any Django model input / choice fields from global IDs to local
-        form = cls.get_form(root, info, **mInput)
+        form = cls.get_form(root, info, **inputs)
         for (key, field) in form.fields.items():
             if (
                 isinstance(field, ModelChoiceField) and form[key].value()
             ):  # pragma: no cover
                 try:
                     if isinstance(form[key].value(), List):
-                        mInput[key] = [from_global_id(item)[1] for item in mInput[key]]
+                        inputs[key] = [from_global_id(item)[1] for item in inputs[key]]
                     else:
-                        mInput[key] = from_global_id(form[key].value())[1]
+                        inputs[key] = from_global_id(form[key].value())[1]
                 except TypeError:
                     pass
 
         # Authorize
         try:
-            if not cls.authorize_request(root, info, **mInput):
+            if not cls.authorize_request(root, info, **inputs):
                 raise AuthorizationException
 
         except MutationException as exception:
             # These are our custom exceptions
             return cls(errors=exception.resolve(), success=False)
 
-        response = super().mutate_and_get_payload(root, info, **mInput)
+        response = super().mutate_and_get_payload(root, info, **inputs)
 
         if len(response.errors):
             exceptions = GQLExceptions(
@@ -288,15 +289,18 @@ class ModelDeletionMutation(AuthRequiredMixin, SafeMutation):
 
     @classmethod
     # pylint: disable=W0212
-    def authorize_request(cls, _, info, id: int):
+    def authorize_request(cls, _, info, **inputs):
         """Authorize the request"""
-        instance = cls.get_instance(id)
+        instance = cls.get_instance(inputs["id"])
         if cls._meta.ability:
-            return cls._meta.ability.user_has(info.context.user, instance)
+            if not cls._meta.ability.user_has(info.context.user, instance):
+                raise AuthorizationException
+            return
 
         if not info.context.user.has_perm(
             "delete_%s" % cls._meta.model._meta.model_name, instance
         ):
+            print("HERE")
             raise AuthorizationException
 
     @classmethod
@@ -326,7 +330,7 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
     class Arguments:
         id = IdInputField(required=True)
         user_email = graphene.String(required=True)
-        permissions = graphene.List(graphene.String)
+        permissions = graphene.List(graphene.String, required=True)
 
     @classmethod
     def __init_subclass_with_meta__(
@@ -346,11 +350,32 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
         super().__init_subclass_with_meta__(_meta=_meta, *args, **options)
 
     @classmethod
-    # pylint: disable=W0212
-    def authorize_request(
-        cls, info, instance: PermissionableModel, permissions_delta, *_, **__
-    ):
+    def instance(cls, pk):
+        return cls._meta.model.objects.get(pk=pk)
+
+    @classmethod
+    def permissions_delta(cls, pk, user, requested_permissions):
+        instance = cls.instance(pk)
+        available_permissions = [
+            node.name for node in instance.available_permissions_for_user(user)
+        ]
+
+        current_user_permissions = set(get_user_perms(user, instance)).intersection(
+            available_permissions
+        )
+
+        permissions_to_remove = current_user_permissions - set(requested_permissions)
+        permissions_to_add = set(requested_permissions).intersection(
+            available_permissions
+        ) - set(current_user_permissions)
+
+        permissions_delta = set(permissions_to_add) | set(permissions_to_remove)
+        return (permissions_to_add, permissions_to_remove, permissions_delta)
+
+    @classmethod
+    def authorize_request(cls, root, info, **inputs):
         """Authorize the request"""
+        instance = cls.instance(inputs["id"])
         available_permissions = instance.available_permissions_for_user(
             info.context.user
         )
@@ -360,7 +385,9 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
         ):
             raise AuthorizationException()
 
-        for permission in permissions_delta:
+        for permission in cls.permissions_delta(
+            inputs["id"], info.context.user, inputs["permissions"]
+        )[2]:
             # Try and get permission node for permission
             permission_node = next(
                 (node for node in available_permissions if node.name == permission),
@@ -380,31 +407,15 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
         model_instance = cls._meta.model.objects.get(id=id)
 
         # See if user exists
-
         if not (user := User.objects.filter(email=user_email).first()):
             raise GQLException(
                 "A user with that email does not exist on our system",
                 field="user_email",
             )
 
-        available_permissions = [
-            node.name
-            for node in model_instance.available_permissions_for_user(info.context.user)
-        ]
-
-        current_user_permissions = set(
-            get_user_perms(user, model_instance)
-        ).intersection(available_permissions)
-
-        permissions_to_remove = current_user_permissions - set(permissions)
-        permissions_to_add = set(permissions).intersection(available_permissions) - set(
-            current_user_permissions
+        (permissions_to_add, permissions_to_remove, _) = cls.permissions_delta(
+            id, info.context.user, permissions
         )
-
-        permissions_delta = set(permissions_to_add) | set(permissions_to_remove)
-
-        # Authorize
-        cls.authorize_request(info, model_instance, permissions_delta)
 
         for permission in permissions_to_add:
             assign_perm(permission, user, model_instance)
