@@ -306,7 +306,7 @@ class ModelDeletionMutation(AuthRequiredMixin, SafeMutation):
     def resolve_mutation(
         cls,
         _,
-        _,
+        __,
         id: int,
     ):
         model_instance = cls.get_instance(id)
