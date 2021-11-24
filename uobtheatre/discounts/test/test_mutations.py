@@ -83,7 +83,8 @@ def test_concession_type_mutation_update(gql_client):
 
 
 @pytest.mark.django_db
-def test_delete_concession_type_mutation(gql_client):
+@pytest.mark.parametrize("with_permission", [(True), (False)])
+def test_delete_concession_type_mutation(gql_client, with_permission):
     concession_type = ConcessionTypeFactory()
     request = """
         mutation {
@@ -96,13 +97,14 @@ def test_delete_concession_type_mutation(gql_client):
     )
 
     with patch.object(
-        ModifyConcessionType, "user_has", return_value=True
+        ModifyConcessionType, "user_has", return_value=with_permission
     ) as ability_mock:
         response = gql_client.login().execute(request)
 
         ability_mock.assert_called()
-        assert response["data"]["deleteConcessionType"]["success"] is True
-        assert ConcessionType.objects.count() == 0
+        assert response["data"]["deleteConcessionType"]["success"] is with_permission
+        if with_permission:
+            assert ConcessionType.objects.count() == 0
 
 
 #####

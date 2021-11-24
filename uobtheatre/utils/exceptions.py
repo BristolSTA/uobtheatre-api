@@ -11,7 +11,7 @@ error: Union[FieldError, NonFieldError])
 
 
 import traceback
-from typing import List, Union, Iterable
+from typing import Iterable, List, Union
 
 import graphene
 from django.db import transaction
@@ -202,7 +202,6 @@ class SafeMutation(MutationResult, graphene.Mutation):
         Calls resolve_mutation, catches error and formats
         """
         try:
-            # TODO I want this
             cls.authorize_request(root, info, **inputs)
             with transaction.atomic():
                 try:

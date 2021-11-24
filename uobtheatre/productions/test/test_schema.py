@@ -1197,7 +1197,7 @@ def test_production_assigned_users(gql_client, with_perm, users, expected_users)
                     user {
                         id
                     }
-                    assignedPermissions 
+                    assignedPermissions
                 }
             }
         }
@@ -1243,12 +1243,10 @@ def test_production_assigned_users(gql_client, with_perm, users, expected_users)
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "perms",
-    "can_assign"[
-        ([], False)(["boxoffice"], False)(["boxoffice", "change_production"], True)
-    ],
+    ("perms", "can_assign"),
+    [([], False), (["boxoffice"], False), (["boxoffice", "change_production"], True)],
 )
-def test_assignable_permissions(gql_client, perms):
+def test_assignable_permissions(gql_client, perms, can_assign):
     production = ProductionFactory(slug="my-production")
     gql_client.login()
 
@@ -1256,5 +1254,31 @@ def test_assignable_permissions(gql_client, perms):
         assign_perm(perm, gql_client.user, production)
 
     request = """
-        
+        query {
+            production(slug: "my-production") {
+                assignablePermissions {
+                    name
+                    description
+                    userCanAssign
+                }
+            }
+        }
     """
+
+    response = gql_client.execute(request)
+
+    if can_assign is False:
+        assert response["data"]["production"]["assignablePermissions"] is None
+        return
+
+    assert len(response["data"]["production"]["assignablePermissions"]) == 8
+    assert {
+        "name": "boxoffice",
+        "description": "Can use boxoffice for this production",
+        "userCanAssign": True,
+    } in response["data"]["production"]["assignablePermissions"]
+    assert {
+        "name": "add_production",
+        "description": "Can add production",
+        "userCanAssign": False,
+    } in response["data"]["production"]["assignablePermissions"]

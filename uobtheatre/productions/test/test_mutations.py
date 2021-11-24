@@ -6,14 +6,15 @@ from guardian.shortcuts import assign_perm
 
 from uobtheatre.bookings.test.factories import BookingFactory, PerformanceSeatingFactory
 from uobtheatre.images.test.factories import ImageFactory
-from uobtheatre.utils.exceptions import AuthorizationException
 from uobtheatre.productions.abilities import EditProductionObjects
 from uobtheatre.productions.models import Performance, PerformanceSeatGroup, Production
 from uobtheatre.productions.mutations import SetProductionStatus
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.societies.test.factories import SocietyFactory
-from uobtheatre.venues.test.factories import SeatGroupFactory, VenueFactory
+from uobtheatre.users.test.factories import UserFactory
+from uobtheatre.utils.exceptions import AuthorizationException
 from uobtheatre.utils.validators import ValidationError
+from uobtheatre.venues.test.factories import SeatGroupFactory, VenueFactory
 
 ###
 # Production Mutations
@@ -450,17 +451,19 @@ def test_delete_performance_mutation(gql_client, with_permission, with_bookings)
     )
 
     gql_client.login()
-    if with_permission:
-        assign_perm("delete_performance", gql_client.user, performance)
 
-    response = gql_client.execute(request)
+    with patch.object(
+        EditProductionObjects, "user_has", return_value=with_permission
+    ) as ability_mock:
+        response = gql_client.execute(request)
+        ability_mock.assert_called_once_with(gql_client.user, performance.production)
 
-    should_success = (
+    should_succeed = (
         with_permission and not with_bookings
     )  # Deletion should not happen if the user doesn't have the permission, or there are related models associated with the performance that are restricted
-    assert response["data"]["deletePerformance"]["success"] is should_success
+    assert response["data"]["deletePerformance"]["success"] is should_succeed
 
-    if should_success:
+    if should_succeed:
         assert Performance.objects.count() == 0
 
 
@@ -814,3 +817,74 @@ def test_set_production_status_draft_errors(gql_client):
     # Assert production status is unchanged
     production.refresh_from_db()
     assert str(production.status) == "PUBLISHED"
+
+
+@pytest.mark.django_db
+def test_production_permissions_without_change_permission(gql_client):
+    production = ProductionFactory()
+    request = """
+        mutation {
+            productionPermissions(id: "%s", userEmail: "example@example.org", permissions: []) {
+                success
+            }
+        }
+    """ % to_global_id(
+        "ProductionNode", production.id
+    )
+    response = gql_client.execute(request)
+    assert response["data"]["productionPermissions"]["success"] is False
+
+
+@pytest.mark.django_db
+def test_production_permissions_unassignable_permission(gql_client):
+    production = ProductionFactory()
+    UserFactory(email="example@example.org")
+    request = """
+        mutation {
+            productionPermissions(id: "%s", userEmail: "example@example.org", permissions: ["add_production"]) {
+                success
+                errors {
+                    ... on FieldError {
+                        message
+                        field
+                    }
+                }
+            }
+        }
+    """ % to_global_id(
+        "ProductionNode", production.id
+    )
+    assign_perm("change_production", gql_client.login().user, production)
+
+    response = gql_client.execute(request)
+    assert response["data"]["productionPermissions"]["success"] is False
+    assert response["data"]["productionPermissions"]["errors"][0] == {
+        "message": "The permission 'add_production' does not exist, or cannot be assigned",
+        "field": "permissions",
+    }
+
+
+@pytest.mark.django_db
+def test_production_permissions_assignable_permission(gql_client):
+    production = ProductionFactory()
+    user = UserFactory(email="example@example.org")
+    request = """
+        mutation {
+            productionPermissions(id: "%s", userEmail: "example@example.org", permissions: ["boxoffice"]) {
+                success
+                errors {
+                    ... on FieldError {
+                        message
+                        field
+                    }
+                }
+            }
+        }
+    """ % to_global_id(
+        "ProductionNode", production.id
+    )
+    assign_perm("change_production", gql_client.login().user, production)
+
+    response = gql_client.execute(request)
+    assert response["data"]["productionPermissions"]["success"] is True
+    assert user.has_perm("boxoffice", production) is True

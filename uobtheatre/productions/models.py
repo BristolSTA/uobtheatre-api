@@ -18,10 +18,10 @@ from uobtheatre.payments.models import Payment
 from uobtheatre.societies.models import Society
 from uobtheatre.utils.models import PermissionableModel, TimeStampedMixin
 from uobtheatre.utils.validators import (
+    RelatedObjectsValidator,
     RequiredFieldsValidator,
     ValidationError,
     Validator,
-    RelatedObjectsValidator,
 )
 from uobtheatre.venues.models import SeatGroup, Venue
 
@@ -145,7 +145,7 @@ class Production(TimeStampedMixin, PermissionableModel):
         PENDING = (
             "PENDING",
             "Pending approval",
-        )  # Produciton is pending publication/review
+        )  # Production is pending publication/review
         APPROVED = "Approved", "Approved (not published)"
         PUBLISHED = (
             "PUBLISHED",
@@ -295,9 +295,9 @@ class Production(TimeStampedMixin, PermissionableModel):
     class Meta:
         ordering = ["id"]
         permissions = (
-            ("boxoffice", "Can use boxoffice for production"),
-            ("sales", "Can view sales for production"),
-            ("force_change_production", "Can edit production once live"),
+            ("boxoffice", "Can use boxoffice for this production"),
+            ("sales", "Can view sales for this production"),
+            ("force_change_production", "Can edit production once this live"),
             ("approve_production", "Can approve production pending publication"),
         )
 

@@ -1,4 +1,3 @@
-from functools import cached_property
 from typing import List
 
 import graphene
@@ -93,7 +92,7 @@ class AssignedUsersMixin:
         if not info.context.user.has_perm("change_" + str(self._meta.model_name), self):
             return None
 
-        if not isinstance(self, PermissionableModel):
+        if not isinstance(self, PermissionableModel):  # pragma: no cover
             return None
 
         return self.available_permissions_for_user(info.context.user)
@@ -300,15 +299,14 @@ class ModelDeletionMutation(AuthRequiredMixin, SafeMutation):
         if not info.context.user.has_perm(
             "delete_%s" % cls._meta.model._meta.model_name, instance
         ):
-            print("HERE")
             raise AuthorizationException
 
     @classmethod
     # pylint: disable=C0103,W0622
     def resolve_mutation(
         cls,
-        root,
-        info,
+        _,
+        _,
         id: int,
     ):
         model_instance = cls.get_instance(id)
@@ -354,15 +352,21 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
         return cls._meta.model.objects.get(pk=pk)
 
     @classmethod
-    def permissions_delta(cls, pk, user, requested_permissions):
+    def subject_user(cls, email):
+        return User.objects.filter(email=email).first()
+
+    @classmethod
+    def permissions_delta(cls, pk, executing_user, target_user, requested_permissions):
+        """Calcualte the permissions delta"""
         instance = cls.instance(pk)
         available_permissions = [
-            node.name for node in instance.available_permissions_for_user(user)
+            node.name
+            for node in instance.available_permissions_for_user(executing_user)
         ]
 
-        current_user_permissions = set(get_user_perms(user, instance)).intersection(
-            available_permissions
-        )
+        current_user_permissions = set(
+            get_user_perms(target_user, instance)
+        ).intersection(available_permissions)
 
         permissions_to_remove = current_user_permissions - set(requested_permissions)
         permissions_to_add = set(requested_permissions).intersection(
@@ -370,6 +374,7 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
         ) - set(current_user_permissions)
 
         permissions_delta = set(permissions_to_add) | set(permissions_to_remove)
+
         return (permissions_to_add, permissions_to_remove, permissions_delta)
 
     @classmethod
@@ -381,12 +386,32 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
         )
 
         if not info.context.user.has_perm(
-            "change_" + cls._meta.model._meta.model_name, instance
+            "change_" + cls._meta.model._meta.model_name,
+            instance,  # pylint: disable=W0212
         ):
             raise AuthorizationException()
 
+        for permission in inputs["permissions"]:
+            if not next(
+                (node for node in available_permissions if node.name == permission),
+                None,
+            ):
+                raise GQLException(
+                    message="The permission '%s' does not exist" % permission,
+                    field="permissions",
+                )
+
+        if not (user := cls.subject_user(inputs["user_email"])):
+            raise GQLException(
+                "A user with that email does not exist on our system",
+                field="user_email",
+            )
+
         for permission in cls.permissions_delta(
-            inputs["id"], info.context.user, inputs["permissions"]
+            inputs["id"],
+            info.context.user,
+            user,
+            inputs["permissions"],
         )[2]:
             # Try and get permission node for permission
             permission_node = next(
@@ -396,7 +421,7 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
 
             if not permission_node or not permission_node.user_can_assign:
                 raise GQLException(
-                    message="The permission '%s' does not exisit, or cannot be assigned"
+                    message="The permission '%s' does not exist, or cannot be assigned"
                     % permission,
                     field="permissions",
                 )
@@ -406,15 +431,10 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
     def resolve_mutation(cls, _, info, id: int, user_email, permissions):
         model_instance = cls._meta.model.objects.get(id=id)
 
-        # See if user exists
-        if not (user := User.objects.filter(email=user_email).first()):
-            raise GQLException(
-                "A user with that email does not exist on our system",
-                field="user_email",
-            )
+        user = cls.subject_user(user_email)
 
         (permissions_to_add, permissions_to_remove, _) = cls.permissions_delta(
-            id, info.context.user, permissions
+            id, info.context.user, user, permissions
         )
 
         for permission in permissions_to_add:

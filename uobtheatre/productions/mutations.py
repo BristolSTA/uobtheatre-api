@@ -1,35 +1,29 @@
 import graphene
 
-from uobtheatre.utils.exceptions import (
-    AuthorizationException,
-    SafeMutation,
-    GQLExceptions,
-)
 from uobtheatre.productions.abilities import AddProduction, EditProductionObjects
-from uobtheatre.users.schema import AuthMutation
-from uobtheatre.utils.schema import AuthRequiredMixin, IdInputField
-from uobtheatre.productions.abilities import EditProductionObjects
-from uobtheatre.productions.models import Production
-from uobtheatre.utils.schema import (
-    AuthRequiredMixin,
-    ModelDeletionMutation,
-    SafeFormMutation,
-    AssignPermissionsMutation,
-)
 from uobtheatre.productions.forms import (
     PerformanceForm,
     PerformanceSeatGroupForm,
     ProductionForm,
 )
-from uobtheatre.productions.models import (
-    Performance,
-    PerformanceSeatGroup,
-    Production,
-)
+from uobtheatre.productions.models import Performance, PerformanceSeatGroup, Production
 from uobtheatre.productions.schema import (
-    ProductionNode,
     PerformanceNode,
     PerformanceSeatGroupNode,
+    ProductionNode,
+)
+from uobtheatre.users.schema import AuthMutation
+from uobtheatre.utils.exceptions import (
+    AuthorizationException,
+    GQLExceptions,
+    SafeMutation,
+)
+from uobtheatre.utils.schema import (
+    AssignPermissionsMutation,
+    AuthRequiredMixin,
+    IdInputField,
+    ModelDeletionMutation,
+    SafeFormMutation,
 )
 
 
@@ -182,6 +176,12 @@ class PerformanceMutation(SafeFormMutation, AuthRequiredMixin):
 
 class DeletePerformanceMutation(ModelDeletionMutation):
     """Mutation to delete a performance"""
+
+    @classmethod
+    def authorize_request(cls, _, info, **inputs):
+        instance = cls.get_instance(inputs["id"])
+        if not EditProductionObjects.user_has(info.context.user, instance.production):
+            raise AuthorizationException
 
     class Meta:
         model = Performance
