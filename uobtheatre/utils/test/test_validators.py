@@ -1,9 +1,13 @@
-import pytest
 from types import SimpleNamespace
+
+import pytest
+
+from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.utils.validators import (
+    AndValidator,
+    RelatedObjectsValidator,
     RequiredFieldsValidator,
     RequiredFieldValidator,
-    AndValidator,
     ValidationError,
 )
 
@@ -42,3 +46,64 @@ def test_and_validator_method():
     validator_1 = RequiredFieldValidator("a")
     validator_2 = RequiredFieldValidator("b")
     assert validator_1 & validator_2 == AndValidator(validator_1, validator_2)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "number_of_related_objects,validator_min_number,mock_validator_response,expected_errors",
+    [
+        (1, 1, [], []),
+        (
+            1,
+            2,
+            [],
+            [
+                ValidationError(
+                    message="At least 2 performances are required.",
+                    attribute="performances",
+                )
+            ],
+        ),
+        (
+            2,
+            None,
+            [
+                ValidationError(
+                    message="Some error",
+                    attribute="some_field",
+                )
+            ],
+            [
+                ValidationError(
+                    message="Some error",
+                    attribute="some_field",
+                ),
+                ValidationError(
+                    message="Some error",
+                    attribute="some_field",
+                ),
+            ],
+        ),
+    ],
+)
+def test_realted_objects_validator_min_number(
+    number_of_related_objects,
+    validator_min_number,
+    mock_validator_response,
+    expected_errors,
+):
+    production = ProductionFactory()
+    _ = [
+        PerformanceFactory(production=production)
+        for _ in range(number_of_related_objects)
+    ]
+
+    class MockValidator:
+        def validate(self, *_, **__):
+            return mock_validator_response
+
+    errors = RelatedObjectsValidator(
+        "performances", MockValidator(), min_number=validator_min_number
+    ).validate(production)
+
+    assert errors == expected_errors
