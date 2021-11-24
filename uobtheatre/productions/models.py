@@ -18,10 +18,10 @@ from uobtheatre.payments.models import Payment
 from uobtheatre.societies.models import Society
 from uobtheatre.utils.models import PermissionableModel, TimeStampedMixin
 from uobtheatre.utils.validators import (
+    RelatedObjectsValidator,
     RequiredFieldsValidator,
     ValidationError,
     Validator,
-    RelatedObjectsValidator,
 )
 from uobtheatre.venues.models import SeatGroup, Venue
 
@@ -68,248 +68,6 @@ class AudienceWarning(models.Model):
         return str(self.description)
 
 
-class ProductionQuerySet(QuerySet):
-    """Queryset for Productions, also used as manager."""
-
-    def annotate_start(self):
-        """Annotate start datetime to queryset"""
-        return self.annotate(start=Min("performances__start"))
-
-    def annotate_end(self):
-        """Annotate end datetime to queryset"""
-        return self.annotate(end=Max("performances__end"))
-
-    def user_can_see(self, user: "User"):
-        """Filter productions which the user can see
-
-        Returns the productions which the provided user has permission to see.
-
-        Args:
-            user (User): The user which is used in the filter.
-
-        Returns:
-            QuerySet: The filtered queryset
-        """
-        productions_user_can_edit = get_objects_for_user(
-            user, "change_production", self
-        ).values_list("id", flat=True)
-        return self.filter(
-            ~Q(status=Production.Status.DRAFT) | Q(id__in=productions_user_can_edit)
-        )
-
-
-class Production(TimeStampedMixin, PermissionableModel):
-    """The model for a production.
-
-    A production is a show (like the 2 weeks things) and can have many
-    performaces (these are like the nights).
-    """
-
-    # Used to validate if a draft can be submitted for approval
-    objects = ProductionQuerySet.as_manager()
-
-    name = models.CharField(max_length=255)
-    subtitle = models.CharField(max_length=255, null=True, blank=True)
-    description = TipTapTextField(null=True)
-
-    society = models.ForeignKey(
-        Society, on_delete=models.RESTRICT, related_name="productions"
-    )
-
-    cover_image = models.ForeignKey(
-        Image,
-        on_delete=models.RESTRICT,
-        related_name="production_cover_images",
-        null=True,
-        blank=True,
-    )
-    poster_image = models.ForeignKey(
-        Image,
-        on_delete=models.RESTRICT,
-        related_name="production_poster_images",
-        null=True,
-        blank=True,
-    )
-    featured_image = models.ForeignKey(
-        Image,
-        on_delete=models.RESTRICT,
-        related_name="production_featured_images",
-        null=True,
-        blank=True,
-    )
-
-    class Status(models.TextChoices):
-        """The overall status of the production"""
-
-        DRAFT = "DRAFT", "Draft"  # Production is in draft
-        PENDING = (
-            "PENDING",
-            "Pending approval",
-        )  # Produciton is pending publication/review
-        APPROVED = "Approved", "Approved (not published)"
-        PUBLISHED = (
-            "PUBLISHED",
-            "Published (Can view on the site)",
-        )  # Production is public
-        CLOSED = (
-            "CLOSED",
-            "Closed (Ready for money transfers)",
-        )  # Production has been closed after it's run. No edits allowed.
-        COMPLETE = (
-            "COMPLETE",
-            "Complete (Show finished and all money settled)",
-        )  # Production has been closed and paid for/transactions settled
-
-    status = models.CharField(
-        max_length=10, choices=Status.choices, default=Status.DRAFT
-    )
-
-    age_rating = models.SmallIntegerField(null=True, blank=True)
-    facebook_event = models.CharField(max_length=255, null=True, blank=True)
-
-    warnings = models.ManyToManyField(AudienceWarning, blank=True)
-
-    slug = AutoSlugField(populate_from="name", unique=True, blank=True, editable=True)
-
-    @property
-    def bookings(self):
-        from uobtheatre.bookings.models import Booking
-
-        return Booking.objects.filter(performance__in=self.performances.all())
-
-    def __str__(self):
-        return str(self.name)
-
-    def is_upcoming(self) -> bool:
-        """If the show has performances in the future.
-
-        A show is upcoming if it has a performance that has not ended.
-
-        Returns:
-            bool: If the proudction is upcoming
-        """
-        return self.performances.filter(start__gte=timezone.now()).count() != 0
-
-    def is_bookable(self) -> bool:
-        """If this Production can be booked.
-
-        Returns if the show is bookable, based on if it has enabled
-        performances.
-
-        Returns:
-            bool: If the booking can be booked.
-        """
-        return (
-            len(
-                [
-                    performance
-                    for performance in self.performances.all()
-                    if performance.is_bookable
-                ]
-            )
-            > 0
-        )
-
-    def end_date(self):
-        """When the last Performance of the Production ends.
-
-        Returns:
-            datetime: The end datatime of the Production.
-        """
-        return self.performances.all().aggregate(Max("end"))["end__max"]
-
-    def start_date(self):
-        """When the first performance starts.
-
-        Returns:
-            datetime: The start datatime of the Production.
-        """
-        return self.performances.all().aggregate(Min("start"))["start__min"]
-
-    def min_seat_price(self) -> Optional[int]:
-        """The price of the cheapest seat available for this production.
-
-        Return the minimum seatgroup ticket price for each performance. This is
-        used to say "Tickets from £x".
-
-        Returns:
-            int, optional: The price of the cheapest seat in pennies. If no
-                SeatGroups are added to this Booking then None is returned.
-        """
-        performances = self.performances.all()
-        all_min_seat_prices = [
-            performance.min_seat_price() for performance in performances
-        ]
-
-        return min(
-            (
-                min_seat_prices
-                for min_seat_prices in all_min_seat_prices
-                if min_seat_prices is not None
-            ),
-            default=None,
-        )
-
-    def duration(self) -> Optional[datetime.timedelta]:
-        """The duration of the shortest show as a datetime object.
-
-        Returns:
-            datetime: The duration of the shortest production.
-        """
-        performances = self.performances.all()
-        if not performances:
-            return None
-        return min(performance.duration() for performance in performances)
-
-    @property
-    def total_capacity(self) -> int:
-        """The total number of tickets which can be sold across all performances"""
-        return sum(
-            [performance.total_capacity for performance in self.performances.all()]
-        )
-
-    @property
-    def total_tickets_sold(self) -> int:
-        """The total number of tickets sold across all performances"""
-        return sum(
-            [
-                performance.total_tickets_sold()
-                for performance in self.performances.all()
-            ]
-        )
-
-    def sales_breakdown(self, breakdowns: list[str] = None):
-        """Generates a breakdown of the sales of this production"""
-        from uobtheatre.bookings.models import Booking
-
-        return Payment.objects.filter(
-            pay_object_id__in=self.bookings.values_list("id", flat=True),
-            pay_object_type=ContentType.objects.get_for_model(Booking),
-        ).annotate_sales_breakdown(  # type: ignore
-            breakdowns
-        )
-
-    def validate_draft(self) -> list[ValidationError]:
-        return self.VALIDATOR.validate(self)
-
-    class Meta:
-        ordering = ["id"]
-        permissions = (
-            ("boxoffice", "Can use boxoffice for production"),
-            ("sales", "Can view sales for production"),
-            ("force_change_production", "Can edit production once live"),
-            ("approve_production", "Can approve production pending publication"),
-        )
-
-    class PermissionsMeta:
-        schema_assignable_permissions = {
-            "boxoffice": ("change_production", "force_change_production"),
-            "view_production": ("change_production", "force_change_production"),
-            "change_production": ("change_production", "force_change_production"),
-            "sales": ("change_production", "force_change_production"),
-        }
-
-
 class CastMember(models.Model):
     """Member of production cast"""
 
@@ -323,7 +81,9 @@ class CastMember(models.Model):
     )
     role = models.CharField(max_length=255, null=True)
     production = models.ForeignKey(
-        Production, on_delete=models.CASCADE, related_name="cast"
+        "productions.Production",
+        on_delete=models.CASCADE,
+        related_name="cast",
     )
 
     def __str__(self):
@@ -339,7 +99,9 @@ class ProductionTeamMember(models.Model):
     name = models.CharField(max_length=255)
     role = models.CharField(max_length=255, null=True)
     production = models.ForeignKey(
-        Production, on_delete=models.CASCADE, related_name="production_team"
+        "productions.Production",
+        on_delete=models.CASCADE,
+        related_name="production_team",
     )
 
     def __str__(self):
@@ -357,7 +119,9 @@ class CrewMember(models.Model):
         CrewRole, null=True, on_delete=models.SET_NULL, related_name="crew_members"
     )
     production = models.ForeignKey(
-        Production, on_delete=models.CASCADE, related_name="crew"
+        "productions.Production",
+        on_delete=models.CASCADE,
+        related_name="crew",
     )
 
     def __str__(self):
@@ -449,7 +213,7 @@ class Performance(
     objects = PerformanceQuerySet.as_manager()
 
     production = models.ForeignKey(
-        Production,
+        "productions.Production",
         on_delete=models.CASCADE,
         related_name="performances",
     )
@@ -891,8 +655,47 @@ class PerformanceSeatGroup(models.Model):
         super().save(*args, **kwargs)
 
 
-Production.VALIDATOR = (
-    RequiredFieldsValidator(
+class ProductionQuerySet(QuerySet):
+    """Queryset for Productions, also used as manager."""
+
+    def annotate_start(self):
+        """Annotate start datetime to queryset"""
+        return self.annotate(start=Min("performances__start"))
+
+    def annotate_end(self):
+        """Annotate end datetime to queryset"""
+        return self.annotate(end=Max("performances__end"))
+
+    def user_can_see(self, user: "User"):
+        """Filter productions which the user can see
+
+        Returns the productions which the provided user has permission to see.
+
+        Args:
+            user (User): The user which is used in the filter.
+
+        Returns:
+            QuerySet: The filtered queryset
+        """
+        productions_user_can_edit = get_objects_for_user(
+            user, "change_production", self
+        ).values_list("id", flat=True)
+        return self.filter(
+            ~Q(status=Production.Status.DRAFT) | Q(id__in=productions_user_can_edit)
+        )
+
+
+class Production(TimeStampedMixin, PermissionableModel):
+    """The model for a production.
+
+    A production is a show (like the 2 weeks things) and can have many
+    performaces (these are like the nights).
+    """
+
+    # Used to validate if a draft can be submitted for approval
+    objects = ProductionQuerySet.as_manager()
+
+    VALIDATOR = RequiredFieldsValidator(
         [
             "name",
             "subtitle",
@@ -902,6 +705,207 @@ Production.VALIDATOR = (
             "poster_image",
             "featured_image",
         ]
+    ) & RelatedObjectsValidator(
+        attribute="performances", validator=Performance.VALIDATOR, min_number=1
     )
-    & RelatedObjectsValidator(attribute="performances", validator=Performance.VALIDATOR)
-)
+
+    name = models.CharField(max_length=255)
+    subtitle = models.CharField(max_length=255, null=True, blank=True)
+    description = TipTapTextField(null=True)
+
+    society = models.ForeignKey(
+        Society, on_delete=models.RESTRICT, related_name="productions"
+    )
+
+    cover_image = models.ForeignKey(
+        Image,
+        on_delete=models.RESTRICT,
+        related_name="production_cover_images",
+        null=True,
+        blank=True,
+    )
+    poster_image = models.ForeignKey(
+        Image,
+        on_delete=models.RESTRICT,
+        related_name="production_poster_images",
+        null=True,
+        blank=True,
+    )
+    featured_image = models.ForeignKey(
+        Image,
+        on_delete=models.RESTRICT,
+        related_name="production_featured_images",
+        null=True,
+        blank=True,
+    )
+
+    class Status(models.TextChoices):
+        """The overall status of the production"""
+
+        DRAFT = "DRAFT", "Draft"  # Production is in draft
+        PENDING = (
+            "PENDING",
+            "Pending approval",
+        )  # Produciton is pending publication/review
+        APPROVED = "Approved", "Approved (not published)"
+        PUBLISHED = (
+            "PUBLISHED",
+            "Published (Can view on the site)",
+        )  # Production is public
+        CLOSED = (
+            "CLOSED",
+            "Closed (Ready for money transfers)",
+        )  # Production has been closed after it's run. No edits allowed.
+        COMPLETE = (
+            "COMPLETE",
+            "Complete (Show finished and all money settled)",
+        )  # Production has been closed and paid for/transactions settled
+
+    status = models.CharField(
+        max_length=10, choices=Status.choices, default=Status.DRAFT
+    )
+
+    age_rating = models.SmallIntegerField(null=True, blank=True)
+    facebook_event = models.CharField(max_length=255, null=True, blank=True)
+
+    warnings = models.ManyToManyField(AudienceWarning, blank=True)
+
+    slug = AutoSlugField(populate_from="name", unique=True, blank=True, editable=True)
+
+    @property
+    def bookings(self):
+        from uobtheatre.bookings.models import Booking
+
+        return Booking.objects.filter(performance__in=self.performances.all())
+
+    def __str__(self):
+        return str(self.name)
+
+    def is_upcoming(self) -> bool:
+        """If the show has performances in the future.
+
+        A show is upcoming if it has a performance that has not ended.
+
+        Returns:
+            bool: If the proudction is upcoming
+        """
+        return self.performances.filter(start__gte=timezone.now()).count() != 0
+
+    def is_bookable(self) -> bool:
+        """If this Production can be booked.
+
+        Returns if the show is bookable, based on if it has enabled
+        performances.
+
+        Returns:
+            bool: If the booking can be booked.
+        """
+        return (
+            len(
+                [
+                    performance
+                    for performance in self.performances.all()
+                    if performance.is_bookable
+                ]
+            )
+            > 0
+        )
+
+    def end_date(self):
+        """When the last Performance of the Production ends.
+
+        Returns:
+            datetime: The end datatime of the Production.
+        """
+        return self.performances.all().aggregate(Max("end"))["end__max"]
+
+    def start_date(self):
+        """When the first performance starts.
+
+        Returns:
+            datetime: The start datatime of the Production.
+        """
+        return self.performances.all().aggregate(Min("start"))["start__min"]
+
+    def min_seat_price(self) -> Optional[int]:
+        """The price of the cheapest seat available for this production.
+
+        Return the minimum seatgroup ticket price for each performance. This is
+        used to say "Tickets from £x".
+
+        Returns:
+            int, optional: The price of the cheapest seat in pennies. If no
+                SeatGroups are added to this Booking then None is returned.
+        """
+        performances = self.performances.all()
+        all_min_seat_prices = [
+            performance.min_seat_price() for performance in performances
+        ]
+
+        return min(
+            (
+                min_seat_prices
+                for min_seat_prices in all_min_seat_prices
+                if min_seat_prices is not None
+            ),
+            default=None,
+        )
+
+    def duration(self) -> Optional[datetime.timedelta]:
+        """The duration of the shortest show as a datetime object.
+
+        Returns:
+            datetime: The duration of the shortest production.
+        """
+        performances = self.performances.all()
+        if not performances:
+            return None
+        return min(performance.duration() for performance in performances)
+
+    @property
+    def total_capacity(self) -> int:
+        """The total number of tickets which can be sold across all performances"""
+        return sum(
+            [performance.total_capacity for performance in self.performances.all()]
+        )
+
+    @property
+    def total_tickets_sold(self) -> int:
+        """The total number of tickets sold across all performances"""
+        return sum(
+            [
+                performance.total_tickets_sold()
+                for performance in self.performances.all()
+            ]
+        )
+
+    def sales_breakdown(self, breakdowns: list[str] = None):
+        """Generates a breakdown of the sales of this production"""
+        from uobtheatre.bookings.models import Booking
+
+        return Payment.objects.filter(
+            pay_object_id__in=self.bookings.values_list("id", flat=True),
+            pay_object_type=ContentType.objects.get_for_model(Booking),
+        ).annotate_sales_breakdown(  # type: ignore
+            breakdowns
+        )
+
+    def validate(self) -> list[ValidationError]:
+        return self.VALIDATOR.validate(self)
+
+    class Meta:
+        ordering = ["id"]
+        permissions = (
+            ("boxoffice", "Can use boxoffice for production"),
+            ("sales", "Can view sales for production"),
+            ("force_change_production", "Can edit production once live"),
+            ("approve_production", "Can approve production pending publication"),
+        )
+
+    class PermissionsMeta:
+        schema_assignable_permissions = {
+            "boxoffice": ("change_production", "force_change_production"),
+            "view_production": ("change_production", "force_change_production"),
+            "change_production": ("change_production", "force_change_production"),
+            "sales": ("change_production", "force_change_production"),
+        }
