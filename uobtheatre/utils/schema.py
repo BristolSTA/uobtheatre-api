@@ -92,8 +92,7 @@ class AssignedUsersMixin:
         if not info.context.user.has_perm("change_" + str(self._meta.model_name), self):
             return None
 
-        # pragma: no cover
-        if not isinstance(self, PermissionableModel):
+        if not isinstance(self, PermissionableModel):  # pragma: no cover
             return None
 
         return self.available_permissions_for_user(info.context.user)
@@ -430,10 +429,9 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
             inputs["permissions"],
         )[2]:
             # Try and get permission node for permission
-            permission_node = next(
-                (node for node in available_permissions if node.name == permission),
-                None,
-            )
+            permission_node = [
+                node for node in available_permissions if node.name == permission
+            ][0]
 
             if not permission_node or not permission_node.user_can_assign:
                 raise GQLException(

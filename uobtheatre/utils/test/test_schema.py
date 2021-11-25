@@ -1,5 +1,6 @@
 import pytest
 from graphql_relay.node.node import to_global_id
+from guardian.shortcuts import assign_perm
 
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import BookingFactory, PerformanceSeatingFactory
@@ -88,7 +89,8 @@ def test_id_input_field_parse_value(gql_client):
 
 
 @pytest.mark.django_db
-def test_model_deletion_mutation_authorisation():
+@pytest.mark.parametrize("with_delete_perm", [False, True])
+def test_model_deletion_mutation_authorisation(with_delete_perm):
     user = UserFactory()
     production = ProductionFactory()
 
@@ -98,9 +100,23 @@ def test_model_deletion_mutation_authorisation():
 
     mutation = FakeModelDeletionMutation()
 
-    with pytest.raises(AuthorizationException):
+    if with_delete_perm:
+        assign_perm("delete_production", user, production)
+
+    context = type(
+        "obj", (object,), {"context": type("obj", (object,), {"user": user})}
+    )
+
+    if with_delete_perm:
         mutation.authorize_request(
             None,
-            type("obj", (object,), {"context": type("obj", (object,), {"user": user})}),
+            context,
             id=production.id,
         )
+    else:
+        with pytest.raises(AuthorizationException):
+            mutation.authorize_request(
+                None,
+                context,
+                id=production.id,
+            )

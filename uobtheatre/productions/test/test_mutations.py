@@ -214,6 +214,372 @@ def test_production_mutation_update_new_society(
     assert response["data"]["production"]["success"] is expected_outcome
 
 
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "permissions, has_edit_ability, current_status, updated_status, has_perm",
+    [
+        # Someone with no perms cannot do anything
+        (
+            [],
+            False,
+            Production.Status.DRAFT,
+            Production.Status.PENDING,
+            False,
+        ),
+        # Force change can do whatever
+        (
+            [
+                "productions.force_change_production",
+            ],
+            False,
+            Production.Status.DRAFT,
+            Production.Status.PUBLISHED,
+            True,
+        ),
+        # Someone who can edit can publish if approved
+        (
+            [],
+            True,
+            Production.Status.APPROVED,
+            Production.Status.PUBLISHED,
+            True,
+        ),
+        # Someone who can edit cannot publish if not approved
+        (
+            [],
+            True,
+            Production.Status.DRAFT,
+            Production.Status.PUBLISHED,
+            False,
+        ),
+        # Someone who can edit can submit for approval
+        (
+            [],
+            True,
+            Production.Status.DRAFT,
+            Production.Status.PENDING,
+            True,
+        ),
+        # Someone who can edit cannot change status of published
+        (
+            [],
+            True,
+            Production.Status.PUBLISHED,
+            Production.Status.PENDING,
+            False,
+        ),
+        # Someone who can approve can approve pending
+        (
+            ["productions.approve_production"],
+            False,
+            Production.Status.PENDING,
+            Production.Status.APPROVED,
+            True,
+        ),
+        # Someone who can approve cannot do other things
+        (
+            ["productions.approve_production"],
+            False,
+            Production.Status.APPROVED,
+            Production.Status.PUBLISHED,
+            False,
+        ),
+        # Fincance can close
+        (
+            ["reports.finance_reports"],
+            False,
+            Production.Status.CLOSED,
+            Production.Status.COMPLETE,
+            True,
+        ),
+        # Fincance cannot do other things
+        (
+            ["reports.finance_reports"],
+            False,
+            Production.Status.PENDING,
+            Production.Status.APPROVED,
+            False,
+        ),
+    ],
+)
+def test_set_production_status_authorize_request_force_change(
+    permissions, has_edit_ability, current_status, updated_status, has_perm, info
+):
+    user = info.context.user
+    production = ProductionFactory(status=current_status)
+
+    with patch.object(EditProductionObjects, "user_has", return_value=has_edit_ability):
+        for permission in permissions:
+            assign_perm(permission, user)
+
+        if not has_perm:
+            with pytest.raises(AuthorizationException):
+                SetProductionStatus.authorize_request(
+                    None, info, production.id, updated_status
+                )
+        else:
+            SetProductionStatus.authorize_request(
+                None, info, production.id, updated_status
+            )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("status", ["DRAFT", "PENDING"])
+def test_set_production_status_draft(status, gql_client):
+    production = ProductionFactory(status=Production.Status.PUBLISHED)
+
+    gql_client.login()
+    query = """
+        mutation {
+          setProductionStatus(productionId: "%s", status: %s) {
+            success
+          }
+        }
+    """ % (
+        to_global_id("ProductionNode", production.id),
+        status,
+    )
+
+    with patch.object(
+        SetProductionStatus, "authorize_request", return_value=None
+    ), patch.object(Production.VALIDATOR, "validate", return_value=[]) as validator:
+        response = gql_client.execute(query)
+        assert response["data"]["setProductionStatus"]["success"]
+
+        if status == "DRAFT":
+            validator.assert_not_called()
+        else:
+            validator.assert_called_once()
+
+    production.refresh_from_db()
+    assert str(production.status) == status
+
+
+@pytest.mark.django_db
+def test_set_production_status_draft_errors(gql_client):
+    production = ProductionFactory(status=Production.Status.PUBLISHED)
+
+    gql_client.login()
+    query = """
+        mutation {
+          setProductionStatus(productionId: "%s", status: %s) {
+            success
+            errors {
+              __typename
+              ... on NonFieldError {
+                message
+                code
+              }
+              ... on FieldError {
+                message
+                field
+                code
+              }
+            }
+          }
+        }
+    """ % (
+        to_global_id("ProductionNode", production.id),
+        "PENDING",
+    )
+
+    with patch.object(
+        SetProductionStatus, "authorize_request", return_value=None
+    ), patch.object(
+        Production.VALIDATOR,
+        "validate",
+        return_value=[
+            ValidationError(message="We need that thing."),
+            ValidationError(message="Something about the attribute", attribute="abc"),
+        ],
+    ) as validator:
+        response = gql_client.execute(query)
+
+    assert response == {
+        "data": {
+            "setProductionStatus": {
+                "errors": [
+                    {
+                        "__typename": "NonFieldError",
+                        "code": "400",
+                        "message": "We need that thing.",
+                    },
+                    {
+                        "__typename": "FieldError",
+                        "code": "400",
+                        "field": "abc",
+                        "message": "Something about the attribute",
+                    },
+                ],
+                "success": False,
+            },
+        },
+    }
+
+    validator.assert_called_once()
+
+    # Assert production status is unchanged
+    production.refresh_from_db()
+    assert str(production.status) == "PUBLISHED"
+
+
+@pytest.mark.django_db
+def test_production_permissions_without_change_permission(gql_client):
+    production = ProductionFactory()
+    request = """
+        mutation {
+            productionPermissions(id: "%s", userEmail: "example@example.org", permissions: []) {
+                success
+            }
+        }
+    """ % to_global_id(
+        "ProductionNode", production.id
+    )
+    response = gql_client.execute(request)
+    assert response["data"]["productionPermissions"]["success"] is False
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("permission", ["add_production"])
+def test_production_permissions_unassignable_permission(gql_client, permission):
+    production = ProductionFactory()
+    UserFactory(email="example@example.org")
+    request = """
+        mutation {
+            productionPermissions(id: "%s", userEmail: "example@example.org", permissions: ["%s"]) {
+                success
+                errors {
+                    ... on FieldError {
+                        message
+                        field
+                    }
+                }
+            }
+        }
+    """ % (
+        to_global_id("ProductionNode", production.id),
+        permission,
+    )
+    assign_perm("change_production", gql_client.login().user, production)
+
+    response = gql_client.execute(request)
+    assert response["data"]["productionPermissions"]["success"] is False
+    assert response["data"]["productionPermissions"]["errors"][0] == {
+        "message": "The permission '%s' does not exist, or cannot be assigned"
+        % permission,
+        "field": "permissions",
+    }
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("permission", ["invalid_permission"])
+def test_production_permissions_invalid_permission(gql_client, permission):
+    production = ProductionFactory()
+    UserFactory(email="example@example.org")
+    request = """
+        mutation {
+            productionPermissions(id: "%s", userEmail: "example@example.org", permissions: ["%s"]) {
+                success
+                errors {
+                    ... on FieldError {
+                        message
+                        field
+                    }
+                }
+            }
+        }
+    """ % (
+        to_global_id("ProductionNode", production.id),
+        permission,
+    )
+    assign_perm("change_production", gql_client.login().user, production)
+
+    response = gql_client.execute(request)
+    assert response["data"]["productionPermissions"]["success"] is False
+    assert response["data"]["productionPermissions"]["errors"][0] == {
+        "message": "The permission '%s' does not exist" % permission,
+        "field": "permissions",
+    }
+
+
+@pytest.mark.django_db
+def test_production_permissions_assignable_permission(gql_client):
+    production = ProductionFactory()
+    user = UserFactory(email="example@example.org")
+    request = """
+        mutation {
+            productionPermissions(id: "%s", userEmail: "example@example.org", permissions: ["boxoffice"]) {
+                success
+                errors {
+                    ... on FieldError {
+                        message
+                        field
+                    }
+                }
+            }
+        }
+    """ % to_global_id(
+        "ProductionNode", production.id
+    )
+    assign_perm("change_production", gql_client.login().user, production)
+
+    response = gql_client.execute(request)
+    assert response["data"]["productionPermissions"]["success"] is True
+    assert user.has_perm("boxoffice", production) is True
+
+
+@pytest.mark.django_db
+def test_production_permissions_remove_assignable_permission(gql_client):
+    production = ProductionFactory()
+    user = UserFactory(email="example@example.org")
+    assign_perm("boxoffice", user, production)
+    request = """
+        mutation {
+            productionPermissions(id: "%s", userEmail: "example@example.org", permissions: []) {
+                success
+                errors {
+                    ... on FieldError {
+                        message
+                        field
+                    }
+                }
+            }
+        }
+    """ % to_global_id(
+        "ProductionNode", production.id
+    )
+    assign_perm("change_production", gql_client.login().user, production)
+
+    response = gql_client.execute(request)
+    assert response["data"]["productionPermissions"]["success"] is True
+    assert user.has_perm("boxoffice", production) is False
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("with_permission", [False, True])
+def test_production_permissions_removing_unassignable_permissions(
+    gql_client, with_permission
+):
+    production = ProductionFactory()
+    user = UserFactory(email="example@example.org")
+    assign_perm("delete_production", user, production)
+    request = """
+        mutation {
+            productionPermissions(id: "%s", userEmail: "example@example.org", permissions: [%s]) {
+                success
+            }
+        }
+    """ % (
+        to_global_id("ProductionNode", production.id),
+        '"delete_production"' if with_permission else "",
+    )
+    assign_perm("change_production", gql_client.login().user, production)
+
+    response = gql_client.execute(request)
+    assert response["data"]["productionPermissions"]["success"] is with_permission
+    assert user.has_perm("delete_production", production)
+
+
 ###
 # Performance Mutations
 ###
@@ -608,283 +974,3 @@ def test_delete_performance_seat_group_mutation(gql_client):
         ability_mock.assert_called()
         assert response["data"]["deletePerformanceSeatGroup"]["success"] is True
         assert PerformanceSeatGroup.objects.count() == 0
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    "permissions, has_edit_ability, current_status, updated_status, has_perm",
-    [
-        # Someone with no perms cannot do anything
-        (
-            [],
-            False,
-            Production.Status.DRAFT,
-            Production.Status.PENDING,
-            False,
-        ),
-        # Force change can do whatever
-        (
-            [
-                "productions.force_change_production",
-            ],
-            False,
-            Production.Status.DRAFT,
-            Production.Status.PUBLISHED,
-            True,
-        ),
-        # Someone who can edit can publish if approved
-        (
-            [],
-            True,
-            Production.Status.APPROVED,
-            Production.Status.PUBLISHED,
-            True,
-        ),
-        # Someone who can edit cannot publish if not approved
-        (
-            [],
-            True,
-            Production.Status.DRAFT,
-            Production.Status.PUBLISHED,
-            False,
-        ),
-        # Someone who can edit can submit for approval
-        (
-            [],
-            True,
-            Production.Status.DRAFT,
-            Production.Status.PENDING,
-            True,
-        ),
-        # Someone who can edit cannot change status of published
-        (
-            [],
-            True,
-            Production.Status.PUBLISHED,
-            Production.Status.PENDING,
-            False,
-        ),
-        # Someone who can approve can approve pending
-        (
-            ["productions.approve_production"],
-            False,
-            Production.Status.PENDING,
-            Production.Status.APPROVED,
-            True,
-        ),
-        # Someone who can approve cannot do other things
-        (
-            ["productions.approve_production"],
-            False,
-            Production.Status.APPROVED,
-            Production.Status.PUBLISHED,
-            False,
-        ),
-        # Fincance can close
-        (
-            ["reports.finance_reports"],
-            False,
-            Production.Status.CLOSED,
-            Production.Status.COMPLETE,
-            True,
-        ),
-        # Fincance cannot do other things
-        (
-            ["reports.finance_reports"],
-            False,
-            Production.Status.PENDING,
-            Production.Status.APPROVED,
-            False,
-        ),
-    ],
-)
-def test_set_production_status_authorize_request_force_change(
-    permissions, has_edit_ability, current_status, updated_status, has_perm, info
-):
-    user = info.context.user
-    production = ProductionFactory(status=current_status)
-
-    with patch.object(EditProductionObjects, "user_has", return_value=has_edit_ability):
-        for permission in permissions:
-            assign_perm(permission, user)
-
-        if not has_perm:
-            with pytest.raises(AuthorizationException):
-                SetProductionStatus.authorize_request(
-                    None, info, production.id, updated_status
-                )
-        else:
-            SetProductionStatus.authorize_request(
-                None, info, production.id, updated_status
-            )
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize("status", ["DRAFT", "PENDING"])
-def test_set_production_status_draft(status, gql_client):
-    production = ProductionFactory(status=Production.Status.PUBLISHED)
-
-    gql_client.login()
-    query = """
-        mutation {
-          setProductionStatus(productionId: "%s", status: %s) {
-            success
-          }
-        }
-    """ % (
-        to_global_id("ProductionNode", production.id),
-        status,
-    )
-
-    with patch.object(
-        SetProductionStatus, "authorize_request", return_value=None
-    ), patch.object(Production.VALIDATOR, "validate", return_value=[]) as validator:
-        response = gql_client.execute(query)
-        assert response["data"]["setProductionStatus"]["success"]
-
-        if status == "DRAFT":
-            validator.assert_not_called()
-        else:
-            validator.assert_called_once()
-
-    production.refresh_from_db()
-    assert str(production.status) == status
-
-
-@pytest.mark.django_db
-def test_set_production_status_draft_errors(gql_client):
-    production = ProductionFactory(status=Production.Status.PUBLISHED)
-
-    gql_client.login()
-    query = """
-        mutation {
-          setProductionStatus(productionId: "%s", status: %s) {
-            success
-            errors {
-              __typename
-              ... on NonFieldError {
-                message
-                code
-              }
-              ... on FieldError {
-                message
-                field
-                code
-              }
-            }
-          }
-        }
-    """ % (
-        to_global_id("ProductionNode", production.id),
-        "PENDING",
-    )
-
-    with patch.object(
-        SetProductionStatus, "authorize_request", return_value=None
-    ), patch.object(
-        Production.VALIDATOR,
-        "validate",
-        return_value=[
-            ValidationError(message="We need that thing."),
-            ValidationError(message="Something about the attribute", attribute="abc"),
-        ],
-    ) as validator:
-        response = gql_client.execute(query)
-
-    assert response == {
-        "data": {
-            "setProductionStatus": {
-                "errors": [
-                    {
-                        "__typename": "NonFieldError",
-                        "code": "400",
-                        "message": "We need that thing.",
-                    },
-                    {
-                        "__typename": "FieldError",
-                        "code": "400",
-                        "field": "abc",
-                        "message": "Something about the attribute",
-                    },
-                ],
-                "success": False,
-            },
-        },
-    }
-
-    validator.assert_called_once()
-
-    # Assert production status is unchanged
-    production.refresh_from_db()
-    assert str(production.status) == "PUBLISHED"
-
-
-@pytest.mark.django_db
-def test_production_permissions_without_change_permission(gql_client):
-    production = ProductionFactory()
-    request = """
-        mutation {
-            productionPermissions(id: "%s", userEmail: "example@example.org", permissions: []) {
-                success
-            }
-        }
-    """ % to_global_id(
-        "ProductionNode", production.id
-    )
-    response = gql_client.execute(request)
-    assert response["data"]["productionPermissions"]["success"] is False
-
-
-@pytest.mark.django_db
-def test_production_permissions_unassignable_permission(gql_client):
-    production = ProductionFactory()
-    UserFactory(email="example@example.org")
-    request = """
-        mutation {
-            productionPermissions(id: "%s", userEmail: "example@example.org", permissions: ["add_production"]) {
-                success
-                errors {
-                    ... on FieldError {
-                        message
-                        field
-                    }
-                }
-            }
-        }
-    """ % to_global_id(
-        "ProductionNode", production.id
-    )
-    assign_perm("change_production", gql_client.login().user, production)
-
-    response = gql_client.execute(request)
-    assert response["data"]["productionPermissions"]["success"] is False
-    assert response["data"]["productionPermissions"]["errors"][0] == {
-        "message": "The permission 'add_production' does not exist, or cannot be assigned",
-        "field": "permissions",
-    }
-
-
-@pytest.mark.django_db
-def test_production_permissions_assignable_permission(gql_client):
-    production = ProductionFactory()
-    user = UserFactory(email="example@example.org")
-    request = """
-        mutation {
-            productionPermissions(id: "%s", userEmail: "example@example.org", permissions: ["boxoffice"]) {
-                success
-                errors {
-                    ... on FieldError {
-                        message
-                        field
-                    }
-                }
-            }
-        }
-    """ % to_global_id(
-        "ProductionNode", production.id
-    )
-    assign_perm("change_production", gql_client.login().user, production)
-
-    response = gql_client.execute(request)
-    assert response["data"]["productionPermissions"]["success"] is True
-    assert user.has_perm("boxoffice", production) is True

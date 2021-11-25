@@ -2,7 +2,6 @@ import django_filters
 import graphene
 from django.db.models.query_utils import Q
 from graphene import relay
-from graphene.types.field import Field
 from graphene_django import DjangoListField
 from graphene_django.filter import DjangoFilterConnectionField
 
@@ -55,6 +54,8 @@ class CrewMemberNode(DjangoObjectType):
 class WarningNode(DjangoObjectType):
     class Meta:
         model = AudienceWarning
+        fields = ("description",)
+        filter_fields = ("id",)
         interfaces = (relay.Node,)
 
 
@@ -362,6 +363,7 @@ class Query(graphene.ObjectType):
 
     productions = DjangoFilterConnectionField(ProductionNode)
     performances = DjangoFilterConnectionField(PerformanceNode)
+    warnings = DjangoFilterConnectionField(WarningNode)
 
     production = graphene.Field(ProductionNode, slug=graphene.String(required=True))
     performance = relay.Node.Field(PerformanceNode)
