@@ -92,13 +92,14 @@ class AssignedUsersMixin:
         if not info.context.user.has_perm("change_" + str(self._meta.model_name), self):
             return None
 
-        if not isinstance(self, PermissionableModel):  # pragma: no cover
+        # pragma: no cover
+        if not isinstance(self, PermissionableModel):
             return None
 
         return self.available_permissions_for_user(info.context.user)
 
 
-class SafeFormMutation(MutationResult, DjangoModelFormMutation):
+class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
     """Provides a wrapper around the DjangoModelFormMutation for use with out validation and authorization system"""
 
     class Meta:
@@ -109,10 +110,40 @@ class SafeFormMutation(MutationResult, DjangoModelFormMutation):
     def __init_subclass_with_meta__(
         cls, *args, create_ability=None, update_ability=None, **kwargs
     ) -> None:
-        cls.is_creation = True
         cls.create_ability = create_ability
         cls.update_ability = update_ability
         super().__init_subclass_with_meta__(*args, **kwargs)
+
+    @classmethod
+    def is_creation(cls, **inputs):
+        return "id" not in inputs
+
+    @classmethod
+    def mutate(cls, root, info, **inputs):
+        input_items = inputs["input"]
+
+        if "id" in input_items:
+            input_items["id"] = from_global_id(input_items["id"])[1]
+        # Fix for relay. Will convert any Django model input / choice fields from global IDs to local
+        form = cls.get_form(root, info, **input_items)
+        for (key, field) in form.fields.items():
+            if (
+                isinstance(field, ModelChoiceField) and form[key].value()
+            ):  # pragma: no cover
+                try:
+                    if isinstance(form[key].value(), List):
+                        input_items[key] = [
+                            from_global_id(item)[1] for item in input_items[key]
+                        ]
+                    else:
+                        input_items[key] = from_global_id(form[key].value())[1]
+                except TypeError:
+                    pass
+        return super().mutate(root, info, **input_items)
+
+    @classmethod
+    def get_form_kwargs(cls, root, info, **inputs):
+        return super().get_form_kwargs(root, info, **inputs)
 
     @classmethod
     # pylint: disable=W0212
@@ -123,18 +154,28 @@ class SafeFormMutation(MutationResult, DjangoModelFormMutation):
         update_ability: Ability = cls.update_ability
         create_ability: Ability = cls.create_ability
 
-        if not cls.is_creation:
-            instance = cls.get_object_instance(root, info, **inputs)
-            return (
-                info.context.user.has_perm("change_%s" % model_name, instance)
-                if not update_ability
-                else update_ability.user_has(info.context.user, instance)
+        if cls.is_creation(**inputs):
+            user_can_add_instance = info.context.user.has_perm(
+                "%s.add_%s" % (app_label, model_name)
             )
-        return (
-            info.context.user.has_perm("%s.add_%s" % (app_label, model_name))
-            if not create_ability
-            else create_ability.user_has(info.context.user, None)
+            if not (
+                user_can_add_instance
+                if not create_ability
+                else create_ability.user_has(info.context.user, None)
+            ):
+                raise AuthorizationException
+            return
+
+        instance = cls.get_object_instance(root, info, **inputs)
+        user_can_change_instance = info.context.user.has_perm(
+            "change_%s" % model_name, instance
         )
+        if not (
+            user_can_change_instance
+            if not update_ability
+            else update_ability.user_has(info.context.user, instance)
+        ):
+            raise AuthorizationException
 
     @classmethod
     def on_success(cls, info, response, is_creation):
@@ -173,37 +214,13 @@ class SafeFormMutation(MutationResult, DjangoModelFormMutation):
         return cls.get_form(root, info, **inputs)[key].value()
 
     @classmethod
+    def resolve_mutation(cls, root, info, **inputs):
+        # pylint: disable=bad-super-call
+        return super(DjangoModelFormMutation, cls).mutate(root, info, inputs)
+
+    @classmethod
     def mutate_and_get_payload(cls, root, info, **inputs):
         """Mutate and get payload override"""
-        if "id" in inputs:
-            inputs["id"] = from_global_id(inputs["id"])[1]
-            cls.is_creation = False
-        else:
-            cls.is_creation = True
-
-        # Fix for relay. Will convert any Django model input / choice fields from global IDs to local
-        form = cls.get_form(root, info, **inputs)
-        for (key, field) in form.fields.items():
-            if (
-                isinstance(field, ModelChoiceField) and form[key].value()
-            ):  # pragma: no cover
-                try:
-                    if isinstance(form[key].value(), List):
-                        inputs[key] = [from_global_id(item)[1] for item in inputs[key]]
-                    else:
-                        inputs[key] = from_global_id(form[key].value())[1]
-                except TypeError:
-                    pass
-
-        # Authorize
-        try:
-            if not cls.authorize_request(root, info, **inputs):
-                raise AuthorizationException
-
-        except MutationException as exception:
-            # These are our custom exceptions
-            return cls(errors=exception.resolve(), success=False)
-
         response = super().mutate_and_get_payload(root, info, **inputs)
 
         if len(response.errors):
@@ -215,13 +232,11 @@ class SafeFormMutation(MutationResult, DjangoModelFormMutation):
                 ]
             )
             return cls(errors=exceptions.resolve(), success=False)
-
-        cls.on_success(info, response, cls.is_creation)
-        if cls.is_creation:
+        cls.on_success(info, response, cls.is_creation(**inputs))
+        if cls.is_creation(**inputs):
             cls.on_creation(info, response)
         else:
             cls.on_update(info, response)
-
         return response
 
 
@@ -386,8 +401,9 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
         )
 
         if not info.context.user.has_perm(
-            "change_" + cls._meta.model._meta.model_name,
-            instance,  # pylint: disable=W0212
+            "change_"
+            + cls._meta.model._meta.model_name,  # pylint: disable=protected-access
+            instance,
         ):
             raise AuthorizationException()
 

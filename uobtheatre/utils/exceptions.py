@@ -204,14 +204,7 @@ class SafeMutation(MutationResult, graphene.Mutation):
         try:
             cls.authorize_request(root, info, **inputs)
             with transaction.atomic():
-                try:
-                    return cls.resolve_mutation(root, info, **inputs)
-                except AttributeError as error:
-                    if not str(error).endswith(
-                        "'resolve_mutation'"
-                    ):  # pragma: no cover
-                        raise error
-                    return super().mutate(root, info, **inputs)
+                return cls.resolve_mutation(root, info, **inputs)
 
         except MutationException as exception:
             # These are our custom exceptions

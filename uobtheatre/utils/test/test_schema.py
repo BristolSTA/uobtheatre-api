@@ -3,8 +3,11 @@ from graphql_relay.node.node import to_global_id
 
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import BookingFactory, PerformanceSeatingFactory
-from uobtheatre.productions.test.factories import PerformanceFactory
-from uobtheatre.utils.schema import IdInputField
+from uobtheatre.productions.models import Production
+from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
+from uobtheatre.users.test.factories import UserFactory
+from uobtheatre.utils.exceptions import AuthorizationException
+from uobtheatre.utils.schema import IdInputField, ModelDeletionMutation
 
 
 @pytest.mark.django_db
@@ -82,3 +85,22 @@ def test_id_input_field_parse_value(gql_client):
 
     booking = Booking.objects.first()
     assert booking.performance == performance
+
+
+@pytest.mark.django_db
+def test_model_deletion_mutation_authorisation():
+    user = UserFactory()
+    production = ProductionFactory()
+
+    class FakeModelDeletionMutation(ModelDeletionMutation):
+        class Meta:
+            model = Production
+
+    mutation = FakeModelDeletionMutation()
+
+    with pytest.raises(AuthorizationException):
+        mutation.authorize_request(
+            None,
+            type("obj", (object,), {"context": type("obj", (object,), {"user": user})}),
+            id=production.id,
+        )

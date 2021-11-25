@@ -81,16 +81,14 @@ class DiscountMutation(SafeFormMutation, AuthRequiredMixin):
         all_performances.extend(new_performances)
 
         if len(all_performances) == 0:
-            return False
+            raise AuthorizationException
 
         # Authorize user on all of the performance's productions
         for performance in all_performances:
             if not EditProductionObjects.user_has(
                 info.context.user, performance.production
             ):
-                return False
-
-        return True
+                raise AuthorizationException
 
     class Meta:
         form_class = DiscountForm
@@ -106,7 +104,7 @@ class DeleteDiscountMutation(ModelDeletionMutation):
             if not EditProductionObjects.user_has(
                 info.context.user, performance.production
             ):
-                raise AuthorizationException()
+                raise AuthorizationException
 
     class Meta:
         model = Discount
@@ -133,14 +131,14 @@ class DiscountRequirementMutation(SafeFormMutation, AuthRequiredMixin):
             all_performances.extend(new_discount.performances.all())
 
         if len(all_performances) == 0:
-            return False
+            raise AuthorizationException
 
         # Authorize user on all of the performance's productions
         for performance in all_performances:
             if not EditProductionObjects.user_has(
                 info.context.user, performance.production
             ):
-                return False
+                raise AuthorizationException
 
         return True
 
@@ -167,6 +165,8 @@ class DeleteDiscountRequirementMutation(ModelDeletionMutation):
 
 
 class Mutation(graphene.ObjectType):
+    """Discount mutations"""
+
     concession_type = ConcessionTypeMutation.Field()
     delete_concession_type = DeleteConcessionTypeMutation.Field()
 

@@ -110,20 +110,22 @@ class ProductionMutation(SafeFormMutation, AuthRequiredMixin):
 
     @classmethod
     def authorize_request(cls, root, info, **inputs):
-        return super().authorize_request(
-            root, info, **inputs
-        ) and cls.authorize_society_part(root, info, **inputs)
+        super().authorize_request(root, info, **inputs)
+
+        cls.authorize_society_part(root, info, **inputs)
 
     @classmethod
     def authorize_society_part(cls, root, info, **inputs):
         """Authorise the society parameter if passed"""
         new_society = cls.get_python_value(root, info, "society", **inputs)
+
         has_perm_new_society = (
             info.context.user.has_perm("add_production", new_society)
             if new_society
             else True
         )
-        return has_perm_new_society
+        if not has_perm_new_society:
+            raise AuthorizationException
 
     @classmethod
     def on_creation(cls, info, response):
@@ -150,7 +152,7 @@ class PerformanceMutation(SafeFormMutation, AuthRequiredMixin):
 
     @classmethod
     def authorize_request(cls, root, info, **inputs):
-        return cls.authorize_production_part(root, info, **inputs)
+        cls.authorize_production_part(root, info, **inputs)
 
     @classmethod
     def authorize_production_part(cls, root, info, **inputs):
@@ -162,16 +164,19 @@ class PerformanceMutation(SafeFormMutation, AuthRequiredMixin):
             else True
         )
 
-        if cls.is_creation:
+        if cls.is_creation(**inputs):
             # If this is a creation operation, we care that there is a new production specified via args, and that the user has edit ability on this production
-            return has_perm_new_production and new_production
+            if not (has_perm_new_production and new_production):
+                raise AuthorizationException
+            return
 
         # For update operations, we care that the user has permissions on both the currently assigned production, and the new production (if provided)
         current_production = cls.get_object_instance(root, info, **inputs).production
         has_perm_current_production = EditProductionObjects.user_has(
             info.context.user, current_production
         )
-        return has_perm_new_production and has_perm_current_production
+        if not (has_perm_new_production and has_perm_current_production):
+            raise AuthorizationException
 
     class Meta:
         form_class = PerformanceForm
@@ -206,7 +211,7 @@ class PerformanceSeatGroupMutation(SafeFormMutation, AuthRequiredMixin):
             else True
         )
 
-        if cls.is_creation:
+        if cls.is_creation(**inputs):
             # If this is a creation operation, we care that there is a new performance specified via args, and that the user has edit ability on this production
             return has_perm_new_performance and new_performance
 
