@@ -363,6 +363,7 @@ def test_set_production_status_draft(status, gql_client):
     [
         ("DRAFT", "PENDING", False, [], False),
         ("DRAFT", "PENDING", True, [], True),
+        ("DRAFT", "DRAFT", True, [], False),
         ("PENDING", "DRAFT", True, [], False),
         ("PENDING", "APPROVED", True, [], False),
         ("PENDING", "APPROVED", False, ["productions.approve_production"], True),

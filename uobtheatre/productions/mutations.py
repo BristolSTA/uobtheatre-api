@@ -1,5 +1,7 @@
 import graphene
+from guardian.shortcuts import get_users_with_perms
 
+from uobtheatre.mail.composer import MailComposer
 from uobtheatre.productions.abilities import AddProduction, EditProductionObjects
 from uobtheatre.productions.forms import (
     PerformanceForm,
@@ -37,10 +39,11 @@ class SetProductionStatus(AuthRequiredMixin, SafeMutation):
         status = graphene.Argument(
             "uobtheatre.productions.schema.ProductionStatusSchema"
         )
+        message = graphene.String()
 
     @classmethod
     # pylint: disable=arguments-differ
-    def authorize_request(cls, _, info, production_id, status):
+    def authorize_request(cls, _, info, production_id, status, **__):
         update_status = status
         production = Production.objects.get(id=production_id)
         user = info.context.user
@@ -89,8 +92,11 @@ class SetProductionStatus(AuthRequiredMixin, SafeMutation):
         raise AuthorizationException()
 
     @classmethod
-    def resolve_mutation(cls, _, info, production_id: int, status: Production.Status):
+    def resolve_mutation(
+        cls, _, info, production_id: int, status: Production.Status, message: str = None
+    ):
         production = Production.objects.get(id=production_id)
+        previous_status = production.status
 
         # If we are setting this production to anything other than draft it must
         # be valid.
@@ -99,6 +105,48 @@ class SetProductionStatus(AuthRequiredMixin, SafeMutation):
 
         production.status = status
         production.save()
+
+        # Notify if applicable
+        involved_users = get_users_with_perms(
+            production, only_with_perms_in=["change_production"]
+        )
+
+        if status == Production.Status.APPROVED:
+            for user in involved_users:
+                mail = MailComposer()
+                mail.greeting(user).line(
+                    f"Your production '{production.name}' has been approved."
+                ).line(
+                    "You may now create complimentry bookings and, when ready, make it public, by going to the production control panel."
+                ).action(
+                    f"/administration/productions/{production.slug}",
+                    "Goto Production Control Panel",
+                ).send(
+                    f"{production.name} has been approved", user.email
+                )
+
+        if (
+            status == Production.Status.DRAFT
+            and previous_status == Production.Status.PENDING
+        ):
+            for user in involved_users:
+                mail = MailComposer()
+                mail.greeting(user).line(
+                    f"We have reviewed your production ({production.name}), and some changes need to be made before we can approve it."
+                )
+
+                if message:
+                    mail.line(f"Review Comment: '{message}'")
+                mail.line(
+                    "You can go back to the production control panel to make the required changes."
+                ).action(
+                    f"/administration/productions/{production.slug}",
+                    "Goto Production Control Panel",
+                ).line(
+                    "If you need any help, please contact us at support@uobtheatre.com"
+                ).send(
+                    f"{production.name} needs changes", user.email
+                )
 
         return cls(success=True)
 
