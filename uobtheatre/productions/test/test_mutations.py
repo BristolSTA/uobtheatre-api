@@ -217,7 +217,7 @@ def test_production_mutation_update_new_society(
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "permissions, has_edit_ability, current_status, updated_status, has_perm",
+    "permissions, has_change_perm, current_status, updated_status, has_perm",
     [
         # Someone with no perms cannot do anything
         (
@@ -304,24 +304,24 @@ def test_production_mutation_update_new_society(
     ],
 )
 def test_set_production_status_authorize_request_force_change(
-    permissions, has_edit_ability, current_status, updated_status, has_perm, info
+    permissions, has_change_perm, current_status, updated_status, has_perm, info
 ):
     user = info.context.user
     production = ProductionFactory(status=current_status)
 
-    with patch.object(EditProductionObjects, "user_has", return_value=has_edit_ability):
-        for permission in permissions:
-            assign_perm(permission, user)
+    if has_change_perm:
+        assign_perm("change_production", user, production)
 
-        if not has_perm:
-            with pytest.raises(AuthorizationException):
-                SetProductionStatus.authorize_request(
-                    None, info, production.id, updated_status
-                )
-        else:
+    for permission in permissions:
+        assign_perm(permission, user)
+
+    if not has_perm:
+        with pytest.raises(AuthorizationException):
             SetProductionStatus.authorize_request(
                 None, info, production.id, updated_status
             )
+    else:
+        SetProductionStatus.authorize_request(None, info, production.id, updated_status)
 
 
 @pytest.mark.django_db

@@ -699,10 +699,8 @@ class Production(TimeStampedMixin, PermissionableModel):
     VALIDATOR = RequiredFieldsValidator(
         [
             "name",
-            "subtitle",
             "description",
             "society",
-            "cover_image",
             "poster_image",
             "featured_image",
         ]

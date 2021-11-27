@@ -1,4 +1,4 @@
-# pylint: disable=R0914
+# pylint: disable=R0914,too-many-statements
 
 import pytest
 from graphql_relay.node.node import to_global_id
@@ -7,8 +7,8 @@ from guardian.shortcuts import assign_perm
 from uobtheatre.images.test.factories import ImageFactory
 from uobtheatre.productions.models import Performance, PerformanceSeatGroup
 from uobtheatre.societies.test.factories import SocietyFactory
-from uobtheatre.venues.test.factories import SeatGroupFactory, VenueFactory
 from uobtheatre.users.test.factories import UserFactory
+from uobtheatre.venues.test.factories import SeatGroupFactory, VenueFactory
 
 
 @pytest.mark.django_db
@@ -56,6 +56,22 @@ def test_total_production_creation_workflow(gql_client):
     assert response["data"]["production"]["success"] is True
 
     production_gid = response["data"]["production"]["production"]["id"]
+
+    # Step 1b: Check it won't let us submit for review
+    request = (
+        """
+        mutation {
+            setProductionStatus(productionId: "%s", status: PENDING) {
+                success
+            }
+        }
+    """
+        % production_gid
+    )
+
+    response = gql_client.execute(request)
+
+    assert response["data"]["setProductionStatus"]["success"] is False
 
     # Step 2: Create performances
 
@@ -260,3 +276,19 @@ def test_total_production_creation_workflow(gql_client):
             "field": "userEmail",
         }
     ]
+
+    # Step 6: Check it will let us submit for review
+    request = (
+        """
+        mutation {
+            setProductionStatus(productionId: "%s", status: PENDING) {
+                success
+            }
+        }
+    """
+        % production_gid
+    )
+
+    response = gql_client.execute(request)
+
+    assert response["data"]["setProductionStatus"]["success"] is True
