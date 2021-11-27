@@ -50,9 +50,9 @@ class SetProductionStatus(AuthRequiredMixin, SafeMutation):
             return
 
         # If the user has permission to edit the production, they can:
-        # - Submit a draft
-        # - Publish and approved production
-        if EditProductionObjects.user_has(user, production):
+        # - Submit a draft to pending
+        # - Publish an approved production
+        if user.has_perm("productions.change_production", production):
             # If the production has been approved they can publish it
             if (
                 update_status == Production.Status.PUBLISHED

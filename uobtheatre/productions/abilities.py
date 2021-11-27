@@ -15,7 +15,7 @@ class AddProduction(Ability):
 
 
 class EditProductionObjects(Ability):
-    """Whether the user is able to change a production's details and sub-objects"""
+    """Whether the user is able to change a production's details and sub-objects, based on the current status"""
 
     name = "edit_production_objects"
 

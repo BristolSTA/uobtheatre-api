@@ -205,8 +205,8 @@ class Performance(
             "doors_open",
             "start",
             "end",
-            "poster_image",
             "seat_groups",
+            "discounts",
         ]
     )
 

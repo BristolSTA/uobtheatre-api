@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 from unittest.mock import patch
 
 import pytest
@@ -353,6 +354,67 @@ def test_set_production_status_draft(status, gql_client):
 
     production.refresh_from_db()
     assert str(production.status) == status
+
+
+# pylint: disable=too-many-arguments
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "current_status,new_status,can_edit,global_permissions,should_pass",
+    [
+        ("DRAFT", "PENDING", False, [], False),
+        ("DRAFT", "PENDING", True, [], True),
+        ("PENDING", "DRAFT", True, [], False),
+        ("PENDING", "APPROVED", True, [], False),
+        ("PENDING", "APPROVED", False, ["productions.approve_production"], True),
+        ("APPROVED", "PUBLISHED", True, [], True),
+        ("PUBLISHED", "CLOSED", True, [], False),
+        ("PUBLISHED", "COMPLETE", True, [], False),
+        ("PUBLISHED", "COMPLETE", False, ["productions.force_change_production"], True),
+        ("COMPLETE", "DRAFT", False, ["productions.force_change_production"], True),
+        ("COMPLETE", "CLOSED", False, ["productions.force_change_production"], True),
+        ("COMPLETE", "CLOSED", False, ["reports.finance_reports"], False),
+        ("CLOSED", "COMPLETE", False, ["reports.finance_reports"], True),
+        ("CLOSED", "COMPLETE", False, [], False),
+    ],
+)
+def test_set_production_status_authorization(
+    gql_client, current_status, new_status, can_edit, global_permissions, should_pass
+):
+    production = ProductionFactory(status=current_status)
+    PerformanceFactory(production=production)
+
+    gql_client.login()
+    query = """
+        mutation {
+          setProductionStatus(productionId: "%s", status: %s) {
+            success
+            errors {
+                ... on NonFieldError {
+                    message
+                }
+                ... on FieldError {
+                    message
+                    field
+                }
+            }
+          }
+        }
+    """ % (
+        to_global_id("ProductionNode", production.id),
+        new_status,
+    )
+
+    # Assign permissions
+    for permission in global_permissions:
+        assign_perm(permission, gql_client.user)
+
+    if can_edit:
+        assign_perm("change_production", gql_client.user, production)
+
+    with patch.object(Production.VALIDATOR, "validate", return_value=[]):
+        response = gql_client.execute(query)
+
+    assert response["data"]["setProductionStatus"]["success"] is should_pass
 
 
 @pytest.mark.django_db
