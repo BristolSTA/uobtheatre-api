@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
                 choices=[
                     ("DRAFT", "Draft"),
                     ("PENDING", "Pending approval"),
-                    ("Approved", "Approved (not published)"),
+                    ("APPROVED", "Approved (not published)"),
                     ("PUBLISHED", "Published (Can view on the site)"),
                     ("CLOSED", "Closed (Ready for money transfers)"),
                     ("COMPLETE", "Complete (Show finished and all money settled)"),
