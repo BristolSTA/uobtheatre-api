@@ -8,6 +8,8 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import get_template
 from django.utils.html import strip_tags
 
+from uobtheatre.users.models import User
+
 
 def get_site_base():
     return "https://%s" % Site.objects.get_current().domain
@@ -147,6 +149,13 @@ class Panel(ComposerItemsContainer):
 
 class MailComposer(ComposerItemsContainer):
     """Compose a mail notificaiton"""
+
+    def greeting(self, user: User = None):
+        self.heading(
+            "Hi %s" % user.first_name.capitalize()
+            if user and user.status.verified
+            else "Hello"
+        )
 
     def get_complete_items(self):
         """Get the email body items (including any signature/signoff)"""

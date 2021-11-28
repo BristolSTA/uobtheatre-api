@@ -26,7 +26,7 @@ class ValidationError(exceptions.MutationException):
         return [exceptions.NonFieldError(code=400, message=self.message)]
 
 
-@dataclass
+@dataclass  # type: ignore
 class Validator(abc.ABC):
     """
     Baseclass for a validator. This requires a validate method which returrns a
@@ -56,7 +56,7 @@ class Validator(abc.ABC):
         return [error for sublist in generator for error in sublist]
 
 
-@dataclass
+@dataclass  # type: ignore
 class AttributeValidator(Validator):
     """
     The base class for a validator which validates a single attribute

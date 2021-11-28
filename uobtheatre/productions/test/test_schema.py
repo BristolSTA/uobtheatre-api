@@ -553,7 +553,7 @@ def test_productions_are_shown_with_permission(gql_client):
     _ = [ProductionFactory() for _ in range(3)]
     draft_production = ProductionFactory(status=Production.Status.DRAFT, slug="my-show")
     assign_perm(
-        "productions.change_production", gql_client.login().user, draft_production
+        "productions.view_production", gql_client.login().user, draft_production
     )
 
     request = """
@@ -1201,7 +1201,7 @@ def test_performances_are_shown_with_permission(gql_client):
     )
 
     assign_perm(
-        "productions.change_production",
+        "productions.view_production",
         gql_client.login().user,
         draft_performance.production,
     )

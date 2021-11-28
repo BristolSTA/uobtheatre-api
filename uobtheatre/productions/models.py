@@ -180,12 +180,12 @@ class PerformanceQuerySet(QuerySet):
         Returns:
             QuerySet: The filtered queryset
         """
-        productions_user_can_edit = get_objects_for_user(
-            user, "change_production", Production
+        productions_user_can_view_admin = get_objects_for_user(
+            user, "view_production", Production
         ).values_list("id", flat=True)
         return self.filter(
-            ~Q(production__status=Production.Status.DRAFT)
-            | Q(production_id__in=productions_user_can_edit)
+            Q(production__status__in=Production.CONSIDERED_PUBLICALLY_VIEWABLE)
+            | Q(production_id__in=productions_user_can_view_admin)
         )
 
 
@@ -205,8 +205,8 @@ class Performance(
             "doors_open",
             "start",
             "end",
-            "poster_image",
             "seat_groups",
+            "discounts",
         ]
     )
 
@@ -677,11 +677,12 @@ class ProductionQuerySet(QuerySet):
         Returns:
             QuerySet: The filtered queryset
         """
-        productions_user_can_edit = get_objects_for_user(
-            user, "change_production", self
+        productions_user_can_view_admin = get_objects_for_user(
+            user, "view_production", self
         ).values_list("id", flat=True)
         return self.filter(
-            ~Q(status=Production.Status.DRAFT) | Q(id__in=productions_user_can_edit)
+            Q(status__in=Production.CONSIDERED_PUBLICALLY_VIEWABLE)
+            | Q(id__in=productions_user_can_view_admin)
         )
 
 
@@ -698,10 +699,8 @@ class Production(TimeStampedMixin, PermissionableModel):
     VALIDATOR = RequiredFieldsValidator(
         [
             "name",
-            "subtitle",
             "description",
             "society",
-            "cover_image",
             "poster_image",
             "featured_image",
         ]
@@ -746,8 +745,11 @@ class Production(TimeStampedMixin, PermissionableModel):
         PENDING = (
             "PENDING",
             "Pending approval",
-        )  # Produciton is pending publication/review
-        APPROVED = "Approved", "Approved (not published)"
+        )  # Production is pending publication/review
+        APPROVED = (
+            "APPROVED",
+            "Approved (not published)",
+        )  # Production has been aproved, but is not public
         PUBLISHED = (
             "PUBLISHED",
             "Published (Can view on the site)",
@@ -760,6 +762,13 @@ class Production(TimeStampedMixin, PermissionableModel):
             "COMPLETE",
             "Complete (Show finished and all money settled)",
         )  # Production has been closed and paid for/transactions settled
+
+    CONSIDERED_PUBLICALLY_VIEWABLE = (
+        Status.APPROVED,
+        Status.PUBLISHED,
+        Status.CLOSED,
+        Status.COMPLETE,
+    )
 
     status = models.CharField(
         max_length=10, choices=Status.choices, default=Status.DRAFT

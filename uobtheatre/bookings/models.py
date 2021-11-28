@@ -561,13 +561,6 @@ class Booking(TimeStampedMixin, Payable, models.Model):
         """
         composer = MailComposer()
 
-        # Add greating
-        composer.heading(
-            "Hi %s" % self.user.first_name.capitalize()
-            if self.user.status.verified
-            else "Hello"
-        )
-
         composer.line(
             "Your booking to %s has been confirmed!" % self.performance.production.name
         ).image(self.performance.production.featured_image.file.url)

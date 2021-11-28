@@ -2,6 +2,7 @@
 import math
 import random
 from datetime import timedelta
+from unittest.mock import patch
 
 import pytest
 from dateutil import parser
@@ -22,7 +23,7 @@ from uobtheatre.discounts.test.factories import (
 )
 from uobtheatre.payments.payment_methods import Card, Cash, SquareOnline
 from uobtheatre.payments.test.factories import PaymentFactory
-from uobtheatre.productions.models import Performance, PerformanceSeatGroup
+from uobtheatre.productions.models import Performance, PerformanceSeatGroup, Production
 from uobtheatre.productions.test.factories import (
     AudienceWarningFactory,
     CastMemberFactory,
@@ -33,32 +34,12 @@ from uobtheatre.productions.test.factories import (
     ProductionTeamMemberFactory,
 )
 from uobtheatre.users.test.factories import UserFactory
+from uobtheatre.utils.validators import ValidationError
 from uobtheatre.venues.test.factories import SeatGroupFactory
 
-
-@pytest.mark.django_db
-def test_performance_duration():
-    start = timezone.datetime(
-        day=2,
-        month=3,
-        year=2020,
-        hour=12,
-        minute=0,
-        second=10,
-        tzinfo=timezone.get_current_timezone(),
-    )
-    end = timezone.datetime(
-        day=3,
-        month=4,
-        year=2021,
-        hour=13,
-        minute=1,
-        second=11,
-        tzinfo=timezone.get_current_timezone(),
-    )
-    performance = PerformanceFactory(start=start, end=end)
-
-    assert performance.duration().total_seconds() == 34304461.0
+###
+# Production
+###
 
 
 @pytest.mark.django_db
@@ -303,6 +284,47 @@ def test_production_total_tickets_sold():
     TicketFactory()
 
     assert perf_1.production.total_tickets_sold == 3
+
+
+@pytest.mark.django_db
+def test_production_validate():
+    production = ProductionFactory()
+    error = ValidationError(message="We need that thing.")
+    with patch.object(
+        Production.VALIDATOR, "validate", return_value=[error]
+    ) as validator:
+        assert production.validate() == [error]
+        validator.assert_called_once()
+
+
+###
+# Performance
+###
+
+
+@pytest.mark.django_db
+def test_performance_duration():
+    start = timezone.datetime(
+        day=2,
+        month=3,
+        year=2020,
+        hour=12,
+        minute=0,
+        second=10,
+        tzinfo=timezone.get_current_timezone(),
+    )
+    end = timezone.datetime(
+        day=3,
+        month=4,
+        year=2021,
+        hour=13,
+        minute=1,
+        second=11,
+        tzinfo=timezone.get_current_timezone(),
+    )
+    performance = PerformanceFactory(start=start, end=end)
+
+    assert performance.duration().total_seconds() == 34304461.0
 
 
 @pytest.mark.django_db
@@ -1006,5 +1028,11 @@ def test_sales_breakdown_with_blank_fees():
 
 
 @pytest.mark.django_db
-def test_validate():
-    pass
+def test_performance_validate():
+    performance = PerformanceFactory()
+    error = ValidationError(message="We need that thing.")
+    with patch.object(
+        Performance.VALIDATOR, "validate", return_value=[error]
+    ) as validator:
+        assert performance.validate() == [error]
+        validator.assert_called_once()
