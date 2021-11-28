@@ -52,7 +52,7 @@ class Migration(migrations.Migration):
                     "admin_discount_percentage",
                     models.FloatField(
                         default=0,
-                        validators=[uobtheatre.utils.models.validate_percentage],
+                        validators=[],
                     ),
                 ),
             ],
@@ -76,7 +76,7 @@ class Migration(migrations.Migration):
                     models.FloatField(
                         blank=True,
                         null=True,
-                        validators=[uobtheatre.utils.models.validate_percentage],
+                        validators=[],
                     ),
                 ),
                 ("value", models.FloatField(blank=True, null=True)),
