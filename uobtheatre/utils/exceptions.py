@@ -16,6 +16,7 @@ from typing import Iterable, List, Union
 import graphene
 from django.db import transaction
 from graphene.utils.str_converters import to_camel_case
+from django.core.exceptions import ObjectDoesNotExist
 
 
 class ExceptionMiddleware:  # pragma: no cover
@@ -181,6 +182,19 @@ class ReferencedException(GQLException):
         super().__init__(message=message, code="REFERR", field=field)
 
 
+class NotFoundException(GQLException):
+    def __init__(
+        self,
+        object_type=None,
+        object_id=None,
+    ):
+        if object_id and object_type:
+            error_message = f"Object {object_type} {object_id} not found"
+        else:
+            error_message = "Object not found"
+        super().__init__(message=error_message, code=404)
+
+
 class SafeMutation(MutationResult, graphene.Mutation):
     """
     Extended graphene.Mutation.
@@ -206,6 +220,8 @@ class SafeMutation(MutationResult, graphene.Mutation):
             with transaction.atomic():
                 return cls.resolve_mutation(root, info, **inputs)
 
-        except MutationException as exception:
+        except (MutationException, ObjectDoesNotExist) as exception:
+            if isinstance(exception, ObjectDoesNotExist):
+                exception = NotFoundException()
             # These are our custom exceptions
             return cls(errors=exception.resolve(), success=False)

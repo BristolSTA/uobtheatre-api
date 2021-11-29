@@ -64,27 +64,19 @@ class DiscountMutation(SafeFormMutation, AuthRequiredMixin):
 
     @classmethod
     def authorize_request(cls, root, info, **inputs):
-        new_performances = (
-            cls.get_python_value(root, info, "performances", **inputs) or []
+        performances = cls.get_python_value(
+            root, info, inputs, "performances", default=[]
         )
-
         instance = cls.get_object_instance(root, info, **inputs)
 
-        current_performances = (
-            instance.performances.prefetch_related("production").all()
-            if instance
-            else []
-        )
+        if instance:
+            performances += instance.performances.prefetch_related("production").all()
 
-        all_performances = []
-        all_performances.extend(current_performances)
-        all_performances.extend(new_performances)
-
-        if len(all_performances) == 0:
+        if not performances:
             raise AuthorizationException
 
         # Authorize user on all of the performance's productions
-        for performance in all_performances:
+        for performance in performances:
             if not EditProductionObjects.user_has(
                 info.context.user, performance.production
             ):
@@ -115,7 +107,7 @@ class DiscountRequirementMutation(SafeFormMutation, AuthRequiredMixin):
 
     @classmethod
     def authorize_request(cls, root, info, **inputs):
-        new_discount = cls.get_python_value(root, info, "discount", **inputs) or None
+        new_discount = cls.get_python_value(root, info, inputs, "discount") or None
 
         instance = cls.get_object_instance(root, info, **inputs)
 

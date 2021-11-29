@@ -203,9 +203,13 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
         return cls.get_form(root, info, **inputs)[key].field
 
     @classmethod
-    def get_python_value(cls, root, info, key, **inputs):
-        return cls.get_field(root, info, key, **inputs).to_python(
-            cls.get_key_raw_value(root, info, key, **inputs)
+    def get_python_value(cls, root, info, inputs, key, default=None):
+        return (
+            cls.get_field(root, info, key, **inputs).to_python(
+                cls.get_key_raw_value(root, info, key, **inputs)
+            )
+            if not None
+            else default
         )
 
     @classmethod

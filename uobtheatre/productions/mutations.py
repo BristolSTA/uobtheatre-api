@@ -165,7 +165,7 @@ class ProductionMutation(SafeFormMutation, AuthRequiredMixin):
     @classmethod
     def authorize_society_part(cls, root, info, **inputs):
         """Authorise the society parameter if passed"""
-        new_society = cls.get_python_value(root, info, "society", **inputs)
+        new_society = cls.get_python_value(root, info, inputs, "society")
 
         has_perm_new_society = (
             info.context.user.has_perm("add_production", new_society)
@@ -205,7 +205,7 @@ class PerformanceMutation(SafeFormMutation, AuthRequiredMixin):
     @classmethod
     def authorize_production_part(cls, root, info, **inputs):
         """Authorised the production part (exisiting and prodivded input)"""
-        new_production = cls.get_python_value(root, info, "production", **inputs)
+        new_production = cls.get_python_value(root, info, inputs, "production")
         has_perm_new_production = (
             EditProductionObjects.user_has(info.context.user, new_production)
             if new_production
@@ -250,7 +250,7 @@ class PerformanceSeatGroupMutation(SafeFormMutation, AuthRequiredMixin):
 
     @classmethod
     def authorize_request(cls, root, info, **inputs):
-        new_performance = cls.get_python_value(root, info, "performance", **inputs)
+        new_performance = cls.get_python_value(root, info, inputs, "performance")
         has_perm_new_performance = (
             EditProductionObjects.user_has(
                 info.context.user, new_performance.production

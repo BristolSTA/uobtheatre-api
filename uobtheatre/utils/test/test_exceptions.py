@@ -1,14 +1,17 @@
 import pytest
 
 from uobtheatre.payments.test.factories import MockApiResponse
+from uobtheatre.productions.models import Performance
 from uobtheatre.utils.exceptions import (
     AuthOutput,
     FieldError,
     GQLException,
     GQLExceptions,
     NonFieldError,
+    NotFoundException,
     SafeMutation,
     SquareException,
+    MutationException,
 )
 
 
@@ -45,6 +48,17 @@ def test_safe_mutation_throws_unknown_exception():
 
     with pytest.raises(Exception, match="Some exception"):
         SomeMutation.mutate(None, None)
+
+
+@pytest.mark.django_db
+def test_safe_mutation_with_object_does_not_exist():
+    class SomeMutation(SafeMutation):
+        def resolve_mutation(cls, _, **__):  # pylint: disable=no-self-argument
+            raise Performance.DoesNotExist()
+
+    response_errors = SomeMutation.mutate(None, None).errors
+    assert len(response_errors) == 1
+    assert response_errors[0].code == 404
 
 
 def test_gql_non_field_exception():
@@ -132,3 +146,16 @@ def test_square_exception_with_non_payment_method_error():
             code=400,
         ),
     )
+
+
+@pytest.mark.parametrize(
+    "object_type, object_id, message",
+    [
+        (None, None, "Object not found"),
+        ("Performance", None, "Object not found"),
+        (None, 1, "Object not found"),
+        ("Performance", 1, "Object Performance 1 not found"),
+    ],
+)
+def test_not_found_exception(object_type, object_id, message):
+    NotFoundException(object_type=object_type, object_id=object_id).message == message
