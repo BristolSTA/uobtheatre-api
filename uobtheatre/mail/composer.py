@@ -151,11 +151,13 @@ class MailComposer(ComposerItemsContainer):
     """Compose a mail notificaiton"""
 
     def greeting(self, user: User = None):
+        """Add a greeting to the email"""
         self.heading(
             "Hi %s" % user.first_name.capitalize()
-            if user and user.status.verified
+            if user and user.status.verified  # type: ignore
             else "Hello"
         )
+        return self
 
     def get_complete_items(self):
         """Get the email body items (including any signature/signoff)"""

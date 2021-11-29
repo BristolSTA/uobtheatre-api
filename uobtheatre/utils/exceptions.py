@@ -14,9 +14,9 @@ import traceback
 from typing import Iterable, List, Union
 
 import graphene
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from graphene.utils.str_converters import to_camel_case
-from django.core.exceptions import ObjectDoesNotExist
 
 
 class ExceptionMiddleware:  # pragma: no cover
@@ -183,6 +183,8 @@ class ReferencedException(GQLException):
 
 
 class NotFoundException(GQLException):
+    """An exception for when a resource is not found."""
+
     def __init__(
         self,
         object_type=None,

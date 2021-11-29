@@ -356,6 +356,88 @@ def test_set_production_status_draft(status, gql_client):
     assert str(production.status) == status
 
 
+@pytest.mark.django_db
+def test_set_production_status_approved_email(gql_client):
+    production = ProductionFactory(status=Production.Status.PENDING)
+
+    user = UserFactory()
+    assign_perm("change_production", user, production)
+
+    gql_client.login(UserFactory(is_superuser=True))
+    query = """
+        mutation {
+          setProductionStatus(productionId: "%s", status: APPROVED) {
+            success
+          }
+        }
+    """ % (
+        to_global_id("ProductionNode", production.id),
+    )
+
+    with patch.object(Production.VALIDATOR, "validate", return_value=[]), patch(
+        "uobtheatre.productions.mutations.send_production_approved_email",
+        return_value=None,
+    ) as mock:
+        gql_client.execute(query)
+        mock.assert_called_once_with(user, production)
+
+
+@pytest.mark.django_db
+def test_set_production_status_approved_email_with_message(gql_client):
+    production = ProductionFactory(status=Production.Status.PENDING)
+
+    user = UserFactory()
+    assign_perm("change_production", user, production)
+
+    gql_client.login(UserFactory(is_superuser=True))
+    query = """
+        mutation {
+          setProductionStatus(productionId: "%s", status: DRAFT, message: "You dun goofed") {
+            success
+          }
+        }
+    """ % (
+        to_global_id("ProductionNode", production.id),
+    )
+
+    with patch.object(Production.VALIDATOR, "validate", return_value=[]), patch(
+        "uobtheatre.productions.mutations.send_production_needs_changes_email",
+        return_value=None,
+    ) as mock:
+        gql_client.execute(query)
+        mock.assert_called_once_with(user, production, "You dun goofed")
+
+
+@pytest.mark.django_db
+def test_set_production_status_pending_email(gql_client):
+    production = ProductionFactory(status=Production.Status.DRAFT)
+
+    user = UserFactory()
+    assign_perm("productions.approve_production", user)
+    super_user = UserFactory(is_superuser=True)
+
+    gql_client.login(super_user)
+    query = """
+        mutation {
+          setProductionStatus(productionId: "%s", status: PENDING) {
+            success
+          }
+        }
+    """ % (
+        to_global_id("ProductionNode", production.id),
+    )
+
+    with patch.object(Production.VALIDATOR, "validate", return_value=[]), patch(
+        "uobtheatre.productions.mutations.send_production_ready_for_review_email",
+        return_value=None,
+    ) as mock:
+        gql_client.execute(query)
+
+        assert mock.call_count == 2
+        mock.assert_any_call(user, production)
+        mock.assert_any_call(super_user, production)
+
+
 # pylint: disable=too-many-arguments
 @pytest.mark.django_db
 @pytest.mark.parametrize(

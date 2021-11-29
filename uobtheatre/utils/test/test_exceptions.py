@@ -7,11 +7,11 @@ from uobtheatre.utils.exceptions import (
     FieldError,
     GQLException,
     GQLExceptions,
+    MutationException,
     NonFieldError,
     NotFoundException,
     SafeMutation,
     SquareException,
-    MutationException,
 )
 
 
@@ -158,4 +158,7 @@ def test_square_exception_with_non_payment_method_error():
     ],
 )
 def test_not_found_exception(object_type, object_id, message):
-    NotFoundException(object_type=object_type, object_id=object_id).message == message
+    assert (
+        NotFoundException(object_type=object_type, object_id=object_id).message
+        == message
+    )
