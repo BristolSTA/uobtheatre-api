@@ -424,9 +424,9 @@ def test_productions_orderby(order_by, expected_order, gql_client):
 @pytest.mark.parametrize(
     "filter_name, value_days, expected_outputs",
     [
-        ("start_Gte", 2, [2, 3]),
+        ("start_Gte", 2, [3, 2]),
         ("start_Lte", 2, [0, 1, 2]),
-        ("end_Gte", 2, [2, 3]),
+        ("end_Gte", 2, [3, 2]),
         ("end_Lte", 2, [0, 1]),
     ],
 )
@@ -458,7 +458,7 @@ def test_production_time_filters(filter_name, value_days, expected_outputs, gql_
     # Check we get 6 of the upcoming productions back in the right order
     request = """
         {
-          productions(%s: "%s") {
+          productions(%s: "%s", orderBy: "end") {
             edges {
               node {
                 end

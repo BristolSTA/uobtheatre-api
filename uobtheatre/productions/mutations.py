@@ -1,8 +1,12 @@
 import graphene
 from guardian.shortcuts import get_users_with_perms
 
-from uobtheatre.mail.composer import MailComposer
 from uobtheatre.productions.abilities import AddProduction, EditProductionObjects
+from uobtheatre.productions.emails import (
+    send_production_approved_email,
+    send_production_needs_changes_email,
+    send_production_ready_for_review_email,
+)
 from uobtheatre.productions.forms import (
     PerformanceForm,
     PerformanceSeatGroupForm,
@@ -20,6 +24,7 @@ from uobtheatre.utils.exceptions import (
     GQLExceptions,
     SafeMutation,
 )
+from uobtheatre.utils.permissions import get_users_with_perm
 from uobtheatre.utils.schema import (
     AssignPermissionsMutation,
     AuthRequiredMixin,
@@ -111,42 +116,26 @@ class SetProductionStatus(AuthRequiredMixin, SafeMutation):
             production, only_with_perms_in=["change_production"]
         )
 
-        if status == Production.Status.APPROVED:
+        if status == Production.Status.PENDING:
+            approving_users = get_users_with_perm(
+                "productions.approve_production", production
+            ).all()
+            for user in approving_users:
+                send_production_ready_for_review_email(user, production)
+
+        if (
+            status == Production.Status.APPROVED
+            and previous_status == Production.Status.PENDING
+        ):
             for user in involved_users:
-                mail = MailComposer()
-                mail.greeting(user).line(
-                    f"Your production '{production.name}' has been approved."
-                ).line(
-                    "You may now create complimentry bookings and, when ready, make it public, by going to the production control panel."
-                ).action(
-                    f"/administration/productions/{production.slug}",
-                    "Goto Production Control Panel",
-                ).send(
-                    f"{production.name} has been approved", user.email
-                )
+                send_production_approved_email(user, production)
 
         if (
             status == Production.Status.DRAFT
             and previous_status == Production.Status.PENDING
         ):
             for user in involved_users:
-                mail = MailComposer()
-                mail.greeting(user).line(
-                    f"We have reviewed your production ({production.name}), and some changes need to be made before we can approve it."
-                )
-
-                if message:
-                    mail.line(f"Review Comment: '{message}'")
-                mail.line(
-                    "You can go back to the production control panel to make the required changes."
-                ).action(
-                    f"/administration/productions/{production.slug}",
-                    "Goto Production Control Panel",
-                ).line(
-                    "If you need any help, please contact us at support@uobtheatre.com"
-                ).send(
-                    f"{production.name} needs changes", user.email
-                )
+                send_production_needs_changes_email(user, production, message)
 
         return cls(success=True)
 
