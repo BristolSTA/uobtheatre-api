@@ -753,19 +753,19 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin):
         )  # Production is pending publication/review
         APPROVED = (
             "APPROVED",
-            "Approved (not published)",
+            "Approved",
         )  # Production has been aproved, but is not public
         PUBLISHED = (
             "PUBLISHED",
-            "Published (Can view on the site)",
+            "Published",
         )  # Production is public
         CLOSED = (
             "CLOSED",
-            "Closed (Ready for money transfers)",
+            "Closed",
         )  # Production has been closed after it's run. No edits allowed.
         COMPLETE = (
             "COMPLETE",
-            "Complete (Show finished and all money settled)",
+            "Complete",
         )  # Production has been closed and paid for/transactions settled
 
     CONSIDERED_PUBLICALLY_VIEWABLE = (
