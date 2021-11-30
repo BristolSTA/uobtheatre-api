@@ -3,7 +3,7 @@
 	"dockerComposeFile": "../local.yml",
 	"service": "api",
 	"workspaceFolder": "/app/uobtheatre-api",
-	"postCreateCommand": "pre-commit install && pip install -r requirements/local.txt && ./manage.py migrate",
+	"postCreateCommand": "pip install -r requirements/local.txt && pre-commit install && ./manage.py migrate",
 	"settings": {
 		"terminal.integrated.shell.linux": "/bin/bash",
 		"python.pythonPath": "/usr/local/bin/python",

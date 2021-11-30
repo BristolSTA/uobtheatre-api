@@ -8,6 +8,7 @@ from uobtheatre.payments.models import Payment
 from uobtheatre.payments.payment_methods import (
     Card,
     Cash,
+    ManualPaymentMethodMixin,
     PaymentMethod,
     SquareOnline,
     SquarePaymentMethodMixin,
@@ -25,6 +26,16 @@ def test_payment_method_all():
         SquarePOS,
         SquareOnline,
     ]
+
+
+def test_payment_method_non_manual():
+    assert (
+        PaymentMethod.non_manual_methods  # pylint: disable=comparison-with-callable
+        == [
+            SquarePOS,
+            SquareOnline,
+        ]
+    )
 
 
 def test_payment_method_choice():
@@ -479,3 +490,7 @@ def test_square_pos_cancel_failure(mock_square):
 
     # Assert payment not deleted
     assert Payment.objects.filter(id=payment.id).exists()
+
+
+def test_manual_payment_method_processing_fee():
+    assert Cash.get_processing_fee(None) is None

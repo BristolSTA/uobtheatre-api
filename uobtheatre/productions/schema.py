@@ -22,6 +22,7 @@ from uobtheatre.utils.schema import (
     AssignedUsersMixin,
     DjangoObjectType,
     GrapheneEnumMixin,
+    UserPermissionFilterMixin,
 )
 
 ProductionStatusSchema = graphene.Enum.from_enum(Production.Status)
@@ -104,7 +105,7 @@ class ProductionByMethodOrderingFilter(django_filters.OrderingFilter):
         return super().filter(query_set, value)
 
 
-class ProductionFilter(FilterSet):
+class ProductionFilter(FilterSet, UserPermissionFilterMixin):
     """Filter for ProductionNode
 
     Extends filterset to include start and end filters.

@@ -8,7 +8,11 @@ from uobtheatre.productions.models import Production
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.utils.exceptions import AuthorizationException
-from uobtheatre.utils.schema import IdInputField, ModelDeletionMutation
+from uobtheatre.utils.schema import (
+    IdInputField,
+    ModelDeletionMutation,
+    UserPermissionFilterMixin,
+)
 
 
 @pytest.mark.django_db
@@ -120,3 +124,30 @@ def test_model_deletion_mutation_authorisation(with_delete_perm):
                 context,
                 id=production.id,
             )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "permission,expected_ids",
+    [
+        (None, [1, 2]),
+        ("add_production", []),
+        ("view_production", [1]),
+        ("productions.view_production", [1]),
+        ("invalid_permission", []),
+    ],
+)
+def test_user_has_permission_mixin(permission, expected_ids):
+    user = UserFactory()
+    prod_1 = ProductionFactory(id=1)
+    ProductionFactory(id=2)
+    assign_perm("view_production", user, prod_1)
+
+    filter_set = UserPermissionFilterMixin(
+        data={"user_has_permission": permission},
+        request=type("", (object,), {"user": user})(),
+        queryset=Production.objects.all(),
+    )
+
+    productions_ids = [production.id for production in filter_set.qs.all()]
+    assert productions_ids == expected_ids

@@ -14,6 +14,10 @@ class PaymentFactory(factory.django.DjangoModelFactory):
     currency = "GBP"
     card_brand = "MASTERCARD"
     last_4 = "1111"
+    provider_payment_id = factory.Faker(
+        "bothify",
+        text="##??",
+    )
 
     class Meta:
         model = Payment

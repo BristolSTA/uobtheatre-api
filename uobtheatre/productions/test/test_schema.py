@@ -515,40 +515,6 @@ def test_production_search_filter(gql_client, query, results):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "logged_in",
-    [(True), (False)],
-)
-def test_productions_are_filtered_out(logged_in, gql_client):
-    _ = [ProductionFactory() for _ in range(3)]
-    draft_production = ProductionFactory(status=Production.Status.DRAFT, slug="my-show")
-
-    request = """
-        {
-          productions {
-            edges {
-              node {
-                id
-              }
-            }
-          }
-          production(slug: "my-show") {
-              name
-          }
-        }
-        """
-    if logged_in:
-        gql_client.login()
-    response = gql_client.execute(request)
-
-    assert len(response["data"]["productions"]["edges"]) == 3
-    assert to_global_id("PerformanceNode", draft_production.id) not in [
-        edge["node"]["id"] for edge in response["data"]["productions"]["edges"]
-    ]
-    assert response["data"]["production"] is None
-
-
-@pytest.mark.django_db
 def test_productions_are_shown_with_permission(gql_client):
     _ = [ProductionFactory() for _ in range(3)]
     draft_production = ProductionFactory(status=Production.Status.DRAFT, slug="my-show")
@@ -1139,7 +1105,6 @@ def test_performance_single_id(gql_client):
             id
           }
         }
-
         """
 
     # Ask for nothing and check you get nothing
@@ -1157,40 +1122,36 @@ def test_performance_single_id(gql_client):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "logged_in",
-    [(True), (False)],
+    "logged_in,status",
+    [(True, "DRAFT"), (True, "PENDING"), (False, "DRAFT"), (False, "PENDING")],
 )
-def test_performances_are_filtered_out(logged_in, gql_client):
-    _ = [PerformanceFactory() for _ in range(3)]
-    draft_performance = PerformanceFactory(
-        production=ProductionFactory(status=Production.Status.DRAFT)
-    )
+def test_productions_are_filtered_out(logged_in, status, gql_client):
+    _ = [ProductionFactory() for _ in range(3)]
+    draft_production = ProductionFactory(status=status, slug="my-show")
 
     request = """
         {
-          performances {
+          productions {
             edges {
               node {
                 id
               }
             }
           }
-          performance(id: "%s") {
-              start
+          production(slug: "my-show") {
+              name
           }
         }
-        """ % to_global_id(
-        "PerformanceNode", draft_performance.id
-    )
+        """
     if logged_in:
         gql_client.login()
     response = gql_client.execute(request)
 
-    assert len(response["data"]["performances"]["edges"]) == 3
-    assert to_global_id("PerformanceNode", draft_performance.id) not in [
-        edge["node"]["id"] for edge in response["data"]["performances"]["edges"]
+    assert len(response["data"]["productions"]["edges"]) == 3
+    assert to_global_id("PerformanceNode", draft_production.id) not in [
+        edge["node"]["id"] for edge in response["data"]["productions"]["edges"]
     ]
-    assert response["data"]["performance"] is None
+    assert response["data"]["production"] is None
 
 
 @pytest.mark.django_db

@@ -1,5 +1,6 @@
 from typing import List
 
+import django_filters
 import graphene
 from django.db.models import RestrictedError
 from django.forms.models import ModelChoiceField
@@ -11,6 +12,7 @@ from graphql_relay.node.node import from_global_id
 from guardian.shortcuts import (
     assign,
     assign_perm,
+    get_objects_for_user,
     get_user_perms,
     get_users_with_perms,
     remove_perm,
@@ -241,6 +243,13 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
         else:
             cls.on_update(info, response)
         return response
+
+
+class UserPermissionFilterMixin(django_filters.FilterSet):
+    user_has_permission = django_filters.CharFilter(method="user_has_permission_filter")
+
+    def user_has_permission_filter(self, query_set, _, permission=None):
+        return get_objects_for_user(self.request.user, permission, query_set)
 
 
 class IdInputField(graphene.ID):
