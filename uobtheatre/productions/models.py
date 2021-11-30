@@ -679,7 +679,7 @@ class ProductionQuerySet(QuerySet):
             QuerySet: The filtered queryset
         """
         productions_user_can_view_admin = get_objects_for_user(
-            user, "view_production", self
+            user, ["view_production", "approve_production"], self, any_perm=True
         ).values_list("id", flat=True)
         return self.filter(
             Q(status__in=Production.CONSIDERED_PUBLICALLY_VIEWABLE)

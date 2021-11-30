@@ -1,9 +1,8 @@
 import abc
-from django.contrib.auth.models import Permission
-from django.contrib.contenttypes.models import ContentType
 
 import graphene
-from guardian.shortcuts import get_perms, get_users_with_perms
+from django.contrib.contenttypes.models import ContentType
+from guardian.shortcuts import get_perms
 
 
 class AbilitiesMixin:
@@ -87,6 +86,12 @@ class PermissionsMixin:
     permissions = graphene.List(graphene.String)
 
     def resolve_permissions(self, info):
+        global_perms = [
+            perm.codename
+            for perm in info.context.user.user_permissions.filter(
+                content_type=ContentType.objects.get_for_model(self)
+            ).all()
+        ]
         if hasattr(self, "get_perms"):
-            return self.get_perms(info.context.user, self)
-        return get_perms(info.context.user, self)
+            return self.get_perms(info.context.user, self) + global_perms
+        return get_perms(info.context.user, self) + global_perms

@@ -1,8 +1,10 @@
 from unittest.mock import patch
 
 import pytest
+from django.contrib.contenttypes.models import ContentType
 from guardian.shortcuts import assign_perm
 
+from uobtheatre.productions.models import Production
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.abilities import OpenAdmin, OpenBoxoffice, PermissionsMixin
 from uobtheatre.users.test.factories import UserFactory
@@ -49,7 +51,11 @@ def test_permissions_mixin_resolve_permissions_with_get_perms(info):
     schema = TestModelSchema()
     with patch.object(schema, "get_perms") as mock_get_perms, patch(
         "uobtheatre.users.abilities.get_perms"
-    ) as mock_guardian_get_perms:
+    ) as mock_guardian_get_perms, patch.object(
+        ContentType.objects,
+        "get_for_model",
+        return_value=ContentType.objects.get_for_model(Production),
+    ):
         schema.resolve_permissions(info)
         mock_get_perms.assert_called_once_with(info.context.user, schema)
         mock_guardian_get_perms.assert_not_called()
@@ -61,6 +67,10 @@ def test_permissions_mixin_resolve_permissions_without_get_perms(info):
         pass
 
     schema = TestModelSchema()
-    with patch("uobtheatre.users.abilities.get_perms") as mock_get_perms:
+    with patch("uobtheatre.users.abilities.get_perms") as mock_get_perms, patch.object(
+        ContentType.objects,
+        "get_for_model",
+        return_value=ContentType.objects.get_for_model(Production),
+    ):
         schema.resolve_permissions(info)
         mock_get_perms.assert_called_once_with(info.context.user, schema)
