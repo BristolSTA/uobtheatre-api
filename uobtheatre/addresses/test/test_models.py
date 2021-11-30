@@ -1,4 +1,5 @@
 import pytest
+import pytz
 
 from uobtheatre.addresses.test.factories import AddressFactory
 
@@ -31,3 +32,15 @@ def test_address_to_string(building_name, building_number, output):
     )
 
     assert str(address) == output
+
+
+@pytest.mark.django_db
+def test_timezone_without_coordinates():
+    address = AddressFactory(latitude=None, longitude=None)
+    assert address.timezone == pytz.UTC
+
+
+@pytest.mark.django_db
+def test_timezone_with_coordinates():
+    address = AddressFactory(latitude=51.45662710361974, longitude=-2.613237959640326)
+    assert address.timezone.zone == "Europe/London"

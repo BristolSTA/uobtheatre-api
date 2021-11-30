@@ -93,7 +93,13 @@ class Discount(models.Model):
             discount
             for discount in discounts
             if discount.get_concession_map() == self.get_concession_map()
+            and (
+                self.pk
+                and len(self.performances.all()) > 0
+                and len(discount.performances.all() & self.performances.all()) > 0
+            )
         ]
+
         discounts_with_same_requirements_names = [
             discount.name for discount in discounts_with_same_requirements
         ]
