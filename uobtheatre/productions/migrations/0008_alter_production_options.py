@@ -18,7 +18,10 @@ class Migration(migrations.Migration):
                     ("boxoffice", "Can use boxoffice for this production"),
                     ("sales", "Can view sales for this production"),
                     ("force_change_production", "Can edit production once live"),
-                    ("approve_production", "Can edit production once live"),
+                    (
+                        "approve_production",
+                        "Can approve production pending publication",
+                    ),
                 ),
             },
         ),
