@@ -14,15 +14,19 @@ from uobtheatre.utils.validators import (
 required_a_and_b_parameters = (
     "obj,errors",
     [
-        (SimpleNamespace(a=1, b=1), []),
+        (SimpleNamespace(a_field=1, b=1), []),
         (
-            SimpleNamespace(a=None, b=1),
-            [ValidationError(message="a is required", attribute="a")],
+            SimpleNamespace(a_field=None, b=1),
+            [ValidationError(message="a field is required", attribute="a_field")],
         ),
         (
-            SimpleNamespace(a=None, b=None),
+            SimpleNamespace(a_field=None, b=1),
+            [ValidationError(message="a field is required", attribute="a_field")],
+        ),
+        (
+            SimpleNamespace(a_field=None, b=None),
             [
-                ValidationError(message="a is required", attribute="a"),
+                ValidationError(message="a field is required", attribute="a_field"),
                 ValidationError(message="b is required", attribute="b"),
             ],
         ),
@@ -32,18 +36,20 @@ required_a_and_b_parameters = (
 
 @pytest.mark.parametrize(*required_a_and_b_parameters)
 def test_required_fields_validator(obj, errors):
-    validator = RequiredFieldsValidator(["a", "b"])
+    validator = RequiredFieldsValidator(["a_field", "b"])
     assert validator.validate(obj) == errors
 
 
 @pytest.mark.parametrize(*required_a_and_b_parameters)
 def test_and_validator(obj, errors):
-    validator = AndValidator(RequiredFieldValidator("a"), RequiredFieldValidator("b"))
+    validator = AndValidator(
+        RequiredFieldValidator("a_field"), RequiredFieldValidator("b")
+    )
     assert validator.validate(obj) == errors
 
 
 def test_and_validator_method():
-    validator_1 = RequiredFieldValidator("a")
+    validator_1 = RequiredFieldValidator("a_field")
     validator_2 = RequiredFieldValidator("b")
     assert validator_1 & validator_2 == AndValidator(validator_1, validator_2)
 

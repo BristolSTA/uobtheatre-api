@@ -1,4 +1,3 @@
-from uobtheatre.productions.models import Production
 from uobtheatre.users.abilities import Ability
 
 
@@ -20,7 +19,9 @@ class EditProductionObjects(Ability):
     name = "edit_production_objects"
 
     @staticmethod
-    def user_has(user, obj: Production) -> bool:
+    def user_has(user, obj) -> bool:
+        from uobtheatre.productions.models import Production
+
         return (
             user.has_perm("productions.force_change_production", obj)
             or (

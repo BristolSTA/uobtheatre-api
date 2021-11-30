@@ -83,7 +83,8 @@ class RequiredFieldValidator(AttributeValidator):
         if value is None:
             return [
                 ValidationError(
-                    message=f"{self.attribute} is required", attribute=self.attribute
+                    message=f"{self.attribute.replace('_', ' ')} is required",
+                    attribute=self.attribute,
                 )
             ]
         return []
@@ -135,8 +136,9 @@ class RelatedObjectsValidator(Validator):
             self.min_number is not None
             and not self._get_attributes(instance).count() >= self.min_number
         ):
+            verb = "are" if self.min_number > 1 else "is"
             return ValidationError(
-                message=f"At least {self.min_number} {self.attribute} are required.",
+                message=f"At least {self.min_number} {self.attribute} {verb} required.",
                 attribute=self.attribute,
             )
         return None

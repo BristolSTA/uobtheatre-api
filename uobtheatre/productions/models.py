@@ -16,6 +16,7 @@ from guardian.shortcuts import get_objects_for_user
 from uobtheatre.images.models import Image
 from uobtheatre.payments.models import Payment
 from uobtheatre.societies.models import Society
+from uobtheatre.users.abilities import AbilitiesMixin
 from uobtheatre.utils.models import PermissionableModel, TimeStampedMixin
 from uobtheatre.utils.validators import (
     RelatedObjectsValidator,
@@ -686,7 +687,7 @@ class ProductionQuerySet(QuerySet):
         )
 
 
-class Production(TimeStampedMixin, PermissionableModel):
+class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin):
     """The model for a production.
 
     A production is a show (like the 2 weeks things) and can have many
@@ -695,6 +696,10 @@ class Production(TimeStampedMixin, PermissionableModel):
 
     # Used to validate if a draft can be submitted for approval
     objects = ProductionQuerySet.as_manager()
+
+    from uobtheatre.productions.abilities import EditProductionObjects
+
+    abilities = [EditProductionObjects]
 
     VALIDATOR = RequiredFieldsValidator(
         [
