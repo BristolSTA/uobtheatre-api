@@ -1,5 +1,6 @@
-from uobtheatre.discounts.models import ConcessionType
+from uobtheatre.discounts.models import ConcessionType, Discount
 from uobtheatre.productions.abilities import EditProduction
+from uobtheatre.productions.models import Production, Performance
 from uobtheatre.users.abilities import Ability
 from uobtheatre.users.models import User
 
@@ -21,19 +22,17 @@ class ModifyConcessionType(Ability):
 
     @staticmethod
     def user_has_for(user: User, obj: ConcessionType) -> bool:
-        unique_productions_using_it = list(
-            set(  # pylint: disable=R1718
-                [
-                    performance.production
-                    for requirement in obj.discount_requirements.prefetch_related(
-                        "discount__performances__production"
-                    ).all()
-                    for performance in requirement.discount.performances.all()
-                ]
-            )
+        discounts = Discount.objects.filter(
+            requirements__in=obj.discount_requirements.prefetch_related(
+                "discount__performances__production"
+            ).all()
+        )
+        performances = Performance.objects.filter(discounts__in=discounts)
+        unique_productions_using_it = Production.objects.filter(
+            performances__in=performances
         )
 
-        if not len(unique_productions_using_it) == 1:
+        if not unique_productions_using_it.count() == 1:
             return False
 
-        return EditProduction.user_has_for(user, unique_productions_using_it[0])
+        return EditProduction.user_has_for(user, unique_productions_using_it.first())
