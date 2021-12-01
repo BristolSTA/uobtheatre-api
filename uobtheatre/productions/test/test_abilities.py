@@ -1,7 +1,7 @@
 import pytest
 from guardian.shortcuts import assign_perm
 
-from uobtheatre.productions.abilities import AddProduction, EditProductionObjects
+from uobtheatre.productions.abilities import AddProduction, EditProduction
 from uobtheatre.productions.test.factories import ProductionFactory
 from uobtheatre.societies.test.factories import SocietyFactory
 from uobtheatre.users.test.factories import UserFactory
@@ -29,7 +29,7 @@ def test_add_production(
     for perm in global_permissions:
         assign_perm(perm, user)
 
-    assert AddProduction.user_has(user, None) is expected_user_has
+    assert AddProduction.user_has(user) is expected_user_has
 
 
 @pytest.mark.django_db
@@ -65,4 +65,4 @@ def test_edit_production_objects(
     for permission in obj_permissions:
         assign_perm(permission, user, production)
 
-    assert EditProductionObjects.user_has(user, production) == expected_user_has
+    assert EditProduction.user_has_for(user, production) == expected_user_has

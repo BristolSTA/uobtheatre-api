@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from typing import Generator, Optional
 
 from uobtheatre.utils import exceptions
+from django.core.validators import URLValidator as DjangoURLValidator
+from django.core.validators import ValidationError as DjangoValidationError
 
 
 @dataclass
@@ -88,6 +90,31 @@ class RequiredFieldValidator(AttributeValidator):
                 )
             ]
         return []
+
+
+@dataclass
+class UrlValidator(AttributeValidator):
+    """
+    A validator that checks its required attribute is provided (not null).
+    """
+
+    def validate_attribute(self, value):
+        schemes = ["http", "https"]
+
+        if not any(value.startswith(scheme) for scheme in schemes):
+            value = f"https://{value}"
+
+        validate = DjangoURLValidator(schemes=schemes)
+        try:
+            validate(value)
+            return []
+        except DjangoValidationError:
+            return [
+                ValidationError(
+                    message=f"{self.attribute.replace('_', ' ')} is not a valid url",
+                    attribute=self.attribute,
+                )
+            ]
 
 
 @dataclass

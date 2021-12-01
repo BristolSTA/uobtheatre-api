@@ -162,7 +162,7 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
             if not (
                 user_can_add_instance
                 if not create_ability
-                else create_ability.user_has(info.context.user, None)
+                else create_ability.user_has(info.context.user)
             ):
                 raise AuthorizationException
             return
@@ -174,7 +174,7 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
         if not (
             user_can_change_instance
             if not update_ability
-            else update_ability.user_has(info.context.user, instance)
+            else update_ability.user_has_for(info.context.user, instance)
         ):
             raise AuthorizationException
 

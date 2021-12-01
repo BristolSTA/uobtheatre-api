@@ -10,7 +10,7 @@ from uobtheatre.discounts.test.factories import (
     DiscountFactory,
     DiscountRequirementFactory,
 )
-from uobtheatre.productions.abilities import EditProductionObjects
+from uobtheatre.productions.abilities import EditProduction
 from uobtheatre.productions.test.factories import PerformanceFactory
 
 #####
@@ -73,7 +73,7 @@ def test_concession_type_mutation_update(gql_client, with_permission):
     )
 
     with patch.object(
-        ModifyConcessionType, "user_has", return_value=with_permission
+        ModifyConcessionType, "user_has_for", return_value=with_permission
     ) as ability_mock:
         response = gql_client.login().execute(request)
 
@@ -136,7 +136,7 @@ def test_discount_mutation_create(gql_client, with_permission):
     )
 
     with patch.object(
-        EditProductionObjects, "user_has", return_value=with_permission
+        EditProduction, "user_has_for", return_value=with_permission
     ) as mock:
         response = gql_client.login().execute(request)
         mock.assert_called_once_with(gql_client.user, performance.production)
@@ -186,7 +186,7 @@ def test_discount_mutation_update(gql_client, with_permission):
     )
 
     with patch.object(
-        EditProductionObjects, "user_has", return_value=with_permission
+        EditProduction, "user_has_for", return_value=with_permission
     ) as mock:
         response = gql_client.login().execute(request)
         mock.assert_called_once_with(gql_client.user, performance.production)
@@ -212,7 +212,7 @@ def test_delete_discount_mutation(gql_client, with_permission):
     )
 
     with patch.object(
-        EditProductionObjects, "user_has", return_value=with_permission
+        EditProduction, "user_has_for", return_value=with_permission
     ) as ability_mock:
         response = gql_client.login().execute(request)
 
@@ -251,7 +251,7 @@ def test_discount_requirement_mutation_create(gql_client, with_permission):
     )
 
     with patch.object(
-        EditProductionObjects, "user_has", return_value=with_permission
+        EditProduction, "user_has_for", return_value=with_permission
     ) as mock:
         response = gql_client.login().execute(request)
         mock.assert_called_once_with(gql_client.user, performance.production)
@@ -317,7 +317,7 @@ def test_discount_requirement_mutation_update(gql_client, with_permission):
     )
 
     with patch.object(
-        EditProductionObjects, "user_has", return_value=with_permission
+        EditProduction, "user_has_for", return_value=with_permission
     ) as mock:
         response = gql_client.login().execute(request)
         mock.assert_any_call(gql_client.user, performance_1.production)
@@ -346,7 +346,7 @@ def test_delete_discount_requirement_mutation(gql_client, with_permission):
     )
 
     with patch.object(
-        EditProductionObjects, "user_has", return_value=with_permission
+        EditProduction, "user_has_for", return_value=with_permission
     ) as ability_mock:
         response = gql_client.login().execute(request)
 

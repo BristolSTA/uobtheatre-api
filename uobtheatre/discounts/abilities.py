@@ -1,5 +1,5 @@
 from uobtheatre.discounts.models import ConcessionType
-from uobtheatre.productions.abilities import EditProductionObjects
+from uobtheatre.productions.abilities import EditProduction
 from uobtheatre.users.abilities import Ability
 from uobtheatre.users.models import User
 
@@ -10,8 +10,8 @@ class CreateConcessionType(Ability):
     name = "create_concession_type"
 
     @staticmethod
-    def user_has(user: User, _) -> bool:
-        return user.has_any_objects_with_perms("productions.change_production")
+    def user_has(user: User) -> bool:
+        return EditProduction.user_has(user)
 
 
 class ModifyConcessionType(Ability):
@@ -20,7 +20,7 @@ class ModifyConcessionType(Ability):
     name = "modify_concession_type"
 
     @staticmethod
-    def user_has(user: User, obj: ConcessionType) -> bool:
+    def user_has_for(user: User, obj: ConcessionType) -> bool:
         unique_productions_using_it = list(
             set(  # pylint: disable=R1718
                 [
@@ -36,4 +36,4 @@ class ModifyConcessionType(Ability):
         if not len(unique_productions_using_it) == 1:
             return False
 
-        return EditProductionObjects.user_has(user, unique_productions_using_it[0])
+        return EditProduction.user_has_for(user, unique_productions_using_it[0])

@@ -1,3 +1,4 @@
+from os import wait
 from uobtheatre.users.abilities import Ability
 
 
@@ -7,19 +8,26 @@ class AddProduction(Ability):
     name = "add_production"
 
     @staticmethod
-    def user_has(user, _) -> bool:
+    def user_has(user) -> bool:
         return user.has_any_objects_with_perms(
             ["societies.add_production"]
         ) or user.has_perm("productions.add_production")
 
 
-class EditProductionObjects(Ability):
-    """Whether the user is able to change a production's details and sub-objects, based on the current status"""
+class EditProduction(Ability):
+    """
+    Whether the user is able to change a production's details and
+    sub-objects, based on the current status
+    """
 
-    name = "edit_production_objects"
+    name = "edit_production"
 
     @staticmethod
-    def user_has(user, obj) -> bool:
+    def user_has(user):
+        return user.has_any_objects_with_perms("productions.change_production")
+
+    @staticmethod
+    def user_has_for(user, obj) -> bool:
         from uobtheatre.productions.models import Production
 
         return (

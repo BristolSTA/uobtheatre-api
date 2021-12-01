@@ -14,10 +14,10 @@ from uobtheatre.users.test.factories import UserFactory
 def test_open_boxoffice():
     user = UserFactory()
     performance = PerformanceFactory()
-    assert not OpenBoxoffice.user_has(user, None)
+    assert not OpenBoxoffice.user_has(user)
 
     assign_perm("boxoffice", user, performance.production)
-    assert OpenBoxoffice.user_has(user, None)
+    assert OpenBoxoffice.user_has(user)
 
 
 @pytest.mark.django_db
@@ -39,7 +39,7 @@ def test_open_admin(permissions, is_superuser, expected_user_has):
     for permission in permissions:
         assign_perm(permission, user)
 
-    assert OpenAdmin.user_has(user, None) == expected_user_has
+    assert OpenAdmin.user_has(user) == expected_user_has
 
 
 @pytest.mark.django_db

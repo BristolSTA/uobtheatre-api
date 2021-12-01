@@ -1,7 +1,7 @@
 import graphene
 from guardian.shortcuts import get_users_with_perms
 
-from uobtheatre.productions.abilities import AddProduction, EditProductionObjects
+from uobtheatre.productions.abilities import AddProduction, EditProduction
 from uobtheatre.productions.emails import (
     send_production_approved_email,
     send_production_needs_changes_email,
@@ -174,7 +174,7 @@ class ProductionMutation(SafeFormMutation, AuthRequiredMixin):
     class Meta:
         form_class = ProductionForm
         create_ability = AddProduction
-        update_ability = EditProductionObjects
+        update_ability = EditProduction
 
 
 class ProductionPermissionsMutation(AssignPermissionsMutation):
@@ -196,7 +196,7 @@ class PerformanceMutation(SafeFormMutation, AuthRequiredMixin):
         """Authorised the production part (exisiting and prodivded input)"""
         new_production = cls.get_python_value(root, info, inputs, "production")
         has_perm_new_production = (
-            EditProductionObjects.user_has(info.context.user, new_production)
+            EditProduction.user_has_for(info.context.user, new_production)
             if new_production
             else True
         )
@@ -209,7 +209,7 @@ class PerformanceMutation(SafeFormMutation, AuthRequiredMixin):
 
         # For update operations, we care that the user has permissions on both the currently assigned production, and the new production (if provided)
         current_production = cls.get_object_instance(root, info, **inputs).production
-        has_perm_current_production = EditProductionObjects.user_has(
+        has_perm_current_production = EditProduction.user_has_for(
             info.context.user, current_production
         )
         if not (has_perm_new_production and has_perm_current_production):
@@ -225,7 +225,7 @@ class DeletePerformanceMutation(ModelDeletionMutation):
     @classmethod
     def authorize_request(cls, _, info, **inputs):
         instance = cls.get_instance(inputs["id"])
-        if not EditProductionObjects.user_has(info.context.user, instance.production):
+        if not EditProduction.user_has_for(info.context.user, instance.production):
             raise AuthorizationException
 
     class Meta:
@@ -241,9 +241,7 @@ class PerformanceSeatGroupMutation(SafeFormMutation, AuthRequiredMixin):
     def authorize_request(cls, root, info, **inputs):
         new_performance = cls.get_python_value(root, info, inputs, "performance")
         has_perm_new_performance = (
-            EditProductionObjects.user_has(
-                info.context.user, new_performance.production
-            )
+            EditProduction.user_has_for(info.context.user, new_performance.production)
             if new_performance
             else True
         )
@@ -256,7 +254,7 @@ class PerformanceSeatGroupMutation(SafeFormMutation, AuthRequiredMixin):
         current_performance = cls.get_object_instance(
             root, info, **inputs
         ).performance.production
-        has_perm_current_performance = EditProductionObjects.user_has(
+        has_perm_current_performance = EditProduction.user_has_for(
             info.context.user, current_performance
         )
         return has_perm_new_performance and has_perm_current_performance
@@ -271,7 +269,7 @@ class DeletePerformanceSeatGroupMutation(ModelDeletionMutation):
     @classmethod
     def authorize_request(cls, _, info, **inputs):
         instance = cls.get_instance(inputs["id"])
-        return EditProductionObjects.user_has(
+        return EditProduction.user_has_for(
             info.context.user,
             instance.performance.production,
         )

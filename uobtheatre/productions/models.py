@@ -697,9 +697,9 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin):
     # Used to validate if a draft can be submitted for approval
     objects = ProductionQuerySet.as_manager()
 
-    from uobtheatre.productions.abilities import EditProductionObjects
+    from uobtheatre.productions.abilities import EditProduction
 
-    abilities = [EditProductionObjects]
+    abilities = [EditProduction]
 
     VALIDATOR = RequiredFieldsValidator(
         [

@@ -9,6 +9,7 @@ from uobtheatre.utils.validators import (
     RequiredFieldsValidator,
     RequiredFieldValidator,
     ValidationError,
+    UrlValidator,
 )
 
 required_a_and_b_parameters = (
@@ -113,3 +114,24 @@ def test_realted_objects_validator_min_number(
     ).validate(production)
 
     assert errors == expected_errors
+
+
+@pytest.mark.parametrize(
+    "url,is_valid",
+    [
+        ("https://", False),
+        ("https://abc", False),
+        ("https://abc.com", True),
+        ("www.abc.com", True),
+        ("http://www.abc.com", True),
+    ],
+)
+def test_url_validator(url, is_valid):
+    obj = SimpleNamespace(url=url)
+    response = UrlValidator("url").validate(obj)
+
+    if is_valid:
+        assert response == []
+    else:
+        assert len(response) == 1
+        assert response[0].message == "url is not a valid url"

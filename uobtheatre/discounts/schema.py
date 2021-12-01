@@ -10,7 +10,7 @@ from uobtheatre.discounts.forms import (
     DiscountRequirementForm,
 )
 from uobtheatre.discounts.models import ConcessionType, Discount, DiscountRequirement
-from uobtheatre.productions.abilities import EditProductionObjects
+from uobtheatre.productions.abilities import EditProduction
 from uobtheatre.utils.exceptions import AuthorizationException
 from uobtheatre.utils.schema import (
     AuthRequiredMixin,
@@ -77,7 +77,7 @@ class DiscountMutation(SafeFormMutation, AuthRequiredMixin):
 
         # Authorize user on all of the performance's productions
         for performance in performances:
-            if not EditProductionObjects.user_has(
+            if not EditProduction.user_has_for(
                 info.context.user, performance.production
             ):
                 raise AuthorizationException
@@ -93,7 +93,7 @@ class DeleteDiscountMutation(ModelDeletionMutation):
     def authorize_request(cls, _, info, **inputs):
         discount = cls.get_instance(inputs["id"])
         for performance in discount.performances.prefetch_related("production").all():
-            if not EditProductionObjects.user_has(
+            if not EditProduction.user_has_for(
                 info.context.user, performance.production
             ):
                 raise AuthorizationException
@@ -127,7 +127,7 @@ class DiscountRequirementMutation(SafeFormMutation, AuthRequiredMixin):
 
         # Authorize user on all of the performance's productions
         for performance in all_performances:
-            if not EditProductionObjects.user_has(
+            if not EditProduction.user_has_for(
                 info.context.user, performance.production
             ):
                 raise AuthorizationException
@@ -147,7 +147,7 @@ class DeleteDiscountRequirementMutation(ModelDeletionMutation):
         for performance in instance.discount.performances.prefetch_related(
             "production"
         ).all():
-            if not EditProductionObjects.user_has(
+            if not EditProduction.user_has_for(
                 info.context.user, performance.production
             ):
                 raise AuthorizationException()

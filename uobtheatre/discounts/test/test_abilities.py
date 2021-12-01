@@ -9,7 +9,7 @@ from uobtheatre.discounts.test.factories import (
     DiscountFactory,
     DiscountRequirementFactory,
 )
-from uobtheatre.productions.abilities import EditProductionObjects
+from uobtheatre.productions.abilities import EditProduction
 from uobtheatre.productions.models import Production
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.users.test.factories import UserFactory
@@ -38,7 +38,7 @@ def test_create_concession_type_ability(
     for permission in obj_permissions:
         assign_perm(permission, user, production)
 
-    assert CreateConcessionType.user_has(user, None) is expected_user_has
+    assert CreateConcessionType.user_has(user) is expected_user_has
 
 
 @pytest.mark.django_db
@@ -46,7 +46,7 @@ def test_modify_concession_type_ability_with_no_perms():
     user = UserFactory()
     concession_type = ConcessionTypeFactory()
 
-    assert ModifyConcessionType.user_has(user, concession_type) is False
+    assert ModifyConcessionType.user_has_for(user, concession_type) is False
 
 
 @pytest.mark.django_db
@@ -64,8 +64,8 @@ def test_modify_concession_type_ability_when_on_another_production():
     DiscountRequirementFactory(discount=dis_1, concession_type=concession_type)
     DiscountRequirementFactory(discount=dis_2, concession_type=concession_type)
 
-    with patch.object(EditProductionObjects, "user_has", return_value=True) as mock:
-        assert ModifyConcessionType.user_has(user, concession_type) is False
+    with patch.object(EditProduction, "user_has_for", return_value=True) as mock:
+        assert ModifyConcessionType.user_has_for(user, concession_type) is False
         mock.assert_not_called()  # This shouldn't be called because it shouldn't reach this later part of the ability
 
 
@@ -81,6 +81,6 @@ def test_modify_concession_type_ability_when_only_on_owned_production():
 
     DiscountRequirementFactory(discount=dis_1, concession_type=concession_type)
 
-    with patch.object(EditProductionObjects, "user_has", return_value=True) as mock:
-        assert ModifyConcessionType.user_has(user, concession_type) is True
+    with patch.object(EditProduction, "user_has_for", return_value=True) as mock:
+        assert ModifyConcessionType.user_has_for(user, concession_type) is True
         mock.assert_called_once_with(user, production)

@@ -7,7 +7,7 @@ from guardian.shortcuts import assign_perm
 
 from uobtheatre.bookings.test.factories import BookingFactory, PerformanceSeatingFactory
 from uobtheatre.images.test.factories import ImageFactory
-from uobtheatre.productions.abilities import EditProductionObjects
+from uobtheatre.productions.abilities import EditProduction
 from uobtheatre.productions.models import Performance, PerformanceSeatGroup, Production
 from uobtheatre.productions.mutations import SetProductionStatus
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
@@ -206,7 +206,7 @@ def test_production_mutation_update_new_society(
 
     gql_client.login()
 
-    with patch.object(EditProductionObjects, "user_has", return_value=True):
+    with patch.object(EditProduction, "user_has_for", return_value=True):
         if has_new_permission:
             assign_perm("add_production", gql_client.user, new_society)
 
@@ -845,7 +845,7 @@ def test_performance_mutation_update(gql_client, with_permission):
     )
 
     with patch.object(
-        EditProductionObjects, "user_has", return_value=with_permission
+        EditProduction, "user_has_for", return_value=with_permission
     ) as ability_mock:
         response = gql_client.login().execute(request)
         ability_mock.assert_called_with(gql_client.user, performance.production)
@@ -894,8 +894,8 @@ def test_performance_mutation_update_new_production(
     )
 
     with patch.object(
-        EditProductionObjects,
-        "user_has",
+        EditProduction,
+        "user_has_for",
         side_effect=[has_new_permission, has_old_permission],
     ) as ability_mock:
         response = gql_client.login().execute(request)
@@ -932,7 +932,7 @@ def test_performance_mutation_update_to_unallowed_production(gql_client):
     )
 
     with patch.object(
-        EditProductionObjects, "user_has", return_value=False
+        EditProduction, "user_has_for", return_value=False
     ) as ability_mock:
         response = gql_client.login().execute(request)
         ability_mock.assert_called()
@@ -964,7 +964,7 @@ def test_delete_performance_mutation(gql_client, with_permission, with_bookings)
     gql_client.login()
 
     with patch.object(
-        EditProductionObjects, "user_has", return_value=with_permission
+        EditProduction, "user_has_for", return_value=with_permission
     ) as ability_mock:
         response = gql_client.execute(request)
         ability_mock.assert_called_once_with(gql_client.user, performance.production)
@@ -1013,7 +1013,7 @@ def test_performance_seat_group_mutation_create(gql_client):
     )
 
     with patch.object(
-        EditProductionObjects, "user_has", return_value=True
+        EditProduction, "user_has_for", return_value=True
     ) as ability_mock:
         response = gql_client.login().execute(request)
 
@@ -1078,7 +1078,7 @@ def test_performance_seat_group_mutation_update(gql_client):
     )
 
     with patch.object(
-        EditProductionObjects, "user_has", return_value=True
+        EditProduction, "user_has_for", return_value=True
     ) as ability_mock:
         response = gql_client.login().execute(request)
 
@@ -1112,7 +1112,7 @@ def test_delete_performance_seat_group_mutation(gql_client):
     )
 
     with patch.object(
-        EditProductionObjects, "user_has", return_value=True
+        EditProduction, "user_has_for", return_value=True
     ) as ability_mock:
         response = gql_client.login().execute(request)
 
