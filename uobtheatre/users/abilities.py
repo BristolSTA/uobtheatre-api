@@ -18,7 +18,9 @@ class AbilitiesMixin:
     def get_perms(self, user, obj):
         django_perms = get_perms(user, self)
         computed_perms = [
-            ability.name for ability in self.abilities if ability.user_has(user, obj)
+            ability.name
+            for ability in self.abilities
+            if ability.user_has_for(user, obj)
         ]
         return django_perms + computed_perms
 
@@ -58,6 +60,12 @@ class OpenBoxoffice(Ability):
 
         return Performance.objects.has_boxoffice_permission(user).exists()  # type: ignore
 
+    @staticmethod
+    def user_has_for(user, obj) -> bool:
+        from uobtheatre.productions.models import Performance  # type: ignore
+
+        return Performance.objects.has_boxoffice_permission(user).filter(pk=obj.pk).exists()  # type: ignore
+
 
 class OpenAdmin(Ability):
     """Whether the user has permission to open the admin pannel."""
@@ -80,6 +88,10 @@ class OpenAdmin(Ability):
             or user.has_perm("reports.finance_reports")
             or AddProduction.user_has(user)
         )
+
+    @staticmethod
+    def user_has_for(user, _) -> bool:
+        return OpenAdmin.user_has(user)
 
 
 class PermissionsMixin:
