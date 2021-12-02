@@ -342,8 +342,7 @@ class ModelDeletionMutation(AuthRequiredMixin, SafeMutation):
             model_instance.delete()
         except RestrictedError as error:
             raise ReferencedException() from error
-
-        return ModelDeletionMutation()
+        return cls()
 
 
 class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):

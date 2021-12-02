@@ -39,7 +39,7 @@ class DiscountNode(DjangoObjectType):
     def get_queryset(cls, queryset, info):
         return queryset.annotate(
             number_of_tickets_required=Count("requirements__number")
-        ).filter(number_of_tickets_required__gt=1)
+        )
 
     class Meta:
         model = Discount

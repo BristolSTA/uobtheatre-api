@@ -17,13 +17,14 @@ from uobtheatre.images.models import Image
 from uobtheatre.payments.models import Payment
 from uobtheatre.societies.models import Society
 from uobtheatre.users.abilities import AbilitiesMixin
+from uobtheatre.utils.field_validators import OptionalSchemeURLValidator
 from uobtheatre.utils.models import PermissionableModel, TimeStampedMixin
 from uobtheatre.utils.validators import (
     RelatedObjectsValidator,
     RequiredFieldsValidator,
     ValidationError,
-    Validator,
 )
+from django.core.validators import URLValidator
 from uobtheatre.venues.models import SeatGroup, Venue
 
 if TYPE_CHECKING:
@@ -780,7 +781,9 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin):
     )
 
     age_rating = models.SmallIntegerField(null=True, blank=True)
-    facebook_event = models.CharField(max_length=255, null=True, blank=True)
+    facebook_event = models.CharField(
+        max_length=255, null=True, blank=True, validators=[OptionalSchemeURLValidator()]
+    )
 
     warnings = models.ManyToManyField(AudienceWarning, blank=True)
 
