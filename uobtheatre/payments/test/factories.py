@@ -36,6 +36,7 @@ class MockApiResponse:
         body=None,
         errors=None,
     ):
+        """Initialse the mock api response"""
         self.reason_phrase = reason_phrase
         self.status_code = status_code
         self.success = success

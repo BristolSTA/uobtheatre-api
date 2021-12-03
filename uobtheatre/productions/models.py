@@ -279,6 +279,7 @@ class Production(TimeStampedMixin, models.Model):
         ordering = ["id"]
         permissions = (
             ("boxoffice", "Can use boxoffice for this production"),
+            ("view_bookings", "Can inspect bookings and users for this production"),
             ("sales", "Can view sales for this production"),
         )
 
@@ -356,6 +357,17 @@ class PerformanceQuerySet(QuerySet):
             QuerySet: The filtered queryset
         """
         return self.filter(start__date__lte=date, end__date__gte=date)
+
+    def where_can_view_tickets_and_bookings(self, user: "User"):
+        """Filter performances where the user is allowed to view tickets and bookings"""
+        productions_with_perm = get_objects_for_user(
+            user,
+            ["productions.boxoffice", "productions.view_bookings"],
+            accept_global_perms=True,
+            with_superuser=True,
+            any_perm=True,
+        )
+        return self.filter(production__in=productions_with_perm)
 
     def has_boxoffice_permission(self, user: "User", has_permission=True):
         """Filter performances where user has boxoffice permission.
@@ -530,7 +542,7 @@ class Performance(
         """The number of tickets sold for the performance
 
         Args:
-            kwargs (dict): Any additonal kwargs are used to filter the queryset.
+            **kwargs (dict): Any additonal kwargs are used to filter the queryset.
 
         Returns:
             int: The number of tickets sold
@@ -547,7 +559,7 @@ class Performance(
         """The number of tickets available for the performance (i.e. factoring in any draft bookings)
 
         Args:
-            kwargs (dict): Any additonal kwargs are used to filter the queryset.
+            **kwargs (dict): Any additonal kwargs are used to filter the queryset.
 
         Returns:
             int: The number of tickets sold
