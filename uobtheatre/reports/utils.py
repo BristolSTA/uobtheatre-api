@@ -25,6 +25,7 @@ class ExcelReport:  # pragma: no cover
         meta: List = None,
         user: User = None,
     ) -> None:
+        """Initalise worbook, sheet, formatters, meta, headers and description"""
         self.name = name
         self.output_buffer = io.BytesIO()
         self.row_tracker = 1  # Track the row we are currently at

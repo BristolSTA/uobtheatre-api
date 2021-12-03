@@ -542,7 +542,7 @@ class Performance(
         """The number of tickets sold for the performance
 
         Args:
-            kwargs (dict): Any additonal kwargs are used to filter the queryset.
+            **kwargs (dict): Any additonal kwargs are used to filter the queryset.
 
         Returns:
             int: The number of tickets sold
@@ -559,7 +559,7 @@ class Performance(
         """The number of tickets available for the performance (i.e. factoring in any draft bookings)
 
         Args:
-            kwargs (dict): Any additonal kwargs are used to filter the queryset.
+            **kwargs (dict): Any additonal kwargs are used to filter the queryset.
 
         Returns:
             int: The number of tickets sold
