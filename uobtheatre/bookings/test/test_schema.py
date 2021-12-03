@@ -1,12 +1,13 @@
 import datetime
 
 import pytest
-from django.contrib.auth.models import Permission
+from django.contrib.auth.models import AnonymousUser, Permission
 from django.utils import timezone
 from graphql_relay.node.node import to_global_id
 from guardian.shortcuts import assign_perm
 
-from uobtheatre.bookings.models import Booking
+from uobtheatre.bookings.models import Booking, Ticket
+from uobtheatre.bookings.schema import TicketNode
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
     PercentageMiscCostFactory,
@@ -898,3 +899,24 @@ def test_booking_order_start(gql_client):
 
     assert desc_response_list == desc_expected_list
     assert asec_response_list == asec_expected_list
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "logged_in, expected_includes",
+    [
+        (False, False),
+        (True, True),
+    ],
+)
+def test_ticket_node_queryset_with_anonymous_user(info, logged_in, expected_includes):
+    ticket = TicketFactory(
+        booking=BookingFactory(user=info.context.user)
+    )  # Belongs to user
+    TicketFactory()  # Doesn't belong to user
+
+    if not logged_in:
+        info.context.user = AnonymousUser()
+
+    qs = TicketNode.get_queryset(Ticket.objects, info)
+    assert list(qs.all()) == ([ticket] if expected_includes else [])

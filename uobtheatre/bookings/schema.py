@@ -42,6 +42,18 @@ class MiscCostNode(DjangoObjectType):
 
 
 class TicketNode(DjangoObjectType):
+    @classmethod
+    def get_queryset(cls, queryset, info):
+        """Get the queryset for a group of ticket nodes"""
+        qs = Q(
+            booking__performance__in=Performance.objects.where_can_view_tickets_and_bookings(
+                info.context.user
+            )
+        )
+        if info.context.user.is_authenticated:
+            qs = qs | Q(booking__user=info.context.user)
+        return queryset.filter(qs)
+
     class Meta:
         model = Ticket
         interfaces = (relay.Node,)
@@ -267,18 +279,15 @@ class BookingNode(GrapheneEnumMixin, DjangoObjectType):
 
     @classmethod
     def get_queryset(cls, queryset, info):
-        return (
-            queryset.none()
-            if not info.context.user.is_authenticated
-            else queryset.filter(
-                Q(
-                    performance__in=Performance.objects.has_boxoffice_permission(
-                        info.context.user
-                    )
-                )
-                | Q(user=info.context.user)
+        """Get the queryset for a group of booking nodes"""
+        qs = Q(
+            performance__in=Performance.objects.where_can_view_tickets_and_bookings(
+                info.context.user
             )
         )
+        if info.context.user.is_authenticated:
+            qs = qs | Q(user=info.context.user)
+        return queryset.filter(qs)
 
     class Meta:
         model = Booking
