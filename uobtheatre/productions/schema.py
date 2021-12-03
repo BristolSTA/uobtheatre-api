@@ -5,7 +5,7 @@ from graphene import relay
 from graphene_django import DjangoListField
 from graphene_django.filter import DjangoFilterConnectionField
 
-from uobtheatre.discounts.schema import ConcessionTypeNode, DiscountNode
+from uobtheatre.discounts.schema import ConcessionTypeNode
 from uobtheatre.productions.models import (
     AudienceWarning,
     CastMember,
@@ -299,7 +299,6 @@ class PerformanceNode(DjangoObjectType):
     is_online = graphene.Boolean(required=True)
     sold_out = graphene.Boolean(required=True)
     is_bookable = graphene.Boolean(required=True)
-    discounts = DjangoListField(DiscountNode)
     tickets_breakdown = graphene.Field(PerformanceTicketsBreakdown, required=True)
     sales_breakdown = graphene.Field(SalesBreakdownNode)
 

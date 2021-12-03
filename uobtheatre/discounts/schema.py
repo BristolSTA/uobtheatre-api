@@ -1,5 +1,6 @@
+import django_filters
 import graphene
-from django.db.models import Count
+from django.db.models.aggregates import Sum
 from graphene import relay
 from graphene_django import DjangoListField, DjangoObjectType
 
@@ -12,6 +13,7 @@ from uobtheatre.discounts.forms import (
 from uobtheatre.discounts.models import ConcessionType, Discount, DiscountRequirement
 from uobtheatre.productions.abilities import EditProduction
 from uobtheatre.utils.exceptions import AuthorizationException
+from uobtheatre.utils.filters import FilterSet
 from uobtheatre.utils.schema import (
     AuthRequiredMixin,
     ModelDeletionMutation,
@@ -32,18 +34,33 @@ class DiscountRequirementNode(DjangoObjectType):
         interfaces = (relay.Node,)
 
 
+class DiscountFilter(FilterSet):
+    """Custom filter for DiscountFilter."""
+
+    group = django_filters.BooleanFilter(method="filter_group", label="Group")
+
+    class Meta:
+        model = Discount
+        fields = ("group",)
+
+    def filter_group(self, queryset, _, value):
+        queryset = queryset.annotate(
+            number_of_tickets_required=Sum("requirements__number")
+        )
+        return (
+            queryset.filter(number_of_tickets_required__gt=1)
+            if value
+            else queryset.filter(number_of_tickets_required=1)
+        )
+
+
 class DiscountNode(DjangoObjectType):
     requirements = DjangoListField(DiscountRequirementNode)
-
-    @classmethod
-    def get_queryset(cls, queryset, info):
-        return queryset.annotate(
-            number_of_tickets_required=Count("requirements__number")
-        )
 
     class Meta:
         model = Discount
         interfaces = (relay.Node,)
+        filterset_class = DiscountFilter
 
 
 class ConcessionTypeMutation(SafeFormMutation, AuthRequiredMixin):
