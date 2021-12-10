@@ -35,7 +35,7 @@ django==3.2.9
 #=== Django Extras ===#
 
 django-guardian==2.4.0  # https://github.com/django-guardian/django-guardian
-django_tiptap==0.0.10  # https://github.com/django-tiptap/django_tiptap
+django_tiptap==0.0.17  # https://github.com/django-tiptap/django_tiptap
 djangorestframework==3.12.4  # https://www.django-rest-framework.org
 
 #=== GQL core ===#
