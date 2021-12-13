@@ -1,4 +1,5 @@
 # pylint: disable=too-many-lines
+from datetime import datetime
 from unittest.mock import patch
 
 import pytest
@@ -738,9 +739,9 @@ def test_performance_mutation_create(gql_client, with_permission):
         mutation {
           performance(
             input: {
-                doorsOpen: "2021-11-09T00:00:00"
+                doorsOpen: "2021-11-08T00:00:00"
                 start: "2021-11-09T00:00:00"
-                end: "2021-11-09T00:00:00"
+                end: "2021-11-10T00:00:00"
                 venue: "%s"
                 production: "%s"
              }
@@ -750,15 +751,6 @@ def test_performance_mutation_create(gql_client, with_permission):
                 id
                 production {
                     name
-                }
-            }
-            errors {
-                ...on FieldError {
-                    message
-                    field
-                }
-                ... on NonFieldError {
-                    message
                 }
             }
          }
@@ -825,7 +817,10 @@ def test_performance_mutation_create_with_no_production(gql_client):
 @pytest.mark.django_db
 @pytest.mark.parametrize("with_permission", [True, False])
 def test_performance_mutation_update(gql_client, with_permission):
-    performance = PerformanceFactory()
+    performance = PerformanceFactory(
+        doors_open=datetime(day=9, month=11, year=2021),
+        end=datetime(day=11, month=11, year=2021),
+    )
     request = """
         mutation {
           performance(
@@ -837,6 +832,15 @@ def test_performance_mutation_update(gql_client, with_permission):
             success
             performance {
                 start
+            }
+            errors {
+                ...on FieldError {
+                    message
+                    field
+                }
+                ... on NonFieldError {
+                    message
+                }
             }
          }
         }
@@ -871,7 +875,10 @@ def test_performance_mutation_update(gql_client, with_permission):
 def test_performance_mutation_update_new_production(
     gql_client, has_old_permission, has_new_permission, expected_outcome
 ):
-    performance = PerformanceFactory()
+    performance = PerformanceFactory(
+        doors_open=datetime(day=9, month=11, year=2021),
+        end=datetime(day=11, month=11, year=2021),
+    )
     new_production = ProductionFactory()
     request = """
         mutation {
@@ -885,6 +892,18 @@ def test_performance_mutation_update_new_production(
             success
             performance {
                 start
+            }
+            success
+            errors {
+              __typename
+              ... on NonFieldError {
+                message
+                code
+              }
+              ... on FieldError {
+                message
+                code
+              }
             }
          }
         }

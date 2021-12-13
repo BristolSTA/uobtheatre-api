@@ -1,19 +1,29 @@
 import graphene
 from graphql_auth import mutations, schema
 from graphql_relay.node.node import to_global_id
-
-from uobtheatre.users.abilities import PermissionsMixin
+from guardian.shortcuts import get_perms
 from uobtheatre.users.models import User
 
 
-class ExtendedUserNode(PermissionsMixin, schema.UserNode):
+class ExtendedUserNode(schema.UserNode):
     """
     Extends user node to add additional properties.
     """
+
     id = graphene.String()
+    permissions = graphene.List(graphene.String)
 
     def resolve_id(self, info):
         return to_global_id("UserNode", self.id)
+
+    def resolve_permissions(self, info):
+        global_perms = [perm.codename for perm in self.global_perms.all()]
+        computed_perms = [
+            ability.name
+            for ability in self.abilities
+            if ability.user_has(info.context.user)
+        ]
+        return global_perms + computed_perms
 
     class Meta:
         model = User
