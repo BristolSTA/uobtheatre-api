@@ -22,6 +22,7 @@ from uobtheatre.utils.schema import (
     AssignedUsersMixin,
     DjangoObjectType,
     GrapheneEnumMixin,
+    IdInputField,
     UserPermissionFilterMixin,
 )
 
@@ -365,11 +366,14 @@ class Query(graphene.ObjectType):
     performances = DjangoFilterConnectionField(PerformanceNode)
     warnings = DjangoFilterConnectionField(WarningNode)
 
-    production = graphene.Field(ProductionNode, slug=graphene.String(required=True))
+    production = graphene.Field(
+        ProductionNode, id=IdInputField(), slug=graphene.String()
+    )
     performance = relay.Node.Field(PerformanceNode)
 
-    def resolve_production(self, info, slug):
+    def resolve_production(self, info, id=None, slug=None):
         try:
-            return Production.objects.user_can_see(info.context.user).get(slug=slug)
+            qs = Production.objects.user_can_see(info.context.user)
+            return qs.get(slug=slug) if slug else qs.get(pk=id)
         except Production.DoesNotExist:
             return None

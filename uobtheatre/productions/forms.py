@@ -8,6 +8,7 @@ class ProductionForm(MutationForm):
         model = Production
         fields = (
             "name",
+            "slug",
             "subtitle",
             "society",
             "description",
