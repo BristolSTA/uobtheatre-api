@@ -17,7 +17,7 @@ from uobtheatre.images.models import Image
 from uobtheatre.payments.models import Payment
 from uobtheatre.societies.models import Society
 from uobtheatre.users.abilities import AbilitiesMixin
-from uobtheatre.utils.field_validators import OptionalSchemeURLValidator
+from uobtheatre.utils.form_validators import OptionalSchemeURLValidator
 from uobtheatre.utils.models import PermissionableModel, TimeStampedMixin
 from uobtheatre.utils.validators import (
     RelatedObjectsValidator,

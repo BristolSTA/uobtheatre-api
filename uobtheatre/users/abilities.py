@@ -38,15 +38,13 @@ class Ability(abc.ABC):
     def name(self) -> str:
         raise NotImplementedError
 
-    @staticmethod
-    @abc.abstractmethod
-    def user_has(user) -> bool:
-        raise NotImplementedError
+    @classmethod
+    def user_has(cls, user) -> bool:
+        return False
 
-    @staticmethod
-    @abc.abstractmethod
-    def user_has_for(user, obj) -> bool:
-        raise NotImplementedError
+    @classmethod
+    def user_has_for(cls, user, obj) -> bool:
+        return cls.user_has(user)
 
 
 class OpenBoxoffice(Ability):
@@ -59,12 +57,6 @@ class OpenBoxoffice(Ability):
         from uobtheatre.productions.models import Performance  # type: ignore
 
         return Performance.objects.has_boxoffice_permission(user).exists()  # type: ignore
-
-    @staticmethod
-    def user_has_for(user, obj) -> bool:
-        from uobtheatre.productions.models import Performance  # type: ignore
-
-        return Performance.objects.has_boxoffice_permission(user).filter(pk=obj.pk).exists()  # type: ignore
 
 
 class OpenAdmin(Ability):
@@ -88,10 +80,6 @@ class OpenAdmin(Ability):
             or user.has_perm("reports.finance_reports")
             or AddProduction.user_has(user)
         )
-
-    @staticmethod
-    def user_has_for(user, _) -> bool:
-        return OpenAdmin.user_has(user)
 
 
 class PermissionsMixin:

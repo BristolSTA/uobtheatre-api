@@ -1,6 +1,14 @@
 import uuid
 
 import factory
+from django.contrib.auth.models import Group
+
+
+class GroupFactory(factory.django.DjangoModelFactory):
+    name = factory.Faker("sentence", nb_words=2)
+
+    class Meta:
+        model = Group
 
 
 class UserFactory(factory.django.DjangoModelFactory):
@@ -22,3 +30,12 @@ class UserFactory(factory.django.DjangoModelFactory):
     last_name = factory.Faker("last_name")
     is_active = True
     is_staff = False
+
+    @factory.post_generation
+    def groups(self, create, extracted, **kwargs):
+        if not create:
+            return
+
+        if extracted:
+            for group in extracted:
+                self.groups.add(group)

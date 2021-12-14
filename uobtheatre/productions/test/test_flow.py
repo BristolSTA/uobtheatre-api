@@ -83,8 +83,8 @@ def test_total_production_creation_workflow(gql_client):
                     production: "%s"
                     venue: "%s"
                     doorsOpen: "2021-11-%sT00:00:00"
-                    start: "2021-11-%sT00:00:00"
-                    end: "2021-11-%sT00:00:00"
+                    start: "2021-11-%sT00:10:00"
+                    end: "2021-11-%sT00:20:00"
                 }
             ) {
                 success

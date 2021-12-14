@@ -4,6 +4,7 @@ from typing import Union
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from guardian.shortcuts import assign_perm, get_objects_for_user
+from django.contrib.auth.models import Permission
 
 from uobtheatre.users.abilities import AbilitiesMixin, OpenAdmin, OpenBoxoffice
 
@@ -77,3 +78,9 @@ class User(AbilitiesMixin, AbstractUser):
             any(self.has_perm(perm) for perm in permissions)
             or self.get_objects_with_perm(permissions).exists()
         )
+
+    @property
+    def global_perms(self):
+        if self.is_superuser:
+            return Permission.objects.all()
+        return self.user_permissions.all() | Permission.objects.filter(group__user=self)

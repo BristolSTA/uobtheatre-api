@@ -768,7 +768,7 @@ def test_assignable_permissions(gql_client, perms, can_assign):
 
 @pytest.mark.django_db
 def test_performance_schema(gql_client):
-    performances = [PerformanceFactory() for i in range(1)]
+    performances = [PerformanceFactory() for _ in range(1)]
 
     response = gql_client.execute(
         """
@@ -782,7 +782,11 @@ def test_performance_schema(gql_client):
                 description
                 disabled
                 discounts {
-                    id
+                  edges {
+                    node {
+                      id
+                    }
+                  }
                 }
                 doorsOpen
                 durationMins
@@ -820,12 +824,14 @@ def test_performance_schema(gql_client):
                             "capacity": performance.capacity,
                             "description": performance.description,
                             "disabled": performance.disabled,
-                            "discounts": [
-                                {
-                                    "id": to_global_id("DiscountNode", discount.id),
-                                }
-                                for discount in performance.discounts.all()
-                            ],
+                            "discounts": {
+                                "edges": [
+                                    {
+                                        "id": to_global_id("DiscountNode", discount.id),
+                                    }
+                                    for discount in performance.discounts.all()
+                                ]
+                            },
                             "doorsOpen": performance.doors_open.isoformat(),
                             "durationMins": performance.duration().seconds // 60,
                             "end": performance.end.isoformat(),

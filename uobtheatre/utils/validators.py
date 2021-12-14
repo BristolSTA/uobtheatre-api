@@ -8,6 +8,7 @@ from django.core.validators import URLValidator as DjangoURLValidator
 from django.core.validators import ValidationError as DjangoValidationError
 
 from uobtheatre.utils import exceptions
+from uobtheatre.utils.form_validators import OptionalSchemeURLValidator
 
 
 @dataclass
@@ -100,12 +101,7 @@ class UrlValidator(AttributeValidator):
     """
 
     def validate_attribute(self, value):
-        schemes = ["http", "https"]
-
-        if not any(value.startswith(scheme) for scheme in schemes):
-            value = f"https://{value}"
-
-        validate = DjangoURLValidator(schemes=schemes)
+        validate = OptionalSchemeURLValidator()
         try:
             validate(value)
             return []

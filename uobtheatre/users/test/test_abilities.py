@@ -6,8 +6,29 @@ from guardian.shortcuts import assign_perm
 
 from uobtheatre.productions.models import Production
 from uobtheatre.productions.test.factories import PerformanceFactory
-from uobtheatre.users.abilities import OpenAdmin, OpenBoxoffice, PermissionsMixin
+from uobtheatre.users.abilities import (
+    Ability,
+    OpenAdmin,
+    OpenBoxoffice,
+    PermissionsMixin,
+)
 from uobtheatre.users.test.factories import UserFactory
+
+
+def test_ability_user_has():
+    class DummyAbility(Ability):
+        pass
+
+    assert DummyAbility.user_has(None) is False
+
+
+def test_ability_user_has_for():
+    class DummyAbility(Ability):
+        @classmethod
+        def user_has(cls, _):
+            return "example"
+
+    assert DummyAbility.user_has_for(None, None) == "example"
 
 
 @pytest.mark.django_db

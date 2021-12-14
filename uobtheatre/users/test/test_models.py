@@ -5,7 +5,7 @@ from guardian.shortcuts import assign_perm
 from conftest import AuthenticateableGQLClient
 from uobtheatre.productions.test.factories import ProductionFactory
 from uobtheatre.users.models import User
-from uobtheatre.users.test.factories import UserFactory
+from uobtheatre.users.test.factories import GroupFactory, UserFactory
 
 
 @pytest.mark.django_db
@@ -63,3 +63,24 @@ def test_boxoffice_permissions_model_level_group(
 
     assert user.has_perm("productions.boxoffice")
     assert user.has_perm("productions.boxoffice", production)
+
+
+@pytest.mark.django_db
+def test_user_get_global_permissions():
+    group = GroupFactory()
+    user = UserFactory.create(groups=[group])
+    assign_perm("productions.boxoffice", user)
+    assign_perm("reports.finance_reports", group)
+
+    assert set([perm.codename for perm in user.global_perms]) == set(
+        [
+            "boxoffice",
+            "finance_reports",
+        ]
+    )
+
+
+@pytest.mark.django_db
+def test_user_get_global_permissions_superuser():
+    user = UserFactory(is_superuser=True)
+    user.global_perms == Permission.objects.all()
