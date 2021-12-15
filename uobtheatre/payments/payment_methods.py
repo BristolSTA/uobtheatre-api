@@ -6,36 +6,24 @@ from django.conf import settings
 from square.client import Client
 
 from uobtheatre.payments import models as payment_models
-from uobtheatre.utils.exceptions import SquareException
+from uobtheatre.utils.exceptions import GQLErrorUnion, SquareException, GQLException
 from uobtheatre.utils.utils import classproperty
 
 if TYPE_CHECKING:
     from uobtheatre.payments.payables import Payable
 
 
-class PaymentMethod(abc.ABC):
-    """
-    Abstract class for all payment methods.
-
-    Every payment method should define a `pay` method. This will take a value
-    and the the object being payed for and return (and save) a payment object
-    if the payment is completed.
-
-    Whenever a payment method is created it is automatically added to the
-    __all__ attirbute of PaymentMethod. This will therefore add it to the
-    choices field and the graphene enum.
-    """
-
-    __all__: list[Type["PaymentMethod"]] = []
+class TransactionMethod(abc.ABC):
+    __all__: list[Type["TransactionMethod"]] = []
     name: str
 
     def __init_subclass__(cls) -> None:
-        cls.name = PaymentMethod.generate_name(cls.__name__)
+        cls.name = TransactionMethod.generate_name(cls.__name__)
         cls.__all__.append(cls)
 
     @classmethod
     @property
-    def non_manual_methods(cls) -> list[Type["PaymentMethod"]]:
+    def non_manual_methods(cls) -> list[Type["TransactionMethod"]]:
         return [method for method in cls.__all__ if not method.is_manual]
 
     @staticmethod
@@ -48,6 +36,37 @@ class PaymentMethod(abc.ABC):
     @classproperty
     def choices(cls):  # pylint: disable=no-self-argument
         return [(method.name, method.name) for method in cls.__all__]
+
+    @classmethod
+    def create_payment_object(
+        cls, pay_object: "Payable", value: int, app_fee, **kwargs
+    ) -> "payment_models.Payment":
+        return payment_models.Payment.objects.create(
+            provider=cls.name,
+            pay_object=pay_object,
+            value=value,
+            app_fee=app_fee,
+            **kwargs,
+        )
+
+    @classmethod
+    @property
+    def is_manual(cls):
+        return issubclass(cls, ManualPaymentMethodMixin)
+
+
+class PaymentMethod(TransactionMethod, abc.ABC):
+    """
+    Abstract class for all payment methods.
+
+    Every payment method should define a `pay` method. This will take a value
+    and the the object being payed for and return (and save) a payment object
+    if the payment is completed.
+
+    Whenever a payment method is created it is automatically added to the
+    __all__ attirbute of PaymentMethod. This will therefore add it to the
+    choices field and the graphene enum.
+    """
 
     @abc.abstractmethod
     def pay(
@@ -79,20 +98,29 @@ class PaymentMethod(abc.ABC):
     @classmethod
     def create_payment_object(
         cls, pay_object: "Payable", value: int, app_fee, **kwargs
-    ):
-        return payment_models.Payment.objects.create(
-            provider=cls.name,
-            type=payment_models.Payment.PaymentType.PURCHASE,
-            pay_object=pay_object,
-            value=value,
-            app_fee=app_fee,
-            **kwargs,
-        )
+    ) -> "payment_models.Payment":
+        payment = super().create_payment_object(pay_object, value, app_fee, **kwargs)
+        payment.type == payment_models.Payment.PaymentType.PURCHASE
+        return payment
+
+
+class RefundMethod(TransactionMethod, abc.ABC):
+    @abc.abstractmethod
+    def refund(self, payment: "payment_models.Payment"):
+        pass
+
+    @staticmethod
+    @abc.abstractmethod
+    def update_refund(payment: "payment_models.Payment"):
+        pass
 
     @classmethod
-    @property
-    def is_manual(cls):
-        return issubclass(cls, ManualPaymentMethodMixin)
+    def create_payment_object(
+        cls, pay_object: "Payable", value: int, app_fee, **kwargs
+    ) -> "payment_models.Payment":
+        payment = super().create_payment_object(pay_object, value, app_fee, **kwargs)
+        payment.type == payment_models.Payment.PaymentType.REFUND
+        return payment
 
 
 class SquarePaymentMethodMixin(abc.ABC):
@@ -446,3 +474,55 @@ class SquareOnline(PaymentMethod, SquarePaymentMethodMixin):
             int: The processing fee
         """
         return cls.payment_processing_fee(data or cls.get_payment(payment_id))
+
+
+class SquareRefund(RefundMethod):
+
+    description = "Square refund"
+    client = Client(
+        square_version="2020-11-18",
+        access_token=settings.SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],  # type: ignore
+        environment=settings.SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],  # type: ignore
+    )
+
+    def __init__(self, idempotency_key: str):
+        self.idempotency_key = idempotency_key
+
+    def refund(self, payment: "payment_models.Payment"):
+        if not payment.status == payment_models.Payment.PaymentStatus.PAID:
+            raise GQLException(
+                "You cannot refund a payment that has not been completed", code=400
+            )
+
+        body = {
+            "idempotency_key": str(self.idempotency_key),
+            "amount_money": {"amount": payment.value, "currency": payment.currency},
+            "payment_id": payment.provider_payment_id,
+        }
+        response = self.client.refunds.refund_payment(body)
+
+        if not response.is_success():
+            raise SquareException(response)
+
+        amount_details = response.body["refund"]["amount_money"]
+        square_refund_id = response.body["refund"]["id"]
+
+        self.create_payment_object(
+            payment.pay_object,
+            -amount_details["amount"],
+            -payment.app_fee,
+            type=payment_models.Payment.PaymentType.REFUND,
+            provider_payment_id=square_refund_id,
+            currency=amount_details["currency"],
+            status=payment_models.Payment.PaymentStatus.PENDING,
+        )
+
+    @staticmethod
+    def update_refund(payment: "payment_models.Payment", refund_data: dict):
+        if processing_fees := refund_data.get("processing_fee"):
+            payment.provider_fee = sum(
+                fee["amount_money"]["amount"] for fee in processing_fees
+            )
+        if refund_data["status"] == "COMPLETED":
+            payment.status = payment_models.Payment.PaymentStatus.COMPLETED
+        payment.save()

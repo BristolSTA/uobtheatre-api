@@ -5,6 +5,7 @@ import pytest
 
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import BookingFactory
+from uobtheatre.payments.models import Payment
 from uobtheatre.payments.square_webhooks import SquareWebhooks
 from uobtheatre.payments.test.factories import PaymentFactory
 
@@ -89,6 +90,42 @@ TEST_PAYMENT_UPDATE_PAYLOAD = {
                 "total_money": {"amount": 100, "currency": "USD"},
                 "updated_at": "2020-11-22T21:19:00.831Z",
                 "version_token": "bhC3b8qKJvNDdxqKzXaeDsAjS1oMFuAKxGgT32HbE6S6o",
+            }
+        },
+    },
+}
+
+TEST_UPDATE_REFUND_PAYLOAD = {
+    "merchant_id": "ML8M1AQ1GQG2K",
+    "type": "refund.updated",
+    "event_id": "e4f5bcd7-6c4d-4c29-8637-115738d759e1",
+    "created_at": "2021-12-13T21:01:40.805Z",
+    "data": {
+        "type": "refund",
+        "id": "xwo62Kt4WIOAh9LrczZxzbQbIZCZY_RVpsRbbUP3LmklUotq0kfiJnn1jDOqhNHymoqa6iDpd",
+        "object": {
+            "refund": {
+                "amount_money": {"amount": 100, "currency": "GBP"},
+                "created_at": "2021-12-13T21:01:32.340Z",
+                "id": "xwo62Kt4WIOAh9LrczZxzbQbIZCZY_RVpsRbbUP3LmklUotq0kfiJnn1jDOqhNHymoqa6iDpd",
+                "location_id": "LN9PN3P67S0QV",
+                "order_id": "tsjSHOoLci0yftfu8Z5BYFO2Me4F",
+                "payment_id": "xwo62Kt4WIOAh9LrczZxzbQbIZCZY",
+                "processing_fee": [
+                    {
+                        "amount_money": {"amount": -2, "currency": "GBP"},
+                        "effective_at": "2021-04-15T13:27:08.000Z",
+                        "type": "INITIAL",
+                    },
+                    {
+                        "amount_money": {"amount": -5, "currency": "GBP"},
+                        "effective_at": "2021-04-15T13:27:08.000Z",
+                        "type": "INITIAL",
+                    },
+                ],
+                "status": "COMPLETED",
+                "updated_at": "2021-12-13T21:01:35.266Z",
+                "version": 19,
             }
         },
     },
@@ -216,3 +253,25 @@ def test_square_webhook_unknown_type(rest_client):
         )
 
     assert response.status_code == 202
+
+
+@pytest.mark.django_db
+def test_handle_refund_update_webhook(rest_client):
+    payment = PaymentFactory(
+        provider_payment_id="xwo62Kt4WIOAh9LrczZxzbQbIZCZY_RVpsRbbUP3LmklUotq0kfiJnn1jDOqhNHymoqa6iDpd",
+        provider_fee=0,
+        type=Payment.PaymentType.REFUND,
+    )
+
+    with patch.object(SquareWebhooks, "is_valid_callback", return_value=True):
+        response = rest_client.post(
+            "/square",
+            TEST_UPDATE_REFUND_PAYLOAD,
+            HTTP_X_SQUARE_SIGNATURE="signature",
+            format="json",
+        )
+
+    payment.refresh_from_db()
+    assert response.status_code == 200
+    assert payment.provider_fee == -7
+    assert payment.status == Payment.PaymentStatus.COMPLETED

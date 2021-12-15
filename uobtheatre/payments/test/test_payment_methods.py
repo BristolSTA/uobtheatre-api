@@ -494,3 +494,47 @@ def test_square_pos_cancel_failure(mock_square):
 
 def test_manual_payment_method_processing_fee():
     assert Cash.get_processing_fee(None) is None
+
+
+def test_square_online_refund_pending_payment():
+    payment = PaymentFactory(status=Payment.PaymentStatus.PENDING)
+    SquareOnline(None, "abc").refund(payment)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "data_fees, data_status",
+    [
+        ([1, 2, 3], "COMPLETED"),
+        (None, "COMPLETED"),
+        (None, "NOTCOMPLETED"),
+        ([1], "NOTCOMPLETED"),
+    ],
+)
+def test_square_online_update_refund(data_fees, data_status):
+    payment = PaymentFactory(status=Payment.PaymentStatus.PENDING, provider_fee=None)
+
+    data = {
+        "status": data_status,
+    }
+
+    if data_fees:
+        data["processing_fee"] = [
+            {
+                "amount_money": {"amount": fee, "currency": "GBP"},
+            }
+            for fee in data_fees
+        ]
+
+    SquareOnline.update_refund(payment, data)
+
+    payment.refresh_from_db()
+    if data_status == "COMPLETED":
+        assert payment.status == Payment.PaymentStatus.COMPLETED
+    else:
+        assert payment.status == Payment.PaymentStatus.PENDING
+
+    if data_fees:
+        assert payment.provider_fee == sum(data_fees)
+    else:
+        assert payment.provider_fee is None

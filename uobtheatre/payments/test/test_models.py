@@ -95,11 +95,11 @@ def test_update_payment_from_square_no_processing_fee(mock_square):
 
 @pytest.mark.django_db
 def test_handle_update_payment_webhook_checkout(mock_square):
-    payment = PaymentFactory(provider_fee=None, provider_payment_id="abc")
+    payment = PaymentFactory(
+        provider_fee=None, provider_payment_id="abc", provider=SquarePOS.name
+    )
 
-    with patch.object(
-        payment, "sync_payment_with_provider"
-    ) as payment_update_mock, mock_square(
+    with mock_square(
         SquarePOS.client.terminal,
         "get_terminal_checkout",
         success=True,
@@ -115,7 +115,7 @@ def test_handle_update_payment_webhook_checkout(mock_square):
                 "status": "COMPLETED",
             },
         },
-    ), mock_square(
+    ) as get_termial_checkout_mock, mock_square(
         SquarePOS.client.payments,
         "get_payment",
         success=True,
@@ -146,8 +146,7 @@ def test_handle_update_payment_webhook_checkout(mock_square):
             },
         )
 
-    payment_update_mock.assert_not_called()
-
+    get_termial_checkout_mock.assert_called_once_with("abc")
     payment.refresh_from_db()
     assert payment.provider_fee == 58 * 2
 
@@ -183,6 +182,7 @@ def test_cancel(provider, status, is_cancelled, mock_square):
     "provider_name, provider_class",
     [
         ("SQUARE_POS", SquarePOS),
+        ("SQUARE_ONLINE", SquareOnline),
     ],
 )
 def test_provider_class(provider_name, provider_class):
@@ -218,3 +218,16 @@ def test_sync_all_payments():
     assert with_payment_fee.provider_fee == 10
     assert different_provider.provider_fee is None
     assert to_update.provider_fee == 20
+
+
+@pytest.mark.django_db
+def test_handle_update_refund_webhook():
+    data = {"object": {"refund": {"id": "abc"}}}
+    payment = PaymentFactory(provider_payment_id="abc", type=Payment.PaymentType.REFUND)
+    with patch(
+        "uobtheatre.payments.payment_methods.SquareOnline.update_refund",
+        return_value=None,
+    ) as update_mock:
+        Payment.handle_update_refund_webhook(data)
+
+    update_mock.assert_called_once_with(payment, {"id": "abc"})

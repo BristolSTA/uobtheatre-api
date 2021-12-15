@@ -76,4 +76,8 @@ class SquareWebhooks(APIView):
             Payment.handle_update_payment_webhook(request.data["data"])
             return Response(status=200)
 
+        if request.data["type"] == "refund.updated":
+            Payment.handle_update_refund_webhook(request.data["data"])
+            return Response(status=200)
+
         return Response(status=202)

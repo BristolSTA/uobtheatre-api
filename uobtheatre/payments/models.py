@@ -80,7 +80,7 @@ class Payment(TimeStampedMixin, models.Model):
         default=PaymentStatus.COMPLETED,
     )
 
-    provider_payment_id = models.CharField(max_length=40, null=True, blank=True)
+    provider_payment_id = models.CharField(max_length=128, null=True, blank=True)
     provider = models.CharField(
         max_length=20, choices=payment_methods.PaymentMethod.choices
     )
@@ -131,23 +131,45 @@ class Payment(TimeStampedMixin, models.Model):
     @staticmethod
     def handle_update_payment_webhook(request):
         """
-        Handle a update payment webhook from square.
+        Handle an update payment webhook from square.
 
         Args:
             request (dict): The body of the square webhook
         """
         square_payment = request["object"]["payment"]
 
-        # If the payment is part of a terminal checkout
-        if checkout_id := square_payment.get("terminal_checkout_id"):
-            payment = Payment.objects.get(provider_payment_id=checkout_id)
-            payment.provider_fee = SquarePOS.get_processing_fee(checkout_id)
-            payment.save()
-
-        # Otherwise the payment is from SquareOnline
+        # Get payment id. if the payment is part of a terminal checkout it will
+        # have id stored in `terminal_checkout_id` else it will be a regular
+        # payment and id will be stored in `id`
+        if (checkout_id := square_payment.get("terminal_checkout_id")) :
+            payment_id = checkout_id
+            # The data in the webhook is the payment data not the data for the
+            # overall checkout so we cannot use it. If we give the below method
+            # no data it goes and get what is needs so we can just do that.
+            data = None
         else:
-            payment = Payment.objects.get(provider_payment_id=square_payment["id"])
-            payment.sync_payment_with_provider(data=square_payment)
+            payment_id = square_payment["id"]
+            # Here we have all the data we need so we can just parse that into
+            # the sync payment method to avoid an extra call to square.
+            data = square_payment
+
+        payment = Payment.objects.get(provider_payment_id=payment_id)
+        payment.sync_payment_with_provider(data=data)
+
+    @staticmethod
+    def handle_update_refund_webhook(request):
+        """
+        Handle an update refund webhook from square.
+
+        Args:
+            request (dict): The body of the square webhook
+        """
+        provider_refund = request["object"]["refund"]
+
+        payment = Payment.objects.get(
+            provider_payment_id=provider_refund["id"], type=Payment.PaymentType.REFUND
+        )
+        payment.provider_class.update_refund(payment, provider_refund)
 
     def sync_payment_with_provider(self, data=None):
         """Sync the payment with the provider payment
@@ -160,6 +182,7 @@ class Payment(TimeStampedMixin, models.Model):
                 str(self.provider_payment_id), data=data
             )
             self.provider_fee = processing_fee
+
         self.save()
 
     def cancel(self):
