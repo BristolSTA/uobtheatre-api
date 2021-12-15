@@ -10,9 +10,12 @@ from uobtheatre.payments.payment_methods import (
     Cash,
     ManualPaymentMethodMixin,
     PaymentMethod,
+    RefundMethod,
     SquareOnline,
     SquarePaymentMethodMixin,
     SquarePOS,
+    SquareRefund,
+    TransactionMethod,
 )
 from uobtheatre.payments.square_webhooks import SquareWebhooks
 from uobtheatre.payments.test.factories import PaymentFactory
@@ -25,6 +28,20 @@ def test_payment_method_all():
         Card,
         SquarePOS,
         SquareOnline,
+    ]
+
+
+def test_refund_method_all():
+    assert RefundMethod.__all__ == [SquareRefund]
+
+
+def test_transaction_method_all():
+    assert TransactionMethod.__all__ == [
+        Cash,
+        Card,
+        SquarePOS,
+        SquareOnline,
+        SquareRefund,
     ]
 
 
@@ -496,9 +513,10 @@ def test_manual_payment_method_processing_fee():
     assert Cash.get_processing_fee(None) is None
 
 
-def test_square_online_refund_pending_payment():
+@pytest.mark.django_db
+def test_square_refund_pending_payment():
     payment = PaymentFactory(status=Payment.PaymentStatus.PENDING)
-    SquareOnline(None, "abc").refund(payment)
+    assert False
 
 
 @pytest.mark.django_db
@@ -526,7 +544,7 @@ def test_square_online_update_refund(data_fees, data_status):
             for fee in data_fees
         ]
 
-    SquareOnline.update_refund(payment, data)
+    SquareRefund.update_refund(payment, data)
 
     payment.refresh_from_db()
     if data_status == "COMPLETED":

@@ -14,12 +14,20 @@ if TYPE_CHECKING:
 
 
 class TransactionMethod(abc.ABC):
-    __all__: list[Type["TransactionMethod"]] = []
     name: str
 
     def __init_subclass__(cls) -> None:
         cls.name = TransactionMethod.generate_name(cls.__name__)
-        cls.__all__.append(cls)
+
+    @classmethod
+    @property
+    def __all__(cls) -> list["TransactionMethod"]:
+        return PaymentMethod.__all__ + RefundMethod.__all__
+
+    @property
+    @abc.abstractmethod
+    def description(self):
+        raise NotImplementedError
 
     @classmethod
     @property
@@ -54,6 +62,11 @@ class TransactionMethod(abc.ABC):
     def is_manual(cls):
         return issubclass(cls, ManualPaymentMethodMixin)
 
+    @classmethod
+    @property
+    def is_refundable(cls):
+        return issubclass(cls, Refundable)
+
 
 class PaymentMethod(TransactionMethod, abc.ABC):
     """
@@ -67,6 +80,12 @@ class PaymentMethod(TransactionMethod, abc.ABC):
     __all__ attirbute of PaymentMethod. This will therefore add it to the
     choices field and the graphene enum.
     """
+
+    __all__: list[Type["PaymentMethod"]] = []
+
+    def __init_subclass__(cls) -> None:
+        super().__init_subclass__()
+        cls.__all__.append(cls)
 
     @abc.abstractmethod
     def pay(
@@ -90,11 +109,6 @@ class PaymentMethod(TransactionMethod, abc.ABC):
     def get_processing_fee(cls, payment_id: str, data: dict = None) -> Optional[int]:
         raise NotImplementedError
 
-    @property
-    @abc.abstractmethod
-    def description(self):
-        raise NotImplementedError
-
     @classmethod
     def create_payment_object(
         cls, pay_object: "Payable", value: int, app_fee, **kwargs
@@ -105,13 +119,19 @@ class PaymentMethod(TransactionMethod, abc.ABC):
 
 
 class RefundMethod(TransactionMethod, abc.ABC):
+    __all__: list[Type["RefundMethod"]] = []
+
+    def __init_subclass__(cls) -> None:
+        super().__init_subclass__()
+        cls.__all__.append(cls)
+
     @abc.abstractmethod
     def refund(self, payment: "payment_models.Payment"):
         pass
 
     @staticmethod
     @abc.abstractmethod
-    def update_refund(payment: "payment_models.Payment"):
+    def update_refund(payment: "payment_models.Payment", data: dict):
         pass
 
     @classmethod
@@ -121,6 +141,13 @@ class RefundMethod(TransactionMethod, abc.ABC):
         payment = super().create_payment_object(pay_object, value, app_fee, **kwargs)
         payment.type == payment_models.Payment.PaymentType.REFUND
         return payment
+
+
+class Refundable(abc.ABC):
+    @property
+    @abc.abstractmethod
+    def refund_method(self):
+        pass
 
 
 class SquarePaymentMethodMixin(abc.ABC):
@@ -202,6 +229,58 @@ class Card(ManualPaymentMethodMixin, PaymentMethod):
     """Manual card payment method"""
 
     description = "Manual card payment"
+
+
+class SquareRefund(RefundMethod):
+
+    description = "Square refund"
+    client = Client(
+        square_version="2020-11-18",
+        access_token=settings.SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],  # type: ignore
+        environment=settings.SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],  # type: ignore
+    )
+
+    def __init__(self, idempotency_key: str):
+        self.idempotency_key = idempotency_key
+
+    def refund(self, payment: "payment_models.Payment"):
+        if not payment.status == payment_models.Payment.PaymentStatus.PAID:
+            raise GQLException(
+                "You cannot refund a payment that has not been completed", code=400
+            )
+
+        body = {
+            "idempotency_key": str(self.idempotency_key),
+            "amount_money": {"amount": payment.value, "currency": payment.currency},
+            "payment_id": payment.provider_payment_id,
+        }
+        response = self.client.refunds.refund_payment(body)
+
+        if not response.is_success():
+            raise SquareException(response)
+
+        amount_details = response.body["refund"]["amount_money"]
+        square_refund_id = response.body["refund"]["id"]
+
+        self.create_payment_object(
+            payment.pay_object,
+            -amount_details["amount"],
+            -payment.app_fee,
+            type=payment_models.Payment.PaymentType.REFUND,
+            provider_payment_id=square_refund_id,
+            currency=amount_details["currency"],
+            status=payment_models.Payment.PaymentStatus.PENDING,
+        )
+
+    @staticmethod
+    def update_refund(payment: "payment_models.Payment", refund_data: dict):
+        if processing_fees := refund_data.get("processing_fee"):
+            payment.provider_fee = sum(
+                fee["amount_money"]["amount"] for fee in processing_fees
+            )
+        if refund_data["status"] == "COMPLETED":
+            payment.status = payment_models.Payment.PaymentStatus.COMPLETED
+        payment.save()
 
 
 class SquarePOS(PaymentMethod, SquarePaymentMethodMixin):
@@ -385,7 +464,7 @@ class SquarePOS(PaymentMethod, SquarePaymentMethodMixin):
         return sum(filter(None, processing_fees))
 
 
-class SquareOnline(PaymentMethod, SquarePaymentMethodMixin):
+class SquareOnline(Refundable, PaymentMethod, SquarePaymentMethodMixin):
     """
     Uses Square checkout api to create payment. Used for online transactions.
 
@@ -399,6 +478,7 @@ class SquareOnline(PaymentMethod, SquarePaymentMethodMixin):
     """
 
     description = "Square online card payment"
+    refund_method = SquareRefund
 
     def __init__(self, nonce: str, idempotency_key: str) -> None:
         """
@@ -475,54 +555,6 @@ class SquareOnline(PaymentMethod, SquarePaymentMethodMixin):
         """
         return cls.payment_processing_fee(data or cls.get_payment(payment_id))
 
-
-class SquareRefund(RefundMethod):
-
-    description = "Square refund"
-    client = Client(
-        square_version="2020-11-18",
-        access_token=settings.SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],  # type: ignore
-        environment=settings.SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],  # type: ignore
-    )
-
-    def __init__(self, idempotency_key: str):
-        self.idempotency_key = idempotency_key
-
-    def refund(self, payment: "payment_models.Payment"):
-        if not payment.status == payment_models.Payment.PaymentStatus.PAID:
-            raise GQLException(
-                "You cannot refund a payment that has not been completed", code=400
-            )
-
-        body = {
-            "idempotency_key": str(self.idempotency_key),
-            "amount_money": {"amount": payment.value, "currency": payment.currency},
-            "payment_id": payment.provider_payment_id,
-        }
-        response = self.client.refunds.refund_payment(body)
-
-        if not response.is_success():
-            raise SquareException(response)
-
-        amount_details = response.body["refund"]["amount_money"]
-        square_refund_id = response.body["refund"]["id"]
-
-        self.create_payment_object(
-            payment.pay_object,
-            -amount_details["amount"],
-            -payment.app_fee,
-            type=payment_models.Payment.PaymentType.REFUND,
-            provider_payment_id=square_refund_id,
-            currency=amount_details["currency"],
-            status=payment_models.Payment.PaymentStatus.PENDING,
-        )
-
-    @staticmethod
-    def update_refund(payment: "payment_models.Payment", refund_data: dict):
-        if processing_fees := refund_data.get("processing_fee"):
-            payment.provider_fee = sum(
-                fee["amount_money"]["amount"] for fee in processing_fees
-            )
-        if refund_data["status"] == "COMPLETED":
-            payment.status = payment_models.Payment.PaymentStatus.COMPLETED
-        payment.save()
+    def refund(self, payment: "payment_models.Payment", idempotency_key: str):
+        refunder = SquareRefund(idempotency_key=idempotency_key)
+        refunder.refund(payment)

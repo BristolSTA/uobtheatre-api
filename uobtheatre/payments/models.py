@@ -11,11 +11,13 @@ from uobtheatre.payments import payment_methods
 from uobtheatre.payments.payment_methods import (
     Cash,
     PaymentMethod,
+    RefundMethod,
     SquareOnline,
     SquarePaymentMethodMixin,
     SquarePOS,
 )
 from uobtheatre.utils.models import TimeStampedMixin
+from uobtheatre.utils.exceptions import GQLException
 
 
 class PaymentQuerySet(QuerySet):
@@ -141,7 +143,7 @@ class Payment(TimeStampedMixin, models.Model):
         # Get payment id. if the payment is part of a terminal checkout it will
         # have id stored in `terminal_checkout_id` else it will be a regular
         # payment and id will be stored in `id`
-        if (checkout_id := square_payment.get("terminal_checkout_id")) :
+        if checkout_id := square_payment.get("terminal_checkout_id"):
             payment_id = checkout_id
             # The data in the webhook is the payment data not the data for the
             # overall checkout so we cannot use it. If we give the below method
@@ -169,7 +171,7 @@ class Payment(TimeStampedMixin, models.Model):
         payment = Payment.objects.get(
             provider_payment_id=provider_refund["id"], type=Payment.PaymentType.REFUND
         )
-        payment.provider_class.update_refund(payment, provider_refund)
+        payment.provider_class.refund_method.update_refund(payment, provider_refund)
 
     def sync_payment_with_provider(self, data=None):
         """Sync the payment with the provider payment
@@ -195,6 +197,17 @@ class Payment(TimeStampedMixin, models.Model):
         if self.status == Payment.PaymentStatus.PENDING:
             self.provider_class.cancel(self)
             self.delete()
+
+    def refund(self, refund_method: RefundMethod = None):
+        if self.status != Payment.PaymentStatus.COMPLETED:
+            raise GQLException(f"You cannot refund a {self.status.value} payment")
+
+        if not self.payment_method.is_refundable:
+            raise GQLException(f"A {self.provider} payment is not refundable")
+
+        if not refund_method:
+            self.payment_method.refund_method
+        refund_method.refund(self)
 
 
 TOTAL_PROVIDER_FEE = Coalesce(
