@@ -88,7 +88,7 @@ class ProductionQuerySet(QuerySet):
             user, "change_production", self
         ).values_list("id", flat=True)
         return self.filter(
-            ~Q(status__in=[Production.Status.DRAFT, Production.Status.PENDING])
+            ~Q(status__in=Production.Status.PRIVATE_STATUSES)
             | Q(id__in=productions_user_can_edit)
         )
 
@@ -141,6 +141,10 @@ class Production(TimeStampedMixin, models.Model):
             "PUBLISHED",
             "Published",
         )  # Production is public
+        CANCELLED = (
+            "CANCELLED",
+            "Cancelled",
+        )  # Production has been cancelled
         CLOSED = (
             "CLOSED",
             "Closed",
@@ -149,6 +153,11 @@ class Production(TimeStampedMixin, models.Model):
             "COMPLETE",
             "Complete",
         )  # Production has been closed and paid for/transactions settled
+
+        @classmethod
+        @property
+        def PRIVATE_STATUSES(cls):
+            return [cls.DRAFT, cls.PENDING]
 
     status = models.CharField(
         max_length=10, choices=Status.choices, default=Status.DRAFT
@@ -409,12 +418,7 @@ class PerformanceQuerySet(QuerySet):
             user, "change_production", Production
         ).values_list("id", flat=True)
         return self.filter(
-            ~Q(
-                production__status__in=[
-                    Production.Status.DRAFT,
-                    Production.Status.PENDING,
-                ]
-            )
+            ~Q(production__status__in=Production.Status.PRIVATE_STATUSES)
             | Q(production_id__in=productions_user_can_edit)
         )
 

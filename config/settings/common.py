@@ -19,6 +19,7 @@ BASE_URL = env(
 )
 
 INSTALLED_APPS = (
+    "admin_confirm",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",

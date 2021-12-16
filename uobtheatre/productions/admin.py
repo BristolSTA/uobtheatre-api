@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.admin.options import TabularInline
 from guardian.admin import GuardedModelAdmin
 
 from uobtheatre.productions.models import (
@@ -12,10 +13,15 @@ from uobtheatre.productions.models import (
     ProductionTeamMember,
     Society,
 )
+from uobtheatre.utils.admin import ReadOnlyInlineMixin
+
+
+class PerformancesInline(TabularInline, ReadOnlyInlineMixin):
+    model = Performance
 
 
 class ProductionAdmin(GuardedModelAdmin):
-    pass
+    inlines = [PerformancesInline]
 
 
 admin.site.register(Production, ProductionAdmin)
