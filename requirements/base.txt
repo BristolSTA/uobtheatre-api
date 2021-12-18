@@ -13,7 +13,7 @@ django-filter==21.1
 Pillow>=8.1.2
 
 # Cors
-django-cors-headers==3.10.0
+django-cors-headers==3.10.1
 
 # TODO check if required
 django-configurations==2.3.1
