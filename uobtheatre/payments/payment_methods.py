@@ -6,7 +6,7 @@ from django.conf import settings
 from square.client import Client
 
 from uobtheatre.payments import models as payment_models
-from uobtheatre.utils.exceptions import GQLErrorUnion, SquareException, GQLException
+from uobtheatre.utils.exceptions import GQLException, SquareException
 from uobtheatre.utils.utils import classproperty
 
 if TYPE_CHECKING:
@@ -478,7 +478,10 @@ class SquareOnline(Refundable, PaymentMethod, SquarePaymentMethodMixin):
     """
 
     description = "Square online card payment"
-    refund_method = SquareRefund
+
+    @property
+    def refund_method(self):
+        return SquareRefund(idempotency_key=uuid())
 
     def __init__(self, nonce: str, idempotency_key: str) -> None:
         """

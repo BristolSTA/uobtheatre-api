@@ -16,8 +16,8 @@ from uobtheatre.payments.payment_methods import (
     SquarePaymentMethodMixin,
     SquarePOS,
 )
-from uobtheatre.utils.models import TimeStampedMixin
 from uobtheatre.utils.exceptions import GQLException
+from uobtheatre.utils.models import TimeStampedMixin
 
 
 class PaymentQuerySet(QuerySet):
@@ -159,7 +159,7 @@ class Payment(TimeStampedMixin, models.Model):
         payment.sync_payment_with_provider(data=data)
 
     @staticmethod
-    def handle_update_refund_webhook(request):
+    def handle_update_refund_webhook(provider_payment_id: str, request: dict):
         """
         Handle an update refund webhook from square.
 
@@ -206,7 +206,8 @@ class Payment(TimeStampedMixin, models.Model):
             raise GQLException(f"A {self.provider} payment is not refundable")
 
         if not refund_method:
-            self.payment_method.refund_method
+            refund_method = self.payment_method.refund_method
+
         refund_method.refund(self)
 
 
