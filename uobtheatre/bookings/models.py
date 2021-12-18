@@ -611,8 +611,7 @@ class Booking(TimeStampedMixin, Payable, models.Model):
         # If this booking includes a payment, we will include details of this payment as a reciept
         if payment:
             composer.heading("Payment Information").line(
-                "{:.2f}".format(payment.value_currency)
-                + f" paid ({payment.provider_class.description}{' - ID' + payment.provider_payment_id if payment.provider_payment_id else '' })"
+                f"{payment.value_currency} paid ({payment.provider_class.description}{' - ID' + payment.provider_payment_id if payment.provider_payment_id else '' })"
             )
 
         composer.line(

@@ -225,9 +225,9 @@ def test_handle_update_refund_webhook():
     data = {"object": {"refund": {"id": "abc"}}}
     payment = PaymentFactory(provider_payment_id="abc", type=Payment.PaymentType.REFUND)
     with patch(
-        "uobtheatre.payments.payment_methods.SquareOnline.update_refund",
+        "uobtheatre.payments.payment_methods.SquareRefund.update_refund",
         return_value=None,
     ) as update_mock:
-        Payment.handle_update_refund_webhook(data)
+        Payment.handle_update_refund_webhook("abc", {"id": "abc"})
 
     update_mock.assert_called_once_with(payment, {"id": "abc"})

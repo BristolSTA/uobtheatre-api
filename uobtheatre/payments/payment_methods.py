@@ -137,12 +137,12 @@ class RefundMethod(TransactionMethod, abc.ABC):
         pass
 
     @classmethod
-    def notify_refund_subject(payment: "payment_models.Payment"):
+    def notify_refund_subject(cls, payment: "payment_models.Payment"):
         user = payment.pay_object.user
         mail = (
             MailComposer()
             .line(
-                f"Your payment of {payment.value_currency} has been successfully refunded (ID: {payment.provider_payment_id | payment.id})."
+                f"Your payment of {payment.value_currency} has been successfully refunded (ID: {payment.provider_payment_id} | {payment.id})."
             )
             .line(
                 f"This will have been refunded in your original payment method ({payment.provider_class.description}{f' {payment.card_brand} ending {payment.last_4}' if payment.card_brand and payment.last_4 else ''})"
@@ -289,7 +289,9 @@ class SquareRefund(RefundMethod):
         )
 
     @classmethod
-    def update_refund(cls, payment: "payment_models.Payment", refund_data: dict):
+    def update_refund(cls, payment: "payment_models.Payment", request: dict):
+        refund_data = request["object"]["refund"]
+
         if processing_fees := refund_data.get("processing_fee"):
             payment.provider_fee = sum(
                 fee["amount_money"]["amount"] for fee in processing_fees

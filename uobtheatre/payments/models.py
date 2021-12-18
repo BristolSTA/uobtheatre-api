@@ -12,6 +12,7 @@ from uobtheatre.payments.payment_methods import (
     Cash,
     PaymentMethod,
     RefundMethod,
+    TransactionMethod,
     SquareOnline,
     SquarePaymentMethodMixin,
     SquarePOS,
@@ -117,7 +118,9 @@ class Payment(TimeStampedMixin, models.Model):
     @property
     def provider_class(self):
         return next(
-            method for method in PaymentMethod.__all__ if method.name == self.provider
+            method
+            for method in TransactionMethod.__all__
+            if method.name == self.provider
         )
 
     def url(self):
@@ -132,7 +135,7 @@ class Payment(TimeStampedMixin, models.Model):
 
     @property
     def value_currency(self):
-        return f"{round(self.value / 100)} {self.currency}"
+        return f"{round(self.value / 100, 2)} {self.currency}"
 
     @staticmethod
     def handle_update_payment_webhook(request):
@@ -170,12 +173,10 @@ class Payment(TimeStampedMixin, models.Model):
         Args:
             request (dict): The body of the square webhook
         """
-        provider_refund = request["object"]["refund"]
-
         payment = Payment.objects.get(
-            provider_payment_id=provider_refund["id"], type=Payment.PaymentType.REFUND
+            provider_payment_id=provider_payment_id, type=Payment.PaymentType.REFUND
         )
-        payment.provider_class.refund_method.update_refund(payment, provider_refund)
+        payment.provider_class.refund_method.update_refund(payment, request)
 
     def sync_payment_with_provider(self, data=None):
         """Sync the payment with the provider payment
