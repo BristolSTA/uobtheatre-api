@@ -38,7 +38,7 @@ WORKDIR ${APP_HOME}
 # Install required system dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \
   # psycopg2 dependencies
-  libpq-dev \
+  libpq-dev gcc \
   # Translations dependencies
   gettext \
   # Git & Dependencies

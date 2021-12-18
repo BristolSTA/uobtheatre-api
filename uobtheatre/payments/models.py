@@ -130,6 +130,10 @@ class Payment(TimeStampedMixin, models.Model):
             return f"https://squareupsandbox.com/dashboard/sales/transactions/{self.provider_payment_id}"
         return None
 
+    @property
+    def value_currency(self):
+        return f"{round(self.value / 100)} {self.currency}"
+
     @staticmethod
     def handle_update_payment_webhook(request):
         """
@@ -202,7 +206,7 @@ class Payment(TimeStampedMixin, models.Model):
         if self.status != Payment.PaymentStatus.COMPLETED:
             raise GQLException(f"You cannot refund a {self.status.value} payment")
 
-        if not self.payment_method.is_refundable:
+        if not self.provider_class.is_refundable:
             raise GQLException(f"A {self.provider} payment is not refundable")
 
         if not refund_method:
