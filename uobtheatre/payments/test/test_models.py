@@ -8,6 +8,21 @@ from uobtheatre.payments.test.factories import PaymentFactory
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    "value, result",
+    [
+        (100, "1.00 GBP"),
+        (150, "1.50 GBP"),
+        (199, "1.99 GBP"),
+        (100.1, "1.00 GBP"),
+    ],
+)
+def test_value_currency(value, result):
+    payment = PaymentFactory(value=value, currency="GBP")
+    assert payment.value_currency == result
+
+
+@pytest.mark.django_db
 def test_payment_url():
     payment = PaymentFactory(provider=SquareOnline.name, provider_payment_id="abc")
     assert (

@@ -135,7 +135,7 @@ class Payment(TimeStampedMixin, models.Model):
 
     @property
     def value_currency(self):
-        return f"{round(self.value / 100, 2)} {self.currency}"
+        return f"{(self.value / 100):.2f} {self.currency}"
 
     @staticmethod
     def handle_update_payment_webhook(request):

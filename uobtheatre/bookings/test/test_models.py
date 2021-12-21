@@ -1074,9 +1074,9 @@ def test_send_confirmation_email(mailoutbox, with_payment, provider_payment_id):
         assert "Payment Information" in email.body
         assert "10.00 GBP" in email.body
         assert (
-            "(SquareOnline - ID SQUARE_PAYMENT_ID)"
+            "(Square online card payment - ID SQUARE_PAYMENT_ID)"
             if provider_payment_id
-            else "(SquareOnline)" in email.body
+            else "(Square online card payment)" in email.body
         )
     else:
         assert "Payment Information" not in email.body
