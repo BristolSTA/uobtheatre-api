@@ -19,7 +19,6 @@ BASE_URL = env(
 )
 
 INSTALLED_APPS = (
-    "admin_confirm",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -54,6 +53,7 @@ INSTALLED_APPS = (
     "uobtheatre.reports",
     "uobtheatre.mail",
     "uobtheatre",
+    "admin_confirm",
 )
 
 # https://docs.djangoproject.com/en/2.0/topics/http/middleware/
