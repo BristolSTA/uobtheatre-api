@@ -1,5 +1,6 @@
 from os import wait
-from unittest.mock import patch
+from types import SimpleNamespace
+from unittest.mock import PropertyMock, patch
 
 import pytest
 
@@ -233,36 +234,3 @@ def test_handle_update_refund_webhook():
         Payment.handle_update_refund_webhook("abc", {"id": "abc"})
 
     update_mock.assert_called_once_with(payment, {"id": "abc"})
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    "payment_values, refund_values, is_refunded",
-    [
-        ([10], [10], True),
-        ([1, 11, 12], [10], False),
-        ([5, 5], [10], True),
-        ([], [], True),
-        ([], [10], False),
-        ([10], [], False),
-    ],
-)
-def test_is_refunded(payment_values, refund_values, is_refunded):
-    [PaymentFactory() for _ in range(10)]
-
-    pay_object = BookingFactory()
-    payments = [
-        PaymentFactory(
-            value=value, type=Payment.PaymentType.PURCHASE, pay_object=pay_object
-        )
-        for value in payment_values
-    ]
-
-    refunds = [
-        PaymentFactory(
-            value=value, type=Payment.PaymentType.REFUND, pay_object=pay_object
-        )
-        for value in refund_values
-    ]
-
-    assert all(payment.is_refunded == is_refunded for payment in payments + refunds)

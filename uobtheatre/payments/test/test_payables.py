@@ -3,6 +3,7 @@ import pytest
 from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.payments.payment_methods import Card, Cash, SquareOnline
 from uobtheatre.payments.test.factories import PaymentFactory
+from uobtheatre.payments.models import Payment
 
 
 @pytest.mark.django_db
@@ -56,3 +57,37 @@ def test_society_transfer_value():
     )
 
     assert booking.society_transfer_value == 550
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "payment_values, has_pending, is_refunded",
+    [
+        ([10, -10], False, True),
+        ([1, 11, 12, -10], False, False),
+        ([5, 5, -10], False, True),
+        ([], False, True),
+        ([-10], False, False),
+        ([10], False, False),
+        ([5, -5], True, False),
+    ],
+)
+def test_is_refunded(payment_values, has_pending, is_refunded):
+    # Create some payments for different payobjects
+    [PaymentFactory(status=Payment.PaymentStatus.COMPLETED) for _ in range(10)]
+
+    pay_object = BookingFactory()
+    [
+        PaymentFactory(
+            value=value, type=Payment.PaymentType.PURCHASE, pay_object=pay_object
+        )
+        for value in payment_values
+    ]
+
+    if has_pending:
+        PaymentFactory(pay_object=pay_object, status=Payment.PaymentStatus.PENDING)
+
+    assert pay_object.is_refunded == is_refunded
+
+    if payment := pay_object.payments.first():
+        payment.is_refunded == is_refunded

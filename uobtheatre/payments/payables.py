@@ -1,6 +1,7 @@
 import abc
 
 from django.contrib.contenttypes.fields import GenericRelation
+from django.db.models import Sum
 
 from uobtheatre.payments.models import Payment
 from uobtheatre.utils.models import AbstractModelMeta
@@ -25,6 +26,19 @@ class Payable(metaclass=AbstractModelMeta):
     def payment_reference_id(self):
         """The id of the payable object provided to payment providers."""
         raise NotImplementedError
+
+    @property
+    def is_refunded(self) -> bool:
+        """
+        A payable is refunded if the value of all the payments for the pay
+        object are equal to the value of all the refunds and all payments are
+        completed.
+        """
+        if self.payments.filter(status=Payment.PaymentStatus.PENDING).exists():
+            return False
+
+        aggregations = self.payments.aggregate(payment_value=Sum("value"))
+        return not aggregations["payment_value"]
 
     @property
     def total_sales(self) -> int:

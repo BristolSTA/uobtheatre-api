@@ -103,13 +103,10 @@ class Payment(TimeStampedMixin, models.Model):
     def is_refunded(self) -> bool:
         """
         A payment is refunded if the value of all the payments for the pay
-        object are equal to the value of all the refunds.
+        object are equal to the value of all the refunds and all payments are
+        completed.
         """
-        aggregations = self.pay_object.payments.aggregate(
-            payment_value=Sum("value", filter=Q(type=Payment.PaymentType.PURCHASE)),
-            refund_value=Sum("value", filter=Q(type=Payment.PaymentType.REFUND)),
-        )
-        return aggregations["payment_value"] == aggregations["refund_value"]
+        return self.pay_object.is_refunded
 
     @classmethod
     def sync_payments(cls):
