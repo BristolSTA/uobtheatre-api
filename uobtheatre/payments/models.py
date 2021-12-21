@@ -99,6 +99,18 @@ class Payment(TimeStampedMixin, models.Model):
     # Amount charged by us to process payment
     app_fee = models.IntegerField(null=True, blank=True)
 
+    @property
+    def is_refunded(self) -> bool:
+        """
+        A payment is refunded if the value of all the payments for the pay
+        object are equal to the value of all the refunds.
+        """
+        aggregations = self.pay_object.payments.aggregate(
+            payment_value=Sum("value", filter=Q(type=Payment.PaymentType.PURCHASE)),
+            refund_value=Sum("value", filter=Q(type=Payment.PaymentType.REFUND)),
+        )
+        return aggregations["payment_value"] == aggregations["refund_value"]
+
     @classmethod
     def sync_payments(cls):
         """
