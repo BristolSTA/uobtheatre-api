@@ -1,11 +1,13 @@
-from admin_confirm import AdminConfirmMixin
-from admin_confirm.admin import confirm_action
 from django.contrib import admin
 from django.contrib.contenttypes.admin import GenericTabularInline
 
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
 from uobtheatre.payments.models import Payment
-from uobtheatre.utils.admin import ReadOnlyInlineMixin
+from uobtheatre.utils.admin import (
+    DangerousAdminConfirmMixin,
+    ReadOnlyInlineMixin,
+    confirm_dangerous_action,
+)
 
 admin.site.register(MiscCost)
 
@@ -22,7 +24,7 @@ class PaymentsInline(GenericTabularInline, ReadOnlyInlineMixin):
 
 
 @admin.register(Booking)
-class BookingAdmin(AdminConfirmMixin, admin.ModelAdmin):
+class BookingAdmin(DangerousAdminConfirmMixin, admin.ModelAdmin):
     """Admin for Booking model.
 
     Extends admin to include:
@@ -42,9 +44,10 @@ class BookingAdmin(AdminConfirmMixin, admin.ModelAdmin):
     actions = ["issue_refund"]
     inlines = [PaymentsInline]
 
-    @confirm_action
+    @confirm_dangerous_action
     @admin.action(description="Issue refund", permissions=["change"])
-    def issue_refund(modeladmin, request, queryset):
+    def issue_refund(self, modeladmin, request, queryset):
+        """Action to issue refund for selected bookin(s)"""
         for booking in queryset:
             for payment in booking.payments.filter(
                 type=Payment.PaymentType.PURCHASE

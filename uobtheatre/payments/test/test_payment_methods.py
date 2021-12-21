@@ -529,8 +529,9 @@ def test_square_refund_pending_payment():
         ([1], "NOTCOMPLETED"),
     ],
 )
-def test_square_online_update_refund(data_fees, data_status):
+def test_square_online_update_refund(mailoutbox, data_fees, data_status):
     payment = PaymentFactory(status=Payment.PaymentStatus.PENDING, provider_fee=None)
+    payment.pay_object.user.email = "myuser@example.org"
 
     data = {
         "object": {
@@ -553,6 +554,10 @@ def test_square_online_update_refund(data_fees, data_status):
     payment.refresh_from_db()
     if data_status == "COMPLETED":
         assert payment.status == Payment.PaymentStatus.COMPLETED
+
+        assert len(mailoutbox) == 1  # Email confirming successful refund
+        assert mailoutbox[0].subject == "Refund successfully processed"
+        assert mailoutbox[0].to[0] == "myuser@example.org"
     else:
         assert payment.status == Payment.PaymentStatus.PENDING
 
