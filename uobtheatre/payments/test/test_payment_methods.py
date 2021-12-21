@@ -533,11 +533,15 @@ def test_square_online_update_refund(data_fees, data_status):
     payment = PaymentFactory(status=Payment.PaymentStatus.PENDING, provider_fee=None)
 
     data = {
-        "status": data_status,
+        "object": {
+            "refund": {
+                "status": data_status,
+            }
+        }
     }
 
     if data_fees:
-        data["processing_fee"] = [
+        data["object"]["refund"]["processing_fee"] = [
             {
                 "amount_money": {"amount": fee, "currency": "GBP"},
             }

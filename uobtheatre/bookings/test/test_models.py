@@ -1055,7 +1055,7 @@ def test_send_confirmation_email(mailoutbox, with_payment, provider_payment_id):
         PaymentFactory(
             pay_object=booking,
             value=1000,
-            provider=payment_methods.SquareOnline.__name__,
+            provider=payment_methods.SquareOnline.name,
             provider_payment_id=provider_payment_id,
         )
 
