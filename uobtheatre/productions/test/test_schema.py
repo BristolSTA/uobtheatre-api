@@ -748,7 +748,7 @@ def test_assignable_permissions(gql_client, perms, can_assign):
         assert response["data"]["production"]["assignablePermissions"] is None
         return
 
-    assert len(response["data"]["production"]["assignablePermissions"]) == 8
+    assert len(response["data"]["production"]["assignablePermissions"]) == 9
     assert {
         "name": "boxoffice",
         "description": "Can use boxoffice for this production",

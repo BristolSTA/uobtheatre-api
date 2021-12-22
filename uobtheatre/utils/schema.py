@@ -87,7 +87,9 @@ class AssignedUsersMixin:
                 user=user,
                 assigned_permissions=permissions,
             )
-            for (user, permissions) in get_users_with_perms(self, True).items()
+            for (user, permissions) in get_users_with_perms(
+                self, attach_perms=True, with_group_users=False
+            ).items()
         ]
 
     def resolve_assignable_permissions(self, info):
@@ -469,4 +471,4 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
         for permission in permissions_to_remove:
             remove_perm(permission, user, model_instance)
 
-        return AssignPermissionsMutation()
+        return cls()

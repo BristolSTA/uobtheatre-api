@@ -1,9 +1,10 @@
-from unittest.mock import patch
-import pytest
 from datetime import datetime
-from uobtheatre.productions.forms import PerformanceForm
 
-from uobtheatre.productions.test.factories import PerformanceFactory
+import pytest
+
+from uobtheatre.productions.forms import PerformanceForm
+from uobtheatre.productions.test.factories import ProductionFactory
+from uobtheatre.venues.test.factories import VenueFactory
 
 
 @pytest.mark.django_db
@@ -14,7 +15,19 @@ from uobtheatre.productions.test.factories import PerformanceFactory
             datetime(day=10, month=1, year=2020),
             datetime(day=11, month=1, year=2020),
             datetime(day=12, month=1, year=2020),
-            [],
+            {},
+        ),
+        (
+            datetime(day=11, month=1, year=2020),
+            datetime(day=10, month=1, year=2020),
+            datetime(day=12, month=1, year=2020),
+            {"doors_open": ["Doors open must be before the start time"]},
+        ),
+        (
+            datetime(day=10, month=1, year=2020),
+            datetime(day=11, month=1, year=2020),
+            datetime(day=10, month=1, year=2020),
+            {"start": ["The start time must be before the end time"]},
         ),
     ],
 )
@@ -24,9 +37,11 @@ def test_performance_form_clean(door, start, end, error):
             "doors_open": door.isoformat(),
             "start": start.isoformat(),
             "end": end.isoformat(),
+            "venue": VenueFactory().id,
+            "production": ProductionFactory().id,
         }
     )
 
     # Patch super.clean call
-    with patch.object(form, "super", return_value=None):
-        assert form.errors == error
+    # with patch.object(form, "super", return_value=None):
+    assert form.errors == error

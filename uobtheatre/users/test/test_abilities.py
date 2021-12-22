@@ -5,14 +5,34 @@ from django.contrib.contenttypes.models import ContentType
 from guardian.shortcuts import assign_perm
 
 from uobtheatre.productions.models import Production
-from uobtheatre.productions.test.factories import PerformanceFactory
+from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.users.abilities import (
+    AbilitiesMixin,
     Ability,
     OpenAdmin,
     OpenBoxoffice,
     PermissionsMixin,
 )
 from uobtheatre.users.test.factories import UserFactory
+
+
+@pytest.mark.django_db
+def test_ability_mixin_perms():
+    user = UserFactory()
+    production = ProductionFactory()
+
+    assign_perm("change_production", user, production)
+
+    with patch.object(OpenBoxoffice, "user_has_for", return_value=True):
+
+        assert (
+            user.get_perms(user, production).sort()
+            == [
+                "admin_open",
+                "change_production",
+                "boxoffice_open",
+            ].sort()
+        )
 
 
 def test_ability_user_has():
