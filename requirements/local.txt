@@ -12,7 +12,7 @@ pylint >= 2.11.1 # Linting
 # mypy stuff
 mypy >= 0.910 # Type checking
 django-stubs >= 1.7.0
-types-python-dateutil==2.8.3
+types-python-dateutil==2.8.4
 
 # testing
 pytest >= 6.2.2
