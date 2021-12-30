@@ -1,9 +1,9 @@
 import pytest
 
 from uobtheatre.bookings.test.factories import BookingFactory
+from uobtheatre.payments.models import Payment
 from uobtheatre.payments.payment_methods import Card, Cash, SquareOnline
 from uobtheatre.payments.test.factories import PaymentFactory
-from uobtheatre.payments.models import Payment
 
 
 @pytest.mark.django_db
@@ -90,4 +90,4 @@ def test_is_refunded(payment_values, has_pending, is_refunded):
     assert pay_object.is_refunded == is_refunded
 
     if payment := pay_object.payments.first():
-        payment.is_refunded == is_refunded
+        assert payment.is_refunded == is_refunded

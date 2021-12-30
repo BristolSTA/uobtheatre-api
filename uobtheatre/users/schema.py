@@ -10,6 +10,7 @@ class ExtendedUserNode(PermissionsMixin, schema.UserNode):
     """
     Extends user node to add additional properties.
     """
+
     id = graphene.String()
 
     def resolve_id(self, info):
