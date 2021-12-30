@@ -5,6 +5,7 @@ Defines base schema for api
 
 import graphene
 
+import uobtheatre.bookings.mutations as bookings_mutations
 import uobtheatre.bookings.schema as bookings_schema
 import uobtheatre.payments.mutations as payments_mutations
 import uobtheatre.payments.schema as payments_schema
@@ -31,7 +32,7 @@ class Query(
 
 class Mutation(
     users_schema.Mutation,
-    bookings_schema.Mutation,
+    bookings_mutations.Mutation,
     reports_schema.Mutation,
     payments_mutations.Mutation,
     graphene.ObjectType,

@@ -9,7 +9,7 @@ from graphql_relay.node.node import from_global_id, to_global_id
 from guardian.shortcuts import assign_perm
 
 from uobtheatre.bookings.models import Booking
-from uobtheatre.bookings.schema import PayBooking, parse_target_user_email
+from uobtheatre.bookings.mutations import PayBooking, parse_target_user_email
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
     PerformanceSeatingFactory,
@@ -2291,6 +2291,72 @@ def test_check_in_booking(
     for ticket in non_booking_tickets:
         ticket.refresh_from_db()
         assert not ticket.checked_in
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "status",
+    [
+        Payable.PayableStatus.IN_PROGRESS,
+        Payable.PayableStatus.CANCELLED,
+        Payable.PayableStatus.LOCKED,
+        Payable.PayableStatus.REFUNDED,
+    ],
+)
+def test_check_in_booking_fails_if_not_paid(gql_client, status):
+    performance = PerformanceFactory()
+    gql_client.login()
+    assign_perm("boxoffice", gql_client.user, performance.production)
+
+    booking = BookingFactory(
+        performance=performance, user=gql_client.user, status=status
+    )
+
+    checked_in_ticket = TicketFactory(booking=booking, checked_in=True)
+
+    request_query = """
+    mutation {
+    checkInBooking(
+            bookingReference: "%s"
+            performanceId: "%s"
+            tickets: [
+                { ticketId: "%s"}
+            ]
+        ) {
+            success
+            errors {
+            __typename
+            ... on FieldError {
+                message
+                field
+            }
+            }
+        }
+    }
+    """
+    response = gql_client.execute(
+        request_query
+        % (
+            booking.reference,
+            to_global_id("PerformanceNode", performance.id),
+            to_global_id("TicketNode", checked_in_ticket.id),
+        )
+    )
+    assert response == {
+        "data": {
+            "checkInBooking": {
+                "success": False,
+                "errors": [
+                    {
+                        "__typename": "FieldError",
+                        "field": "bookingReference",
+                        "message": "This booking has not been paid for (Status: %s)"
+                        % status.label,
+                    }
+                ],
+            }
+        }
+    }
 
 
 @pytest.mark.django_db

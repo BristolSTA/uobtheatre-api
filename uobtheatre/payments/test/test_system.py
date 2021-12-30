@@ -13,7 +13,7 @@ from uobtheatre.payments.payment_methods import SquareOnline
 
 
 @pytest.mark.django_db
-@pytest.mark.square_itegration
+@pytest.mark.square_integration
 def test_create_and_refund_booking(square_client):
     # Create a booking with a seat costing 1200 and a misc cost of 100
     ValueMiscCostFactory(value=100)
