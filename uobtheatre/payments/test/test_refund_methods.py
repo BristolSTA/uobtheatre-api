@@ -39,8 +39,7 @@ def test_square_refund_refund(mock_square):
     refund_method.create_payment_object.assert_called_once_with(
         payment.pay_object,
         -100,
-        0,
-        type=Payment.PaymentType.REFUND,
+        None,
         provider_payment_id="abc",
         currency="GBP",
         status=Payment.PaymentStatus.PENDING,
