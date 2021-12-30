@@ -1,21 +1,30 @@
-from rest_framework import status
+from rest_framework import exceptions, status
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import exceptions
 
-from uobtheatre.images.serializers import ImageSerializer
 from uobtheatre.images.abilities import UplaodImage
+from uobtheatre.images.serializers import ImageSerializer
+from uobtheatre.users.backends import GraphqlJWTAuthentication
 
 
 class ImageView(APIView):
-    # MultiPartParser AND FormParser
-    # https://www.django-rest-framework.org/api-guide/parsers/#multipartparser
-    # "You will typically want to use both FormParser and MultiPartParser
-    # together in order to fully support HTML form data."
+    """
+    Image upload endpoint.
+
+    MultiPartParser AND FormParser
+    https://www.django-rest-framework.org/api-guide/parsers/#multipartparser
+    "You will typically want to use both FormParser and MultiPartParser
+    together in order to fully support HTML form data."
+    """
+
     parser_classes = (MultiPartParser, FormParser)
+    authentication_classes = (GraphqlJWTAuthentication,)
 
     def post(self, request, *_, **__):
+        """
+        Endpoint to upload an image.
+        """
         if not request.user.is_authenticated or not UplaodImage.user_has(request.user):
             raise exceptions.AuthenticationFailed
 
