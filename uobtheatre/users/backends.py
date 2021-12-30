@@ -1,9 +1,12 @@
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from graphql_jwt.exceptions import JSONWebTokenError
 from graphql_jwt.shortcuts import get_user_by_token
 from rest_framework import authentication
 from rest_framework.exceptions import AuthenticationFailed
+
+if TYPE_CHECKING:
+    from uobtheatre.users.models import User
 
 
 class GraphqlJWTAuthentication(authentication.BaseAuthentication):
