@@ -6,7 +6,7 @@ from django.utils import timezone
 from graphql_relay.node.node import to_global_id
 from guardian.shortcuts import assign_perm
 
-from uobtheatre.bookings.models import Booking, Ticket
+from uobtheatre.bookings.models import Ticket
 from uobtheatre.bookings.schema import TicketNode
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
@@ -20,6 +20,7 @@ from uobtheatre.discounts.test.factories import (
     DiscountFactory,
     DiscountRequirementFactory,
 )
+from uobtheatre.payments.payables import Payable
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory
@@ -28,9 +29,9 @@ from uobtheatre.venues.test.factories import SeatGroupFactory
 @pytest.mark.django_db
 def test_bookings_schema(gql_client):
 
-    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
     # Create a booking that is not owned by the same user
-    BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
     tickets = [TicketFactory(booking=booking) for _ in range(10)]
 
     request_query = """
@@ -116,7 +117,7 @@ def test_bookings_schema(gql_client):
 def test_booking_expires_at(gql_client, expired):
     gql_client.login()
     booking = BookingFactory(
-        status=Booking.BookingStatus.IN_PROGRESS, user=gql_client.user
+        status=Payable.PayableStatus.IN_PROGRESS, user=gql_client.user
     )
     if expired:
         booking.expires_at = timezone.now() - datetime.timedelta(minutes=30)
@@ -409,14 +410,14 @@ def test_booking_in_progress(gql_client):
     # Create some completed bookings for the same performance
     _ = [
         BookingFactory(
-            user=user, performance=performance, status=Booking.BookingStatus.PAID
+            user=user, performance=performance, status=Payable.PayableStatus.PAID
         )
         for i in range(10)
     ]
     # Create some bookings for dfferent performances
     _ = [BookingFactory(user=user) for i in range(10)]
     booking = BookingFactory(
-        user=user, performance=performance, status=Booking.BookingStatus.IN_PROGRESS
+        user=user, performance=performance, status=Payable.PayableStatus.IN_PROGRESS
     )
 
     request_query = """
@@ -460,11 +461,11 @@ def test_booking_expired(gql_client, expired):
 
     expired_booking = BookingFactory(
         user=gql_client.user,
-        status=Booking.BookingStatus.IN_PROGRESS,
+        status=Payable.PayableStatus.IN_PROGRESS,
         expires_at=timezone.now() - datetime.timedelta(minutes=20),
     )
     not_expired_booking = BookingFactory(
-        user=gql_client.user, status=Booking.BookingStatus.IN_PROGRESS
+        user=gql_client.user, status=Payable.PayableStatus.IN_PROGRESS
     )
 
     request = (

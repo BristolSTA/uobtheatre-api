@@ -7,7 +7,6 @@ from django.utils import timezone
 from graphql_relay.node.node import to_global_id
 from guardian.shortcuts import assign_perm
 
-from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
     PerformanceSeatingFactory,
@@ -17,6 +16,7 @@ from uobtheatre.discounts.test.factories import (
     DiscountFactory,
     DiscountRequirementFactory,
 )
+from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.test.factories import PaymentFactory
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.productions.test.factories import (
@@ -1067,7 +1067,7 @@ def test_performance_has_permission(gql_client):
 def test_production_and_performance_sales_breakdowns(gql_client):
     performance = PerformanceFactory()
     booking = BookingFactory(
-        performance=performance, status=Booking.BookingStatus.IN_PROGRESS
+        performance=performance, status=Payable.PayableStatus.IN_PROGRESS
     )
     perf_seat_group = PerformanceSeatingFactory(performance=performance, price=100)
     TicketFactory(booking=booking, seat_group=perf_seat_group.seat_group)

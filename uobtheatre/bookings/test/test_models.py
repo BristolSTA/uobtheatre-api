@@ -26,6 +26,7 @@ from uobtheatre.discounts.test.factories import (
 )
 from uobtheatre.payments import payment_methods
 from uobtheatre.payments.models import Payment
+from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.payment_methods import SquarePOS
 from uobtheatre.payments.test.factories import PaymentFactory
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
@@ -535,12 +536,12 @@ def test_draft_uniqueness():
     args = {
         "user": UserFactory(),
         "performance": PerformanceFactory(),
-        "status": Booking.BookingStatus.IN_PROGRESS,
+        "status": Payable.PayableStatus.IN_PROGRESS,
     }
 
     # Check that can make more bookings that are no in_progress
     BookingFactory(
-        status=Booking.BookingStatus.PAID,
+        status=Payable.PayableStatus.PAID,
         performance=args["performance"],
         user=args["user"],
     )
@@ -831,11 +832,11 @@ def test_booking_pay_with_payment():
             return Payment()
 
     payment_method = MockPaymentMethod()
-    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
 
     booking.pay(payment_method)  # type: ignore
 
-    assert booking.status == Booking.BookingStatus.PAID
+    assert booking.status == Payable.PayableStatus.PAID
 
 
 @pytest.mark.django_db
@@ -850,7 +851,7 @@ def test_booking_pay_deletes_pending_payments(mock_square):
             return Payment()
 
     payment_method = MockPaymentMethod()
-    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
 
     # Deleted
     pending_payment = PaymentFactory(
@@ -869,7 +870,7 @@ def test_booking_pay_deletes_pending_payments(mock_square):
     ) as mock:
         booking.pay(payment_method)  # type: ignore
 
-    assert booking.status == Booking.BookingStatus.PAID
+    assert booking.status == Payable.PayableStatus.PAID
 
     # Assert pending payment cancelled with square
     mock.assert_called_once_with(pending_payment.provider_payment_id)
@@ -984,10 +985,10 @@ def test_filter_by_active():
 
 @pytest.mark.django_db
 def test_booking_expiration():
-    unexpired_booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    unexpired_booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
 
     expired_booking = BookingFactory(
-        status=Booking.BookingStatus.IN_PROGRESS,
+        status=Payable.PayableStatus.IN_PROGRESS,
         expires_at=timezone.now() - datetime.timedelta(minutes=16),
     )
 
@@ -1001,19 +1002,19 @@ def test_booking_expiration():
     assert not unexpired_booking.is_reservation_expired
     assert expired_booking.is_reservation_expired
 
-    expired_booking.status = Booking.BookingStatus.PAID
+    expired_booking.status = Payable.PayableStatus.PAID
     assert not expired_booking.is_reservation_expired
 
 
 @pytest.mark.django_db
 def test_complete():
-    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
     with patch.object(booking, "send_confirmation_email") as mock_send_email:
         booking.complete()
         mock_send_email.assert_called_once()
 
     booking.refresh_from_db()
-    assert booking.status == Booking.BookingStatus.PAID
+    assert booking.status == Payable.PayableStatus.PAID
 
 
 @pytest.mark.django_db
@@ -1045,7 +1046,7 @@ def test_send_confirmation_email(mailoutbox, with_payment, provider_payment_id):
         production=production,
     )
     booking = BookingFactory(
-        status=Booking.BookingStatus.IN_PROGRESS,
+        status=Payable.PayableStatus.IN_PROGRESS,
         reference="abc",
         performance=performance,
     )
@@ -1107,7 +1108,7 @@ def test_send_confirmation_email_for_anonymous(mailoutbox):
         venue=venue,
     )
     booking = BookingFactory(
-        status=Booking.BookingStatus.IN_PROGRESS,
+        status=Payable.PayableStatus.IN_PROGRESS,
         reference="abc",
         performance=performance,
     )

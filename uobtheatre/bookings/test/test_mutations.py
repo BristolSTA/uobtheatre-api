@@ -19,6 +19,7 @@ from uobtheatre.bookings.test.factories import (
 )
 from uobtheatre.discounts.test.factories import ConcessionTypeFactory
 from uobtheatre.payments.models import Payment
+from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.payment_methods import SquareOnline, SquarePOS
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.models import User
@@ -206,10 +207,10 @@ def test_create_booking_deletes_users_draft(gql_client):
     BookingFactory(
         performance=performance,
         user=gql_client.user,
-        status=Booking.BookingStatus.IN_PROGRESS,
+        status=Payable.PayableStatus.IN_PROGRESS,
     )  # A booking belonging to this user
     unaffected_booking = BookingFactory(
-        performance=performance, status=Booking.BookingStatus.IN_PROGRESS
+        performance=performance, status=Payable.PayableStatus.IN_PROGRESS
     )  # A booking belonging to another user
 
     assert Booking.objects.count() == 2
@@ -746,7 +747,7 @@ def test_update_booking(current_tickets, planned_tickets, expected_tickets, gql_
 
     # Create booking with current tickets
     booking = BookingFactory(
-        performance=performance, status=Booking.BookingStatus.IN_PROGRESS
+        performance=performance, status=Payable.PayableStatus.IN_PROGRESS
     )
     _ = [TicketFactory(booking=booking, **ticket) for ticket in current_tickets]
     # Generate mutation query from input data
@@ -820,7 +821,7 @@ def test_update_expired_booking(gql_client):
     booking = BookingFactory(
         user=gql_client.user,
         expires_at=timezone.now() - timedelta(minutes=20),
-        status=Booking.BookingStatus.IN_PROGRESS,
+        status=Payable.PayableStatus.IN_PROGRESS,
     )
 
     request = """
@@ -858,7 +859,7 @@ def test_update_booking_with_too_many_tickets(gql_client, with_boxoffice_perms):
     booking = BookingFactory(
         performance=performance,
         user=gql_client.user,
-        status=Booking.BookingStatus.IN_PROGRESS,
+        status=Payable.PayableStatus.IN_PROGRESS,
     )
     seat_group = SeatGroupFactory(id=1)
     PerformanceSeatingFactory(
@@ -950,7 +951,7 @@ def test_update_booking_no_tickets(gql_client):
 @pytest.mark.django_db
 def test_update_booking_set_target_user(gql_client):
     creator = gql_client.login().user
-    booking = BookingFactory(user=creator, status=Booking.BookingStatus.IN_PROGRESS)
+    booking = BookingFactory(user=creator, status=Payable.PayableStatus.IN_PROGRESS)
 
     creator.is_superuser = True
     creator.save()
@@ -960,7 +961,7 @@ def test_update_booking_set_target_user(gql_client):
     BookingFactory(
         user=user,
         performance=booking.performance,
-        status=Booking.BookingStatus.IN_PROGRESS,
+        status=Payable.PayableStatus.IN_PROGRESS,
     )
 
     assert creator.bookings.count() == 1
@@ -992,7 +993,7 @@ def test_update_booking_set_target_user_to_same_user(gql_client):
 
     user = UserFactory(email="user@email.com")
     creator = gql_client.login().user
-    booking = BookingFactory(user=user, status=Booking.BookingStatus.IN_PROGRESS)
+    booking = BookingFactory(user=user, status=Payable.PayableStatus.IN_PROGRESS)
 
     creator.is_superuser = True
     creator.save()
@@ -1024,7 +1025,7 @@ def test_update_booking_set_target_user_to_same_user(gql_client):
 
 @pytest.mark.django_db
 def test_update_booking_admin_discount_without_perms(gql_client):
-    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
     request = """
         mutation {
           updateBooking(
@@ -1071,7 +1072,7 @@ def test_update_booking_admin_discount_without_perms(gql_client):
     ],
 )
 def test_update_booking_admin_discount(gql_client, discount, should_be_valid):
-    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
     request = """
         mutation {
           updateBooking(
@@ -1115,7 +1116,7 @@ def test_update_booking_admin_discount(gql_client, discount, should_be_valid):
 
 @pytest.mark.django_db
 def test_update_booking_without_permission(gql_client):
-    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
 
     request_query = """
         mutation {
@@ -1160,7 +1161,7 @@ def test_update_booking_capacity_error(gql_client):
     seat_group = SeatGroupFactory()
     concession_type = ConcessionTypeFactory()
     booking = BookingFactory(
-        user=gql_client.login().user, status=Booking.BookingStatus.IN_PROGRESS
+        user=gql_client.login().user, status=Payable.PayableStatus.IN_PROGRESS
     )
     request_query = """
         mutation {
@@ -1216,7 +1217,7 @@ def test_update_paid_booking_fails(gql_client):
     seat_group = SeatGroupFactory()
     concession_type = ConcessionTypeFactory()
     booking = BookingFactory(
-        user=gql_client.login().user, status=Booking.BookingStatus.PAID
+        user=gql_client.login().user, status=Payable.PayableStatus.PAID
     )
     request_query = """
         mutation {
@@ -1322,7 +1323,7 @@ def test_booking_with_invalid_seat_group(gql_client):
 def test_pay_booking_mutation_wrong_price(gql_client):
     gql_client.login()
     booking = BookingFactory(
-        user=gql_client.user, status=Booking.BookingStatus.IN_PROGRESS
+        user=gql_client.user, status=Payable.PayableStatus.IN_PROGRESS
     )
 
     request_query = """
@@ -1385,7 +1386,7 @@ def test_pay_booking_square_pos_no_device_id(gql_client):
         }
     """
     gql_client.login()
-    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
     add_ticket_to_booking(booking)
 
     assign_perm("boxoffice", gql_client.user, booking.performance.production)
@@ -1413,7 +1414,7 @@ def test_pay_booking_square_pos_no_device_id(gql_client):
 def test_pay_booking_square_error(mock_square, gql_client):
     gql_client.login()
     booking = BookingFactory(
-        status=Booking.BookingStatus.IN_PROGRESS, user=gql_client.user
+        status=Payable.PayableStatus.IN_PROGRESS, user=gql_client.user
     )
     add_ticket_to_booking(booking)
 
@@ -1469,7 +1470,7 @@ def test_pay_booking_square_error(mock_square, gql_client):
 def test_pay_booking_mutation_unauthorized_provider(gql_client):
     gql_client.login()
     booking = BookingFactory(
-        status=Booking.BookingStatus.IN_PROGRESS, user=gql_client.user
+        status=Payable.PayableStatus.IN_PROGRESS, user=gql_client.user
     )
 
     request_query = """
@@ -1514,7 +1515,7 @@ def test_pay_booking_mutation_unauthorized_provider(gql_client):
 @pytest.mark.django_db
 def test_pay_booking_mutation_unauthorized_user(gql_client):
     gql_client.login()
-    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
 
     request_query = """
     mutation {
@@ -1556,7 +1557,7 @@ def test_pay_booking_mutation_unauthorized_user(gql_client):
 def test_pay_booking_mutation_expired_booking(gql_client):
     gql_client.login()
     booking = BookingFactory(
-        status=Booking.BookingStatus.IN_PROGRESS,
+        status=Payable.PayableStatus.IN_PROGRESS,
         user=gql_client.user,
         expires_at=timezone.now() - timedelta(minutes=20),
     )
@@ -1599,7 +1600,7 @@ def test_pay_booking_mutation_expired_booking(gql_client):
 def test_pay_booking_mutation_online_without_idempotency_key(gql_client):
     gql_client.login()
     booking = BookingFactory(
-        status=Booking.BookingStatus.IN_PROGRESS, user=gql_client.user
+        status=Payable.PayableStatus.IN_PROGRESS, user=gql_client.user
     )
     add_ticket_to_booking(booking)
 
@@ -1646,7 +1647,7 @@ def test_pay_booking_mutation_online_without_idempotency_key(gql_client):
 def test_pay_booking_mutation_online_without_nonce(gql_client):
     gql_client.login()
     booking = BookingFactory(
-        status=Booking.BookingStatus.IN_PROGRESS, user=gql_client.user
+        status=Payable.PayableStatus.IN_PROGRESS, user=gql_client.user
     )
     add_ticket_to_booking(booking)
 
@@ -1693,7 +1694,7 @@ def test_pay_booking_mutation_online_without_nonce(gql_client):
 def test_pay_booking_success(mock_square, gql_client):
     gql_client.login()
     booking = BookingFactory(
-        status=Booking.BookingStatus.IN_PROGRESS, user=gql_client.user
+        status=Payable.PayableStatus.IN_PROGRESS, user=gql_client.user
     )
     add_ticket_to_booking(booking)
     ValueMiscCostFactory(value=25)
@@ -1802,7 +1803,7 @@ def test_pay_booking_success(mock_square, gql_client):
 
 @pytest.mark.django_db
 def test_pay_booking_success_square_pos(mock_square, gql_client):
-    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
     add_ticket_to_booking(booking)
     gql_client.login()
     assign_perm("boxoffice", gql_client.user, booking.performance.production)
@@ -1897,7 +1898,7 @@ def test_pay_booking_success_square_pos(mock_square, gql_client):
 @pytest.mark.django_db
 @pytest.mark.parametrize("payment_method", ["CARD", "CASH"])
 def test_pay_booking_manual(gql_client, payment_method):
-    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
     add_ticket_to_booking(booking)
     gql_client.login()
     assign_perm("boxoffice", gql_client.user, booking.performance.production)
@@ -1988,7 +1989,7 @@ def test_pay_booking_manual(gql_client, payment_method):
 def test_pay_booking_with_no_tickets(gql_client):
     gql_client.login()
     booking = BookingFactory(
-        status=Booking.BookingStatus.IN_PROGRESS, user=gql_client.user
+        status=Payable.PayableStatus.IN_PROGRESS, user=gql_client.user
     )
 
     request_query = """
@@ -2025,7 +2026,7 @@ def test_pay_booking_with_no_tickets(gql_client):
 def test_pay_booking_when_free(gql_client):
     gql_client.login()
     booking = BookingFactory(
-        status=Booking.BookingStatus.IN_PROGRESS,
+        status=Payable.PayableStatus.IN_PROGRESS,
         admin_discount_percentage=1,
         user=gql_client.user,
     )
@@ -2064,7 +2065,7 @@ def test_pay_booking_when_free(gql_client):
 
 @pytest.mark.django_db
 def test_paybooking_unsupported_payment_provider(info):
-    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
     assign_perm("boxoffice", info.context.user, booking.performance.production)
 
     with pytest.raises(GQLException) as exc:
@@ -2078,7 +2079,7 @@ def test_paybooking_unsupported_payment_provider(info):
 def test_pay_booking_fails_if_already_paid(gql_client):
 
     booking = BookingFactory(
-        user=gql_client.login().user, status=Booking.BookingStatus.PAID
+        user=gql_client.login().user, status=Payable.PayableStatus.PAID
     )
     request_query = """
         mutation {

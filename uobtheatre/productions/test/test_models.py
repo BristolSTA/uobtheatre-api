@@ -8,7 +8,7 @@ from dateutil import parser
 from django.utils import timezone
 from guardian.shortcuts import assign_perm
 
-from uobtheatre.bookings.models import Booking, Ticket
+from uobtheatre.bookings.models import Ticket
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
     PerformanceSeatingFactory,
@@ -20,6 +20,7 @@ from uobtheatre.discounts.test.factories import (
     DiscountFactory,
     DiscountRequirementFactory,
 )
+from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.payment_methods import Card, Cash, SquareOnline
 from uobtheatre.payments.test.factories import PaymentFactory
 from uobtheatre.productions.models import Performance, PerformanceSeatGroup
@@ -365,7 +366,7 @@ def test_performance_checked_in_tickets():
 
     # Ticket in an in progress booking - shouldn't be included
     in_progress_booking = BookingFactory(
-        performance=booking.performance, status=Booking.BookingStatus.IN_PROGRESS
+        performance=booking.performance, status=Payable.PayableStatus.IN_PROGRESS
     )
     TicketFactory(booking=in_progress_booking)
 
@@ -383,7 +384,7 @@ def test_performance_unchecked_in_tickets():
 
     # Ticket in an in progress booking - shouldn't be included
     in_progress_booking = BookingFactory(
-        performance=booking.performance, status=Booking.BookingStatus.IN_PROGRESS
+        performance=booking.performance, status=Payable.PayableStatus.IN_PROGRESS
     )
     TicketFactory(booking=in_progress_booking)
 
@@ -399,7 +400,7 @@ def test_performance_total_tickets_sold():
     TicketFactory(booking=booking)
 
     # Draft booking with 3 tickets (shouldn't be counted)
-    draft_booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    draft_booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
     TicketFactory(booking=draft_booking)
     TicketFactory(booking=draft_booking)
     TicketFactory(booking=draft_booking)
@@ -407,7 +408,7 @@ def test_performance_total_tickets_sold():
     # Expired Booking with 4 tickets (shouldn't be counted)
     expires_draft_booking = BookingFactory(
         expires_at=timezone.now() - timedelta(minutes=16),
-        status=Booking.BookingStatus.IN_PROGRESS,
+        status=Payable.PayableStatus.IN_PROGRESS,
     )
     TicketFactory(booking=expires_draft_booking)
     TicketFactory(booking=expires_draft_booking)
@@ -429,7 +430,7 @@ def test_performance_total_tickets_sold_or_reserved():
 
     # Draft booking with 3 tickets
     draft_booking = BookingFactory(
-        status=Booking.BookingStatus.IN_PROGRESS, performance=booking.performance
+        status=Payable.PayableStatus.IN_PROGRESS, performance=booking.performance
     )
     TicketFactory(booking=draft_booking)
     TicketFactory(booking=draft_booking)
@@ -438,7 +439,7 @@ def test_performance_total_tickets_sold_or_reserved():
     # Expired Booking with 4 tickets (shouldn't be counted)
     expires_draft_booking = BookingFactory(
         expires_at=timezone.now() - timedelta(minutes=16),
-        status=Booking.BookingStatus.IN_PROGRESS,
+        status=Payable.PayableStatus.IN_PROGRESS,
         performance=booking.performance,
     )
     TicketFactory(booking=expires_draft_booking)
@@ -519,7 +520,7 @@ def test_performance_capacity_remaining():
     # Check an expired booking with tickets (should not be included)
     booking_3 = BookingFactory(
         performance=perf,
-        status=Booking.BookingStatus.IN_PROGRESS,
+        status=Payable.PayableStatus.IN_PROGRESS,
         expires_at=timezone.now() - timedelta(minutes=16),
     )
     TicketFactory(booking=booking_3, seat_group=seat_group)
@@ -527,7 +528,7 @@ def test_performance_capacity_remaining():
 
     # Check a draft booking with tickets
     booking_4 = BookingFactory(
-        performance=perf, status=Booking.BookingStatus.IN_PROGRESS
+        performance=perf, status=Payable.PayableStatus.IN_PROGRESS
     )
     TicketFactory(booking=booking_4, seat_group=seat_group)
     TicketFactory(booking=booking_4, seat_group=seat_group)

@@ -172,7 +172,7 @@ def generate_expires_at():
     return timezone.now() + timezone.timedelta(minutes=15)
 
 
-class Booking(TimeStampedMixin, Payable, models.Model):
+class Booking(TimeStampedMixin, Payable):
     """A booking for a performance
 
     A booking holds a collection of tickets for a given performance.
@@ -182,10 +182,6 @@ class Booking(TimeStampedMixin, Payable, models.Model):
     """
 
     objects = BookingQuerySet.as_manager()
-
-    class BookingStatus(models.TextChoices):
-        IN_PROGRESS = "IN_PROGRESS", "In Progress"
-        PAID = "PAID", "Paid"
 
     class Meta:
         constraints = [
@@ -214,11 +210,6 @@ class Booking(TimeStampedMixin, Payable, models.Model):
         Performance,
         on_delete=models.RESTRICT,
         related_name="bookings",
-    )
-    status = models.CharField(
-        max_length=20,
-        choices=BookingStatus.choices,
-        default=BookingStatus.IN_PROGRESS,
     )
 
     payments = GenericRelation(
@@ -552,7 +543,7 @@ class Booking(TimeStampedMixin, Payable, models.Model):
         Complete the booking (after it has been paid for) and send the
         confirmation email.
         """
-        self.status = self.BookingStatus.PAID
+        self.status = Payable.PayableStatus.PAID
         self.save()
         self.send_confirmation_email()
 
@@ -625,7 +616,7 @@ class Booking(TimeStampedMixin, Payable, models.Model):
         """Returns whether the booking is considered expired"""
 
         return (
-            self.status == self.BookingStatus.IN_PROGRESS
+            self.status == Payable.PayableStatus.IN_PROGRESS
             and self.expires_at
             and timezone.now() > self.expires_at
         )

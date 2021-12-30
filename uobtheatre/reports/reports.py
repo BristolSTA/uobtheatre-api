@@ -7,6 +7,7 @@ from graphql_relay.node.node import from_global_id
 
 from uobtheatre.bookings.models import Booking
 from uobtheatre.payments.models import Payment
+from uobtheatre.payments.payables import Payable
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.users.models import User
 from uobtheatre.utils.exceptions import AuthorizationException, GQLException
@@ -280,7 +281,7 @@ class PerformanceBookings(Report):
 
         self.meta.append(MetaItem("Performance", str(performance)))
         for booking in (
-            performance.bookings.filter(status=Booking.BookingStatus.PAID)
+            performance.bookings.filter(status=Payable.PayableStatus.PAID)
             .prefetch_related(
                 "payments", "user", "tickets__seat_group", "tickets__concession_type"
             )
