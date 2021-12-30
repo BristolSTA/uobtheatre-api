@@ -1,4 +1,4 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.contenttypes.admin import GenericTabularInline
 
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
@@ -46,15 +46,24 @@ class BookingAdmin(DangerousAdminConfirmMixin, admin.ModelAdmin):
 
     @confirm_dangerous_action
     @admin.action(description="Issue refund", permissions=["change"])
-    def issue_refund(self, modeladmin, request, queryset):
-        """Action to issue refund for selected bookin(s)"""
+    def issue_refund(self, request, queryset):
+        """Action to issue refund for selected booking(s)"""
         for booking in queryset:
+            # Check if booking is paid
+            if not booking.status == Booking.PayableStatus.PAID:
+                self.message_user(
+                    request,
+                    f"One or more booking is not of status paid ({booking})",
+                    level=messages.ERROR,
+                )
+                return
+
             for payment in booking.payments.filter(
                 type=Payment.PaymentType.PURCHASE
             ).all():
                 payment.refund()
 
-        modeladmin.message_user(
+        self.message_user(
             request, f"{queryset.count()} objects have had refunds requested "
         )
 
