@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock
+
 import factory
 
 from uobtheatre.bookings.test.factories import BookingFactory
@@ -45,3 +47,31 @@ class MockApiResponse:
 
     def is_success(self):
         return self.success
+
+
+def mock_payment_method(is_refundable: bool = True, refund_method=None):
+    """
+    Mock of the payment method class.
+    """
+
+    class MockPaymentMethod:  # pylint: disable=missing-class-docstring
+        pay = MagicMock(return_value=Payment())
+
+        @classmethod
+        @property
+        def refund_method(cls):
+            return refund_method
+
+        @classmethod
+        @property
+        def is_refundable(cls):
+            return is_refundable
+
+    return MockPaymentMethod()
+
+
+def mock_refund_method():
+    class MockRefundMethod:  # pylint: disable=no-method-argument
+        refund = MagicMock(return_value=None)
+
+    return MockRefundMethod()

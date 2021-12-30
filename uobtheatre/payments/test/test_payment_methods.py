@@ -36,7 +36,7 @@ def test_refund_method_all():
 
 
 def test_transaction_method_all():
-    assert TransactionMethod.__all__ == [
+    assert TransactionMethod.__all__ == [  # pylint: disable=comparison-with-callable
         Cash,
         Card,
         SquarePOS,
@@ -89,14 +89,22 @@ def test_generate_name(input_name, expected_output_name):
 
 
 @pytest.mark.django_db
-def test_create_paymnet_object():
+@pytest.mark.parametrize(
+    "payment_method, expected_type",
+    [
+        (SquareOnline, Payment.PaymentType.PURCHASE),
+        (SquareRefund, Payment.PaymentType.REFUND),
+    ],
+)
+def test_create_paymnet_object(payment_method, expected_type):
     booking = BookingFactory()
-    SquareOnline.create_payment_object(booking, 10, 5, currency="ABC")
+    payment_method.create_payment_object(booking, 10, 5, currency="ABC")
 
     assert Payment.objects.count() == 1
     payment = Payment.objects.first()
-    assert payment.provider == SquareOnline.name
-    assert payment.type == Payment.PaymentType.PURCHASE
+
+    assert payment.provider == payment_method.name
+    assert payment.type == expected_type
     assert payment.pay_object == booking
     assert payment.value == 10
     assert payment.currency == "ABC"
@@ -514,12 +522,6 @@ def test_manual_payment_method_processing_fee():
 
 
 @pytest.mark.django_db
-def test_square_refund_pending_payment():
-    payment = PaymentFactory(status=Payment.PaymentStatus.PENDING)
-    assert False
-
-
-@pytest.mark.django_db
 @pytest.mark.parametrize(
     "data_fees, data_status",
     [
@@ -560,3 +562,15 @@ def test_square_online_update_refund(mailoutbox, data_fees, data_status):
         assert payment.provider_fee == sum(data_fees)
     else:
         assert payment.provider_fee is None
+
+
+@pytest.mark.parametrize(
+    "payment_method, is_refundable",
+    [
+        (Cash, False),
+        (SquarePOS, False),
+        (SquareOnline, True),
+    ],
+)
+def test_is_refundable(payment_method, is_refundable):
+    assert payment_method.is_refundable == is_refundable

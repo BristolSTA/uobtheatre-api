@@ -5,9 +5,10 @@ from uuid import uuid4
 
 from django.conf import settings
 from square.client import Client
+from square.http.api_response import ApiResponse as SquareApiResponse
 
 from uobtheatre.payments import models as payment_models
-from uobtheatre.utils.exceptions import GQLException, SquareException
+from uobtheatre.utils.exceptions import SquareException
 from uobtheatre.utils.utils import classproperty
 
 if TYPE_CHECKING:
@@ -15,6 +16,11 @@ if TYPE_CHECKING:
 
 
 class TransactionMethod(abc.ABC):
+    """
+    Absctact class for transactions methods. This includes both refunds and
+    payments.
+    """
+
     name: str
 
     def __init_subclass__(cls) -> None:
@@ -68,6 +74,11 @@ class TransactionMethod(abc.ABC):
     def is_refundable(cls):
         return issubclass(cls, Refundable)
 
+    @classmethod
+    def _handle_response_failure(cls, response: SquareApiResponse) -> None:
+        if not response.is_success():
+            raise SquareException(response)
+
 
 class PaymentMethod(TransactionMethod, abc.ABC):
     """
@@ -114,12 +125,21 @@ class PaymentMethod(TransactionMethod, abc.ABC):
     def create_payment_object(
         cls, pay_object: "Payable", value: int, app_fee, **kwargs
     ) -> "payment_models.Payment":
-        payment = super().create_payment_object(pay_object, value, app_fee, **kwargs)
-        payment.type == payment_models.Payment.PaymentType.PURCHASE
+        payment = super().create_payment_object(
+            pay_object,
+            value,
+            app_fee,
+            type=payment_models.Payment.PaymentType.PURCHASE,
+            **kwargs,
+        )
         return payment
 
 
 class RefundMethod(TransactionMethod, abc.ABC):
+    """
+    Abscract class for all refund methods.
+    """
+
     __all__: list[Type["RefundMethod"]] = []
 
     def __init_subclass__(cls) -> None:
@@ -132,15 +152,20 @@ class RefundMethod(TransactionMethod, abc.ABC):
 
     @staticmethod
     @abc.abstractmethod
-    def update_refund(payment: "payment_models.Payment", data: dict):
+    def update_refund(payment: "payment_models.Payment", request: dict):
         pass
 
     @classmethod
     def create_payment_object(
         cls, pay_object: "Payable", value: int, app_fee, **kwargs
     ) -> "payment_models.Payment":
-        payment = super().create_payment_object(pay_object, value, app_fee, **kwargs)
-        payment.type == payment_models.Payment.PaymentType.REFUND
+        payment = super().create_payment_object(
+            pay_object,
+            value,
+            app_fee,
+            type=payment_models.Payment.PaymentType.REFUND,
+            **kwargs,
+        )
         return payment
 
 
@@ -178,9 +203,7 @@ class SquarePaymentMethodMixin(abc.ABC):
             SquareException: When response is not successful
         """
         response = cls.client.payments.get_payment(payment_id)
-
-        if not response.is_success():
-            raise SquareException(response)
+        cls._handle_response_failure(response)  # pylint: disable=no-member
 
         return response.body["payment"]
 
@@ -233,6 +256,9 @@ class Card(ManualPaymentMethodMixin, PaymentMethod):
 
 
 class SquareRefund(RefundMethod):
+    """
+    Refund method for refunding square payments.
+    """
 
     description = "Square refund"
     client = Client(
@@ -245,20 +271,13 @@ class SquareRefund(RefundMethod):
         self.idempotency_key = idempotency_key
 
     def refund(self, payment: "payment_models.Payment"):
-        if not payment.status == payment_models.Payment.PaymentStatus.PAID:
-            raise GQLException(
-                "You cannot refund a payment that has not been completed", code=400
-            )
-
         body = {
             "idempotency_key": str(self.idempotency_key),
             "amount_money": {"amount": payment.value, "currency": payment.currency},
             "payment_id": payment.provider_payment_id,
         }
         response = self.client.refunds.refund_payment(body)
-
-        if not response.is_success():
-            raise SquareException(response)
+        self._handle_response_failure(response)
 
         amount_details = response.body["refund"]["amount_money"]
         square_refund_id = response.body["refund"]["id"]
@@ -266,8 +285,7 @@ class SquareRefund(RefundMethod):
         self.create_payment_object(
             payment.pay_object,
             -amount_details["amount"],
-            -payment.app_fee,
-            type=payment_models.Payment.PaymentType.REFUND,
+            None,
             provider_payment_id=square_refund_id,
             currency=amount_details["currency"],
             status=payment_models.Payment.PaymentStatus.PENDING,
@@ -340,8 +358,7 @@ class SquarePOS(PaymentMethod, SquarePaymentMethodMixin):
             },
         }
         response = self.client.terminal.create_terminal_checkout(body)
-        if not response.is_success():
-            raise SquareException(response)
+        self._handle_response_failure(response)
 
         return self.create_payment_object(
             pay_object,
@@ -404,8 +421,8 @@ class SquarePOS(PaymentMethod, SquarePaymentMethodMixin):
         response = cls.client.devices.list_device_codes(
             status=status, product_type=product_type
         )
-        if not response.is_success():
-            raise SquareException(response)
+        cls._handle_response_failure(response)
+
         return response.body.get("device_codes") or []
 
     @classmethod
@@ -422,9 +439,7 @@ class SquarePOS(PaymentMethod, SquarePaymentMethodMixin):
             SquareException: When response is not successful
         """
         response = cls.client.terminal.get_terminal_checkout(checkout_id)
-
-        if not response.is_success():
-            raise SquareException(response)
+        cls._handle_response_failure(response)
 
         return response.body["checkout"]
 
@@ -441,9 +456,7 @@ class SquarePOS(PaymentMethod, SquarePaymentMethodMixin):
         response = cls.client.terminal.cancel_terminal_checkout(
             payment.provider_payment_id
         )
-
-        if not response.is_success():
-            raise SquareException(response)
+        cls._handle_response_failure(response)
 
     @classmethod
     def get_processing_fee(  # pylint: disable=arguments-differ
@@ -530,9 +543,7 @@ class SquareOnline(Refundable, PaymentMethod, SquarePaymentMethodMixin):
             "reference_id": pay_object.payment_reference_id,
         }
         response = self.client.payments.create_payment(body)
-
-        if not response.is_success():
-            raise SquareException(response)
+        self._handle_response_failure(response)
 
         card_details = response.body["payment"]["card_details"]["card"]
         amount_details = response.body["payment"]["amount_money"]
@@ -564,7 +575,3 @@ class SquareOnline(Refundable, PaymentMethod, SquarePaymentMethodMixin):
             int: The processing fee
         """
         return cls.payment_processing_fee(data or cls.get_payment(payment_id))
-
-    def refund(self, payment: "payment_models.Payment", idempotency_key: str):
-        refunder = SquareRefund(idempotency_key=idempotency_key)
-        refunder.refund(payment)

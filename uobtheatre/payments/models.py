@@ -219,7 +219,7 @@ class Payment(TimeStampedMixin, models.Model):
             raise GQLException(f"A {self.provider} payment is not refundable")
 
         if not refund_method:
-            refund_method = self.payment_method.refund_method
+            refund_method = self.provider_class.refund_method
 
         refund_method.refund(self)
 

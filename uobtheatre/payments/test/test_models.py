@@ -1,13 +1,16 @@
-from os import wait
-from types import SimpleNamespace
+from unittest import mock
 from unittest.mock import PropertyMock, patch
 
 import pytest
 
 from uobtheatre.payments.models import Payment
 from uobtheatre.payments.payment_methods import Cash, SquareOnline, SquarePOS
-from uobtheatre.payments.test.factories import PaymentFactory
-from uobtheatre.bookings.test.factories import BookingFactory
+from uobtheatre.payments.test.factories import (
+    PaymentFactory,
+    mock_payment_method,
+    mock_refund_method,
+)
+from uobtheatre.utils.exceptions import GQLException
 
 
 @pytest.mark.django_db
@@ -78,10 +81,10 @@ def test_update_payment_from_square_no_provider_id(mock_square):
     with mock_square(
         SquareOnline.client.payments,
         "get_payment",
-    ) as mock:
+    ) as mock_get:
         payment.sync_payment_with_provider()
+        mock_get.assert_not_called()
 
-    mock.assert_not_called()
     assert payment.provider_fee == 0
 
 
@@ -182,14 +185,14 @@ def test_cancel(provider, status, is_cancelled, mock_square):
     payment = PaymentFactory(provider=provider, status=status)
     with mock_square(
         SquarePOS.client.terminal, "cancel_terminal_checkout", success=True
-    ) as mock:
+    ) as mock_cancel:
         payment.cancel()
 
-    # If cancelled this should have been called
-    if is_cancelled:
-        mock.assert_called_once_with(payment.provider_payment_id)
-    else:
-        mock.assert_not_called()
+        # If cancelled this should have been called
+        if is_cancelled:
+            mock_cancel.assert_called_once_with(payment.provider_payment_id)
+        else:
+            mock_cancel.assert_not_called()
 
     # If pending assert this payment is deleted
     is_pending = status == Payment.PaymentStatus.PENDING
@@ -240,7 +243,6 @@ def test_sync_all_payments():
 
 @pytest.mark.django_db
 def test_handle_update_refund_webhook():
-    data = {"object": {"refund": {"id": "abc"}}}
     payment = PaymentFactory(provider_payment_id="abc", type=Payment.PaymentType.REFUND)
     with patch(
         "uobtheatre.payments.payment_methods.SquareRefund.update_refund",
@@ -249,3 +251,53 @@ def test_handle_update_refund_webhook():
         Payment.handle_update_refund_webhook("abc", {"id": "abc"})
 
     update_mock.assert_called_once_with(payment, {"id": "abc"})
+
+
+@pytest.mark.django_db
+def test_refund_pending_payment():
+    payment = PaymentFactory(status=Payment.PaymentStatus.PENDING)
+    with pytest.raises(GQLException) as exc:
+        payment.refund()
+        assert exc.message == "You cannot refund a PENDING payment"
+
+
+@pytest.mark.django_db
+def test_refund_unrefundable_payment():
+    payment = PaymentFactory(status=Payment.PaymentStatus.COMPLETED)
+    with mock.patch(
+        "uobtheatre.payments.models.Payment.provider_class", new_callable=PropertyMock
+    ) as p_mock:
+        p_mock.return_value = mock_payment_method(is_refundable=False)
+        with pytest.raises(GQLException) as exc:
+            payment.refund()
+            assert exc.message == "You cannot refund a payment that is not refundable"
+
+
+@pytest.mark.django_db
+def test_refund_payment_with_refund_method():
+    payment = PaymentFactory(status=Payment.PaymentStatus.COMPLETED)
+    refund_method = mock_refund_method()
+    other_refund_method = mock_refund_method()
+    with mock.patch(
+        "uobtheatre.payments.models.Payment.provider_class", new_callable=PropertyMock
+    ) as p_mock:
+        p_mock.return_value = mock_payment_method(is_refundable=True)
+        payment.refund(refund_method=other_refund_method)
+
+        # Assert correct refund method is called
+        refund_method.refund.assert_not_called()
+        other_refund_method.refund.assert_called_once_with(payment)
+
+
+@pytest.mark.django_db
+def test_refund_payment_without_refund_method():
+    payment = PaymentFactory(status=Payment.PaymentStatus.COMPLETED)
+    refund_method = mock_refund_method()
+    with mock.patch(
+        "uobtheatre.payments.models.Payment.provider_class", new_callable=PropertyMock
+    ) as p_mock:
+        p_mock.return_value = mock_payment_method(
+            is_refundable=True, refund_method=refund_method
+        )
+        payment.refund()
+        refund_method.refund.assert_called_once_with(payment)
