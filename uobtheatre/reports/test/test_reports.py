@@ -16,6 +16,7 @@ from uobtheatre.discounts.test.factories import (
 )
 from uobtheatre.payments import payment_methods
 from uobtheatre.payments.models import Payment
+from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.test.factories import PaymentFactory
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
@@ -75,7 +76,7 @@ def create_fixtures():
     )  # A comp booking. Total should be 0
 
     BookingFactory(
-        performance=booking_1.performance, status=Booking.BookingStatus.IN_PROGRESS
+        performance=booking_1.performance, status=Payable.PayableStatus.IN_PROGRESS
     )  # This booking is in progress - it shouldn't show in any reports
 
     discount_requirement = DiscountRequirementFactory()

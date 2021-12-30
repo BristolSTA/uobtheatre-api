@@ -6,7 +6,6 @@ from uuid import uuid4
 from django.conf import settings
 from square.client import Client
 
-from uobtheatre.mail.composer import MailComposer
 from uobtheatre.payments import models as payment_models
 from uobtheatre.utils.exceptions import GQLException, SquareException
 from uobtheatre.utils.utils import classproperty
@@ -135,20 +134,6 @@ class RefundMethod(TransactionMethod, abc.ABC):
     @abc.abstractmethod
     def update_refund(payment: "payment_models.Payment", data: dict):
         pass
-
-    @classmethod
-    def notify_refund_subject(cls, payment: "payment_models.Payment"):
-        user = payment.pay_object.user
-        mail = (
-            MailComposer()
-            .line(
-                f"Your payment of {payment.value_currency} has been successfully refunded (ID: {payment.provider_payment_id} | {payment.id})."
-            )
-            .line(
-                f"This will have been refunded in your original payment method ({payment.provider_class.description}{f' {payment.card_brand} ending {payment.last_4}' if payment.card_brand and payment.last_4 else ''})"
-            )
-        )
-        mail.send("Refund successfully processed", user.email)
 
     @classmethod
     def create_payment_object(
@@ -301,7 +286,6 @@ class SquareRefund(RefundMethod):
             and not payment.status == payment_models.Payment.PaymentStatus.COMPLETED
         ):
             payment.status = payment_models.Payment.PaymentStatus.COMPLETED
-            cls.notify_refund_subject(payment)
         payment.save()
 
 

@@ -2,9 +2,9 @@ from unittest.mock import PropertyMock, patch
 
 import pytest
 
-from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.payments.models import Payment
+from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.payment_methods import (
     Card,
     Cash,
@@ -357,7 +357,7 @@ def test_is_valid_callback(body, signature, signature_key, webhook_url, valid):
 
 @pytest.mark.django_db
 def test_handle_terminal_checkout_updated_webhook_completed():
-    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
     payment = PaymentFactory()
     data = {
         "object": {
@@ -374,7 +374,7 @@ def test_handle_terminal_checkout_updated_webhook_completed():
     SquarePOS.handle_terminal_checkout_updated_webhook(data)
     booking.refresh_from_db()
 
-    assert booking.status == Booking.BookingStatus.PAID
+    assert booking.status == Payable.PayableStatus.PAID
     assert Payment.objects.count() == 1
 
     payment = Payment.objects.first()
@@ -383,7 +383,7 @@ def test_handle_terminal_checkout_updated_webhook_completed():
 
 @pytest.mark.django_db
 def test_handle_terminal_checkout_updated_webhook_not_completed():
-    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
     data = {
         "object": {
             "checkout": {
@@ -396,12 +396,12 @@ def test_handle_terminal_checkout_updated_webhook_not_completed():
     SquarePOS.handle_terminal_checkout_updated_webhook(data)
 
     booking.refresh_from_db()
-    assert booking.status == Booking.BookingStatus.IN_PROGRESS
+    assert booking.status == Payable.PayableStatus.IN_PROGRESS
 
 
 @pytest.mark.django_db
 def test_handle_terminal_checkout_updated_canceled():
-    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
     payment = PaymentFactory(
         provider_payment_id="abc",
         provider=SquarePOS.name,
@@ -420,7 +420,7 @@ def test_handle_terminal_checkout_updated_canceled():
     SquarePOS.handle_terminal_checkout_updated_webhook(data)
 
     booking.refresh_from_db()
-    assert booking.status == Booking.BookingStatus.IN_PROGRESS
+    assert booking.status == Payable.PayableStatus.IN_PROGRESS
     assert not Payment.objects.filter(id=payment.id).exists()
 
 
@@ -430,7 +430,7 @@ def test_handle_terminal_checkout_updated_canceled_no_payments():
     When square sends a webhook that cancels a checkout. If there is no
     associated payment then do nothing.
     """
-    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
     data = {
         "object": {
             "checkout": {
@@ -444,7 +444,7 @@ def test_handle_terminal_checkout_updated_canceled_no_payments():
     SquarePOS.handle_terminal_checkout_updated_webhook(data)
 
     booking.refresh_from_db()
-    assert booking.status == Booking.BookingStatus.IN_PROGRESS
+    assert booking.status == Payable.PayableStatus.IN_PROGRESS
 
 
 @pytest.mark.django_db
@@ -531,7 +531,6 @@ def test_square_refund_pending_payment():
 )
 def test_square_online_update_refund(mailoutbox, data_fees, data_status):
     payment = PaymentFactory(status=Payment.PaymentStatus.PENDING, provider_fee=None)
-    payment.pay_object.user.email = "myuser@example.org"
 
     data = {
         "object": {
@@ -554,10 +553,6 @@ def test_square_online_update_refund(mailoutbox, data_fees, data_status):
     payment.refresh_from_db()
     if data_status == "COMPLETED":
         assert payment.status == Payment.PaymentStatus.COMPLETED
-
-        assert len(mailoutbox) == 1  # Email confirming successful refund
-        assert mailoutbox[0].subject == "Refund successfully processed"
-        assert mailoutbox[0].to[0] == "myuser@example.org"
     else:
         assert payment.status == Payment.PaymentStatus.PENDING
 

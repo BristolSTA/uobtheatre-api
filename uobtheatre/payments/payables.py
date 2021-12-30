@@ -1,19 +1,33 @@
 import abc
 
 from django.contrib.contenttypes.fields import GenericRelation
+from django.db import models
 from django.db.models import Sum
 
 from uobtheatre.payments.models import Payment
 from uobtheatre.utils.models import AbstractModelMeta
 
 
-class Payable(metaclass=AbstractModelMeta):
+class Payable(models.Model, metaclass=AbstractModelMeta):
     """
     An model which can be paid for
     """
 
     payments = GenericRelation(
         Payment, object_id_field="pay_object_id", content_type_field="pay_object_type"
+    )
+
+    class PayableStatus(models.TextChoices):
+        IN_PROGRESS = "IN_PROGRESS", "In Progress"
+        CANCELLED = "CANCELLED", "Cancelled"
+        PAID = "PAID", "Paid"
+        LOCKED = "LOCKED", "Locked"
+        REFUNDED = "REFUNDED", "Refunded"
+
+    status = models.CharField(
+        max_length=20,
+        choices=PayableStatus.choices,
+        default=PayableStatus.IN_PROGRESS,
     )
 
     @property
@@ -74,3 +88,6 @@ class Payable(metaclass=AbstractModelMeta):
         return self.payments.annotate_sales_breakdown(["society_transfer_value"])[  # type: ignore
             "society_transfer_value"
         ]
+
+    class Meta:
+        abstract = True
