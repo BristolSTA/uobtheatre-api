@@ -54,11 +54,18 @@ jobs:
     - name: Collect Static
       run: ./manage.py collectstatic --noinput
 
-    - name: pytest - check tests pass and coverage is 100%
+    - name: Tests
       run: |
         pytest --cov uobtheatre --cov-fail-under 100 -m "not square_integration"
       env:
         DATABASE_URL: postgresql://postgres:postgres@0.0.0.0:5432/uobtheatre_api
+
+    - name: System tests
+      run: |
+        pytest --cov uobtheatre -m "square_integration"
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@0.0.0.0:5432/uobtheatre_api
+        SQUARE_ACCESS_TOKEN: ${{ secrets.SQUARE_SANDBOX_ACCESS_TOKEN }}
 
   lint:
     runs-on: ubuntu-latest
