@@ -63,7 +63,7 @@ repos:
         exclude: migrations/
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.812
+    rev: v0.750
     hooks:
       - id: mypy
         additional_dependencies:
