@@ -219,26 +219,17 @@ def test_provider_class_unknown():
 
 @pytest.mark.django_db
 def test_sync_all_payments():
-    with_payment_fee = PaymentFactory(provider=SquareOnline.name, provider_fee=10)
-    different_provider = PaymentFactory(provider=Cash.name, provider_fee=None)
+    PaymentFactory(provider=SquareOnline.name, provider_fee=10)
+    PaymentFactory(provider=Cash.name, provider_fee=None)
 
     to_update = PaymentFactory(provider=SquareOnline.name, provider_fee=None)
 
-    with patch.object(SquareOnline, "get_processing_fee") as online_get, patch.object(
-        Cash, "get_processing_fee"
-    ) as cash_get:
-        online_get.return_value = 20
+    with patch.object(SquareOnline, "sync_payment") as online_sync, patch.object(
+        Cash, "sync_payment"
+    ) as cash_sync:
         Payment.sync_payments()
-        cash_get.assert_not_called()
-        online_get.assert_called_once_with(to_update.provider_payment_id, data=None)
-
-    with_payment_fee.refresh_from_db()
-    different_provider.refresh_from_db()
-    to_update.refresh_from_db()
-
-    assert with_payment_fee.provider_fee == 10
-    assert different_provider.provider_fee is None
-    assert to_update.provider_fee == 20
+        cash_sync.assert_not_called()  # Not called because no provider ID
+        online_sync.assert_called_once_with(to_update, None)
 
 
 @pytest.mark.django_db

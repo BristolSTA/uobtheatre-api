@@ -7,6 +7,10 @@ from uobtheatre.payments.models import Payment
 from uobtheatre.payments.payment_methods import SquareRefund
 from uobtheatre.payments.test.factories import PaymentFactory
 
+###
+# Square Refund RefundMethod
+###
+
 
 @pytest.mark.django_db
 def test_square_refund_refund(mock_square):
@@ -51,3 +55,72 @@ def test_square_refund_refund(mock_square):
             "payment_id": payment.provider_payment_id,
         }
     )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "data_fees, data_status",
+    [
+        ([1, 2, 3], "COMPLETED"),
+        (None, "COMPLETED"),
+        (None, "PENDING"),
+        ([1], "PENDING"),
+    ],
+)
+def test_square_online_update_refund(data_fees, data_status):
+    payment = PaymentFactory(status=Payment.PaymentStatus.PENDING, provider_fee=None)
+
+    data = {
+        "object": {
+            "refund": {
+                "status": data_status,
+            }
+        }
+    }
+
+    if data_fees:
+        data["object"]["refund"]["processing_fee"] = [
+            {
+                "amount_money": {"amount": fee, "currency": "GBP"},
+            }
+            for fee in data_fees
+        ]
+
+    SquareRefund.update_refund(payment, data)
+
+    payment.refresh_from_db()
+    if data_status == "COMPLETED":
+        assert payment.status == Payment.PaymentStatus.COMPLETED
+    else:
+        assert payment.status == Payment.PaymentStatus.PENDING
+
+    if data_fees:
+        assert payment.provider_fee == sum(data_fees)
+    else:
+        assert payment.provider_fee is None
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("with_data", [False, True])
+def test_square_refund_sync_payment(mock_square, with_data):
+    payment = PaymentFactory(
+        value=-100,
+        provider_fee=None,
+        provider=SquareRefund.name,
+        status=Payment.PaymentStatus.PENDING,
+    )
+    data = {
+        "id": "abc",
+        "status": "COMPLETED",
+        "processing_fee": [{"amount_money": {"amount": -10, "currency": "GBP"}}],
+    }
+    with mock_square(
+        SquareRefund.client.refunds,
+        "get_payment_refund",
+        body={"refund": data},
+        success=True,
+    ):
+        payment.sync_payment_with_provider(data=data if with_data else None)
+        payment.refresh_from_db()
+    assert payment.provider_fee == -10
+    assert payment.status == Payment.PaymentStatus.COMPLETED

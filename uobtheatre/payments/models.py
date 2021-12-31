@@ -50,6 +50,8 @@ class Payment(TimeStampedMixin, models.Model):
 
         PENDING = "PENDING", "In progress"
         COMPLETED = "COMPLETED", "Completed"
+        REJECTED = "REJECTED", "Rejected"
+        FAILED = "FAILED", "Failed"
 
     objects = PaymentQuerySet.as_manager()
 
@@ -82,7 +84,7 @@ class Payment(TimeStampedMixin, models.Model):
 
     provider_payment_id = models.CharField(max_length=128, null=True, blank=True)
     provider = models.CharField(
-        max_length=20, choices=payment_methods.PaymentMethod.choices
+        max_length=20, choices=payment_methods.TransactionMethod.choices
     )
 
     value = models.IntegerField()
@@ -192,12 +194,7 @@ class Payment(TimeStampedMixin, models.Model):
         payment.
         """
         if self.provider_payment_id is not None:
-            processing_fee = self.provider_class.get_processing_fee(
-                str(self.provider_payment_id), data=data
-            )
-            self.provider_fee = processing_fee
-
-        self.save()
+            self.provider_class.sync_payment(self, data)
 
     def cancel(self):
         """
@@ -227,23 +224,35 @@ class Payment(TimeStampedMixin, models.Model):
 TOTAL_PROVIDER_FEE = Coalesce(
     Sum(
         "provider_fee",
-        filter=Q(type=Payment.PaymentType.PURCHASE),
     ),
     0,
 )
+NET_TOTAL = Sum("value")
+NET_CARD_TOTAL = Sum("value", filter=(~Q(provider=Cash.name)))
 TOTAL_SALES = Sum("value", filter=Q(type=Payment.PaymentType.PURCHASE))
 TOTAL_CARD_SALES = Sum(
     "value", filter=(~Q(provider=Cash.name) & Q(type=Payment.PaymentType.PURCHASE))
 )
-APP_FEE = Coalesce(Sum("app_fee", filter=Q(type=Payment.PaymentType.PURCHASE)), 0)
+TOTAL_REFUNDS = Sum("value", filter=Q(type=Payment.PaymentType.REFUND))
+TOTAL_CARD_REFUNDS = Sum(
+    "value", filter=(~Q(provider=Cash.name) & Q(type=Payment.PaymentType.REFUND))
+)
+APP_FEE = Coalesce(Sum("app_fee"), 0)
 
 SALE_BREAKDOWN_ANNOTATIONS: dict[str, Any] = {
+    # Gross Income
+    "net_income": NET_TOTAL,
+    "net_card_income": NET_CARD_TOTAL,
+    # Total Purchases / Sales
     "total_sales": TOTAL_SALES,
     "total_card_sales": TOTAL_CARD_SALES,
-    # Amount charged by the payment provider (square) for these payments
+    # Total Refunds
+    "total_refunds": TOTAL_REFUNDS,
+    "total_card_refunds": TOTAL_CARD_REFUNDS,
+    # Gross Amount charged by the payment provider (square) for these payments
     "provider_payment_value": TOTAL_PROVIDER_FEE,
     # Amount we take from net payment - provider cut
     "app_payment_value": APP_FEE - TOTAL_PROVIDER_FEE,
-    "society_transfer_value": TOTAL_CARD_SALES - APP_FEE,
-    "society_revenue": TOTAL_SALES - APP_FEE,
+    "society_transfer_value": NET_CARD_TOTAL - APP_FEE,
+    "society_revenue": NET_TOTAL - APP_FEE,
 }

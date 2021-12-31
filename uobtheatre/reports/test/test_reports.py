@@ -75,6 +75,12 @@ def create_fixtures():
         reference="booking4",
     )  # A comp booking. Total should be 0
 
+    booking_5 = BookingFactory(
+        performance=booking_1.performance,
+        reference="booking5",
+        status=Booking.PayableStatus.REFUNDED,
+    )  # A refunded booking (of 1100 cost)
+
     BookingFactory(
         performance=booking_1.performance, status=Payable.PayableStatus.IN_PROGRESS
     )  # This booking is in progress - it shouldn't show in any reports
@@ -116,6 +122,9 @@ def create_fixtures():
         booking=booking_4,
         seat_group=seat_group_2,
     )
+    TicketFactory(
+        booking=booking_5, seat_group=seat_group_1, concession_type=concession_1
+    )
 
     payment_1 = PaymentFactory(
         pay_object=booking_1,
@@ -144,10 +153,27 @@ def create_fixtures():
     payment_3.created_at = "2021-09-08T12:00:01"
     payment_3.save()
 
+    payment_4 = PaymentFactory(
+        pay_object=booking_5, value=booking_5.total, app_fee=5, provider_fee=2
+    )
+    payment_4.created_at = "2021-09-08T22:00:01"
+    payment_4.save()
+
+    refund_1 = PaymentFactory(
+        pay_object=booking_5,
+        value=-booking_5.total,
+        provider=payment_methods.SquareRefund.name,
+        type=Payment.PaymentType.REFUND,
+        app_fee=-5,
+        provider_fee=-2,
+    )
+    refund_1.created_at = "2021-09-08T22:10:01"
+    refund_1.save()
+
     # Create a pending payment (shouldn't show in reports)
     PaymentFactory(status=Payment.PaymentStatus.PENDING)
 
-    return (payment_1, payment_2, payment_3)
+    return (payment_1, payment_2, payment_3, payment_4, refund_1)
 
 
 def test_dataset_class():
@@ -203,9 +229,10 @@ def test_require_option():
 
 @pytest.mark.django_db
 def test_period_totals_breakdown_report():
-    (payment_1, _, payment_3) = create_fixtures()
+    (payment_1, _, payment_3, payment_4, refund_1) = create_fixtures()
     booking_1 = payment_1.pay_object
     booking_3 = payment_3.pay_object
+    booking_5 = payment_4.pay_object
 
     # Generate report that covers this period
     with patch.object(Payment, "sync_payments") as mock_sync:
@@ -220,15 +247,16 @@ def test_period_totals_breakdown_report():
 
     assert len(report.meta) == 2
     assert report.meta[0].name == "No. of Payments"
-    assert report.meta[0].value == "2"
+    assert report.meta[0].value == "4"
     assert report.meta[1].name == "Total Income"
     assert report.meta[1].value == "1680"
 
     assert report.datasets[0].name == "Provider Totals"
     assert len(report.datasets[0].headings) == 2
     assert report.datasets[0].data == [
-        ["SQUARE_ONLINE", 580],
+        ["SQUARE_ONLINE", 580 + 1100],
         ["SQUARE_POS", 1100],
+        ["SQUARE_REFUND", -1100],
     ]
 
     assert report.datasets[1].name == "Production Totals"
@@ -273,6 +301,30 @@ def test_period_totals_breakdown_report():
             "SQUARE_ONLINE",
             payment_3.provider_payment_id,
         ],
+        [
+            str(payment_4.id),
+            "2021-09-08 22:00:01",
+            "PURCHASE",
+            str(booking_5.id),
+            "Booking",
+            str(booking_5.performance.production.id),
+            "Amazing Show 1",
+            "1100",
+            "SQUARE_ONLINE",
+            payment_4.provider_payment_id,
+        ],
+        [
+            str(refund_1.id),
+            "2021-09-08 22:10:01",
+            "REFUND",
+            str(booking_5.id),
+            "Booking",
+            str(booking_5.performance.production.id),
+            "Amazing Show 1",
+            "-1100",
+            "SQUARE_REFUND",
+            refund_1.provider_payment_id,
+        ],
     ]
 
 
@@ -309,18 +361,22 @@ def test_outstanding_society_payments_report():
     ]
 
     assert report.datasets[1].name == "Productions"
-    assert len(report.datasets[1].headings) == 9
+    assert len(report.datasets[1].headings) == 13
     assert report.datasets[1].data == [
         [
             production_1.id,
             "Amazing Show 1",
             society_1.id,
             "Society 1",
-            3200,  # Payments total (1100 + 2100)
-            1100,  # Of which card: 1100
+            4300,  # Payments total (2200 + 2100)
+            2200,  # Of which card: 1100*2
+            -1100,  # Refunds total
+            -1100,  # Of which card
+            3200,  # Net income
+            1100,  # Net Card income
             10,  # Square fees
             190,  # Total misc costs (2 bookings * 100) - square fee
-            900,  # Card payments (1100) - Total Misc costs (200)
+            900,  # Society transfer amount: Card payments (1100) - Total Misc costs (200)
         ]
     ]
 

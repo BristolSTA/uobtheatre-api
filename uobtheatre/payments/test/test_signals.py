@@ -10,7 +10,7 @@ from uobtheatre.payments.test.factories import PaymentFactory
 
 
 @pytest.mark.django_db
-def test_payment_model_post_save_signal(mailoutbox):
+def test_payment_model_post_save_status_update(mailoutbox):
     booking = BookingFactory(status=Payable.PayableStatus.PAID)
     booking.user.email = "myuser@example.org"
     PaymentFactory(value=200, pay_object=booking)
@@ -27,6 +27,7 @@ def test_payment_model_post_save_signal(mailoutbox):
             status=Payment.PaymentStatus.PENDING,
         )
         mock.assert_called_once()
+
     assert booking.status == Payable.PayableStatus.LOCKED
     assert len(mailoutbox) == 0
 

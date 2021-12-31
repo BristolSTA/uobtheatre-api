@@ -6,4 +6,4 @@ class ProductionsConfig(AppConfig):
     verbose_name = "Productions"
 
     def ready(self):
-        pass
+        import uobtheatre.productions.signals  # NOQA

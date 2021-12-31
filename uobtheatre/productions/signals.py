@@ -16,6 +16,7 @@ def check_production_status_validation(production_instance: Production):
     old_instance = (
         Production.objects.get(pk=production_instance.id)
         if production_instance.id
+        and not production_instance._state.adding  # pylint: disable=protected-access
         else None
     )
 

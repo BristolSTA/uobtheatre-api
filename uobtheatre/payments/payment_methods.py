@@ -15,6 +15,17 @@ if TYPE_CHECKING:
     from uobtheatre.payments.payables import Payable
 
 
+def square_status_map():
+    return {
+        "APPROVED": payment_models.Payment.PaymentStatus.PENDING,
+        "PENDING": payment_models.Payment.PaymentStatus.PENDING,
+        "COMPLETED": payment_models.Payment.PaymentStatus.COMPLETED,
+        "REJECTED": payment_models.Payment.PaymentStatus.REJECTED,
+        "CANCELLED": payment_models.Payment.PaymentStatus.FAILED,
+        "FAILED": payment_models.Payment.PaymentStatus.FAILED,
+    }
+
+
 class TransactionMethod(abc.ABC):
     """
     Absctact class for transactions methods. This includes both refunds and
@@ -65,6 +76,11 @@ class TransactionMethod(abc.ABC):
         )
 
     @classmethod
+    @abc.abstractmethod
+    def sync_payment(cls, payment: "payment_models.Payment", data: dict = None):
+        """Syncs the refund payment from the provider"""
+
+    @classmethod
     @property
     def is_manual(cls):
         return issubclass(cls, ManualPaymentMethodMixin)
@@ -73,11 +89,6 @@ class TransactionMethod(abc.ABC):
     @property
     def is_refundable(cls):
         return issubclass(cls, Refundable)
-
-    @classmethod
-    def _handle_response_failure(cls, response: SquareApiResponse) -> None:
-        if not response.is_success():
-            raise SquareException(response)
 
 
 class PaymentMethod(TransactionMethod, abc.ABC):
@@ -115,11 +126,6 @@ class PaymentMethod(TransactionMethod, abc.ABC):
         pending) so the default implementation is just to return.
         """
         return
-
-    @classmethod
-    @abc.abstractmethod
-    def get_processing_fee(cls, payment_id: str, data: dict = None) -> Optional[int]:
-        raise NotImplementedError
 
     @classmethod
     def create_payment_object(
@@ -176,18 +182,27 @@ class Refundable(abc.ABC):
         pass
 
 
-class SquarePaymentMethodMixin(abc.ABC):
-    """
-    Mixin for SquarePayment method classes which adds client and helper
-    function. Sub-classes should import this mixin and the main PaymentMethod
-    class.
-    """
+class SquareAPIMixin(abc.ABC):
+    """Mixin that inserts square API client and handlers"""
 
     client = Client(
         square_version="2020-11-18",
         access_token=settings.SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],  # type: ignore
         environment=settings.SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],  # type: ignore
     )
+
+    @classmethod
+    def _handle_response_failure(cls, response: SquareApiResponse) -> None:
+        if not response.is_success():
+            raise SquareException(response)
+
+
+class SquarePaymentMethod(SquareAPIMixin, abc.ABC):
+    """
+    Mixin for SquarePayment method classes which adds client and helper
+    function. Sub-classes should import this mixin and the main PaymentMethod
+    class.
+    """
 
     @classmethod
     def get_payment(cls, payment_id: str):
@@ -239,8 +254,8 @@ class ManualPaymentMethodMixin(abc.ABC):
         return self.create_payment_object(pay_object, value, app_fee)  # type: ignore # pylint: disable=arguments-differ
 
     @classmethod
-    def get_processing_fee(cls, _, __=None) -> Optional[int]:
-        return None
+    def sync_payment(cls, *_, **__):
+        return
 
 
 class Cash(ManualPaymentMethodMixin, PaymentMethod):
@@ -255,17 +270,12 @@ class Card(ManualPaymentMethodMixin, PaymentMethod):
     description = "Manual card payment"
 
 
-class SquareRefund(RefundMethod):
+class SquareRefund(RefundMethod, SquareAPIMixin):
     """
     Refund method for refunding square payments.
     """
 
     description = "Square refund"
-    client = Client(
-        square_version="2020-11-18",
-        access_token=settings.SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],  # type: ignore
-        environment=settings.SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],  # type: ignore
-    )
 
     def __init__(self, idempotency_key: str):
         self.idempotency_key = idempotency_key
@@ -285,29 +295,41 @@ class SquareRefund(RefundMethod):
         self.create_payment_object(
             payment.pay_object,
             -amount_details["amount"],
-            None,
+            -payment.app_fee if payment.app_fee else None,
             provider_payment_id=square_refund_id,
             currency=amount_details["currency"],
             status=payment_models.Payment.PaymentStatus.PENDING,
         )
 
     @classmethod
-    def update_refund(cls, payment: "payment_models.Payment", request: dict):
-        refund_data = request["object"]["refund"]
+    def sync_payment(cls, payment: "payment_models.Payment", data: dict = None):
+        if not data:
+            response = cls.client.refunds.get_payment_refund(
+                payment.provider_payment_id
+            )
+            cls._handle_response_failure(response)
+            data = response.body["refund"]
 
-        if processing_fees := refund_data.get("processing_fee"):
+        cls._fill_payment_from_response_object(payment, data).save()
+
+    @classmethod
+    def _fill_payment_from_response_object(cls, payment, response_object):
+        """Updates and fills a payment model from a refund response object"""
+        payment.status = square_status_map()[response_object["status"]]
+        if processing_fees := response_object.get("processing_fee"):
             payment.provider_fee = sum(
                 fee["amount_money"]["amount"] for fee in processing_fees
             )
-        if (
-            refund_data["status"] == "COMPLETED"
-            and not payment.status == payment_models.Payment.PaymentStatus.COMPLETED
-        ):
-            payment.status = payment_models.Payment.PaymentStatus.COMPLETED
-        payment.save()
+        return payment
+
+    @classmethod
+    def update_refund(cls, payment: "payment_models.Payment", request: dict):
+        cls._fill_payment_from_response_object(
+            payment, request["object"]["refund"]
+        ).save()
 
 
-class SquarePOS(PaymentMethod, SquarePaymentMethodMixin):
+class SquarePOS(PaymentMethod, SquarePaymentMethod):
     """
     Uses Square terminal api to create payment. Used for inperson card
     transactions.
@@ -459,31 +481,23 @@ class SquarePOS(PaymentMethod, SquarePaymentMethodMixin):
         cls._handle_response_failure(response)
 
     @classmethod
-    def get_processing_fee(  # pylint: disable=arguments-differ
-        cls, checkout_id: str, data: dict = None
-    ) -> Optional[int]:
-        """
-        Get processing fee for a square checkout.
-
-        Args:
-            checkout_id (str): The id of the square checkout
-            data (dict, optional): Prefetched checkout reponse. This is used
-                when the checkout has already been fetched from the api and the
-                processing_fee is to be extracted from this response.
-
-        Returns:
-            int: The processing fee
-        """
-        checkout = data if data else cls.get_checkout(checkout_id)
-        processing_fees = [
-            cls.payment_processing_fee(cls.get_payment(payment_id))
-            for payment_id in checkout["payment_ids"]
-        ]
-        # Sum all non-none processing fess
-        return sum(filter(None, processing_fees))
+    def sync_payment(cls, payment: "payment_models.Payment", data: dict = None):
+        """Syncs the given payment with the raw payment data"""
+        checkout = data if data else cls.get_checkout(payment.provider_payment_id)
+        payment.provider_fee = sum(
+            filter(
+                None,
+                [
+                    cls.payment_processing_fee(cls.get_payment(payment_id))
+                    for payment_id in checkout["payment_ids"]
+                ],
+            )
+        )
+        payment.status = square_status_map()[checkout["status"]]
+        payment.save()
 
 
-class SquareOnline(Refundable, PaymentMethod, SquarePaymentMethodMixin):
+class SquareOnline(Refundable, PaymentMethod, SquarePaymentMethod):
     """
     Uses Square checkout api to create payment. Used for online transactions.
 
@@ -561,17 +575,10 @@ class SquareOnline(Refundable, PaymentMethod, SquarePaymentMethodMixin):
         )
 
     @classmethod
-    def get_processing_fee(cls, payment_id: str, data: dict = None) -> Optional[int]:
-        """
-        Get processing fee for a square payment.
-
-        Args:
-            payment_id (str): The id of the square payment
-            data (dict, optional): Prefetched payment reponse. This is used
-                when the payment has already been fetched from the api and the
-                processing_fee is to be extracted from this response.
-
-        Returns:
-            int: The processing fee
-        """
-        return cls.payment_processing_fee(data or cls.get_payment(payment_id))
+    def sync_payment(cls, payment: "payment_models.Payment", data: dict = None):
+        """Syncs the given payment with the raw payment data"""
+        if not data:
+            data = cls.get_payment(payment.provider_payment_id)
+        payment.provider_fee = cls.payment_processing_fee(data)
+        payment.status = square_status_map()[data["status"]]
+        payment.save()

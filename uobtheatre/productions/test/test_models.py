@@ -20,6 +20,7 @@ from uobtheatre.discounts.test.factories import (
     DiscountFactory,
     DiscountRequirementFactory,
 )
+from uobtheatre.payments.models import Payment
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.payment_methods import Card, Cash, SquareOnline
 from uobtheatre.payments.test.factories import PaymentFactory
@@ -933,6 +934,17 @@ def test_sales_breakdown_production():
         pay_object=booking_1, provider_fee=4, app_fee=200, value=600, provider=Card.name
     )
     PaymentFactory(
+        pay_object=booking_1, provider_fee=4, app_fee=200, value=600, provider=Card.name
+    )
+    PaymentFactory(
+        pay_object=booking_1,
+        provider_fee=-4,
+        app_fee=-200,
+        value=-600,
+        provider=Card.name,
+        type=Payment.PaymentType.REFUND,
+    )
+    PaymentFactory(
         pay_object=booking_2,
         provider_fee=10,
         app_fee=150,
@@ -945,8 +957,12 @@ def test_sales_breakdown_production():
         "provider_payment_value": 16,
         "society_revenue": 750,
         "society_transfer_value": 550,
-        "total_card_sales": 1000,
-        "total_sales": 1200,
+        "total_card_sales": 1600,
+        "total_sales": 1800,
+        "total_refunds": -600,
+        "total_card_refunds": -600,
+        "net_income": 1200,
+        "net_card_income": 1000,
     }
 
 
@@ -986,6 +1002,10 @@ def test_sales_breakdown_performance():
         "society_transfer_value": 550,
         "total_card_sales": 1000,
         "total_sales": 1200,
+        "total_refunds": 0,
+        "total_card_refunds": 0,
+        "net_income": 1200,
+        "net_card_income": 1000,
     }
 
 
@@ -1003,4 +1023,8 @@ def test_sales_breakdown_with_blank_fees():
         "society_transfer_value": 200,
         "total_card_sales": 200,
         "total_sales": 200,
+        "total_refunds": 0,
+        "total_card_refunds": 0,
+        "net_income": 200,
+        "net_card_income": 200,
     }

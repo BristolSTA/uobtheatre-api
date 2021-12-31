@@ -13,9 +13,6 @@ def on_payment_save(instance: Payment, **_):
 
 def on_payment_save_callback(payment_instance: Payment):
     """Post payment save actions"""
-    # Check if the payment has a pay object. If it does, check what the status should be
-    if not payment_instance.pay_object:
-        return
 
     # If the payobject is classed as refunded, make it so
     if (

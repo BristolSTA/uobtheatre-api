@@ -46,7 +46,7 @@ def test_create_and_refund_booking(square_client):
     refund = Payment.objects.last()
 
     assert refund.value == -1300
-    assert refund.app_fee is None
+    assert refund.app_fee == -100
     assert refund.status == Payment.PaymentStatus.PENDING
 
     response = square_client.refunds.get_payment_refund(refund.provider_payment_id)

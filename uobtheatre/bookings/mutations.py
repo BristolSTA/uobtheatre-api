@@ -568,13 +568,6 @@ class UnCheckInBooking(AuthRequiredMixin, SafeMutation):
                 message="You do not have permission to uncheck in this booking.",
             )
 
-        # Check the booking has been paid for
-        if not booking.status == Payable.PayableStatus.PAID:
-            raise GQLException(
-                field="booking_reference",
-                message=f"This booking has not been paid for (Status: {booking.get_status_display()})",
-            )
-
         ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))
         # loop through the ticket IDs given
 

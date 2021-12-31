@@ -6,4 +6,4 @@ class PaymentsConfig(AppConfig):
     verbose_name = "Payments"
 
     def ready(self):
-        pass
+        import uobtheatre.payments.signals  # NOQA

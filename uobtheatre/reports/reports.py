@@ -90,13 +90,11 @@ class PeriodTotalsBreakdown(Report):
             "Provider Totals", ["Provider Name", "Total Income (Pence)"]
         )
 
-        payments = (
-            Payment.objects.filter(
-                created_at__gt=start, status=Payment.PaymentStatus.COMPLETED
-            )
-            .filter(created_at__lt=end)
-            .prefetch_related("pay_object__performance__production__society")
-        )
+        payments = Payment.objects.filter(
+            created_at__gt=start,
+            status=Payment.PaymentStatus.COMPLETED,
+            created_at__lt=end,
+        ).prefetch_related("pay_object__performance__production__society")
 
         self.meta.append(MetaItem("No. of Payments", str(len(payments))))
         self.meta.append(
@@ -201,8 +199,12 @@ class OutstandingSocietyPayments(Report):
                 "Production Name",
                 "Society ID",
                 "Society Name",
-                "Gross Takings",
-                "Gross Takings via Square",
+                "Total Sales",
+                "Total Sales via Card",
+                "Total Refunds",
+                "Total Refunds via Card",
+                "Net Income",
+                "Net Income via Card",
                 "Processing Fees",
                 "STA Fees",
                 "Society Net Income",
@@ -239,6 +241,10 @@ class OutstandingSocietyPayments(Report):
                     production.society.name,
                     sales_breakdown["total_sales"],
                     sales_breakdown["total_card_sales"],
+                    sales_breakdown["total_refunds"],
+                    sales_breakdown["total_card_refunds"],
+                    sales_breakdown["net_income"],
+                    sales_breakdown["net_card_income"],
                     sales_breakdown["provider_payment_value"],
                     production_sta_fees,
                     sales_breakdown["society_transfer_value"],

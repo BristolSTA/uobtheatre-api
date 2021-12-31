@@ -8,11 +8,9 @@ from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.payment_methods import (
     Card,
     Cash,
-    ManualPaymentMethodMixin,
     PaymentMethod,
     RefundMethod,
     SquareOnline,
-    SquarePaymentMethodMixin,
     SquarePOS,
     SquareRefund,
     TransactionMethod,
@@ -96,7 +94,7 @@ def test_generate_name(input_name, expected_output_name):
         (SquareRefund, Payment.PaymentType.REFUND),
     ],
 )
-def test_create_paymnet_object(payment_method, expected_type):
+def test_create_payment_object(payment_method, expected_type):
     booking = BookingFactory()
     payment_method.create_payment_object(booking, 10, 5, currency="ABC")
 
@@ -111,6 +109,9 @@ def test_create_paymnet_object(payment_method, expected_type):
     assert payment.app_fee == 5
 
 
+###
+# Square Online PaymentMethod
+###
 @pytest.mark.django_db
 def test_square_online_pay_success(mock_square):
     """
@@ -161,25 +162,53 @@ def test_square_online_pay_success(mock_square):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "payment_method, value, expected_method_str",
-    [(Cash(), 10, "CASH"), (Card(), 0, "CARD")],
-)
-def test_manual_pay(payment_method, value, expected_method_str):
-    booking = BookingFactory()
-    payment = payment_method.pay(value, 12, booking)
+def test_square_online_pay_failure(mock_square):
+    """
+    Test paying a booking with square
+    """
+    with mock_square(
+        SquareOnline.client.payments,
+        "create_payment",
+        reason_phrase="Some phrase",
+        status_code=400,
+        success=False,
+    ):
+        payment_method = SquareOnline("nonce", "abc")
+        with pytest.raises(SquareException):
+            payment_method.pay(100, 0, BookingFactory())
 
-    assert Payment.objects.count() == 1
-    assert Payment.objects.first() == payment
-
-    assert payment.pay_object == booking
-    assert payment.value == value
-    assert payment.currency == "GBP"
-    assert payment.provider == expected_method_str
-    assert payment.type == Payment.PaymentType.PURCHASE
-    assert payment.app_fee == 12
+    # Assert no payments are created
+    assert Payment.objects.count() == 0
 
 
+@pytest.mark.django_db
+def test_square_online_sync_payment(mock_square):
+    payment = PaymentFactory(
+        value=100, provider_fee=None, status=Payment.PaymentStatus.PENDING
+    )
+    with mock_square(
+        SquareOnline.client.payments,
+        "get_payment",
+        body={
+            "payment": {
+                "id": "abc",
+                "status": "COMPLETED",
+                "processing_fee": [
+                    {"amount_money": {"amount": -10, "currency": "GBP"}}
+                ],
+            }
+        },
+        success=True,
+    ):
+        payment.sync_payment_with_provider()
+        payment.refresh_from_db()
+    assert payment.provider_fee == -10
+    assert payment.status == Payment.PaymentStatus.COMPLETED
+
+
+###
+# Square POS PaymentMethod
+###
 @pytest.mark.django_db
 def test_square_pos_pay_success(mock_square):
     with mock_square(
@@ -251,6 +280,179 @@ def test_square_pos_list_devices_failure(mock_square):
     ):
         with pytest.raises(SquareException):
             SquarePOS.list_devices()
+
+
+@pytest.mark.django_db
+def test_handle_terminal_checkout_updated_webhook_completed():
+    booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
+    payment = PaymentFactory()
+    data = {
+        "object": {
+            "checkout": {
+                "id": payment.provider_payment_id,
+                "amount_money": {"amount": 111, "currency": "USD"},
+                "reference_id": booking.payment_reference_id,
+                "payment_ids": ["dgzrZTeIeVuOGwYgekoTHsPouaB"],
+                "status": "COMPLETED",
+            }
+        },
+    }
+
+    SquarePOS.handle_terminal_checkout_updated_webhook(data)
+    booking.refresh_from_db()
+
+    assert booking.status == Payable.PayableStatus.PAID
+    assert Payment.objects.count() == 1
+
+    payment = Payment.objects.first()
+    assert payment.status == Payment.PaymentStatus.COMPLETED
+
+
+@pytest.mark.django_db
+def test_handle_terminal_checkout_updated_webhook_not_completed():
+    booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
+    data = {
+        "object": {
+            "checkout": {
+                "reference_id": booking.payment_reference_id,
+                "status": "NOTCOMPLETED",
+            }
+        },
+    }
+
+    SquarePOS.handle_terminal_checkout_updated_webhook(data)
+
+    booking.refresh_from_db()
+    assert booking.status == Payable.PayableStatus.IN_PROGRESS
+
+
+@pytest.mark.django_db
+def test_handle_terminal_checkout_updated_canceled():
+    booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
+    payment = PaymentFactory(
+        provider_payment_id="abc",
+        provider=SquarePOS.name,
+        status=Payment.PaymentStatus.PENDING,
+    )
+    data = {
+        "object": {
+            "checkout": {
+                "id": "abc",
+                "reference_id": booking.payment_reference_id,
+                "status": "CANCELED",
+            }
+        },
+    }
+
+    SquarePOS.handle_terminal_checkout_updated_webhook(data)
+
+    booking.refresh_from_db()
+    assert booking.status == Payable.PayableStatus.IN_PROGRESS
+    assert not Payment.objects.filter(id=payment.id).exists()
+
+
+@pytest.mark.django_db
+def test_handle_terminal_checkout_updated_canceled_no_payments():
+    """
+    When square sends a webhook that cancels a checkout. If there is no
+    associated payment then do nothing.
+    """
+    booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
+    data = {
+        "object": {
+            "checkout": {
+                "id": "abc",
+                "reference_id": booking.payment_reference_id,
+                "status": "CANCELED",
+            }
+        },
+    }
+
+    SquarePOS.handle_terminal_checkout_updated_webhook(data)
+
+    booking.refresh_from_db()
+    assert booking.status == Payable.PayableStatus.IN_PROGRESS
+
+
+@pytest.mark.django_db
+def test_square_get_checkout_error(mock_square):
+    with mock_square(
+        SquarePOS.client.terminal,
+        "get_terminal_checkout",
+        status_code=400,
+        success=False,
+    ):
+        with pytest.raises(SquareException):
+            SquarePOS.get_checkout("abc")
+
+
+@pytest.mark.django_db
+def test_square_get_checkout(mock_square):
+    with mock_square(
+        SquarePOS.client.terminal,
+        "get_terminal_checkout",
+        status_code=200,
+        success=True,
+        body={"checkout": {"abc": "def"}},
+    ):
+        assert SquarePOS.get_checkout("abc") == {"abc": "def"}
+
+
+@pytest.mark.django_db
+def test_square_pos_cancel_failure(mock_square):
+    payment = PaymentFactory()
+    with mock_square(
+        SquarePOS.client.terminal,
+        "cancel_terminal_checkout",
+        status_code=400,
+        success=False,
+        reason_phrase="Checkout not found",
+    ):
+        with pytest.raises(SquareException):
+            payment_method = SquarePOS("device_id", "ikey")
+            payment_method.cancel(payment)
+
+    # Assert payment not deleted
+    assert Payment.objects.filter(id=payment.id).exists()
+
+
+@pytest.mark.django_db
+def test_square_pos_sync_payment():
+    payment = PaymentFactory(
+        value=100,
+        provider_fee=None,
+        status=Payment.PaymentStatus.PENDING,
+        provider=SquarePOS.name,
+        provider_payment_id="abc",
+    )
+    with patch.object(
+        SquarePOS,
+        "get_checkout",
+        return_value={
+            "id": "abc",
+            "status": "COMPLETED",
+            "payment_ids": ["abc123"],
+        },
+    ) as get_checkout_mock, patch.object(
+        SquarePOS,
+        "get_payment",
+        return_value={
+            "status": "COMPLETED",
+            "processing_fee": [{"amount_money": {"amount": -10, "currency": "GBP"}}],
+        },
+    ) as get_payment_mock:
+        payment.sync_payment_with_provider()
+
+        get_checkout_mock.assert_called_once_with("abc")
+        get_payment_mock.assert_called_once_with("abc123")
+        payment.refresh_from_db()
+    assert payment.provider_fee == -10
+    assert payment.status == Payment.PaymentStatus.COMPLETED
+
+
+###
+# General Square
+###
 
 
 @pytest.mark.django_db
@@ -363,205 +565,38 @@ def test_is_valid_callback(body, signature, signature_key, webhook_url, valid):
         assert SquareWebhooks.is_valid_callback(body, signature) == valid
 
 
-@pytest.mark.django_db
-def test_handle_terminal_checkout_updated_webhook_completed():
-    booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
-    payment = PaymentFactory()
-    data = {
-        "object": {
-            "checkout": {
-                "id": payment.provider_payment_id,
-                "amount_money": {"amount": 111, "currency": "USD"},
-                "reference_id": booking.payment_reference_id,
-                "payment_ids": ["dgzrZTeIeVuOGwYgekoTHsPouaB"],
-                "status": "COMPLETED",
-            }
-        },
-    }
-
-    SquarePOS.handle_terminal_checkout_updated_webhook(data)
-    booking.refresh_from_db()
-
-    assert booking.status == Payable.PayableStatus.PAID
-    assert Payment.objects.count() == 1
-
-    payment = Payment.objects.first()
-    assert payment.status == Payment.PaymentStatus.COMPLETED
-
-
-@pytest.mark.django_db
-def test_handle_terminal_checkout_updated_webhook_not_completed():
-    booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
-    data = {
-        "object": {
-            "checkout": {
-                "reference_id": booking.payment_reference_id,
-                "status": "NOTCOMPLETED",
-            }
-        },
-    }
-
-    SquarePOS.handle_terminal_checkout_updated_webhook(data)
-
-    booking.refresh_from_db()
-    assert booking.status == Payable.PayableStatus.IN_PROGRESS
-
-
-@pytest.mark.django_db
-def test_handle_terminal_checkout_updated_canceled():
-    booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
-    payment = PaymentFactory(
-        provider_payment_id="abc",
-        provider=SquarePOS.name,
-        status=Payment.PaymentStatus.PENDING,
-    )
-    data = {
-        "object": {
-            "checkout": {
-                "id": "abc",
-                "reference_id": booking.payment_reference_id,
-                "status": "CANCELED",
-            }
-        },
-    }
-
-    SquarePOS.handle_terminal_checkout_updated_webhook(data)
-
-    booking.refresh_from_db()
-    assert booking.status == Payable.PayableStatus.IN_PROGRESS
-    assert not Payment.objects.filter(id=payment.id).exists()
-
-
-@pytest.mark.django_db
-def test_handle_terminal_checkout_updated_canceled_no_payments():
-    """
-    When square sends a webhook that cancels a checkout. If there is no
-    associated payment then do nothing.
-    """
-    booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
-    data = {
-        "object": {
-            "checkout": {
-                "id": "abc",
-                "reference_id": booking.payment_reference_id,
-                "status": "CANCELED",
-            }
-        },
-    }
-
-    SquarePOS.handle_terminal_checkout_updated_webhook(data)
-
-    booking.refresh_from_db()
-    assert booking.status == Payable.PayableStatus.IN_PROGRESS
-
-
-@pytest.mark.django_db
-def test_square_online_pay_failure(mock_square):
-    """
-    Test paying a booking with square
-    """
-    with mock_square(
-        SquareOnline.client.payments,
-        "create_payment",
-        reason_phrase="Some phrase",
-        status_code=400,
-        success=False,
-    ):
-        payment_method = SquareOnline("nonce", "abc")
-        with pytest.raises(SquareException):
-            payment_method.pay(100, 0, BookingFactory())
-
-    # Assert no payments are created
-    assert Payment.objects.count() == 0
-
-
-@pytest.mark.django_db
-def test_square_get_checkout_error(mock_square):
-    with mock_square(
-        SquarePOS.client.terminal,
-        "get_terminal_checkout",
-        status_code=400,
-        success=False,
-    ):
-        with pytest.raises(SquareException):
-            SquarePOS.get_checkout("abc")
-
-
-@pytest.mark.django_db
-def test_square_get_checkout(mock_square):
-    with mock_square(
-        SquarePOS.client.terminal,
-        "get_terminal_checkout",
-        status_code=200,
-        success=True,
-        body={"checkout": {"abc": "def"}},
-    ):
-        assert SquarePOS.get_checkout("abc") == {"abc": "def"}
-
-
-@pytest.mark.django_db
-def test_square_pos_cancel_failure(mock_square):
-    payment = PaymentFactory()
-    with mock_square(
-        SquarePOS.client.terminal,
-        "cancel_terminal_checkout",
-        status_code=400,
-        success=False,
-        reason_phrase="Checkout not found",
-    ):
-        with pytest.raises(SquareException):
-            payment_method = SquarePOS("device_id", "ikey")
-            payment_method.cancel(payment)
-
-    # Assert payment not deleted
-    assert Payment.objects.filter(id=payment.id).exists()
-
-
-def test_manual_payment_method_processing_fee():
-    assert Cash.get_processing_fee(None) is None
-
-
+###
+# Manual PaymentMethods
+###
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "data_fees, data_status",
-    [
-        ([1, 2, 3], "COMPLETED"),
-        (None, "COMPLETED"),
-        (None, "NOTCOMPLETED"),
-        ([1], "NOTCOMPLETED"),
-    ],
+    "payment_method, value, expected_method_str",
+    [(Cash(), 10, "CASH"), (Card(), 0, "CARD")],
 )
-def test_square_online_update_refund(mailoutbox, data_fees, data_status):
-    payment = PaymentFactory(status=Payment.PaymentStatus.PENDING, provider_fee=None)
+def test_manual_pay(payment_method, value, expected_method_str):
+    booking = BookingFactory()
+    payment = payment_method.pay(value, 12, booking)
 
-    data = {
-        "object": {
-            "refund": {
-                "status": data_status,
-            }
-        }
-    }
+    assert Payment.objects.count() == 1
+    assert Payment.objects.first() == payment
 
-    if data_fees:
-        data["object"]["refund"]["processing_fee"] = [
-            {
-                "amount_money": {"amount": fee, "currency": "GBP"},
-            }
-            for fee in data_fees
-        ]
+    assert payment.pay_object == booking
+    assert payment.value == value
+    assert payment.currency == "GBP"
+    assert payment.provider == expected_method_str
+    assert payment.type == Payment.PaymentType.PURCHASE
+    assert payment.app_fee == 12
 
-    SquareRefund.update_refund(payment, data)
 
-    payment.refresh_from_db()
-    if data_status == "COMPLETED":
-        assert payment.status == Payment.PaymentStatus.COMPLETED
-    else:
-        assert payment.status == Payment.PaymentStatus.PENDING
+@pytest.mark.django_db
+def test_cash_payment_sync():
+    payment = PaymentFactory(provider=Cash.name)
+    assert payment.sync_payment_with_provider() is None
 
-    if data_fees:
-        assert payment.provider_fee == sum(data_fees)
-    else:
-        assert payment.provider_fee is None
+
+###
+# General PaymentMethods
+###
 
 
 @pytest.mark.parametrize(
