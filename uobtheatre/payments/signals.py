@@ -1,5 +1,3 @@
-from typing import Type
-
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
@@ -9,14 +7,16 @@ from uobtheatre.payments.payables import Payable
 
 
 @receiver(post_save, sender=Payment)
-def on_payment_save(sender: Type[Payment], instance: Payment, **kwargs):
+def on_payment_save(instance: Payment, **_):
     on_payment_save_callback(instance)
 
 
 def on_payment_save_callback(payment_instance: Payment):
+    """Post payment save actions"""
     # Check if the payment has a pay object. If it does, check what the status should be
     if not payment_instance.pay_object:
         return
+
     # If the payobject is classed as refunded, make it so
     if (
         payment_instance.pay_object.is_refunded
@@ -39,4 +39,4 @@ def on_payment_save_callback(payment_instance: Payment):
     # If the payment is of type refund, ensure that the pay_object is marked locked
     if payment_instance.type == Payment.PaymentType.REFUND:
         payment_instance.pay_object.status = Payable.PayableStatus.LOCKED
-        return payment_instance.pay_object.save()
+        payment_instance.pay_object.save()

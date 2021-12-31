@@ -1,7 +1,7 @@
 # pylint: disable=too-many-lines
 import datetime
 import math
-from unittest.mock import patch
+from unittest.mock import PropertyMock, patch
 from urllib.parse import quote_plus
 
 import pytest
@@ -29,6 +29,7 @@ from uobtheatre.payments.models import Payment
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.payment_methods import SquarePOS
 from uobtheatre.payments.test.factories import PaymentFactory
+from uobtheatre.productions.models import Production
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.utils.test_utils import ticket_dict_list_dict_gen, ticket_list_dict_gen
@@ -1004,6 +1005,31 @@ def test_booking_expiration():
 
     expired_booking.status = Payable.PayableStatus.PAID
     assert not expired_booking.is_reservation_expired
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "is_refunded,status,production_status,expected",
+    [
+        (False, Payable.PayableStatus.PAID, Production.Status.PUBLISHED, True),
+        (False, Payable.PayableStatus.PAID, Production.Status.PENDING, True),
+        (True, Payable.PayableStatus.PAID, Production.Status.PUBLISHED, False),
+        (False, Payable.PayableStatus.REFUNDED, Production.Status.PUBLISHED, False),
+        (False, Payable.PayableStatus.PAID, Production.Status.CLOSED, False),
+    ],
+)
+def test_booking_can_be_refunded(is_refunded, status, production_status, expected):
+    production = ProductionFactory(status=production_status)
+
+    with patch(
+        "uobtheatre.bookings.models.Booking.is_refunded",
+        new_callable=PropertyMock(return_value=is_refunded),
+    ):
+
+        booking = BookingFactory(
+            performance=PerformanceFactory(production=production), status=status
+        )
+        assert booking.can_be_refunded == expected
 
 
 @pytest.mark.django_db

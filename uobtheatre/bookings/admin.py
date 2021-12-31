@@ -1,7 +1,9 @@
 from django.contrib import admin, messages
 from django.contrib.contenttypes.admin import GenericTabularInline
+from django.core.mail import mail_admins
 
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
+from uobtheatre.mail.composer import MailComposer
 from uobtheatre.payments.models import Payment
 from uobtheatre.utils.admin import (
     DangerousAdminConfirmMixin,
@@ -50,10 +52,10 @@ class BookingAdmin(DangerousAdminConfirmMixin, admin.ModelAdmin):
         """Action to issue refund for selected booking(s)"""
         for booking in queryset:
             # Check if booking is paid
-            if not booking.status == Booking.PayableStatus.PAID:
+            if not booking.can_be_refunded:
                 self.message_user(
                     request,
-                    f"One or more booking is not of status paid ({booking})",
+                    "One or more bookings cannot be refunded",
                     level=messages.ERROR,
                 )
                 return
@@ -65,6 +67,19 @@ class BookingAdmin(DangerousAdminConfirmMixin, admin.ModelAdmin):
 
         self.message_user(
             request, f"{queryset.count()} objects have had refunds requested "
+        )
+        mail = (
+            MailComposer()
+            .line("Refunds have been initiated for the following bookings:")
+            .line(", ".join(f"{booking} ({booking.id})" for booking in queryset))
+            .line(
+                f"This action was requested by {request.user.full_name} ({request.user.email})"
+            )
+        )
+        mail_admins(
+            "Booking Refunds Initiated",
+            mail.to_plain_text(),
+            html_message=mail.to_html(),
         )
 
     def get_performance_name(self, obj):

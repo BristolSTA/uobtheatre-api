@@ -16,7 +16,7 @@ from uobtheatre.discounts.models import ConcessionType, DiscountCombination
 from uobtheatre.mail.composer import MailComposer
 from uobtheatre.payments.models import Payment
 from uobtheatre.payments.payables import Payable
-from uobtheatre.productions.models import Performance
+from uobtheatre.productions.models import Performance, Production
 from uobtheatre.users.models import User
 from uobtheatre.utils.models import TimeStampedMixin, validate_percentage
 from uobtheatre.utils.utils import combinations, create_short_uuid
@@ -172,6 +172,7 @@ def generate_expires_at():
     return timezone.now() + timezone.timedelta(minutes=15)
 
 
+# pylint: disable=too-many-public-methods
 class Booking(TimeStampedMixin, Payable):
     """A booking for a performance
 
@@ -619,6 +620,15 @@ class Booking(TimeStampedMixin, Payable):
             self.status == Payable.PayableStatus.IN_PROGRESS
             and self.expires_at
             and timezone.now() > self.expires_at
+        )
+
+    @property
+    def can_be_refunded(self):
+        return (
+            self.status == self.PayableStatus.PAID
+            and not self.is_refunded
+            and not self.performance.production.status
+            in [Production.Status.CLOSED, Production.Status.COMPLETE]
         )
 
 

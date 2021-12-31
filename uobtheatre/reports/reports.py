@@ -91,7 +91,9 @@ class PeriodTotalsBreakdown(Report):
         )
 
         payments = (
-            Payment.objects.filter(created_at__gt=start)
+            Payment.objects.filter(
+                created_at__gt=start, status=Payment.PaymentStatus.COMPLETED
+            )
             .filter(created_at__lt=end)
             .prefetch_related("pay_object__performance__production__society")
         )
@@ -132,11 +134,11 @@ class PeriodTotalsBreakdown(Report):
         # Sort alphabetically
         provider_totals_set.data.sort(key=lambda provider: provider[0])
         production_totals_set.data.sort(key=lambda production: production[0])
-
         payments_data = [
             [
                 str(payment.id),
                 payment.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                payment.type,
                 str(payment.pay_object.id) if payment.pay_object else "",
                 type(payment.pay_object).__name__ if payment.pay_object else "",
                 str(
@@ -166,6 +168,7 @@ class PeriodTotalsBreakdown(Report):
                     [
                         "Payment ID",
                         "Timestamp",
+                        "Payment Type",
                         "Pay Object ID",
                         "Pay Object Type",
                         "Production ID",

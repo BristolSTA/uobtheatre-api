@@ -1,7 +1,9 @@
 from django.contrib import admin, messages
 from django.contrib.admin.options import ModelAdmin, TabularInline
+from django.core.mail import mail_admins
 from guardian.admin import GuardedModelAdmin
 
+from uobtheatre.mail.composer import MailComposer
 from uobtheatre.payments.models import Payment
 from uobtheatre.payments.payables import Payable
 from uobtheatre.productions.models import (
@@ -40,6 +42,7 @@ class PerformanceAdmin(DangerousAdminConfirmMixin, ModelAdmin):
     @admin.action(description="Issue refunds", permissions=["change"])
     def issue_refunds(self, request, queryset):
         """Action to issue refund for bookings in selected performances(s)"""
+        refund_count = 0
         for performance in queryset:
             # Check if performance is marked as cancelled
             if not performance.disabled:
@@ -53,14 +56,33 @@ class PerformanceAdmin(DangerousAdminConfirmMixin, ModelAdmin):
             for booking in performance.bookings.filter(
                 status=Payable.PayableStatus.PAID
             ):
+                if not booking.can_be_refunded:
+                    return
+
                 for payment in booking.payments.filter(
                     type=Payment.PaymentType.PURCHASE
                 ).all():
                     payment.refund()
+                refund_count += 1
 
         self.message_user(
             request,
-            f"{queryset.count()} performances have had elgiable bookings refunds requested ",
+            f"{refund_count} eligable bookings have had refunds requested ",
+        )
+        mail = (
+            MailComposer()
+            .line("Refunds have been initiated for the following productions:")
+            .line(
+                ", ".join(f"{production} ({production.id})" for production in queryset)
+            )
+            .line(
+                f"This action was requested by {request.user.full_name} ({request.user.email})"
+            )
+        )
+        mail_admins(
+            "Production Refunds Initiated",
+            mail.to_plain_text(),
+            html_message=mail.to_html(),
         )
 
 

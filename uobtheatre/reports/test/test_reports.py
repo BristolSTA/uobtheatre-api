@@ -144,6 +144,9 @@ def create_fixtures():
     payment_3.created_at = "2021-09-08T12:00:01"
     payment_3.save()
 
+    # Create a pending payment (shouldn't show in reports)
+    PaymentFactory(status=Payment.PaymentStatus.PENDING)
+
     return (payment_1, payment_2, payment_3)
 
 
@@ -244,11 +247,12 @@ def test_period_totals_breakdown_report():
     ]
 
     assert report.datasets[2].name == "Payments"
-    assert len(report.datasets[2].headings) == 9
+    assert len(report.datasets[2].headings) == 10
     assert report.datasets[2].data == [
         [
             str(payment_1.id),
             "2021-09-08 00:00:01",
+            "PURCHASE",
             str(booking_1.id),
             "Booking",
             str(booking_1.performance.production.id),
@@ -260,6 +264,7 @@ def test_period_totals_breakdown_report():
         [
             str(payment_3.id),
             "2021-09-08 12:00:01",
+            "PURCHASE",
             str(booking_3.id),
             "Booking",
             str(booking_3.performance.production.id),
