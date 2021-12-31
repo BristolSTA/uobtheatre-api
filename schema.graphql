@@ -482,6 +482,10 @@ type RevokeToken {
 type SalesBreakdownNode {
   totalSales: Int!
   totalCardSales: Int!
+  totalRefunds: Int!
+  totalCardRefunds: Int!
+  netIncome: Int!
+  netCardIncome: Int!
   providerPaymentValue: Int!
   appPaymentValue: Int!
   societyTransferValue: Int!
