@@ -11,11 +11,13 @@ error: Union[FieldError, NonFieldError])
 
 
 import traceback
-from typing import List, Union
+from typing import Iterable, List, Union
 
 import graphene
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from graphene.utils.str_converters import to_camel_case
+from graphene_django.types import ErrorType
 
 
 class ExceptionMiddleware:  # pragma: no cover
@@ -51,7 +53,6 @@ class GQLErrorUnion(graphene.Union):
 class MutationResult:
     success = graphene.Boolean(default_value=True)
     errors = graphene.List(GQLErrorUnion)
-
 
 class AuthOutput(MutationResult):
     """
@@ -116,9 +117,9 @@ class GQLExceptions(MutationException):
     Many GQL errors
     """
 
-    def __init__(self, exceptions: List[MutationException] = None):
+    def __init__(self, exceptions: Iterable[MutationException] = None):
         super().__init__()
-        self.exceptions = exceptions or []
+        self.exceptions = list(exceptions) if exceptions else []
 
     def add_exception(self, exception: MutationException):
         self.exceptions.append(exception)
@@ -170,6 +171,53 @@ class AuthorizationException(GQLException):
         super().__init__(message=message, code=403, field=field)
 
 
+class ReferencedException(GQLException):
+    """
+    Thrown when a model can't be deleted because of restricted foreign key
+    relations
+    """
+
+    def __init__(
+        self,
+        message="This model cannot be deleted because it is referenced by another",
+        field=None,
+    ):
+        super().__init__(message=message, code="REFERR", field=field)
+
+
+class FormExceptions(GQLExceptions):
+    """
+    An exception for handling form errors
+    """
+
+    def __init__(self, form_errors: list[ErrorType] = None):
+        """
+        A form returns a list of error dicts that contains the field name
+        and a list of error message. This init method creates a field error for
+        each error message.
+        """
+        exceptions = [
+            GQLException(message, field=error.field)
+            for error in list(form_errors)
+            for message in error.messages
+        ] if form_errors else []
+        super().__init__(exceptions)
+
+class NotFoundException(GQLException):
+    """An exception for when a resource is not found."""
+
+    def __init__(
+        self,
+        object_type=None,
+        object_id=None,
+    ):
+        if object_id and object_type:
+            error_message = f"Object {object_type} {object_id} not found"
+        else:
+            error_message = "Object not found"
+        super().__init__(message=error_message, code=404)
+
+
 class SafeMutation(MutationResult, graphene.Mutation):
     """
     Extended graphene.Mutation.
@@ -181,14 +229,22 @@ class SafeMutation(MutationResult, graphene.Mutation):
         abstract = True
 
     @classmethod
+    # pylint: disable=protected-access
+    def authorize_request(cls, root, info, **inputs):
+        pass
+
+    @classmethod
     def mutate(cls, root, info, **inputs):
         """
         Calls resolve_mutation, catches error and formats
         """
         try:
+            cls.authorize_request(root, info, **inputs)
             with transaction.atomic():
                 return cls.resolve_mutation(root, info, **inputs)
 
-        except MutationException as exception:
+        except (MutationException, ObjectDoesNotExist) as exception:
+            if isinstance(exception, ObjectDoesNotExist):
+                exception = NotFoundException()
             # These are our custom exceptions
             return cls(errors=exception.resolve(), success=False)

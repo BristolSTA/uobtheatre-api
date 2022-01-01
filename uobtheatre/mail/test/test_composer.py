@@ -5,6 +5,7 @@ from django.template.loader import get_template
 
 import uobtheatre.mail.test.fixtures as fixtures
 from uobtheatre.mail.composer import Action, Heading, Image, Line, MailComposer, Panel
+from uobtheatre.users.test.factories import UserFactory
 
 
 def test_it_generates_correct_plain_text():
@@ -111,6 +112,19 @@ def test_append():
     assert composer.items == []
     composer.append(line)
     assert composer.items == [line]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("with_user,expected", [(True, "Hi Test"), (False, "Hello")])
+def test_greeting(with_user, expected):
+    composer = MailComposer()
+    user = UserFactory(first_name="Test")
+    user.status.verified = True
+
+    assert composer.items == []
+    composer.greeting(user if with_user else None)
+    assert isinstance(composer.items[0], Heading) is True
+    assert composer.items[0].text == expected
 
 
 @pytest.mark.parametrize("size", [1, 2, 3])

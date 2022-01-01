@@ -1134,8 +1134,7 @@ def test_web_tickets_path_property():
         quote_plus((to_global_id("TicketNode", ticket.id)))
         for ticket in [TicketFactory(booking=booking, id=i) for i in range(3)]
     ]
-    performance_id = to_global_id("PerformanceNode", booking.performance.id)
-
+    performance_id = quote_plus(to_global_id("PerformanceNode", booking.performance.id))
     assert (
         booking.web_tickets_path
         == f"/user/booking/abcd1234/tickets?performanceID={performance_id}&ticketID={ticket_ids[0]}&ticketID={ticket_ids[1]}&ticketID={ticket_ids[2]}"

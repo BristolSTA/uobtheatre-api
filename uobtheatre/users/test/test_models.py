@@ -1,11 +1,12 @@
 import pytest
 from django.contrib.auth.models import Group, Permission
 from guardian.shortcuts import assign_perm
+from pytest_django.asserts import assertQuerysetEqual
 
 from conftest import AuthenticateableGQLClient
 from uobtheatre.productions.test.factories import ProductionFactory
 from uobtheatre.users.models import User
-from uobtheatre.users.test.factories import UserFactory
+from uobtheatre.users.test.factories import GroupFactory, UserFactory
 
 
 @pytest.mark.django_db
@@ -63,3 +64,74 @@ def test_boxoffice_permissions_model_level_group(
 
     assert user.has_perm("productions.boxoffice")
     assert user.has_perm("productions.boxoffice", production)
+
+
+@pytest.mark.django_db
+def test_user_get_global_permissions():
+    group = GroupFactory()
+    user = UserFactory.create(groups=[group])
+    assign_perm("productions.boxoffice", user)
+    assign_perm("reports.finance_reports", group)
+
+    assert {perm.codename for perm in user.global_perms} == {
+        "boxoffice",
+        "finance_reports",
+    }
+
+
+@pytest.mark.django_db
+def test_user_get_global_permissions_superuser():
+    user = UserFactory(is_superuser=True)
+    assertQuerysetEqual(user.global_perms, Permission.objects.all())
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "global_perms,object_perms,query_perms,expected",
+    [
+        (["productions.approve_production"], [], ["productions.add_production"], False),
+        (["productions.approve_production"], [], "productions.add_production", False),
+        (["productions.approve_production"], [], "societies.add_production", False),
+        (["societies.add_production"], [], "societies.add_production", True),
+        (
+            ["productions.approve_production"],
+            [],
+            ["productions.approve_production"],
+            True,
+        ),
+        (
+            ["productions.approve_production"],
+            [],
+            "productions.approve_production",
+            True,
+        ),
+        (
+            ["productions.approve_production"],
+            [],
+            ["productions.approve_production", "productions.add_production"],
+            True,
+        ),
+        ([], ["productions.add_production"], ["productions.approve_production"], False),
+        ([], ["productions.add_production"], ["productions.add_production"], True),
+        (
+            [],
+            ["productions.add_production"],
+            ["productions.approve_production", "productions.add_production"],
+            True,
+        ),
+    ],
+)
+def test_user_has_any_objects_with_perms(
+    global_perms, object_perms, query_perms, expected
+):
+
+    user = UserFactory()
+    for perm in global_perms:
+        user.assign_perm(perm)
+
+    if len(object_perms):
+        obj = ProductionFactory()
+        for perm in object_perms:
+            user.assign_perm(perm, obj)
+
+    assert user.has_any_objects_with_perms(query_perms) is expected

@@ -5,9 +5,10 @@ from graphene_django.filter import DjangoFilterConnectionField
 
 from uobtheatre.images.schema import ImageNode  # noqa
 from uobtheatre.societies.models import Society
+from uobtheatre.users.abilities import PermissionsMixin
 
 
-class SocietyNode(DjangoObjectType):
+class SocietyNode(PermissionsMixin, DjangoObjectType):
     class Meta:
         model = Society
         interfaces = (relay.Node,)

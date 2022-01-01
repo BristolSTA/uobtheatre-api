@@ -5,7 +5,7 @@ from graphene import relay
 from graphene_django import DjangoListField
 from graphene_django.filter import DjangoFilterConnectionField
 
-from uobtheatre.discounts.schema import ConcessionTypeNode, DiscountNode
+from uobtheatre.discounts.schema import ConcessionTypeNode
 from uobtheatre.productions.models import (
     AudienceWarning,
     CastMember,
@@ -19,10 +19,14 @@ from uobtheatre.productions.models import (
 from uobtheatre.users.abilities import PermissionsMixin
 from uobtheatre.utils.filters import FilterSet
 from uobtheatre.utils.schema import (
+    AssignedUsersMixin,
     DjangoObjectType,
     GrapheneEnumMixin,
+    IdInputField,
     UserPermissionFilterMixin,
 )
+
+ProductionStatusSchema = graphene.Enum.from_enum(Production.Status)
 
 
 class CrewRoleNode(GrapheneEnumMixin, DjangoObjectType):
@@ -52,6 +56,8 @@ class CrewMemberNode(DjangoObjectType):
 class WarningNode(DjangoObjectType):
     class Meta:
         model = AudienceWarning
+        fields = ("description",)
+        filter_fields = ("id",)
         interfaces = (relay.Node,)
 
 
@@ -154,7 +160,9 @@ class SalesBreakdownNode(graphene.ObjectType):
     society_revenue = graphene.Int(required=True)
 
 
-class ProductionNode(PermissionsMixin, GrapheneEnumMixin, DjangoObjectType):
+class ProductionNode(
+    PermissionsMixin, GrapheneEnumMixin, AssignedUsersMixin, DjangoObjectType
+):
     warnings = DjangoListField(WarningNode)
     crew = DjangoListField(CrewMemberNode)
     cast = DjangoListField(CastMemberNode)
@@ -242,6 +250,8 @@ class PerformanceSeatGroupNode(DjangoObjectType):
             "capacity_remaining",
             "concession_types",
             "seat_group",
+            "performance",
+            "price",
         )
         filter_fields = {}  # type: ignore
         interfaces = (relay.Node,)
@@ -290,7 +300,6 @@ class PerformanceNode(DjangoObjectType):
     is_online = graphene.Boolean(required=True)
     sold_out = graphene.Boolean(required=True)
     is_bookable = graphene.Boolean(required=True)
-    discounts = DjangoListField(DiscountNode)
     tickets_breakdown = graphene.Field(PerformanceTicketsBreakdown, required=True)
     sales_breakdown = graphene.Field(SalesBreakdownNode)
 
@@ -355,12 +364,18 @@ class Query(graphene.ObjectType):
 
     productions = DjangoFilterConnectionField(ProductionNode)
     performances = DjangoFilterConnectionField(PerformanceNode)
+    warnings = DjangoFilterConnectionField(WarningNode)
 
-    production = graphene.Field(ProductionNode, slug=graphene.String(required=True))
+    production = graphene.Field(
+        ProductionNode, id=IdInputField(), slug=graphene.String()
+    )
     performance = relay.Node.Field(PerformanceNode)
 
-    def resolve_production(self, info, slug):
+    def resolve_production(self, info, **args):  # pylint: disable=redefined-builtin
+        if all(arg is None for arg in args.values()):
+            return None
         try:
-            return Production.objects.user_can_see(info.context.user).get(slug=slug)
+            qs = Production.objects.user_can_see(info.context.user)
+            return qs.get(**args)
         except Production.DoesNotExist:
             return None
