@@ -17,7 +17,7 @@ from uobtheatre.payments.payment_methods import (
 )
 from uobtheatre.payments.square_webhooks import SquareWebhooks
 from uobtheatre.payments.test.factories import PaymentFactory
-from uobtheatre.utils.exceptions import SquareException
+from uobtheatre.utils.exceptions import PaymentException, SquareException
 
 
 def test_payment_method_all():
@@ -60,6 +60,26 @@ def test_payment_method_choice():
         ("SQUARE_POS", "SQUARE_POS"),
         ("SQUARE_ONLINE", "SQUARE_ONLINE"),
     ]
+
+
+@pytest.mark.parametrize(
+    "payment_id, raises_exception",
+    [
+        (None, True),
+        ("", True),
+        ("123", False),
+        ("abc", False),
+    ],
+)
+def test_get_provider_payment_id(payment_id, raises_exception):
+    payment = Payment()
+    payment.provider_payment_id = payment_id
+
+    if raises_exception:
+        with pytest.raises(PaymentException):
+            TransactionMethod.get_payment_provider_id(payment)
+    else:
+        assert TransactionMethod.get_payment_provider_id(payment) == payment_id
 
 
 @pytest.mark.parametrize(

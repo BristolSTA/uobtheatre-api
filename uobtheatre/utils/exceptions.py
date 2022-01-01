@@ -133,6 +133,10 @@ class GQLExceptions(MutationException):
         return resovled_exceptions
 
 
+class PaymentException(GQLException):
+    pass
+
+
 class SquareException(GQLException):
     """An exception with the square API"""
 

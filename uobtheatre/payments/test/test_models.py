@@ -10,7 +10,7 @@ from uobtheatre.payments.test.factories import (
     mock_payment_method,
     mock_refund_method,
 )
-from uobtheatre.utils.exceptions import GQLException
+from uobtheatre.utils.exceptions import GQLException, PaymentException
 
 
 @pytest.mark.django_db
@@ -81,7 +81,7 @@ def test_update_payment_from_square_no_provider_id(mock_square):
     with mock_square(
         SquareOnline.client.payments,
         "get_payment",
-    ) as mock_get:
+    ) as mock_get, pytest.raises(PaymentException):
         payment.sync_payment_with_provider()
         mock_get.assert_not_called()
 

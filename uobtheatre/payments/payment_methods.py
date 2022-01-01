@@ -8,7 +8,7 @@ from square.client import Client
 from square.http.api_response import ApiResponse as SquareApiResponse
 
 from uobtheatre.payments import models as payment_models
-from uobtheatre.utils.exceptions import SquareException
+from uobtheatre.utils.exceptions import PaymentException, SquareException
 from uobtheatre.utils.utils import classproperty
 
 if TYPE_CHECKING:
@@ -89,6 +89,12 @@ class TransactionMethod(abc.ABC):
     @property
     def is_refundable(cls):
         return issubclass(cls, Refundable)
+
+    @classmethod
+    def get_payment_provider_id(cls, payment: "payment_models.Payment") -> str:
+        if not payment.provider_payment_id:
+            raise PaymentException("Payment has no provider_payment_id")
+        return payment.provider_payment_id
 
 
 class PaymentMethod(TransactionMethod, abc.ABC):
@@ -303,12 +309,9 @@ class SquareRefund(RefundMethod, SquareAPIMixin):
 
     @classmethod
     def sync_payment(cls, payment: "payment_models.Payment", data: dict = None):
-        if payment.provider_payment_id is None:
-            return
-
         if not data:
             response = cls.client.refunds.get_payment_refund(
-                payment.provider_payment_id
+                cls.get_payment_provider_id(payment)
             )
             cls._handle_response_failure(response)
             data = response.body["refund"]
@@ -486,10 +489,9 @@ class SquarePOS(PaymentMethod, SquarePaymentMethod):
     @classmethod
     def sync_payment(cls, payment: "payment_models.Payment", data: dict = None):
         """Syncs the given payment with the raw payment data"""
-        if payment.provider_payment_id is None:
-            return
+        payment_id = cls.get_payment_provider_id(payment)
 
-        checkout = data if data else cls.get_checkout(payment.provider_payment_id)
+        checkout = data if data else cls.get_checkout(payment_id)
         payment.provider_fee = sum(
             filter(
                 None,
@@ -583,10 +585,10 @@ class SquareOnline(Refundable, PaymentMethod, SquarePaymentMethod):
     @classmethod
     def sync_payment(cls, payment: "payment_models.Payment", data: dict = None):
         """Syncs the given payment with the raw payment data"""
-        if payment.provider_payment_id is None:
-            return
+        payment_id = cls.get_payment_provider_id(payment)
+
         if data is None:
-            data = cls.get_payment(payment.provider_payment_id)
+            data = cls.get_payment(payment_id)
         payment.provider_fee = cls.payment_processing_fee(data)
         payment.status = square_status_map()[data["status"]]
         payment.save()

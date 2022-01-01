@@ -15,7 +15,7 @@ from uobtheatre.payments.payment_methods import (
     RefundMethod,
     TransactionMethod,
 )
-from uobtheatre.utils.exceptions import GQLException
+from uobtheatre.utils.exceptions import PaymentException
 from uobtheatre.utils.models import TimeStampedMixin
 
 if TYPE_CHECKING:
@@ -215,12 +215,12 @@ class Payment(TimeStampedMixin, models.Model):
     def refund(self, refund_method: RefundMethod = None):
         """Refund the payment"""
         if self.status != Payment.PaymentStatus.COMPLETED:
-            raise GQLException(
+            raise PaymentException(
                 f"You cannot refund a {self.status.label.lower()} payment"
             )
 
         if not self.provider_class.is_refundable:
-            raise GQLException(f"A {self.provider} payment is not refundable")
+            raise PaymentException(f"A {self.provider} payment is not refundable")
 
         if refund_method is None:
             refund_method = self.provider_class.refund_method
