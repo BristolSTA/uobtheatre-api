@@ -297,7 +297,7 @@ class ModelDeletionMutation(AuthRequiredMixin, SafeMutation):
         id = IdInputField(required=True)
 
     @classmethod
-    def __init_subclass_with_meta__(
+    def __init_subclass_with_meta__(  # pylint: disable=arguments-differ
         cls, *args, model=None, ability=None, **options
     ):  # pragma: no cover
         """Inits the subclass with meta..."""
@@ -432,7 +432,7 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
 
         if not (user := cls.subject_user(inputs["user_email"])):
             raise GQLException(
-                "A user with that email does not exist on our system",
+                "A user with that email does not exist",
                 field="user_email",
             )
 

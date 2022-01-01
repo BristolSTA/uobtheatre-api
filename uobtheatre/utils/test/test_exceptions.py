@@ -165,16 +165,12 @@ def test_not_found_exception(object_type, object_id, message):
         == message
     )
 
+
 @pytest.mark.parametrize(
     "form_errors, expected_resolve_output",
     [
         (
-            [
-                ErrorType(
-                    messages=["too long", "too short"],
-                    field="field"
-                )
-            ],
+            [ErrorType(messages=["too long", "too short"], field="field")],
             [
                 FieldError(
                     message="too long",
@@ -186,7 +182,13 @@ def test_not_found_exception(object_type, object_id, message):
                 ),
             ],
         )
-    ]
+    ],
 )
 def test_form_exceptions(form_errors, expected_resolve_output):
-    assert FormExceptions(form_errors).resolve() == expected_resolve_output
+    resolved_exceptions = FormExceptions(form_errors).resolve()
+    assert len(resolved_exceptions) == len(expected_resolve_output)
+
+    for exception, expected_exception in zip(
+        resolved_exceptions, expected_resolve_output
+    ):
+        compare_gql_objects(exception, expected_exception)

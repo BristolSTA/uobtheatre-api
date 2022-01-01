@@ -274,7 +274,7 @@ def test_total_production_creation_workflow(gql_client):
     assert response["data"]["productionPermissions"]["success"] is False
     assert response["data"]["productionPermissions"]["errors"] == [
         {
-            "message": "A user with that email does not exist on our system",
+            "message": "A user with that email does not exist",
             "field": "userEmail",
         }
     ]
