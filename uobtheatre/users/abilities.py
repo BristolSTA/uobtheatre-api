@@ -16,6 +16,7 @@ class AbilitiesMixin:
         raise NotImplementedError
 
     def get_perms(self, user, obj):
+        """Override get_perms method to return perms as well as abilities"""
         django_perms = get_perms(user, self)
         computed_perms = [
             ability.name
@@ -39,11 +40,28 @@ class Ability(abc.ABC):
         raise NotImplementedError
 
     @classmethod
-    def user_has(cls, user) -> bool:
+    def user_has(cls, user) -> bool:  # pylint: disable=unused-argument
+        """Returns whether the user has the ability for any / at all
+
+        Args:
+            user (User): The user being queried
+
+        Returns:
+            bool: Whether the user has the abiltiy
+        """
         return False
 
     @classmethod
-    def user_has_for(cls, user, obj) -> bool:
+    def user_has_for(cls, user, obj) -> bool:  # pylint: disable=unused-argument
+        """Returns whether the user has the ability for a specific object
+
+        Args:
+            user (User): The user being queried
+            obj (Model): The object to query the user on
+
+        Returns:
+            bool: Whether the user has the ability for the object
+        """
         return cls.user_has(user)
 
 

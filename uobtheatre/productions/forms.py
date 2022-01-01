@@ -1,6 +1,7 @@
+from django.core.exceptions import ValidationError
+
 from uobtheatre.productions.models import Performance, PerformanceSeatGroup, Production
 from uobtheatre.utils.forms import MutationForm
-from django.core.exceptions import ValidationError
 
 
 class ProductionForm(MutationForm):
@@ -22,7 +23,10 @@ class ProductionForm(MutationForm):
 
 
 class PerformanceForm(MutationForm):
+    """Form for performance mutations"""
+
     def clean(self):
+        """Validate form data on clean"""
         cleaned_data = super().clean()
         doors_open = cleaned_data.get("doors_open")
         start = cleaned_data.get("start")

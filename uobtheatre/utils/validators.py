@@ -4,7 +4,6 @@ import abc
 from dataclasses import dataclass
 from typing import Generator, Optional
 
-from django.core.validators import URLValidator as DjangoURLValidator
 from django.core.validators import ValidationError as DjangoValidationError
 
 from uobtheatre.utils import exceptions
@@ -116,8 +115,11 @@ class UrlValidator(AttributeValidator):
 
 @dataclass
 class AndValidator(Validator):
+    """Combines multiple validators together to ensure they all pass"""
+
     def __init__(self, *validators):
         self.validators = validators
+        super().__init__()
 
     def validate(self, instance):
         return self.all_errors(
@@ -148,6 +150,7 @@ class RelatedObjectsValidator(Validator):
         self.attribute = attribute
         self.validator = validator
         self.min_number = min_number
+        super().__init__()
 
     def _get_attributes(self, instance):
         return getattr(instance, self.attribute).all()

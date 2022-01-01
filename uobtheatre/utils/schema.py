@@ -109,7 +109,7 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
         abstract = True
 
     @classmethod
-    # pylint: disable=C0116
+    # pylint: disable=C0116,arguments-differ
     def __init_subclass_with_meta__(
         cls, *args, create_ability=None, update_ability=None, **kwargs
     ) -> None:
@@ -234,7 +234,7 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
             exceptions = GQLExceptions(
                 exceptions=[
                     GQLException(message, field=error.field)
-                    for error in response.errors
+                    for error in list(response.errors)
                     for message in error.messages
                 ]
             )
@@ -298,6 +298,7 @@ class ModelDeletionMutation(AuthRequiredMixin, SafeMutation):
         id = IdInputField(required=True)
 
     @classmethod
+    # pylint: disable=arguments-differ
     def __init_subclass_with_meta__(
         cls, *args, model=None, ability=None, **options
     ):  # pragma: no cover
@@ -359,6 +360,7 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
         permissions = graphene.List(graphene.String, required=True)
 
     @classmethod
+    # pylint:disable=arguments-differ
     def __init_subclass_with_meta__(
         cls, *args, model=None, ability=None, **options
     ):  # pragma: no cover

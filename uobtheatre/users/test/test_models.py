@@ -1,6 +1,7 @@
 import pytest
 from django.contrib.auth.models import Group, Permission
 from guardian.shortcuts import assign_perm
+from pytest_django.asserts import assertQuerysetEqual
 
 from conftest import AuthenticateableGQLClient
 from uobtheatre.productions.test.factories import ProductionFactory
@@ -72,15 +73,13 @@ def test_user_get_global_permissions():
     assign_perm("productions.boxoffice", user)
     assign_perm("reports.finance_reports", group)
 
-    assert set([perm.codename for perm in user.global_perms]) == set(
-        [
-            "boxoffice",
-            "finance_reports",
-        ]
-    )
+    assert {perm.codename for perm in user.global_perms} == {
+        "boxoffice",
+        "finance_reports",
+    }
 
 
 @pytest.mark.django_db
 def test_user_get_global_permissions_superuser():
     user = UserFactory(is_superuser=True)
-    user.global_perms == Permission.objects.all()
+    assertQuerysetEqual(user.global_perms, Permission.objects.all())
