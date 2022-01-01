@@ -23,7 +23,13 @@ class EditProduction(Ability):
 
     @staticmethod
     def user_has(user):
-        return user.has_any_objects_with_perms("productions.change_production")
+        return user.has_any_objects_with_perms(
+            [
+                "productions.change_production",
+                "productions.force_change_production",
+                "productions.approve_production",
+            ]
+        )
 
     @staticmethod
     def user_has_for(user, obj) -> bool:

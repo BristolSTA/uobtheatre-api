@@ -123,14 +123,14 @@ class SetProductionStatus(AuthRequiredMixin, SafeMutation):
             for user in approving_users:
                 send_production_ready_for_review_email(user, production)
 
-        if (
+        elif (
             status == Production.Status.APPROVED
             and previous_status == Production.Status.PENDING
         ):
             for user in involved_users:
                 send_production_approved_email(user, production)
 
-        if (
+        elif (
             status == Production.Status.DRAFT
             and previous_status == Production.Status.PENDING
         ):
