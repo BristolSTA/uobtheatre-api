@@ -208,20 +208,22 @@ class PerformanceMutation(SafeFormMutation, AuthRequiredMixin):
             if new_production
             else True
         )
-        current_production = cls.get_object_instance(root, info, **inputs).production
-        has_perm_current_production = EditProduction.user_has_for(
-            info.context.user, current_production
+        current_instance = cls.get_object_instance(root, info, **inputs)
+        has_perm_current_production = (
+            EditProduction.user_has_for(info.context.user, current_instance.production)
+            if current_instance
+            else True
         )
 
-        if has_perm_current_production:
+        if not has_perm_current_production:
             raise AuthorizationException(
-                "You do not have permission to move a performance from the current production",
+                "You do not have permission to move the performance from the current production",
                 field="production",
             )
 
-        if has_perm_new_production:
+        if not has_perm_new_production:
             raise AuthorizationException(
-                "You do not have permission to add a performance to this production",
+                "You do not have permission to add the performance to this production",
                 field="production",
             )
 

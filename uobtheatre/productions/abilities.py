@@ -1,4 +1,3 @@
-from os import wait
 from uobtheatre.users.abilities import Ability
 
 
@@ -9,9 +8,9 @@ class AddProduction(Ability):
 
     @staticmethod
     def user_has(user) -> bool:
-        return user.has_any_objects_with_perms(
-            ["societies.add_production"]
-        ) or user.has_perm("productions.add_production")
+        return user.has_perm(
+            "productions.add_production"
+        ) or user.has_any_objects_with_perms(["societies.add_production"])
 
 
 class EditProduction(Ability):

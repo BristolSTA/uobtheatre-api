@@ -1,10 +1,10 @@
+from uobtheatre.productions.abilities import EditProduction
 from uobtheatre.users.abilities import Ability
 from uobtheatre.users.models import User
-from uobtheatre.productions.abilities import EditProduction
 
 
-class UplaodImage(Ability):
-    """Whether the user has permission to open the boxoffice."""
+class UploadImage(Ability):
+    """Whether the user has permission to upload an image."""
 
     name = "upload_image"
 

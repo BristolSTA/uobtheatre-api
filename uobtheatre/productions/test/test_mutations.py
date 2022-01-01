@@ -839,7 +839,7 @@ def test_performance_mutation_create_with_no_production(gql_client):
     assert response["data"]["performance"]["success"] is False
     assert (
         response["data"]["performance"]["errors"][0]["message"]
-        == "You are not authorized to perform this action"
+        == "This field is required."
     )
 
 
@@ -898,17 +898,17 @@ def test_performance_mutation_update(gql_client, with_permission):
         (
             False,
             False,
-            "You do not have permission to move a performance from this production",
+            "You do not have permission to move the performance from the current production",
         ),
         (
             False,
             True,
-            "You do not have permission to move a performance from this production",
+            "You do not have permission to move the performance from the current production",
         ),
         (
             True,
             False,
-            "You do not have permission to add a performance to this production",
+            "You do not have permission to add the performance to this production",
         ),
         (True, True, None),
     ],
@@ -973,7 +973,7 @@ def test_performance_mutation_update_new_production(
             {
                 "__typename": "FieldError",
                 "message": error_message,
-                "code": 403,
+                "code": "403",
                 "field": "production",
             }
         ]

@@ -31,7 +31,7 @@ from uobtheatre.venues.test.factories import VenueFactory
         ),
     ],
 )
-def test_performance_form_clean(door, start, end, error):
+def test_performance_form_clean_timings(door, start, end, error):
     form = PerformanceForm(
         data={
             "doors_open": door.isoformat(),

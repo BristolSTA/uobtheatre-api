@@ -3,7 +3,7 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from uobtheatre.images.abilities import UplaodImage
+from uobtheatre.images.abilities import UploadImage
 from uobtheatre.images.serializers import ImageSerializer
 from uobtheatre.users.backends import GraphqlJWTAuthentication
 
@@ -25,7 +25,7 @@ class ImageView(APIView):
         """
         Endpoint to upload an image.
         """
-        if not request.user.is_authenticated or not UplaodImage.user_has(request.user):
+        if not request.user.is_authenticated or not UploadImage.user_has(request.user):
             raise exceptions.AuthenticationFailed
 
         file_serializer = ImageSerializer(data=request.data)
