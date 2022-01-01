@@ -171,7 +171,7 @@ class DeleteDiscountRequirementMutation(ModelDeletionMutation):
             if not EditProduction.user_has_for(
                 info.context.user, performance.production
             ):
-                raise AuthorizationException()
+                raise AuthorizationException("You do not have the ability to edit one of the provided performances")
 
     class Meta:
         model = DiscountRequirement
