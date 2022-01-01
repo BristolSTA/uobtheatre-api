@@ -39,7 +39,7 @@ class TransactionMethod(abc.ABC):
 
     @classmethod
     @property
-    def __all__(cls) -> list["TransactionMethod"]:
+    def __all__(cls) -> list[Type["TransactionMethod"]]:
         return PaymentMethod.__all__ + RefundMethod.__all__
 
     @property
@@ -50,7 +50,7 @@ class TransactionMethod(abc.ABC):
     @classmethod
     @property
     def non_manual_methods(cls) -> list[Type["TransactionMethod"]]:
-        return [method for method in cls.__all__ if not method.is_manual]
+        return [method for method in cls.__all__ if not method.is_manual]  # type: ignore
 
     @staticmethod
     def generate_name(name):
@@ -104,7 +104,7 @@ class PaymentMethod(TransactionMethod, abc.ABC):
     choices field and the graphene enum.
     """
 
-    __all__: list[Type["PaymentMethod"]] = []
+    __all__: list[Type["TransactionMethod"]] = []
 
     def __init_subclass__(cls) -> None:
         super().__init_subclass__()
@@ -146,7 +146,7 @@ class RefundMethod(TransactionMethod, abc.ABC):
     Abscract class for all refund methods.
     """
 
-    __all__: list[Type["RefundMethod"]] = []
+    __all__: list[Type["TransactionMethod"]] = []
 
     def __init_subclass__(cls) -> None:
         super().__init_subclass__()
