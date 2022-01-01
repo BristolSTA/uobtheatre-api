@@ -162,7 +162,10 @@ class ProductionMutation(SafeFormMutation, AuthRequiredMixin):
             else True
         )
         if not has_perm_new_society:
-            raise AuthorizationException
+            raise AuthorizationException(
+                "You do not have permission to add a production for this society",
+                field="society",
+            )
 
     @classmethod
     def on_creation(cls, info, response):
