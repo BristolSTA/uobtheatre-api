@@ -1066,6 +1066,14 @@ def test_performance_seat_group_mutation_create(gql_client):
              }
           ) {
             success
+            errors {
+                ... on NonFieldError {
+                    message
+                }
+                ... on FieldError {
+                    message
+                }
+            }
             performanceSeatGroup {
                 performance {
                     id
@@ -1085,6 +1093,7 @@ def test_performance_seat_group_mutation_create(gql_client):
         EditProduction, "user_has_for", return_value=True
     ) as ability_mock:
         response = gql_client.login().execute(request)
+        print(response)
 
         ability_mock.assert_called()
         assert response["data"]["performanceSeatGroup"]["success"] is True

@@ -1,3 +1,5 @@
+from typing import Optional
+
 import graphene
 from guardian.shortcuts import get_users_with_perms
 
@@ -18,6 +20,7 @@ from uobtheatre.productions.schema import (
     PerformanceSeatGroupNode,
     ProductionNode,
 )
+from uobtheatre.users.models import User
 from uobtheatre.users.schema import AuthMutation
 from uobtheatre.utils.exceptions import (
     AuthorizationException,
@@ -186,6 +189,33 @@ class ProductionPermissionsMutation(AssignPermissionsMutation):
         model = Production
 
 
+def authorize_productions(
+    old_production: Optional[Production],
+    new_production: Optional[Production],
+    user: User,
+    object_name: str,
+    field: str,
+):
+    """Authorize the user on both the old and new production"""
+
+    # If the performance is current assinged to a production and being move
+    # to a different production then we must check the user has permission
+    # to edit the performances curent production.
+    if old_production and not EditProduction.user_has_for(user, old_production):
+        raise AuthorizationException(
+            f"You do not have permission to move the {object_name} from the current {field}",
+            field=field,
+        )
+
+    # If the performance is being assigned to a production then we must
+    # check the user has permission to edit this new production.
+    if new_production and not EditProduction.user_has_for(user, new_production):
+        raise AuthorizationException(
+            f"You do not have permission to add the {object_name} to this {field}",
+            field=field,
+        )
+
+
 class PerformanceMutation(SafeFormMutation, AuthRequiredMixin):
     """Mutation to create or update a performance"""
 
@@ -193,41 +223,14 @@ class PerformanceMutation(SafeFormMutation, AuthRequiredMixin):
 
     @classmethod
     def authorize_request(cls, root, info, **inputs):
-        cls.authorize_production_part(root, info, **inputs)
-
-    @classmethod
-    def authorize_production_part(cls, root, info, **inputs):
-        """
-        Authorised the production part (exisiting and prodivded input)
-
-        During the mutation the performance may be moved to a diferent
-        production. In this case we must check the user has permission to edit
-        both the production it was assigned to (if it exists) and the
-        production is it being moved to.
-        """
-
-        # If the performance is current assinged to a production and being move
-        # to a different production then we must check the user has permission
-        # to edit the performances curent production.
         current_instance = cls.get_object_instance(root, info, **inputs)
-        if current_instance and not EditProduction.user_has_for(
-            info.context.user, current_instance.production
-        ):
-            raise AuthorizationException(
-                "You do not have permission to move the performance from the current production",
-                field="production",
-            )
-
-        # If the performance is being assigned to a production then we must
-        # check the user has permission to edit this new production.
-        new_production = cls.get_python_value(root, info, inputs, "production")
-        if new_production and not EditProduction.user_has_for(
-            info.context.user, new_production
-        ):
-            raise AuthorizationException(
-                "You do not have permission to add the performance to this production",
-                field="production",
-            )
+        authorize_productions(
+            current_instance.production if current_instance else None,
+            cls.get_python_value(root, info, inputs, "production"),
+            info.context.user,
+            "performance",
+            "production",
+        )
 
     class Meta:
         form_class = PerformanceForm
@@ -254,24 +257,15 @@ class PerformanceSeatGroupMutation(SafeFormMutation, AuthRequiredMixin):
     @classmethod
     def authorize_request(cls, root, info, **inputs):
         new_performance = cls.get_python_value(root, info, inputs, "performance")
-        has_perm_new_performance = (
-            EditProduction.user_has_for(info.context.user, new_performance.production)
-            if new_performance
-            else True
-        )
+        current_instance = cls.get_object_instance(root, info, **inputs)
 
-        if cls.is_creation(**inputs):
-            # If this is a creation operation, we care that there is a new performance specified via args, and that the user has edit ability on this production
-            return has_perm_new_performance and new_performance
-
-        # For update operations, we care that the user has permissions on both the currently assigned performance, and the new performance (if provided)
-        current_performance = cls.get_object_instance(
-            root, info, **inputs
-        ).performance.production
-        has_perm_current_performance = EditProduction.user_has_for(
-            info.context.user, current_performance
+        authorize_productions(
+            current_instance.performance.production if current_instance else None,
+            new_performance.production if new_performance else None,
+            info.context.user,
+            "seat group",
+            "performance",
         )
-        return has_perm_new_performance and has_perm_current_performance
 
     class Meta:
         form_class = PerformanceSeatGroupForm
