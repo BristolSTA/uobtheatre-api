@@ -202,26 +202,25 @@ class PerformanceMutation(SafeFormMutation, AuthRequiredMixin):
         both the production it was assigned to (if it exists) and the
         production is it being moved to.
         """
-        new_production = cls.get_python_value(root, info, inputs, "production")
-        has_perm_new_production = (
-            EditProduction.user_has_for(info.context.user, new_production)
-            if new_production
-            else True
-        )
-        current_instance = cls.get_object_instance(root, info, **inputs)
-        has_perm_current_production = (
-            EditProduction.user_has_for(info.context.user, current_instance.production)
-            if current_instance
-            else True
-        )
 
-        if not has_perm_current_production:
+        # If the performance is current assinged to a production and being move
+        # to a different production then we must check the user has permission
+        # to edit the performances curent production.
+        current_instance = cls.get_object_instance(root, info, **inputs)
+        if current_instance and not EditProduction.user_has_for(
+            info.context.user, current_instance.production
+        ):
             raise AuthorizationException(
                 "You do not have permission to move the performance from the current production",
                 field="production",
             )
 
-        if not has_perm_new_production:
+        # If the performance is being assigned to a production then we must
+        # check the user has permission to edit this new production.
+        new_production = cls.get_python_value(root, info, inputs, "production")
+        if new_production and not EditProduction.user_has_for(
+            info.context.user, new_production
+        ):
             raise AuthorizationException(
                 "You do not have permission to add the performance to this production",
                 field="production",
