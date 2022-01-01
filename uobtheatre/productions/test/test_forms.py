@@ -42,6 +42,4 @@ def test_performance_form_clean(door, start, end, error):
         }
     )
 
-    # Patch super.clean call
-    # with patch.object(form, "super", return_value=None):
     assert form.errors == error

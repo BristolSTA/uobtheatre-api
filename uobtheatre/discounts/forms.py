@@ -12,6 +12,8 @@ class ConcessionTypeForm(MutationForm):
 
 
 class DiscountForm(MutationForm):
+    """Discount mutation form"""
+
     class Meta:
         model = Discount
         fields = (
@@ -21,10 +23,11 @@ class DiscountForm(MutationForm):
         )
 
     def clean_performances(self):
+        """Validate the performances"""
         performances = self.cleaned_data["performances"]
 
         if not performances:
-            raise ValidationError("Please select at least one performance.")
+            raise ValidationError("Please select at least one performance")
 
         return performances
 
