@@ -893,16 +893,28 @@ def test_performance_mutation_update(gql_client, with_permission):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "has_old_permission,has_new_permission,expected_outcome",
+    "has_old_permission,has_new_permission,error_message",
     [
-        (False, False, False),
-        (False, True, False),
-        (True, False, False),
-        (True, True, True),
+        (
+            False,
+            False,
+            "You do not have permission to move a performance from this production",
+        ),
+        (
+            False,
+            True,
+            "You do not have permission to move a performance from this production",
+        ),
+        (
+            True,
+            False,
+            "You do not have permission to add a performance to this production",
+        ),
+        (True, True, None),
     ],
 )
 def test_performance_mutation_update_new_production(
-    gql_client, has_old_permission, has_new_permission, expected_outcome
+    gql_client, has_old_permission, has_new_permission, error_message
 ):
     performance = PerformanceFactory(
         doors_open=datetime(day=9, month=11, year=2021),
@@ -925,13 +937,10 @@ def test_performance_mutation_update_new_production(
             success
             errors {
               __typename
-              ... on NonFieldError {
-                message
-                code
-              }
               ... on FieldError {
                 message
                 code
+                field
               }
             }
          }
@@ -951,12 +960,23 @@ def test_performance_mutation_update_new_production(
         ability_mock.assert_any_call(gql_client.user, performance.production)
         ability_mock.assert_any_call(gql_client.user, new_production)
 
-    assert response["data"]["performance"]["success"] is expected_outcome
-    if expected_outcome:
+    if error_message is None:
+        assert response["data"]["performance"]["success"]
         assert (
             response["data"]["performance"]["performance"]["start"]
             == "2021-11-10T00:00:00+00:00"
         )
+
+    else:
+        assert not response["data"]["performance"]["success"]
+        assert response["data"]["performance"]["errors"] == [
+            {
+                "__typename": "FieldError",
+                "message": error_message,
+                "code": 403,
+                "field": "production",
+            }
+        ]
 
 
 @pytest.mark.django_db

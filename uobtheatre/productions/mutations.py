@@ -194,27 +194,36 @@ class PerformanceMutation(SafeFormMutation, AuthRequiredMixin):
 
     @classmethod
     def authorize_production_part(cls, root, info, **inputs):
-        """Authorised the production part (exisiting and prodivded input)"""
+        """
+        Authorised the production part (exisiting and prodivded input)
+
+        During the mutation the performance may be moved to a diferent
+        production. In this case we must check the user has permission to edit
+        both the production it was assigned to (if it exists) and the
+        production is it being moved to.
+        """
         new_production = cls.get_python_value(root, info, inputs, "production")
         has_perm_new_production = (
             EditProduction.user_has_for(info.context.user, new_production)
             if new_production
             else True
         )
-
-        if cls.is_creation(**inputs):
-            # If this is a creation operation, we care that there is a new production specified via args, and that the user has edit ability on this production
-            if not (has_perm_new_production and new_production):
-                raise AuthorizationException
-            return
-
-        # For update operations, we care that the user has permissions on both the currently assigned production, and the new production (if provided)
         current_production = cls.get_object_instance(root, info, **inputs).production
         has_perm_current_production = EditProduction.user_has_for(
             info.context.user, current_production
         )
-        if not (has_perm_new_production and has_perm_current_production):
-            raise AuthorizationException
+
+        if has_perm_current_production:
+            raise AuthorizationException(
+                "You do not have permission to move a performance from the current production",
+                field="production",
+            )
+
+        if has_perm_new_production:
+            raise AuthorizationException(
+                "You do not have permission to add a performance to this production",
+                field="production",
+            )
 
     class Meta:
         form_class = PerformanceForm
