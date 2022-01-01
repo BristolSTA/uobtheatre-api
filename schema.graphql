@@ -185,6 +185,16 @@ type DiscountNode implements Node {
   requirements: [DiscountRequirementNode!]
 }
 
+type DiscountNodeConnection {
+  pageInfo: PageInfo!
+  edges: [DiscountNodeEdge]!
+}
+
+type DiscountNodeEdge {
+  node: DiscountNode
+  cursor: String!
+}
+
 input DiscountRequirementMutationInput {
   number: Int
   discount: ID
@@ -426,7 +436,7 @@ type PerformanceNode implements Node {
   disabled: Boolean!
   seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
   capacity: Int
-  discounts: [DiscountNode!]
+  discounts(offset: Int, before: String, after: String, first: Int, last: Int, group: Boolean, id: ID): DiscountNodeConnection!
   bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, reference: String, user: ID, creator: ID, performance: ID, status: String, adminDiscountPercentage: Float, expiresAt: DateTime, id: ID, search: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection!
   capacityRemaining: Int
   ticketOptions: [PerformanceSeatGroupNode]
@@ -512,6 +522,7 @@ type PriceBreakdownTicketNode {
 
 input ProductionMutationInput {
   name: String
+  slug: String
   subtitle: String
   society: ID
   description: String
@@ -539,7 +550,7 @@ type ProductionNode implements Node {
   name: String!
   subtitle: String
   description: String
-  society: SocietyNode!
+  society: SocietyNode
   coverImage: ImageNode
   posterImage: ImageNode
   featuredImage: ImageNode
@@ -596,7 +607,7 @@ type Query {
   productions(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, society: ID, status: String, ageRating: Int, facebookEvent: String, warnings: [ID], slug: String, id: ID, userHasPermission: String, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, search: String, orderBy: String): ProductionNodeConnection
   performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, hasBoxofficePermissions: Boolean, runOn: Date, orderBy: String): PerformanceNodeConnection
   warnings(offset: Int, before: String, after: String, first: Int, last: Int, id: ID): WarningNodeConnection
-  production(slug: String!): ProductionNode
+  production(id: IdInputField, slug: String): ProductionNode
   performance(id: ID!): PerformanceNode
   venues(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String): VenueNodeConnection
   venue(slug: String!): VenueNode
