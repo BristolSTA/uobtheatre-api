@@ -10,6 +10,8 @@ from uobtheatre.societies.test.factories import SocietyFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory, VenueFactory
 
+pytestmark = pytest.mark.system_test
+
 
 @pytest.mark.django_db
 def test_total_production_creation_workflow(gql_client):

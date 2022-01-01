@@ -123,24 +123,28 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
 
     @classmethod
     def mutate(cls, root, info, **inputs):
+        """In order to account for having a possible mix of global and local IDs, override the mutate function so that id input items are parsed from global ids"""
         input_items = inputs["input"]
 
+        # If an ID is passed as top level input, convert from global to local
         if "id" in input_items:
             input_items["id"] = from_global_id(input_items["id"])[1]
-        # Fix for relay. Will convert any Django model input / choice fields from global IDs to local
+
+        # Iterate over all the fields in the form
         form = cls.get_form(root, info, **input_items)
         for (key, field) in form.fields.items():
-            if (
-                isinstance(field, ModelChoiceField) and form[key].value()
-            ):  # pragma: no cover
+
+            # If the field is a model choice field and it has a value (i.e. accepts an ID), try converting from a global ID
+            if isinstance(field, ModelChoiceField) and form[key].value():
                 try:
+                    # If this is a multiple model choice field, convert every ID in the list to a local ID
                     if isinstance(form[key].value(), List):
                         input_items[key] = [
                             from_global_id(item)[1] for item in input_items[key]
                         ]
                     else:
                         input_items[key] = from_global_id(form[key].value())[1]
-                except TypeError:
+                except ValueError:
                     pass
         return super().mutate(root, info, **input_items)
 
@@ -149,7 +153,7 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
         return super().get_form_kwargs(root, info, **inputs)
 
     @classmethod
-    # pylint: disable=W0212
+    # pylint: disable=protected-access
     def authorize_request(cls, root, info, **inputs):
         """Authorize the request (pre-validation)"""
         model_name = cls._meta.model._meta.model_name
@@ -166,7 +170,7 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
                 if not create_ability
                 else create_ability.user_has(info.context.user)
             ):
-                raise AuthorizationException
+                raise AuthorizationException("You cannot create one of these")
             return
 
         instance = cls.get_object_instance(root, info, **inputs)
@@ -178,7 +182,7 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
             if not update_ability
             else update_ability.user_has_for(info.context.user, instance)
         ):
-            raise AuthorizationException
+            raise AuthorizationException("You cannot change this instance")
 
     @classmethod
     def on_success(cls, info, response, is_creation):
@@ -298,7 +302,6 @@ class ModelDeletionMutation(AuthRequiredMixin, SafeMutation):
         id = IdInputField(required=True)
 
     @classmethod
-    # pylint: disable=arguments-differ
     def __init_subclass_with_meta__(
         cls, *args, model=None, ability=None, **options
     ):  # pragma: no cover
@@ -317,19 +320,19 @@ class ModelDeletionMutation(AuthRequiredMixin, SafeMutation):
         return cls._meta.model.objects.get(id=model_id)
 
     @classmethod
-    # pylint: disable=W0212
+    # pylint: disable=protected-access
     def authorize_request(cls, _, info, **inputs):
         """Authorize the request"""
         instance = cls.get_instance(inputs["id"])
         if cls._meta.ability:
             if not cls._meta.ability.user_has(info.context.user, instance):
-                raise AuthorizationException
+                raise AuthorizationException("You cannot delete this instance")
             return
 
         if not info.context.user.has_perm(
             "delete_%s" % cls._meta.model._meta.model_name, instance
         ):
-            raise AuthorizationException
+            raise AuthorizationException("You cannot delete this instance")
 
     @classmethod
     # pylint: disable=C0103,W0622
@@ -420,7 +423,7 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
             + cls._meta.model._meta.model_name,  # pylint: disable=protected-access
             instance,
         ):
-            raise AuthorizationException()
+            raise AuthorizationException("You cannot change this instance")
 
         for permission in inputs["permissions"]:
             if not next(

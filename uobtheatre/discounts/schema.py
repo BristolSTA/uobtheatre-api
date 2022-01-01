@@ -153,8 +153,6 @@ class DiscountRequirementMutation(SafeFormMutation, AuthRequiredMixin):
                     "You do not have permission to edit one or more of the productions associated with this requirement"
                 )
 
-        return True
-
     class Meta:
         form_class = DiscountRequirementForm
 

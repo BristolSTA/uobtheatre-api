@@ -2,7 +2,7 @@ from uobtheatre.users.abilities import Ability
 
 
 class AddProduction(Ability):
-    """Whether the user is able to change a production's details and sub-objects"""
+    """Whether the user is able to add a production"""
 
     name = "add_production"
 

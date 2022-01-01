@@ -85,7 +85,9 @@ class Discount(models.Model):
 
         super().validate_unique(*args, **kwargs)
 
-        discounts = self.__class__._default_manager.all()  # pylint: disable=W0212
+        discounts = (
+            self.__class__._default_manager.all()  # pylint: disable=protected-access
+        )
         if not self._state.adding and self.pk is not None:
             discounts = discounts.exclude(pk=self.pk)
 
