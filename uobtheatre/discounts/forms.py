@@ -1,5 +1,5 @@
 from uobtheatre.discounts.models import ConcessionType, Discount, DiscountRequirement
-from uobtheatre.utils.forms import MutationForm
+from uobtheatre.utils.forms import MutationForm, ValidationError
 
 
 class ConcessionTypeForm(MutationForm):
@@ -19,6 +19,14 @@ class DiscountForm(MutationForm):
             "performances",
             "seat_group",
         )
+
+    def clean_performances(self):
+        performances = self.cleaned_data["performances"]
+
+        if not performances:
+            raise ValidationError("Please select at least one performance.")
+
+        return performances
 
 
 class DiscountRequirementForm(MutationForm):

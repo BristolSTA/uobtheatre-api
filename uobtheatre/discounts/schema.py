@@ -44,6 +44,11 @@ class DiscountFilter(FilterSet):
         fields = ("group",)
 
     def filter_group(self, queryset, _, value):
+        """
+        Filter discounts by whether they are a group discount.
+        A group discount is a discount that requires more than 1 tickt to meet
+        the discount requirements.
+        """
         queryset = queryset.annotate(
             number_of_tickets_required=Sum("requirements__number")
         )
@@ -89,15 +94,12 @@ class DiscountMutation(SafeFormMutation, AuthRequiredMixin):
         if instance:
             performances += instance.performances.prefetch_related("production").all()
 
-        if not performances:
-            raise AuthorizationException
-
         # Authorize user on all of the performance's productions
-        for performance in performances:
+        for performance in performances or []:
             if not EditProduction.user_has_for(
                 info.context.user, performance.production
             ):
-                raise AuthorizationException
+                raise AuthorizationException("You do not have the ability to edit one of the provided performances")
 
     class Meta:
         form_class = DiscountForm
