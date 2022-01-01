@@ -91,6 +91,7 @@ class DiscountMutation(SafeFormMutation, AuthRequiredMixin):
         )
         instance = cls.get_object_instance(root, info, **inputs)
 
+        # If we are editing an exisiting discount, add the performances currently associated with that discount
         if instance:
             performances += instance.performances.prefetch_related("production").all()
 
@@ -99,7 +100,9 @@ class DiscountMutation(SafeFormMutation, AuthRequiredMixin):
             if not EditProduction.user_has_for(
                 info.context.user, performance.production
             ):
-                raise AuthorizationException("You do not have the ability to edit one of the provided performances")
+                raise AuthorizationException(
+                    "You do not have the ability to edit one of the provided performances"
+                )
 
     class Meta:
         form_class = DiscountForm
@@ -130,26 +133,25 @@ class DiscountRequirementMutation(SafeFormMutation, AuthRequiredMixin):
 
         instance = cls.get_object_instance(root, info, **inputs)
 
-        current_performances = (
-            instance.discount.performances.prefetch_related("production").all()
-            if instance
-            else []
-        )
-
+        # Get all the performances that are related to the requirement's discounts
         all_performances = []
-        all_performances.extend(current_performances)
+        if instance:
+            all_performances.extend(
+                instance.discount.performances.prefetch_related("production").all()
+            )
         if new_discount:
-            all_performances.extend(new_discount.performances.all())
-
-        if len(all_performances) == 0:
-            raise AuthorizationException
+            all_performances.extend(
+                new_discount.performances.prefetch_related("production").all()
+            )
 
         # Authorize user on all of the performance's productions
         for performance in all_performances:
             if not EditProduction.user_has_for(
                 info.context.user, performance.production
             ):
-                raise AuthorizationException
+                raise AuthorizationException(
+                    "You do not have permission to edit one or more of the productions associated with this requirement"
+                )
 
         return True
 
