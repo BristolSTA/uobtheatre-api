@@ -249,7 +249,7 @@ def test_refund_pending_payment():
     payment = PaymentFactory(status=Payment.PaymentStatus.PENDING)
     with pytest.raises(GQLException) as exc:
         payment.refund()
-        assert exc.message == "You cannot refund a PENDING payment"
+        assert exc.message == "You cannot refund a pending payment"
 
 
 @pytest.mark.django_db

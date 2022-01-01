@@ -8,7 +8,7 @@ from uobtheatre.payments.models import Payment
 from uobtheatre.utils.models import AbstractModelMeta
 
 
-class Payable(models.Model, metaclass=AbstractModelMeta):
+class Payable(models.Model, metaclass=AbstractModelMeta):  # type: ignore
     """
     An model which can be paid for
     """

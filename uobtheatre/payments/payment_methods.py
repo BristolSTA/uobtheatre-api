@@ -1,6 +1,6 @@
 import abc
 import re
-from typing import TYPE_CHECKING, Optional, Type
+from typing import TYPE_CHECKING, Any, Dict, Optional, Type
 from uuid import uuid4
 
 from django.conf import settings
@@ -205,7 +205,7 @@ class SquarePaymentMethod(SquareAPIMixin, abc.ABC):
     """
 
     @classmethod
-    def get_payment(cls, payment_id: str):
+    def get_payment(cls, payment_id: str) -> Dict[Any, Any]:
         """Get full payment info from square for a given payment id.
 
         Args:
@@ -303,6 +303,9 @@ class SquareRefund(RefundMethod, SquareAPIMixin):
 
     @classmethod
     def sync_payment(cls, payment: "payment_models.Payment", data: dict = None):
+        if payment.provider_payment_id is None:
+            return
+
         if not data:
             response = cls.client.refunds.get_payment_refund(
                 payment.provider_payment_id
@@ -483,6 +486,9 @@ class SquarePOS(PaymentMethod, SquarePaymentMethod):
     @classmethod
     def sync_payment(cls, payment: "payment_models.Payment", data: dict = None):
         """Syncs the given payment with the raw payment data"""
+        if payment.provider_payment_id is None:
+            return
+
         checkout = data if data else cls.get_checkout(payment.provider_payment_id)
         payment.provider_fee = sum(
             filter(
@@ -577,7 +583,9 @@ class SquareOnline(Refundable, PaymentMethod, SquarePaymentMethod):
     @classmethod
     def sync_payment(cls, payment: "payment_models.Payment", data: dict = None):
         """Syncs the given payment with the raw payment data"""
-        if not data:
+        if payment.provider_payment_id is None:
+            return
+        if data is None:
             data = cls.get_payment(payment.provider_payment_id)
         payment.provider_fee = cls.payment_processing_fee(data)
         payment.status = square_status_map()[data["status"]]

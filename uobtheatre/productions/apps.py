@@ -6,4 +6,4 @@ class ProductionsConfig(AppConfig):
     verbose_name = "Productions"
 
     def ready(self):
-        import uobtheatre.productions.signals  # NOQA
+        import uobtheatre.productions.signals  # pylint: disable=unused-import

@@ -34,7 +34,6 @@ class BookingAdmin(DangerousAdminConfirmMixin, admin.ModelAdmin):
         - price and discounted_price in list view
     """
 
-    inlines = [SeatBookingInline]
     list_filter = ("status",)
     readonly_fields = ("subtotal", "total")
     list_display = ("reference", "status", "get_performance_name")
@@ -44,7 +43,7 @@ class BookingAdmin(DangerousAdminConfirmMixin, admin.ModelAdmin):
         "user__email",
     ]
     actions = ["issue_refund"]
-    inlines = [PaymentsInline]
+    inlines = [PaymentsInline, SeatBookingInline]
 
     @confirm_dangerous_action
     @admin.action(description="Issue refund", permissions=["change"])

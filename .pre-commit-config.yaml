@@ -61,7 +61,7 @@ repos:
     - django-configurations==2.3.1
     - django-environ==0.8.1
     - xlsxwriter==3.0.2
-    - django==3.2.9
+    - django==3.2.10
     - django-guardian==2.4.0
     - django_tiptap==0.0.10
     - djangorestframework==3.12.4
@@ -81,7 +81,7 @@ repos:
     - black >= 21.10b0
     - isort >= 5.10.1
     - pylint >= 2.11.1
-    - django-stubs >= 1.7.0
+    - django-stubs >= 1.9.0
     - types-python-dateutil==2.8.3
     - pytest >= 6.2.2
     - pytest-sugar >= 0.9.4

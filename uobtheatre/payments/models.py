@@ -1,9 +1,10 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Q, Sum
+from django.db.models.enums import TextChoices
 from django.db.models.functions import Coalesce
 from django.db.models.query import QuerySet
 
@@ -16,6 +17,9 @@ from uobtheatre.payments.payment_methods import (
 )
 from uobtheatre.utils.exceptions import GQLException
 from uobtheatre.utils.models import TimeStampedMixin
+
+if TYPE_CHECKING:
+    from uobtheatre.payments.payables import Payable
 
 
 class PaymentQuerySet(QuerySet):
@@ -69,18 +73,20 @@ class Payment(TimeStampedMixin, models.Model):
 
     # The object that has been payed for. The type of this object has to be of
     # one of the payable types.
-    pay_object = GenericForeignKey("pay_object_type", "pay_object_id")
+    pay_object: "Payable" = GenericForeignKey(
+        "pay_object_type", "pay_object_id"
+    )  # type: ignore
 
     type = models.CharField(
         max_length=20,
         choices=PaymentType.choices,
         default=PaymentType.PURCHASE,
     )
-    status = models.CharField(
+    status: TextChoices = models.CharField(
         max_length=20,
         choices=PaymentStatus.choices,
         default=PaymentStatus.COMPLETED,
-    )
+    )  # type: ignore
 
     provider_payment_id = models.CharField(max_length=128, null=True, blank=True)
     provider = models.CharField(
@@ -193,8 +199,7 @@ class Payment(TimeStampedMixin, models.Model):
         NOTE: Currently this method only updates the processing_fee of the
         payment.
         """
-        if self.provider_payment_id is not None:
-            self.provider_class.sync_payment(self, data)
+        self.provider_class.sync_payment(self, data)
 
     def cancel(self):
         """
@@ -210,12 +215,14 @@ class Payment(TimeStampedMixin, models.Model):
     def refund(self, refund_method: RefundMethod = None):
         """Refund the payment"""
         if self.status != Payment.PaymentStatus.COMPLETED:
-            raise GQLException(f"You cannot refund a {self.status.value} payment")
+            raise GQLException(
+                f"You cannot refund a {self.status.label.lower()} payment"
+            )
 
         if not self.provider_class.is_refundable:
             raise GQLException(f"A {self.provider} payment is not refundable")
 
-        if not refund_method:
+        if refund_method is None:
             refund_method = self.provider_class.refund_method
 
         refund_method.refund(self)

@@ -6,4 +6,4 @@ class PaymentsConfig(AppConfig):
     verbose_name = "Payments"
 
     def ready(self):
-        import uobtheatre.payments.signals  # NOQA
+        import uobtheatre.payments.signals  # pylint: disable=unused-import
