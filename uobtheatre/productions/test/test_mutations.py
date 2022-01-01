@@ -953,12 +953,13 @@ def test_performance_mutation_update_new_production(
     with patch.object(
         EditProduction,
         "user_has_for",
-        side_effect=[has_new_permission, has_old_permission],
+        side_effect=[has_old_permission, has_new_permission],
     ) as ability_mock:
         response = gql_client.login().execute(request)
-        assert ability_mock.call_count == 2  # To check old and new production
+        assert ability_mock.call_count == 2 if has_old_permission else 1
         ability_mock.assert_any_call(gql_client.user, performance.production)
-        ability_mock.assert_any_call(gql_client.user, new_production)
+        if has_old_permission:
+            ability_mock.assert_any_call(gql_client.user, new_production)
 
     if error_message is None:
         assert response["data"]["performance"]["success"]
