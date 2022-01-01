@@ -17,14 +17,12 @@ from uobtheatre.images.models import Image
 from uobtheatre.payments.models import Payment
 from uobtheatre.societies.models import Society
 from uobtheatre.users.abilities import AbilitiesMixin
-from uobtheatre.utils.form_validators import OptionalSchemeURLValidator
 from uobtheatre.utils.models import PermissionableModel, TimeStampedMixin
 from uobtheatre.utils.validators import (
     RelatedObjectsValidator,
     RequiredFieldsValidator,
     ValidationError,
 )
-from django.core.validators import URLValidator
 from uobtheatre.venues.models import SeatGroup, Venue
 
 if TYPE_CHECKING:
@@ -149,6 +147,17 @@ class PerformanceQuerySet(QuerySet):
             QuerySet: The filtered queryset
         """
         return self.filter(start__date__lte=date, end__date__gte=date)
+
+    def where_can_view_tickets_and_bookings(self, user: "User"):
+        """Filter performances where the user is allowed to view tickets and bookings"""
+        productions_with_perm = get_objects_for_user(
+            user,
+            ["productions.boxoffice", "productions.view_bookings"],
+            accept_global_perms=True,
+            with_superuser=True,
+            any_perm=True,
+        )
+        return self.filter(production__in=productions_with_perm)
 
     def has_boxoffice_permission(self, user: "User", has_permission=True):
         """Filter performances where user has boxoffice permission.
@@ -333,7 +342,7 @@ class Performance(
         """The number of tickets sold for the performance
 
         Args:
-            kwargs (dict): Any additonal kwargs are used to filter the queryset.
+            **kwargs (dict): Any additonal kwargs are used to filter the queryset.
 
         Returns:
             int: The number of tickets sold
@@ -350,7 +359,7 @@ class Performance(
         """The number of tickets available for the performance (i.e. factoring in any draft bookings)
 
         Args:
-            kwargs (dict): Any additonal kwargs are used to filter the queryset.
+            **kwargs (dict): Any additonal kwargs are used to filter the queryset.
 
         Returns:
             int: The number of tickets sold
@@ -695,31 +704,17 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin):
     performaces (these are like the nights).
     """
 
-    # Used to validate if a draft can be submitted for approval
     objects = ProductionQuerySet.as_manager()
-
     from uobtheatre.productions.abilities import EditProduction
 
     abilities = [EditProduction]
-
-    VALIDATOR = RequiredFieldsValidator(
-        [
-            "name",
-            "description",
-            "society",
-            "poster_image",
-            "featured_image",
-        ]
-    ) & RelatedObjectsValidator(
-        attribute="performances", validator=Performance.VALIDATOR, min_number=1
-    )
 
     name = models.CharField(max_length=255)
     subtitle = models.CharField(max_length=255, null=True, blank=True)
     description = TipTapTextField(null=True)
 
     society = models.ForeignKey(
-        Society, on_delete=models.RESTRICT, related_name="productions"
+        Society, on_delete=models.SET_NULL, null=True, related_name="productions"
     )
 
     cover_image = models.ForeignKey(
@@ -744,14 +739,23 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin):
         blank=True,
     )
 
+    VALIDATOR = RequiredFieldsValidator(
+        [
+            "name",
+            "description",
+            "society",
+            "poster_image",
+            "featured_image",
+        ]
+    ) & RelatedObjectsValidator(
+        attribute="performances", validator=Performance.VALIDATOR, min_number=1
+    )
+
     class Status(models.TextChoices):
         """The overall status of the production"""
 
         DRAFT = "DRAFT", "Draft"  # Production is in draft
-        PENDING = (
-            "PENDING",
-            "Pending approval",
-        )  # Production is pending publication/review
+        PENDING = "PENDING", "Pending"  # Produciton is pending publication/review
         APPROVED = (
             "APPROVED",
             "Approved",
@@ -781,9 +785,7 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin):
     )
 
     age_rating = models.SmallIntegerField(null=True, blank=True)
-    facebook_event = models.CharField(
-        max_length=255, null=True, blank=True, validators=[OptionalSchemeURLValidator()]
-    )
+    facebook_event = models.CharField(max_length=255, null=True, blank=True)
 
     warnings = models.ManyToManyField(AudienceWarning, blank=True)
 
@@ -916,6 +918,7 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin):
             ("boxoffice", "Can use boxoffice for production"),
             ("sales", "Can view sales for production"),
             ("force_change_production", "Can edit production once live"),
+            ("view_bookings", "Can inspect bookings and users for this production"),
             ("approve_production", "Can approve production pending publication"),
         )
 
@@ -923,6 +926,7 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin):
         schema_assignable_permissions = {
             "boxoffice": ("change_production", "force_change_production"),
             "view_production": ("change_production", "force_change_production"),
+            "view_bookings": ("change_production", "force_change_production"),
             "change_production": ("change_production", "force_change_production"),
             "sales": ("change_production", "force_change_production"),
         }

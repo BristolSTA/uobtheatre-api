@@ -14,13 +14,14 @@ class SeatGroupNode(DjangoObjectType):
     class Meta:
         model = SeatGroup
         interfaces = (relay.Node,)
-        exclude = ("performance_set", "performanceseatgroup_set", "discount_set")
+        fields = ("name", "description", "venue", "capacity", "is_internal")
 
 
 class SeatNode(DjangoObjectType):
     class Meta:
         model = Seat
         interfaces = (relay.Node,)
+        fields = ("row", "number")
 
 
 class VenueNode(DjangoObjectType):

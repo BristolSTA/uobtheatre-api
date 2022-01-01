@@ -87,10 +87,9 @@ type ConcessionTypeMutationPayload {
 }
 
 type ConcessionTypeNode implements Node {
-  id: ID!
   name: String!
   description: String
-  seatBookings(offset: Int, before: String, after: String, first: Int, last: Int): TicketNodeConnection!
+  id: ID!
 }
 
 type CreateBooking {
@@ -647,14 +646,12 @@ type SalesBreakdownNode {
 }
 
 type SeatGroupNode implements Node {
-  id: ID!
   name: String!
   description: String
   venue: VenueNode!
   capacity: Int
-  seats: SeatNode
   isInternal: Boolean!
-  tickets(offset: Int, before: String, after: String, first: Int, last: Int): TicketNodeConnection!
+  id: ID!
 }
 
 type SeatGroupNodeConnection {
@@ -668,11 +665,9 @@ type SeatGroupNodeEdge {
 }
 
 type SeatNode implements Node {
-  id: ID!
   row: String
   number: String
-  seatgroupSet(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
-  ticketSet(offset: Int, before: String, after: String, first: Int, last: Int): TicketNodeConnection!
+  id: ID!
 }
 
 type SendPasswordResetEmail {
@@ -751,16 +746,6 @@ type TicketNode implements Node {
   concessionType: ConcessionTypeNode!
   seat: SeatNode
   checkedIn: Boolean!
-}
-
-type TicketNodeConnection {
-  pageInfo: PageInfo!
-  edges: [TicketNodeEdge]!
-}
-
-type TicketNodeEdge {
-  node: TicketNode
-  cursor: String!
 }
 
 type UnCheckInBooking {

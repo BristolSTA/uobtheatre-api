@@ -167,6 +167,7 @@ class ProductionMutation(SafeFormMutation, AuthRequiredMixin):
     @classmethod
     def on_creation(cls, info, response):
         info.context.user.assign_perm("view_production", response.production)
+        info.context.user.assign_perm("view_bookings", response.production)
         info.context.user.assign_perm("change_production", response.production)
         info.context.user.assign_perm("sales", response.production)
         info.context.user.assign_perm("boxoffice", response.production)
