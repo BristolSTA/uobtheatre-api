@@ -103,9 +103,9 @@ jobs:
       run: |
         pylint uobtheatre
 
-        # - name: mypy - static type checking
-        #   run: |
-        #     mypy uobtheatre
+    - name: mypy - static type checking
+      run: |
+        mypy uobtheatre
 
   schema:
     runs-on: ubuntu-latest
