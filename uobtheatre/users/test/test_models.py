@@ -130,8 +130,8 @@ def test_user_has_any_objects_with_perms(
         user.assign_perm(perm)
 
     if len(object_perms):
-        object = ProductionFactory()
+        obj = ProductionFactory()
         for perm in object_perms:
-            user.assign_perm(perm, object)
+            user.assign_perm(perm, obj)
 
     assert user.has_any_objects_with_perms(query_perms) is expected
