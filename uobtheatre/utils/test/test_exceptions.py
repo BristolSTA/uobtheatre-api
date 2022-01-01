@@ -1,10 +1,12 @@
 import pytest
+from graphene_django.types import ErrorType
 
 from uobtheatre.payments.test.factories import MockApiResponse
 from uobtheatre.productions.models import Performance
 from uobtheatre.utils.exceptions import (
     AuthOutput,
     FieldError,
+    FormExceptions,
     GQLException,
     GQLExceptions,
     MutationException,
@@ -162,3 +164,29 @@ def test_not_found_exception(object_type, object_id, message):
         NotFoundException(object_type=object_type, object_id=object_id).message
         == message
     )
+
+@pytest.mark.parametrize(
+    "form_errors, expected_resolve_output",
+    [
+        (
+            [
+                ErrorType(
+                    messages=["too long", "too short"],
+                    field="field"
+                )
+            ],
+            [
+                FieldError(
+                    message="too long",
+                    field="field",
+                ),
+                FieldError(
+                    message="too short",
+                    field="field",
+                ),
+            ],
+        )
+    ]
+)
+def test_form_exceptions(form_errors, expected_resolve_output):
+    assert FormExceptions(form_errors).resolve() == expected_resolve_output

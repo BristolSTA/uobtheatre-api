@@ -25,6 +25,7 @@ from uobtheatre.utils.enums import GrapheneEnumMixin
 from uobtheatre.utils.exceptions import (
     AuthException,
     AuthorizationException,
+    FormExceptions,
     GQLException,
     GQLExceptions,
     MutationException,
@@ -230,15 +231,9 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
         """Mutate and get payload override"""
         response = super().mutate_and_get_payload(root, info, **inputs)
 
-        if len(response.errors):
-            exceptions = GQLExceptions(
-                exceptions=[
-                    GQLException(message, field=error.field)
-                    for error in list(response.errors)
-                    for message in error.messages
-                ]
-            )
-            return cls(errors=exceptions.resolve(), success=False)
+        if response.errors:
+            return cls(errors=FormExceptions(response.errors).resolve(), success=False)
+
         cls.on_success(info, response, cls.is_creation(**inputs))
         if cls.is_creation(**inputs):
             cls.on_creation(info, response)

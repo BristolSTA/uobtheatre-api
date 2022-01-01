@@ -17,6 +17,7 @@ import graphene
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from graphene.utils.str_converters import to_camel_case
+from graphene_django.types import ErrorType
 
 
 class ExceptionMiddleware:  # pragma: no cover
@@ -52,7 +53,6 @@ class GQLErrorUnion(graphene.Union):
 class MutationResult:
     success = graphene.Boolean(default_value=True)
     errors = graphene.List(GQLErrorUnion)
-
 
 class AuthOutput(MutationResult):
     """
@@ -172,7 +172,10 @@ class AuthorizationException(GQLException):
 
 
 class ReferencedException(GQLException):
-    """Thrown when a model can't be deleted because of restricted foreign key relations"""
+    """
+    Thrown when a model can't be deleted because of restricted foreign key
+    relations
+    """
 
     def __init__(
         self,
@@ -181,6 +184,24 @@ class ReferencedException(GQLException):
     ):
         super().__init__(message=message, code="REFERR", field=field)
 
+
+class FormExceptions(GQLExceptions):
+    """
+    An exception for handling form errors
+    """
+
+    def __init__(self, form_errors: list[ErrorType] = None):
+        """
+        A form returns a list of error dicts that contains the field name
+        and a list of error message. This init method creates a field error for
+        each error message.
+        """
+        exceptions = [
+            GQLException(message, field=error.field)
+            for error in list(form_errors)
+            for message in error.messages
+        ] if form_errors else []
+        super().__init__(exceptions)
 
 class NotFoundException(GQLException):
     """An exception for when a resource is not found."""
