@@ -726,6 +726,35 @@ def test_production_permissions_removing_unassignable_permissions(
     assert user.has_perm("delete_production", production)
 
 
+@pytest.mark.django_db
+@pytest.mark.parametrize("as_superuser", [False, True])
+def test_production_permissions_removing_self(gql_client, as_superuser):
+    production = ProductionFactory()
+    user = UserFactory(email="example@example.org", is_superuser=as_superuser)
+    assign_perm("change_production", user, production)
+    request = """
+        mutation {
+            productionPermissions(id: "%s", userEmail: "example@example.org", permissions: []) {
+                success
+                errors {
+                    ... on NonFieldError {
+                        message
+                    }
+                }
+            }
+        }
+    """ % (
+        to_global_id("ProductionNode", production.id),
+    )
+
+    response = gql_client.login(user).execute(request)
+    assert response["data"]["productionPermissions"]["success"] is as_superuser
+    if not as_superuser:
+        assert response["data"]["productionPermissions"]["errors"] == [
+            {"message": "You cannot edit your own permissions"}
+        ]
+
+
 ###
 # Performance Mutations
 ###

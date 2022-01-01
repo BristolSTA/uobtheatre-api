@@ -436,6 +436,11 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
                 field="user_email",
             )
 
+        if user == info.context.user and not user.is_superuser:
+            raise GQLException(
+                "You cannot edit your own permissions",
+            )
+
         for permission in cls.permissions_delta(
             inputs["id"],
             info.context.user,
