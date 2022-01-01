@@ -295,26 +295,38 @@ def test_productions_filter(factories, requests, gql_client):
 
 
 @pytest.mark.django_db
-def test_production_single_slug(gql_client):
-    productions = [ProductionFactory() for i in range(2)]
+@pytest.mark.parametrize(
+    "query_args, expected_production",
+    [
+        ('slug: "example-show"', 1),
+        ('slug: "not-a-thing"', None),
+        (f'id: "{to_global_id("ProductionNode", 1)}"', 1),
+        (f'id: "{to_global_id("ProductionNode", 2)}"', 2),
+        (f'id: "{to_global_id("ProductionNode", 3)}"', None),
+        (f'id: "{to_global_id("ProductionNode", 1)}" slug: "example-show"', 1),
+        (f'id: "{to_global_id("ProductionNode", 1)}" slug: "not-a-thing"', None),
+        (None, None),
+    ],
+)
+def test_resolve_production(gql_client, query_args, expected_production):
+    ProductionFactory(slug="example-show", id=1)
+    ProductionFactory(slug="other-show", id=2)
 
     request = """
-        query {
-	  production(slug:"%s") {
-            id
-          }
+      query {
+	    production%s {
+          id
         }
+      }
+    """
+    response = gql_client.execute(request % (f"({query_args})" if query_args else ""))
 
-        """
-    response = gql_client.execute(request % "")
-
-    assert not response.get("errors", None)
-    assert response["data"] == {"production": None}
-
-    response = gql_client.execute(request % productions[0].slug)
-    assert response["data"] == {
-        "production": {"id": to_global_id("ProductionNode", productions[0].id)}
-    }
+    if expected_production is not None:
+        assert response["data"]["production"]["id"] == to_global_id(
+            "ProductionNode", expected_production
+        )
+    else:
+        assert response["data"]["production"] is None
 
 
 @pytest.mark.django_db
