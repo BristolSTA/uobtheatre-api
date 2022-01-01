@@ -9,6 +9,7 @@ from uobtheatre.productions.test.factories import PerformanceFactory, Production
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.utils.exceptions import AuthorizationException
 from uobtheatre.utils.schema import (
+    AssignedUsersMixin,
     IdInputField,
     ModelDeletionMutation,
     UserPermissionFilterMixin,

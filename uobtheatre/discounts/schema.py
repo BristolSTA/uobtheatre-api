@@ -153,8 +153,6 @@ class DiscountRequirementMutation(SafeFormMutation, AuthRequiredMixin):
                     "You do not have permission to edit one or more of the productions associated with this requirement"
                 )
 
-        return
-
     class Meta:
         form_class = DiscountRequirementForm
 
@@ -171,7 +169,9 @@ class DeleteDiscountRequirementMutation(ModelDeletionMutation):
             if not EditProduction.user_has_for(
                 info.context.user, performance.production
             ):
-                raise AuthorizationException("You do not have the ability to edit one of the provided performances")
+                raise AuthorizationException(
+                    "You do not have the ability to edit one of the provided performances"
+                )
 
     class Meta:
         model = DiscountRequirement

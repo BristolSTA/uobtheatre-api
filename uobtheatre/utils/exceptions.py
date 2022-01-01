@@ -229,7 +229,7 @@ class SafeMutation(MutationResult, graphene.Mutation):
         abstract = True
 
     @classmethod
-    # pylint: disable=W0212
+    # pylint: disable=protected-access
     def authorize_request(cls, root, info, **inputs):
         pass
 
