@@ -371,11 +371,11 @@ class Query(graphene.ObjectType):
     )
     performance = relay.Node.Field(PerformanceNode)
 
-    def resolve_production(
-        self, info, id=None, slug=None
-    ):  # pylint: disable=redefined-builtin
+    def resolve_production(self, info, **args):  # pylint: disable=redefined-builtin
+        if all(arg is None for arg in args.values()):
+            return None
         try:
             qs = Production.objects.user_can_see(info.context.user)
-            return qs.get(slug=slug) if slug else qs.get(pk=id)
+            return qs.get(**args)
         except Production.DoesNotExist:
             return None
