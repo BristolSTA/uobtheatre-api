@@ -7,7 +7,13 @@ from uobtheatre.bookings.test.factories import BookingFactory, PerformanceSeatin
 from uobtheatre.productions.models import Production
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.users.test.factories import UserFactory
-from uobtheatre.utils.schema import IdInputField, UserPermissionFilterMixin
+from uobtheatre.utils.exceptions import AuthorizationException
+from uobtheatre.utils.schema import (
+    AssignedUsersMixin,
+    IdInputField,
+    ModelDeletionMutation,
+    UserPermissionFilterMixin,
+)
 
 
 @pytest.mark.django_db
@@ -85,6 +91,40 @@ def test_id_input_field_parse_value(gql_client):
 
     booking = Booking.objects.first()
     assert booking.performance == performance
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("with_delete_perm", [False, True])
+def test_model_deletion_mutation_authorisation(with_delete_perm):
+    user = UserFactory()
+    production = ProductionFactory()
+
+    class FakeModelDeletionMutation(ModelDeletionMutation):
+        class Meta:
+            model = Production
+
+    mutation = FakeModelDeletionMutation()
+
+    if with_delete_perm:
+        assign_perm("delete_production", user, production)
+
+    context = type(
+        "obj", (object,), {"context": type("obj", (object,), {"user": user})}
+    )
+
+    if with_delete_perm:
+        mutation.authorize_request(
+            None,
+            context,
+            id=production.id,
+        )
+    else:
+        with pytest.raises(AuthorizationException):
+            mutation.authorize_request(
+                None,
+                context,
+                id=production.id,
+            )
 
 
 @pytest.mark.django_db

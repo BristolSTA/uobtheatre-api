@@ -1,16 +1,11 @@
 from typing import List, Optional
 
 import graphene
-from django.core.exceptions import ValidationError
 from graphene.types.scalars import Float
 
-from uobtheatre.bookings.models import Booking, max_tickets_per_booking
-from uobtheatre.bookings.schema import (
-    BookingNode,
-    CreateTicketInput,
-    TicketIDInput,
-    UpdateTicketInput,
-)
+from uobtheatre.bookings.models import Booking, Ticket, max_tickets_per_booking
+from uobtheatre.bookings.schema import BookingNode
+from uobtheatre.discounts.models import ConcessionType
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.payment_methods import Card, Cash, SquareOnline, SquarePOS
 from uobtheatre.productions.models import Performance, Production
@@ -21,8 +16,69 @@ from uobtheatre.utils.exceptions import (
     GQLExceptions,
     SafeMutation,
 )
-from uobtheatre.utils.models import validate_percentage
 from uobtheatre.utils.schema import AuthRequiredMixin, IdInputField
+from uobtheatre.utils.validators import PercentageValidator
+from uobtheatre.venues.models import Seat, SeatGroup
+
+
+class CreateTicketInput(graphene.InputObjectType):
+    """Input for creating Tickets with mutations."""
+
+    seat_group_id = IdInputField(required=True)
+    concession_type_id = IdInputField(required=True)
+
+    def to_ticket(self):
+        """Get Ticket object from input.
+
+        This creates a Ticket object based on the inputs to the mutation.
+
+        Note:
+            This is a Ticket object but has not yet been saved to the database.
+
+        Returns:
+            Ticket: The ticket to be created.
+        """
+        return Ticket(
+            seat_group=SeatGroup.objects.get(id=self.seat_group_id),
+            concession_type=ConcessionType.objects.get(id=self.concession_type_id),
+        )
+
+
+class UpdateTicketInput(graphene.InputObjectType):
+    """Input to update existing Tickets or create new ones with a mutation."""
+
+    seat_group_id = IdInputField(required=True)
+    concession_type_id = IdInputField(required=True)
+    seat_id = IdInputField(required=False)
+    id = IdInputField(required=False)
+
+    def to_ticket(self):
+        """Returns the Ticket object to be updated/created.
+
+        If a Ticket already exists it is the exisitng Ticket object (saved in
+        the database). If not a new Ticket object is created (and not yet saved
+        to the database).
+
+        Returns:
+            Ticket: The ticket to be updated/created.
+        """
+
+        if self.id is not None:
+            return Ticket.objects.get(id=self.id)
+        return Ticket(
+            seat_group=SeatGroup.objects.get(id=self.seat_group_id),
+            concession_type=ConcessionType.objects.get(id=self.concession_type_id),
+            seat=Seat.objects.get(id=self.seat_id)
+            if self.seat_id is not None
+            else None,
+        )
+
+
+class TicketIDInput(graphene.InputObjectType):
+    ticket_id = IdInputField(required=True)
+
+    def to_ticket(self):
+        return Ticket.objects.get(id=self.ticket_id)
 
 
 def parse_target_user_email(
@@ -88,13 +144,8 @@ def parse_admin_discount_percentage(
             message="You do not have permission to assign an admin discount",
             field="admin_discount_percentage",
         )
-    try:
-        validate_percentage(admin_discount_percentage)
-    except ValidationError as error:
-        raise GQLException(
-            message=error.message,
-            field="admin_discount_percentage",
-        ) from error
+    validator = PercentageValidator("admin_discount_percentage")
+    validator(admin_discount_percentage)
     return admin_discount_percentage
 
 

@@ -1,21 +1,64 @@
 from unittest.mock import patch
 
 import pytest
+from django.contrib.contenttypes.models import ContentType
 from guardian.shortcuts import assign_perm
 
-from uobtheatre.productions.test.factories import PerformanceFactory
-from uobtheatre.users.abilities import OpenAdmin, OpenBoxoffice, PermissionsMixin
+from uobtheatre.productions.models import Production
+from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
+from uobtheatre.users.abilities import (
+    AbilitiesMixin,
+    Ability,
+    OpenAdmin,
+    OpenBoxoffice,
+    PermissionsMixin,
+)
 from uobtheatre.users.test.factories import UserFactory
+
+
+@pytest.mark.django_db
+def test_ability_mixin_perms():
+    user = UserFactory()
+    production = ProductionFactory()
+
+    assign_perm("change_production", user, production)
+
+    with patch.object(OpenBoxoffice, "user_has_for", return_value=True):
+
+        assert (
+            user.get_perms(user, production).sort()
+            == [
+                "admin_open",
+                "change_production",
+                "boxoffice_open",
+            ].sort()
+        )
+
+
+def test_ability_user_has():
+    class DummyAbility(Ability):
+        pass
+
+    assert DummyAbility.user_has(None) is False
+
+
+def test_ability_user_has_for():
+    class DummyAbility(Ability):
+        @classmethod
+        def user_has(cls, _):
+            return "example"
+
+    assert DummyAbility.user_has_for(None, None) == "example"
 
 
 @pytest.mark.django_db
 def test_open_boxoffice():
     user = UserFactory()
     performance = PerformanceFactory()
-    assert not OpenBoxoffice.user_has(user, None)
+    assert not OpenBoxoffice.user_has(user)
 
     assign_perm("boxoffice", user, performance.production)
-    assert OpenBoxoffice.user_has(user, None)
+    assert OpenBoxoffice.user_has(user)
 
 
 @pytest.mark.django_db
@@ -37,7 +80,7 @@ def test_open_admin(permissions, is_superuser, expected_user_has):
     for permission in permissions:
         assign_perm(permission, user)
 
-    assert OpenAdmin.user_has(user, None) == expected_user_has
+    assert OpenAdmin.user_has(user) == expected_user_has
 
 
 @pytest.mark.django_db
@@ -49,7 +92,11 @@ def test_permissions_mixin_resolve_permissions_with_get_perms(info):
     schema = TestModelSchema()
     with patch.object(schema, "get_perms") as mock_get_perms, patch(
         "uobtheatre.users.abilities.get_perms"
-    ) as mock_guardian_get_perms:
+    ) as mock_guardian_get_perms, patch.object(
+        ContentType.objects,
+        "get_for_model",
+        return_value=ContentType.objects.get_for_model(Production),
+    ):
         schema.resolve_permissions(info)
         mock_get_perms.assert_called_once_with(info.context.user, schema)
         mock_guardian_get_perms.assert_not_called()
@@ -61,6 +108,10 @@ def test_permissions_mixin_resolve_permissions_without_get_perms(info):
         pass
 
     schema = TestModelSchema()
-    with patch("uobtheatre.users.abilities.get_perms") as mock_get_perms:
+    with patch("uobtheatre.users.abilities.get_perms") as mock_get_perms, patch.object(
+        ContentType.objects,
+        "get_for_model",
+        return_value=ContentType.objects.get_for_model(Production),
+    ):
         schema.resolve_permissions(info)
         mock_get_perms.assert_called_once_with(info.context.user, schema)

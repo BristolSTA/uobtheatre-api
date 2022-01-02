@@ -56,13 +56,13 @@ jobs:
 
     - name: Tests
       run: |
-        pytest --cov uobtheatre --cov-fail-under 100 -m "not square_integration"
+        pytest --cov uobtheatre --cov-fail-under 100 -m "not system_test"
       env:
         DATABASE_URL: postgresql://postgres:postgres@0.0.0.0:5432/uobtheatre_api
 
     - name: System tests
       run: |
-        pytest --cov uobtheatre -m "square_integration"
+        pytest --cov uobtheatre -m "system_test"
       env:
         DATABASE_URL: postgresql://postgres:postgres@0.0.0.0:5432/uobtheatre_api
         SQUARE_ACCESS_TOKEN: ${{ secrets.SQUARE_SANDBOX_ACCESS_TOKEN }}

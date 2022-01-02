@@ -11,6 +11,8 @@ from uobtheatre.bookings.test.factories import (
 from uobtheatre.payments.models import Payment
 from uobtheatre.payments.payment_methods import SquareOnline
 
+pytestmark = pytest.mark.system_test
+
 
 @pytest.mark.django_db
 @pytest.mark.square_integration

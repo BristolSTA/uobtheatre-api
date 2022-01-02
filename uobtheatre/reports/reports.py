@@ -232,6 +232,8 @@ class OutstandingSocietyPayments(Report):
             production_sta_fees = sales_breakdown["app_payment_value"]
             sta_total_due += production_sta_fees
 
+            if production.society is None:
+                raise Exception(f"Production {production.id} has no society")
             productions_dataset.find_or_create_row_by_first_column(
                 production.id,
                 [

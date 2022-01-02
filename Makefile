@@ -47,6 +47,9 @@ migrations: ## Make the migrations
 migrations-without-user: ## Make the migrations without setting the user (the user will probably break windows)
 	docker-compose run --rm api python manage.py makemigrations
 
+merge-migrations: ## Merge conflicting migrations
+	docker-compose run --rm api python manage.py makemigrations --merge
+
 migrate: ## Do the migrations
 	docker-compose run --rm api python manage.py migrate
 

@@ -1,23 +1,19 @@
 import pytest
+from graphql_relay.node.node import to_global_id
 
-from uobtheatre.societies.test.factories import SocietyFactory
+from uobtheatre.images.test.factories import ImageFactory
 
 
 @pytest.mark.django_db
 def test_image_schema(gql_client):
-    society = SocietyFactory()
+    image = ImageFactory()
     response = gql_client.execute(
         """
         {
-	  societies {
-            edges {
-              node {
-                logo {
-                  url
-                  altText
-                }
-              }
-            }
+          images {
+            id
+            url
+            altText
           }
         }
         """
@@ -25,17 +21,12 @@ def test_image_schema(gql_client):
 
     assert response == {
         "data": {
-            "societies": {
-                "edges": [
-                    {
-                        "node": {
-                            "logo": {
-                                "url": society.logo.file.url,
-                                "altText": society.logo.alt_text,
-                            },
-                        }
-                    }
-                ]
-            }
+            "images": [
+                {
+                    "id": to_global_id("ImageNode", image.id),
+                    "url": image.file.url,
+                    "altText": image.alt_text,
+                }
+            ]
         }
     }

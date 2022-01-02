@@ -9,24 +9,10 @@ from graphene_django import DjangoListField, DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
 from graphql_auth.schema import UserNode
 
-from uobtheatre.bookings.models import (
-    Booking,
-    MiscCost,
-    Ticket,
-    max_tickets_per_booking,
-)
-from uobtheatre.discounts.models import ConcessionType
+from uobtheatre.bookings.models import Booking, MiscCost, Ticket
 from uobtheatre.productions.models import Performance
 from uobtheatre.utils.enums import GrapheneEnumMixin
-from uobtheatre.utils.exceptions import (
-    AuthorizationException,
-    GQLException,
-    GQLExceptions,
-    SafeMutation,
-)
 from uobtheatre.utils.filters import FilterSet
-from uobtheatre.utils.schema import IdInputField
-from uobtheatre.venues.models import Seat, SeatGroup
 
 
 class MiscCostNode(DjangoObjectType):
@@ -60,7 +46,7 @@ class PriceBreakdownTicketNode(graphene.ObjectType):
     concession_type = graphene.Field("uobtheatre.discounts.schema.ConcessionTypeNode")
     total_price = graphene.Int(required=True)
 
-    def resolve_total_price(self, info):
+    def resolve_total_price(self, _):
         return self.ticket_price * self.number
 
 
@@ -74,25 +60,25 @@ class PriceBreakdownNode(DjangoObjectType):
     total_price = graphene.Int(required=True)
     tickets_discounted_price = graphene.Int(required=True)
 
-    def resolve_tickets_price(self, info):
+    def resolve_tickets_price(self, _):
         return self.tickets_price()
 
-    def resolve_discounts_value(self, info):
+    def resolve_discounts_value(self, _):
         return self.discount_value()
 
-    def resolve_subtotal_price(self, info):
+    def resolve_subtotal_price(self, _):
         return self.subtotal
 
-    def resolve_misc_costs_value(self, info):
+    def resolve_misc_costs_value(self, _):
         return self.misc_costs_value()
 
-    def resolve_total_price(self, info):
+    def resolve_total_price(self, _):
         return self.total
 
-    def resolve_tickets_discounted_price(self, info):
+    def resolve_tickets_discounted_price(self, _):
         return self.subtotal
 
-    def resolve_tickets(self, info):
+    def resolve_tickets(self, _):
 
         # Group the ticket together, this returns a list of tuples.
         # The first element of the tuple is itself a tuple which contains the
@@ -118,7 +104,7 @@ class PriceBreakdownNode(DjangoObjectType):
             for ticket_group, group in groups
         ]
 
-    def resolve_misc_costs(self, info):
+    def resolve_misc_costs(self, _):
         # For some reason the node isnt working for ive had to add all the
         # values in here.
         return [
@@ -259,13 +245,13 @@ class BookingNode(GrapheneEnumMixin, DjangoObjectType):
     payments = DjangoFilterConnectionField("uobtheatre.payments.schema.PaymentNode")
     expired = graphene.Boolean(required=True)
 
-    def resolve_payments(self, info):
+    def resolve_payments(self, _):
         return self.payments.all()
 
-    def resolve_price_breakdown(self, info):
+    def resolve_price_breakdown(self, _):
         return self
 
-    def resolve_expired(self, info):
+    def resolve_expired(self, _):
         return self.is_reservation_expired
 
     @classmethod
@@ -284,66 +270,6 @@ class BookingNode(GrapheneEnumMixin, DjangoObjectType):
         model = Booking
         filterset_class = BookingFilter
         interfaces = (relay.Node,)
-
-
-class CreateTicketInput(graphene.InputObjectType):
-    """Input for creating Tickets with mutations."""
-
-    seat_group_id = IdInputField(required=True)
-    concession_type_id = IdInputField(required=True)
-
-    def to_ticket(self):
-        """Get Ticket object from input.
-
-        This creates a Ticket object based on the inputs to the mutation.
-
-        Note:
-            This is a Ticket object but has not yet been saved to the database.
-
-        Returns:
-            Ticket: The ticket to be created.
-        """
-        return Ticket(
-            seat_group=SeatGroup.objects.get(id=self.seat_group_id),
-            concession_type=ConcessionType.objects.get(id=self.concession_type_id),
-        )
-
-
-class UpdateTicketInput(graphene.InputObjectType):
-    """Input to update existing Tickets or create new ones with a mutation."""
-
-    seat_group_id = IdInputField(required=True)
-    concession_type_id = IdInputField(required=True)
-    seat_id = IdInputField(required=False)
-    id = IdInputField(required=False)
-
-    def to_ticket(self):
-        """Returns the Ticket object to be updated/created.
-
-        If a Ticket already exists it is the exisitng Ticket object (saved in
-        the database). If not a new Ticket object is created (and not yet saved
-        to the database).
-
-        Returns:
-            Ticket: The ticket to be updated/created.
-        """
-
-        if self.id is not None:
-            return Ticket.objects.get(id=self.id)
-        return Ticket(
-            seat_group=SeatGroup.objects.get(id=self.seat_group_id),
-            concession_type=ConcessionType.objects.get(id=self.concession_type_id),
-            seat=Seat.objects.get(id=self.seat_id)
-            if self.seat_id is not None
-            else None,
-        )
-
-
-class TicketIDInput(graphene.InputObjectType):
-    ticket_id = IdInputField(required=True)
-
-    def to_ticket(self):
-        return Ticket.objects.get(id=self.ticket_id)
 
 
 class Query(graphene.ObjectType):

@@ -313,11 +313,6 @@ def test_discounts_node(gql_client):
         DiscountRequirementFactory(discount=discount, number=1),
     ]
 
-    # Single discount - should not appear
-    discount_2 = DiscountFactory(name="Student", percentage=0.3)
-    discount_2.performances.set([performance])
-    DiscountRequirementFactory(discount=discount_2, number=1)
-
     response = gql_client.execute(
         """
         {
@@ -325,20 +320,24 @@ def test_discounts_node(gql_client):
             edges {
               node {
                 discounts {
-                  id
-                  percentage
-                  name
-                  seatGroup {
-                    id
-                  }
-                  requirements {
-                    id
-                    number
-                    discount {
+                  edges {
+                    node {
                       id
-                    }
-                    concessionType {
-                      id
+                      percentage
+                      name
+                      seatGroup {
+                        id
+                      }
+                      requirements {
+                        id
+                        number
+                        discount {
+                          id
+                        }
+                        concessionType {
+                          id
+                        }
+                      }
                     }
                   }
                 }
@@ -354,43 +353,49 @@ def test_discounts_node(gql_client):
                 "edges": [
                     {
                         "node": {
-                            "discounts": [
-                                {
-                                    "id": to_global_id("DiscountNode", discount.id),
-                                    "percentage": discount.percentage,
-                                    "name": discount.name,
-                                    "seatGroup": {
-                                        to_global_id(
-                                            "SeatGroupNode",
-                                            discount.seat_group.id,
-                                        )
-                                    }
-                                    if discount.seat_group
-                                    else None,
-                                    "requirements": [
-                                        {
+                            "discounts": {
+                                "edges": [
+                                    {
+                                        "node": {
                                             "id": to_global_id(
-                                                "DiscountRequirementNode",
-                                                requirement.id,
+                                                "DiscountNode", discount.id
                                             ),
-                                            "number": requirement.number,
-                                            "discount": {
-                                                "id": to_global_id(
-                                                    "DiscountNode",
-                                                    requirement.discount.id,
+                                            "percentage": discount.percentage,
+                                            "name": discount.name,
+                                            "seatGroup": {
+                                                to_global_id(
+                                                    "SeatGroupNode",
+                                                    discount.seat_group.id,
                                                 )
-                                            },
-                                            "concessionType": {
-                                                "id": to_global_id(
-                                                    "ConcessionTypeNode",
-                                                    requirement.concession_type.id,
-                                                )
-                                            },
+                                            }
+                                            if discount.seat_group
+                                            else None,
+                                            "requirements": [
+                                                {
+                                                    "id": to_global_id(
+                                                        "DiscountRequirementNode",
+                                                        requirement.id,
+                                                    ),
+                                                    "number": requirement.number,
+                                                    "discount": {
+                                                        "id": to_global_id(
+                                                            "DiscountNode",
+                                                            requirement.discount.id,
+                                                        )
+                                                    },
+                                                    "concessionType": {
+                                                        "id": to_global_id(
+                                                            "ConcessionTypeNode",
+                                                            requirement.concession_type.id,
+                                                        )
+                                                    },
+                                                }
+                                                for requirement in discount.requirements.all()
+                                            ],
                                         }
-                                        for requirement in discount.requirements.all()
-                                    ],
-                                }
-                            ]
+                                    }
+                                ]
+                            }
                         }
                     }
                 ]

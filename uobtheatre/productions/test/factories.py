@@ -8,6 +8,7 @@ from uobtheatre.productions.models import (
     CrewMember,
     CrewRole,
     Performance,
+    PerformanceSeatGroup,
     Production,
     ProductionTeamMember,
     Society,
