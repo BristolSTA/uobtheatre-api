@@ -25,7 +25,7 @@ django-environ==0.8.1  # https://github.com/joke2k/django-environ
 xlsxwriter==3.0.2
 
 # Used in tests and for MutationForm
-faker==10.0.0; python_version >= '3.6'
+factory-boy==3.2.1
 
 #=== Database ===#
 
