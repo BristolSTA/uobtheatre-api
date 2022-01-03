@@ -170,23 +170,30 @@ class RequiredFieldsValidator(AndValidator):
 @dataclass
 class PercentageValidator(AttributeValidator):
     """
-    A validator that checks its required attribute is a percentage.
+    A validator that checks it's required attribute is a percentage.
     """
 
     def __init__(self, attribute="percentage"):
         super().__init__(attribute=attribute)
 
     def validate_attribute(self, value):
-        if value < 0 or value > 1:
-            return ValidationErrors(
-                exceptions=[
-                    ValidationError(
-                        message=f"{value} is not a valid percentage. A percenage must be between 0 and 1",
-                        attribute=self.attribute,
-                    )
-                ]
+        errors = []
+        if not isinstance(value, float) and not isinstance(value, int):
+            errors.append(
+                ValidationError(
+                    message="A percentage must be a valid number",
+                    attribute=self.attribute,
+                )
             )
-        return None
+        elif value < 0 or value > 1:
+            errors.append(
+                ValidationError(
+                    message=f"{value:.2f} is not a valid percentage. A percentage must be between 0 and 1",
+                    attribute=self.attribute,
+                )
+            )
+
+        return ValidationErrors(exceptions=errors)
 
 
 @dataclass
