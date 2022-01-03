@@ -630,13 +630,12 @@ class Performance(
 
     def refund_bookings(self):
         """Refund the performance's bookings"""
-        # Check if performance is marked as cancelled
         if not self.disabled:
             raise CantBeRefundedException(f"{self} is not set to disabled")
 
         for booking in self.bookings.filter(status=Payable.PayableStatus.PAID):
             if not booking.can_be_refunded:
-                return
+                continue
 
             booking.refund()
 
