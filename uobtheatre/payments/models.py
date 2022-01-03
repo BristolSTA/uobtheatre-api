@@ -57,6 +57,19 @@ class Payment(TimeStampedMixin, models.Model):
         REJECTED = "REJECTED", "Rejected"
         FAILED = "FAILED", "Failed"
 
+        @classmethod
+        def from_square_status(cls, square_status: str):
+            """Convert a Square payment status to a PaymentStatus"""
+            status_map = {
+                "APPROVED": cls.PENDING,
+                "PENDING": cls.PENDING,
+                "COMPLETED": cls.COMPLETED,
+                "REJECTED": cls.REJECTED,
+                "CANCELLED": cls.FAILED,
+                "FAILED": cls.FAILED,
+            }
+            return status_map[square_status]
+
     objects = PaymentQuerySet.as_manager()
 
     # List of models which can be paid for

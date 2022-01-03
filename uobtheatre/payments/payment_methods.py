@@ -15,17 +15,6 @@ if TYPE_CHECKING:
     from uobtheatre.payments.payables import Payable
 
 
-def square_status_map():
-    return {
-        "APPROVED": payment_models.Payment.PaymentStatus.PENDING,
-        "PENDING": payment_models.Payment.PaymentStatus.PENDING,
-        "COMPLETED": payment_models.Payment.PaymentStatus.COMPLETED,
-        "REJECTED": payment_models.Payment.PaymentStatus.REJECTED,
-        "CANCELLED": payment_models.Payment.PaymentStatus.FAILED,
-        "FAILED": payment_models.Payment.PaymentStatus.FAILED,
-    }
-
-
 class TransactionMethod(abc.ABC):
     """
     Absctact class for transactions methods. This includes both refunds and
@@ -321,7 +310,9 @@ class SquareRefund(RefundMethod, SquareAPIMixin):
     @classmethod
     def _fill_payment_from_response_object(cls, payment, response_object):
         """Updates and fills a payment model from a refund response object"""
-        payment.status = square_status_map()[response_object["status"]]
+        payment.status = payment_models.Payment.PaymentStatus.from_square_status(
+            response_object["status"]
+        )
         if processing_fees := response_object.get("processing_fee"):
             payment.provider_fee = sum(
                 fee["amount_money"]["amount"] for fee in processing_fees
@@ -501,7 +492,9 @@ class SquarePOS(PaymentMethod, SquarePaymentMethod):
                 ],
             )
         )
-        payment.status = square_status_map()[checkout["status"]]
+        payment.status = payment_models.Payment.PaymentStatus.from_square_status(
+            checkout["status"]
+        )
         payment.save()
 
 
@@ -590,5 +583,7 @@ class SquareOnline(Refundable, PaymentMethod, SquarePaymentMethod):
         if data is None:
             data = cls.get_payment(payment_id)
         payment.provider_fee = cls.payment_processing_fee(data)
-        payment.status = square_status_map()[data["status"]]
+        payment.status = payment_models.Payment.PaymentStatus.from_square_status(
+            data["status"]
+        )
         payment.save()

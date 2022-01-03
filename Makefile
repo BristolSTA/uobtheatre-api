@@ -75,10 +75,10 @@ clean: ## Remove all the things
 	docker-compose down --volumes --rmi all || true
 
 test: ## Run unit tests in docker container
-	docker-compose run --rm api pytest --cov uobtheatre --cov-fail-under 100 --cov-report term-missing $(TEST_PATH) $(TEST)
+	docker-compose run --rm api pytest -k "not system_test" --cov uobtheatre --cov-fail-under 100 --cov-report term-missing $(TEST_PATH) $(TEST)
 
 test-v: ## Run verbose unit tests in docker container, use test_path to specify a test file/directory, app to specify a module and test to specify specific tests to be run.
-	docker-compose run --rm api coverage run -m pytest -s -vv $(TEST_PATH) $(TEST)
+	docker-compose run --rm api coverage run -m pytest -k "not system_test" -s -vv $(TEST_PATH) $(TEST)
 
 coverage: ## Generate test coverage report
 	docker-compose run --rm api coverage run --source=uobtheatre -m pytest -m "not square_integration"
