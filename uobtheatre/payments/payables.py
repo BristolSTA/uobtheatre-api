@@ -63,7 +63,7 @@ class Payable(models.Model, metaclass=AbstractModelMeta):  # type: ignore
         """Refund the payable"""
         if not self.can_be_refunded:
             raise CantBeRefundedException(
-                f"{self.__name__} ({self}) cannot be refunded"
+                f"{self.__class__.__name__} ({self}) cannot be refunded"
             )
 
         for payment in self.payments.filter(type=Payment.PaymentType.PURCHASE).all():

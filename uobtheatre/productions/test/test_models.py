@@ -1,8 +1,9 @@
 # pylint: disable=too-many-lines
 import math
 import random
+from contextlib import nullcontext
 from datetime import timedelta
-from unittest.mock import patch
+from unittest.mock import PropertyMock, patch
 
 import pytest
 from dateutil import parser
@@ -21,6 +22,7 @@ from uobtheatre.discounts.test.factories import (
     DiscountFactory,
     DiscountRequirementFactory,
 )
+from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Payment
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.payment_methods import Card, Cash, SquareOnline
@@ -1074,3 +1076,34 @@ def test_performance_validate_without_possible_tickets():
 
     performance.discounts.add(DiscountFactory())
     assert performance.validate() is None
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("disabled", [True, False])
+def test_performance_refund_bookings(disabled):
+    performance = PerformanceFactory(disabled=disabled)
+    booking_1 = BookingFactory(performance=performance)
+    booking_2 = BookingFactory(performance=performance)
+    BookingFactory()  # Booking not associated with booking
+
+    with patch(
+        "uobtheatre.bookings.models.Booking.refund", autospec=True
+    ) as booking_refund, patch(
+        "uobtheatre.bookings.models.Booking.can_be_refunded",
+        new_callable=PropertyMock(return_value=True),
+    ):
+
+        with pytest.raises(
+            CantBeRefundedException
+        ) if not disabled else nullcontext() as exception:
+            performance.refund_bookings()
+            if not disabled:
+                assert exception == f"{performance} is not set to disabled"
+
+        if not disabled:
+            booking_refund.assert_not_called()
+            return
+
+        assert booking_refund.call_count == 2
+        booking_refund.assert_any_call(booking_1)
+        booking_refund.assert_any_call(booking_2)
