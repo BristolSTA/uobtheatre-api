@@ -74,9 +74,7 @@ class Validator(abc.ABC):
         errors = reduce(
             operator.add, (filter(None, generator)), ValidationErrors(exceptions=[])
         )
-        if not errors:
-            return None
-        return errors
+        return errors or None
 
     def __call__(self, value):
         errors = self.validate(value)
@@ -202,7 +200,7 @@ class RelatedObjectsValidator(Validator):
     performance.
     """
 
-    def __init__(self, attribute: str, validator, min_number: int = None):
+    def __init__(self, attribute: str, validator=None, min_number: int = None):
         self.attribute = attribute
         self.validator = validator
         self.min_number = min_number
@@ -230,10 +228,9 @@ class RelatedObjectsValidator(Validator):
         errors = self.combine_errors(
             self.validator.validate(related_instance)
             for related_instance in self._get_attributes(instance)
+            if self.validator
         ) or ValidationErrors(exceptions=[])
+
         if number_error := self._validate_number(instance):
             errors.add_exception(number_error)
-
-        if not errors:
-            return None
-        return errors
+        return errors or None
