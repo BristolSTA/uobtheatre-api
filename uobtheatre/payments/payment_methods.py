@@ -86,11 +86,6 @@ class TransactionMethod(abc.ABC):
         return issubclass(cls, ManualPaymentMethodMixin)
 
     @classmethod
-    @property
-    def is_refundable(cls):
-        return issubclass(cls, Refundable)
-
-    @classmethod
     def get_payment_provider_id(cls, payment: "payment_models.Payment") -> str:
         if not payment.provider_payment_id:
             raise PaymentException("Payment has no provider_payment_id")
@@ -145,6 +140,11 @@ class PaymentMethod(TransactionMethod, abc.ABC):
             **kwargs,
         )
         return payment
+
+    @classmethod
+    @property
+    def is_refundable(cls):
+        return issubclass(cls, Refundable)
 
 
 class RefundMethod(TransactionMethod, abc.ABC):

@@ -4,7 +4,6 @@ from django.core.mail import mail_admins
 from guardian.admin import GuardedModelAdmin
 
 from uobtheatre.mail.composer import MailComposer
-from uobtheatre.payments.models import Payment
 from uobtheatre.payments.payables import Payable
 from uobtheatre.productions.models import (
     AudienceWarning,
@@ -59,10 +58,7 @@ class PerformanceAdmin(DangerousAdminConfirmMixin, ModelAdmin):
                 if not booking.can_be_refunded:
                     return
 
-                for payment in booking.payments.filter(
-                    type=Payment.PaymentType.PURCHASE
-                ).all():
-                    payment.refund()
+                booking.refund()
                 refund_count += 1
 
         self.message_user(

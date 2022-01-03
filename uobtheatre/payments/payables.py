@@ -4,6 +4,7 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.db.models import Sum
 
+from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Payment
 from uobtheatre.utils.models import AbstractModelMeta
 
@@ -53,6 +54,17 @@ class Payable(models.Model, metaclass=AbstractModelMeta):  # type: ignore
 
         aggregations = self.payments.aggregate(payment_value=Sum("value"))
         return not aggregations["payment_value"]
+
+    @property
+    def can_be_refunded(self):
+        return self.status == self.PayableStatus.PAID and not self.is_refunded
+
+    def refund(self):
+        if not self.can_be_refunded:
+            raise CantBeRefundedException()
+
+        for payment in self.payments.filter(type=Payment.PaymentType.PURCHASE).all():
+            payment.refund()
 
     @property
     def total_sales(self) -> int:

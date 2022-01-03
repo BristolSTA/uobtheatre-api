@@ -618,10 +618,8 @@ class Booking(TimeStampedMixin, Payable):
 
     @property
     def can_be_refunded(self):
-        return (
-            self.status == self.PayableStatus.PAID
-            and not self.is_refunded
-            and not self.performance.production.status
+        return super().can_be_refunded and (
+            not self.performance.production.status
             in [Production.Status.CLOSED, Production.Status.COMPLETE]
         )
 

@@ -4,6 +4,7 @@ from django.core.mail import mail_admins
 
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
 from uobtheatre.mail.composer import MailComposer
+from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Payment
 from uobtheatre.utils.admin import (
     DangerousAdminConfirmMixin,
@@ -51,7 +52,9 @@ class BookingAdmin(DangerousAdminConfirmMixin, admin.ModelAdmin):
         """Action to issue refund for selected booking(s)"""
         for booking in queryset:
             # Check if booking is paid
-            if not booking.can_be_refunded:
+            try:
+                booking.refund()
+            except CantBeRefundedException:
                 self.message_user(
                     request,
                     "One or more bookings cannot be refunded",
@@ -59,13 +62,8 @@ class BookingAdmin(DangerousAdminConfirmMixin, admin.ModelAdmin):
                 )
                 return
 
-            for payment in booking.payments.filter(
-                type=Payment.PaymentType.PURCHASE
-            ).all():
-                payment.refund()
-
         self.message_user(
-            request, f"{queryset.count()} objects have had refunds requested "
+            request, f"{queryset.count()} bookings have had refunds requested "
         )
         mail = (
             MailComposer()

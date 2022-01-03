@@ -1,6 +1,11 @@
+from contextlib import nullcontext
+from unittest.mock import PropertyMock, patch
+
 import pytest
 
+from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import BookingFactory
+from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Payment
 from uobtheatre.payments.payment_methods import Card, Cash, SquareOnline
 from uobtheatre.payments.test.factories import PaymentFactory
@@ -91,3 +96,29 @@ def test_is_refunded(payment_values, has_pending, is_refunded):
 
     if payment := pay_object.payments.first():
         assert payment.is_refunded == is_refunded
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("can_be_refunded", [True, False])
+def test_payable_refund(can_be_refunded):
+    pay_object = BookingFactory()
+    payment_1 = PaymentFactory(pay_object=pay_object)
+    payment_2 = PaymentFactory(pay_object=pay_object)
+    PaymentFactory()  # Payment not associated with booking
+
+    with patch.object(
+        Booking,
+        "can_be_refunded",
+        new_callable=PropertyMock(return_value=can_be_refunded),
+    ), patch(
+        "uobtheatre.payments.models.Payment.refund", autospec=True
+    ) as payment_refund:
+        with pytest.raises(
+            CantBeRefundedException
+        ) if not can_be_refunded else nullcontext():
+            pay_object.refund()
+
+        assert payment_refund.call_count == (2 if can_be_refunded else 0)
+        if can_be_refunded:
+            payment_refund.assert_any_call(payment_1)
+            payment_refund.assert_any_call(payment_2)
