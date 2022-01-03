@@ -4,7 +4,7 @@ from django.core.mail import mail_admins
 from guardian.admin import GuardedModelAdmin
 
 from uobtheatre.mail.composer import MailComposer
-from uobtheatre.payments.payables import Payable
+from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.productions.models import (
     AudienceWarning,
     CastMember,
@@ -41,29 +41,20 @@ class PerformanceAdmin(DangerousAdminConfirmMixin, ModelAdmin):
     @admin.action(description="Issue refunds", permissions=["change"])
     def issue_refunds(self, request, queryset):
         """Action to issue refund for bookings in selected performances(s)"""
-        refund_count = 0
         for performance in queryset:
-            # Check if performance is marked as cancelled
-            if not performance.disabled:
+            try:
+                performance.refund_bookings()
+            except CantBeRefundedException as exception:
                 self.message_user(
                     request,
-                    f"One or more performances are not set to disabled ({performance})",
+                    exception.message,
                     level=messages.ERROR,
                 )
                 return
 
-            for booking in performance.bookings.filter(
-                status=Payable.PayableStatus.PAID
-            ):
-                if not booking.can_be_refunded:
-                    return
-
-                booking.refund()
-                refund_count += 1
-
         self.message_user(
             request,
-            f"{refund_count} eligable bookings have had refunds requested ",
+            "Eligable bookings on the performance have had refunds requested ",
         )
         mail = (
             MailComposer()

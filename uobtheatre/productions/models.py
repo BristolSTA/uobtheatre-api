@@ -14,7 +14,9 @@ from django_tiptap.fields import TipTapTextField
 from guardian.shortcuts import get_objects_for_user
 
 from uobtheatre.images.models import Image
+from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Payment
+from uobtheatre.payments.payables import Payable
 from uobtheatre.societies.models import Society
 from uobtheatre.users.abilities import AbilitiesMixin
 from uobtheatre.utils.models import PermissionableModel, TimeStampedMixin
@@ -625,6 +627,18 @@ class Performance(
         ).annotate_sales_breakdown(  # type: ignore
             breakdowns
         )
+
+    def refund_bookings(self):
+        """Refund the performance's bookings"""
+        # Check if performance is marked as cancelled
+        if not self.disabled:
+            raise CantBeRefundedException(f"{self} is not set to disabled")
+
+        for booking in self.bookings.filter(status=Payable.PayableStatus.PAID):
+            if not booking.can_be_refunded:
+                return
+
+            booking.refund()
 
     def __str__(self):
         if self.start is None:
