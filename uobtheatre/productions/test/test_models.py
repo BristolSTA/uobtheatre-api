@@ -1061,3 +1061,16 @@ def test_performance_validate():
     ) as validator:
         assert performance.validate() == [error]
         validator.assert_called_once()
+
+
+@pytest.mark.django_db
+def test_performance_validate_without_possible_tickets():
+    performance = PerformanceFactory()
+    assert performance.validate() is not None
+
+    PerformanceSeatingFactory(performance=performance)
+
+    assert performance.validate() is not None
+
+    performance.discounts.add(DiscountFactory())
+    assert performance.validate() is None

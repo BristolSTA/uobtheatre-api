@@ -241,7 +241,7 @@ def test_period_totals_breakdown_report():
             datetime.fromisoformat("2021-09-08T23:00:00"),
         )
 
-    mock_sync.assert_called_once()
+        mock_sync.assert_called_once()
 
     assert len(report.datasets) == 3
 
@@ -379,6 +379,16 @@ def test_outstanding_society_payments_report():
             900,  # Society transfer amount: Card payments (1100) - Total Misc costs (200)
         ]
     ]
+
+
+@pytest.mark.django_db
+def test_outstanding_society_payments_report_production_no_society():
+    ProductionFactory(id=1, status=Production.Status.CLOSED, society=None)
+
+    with patch.object(Payment, "sync_payments"):
+        with pytest.raises(Exception) as exception:
+            OutstandingSocietyPayments()
+            assert exception.value == "Production 1 has no society"
 
 
 @pytest.mark.django_db

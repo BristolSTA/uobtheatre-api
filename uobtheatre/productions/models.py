@@ -204,16 +204,18 @@ class Performance(
     Tuesday.
     """
 
-    VALIDATOR = RequiredFieldsValidator(
-        [
-            "production",
-            "venue",
-            "doors_open",
-            "start",
-            "end",
-            "seat_groups",
-            "discounts",
-        ]
+    VALIDATOR = (
+        RequiredFieldsValidator(
+            [
+                "production",
+                "venue",
+                "doors_open",
+                "start",
+                "end",
+            ]
+        )
+        & RelatedObjectsValidator(attribute="seat_groups", min_number=1)
+        & RelatedObjectsValidator(attribute="discounts", min_number=1)
     )
 
     objects = PerformanceQuerySet.as_manager()

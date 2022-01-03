@@ -668,9 +668,9 @@ def test_bookings_qs(gql_client):
     """
 
     response = gql_client.execute(request)
-    assert [node["node"]["id"] for node in response["data"]["bookings"]["edges"]] == [
+    assert {node["node"]["id"] for node in response["data"]["bookings"]["edges"]} == {
         to_global_id("BookingNode", booking_id) for booking_id in [1, 3]
-    ]
+    }
 
     # If the user is a superuser they should be able to access all bookngs
     gql_client.user.is_superuser = True
