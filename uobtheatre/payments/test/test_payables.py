@@ -1,4 +1,3 @@
-from contextlib import nullcontext
 from unittest.mock import PropertyMock, patch
 
 import pytest
@@ -9,6 +8,7 @@ from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Payment
 from uobtheatre.payments.payment_methods import Card, Cash, SquareOnline
 from uobtheatre.payments.test.factories import PaymentFactory
+from uobtheatre.users.test.factories import UserFactory
 
 
 @pytest.mark.django_db
@@ -99,8 +99,10 @@ def test_is_refunded(payment_values, has_pending, is_refunded):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("can_be_refunded", [True, False])
-def test_payable_refund(can_be_refunded):
+@pytest.mark.parametrize(
+    "can_be_refunded,send_email", [(True, False), (False, True), (True, True)]
+)
+def test_payable_refund(mailoutbox, can_be_refunded, send_email):
     pay_object = BookingFactory()
     payment_1 = PaymentFactory(pay_object=pay_object)
     payment_2 = PaymentFactory(pay_object=pay_object)
@@ -113,12 +115,18 @@ def test_payable_refund(can_be_refunded):
     ), patch(
         "uobtheatre.payments.models.Payment.refund", autospec=True
     ) as payment_refund:
-        with pytest.raises(
-            CantBeRefundedException
-        ) if not can_be_refunded else nullcontext():
-            pay_object.refund()
+
+        def test():
+            pay_object.refund(UserFactory(), send_admin_email=send_email)
+
+        if not can_be_refunded:
+            with pytest.raises(CantBeRefundedException):
+                test()
+        else:
+            test()
 
         assert payment_refund.call_count == (2 if can_be_refunded else 0)
+        assert len(mailoutbox) == (1 if can_be_refunded and send_email else 0)
         if can_be_refunded:
             payment_refund.assert_any_call(payment_1)
             payment_refund.assert_any_call(payment_2)

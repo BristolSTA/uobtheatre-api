@@ -3,7 +3,7 @@ from django.contrib.admin.options import ModelAdmin, TabularInline
 from django.core.mail import mail_admins
 from guardian.admin import GuardedModelAdmin
 
-from uobtheatre.mail.composer import MailComposer
+from uobtheatre.payments.emails import payable_refund_initiated_email
 from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.productions.models import (
     AudienceWarning,
@@ -41,36 +41,31 @@ class PerformanceAdmin(DangerousAdminConfirmMixin, ModelAdmin):
     @admin.action(description="Issue refunds", permissions=["change"])
     def issue_refunds(self, request, queryset):
         """Action to issue refund for bookings in selected performances(s)"""
+        refunded_performances = []
         for performance in queryset:
             try:
-                performance.refund_bookings()
+                performance.refund_bookings(
+                    authorizing_user=request.user, send_admin_email=False
+                )
+                refunded_performances.append(performance)
             except CantBeRefundedException as exception:
                 self.message_user(
                     request,
                     exception.message,
                     level=messages.ERROR,
                 )
-                return
 
-        self.message_user(
-            request,
-            "Eligable bookings on the performance have had refunds requested ",
-        )
-        mail = (
-            MailComposer()
-            .line("Refunds have been initiated for the following productions:")
-            .line(
-                ", ".join(f"{production} ({production.id})" for production in queryset)
+        if len(refunded_performances) > 0:
+            self.message_user(
+                request,
+                "Eligable bookings on the performance(s) have had refunds requested ",
             )
-            .line(
-                f"This action was requested by {request.user.full_name} ({request.user.email})"
+            mail = payable_refund_initiated_email(request.user, refunded_performances)
+            mail_admins(
+                "Performance Refunds Initiated",
+                mail.to_plain_text(),
+                html_message=mail.to_html(),
             )
-        )
-        mail_admins(
-            "Production Refunds Initiated",
-            mail.to_plain_text(),
-            html_message=mail.to_html(),
-        )
 
 
 admin.site.register(Production, ProductionAdmin)

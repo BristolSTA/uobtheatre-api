@@ -1,11 +1,14 @@
 import abc
 
 from django.contrib.contenttypes.fields import GenericRelation
+from django.core.mail import mail_admins
 from django.db import models
 from django.db.models import Sum
 
+from uobtheatre.payments.emails import payable_refund_initiated_email
 from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Payment
+from uobtheatre.users.models import User
 from uobtheatre.utils.models import AbstractModelMeta
 
 
@@ -59,7 +62,7 @@ class Payable(models.Model, metaclass=AbstractModelMeta):  # type: ignore
     def can_be_refunded(self):
         return self.status == self.PayableStatus.PAID and not self.is_refunded
 
-    def refund(self):
+    def refund(self, authorizing_user: User, send_admin_email=True):
         """Refund the payable"""
         if not self.can_be_refunded:
             raise CantBeRefundedException(
@@ -68,6 +71,14 @@ class Payable(models.Model, metaclass=AbstractModelMeta):  # type: ignore
 
         for payment in self.payments.filter(type=Payment.PaymentType.PURCHASE).all():
             payment.refund()
+
+        if send_admin_email:
+            mail = payable_refund_initiated_email(authorizing_user, [self])
+            mail_admins(
+                "Booking Refund Initiated",
+                mail.to_plain_text(),
+                html_message=mail.to_html(),
+            )
 
     @property
     def total_sales(self) -> int:
