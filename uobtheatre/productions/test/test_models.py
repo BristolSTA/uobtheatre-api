@@ -515,10 +515,12 @@ def test_performance_total_capacity():
 def test_performance_capacity_remaining():
     perf = PerformanceFactory()
 
-    seating = [PerformanceSeatingFactory(performance=perf) for _ in range(3)]
+    seating = [
+        PerformanceSeatingFactory(performance=perf, capacity=20) for _ in range(3)
+    ]
 
     # Check total capacity is the same as capacity_remaining when no bookings
-    assert perf.capacity_remaining() == perf.total_capacity
+    assert perf.capacity_remaining() == 60
 
     seat_group = SeatGroupFactory()
     assert perf.total_seat_group_capacity(seat_group) == 0
@@ -536,11 +538,8 @@ def test_performance_capacity_remaining():
     booking_2 = BookingFactory(performance=perf)
     _ = [TicketFactory(booking=booking_1, seat_group=seat_group) for _ in range(3)]
     _ = [TicketFactory(booking=booking_2, seat_group=seat_group) for _ in range(2)]
-    assert (
-        perf.capacity_remaining(seat_group)
-        == perf.total_seat_group_capacity(seat_group) - 5
-    )
-    assert perf.capacity_remaining() == perf.total_capacity - 5
+    assert perf.capacity_remaining(seat_group) == 20 - 5
+    assert perf.capacity_remaining() == 60 - 5
 
     # Check an expired booking with tickets (should not be included)
     booking_3 = BookingFactory(
@@ -549,7 +548,7 @@ def test_performance_capacity_remaining():
         expires_at=timezone.now() - timedelta(minutes=16),
     )
     TicketFactory(booking=booking_3, seat_group=seat_group)
-    assert perf.capacity_remaining() == perf.total_capacity - 5
+    assert perf.capacity_remaining() == 60 - 5
 
     # Check a draft booking with tickets
     booking_4 = BookingFactory(
@@ -557,7 +556,17 @@ def test_performance_capacity_remaining():
     )
     TicketFactory(booking=booking_4, seat_group=seat_group)
     TicketFactory(booking=booking_4, seat_group=seat_group)
-    assert perf.capacity_remaining() == perf.total_capacity - 7
+    assert perf.capacity_remaining() == 60 - 7
+
+    # Check a locked booking
+    booking_5 = BookingFactory(performance=perf, status=Payable.PayableStatus.LOCKED)
+    TicketFactory(booking=booking_5, seat_group=seat_group)
+    assert perf.capacity_remaining() == 60 - 8
+
+    # Check a cancelled booking
+    booking_6 = BookingFactory(performance=perf, status=Payable.PayableStatus.CANCELLED)
+    TicketFactory(booking=booking_6, seat_group=seat_group)
+    assert perf.capacity_remaining() == 60 - 8
 
 
 @pytest.mark.django_db

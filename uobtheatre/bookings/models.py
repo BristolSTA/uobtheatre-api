@@ -629,7 +629,16 @@ class TicketQuerySet(QuerySet):
 
     def sold_or_reserved(self) -> QuerySet:
         return self.filter(
-            Q(booking__status="PAID") | Q(booking__expires_at__gt=timezone.now())
+            Q(
+                booking__status__in=[
+                    Payable.PayableStatus.PAID,
+                    Payable.PayableStatus.LOCKED,
+                ]
+            )
+            | Q(
+                booking__status=Payable.PayableStatus.IN_PROGRESS,
+                booking__expires_at__gt=timezone.now(),
+            )
         )
 
     def sold(self) -> QuerySet:
