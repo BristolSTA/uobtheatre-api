@@ -53,6 +53,18 @@ def test_payment_method_non_manual():
     )
 
 
+def test_refundable_payment_methods():
+    PaymentMethod.refundable_payment_methods == [
+        SquareOnline
+    ]
+
+
+def test_auto_refundable_payment_methods():
+    PaymentMethod.refundable_payment_methods == [
+        SquareOnline
+    ]
+
+
 def test_payment_method_choice():
     assert PaymentMethod.choices == [  # pylint: disable=comparison-with-callable
         ("CASH", "CASH"),
