@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from autoslug import AutoSlugField
 from django.contrib.contenttypes.models import ContentType
+from django.core.mail import mail_admins
 from django.db import models
 from django.db.models import Max, Min, Sum
 from django.db.models.query import Q, QuerySet
@@ -14,11 +15,13 @@ from django_tiptap.fields import TipTapTextField
 from guardian.shortcuts import get_objects_for_user
 
 from uobtheatre.images.models import Image
+from uobtheatre.payments.emails import payable_refund_initiated_email
 from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Payment
 from uobtheatre.payments.payables import Payable
 from uobtheatre.societies.models import Society
 from uobtheatre.users.abilities import AbilitiesMixin
+from uobtheatre.users.models import User
 from uobtheatre.utils.models import PermissionableModel, TimeStampedMixin
 from uobtheatre.utils.validators import (
     RelatedObjectsValidator,
@@ -29,7 +32,6 @@ from uobtheatre.venues.models import SeatGroup, Venue
 
 if TYPE_CHECKING:
     from uobtheatre.bookings.models import ConcessionType, Ticket
-    from uobtheatre.users.models import User
 
 
 class CrewRole(models.Model):
@@ -628,16 +630,25 @@ class Performance(
             breakdowns
         )
 
-    def refund_bookings(self):
+    def refund_bookings(self, authorizing_user: User, send_admin_email=True):
         """Refund the performance's bookings"""
         if not self.disabled:
             raise CantBeRefundedException(f"{self} is not set to disabled")
 
+        refunded_bookings = []
         for booking in self.bookings.filter(status=Payable.PayableStatus.PAID):
             if not booking.can_be_refunded:
                 continue
+            booking.refund(authorizing_user=authorizing_user, send_admin_email=False)
+            refunded_bookings.append(booking)
 
-            booking.refund()
+        if len(refunded_bookings) != 0 and send_admin_email:
+            mail = payable_refund_initiated_email(authorizing_user, [self])
+            mail_admins(
+                "Performance Refunds Initiated",
+                mail.to_plain_text(),
+                html_message=mail.to_html(),
+            )
 
     def __str__(self):
         if self.start is None:

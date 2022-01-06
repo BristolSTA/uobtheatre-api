@@ -72,12 +72,25 @@ class TransactionMethod(abc.ABC):
         """Syncs the refund payment from the provider"""
 
     @classmethod
+    def cancel(
+        cls, payment: "payment_models.Payment"  # pylint: disable=unused-argument
+    ):
+        """Cancel the payment
+
+        Most payment methods cannot be cancelled (as they will never be
+        pending) so the default implementation is just to return.
+        """
+        return
+
+    @classmethod
     @property
     def is_manual(cls):
+        """Whether this payment method is a manual payment method"""
         return issubclass(cls, ManualPaymentMethodMixin)
 
     @classmethod
     def get_payment_provider_id(cls, payment: "payment_models.Payment") -> str:
+        """Get the ID of the provided payment assigned by the provider"""
         if not payment.provider_payment_id:
             raise PaymentException("Payment has no provider_payment_id")
         return payment.provider_payment_id
@@ -107,17 +120,6 @@ class PaymentMethod(TransactionMethod, abc.ABC):
         self, value: int, app_fee: int, pay_object: "Payable"
     ) -> "payment_models.Payment":
         raise NotImplementedError
-
-    @classmethod
-    def cancel(
-        cls, payment: "payment_models.Payment"  # pylint: disable=unused-argument
-    ):
-        """Cancel the payment
-
-        Most payment methods cannot be cancelled (as they will never be
-        pending) so the default implementation is just to return.
-        """
-        return
 
     @classmethod
     def create_payment_object(

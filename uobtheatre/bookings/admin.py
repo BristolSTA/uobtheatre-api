@@ -3,7 +3,7 @@ from django.contrib.contenttypes.admin import GenericTabularInline
 from django.core.mail import mail_admins
 
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
-from uobtheatre.mail.composer import MailComposer
+from uobtheatre.payments.emails import payable_refund_initiated_email
 from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Payment
 from uobtheatre.utils.admin import (
@@ -50,34 +50,30 @@ class BookingAdmin(DangerousAdminConfirmMixin, admin.ModelAdmin):
     @admin.action(description="Issue refund", permissions=["change"])
     def issue_refund(self, request, queryset):
         """Action to issue refund for selected booking(s)"""
+        refunded_bookings = []
         for booking in queryset:
-            # Check if booking is paid
             try:
-                booking.refund()
+                booking.refund(authorizing_user=request.user, send_admin_email=False)
+                refunded_bookings.append(booking)
             except CantBeRefundedException:
                 self.message_user(
                     request,
-                    "One or more bookings cannot be refunded",
+                    f"One or more bookings could not be refunded ({booking})",
                     level=messages.ERROR,
                 )
-                return
+                break
 
-        self.message_user(
-            request, f"{queryset.count()} bookings have had refunds requested "
-        )
-        mail = (
-            MailComposer()
-            .line("Refunds have been initiated for the following bookings:")
-            .line(", ".join(f"{booking} ({booking.id})" for booking in queryset))
-            .line(
-                f"This action was requested by {request.user.full_name} ({request.user.email})"
+        if num_refunded := len(refunded_bookings):
+            self.message_user(
+                request, f"{num_refunded} bookings have had refunds requested"
             )
-        )
-        mail_admins(
-            "Booking Refunds Initiated",
-            mail.to_plain_text(),
-            html_message=mail.to_html(),
-        )
+
+            mail = payable_refund_initiated_email(request.user, refunded_bookings)
+            mail_admins(
+                "Booking Refunds Initiated",
+                mail.to_plain_text(),
+                html_message=mail.to_html(),
+            )
 
     def get_performance_name(self, obj):
         return obj.performance.production.name

@@ -1,7 +1,6 @@
 # pylint: disable=too-many-lines
 import math
 import random
-from contextlib import nullcontext
 from datetime import timedelta
 from unittest.mock import PropertyMock, patch
 
@@ -1088,31 +1087,51 @@ def test_performance_validate_without_possible_tickets():
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("disabled", [True, False])
-def test_performance_refund_bookings(disabled):
+@pytest.mark.parametrize(
+    "disabled,bookings_can_refund,send_email",
+    [
+        (True, True, True),
+        (True, True, False),
+        (True, False, True),
+        (False, True, True),
+        (False, False, True),
+        (False, False, False),
+    ],
+)
+def test_performance_refund_bookings(
+    mailoutbox, disabled, bookings_can_refund, send_email
+):
     performance = PerformanceFactory(disabled=disabled)
     booking_1 = BookingFactory(performance=performance)
     booking_2 = BookingFactory(performance=performance)
     BookingFactory()  # Booking not associated with booking
+    user = UserFactory()
 
     with patch(
         "uobtheatre.bookings.models.Booking.refund", autospec=True
     ) as booking_refund, patch(
         "uobtheatre.bookings.models.Booking.can_be_refunded",
-        new_callable=PropertyMock(return_value=True),
+        new_callable=PropertyMock(return_value=bookings_can_refund),
     ):
 
-        with pytest.raises(
-            CantBeRefundedException
-        ) if not disabled else nullcontext() as exception:
-            performance.refund_bookings()
-            if not disabled:
-                assert exception == f"{performance} is not set to disabled"
+        def test():
+            performance.refund_bookings(user, send_admin_email=send_email)
 
         if not disabled:
-            booking_refund.assert_not_called()
-            return
-
-        assert booking_refund.call_count == 2
-        booking_refund.assert_any_call(booking_1)
-        booking_refund.assert_any_call(booking_2)
+            with pytest.raises(CantBeRefundedException) as exception:
+                test()
+                assert exception == f"{performance} is not set to disabled"
+                booking_refund.assert_not_called()
+        else:
+            test()
+            assert booking_refund.call_count == (2 if bookings_can_refund else 0)
+            if bookings_can_refund:
+                booking_refund.assert_any_call(
+                    booking_1, authorizing_user=user, send_admin_email=False
+                )
+                booking_refund.assert_any_call(
+                    booking_2, authorizing_user=user, send_admin_email=False
+                )
+        assert len(mailoutbox) == (
+            1 if disabled and send_email and bookings_can_refund else 0
+        )
