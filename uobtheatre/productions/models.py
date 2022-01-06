@@ -422,13 +422,11 @@ class Performance(
             self.capacity_remaining(seat_group=performance_seat_group.seat_group)
             for performance_seat_group in self.performance_seat_groups.all()
         )
-        return (
-            seat_groups_remaining_capacity
-            if not self.capacity
-            else min(
-                self.capacity - self.total_tickets_sold_or_reserved(),
-                seat_groups_remaining_capacity,
-            )
+
+        # The number of tickets remaining is the number of tickets left in the seat groups or the total capacity left for the performance - which ever is lower
+        return min(
+            seat_groups_remaining_capacity,
+            self.total_capacity - self.total_tickets_sold_or_reserved(),
         )
 
     def duration(self):
