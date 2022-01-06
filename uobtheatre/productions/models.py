@@ -332,11 +332,15 @@ class Performance(
             int: The capacity of the show
         """
 
-        return (
-            min(self.capacity, self.total_seat_group_capacity())
-            if self.capacity
-            else self.total_seat_group_capacity()
-        )
+        limiting_capacities = [
+            self.total_seat_group_capacity(),
+            self.venue.internal_capacity,
+        ]
+
+        if self.capacity:
+            limiting_capacities.append(self.capacity)
+
+        return min(limiting_capacities)
 
     def total_tickets_sold(self, **kwargs):
         """The number of tickets sold for the performance

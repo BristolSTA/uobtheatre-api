@@ -35,7 +35,7 @@ from uobtheatre.productions.test.factories import (
 )
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.utils.validators import ValidationError
-from uobtheatre.venues.test.factories import SeatGroupFactory
+from uobtheatre.venues.test.factories import SeatGroupFactory, VenueFactory
 
 ###
 # Production
@@ -487,24 +487,27 @@ def test_performance_total_tickets_checked_in():
 
 
 @pytest.mark.django_db
-def test_performance_total_capacity():
-    perf1 = PerformanceFactory()
-    seating = [PerformanceSeatingFactory(performance=perf1) for _ in range(3)]
-    set_capacity = 100
-    perf2 = PerformanceFactory(capacity=set_capacity)
-    for _ in range(3):
-        PerformanceSeatingFactory(performance=perf2)
+@pytest.mark.parametrize(
+    "seat_group_capacities,performance_capacity,venue_capacity,expected",
+    [
+        ([50, 30], None, 100, 80),
+        ([50, 200], None, 100, 100),
+        ([50, 200], 40, 100, 40),
+        ([], 40, 100, 0),
+    ],
+)
+def test_performance_total_capacity(
+    seat_group_capacities, performance_capacity, venue_capacity, expected
+):
+    performance = PerformanceFactory(
+        venue=VenueFactory(internal_capacity=venue_capacity),
+        capacity=performance_capacity,
+    )
 
-    assert perf1.total_capacity == sum(perf_seat.capacity for perf_seat in seating) != 0
-    assert perf1.total_capacity == perf1.total_seat_group_capacity()
-    assert perf2.total_capacity == set_capacity
+    for capacity in seat_group_capacities:
+        PerformanceSeatingFactory(performance=performance, capacity=capacity)
 
-    seat_group = SeatGroupFactory()
-    assert perf1.total_seat_group_capacity(seat_group) == 0
-
-    seating[0].seat_group = seat_group
-    seating[0].save()
-    assert perf1.total_seat_group_capacity(seat_group) == seating[0].capacity != 0
+    assert performance.total_capacity == expected
 
 
 @pytest.mark.django_db
