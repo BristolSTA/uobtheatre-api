@@ -29,7 +29,7 @@ factory-boy==3.2.1
 
 #=== Database ===#
 
-psycopg2==2.9.2  # https://github.com/psycopg/psycopg2
+psycopg2==2.9.3  # https://github.com/psycopg/psycopg2
 
 #=== Django core ===#
 
