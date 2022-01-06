@@ -207,11 +207,7 @@ class Payment(TimeStampedMixin, models.Model):
         payment.provider_class.refund_method.update_refund(payment, request)
 
     def sync_payment_with_provider(self, data=None):
-        """Sync the payment with the provider payment
-
-        NOTE: Currently this method only updates the processing_fee of the
-        payment.
-        """
+        """Sync the payment with the provider payment"""
         self.provider_class.sync_payment(self, data)
 
     def cancel(self):
