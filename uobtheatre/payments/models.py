@@ -204,7 +204,7 @@ class Payment(TimeStampedMixin, models.Model):
         payment = Payment.objects.get(
             provider_payment_id=provider_payment_id, type=Payment.PaymentType.REFUND
         )
-        payment.provider_class.refund_method.update_refund(payment, request)
+        payment.provider_class.sync_refund(payment, request)
 
     def sync_payment_with_provider(self, data=None):
         """Sync the payment with the provider payment"""

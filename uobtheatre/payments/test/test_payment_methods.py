@@ -13,6 +13,7 @@ from uobtheatre.payments.payment_methods import (
     SquareOnline,
     SquarePOS,
     SquareRefund,
+    ManualRefund,
     TransactionMethod,
 )
 from uobtheatre.payments.square_webhooks import SquareWebhooks
@@ -29,16 +30,13 @@ def test_payment_method_all():
     ]
 
 
-def test_refund_method_all():
-    assert RefundMethod.__all__ == [SquareRefund]
-
-
 def test_transaction_method_all():
     assert TransactionMethod.__all__ == [  # pylint: disable=comparison-with-callable
         Cash,
         Card,
         SquarePOS,
         SquareOnline,
+        ManualRefund,
         SquareRefund,
     ]
 
@@ -51,18 +49,6 @@ def test_payment_method_non_manual():
             SquareOnline,
         ]
     )
-
-
-def test_refundable_payment_methods():
-    PaymentMethod.refundable_payment_methods == [
-        SquareOnline
-    ]
-
-
-def test_auto_refundable_payment_methods():
-    PaymentMethod.refundable_payment_methods == [
-        SquareOnline
-    ]
 
 
 def test_payment_method_choice():

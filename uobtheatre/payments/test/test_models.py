@@ -4,7 +4,7 @@ from unittest.mock import PropertyMock, patch
 import pytest
 
 from uobtheatre.payments.models import Payment
-from uobtheatre.payments.payment_methods import Cash, SquareOnline, SquarePOS
+from uobtheatre.payments.payment_methods import Cash, SquareOnline, SquarePOS, SquareRefund
 from uobtheatre.payments.test.factories import (
     PaymentFactory,
     mock_payment_method,
@@ -234,9 +234,9 @@ def test_sync_all_payments():
 
 @pytest.mark.django_db
 def test_handle_update_refund_webhook():
-    payment = PaymentFactory(provider_payment_id="abc", type=Payment.PaymentType.REFUND)
+    payment = PaymentFactory(provider_payment_id="abc", type=Payment.PaymentType.REFUND, provider=SquareRefund.name)
     with patch(
-        "uobtheatre.payments.payment_methods.SquareRefund.update_refund",
+        "uobtheatre.payments.payment_methods.SquareRefund.sync_refund",
         return_value=None,
     ) as update_mock:
         Payment.handle_update_refund_webhook("abc", {"id": "abc"})

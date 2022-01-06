@@ -4,8 +4,24 @@ from uuid import uuid4
 import pytest
 
 from uobtheatre.payments.models import Payment
-from uobtheatre.payments.payment_methods import SquareRefund
+from uobtheatre.payments.payment_methods import SquareRefund, RefundMethod, PaymentMethod, ManualRefund, SquareOnline
 from uobtheatre.payments.test.factories import PaymentFactory
+
+
+def test_refund_method_all():
+    assert RefundMethod.__all__ == [ManualRefund, SquareRefund]
+
+
+def test_refundable_payment_methods():
+    PaymentMethod.refundable_payment_methods == [
+        SquareOnline
+    ]
+
+
+def test_auto_refundable_payment_methods():
+    PaymentMethod.refundable_payment_methods == [
+        SquareOnline
+    ]
 
 ###
 # Square Refund RefundMethod
@@ -67,7 +83,7 @@ def test_square_refund_refund(mock_square):
         ([1], "PENDING"),
     ],
 )
-def test_square_online_update_refund(data_fees, data_status):
+def test_square_online_sync_refund(data_fees, data_status):
     payment = PaymentFactory(status=Payment.PaymentStatus.PENDING, provider_fee=None)
 
     data = {
@@ -86,7 +102,7 @@ def test_square_online_update_refund(data_fees, data_status):
             for fee in data_fees
         ]
 
-    SquareRefund.update_refund(payment, data)
+    SquareRefund.sync_refund(payment, data)
 
     payment.refresh_from_db()
     if data_status == "COMPLETED":
