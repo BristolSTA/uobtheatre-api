@@ -68,7 +68,7 @@ class TransactionMethod(abc.ABC):
 
     @classmethod
     @abc.abstractmethod
-    def sync_payment(cls, payment: "payment_models.Payment", data: dict = None):
+    def sync_transaction(cls, payment: "payment_models.Payment", data: dict = None):
         """Syncs the refund payment from the provider"""
 
     @classmethod
@@ -142,12 +142,12 @@ class PaymentMethod(TransactionMethod, abc.ABC):
     @classmethod
     @property
     def refundable_payment_methods(cls) -> tuple[Type["Refundable"],...]:
-        return tuple(method for method in PaymentMethod.__all__ if issubclass(method, Refundable))
+        return tuple(method for method in cls.__all__ if issubclass(method, Refundable))
 
     @classmethod
     @property
     def auto_refundable_payment_methods(cls) -> tuple[Type["Refundable"],...]:
-        return tuple(method for method in PaymentMethod.__all__ if issubclass(method, Refundable) and method.is_auto_refundable)
+        return tuple(method for method in cls.refundable_payment_methods if issubclass(method, Refundable) and method.is_auto_refundable)
 
 
 class RefundMethod(TransactionMethod, abc.ABC):
@@ -175,7 +175,7 @@ class RefundMethod(TransactionMethod, abc.ABC):
         pass
 
     @staticmethod
-    def sync_refund(payment: "payment_models.Payment", request: dict):
+    def sync_transaction(payment: "payment_models.Payment", request: dict):
         pass
 
     @classmethod
@@ -193,20 +193,21 @@ class RefundMethod(TransactionMethod, abc.ABC):
 
 
 class Refundable(abc.ABC):
-    @property
+
     @classmethod
+    @property
     @abc.abstractmethod
     def refund_methods(cls) -> tuple[RefundMethod]:
         pass
 
-    @property
     @classmethod
+    @property
     def automatic_refund_method(cls) -> Optional[RefundMethod]:
         return next((method for method in cls.refund_methods if method.is_automatic), None)
 
     @classmethod
     @property
-    def is_auto_refundable(cls) -> bool:
+    def is_auto_refundable(cls):
         return cls.automatic_refund_method is not None
 
 
@@ -270,39 +271,12 @@ class SquarePaymentMethod(SquareAPIMixin, abc.ABC):
         )
 
 
-class ManualPaymentMethodMixin(abc.ABC):
-    """
-    Mixin for any manual payment method (one with no regiestered
-    provider)
-    """
-
-    def pay(
-        self, value: int, app_fee: int, pay_object: "Payable"
-    ) -> "payment_models.Payment":
-        return self.create_payment_object(pay_object, value, app_fee)  # type: ignore # pylint: disable=arguments-differ
-
-    @classmethod
-    def sync_payment(cls, *_, **__):
-        return
-
-
-class Cash(ManualPaymentMethodMixin, PaymentMethod):
-    """Manual cash payment method"""
-
-    description = "Manual cash payment"
-
-
-class Card(ManualPaymentMethodMixin, PaymentMethod):
-    """Manual card payment method"""
-
-    description = "Manual card payment"
-
-
 class ManualRefund(RefundMethod):
     """
     Refund method for refunding square payments.
     """
 
+    description = "Manually refund"
     is_automatic = False
 
     def refund(self, payment: "payment_models.Payment"):
@@ -310,6 +284,7 @@ class ManualRefund(RefundMethod):
             payment.pay_object,
             -payment.value,
             -payment.app_fee if payment.app_fee else None,
+            provider_fee = -payment.provider_fee if payment.provider_fee else None,
             status=payment_models.Payment.PaymentStatus.COMPLETED,
         )
 
@@ -346,7 +321,7 @@ class SquareRefund(RefundMethod, SquareAPIMixin):
         )
 
     @classmethod
-    def sync_payment(cls, payment: "payment_models.Payment", data: dict = None):
+    def sync_transaction(cls, payment: "payment_models.Payment", data: dict = None):
         if not data:
             response = cls.client.refunds.get_payment_refund(
                 cls.get_payment_provider_id(payment)
@@ -368,11 +343,38 @@ class SquareRefund(RefundMethod, SquareAPIMixin):
             )
         return payment
 
+class ManualPaymentMethodMixin(Refundable, abc.ABC):
+    """
+    Mixin for any manual payment method (one with no regiestered
+    provider)
+    """
+
     @classmethod
-    def sync_refund(cls, payment: "payment_models.Payment", request: dict):
-        cls._fill_payment_from_response_object(
-            payment, request["object"]["refund"]
-        ).save()
+    @property
+    def refund_methods(cls):
+        return (ManualRefund(),)
+
+    def pay(
+        self, value: int, app_fee: int, pay_object: "Payable"
+    ) -> "payment_models.Payment":
+        return self.create_payment_object(pay_object, value, app_fee)  # type: ignore # pylint: disable=arguments-differ
+
+    @classmethod
+    def sync_transaction(cls, *_, **__):
+        return
+
+
+class Cash(ManualPaymentMethodMixin, PaymentMethod):
+    """Manual cash payment method"""
+
+    description = "Manual cash payment"
+
+
+class Card(ManualPaymentMethodMixin, PaymentMethod):
+    """Manual card payment method"""
+
+    description = "Manual card payment"
+
 
 
 class SquarePOS(PaymentMethod, SquarePaymentMethod):
@@ -527,7 +529,7 @@ class SquarePOS(PaymentMethod, SquarePaymentMethod):
         cls._handle_response_failure(response)
 
     @classmethod
-    def sync_payment(cls, payment: "payment_models.Payment", data: dict = None):
+    def sync_transaction(cls, payment: "payment_models.Payment", data: dict = None):
         """Syncs the given payment with the raw payment data"""
         payment_id = cls.get_payment_provider_id(payment)
 
@@ -625,7 +627,7 @@ class SquareOnline(Refundable, PaymentMethod, SquarePaymentMethod):
         )
 
     @classmethod
-    def sync_payment(cls, payment: "payment_models.Payment", data: dict = None):
+    def sync_transaction(cls, payment: "payment_models.Payment", data: dict = None):
         """Syncs the given payment with the raw payment data"""
         payment_id = cls.get_payment_provider_id(payment)
 

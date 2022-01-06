@@ -620,7 +620,8 @@ def test_cash_payment_sync():
 @pytest.mark.parametrize(
     "payment_method, is_refundable",
     [
-        (Cash, False),
+        (Cash, True),
+        (Card, True),
         (SquarePOS, False),
         (SquareOnline, True),
     ],

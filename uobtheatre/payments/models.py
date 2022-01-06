@@ -193,7 +193,7 @@ class Payment(TimeStampedMixin, models.Model):
         payment.sync_payment_with_provider(data=data)
 
     @staticmethod
-    def handle_update_refund_webhook(provider_payment_id: str, request: dict):
+    def handle_update_refund_webhook(provider_payment_id: str, data: dict):
         """
         Handle an update refund webhook from square.
 
@@ -204,11 +204,11 @@ class Payment(TimeStampedMixin, models.Model):
         payment = Payment.objects.get(
             provider_payment_id=provider_payment_id, type=Payment.PaymentType.REFUND
         )
-        payment.provider_class.sync_refund(payment, request)
+        payment.sync_payment_with_provider(data)
 
     def sync_payment_with_provider(self, data=None):
         """Sync the payment with the provider payment"""
-        self.provider_class.sync_payment(self, data)
+        self.provider_class.sync_transaction(self, data)
 
     def cancel(self):
         """

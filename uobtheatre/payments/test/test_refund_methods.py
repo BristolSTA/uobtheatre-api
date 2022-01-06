@@ -4,7 +4,7 @@ from uuid import uuid4
 import pytest
 
 from uobtheatre.payments.models import Payment
-from uobtheatre.payments.payment_methods import SquareRefund, RefundMethod, PaymentMethod, ManualRefund, SquareOnline
+from uobtheatre.payments.payment_methods import SquareRefund, RefundMethod, PaymentMethod, ManualRefund, SquareOnline, Cash
 from uobtheatre.payments.test.factories import PaymentFactory
 
 
@@ -19,9 +19,57 @@ def test_refundable_payment_methods():
 
 
 def test_auto_refundable_payment_methods():
-    PaymentMethod.refundable_payment_methods == [
+    PaymentMethod.auto_refundable_payment_methods == [
         SquareOnline
     ]
+
+@pytest.mark.parametrize(
+    "payment_method, automatic_refund_method_type",
+    [
+        (SquareOnline, SquareRefund),
+        (Cash, None)
+    ]
+)
+def test_automatic_refund_method(payment_method, automatic_refund_method_type):
+    if automatic_refund_method_type is None:
+        assert payment_method.automatic_refund_method is None
+    else:
+        assert isinstance(payment_method.automatic_refund_method, automatic_refund_method_type)
+
+
+@pytest.mark.parametrize(
+    "payment_method, is_auto_refundable",
+    [
+        (SquareOnline, True),
+        (Cash, False)
+    ]
+)
+def test_is_auto_refundable(payment_method, is_auto_refundable):
+    assert payment_method.is_auto_refundable == is_auto_refundable
+
+###
+# Manual Refund RefundMethod
+###
+
+@pytest.mark.django_db
+def test_manual_refund_method_refund():
+    refund_payment = PaymentFactory(
+        value=100,
+        provider_fee=10,
+        app_fee=20,
+        provider=Cash.name,
+        status=Payment.PaymentStatus.COMPLETED,
+    )
+    ManualRefund().refund(refund_payment)
+
+    assert Payment.objects.count() == 2
+
+    payment = Payment.objects.last()
+    assert payment.value == -100
+    assert payment.app_fee == -20
+    assert payment.provider_fee == -10
+    assert payment.provider == ManualRefund.name
+    assert payment.type == Payment.PaymentType.REFUND
 
 ###
 # Square Refund RefundMethod
@@ -83,26 +131,22 @@ def test_square_refund_refund(mock_square):
         ([1], "PENDING"),
     ],
 )
-def test_square_online_sync_refund(data_fees, data_status):
+def test_square_online_sync_transaction(data_fees, data_status):
     payment = PaymentFactory(status=Payment.PaymentStatus.PENDING, provider_fee=None)
 
     data = {
-        "object": {
-            "refund": {
-                "status": data_status,
-            }
-        }
+        "status": data_status,
     }
 
     if data_fees:
-        data["object"]["refund"]["processing_fee"] = [
+        data["processing_fee"] = [
             {
                 "amount_money": {"amount": fee, "currency": "GBP"},
             }
             for fee in data_fees
         ]
 
-    SquareRefund.sync_refund(payment, data)
+    SquareRefund.sync_transaction(payment, data)
 
     payment.refresh_from_db()
     if data_status == "COMPLETED":

@@ -224,8 +224,8 @@ def test_sync_all_payments():
 
     to_update = PaymentFactory(provider=SquareOnline.name, provider_fee=None)
 
-    with patch.object(SquareOnline, "sync_payment") as online_sync, patch.object(
-        Cash, "sync_payment"
+    with patch.object(SquareOnline, "sync_transaction") as online_sync, patch.object(
+        Cash, "sync_transaction"
     ) as cash_sync:
         Payment.sync_payments()
         cash_sync.assert_not_called()  # Not called because no provider ID
@@ -236,7 +236,7 @@ def test_sync_all_payments():
 def test_handle_update_refund_webhook():
     payment = PaymentFactory(provider_payment_id="abc", type=Payment.PaymentType.REFUND, provider=SquareRefund.name)
     with patch(
-        "uobtheatre.payments.payment_methods.SquareRefund.sync_refund",
+        "uobtheatre.payments.payment_methods.SquareRefund.sync_transaction",
         return_value=None,
     ) as update_mock:
         Payment.handle_update_refund_webhook("abc", {"id": "abc"})

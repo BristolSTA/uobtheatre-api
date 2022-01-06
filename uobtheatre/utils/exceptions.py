@@ -160,17 +160,9 @@ class GQLExceptions(MutationException):
             raise NotImplementedError
         return GQLExceptions(self.exceptions + other.exceptions)
 
-    def __iter__(self):
-        return self.exceptions.__iter__()
-
     def __eq__(self, other: Any):
-        print(other)
         if not isinstance(other, GQLExceptions):
             raise NotImplementedError
-
-        print("Checking equality")
-        print(self.exceptions)
-        print(other.exceptions)
         return self.exceptions == other.exceptions
 
 
