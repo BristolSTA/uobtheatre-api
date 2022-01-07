@@ -4,6 +4,9 @@ import tempfile
 
 from .local import *  # noqa: F403,F401
 
+import logging
+logging.getLogger("factory").setLevel(logging.WARN)
+
 # GENERAL
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#secret-key

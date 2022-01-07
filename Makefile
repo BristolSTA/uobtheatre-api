@@ -26,6 +26,18 @@ PONY: help
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
+setup:
+	docker-compose pull
+	make build
+	make collect-static
+	python -m venv .venv
+	source .venv/bin/activate
+	make setup-precommit
+
+setup-precommit:
+	pip install pre-commit
+	pre-commit install
+
 up: ## Run background
 	docker-compose up -d api postgres
 
@@ -96,11 +108,6 @@ isort: ## Run isort to sort imports
 
 pylint: ## Run pylint to check uobtheatre code
 	docker-compose run --rm api pylint uobtheatre
-
-setup-pipenv: ## Setup pipenv locally
-	pipenv --python 3.8
-	# If black is causing issues: pipenv install --dev --pre
-	pipenv install
 
 pipenv-install: ## Setup pipenv locally
 	docker-compose run --rm api cd /tmp; pipenv lock --requirements > requirements.txt; pip install -r /tmp/requirements.txt

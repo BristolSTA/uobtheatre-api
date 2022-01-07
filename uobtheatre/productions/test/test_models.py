@@ -906,7 +906,7 @@ def test_qs_has_boxoffice_permission():
 
 @pytest.mark.django_db
 def test_qs_running_on():
-    query_date = timezone.datetime(year=2021, month=7, day=14)
+    query_date = timezone.datetime(year=2021, month=7, day=14, tzinfo=timezone.get_current_timezone())
     one_day = timezone.timedelta(days=1)
     # Past performance
     PerformanceFactory(start=query_date - one_day, end=query_date - one_day)

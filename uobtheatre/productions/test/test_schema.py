@@ -1208,11 +1208,11 @@ def test_performances_are_shown_with_permission(gql_client):
 
 @pytest.mark.django_db
 def test_performance_run_on(gql_client):
-    query_date = datetime.date(year=2000, month=6, day=20)
+    query_datetime = timezone.datetime(year=2000, month=6, day=20, tzinfo=timezone.get_current_timezone())
     _ = [
         PerformanceFactory(
-            start=query_date + timezone.timedelta(days=i),
-            end=query_date + timezone.timedelta(days=i, hours=2),
+            start=query_datetime + timezone.timedelta(days=i),
+            end=query_datetime + timezone.timedelta(days=i, hours=2),
         )
         for i in range(-2, 2)
     ]
@@ -1231,10 +1231,10 @@ def test_performance_run_on(gql_client):
         """
 
     # Ask for nothing and check you get nothing
-    response = gql_client.execute(request % query_date)
+    response = gql_client.execute(request % query_datetime.date())
     assert response["data"]["performances"]["edges"] == [
         {"node": {"start": perm.start.isoformat()}}
-        for perm in Performance.objects.running_on(query_date)
+        for perm in Performance.objects.running_on(query_datetime.date())
     ]
 
 

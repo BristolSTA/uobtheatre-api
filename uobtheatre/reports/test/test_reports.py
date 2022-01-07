@@ -2,6 +2,7 @@ from datetime import datetime
 from unittest.mock import patch
 
 import pytest
+from django.utils import timezone
 
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import (
@@ -46,7 +47,7 @@ def create_fixtures():
                 society=SocietyFactory(name="Society 1"),
                 status=Production.Status.CLOSED,
             ),
-            start=datetime(2021, 9, 23, 15, 0),
+            start=timezone.datetime(2021, 9, 23, 15, 0, tzinfo=timezone.get_current_timezone()),
         ),
         user=UserFactory(first_name="Joe", last_name="Bloggs", email="joe@example.org"),
         reference="booking1",
@@ -134,7 +135,7 @@ def create_fixtures():
         app_fee=booking_1.misc_costs_value(),
         provider_fee=10,
     )
-    payment_1.created_at = "2021-09-08T00:00:01"
+    payment_1.created_at = "2021-09-08T00:00:01-00:00"
     payment_1.save()
 
     payment_2 = PaymentFactory(
@@ -143,20 +144,20 @@ def create_fixtures():
         provider=payment_methods.Cash.name,
         app_fee=booking_2.misc_costs_value(),
     )
-    payment_2.created_at = "2021-09-05T12:00:01"
+    payment_2.created_at = "2021-09-05T12:00:01-00:00"
     payment_2.save()
 
     payment_3 = PaymentFactory(
         pay_object=booking_3,
         value=booking_3.total,
     )
-    payment_3.created_at = "2021-09-08T12:00:01"
+    payment_3.created_at = "2021-09-08T12:00:01-00:00"
     payment_3.save()
 
     payment_4 = PaymentFactory(
         pay_object=booking_5, value=booking_5.total, app_fee=5, provider_fee=2
     )
-    payment_4.created_at = "2021-09-08T22:00:01"
+    payment_4.created_at = "2021-09-08T22:00:01-00:00"
     payment_4.save()
 
     refund_1 = PaymentFactory(
@@ -167,7 +168,7 @@ def create_fixtures():
         app_fee=-5,
         provider_fee=-2,
     )
-    refund_1.created_at = "2021-09-08T22:10:01"
+    refund_1.created_at = "2021-09-08T22:10:01-00:00"
     refund_1.save()
 
     # Create a pending payment (shouldn't show in reports)
