@@ -12,6 +12,7 @@ from uobtheatre.payments import payment_methods
 from uobtheatre.payments.payment_methods import (
     Cash,
     PaymentMethod,
+    Refundable,
     RefundMethod,
     TransactionMethod,
 )
@@ -54,7 +55,6 @@ class Payment(TimeStampedMixin, models.Model):
 
         PENDING = "PENDING", "In progress"
         COMPLETED = "COMPLETED", "Completed"
-        REJECTED = "REJECTED", "Rejected"
         FAILED = "FAILED", "Failed"
 
         @classmethod
@@ -64,7 +64,7 @@ class Payment(TimeStampedMixin, models.Model):
                 "APPROVED": cls.PENDING,
                 "PENDING": cls.PENDING,
                 "COMPLETED": cls.COMPLETED,
-                "REJECTED": cls.REJECTED,
+                "REJECTED": cls.FAILED,
                 "CANCELLED": cls.FAILED,
                 "FAILED": cls.FAILED,
             }
@@ -221,15 +221,23 @@ class Payment(TimeStampedMixin, models.Model):
             self.provider_class.cancel(self)
             self.delete()
 
+    def can_be_refunded(self, raises=False):
+        """If the payment can be refunded either automatically or manually"""
+        if not self.status == Payment.PaymentStatus.COMPLETED:
+            if raises:
+                raise PaymentException(
+                    f"A {self.status.label.lower()} payment can't refunded"
+                )
+            return False
+        if not self.provider_class.is_refundable:
+            if raises:
+                raise PaymentException(f"A {self.provider} payment cannot be refunded")
+            return False
+        return True
+
     def refund(self, refund_method: RefundMethod = None):
         """Refund the payment"""
-        if self.status != Payment.PaymentStatus.COMPLETED:
-            raise PaymentException(
-                f"You cannot refund a {self.status.label.lower()} payment"
-            )
-
-        if not self.provider_class.is_refundable:
-            raise PaymentException(f"A {self.provider} payment is not refundable")
+        self.can_be_refunded(raises=True)
 
         if refund_method is None:
             refund_method = self.provider_class.refund_method
