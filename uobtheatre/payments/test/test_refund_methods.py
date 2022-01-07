@@ -4,7 +4,14 @@ from uuid import uuid4
 import pytest
 
 from uobtheatre.payments.models import Payment
-from uobtheatre.payments.payment_methods import SquareRefund, RefundMethod, PaymentMethod, ManualRefund, SquareOnline, Cash
+from uobtheatre.payments.payment_methods import (
+    Cash,
+    ManualRefund,
+    PaymentMethod,
+    RefundMethod,
+    SquareOnline,
+    SquareRefund,
+)
 from uobtheatre.payments.test.factories import PaymentFactory
 
 
@@ -13,43 +20,41 @@ def test_refund_method_all():
 
 
 def test_refundable_payment_methods():
-    PaymentMethod.refundable_payment_methods == [
+    assert PaymentMethod.refundable_payment_methods == [
         SquareOnline
-    ]
+    ]  # pylint: disable=comparison-with-callable
 
 
 def test_auto_refundable_payment_methods():
-    PaymentMethod.auto_refundable_payment_methods == [
+    assert PaymentMethod.auto_refundable_payment_methods == [
         SquareOnline
-    ]
+    ]  # pylint: disable=comparison-with-callable
+
 
 @pytest.mark.parametrize(
     "payment_method, automatic_refund_method_type",
-    [
-        (SquareOnline, SquareRefund),
-        (Cash, None)
-    ]
+    [(SquareOnline, SquareRefund), (Cash, None)],
 )
 def test_automatic_refund_method(payment_method, automatic_refund_method_type):
     if automatic_refund_method_type is None:
         assert payment_method.automatic_refund_method is None
     else:
-        assert isinstance(payment_method.automatic_refund_method, automatic_refund_method_type)
+        assert isinstance(
+            payment_method.automatic_refund_method, automatic_refund_method_type
+        )
 
 
 @pytest.mark.parametrize(
-    "payment_method, is_auto_refundable",
-    [
-        (SquareOnline, True),
-        (Cash, False)
-    ]
+    "payment_method, is_auto_refundable", [(SquareOnline, True), (Cash, False)]
 )
 def test_is_auto_refundable(payment_method, is_auto_refundable):
     assert payment_method.is_auto_refundable == is_auto_refundable
 
+
 ###
 # Manual Refund RefundMethod
 ###
+
 
 @pytest.mark.django_db
 def test_manual_refund_method_refund():
@@ -70,6 +75,7 @@ def test_manual_refund_method_refund():
     assert payment.provider_fee == -10
     assert payment.provider == ManualRefund.name
     assert payment.type == Payment.PaymentType.REFUND
+
 
 ###
 # Square Refund RefundMethod

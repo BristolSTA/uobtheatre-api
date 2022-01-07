@@ -199,7 +199,7 @@ class Payment(TimeStampedMixin, models.Model):
 
         Args:
             provider_payment_id (str): The payment ID given by the provider
-            request (dict): The body of the square webhook
+            data (dict): The body of the square webhook
         """
         payment = Payment.objects.get(
             provider_payment_id=provider_payment_id, type=Payment.PaymentType.REFUND
@@ -223,7 +223,7 @@ class Payment(TimeStampedMixin, models.Model):
 
     def can_be_refunded(self, raises=False):
         """If the payment can be refunded either automatically or manually"""
-        if not self.status == Payment.PaymentStatus.COMPLETED:
+        if self.status != Payment.PaymentStatus.COMPLETED:
             if raises:
                 raise PaymentException(
                     f"A {self.status.label.lower()} payment can't refunded"

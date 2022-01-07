@@ -1,6 +1,6 @@
 import abc
 import re
-from typing import TYPE_CHECKING, Any, Dict, Optional, Type, Iterable, Sequence, TypeVar
+from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Type
 from uuid import uuid4
 
 from django.conf import settings
@@ -9,7 +9,6 @@ from square.http.api_response import ApiResponse as SquareApiResponse
 
 from uobtheatre.payments import models as payment_models
 from uobtheatre.utils.exceptions import PaymentException, SquareException
-from uobtheatre.utils.utils import classproperty
 
 if TYPE_CHECKING:
     from uobtheatre.payments.payables import Payable
@@ -29,7 +28,7 @@ class TransactionMethod(abc.ABC):
     @classmethod
     @property
     def __all__(cls) -> Sequence[Type["TransactionMethod"]]:
-        return PaymentMethod.__all__ + RefundMethod.__all__ # type: ignore
+        return PaymentMethod.__all__ + RefundMethod.__all__  # type: ignore
 
     @classmethod
     @property
@@ -49,7 +48,8 @@ class TransactionMethod(abc.ABC):
         name = name.replace("-", "_")
         return name.upper()
 
-    @classproperty
+    @classmethod
+    @property
     def choices(cls):
         choices = [(method.name, method.name) for method in cls.__all__]
         return choices
@@ -67,7 +67,6 @@ class TransactionMethod(abc.ABC):
         )
 
     @classmethod
-    @abc.abstractmethod
     def sync_transaction(cls, payment: "payment_models.Payment", data: dict = None):
         """Syncs the refund payment from the provider"""
 
@@ -113,7 +112,7 @@ class PaymentMethod(TransactionMethod, abc.ABC):
 
     def __init_subclass__(cls) -> None:
         super().__init_subclass__()
-        cls.__all__.append(cls) # type: ignore
+        cls.__all__.append(cls)  # type: ignore
 
     @abc.abstractmethod
     def pay(
@@ -141,13 +140,17 @@ class PaymentMethod(TransactionMethod, abc.ABC):
 
     @classmethod
     @property
-    def refundable_payment_methods(cls) -> tuple[Type["Refundable"],...]:
+    def refundable_payment_methods(cls) -> tuple[Type["Refundable"], ...]:
         return tuple(method for method in cls.__all__ if issubclass(method, Refundable))
 
     @classmethod
     @property
-    def auto_refundable_payment_methods(cls) -> tuple[Type["Refundable"],...]:
-        return tuple(method for method in cls.refundable_payment_methods if issubclass(method, Refundable) and method.is_auto_refundable)
+    def auto_refundable_payment_methods(cls) -> tuple[Type["Refundable"], ...]:
+        return tuple(
+            method
+            for method in cls.refundable_payment_methods
+            if issubclass(method, Refundable) and method.is_auto_refundable
+        )
 
 
 class RefundMethod(TransactionMethod, abc.ABC):
@@ -159,7 +162,7 @@ class RefundMethod(TransactionMethod, abc.ABC):
 
     def __init_subclass__(cls) -> None:
         super().__init_subclass__()
-        cls.__all__ = cls.__all__.append(cls) # type: ignore
+        cls.__all__ = cls.__all__.append(cls)  # type: ignore
 
     @classmethod
     @property
@@ -172,10 +175,6 @@ class RefundMethod(TransactionMethod, abc.ABC):
 
     @abc.abstractmethod
     def refund(self, payment: "payment_models.Payment"):
-        pass
-
-    @staticmethod
-    def sync_transaction(payment: "payment_models.Payment", request: dict):
         pass
 
     @classmethod
@@ -193,21 +192,37 @@ class RefundMethod(TransactionMethod, abc.ABC):
 
 
 class Refundable(abc.ABC):
+    """
+    A mixin which can be added to a payment method. This makes the payment
+    method refundable. A refundable payment method must have refund_methods.
+    These are the methods that can be used to refund payments created with this
+    payment method.
+    """
 
     @classmethod
     @property
     @abc.abstractmethod
     def refund_methods(cls) -> tuple[RefundMethod]:
-        pass
+        """A tuple of methods that can be used to refund payments"""
 
     @classmethod
     @property
     def automatic_refund_method(cls) -> Optional[RefundMethod]:
-        return next((method for method in cls.refund_methods if method.is_automatic), None)
+        """
+        Return the first payment method that can be used automatically. This
+        means it can be used to refund the payment method without any
+        interaction from the uob team.
+        """
+        return next(
+            (method for method in cls.refund_methods if method.is_automatic), None
+        )
 
     @classmethod
     @property
-    def is_auto_refundable(cls):
+    def is_auto_refundable(cls) -> bool:
+        """
+        Returns whether this payment method has an automatic refund method.
+        """
         return cls.automatic_refund_method is not None
 
 
@@ -216,8 +231,8 @@ class SquareAPIMixin(abc.ABC):
 
     client = Client(
         square_version="2020-11-18",
-        access_token=settings.SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],
-        environment=settings.SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],
+        access_token=settings.SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],  # type: ignore
+        environment=settings.SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],  # type: ignore
     )
 
     @classmethod
@@ -284,9 +299,10 @@ class ManualRefund(RefundMethod):
             payment.pay_object,
             -payment.value,
             -payment.app_fee if payment.app_fee else None,
-            provider_fee = -payment.provider_fee if payment.provider_fee else None,
+            provider_fee=-payment.provider_fee if payment.provider_fee else None,
             status=payment_models.Payment.PaymentStatus.COMPLETED,
         )
+
 
 class SquareRefund(RefundMethod, SquareAPIMixin):
     """
@@ -343,6 +359,7 @@ class SquareRefund(RefundMethod, SquareAPIMixin):
             )
         return payment
 
+
 class ManualPaymentMethodMixin(Refundable, abc.ABC):
     """
     Mixin for any manual payment method (one with no regiestered
@@ -374,7 +391,6 @@ class Card(ManualPaymentMethodMixin, PaymentMethod):
     """Manual card payment method"""
 
     description = "Manual card payment"
-
 
 
 class SquarePOS(PaymentMethod, SquarePaymentMethod):
