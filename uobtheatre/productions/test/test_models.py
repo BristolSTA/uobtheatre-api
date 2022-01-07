@@ -598,10 +598,12 @@ def test_performance_seat_group_capacity_remaining(
         total_seat_group_capacity_mock.assert_called_once_with(seat_group=seat_group)
         total_tickets_sold_or_reserved_mock.assert_any_call(seat_group=seat_group)
 
+
 @pytest.mark.django_db
 def test_performance_seat_group_capacity_reamining_with_invalid_seat_group():
     performance = PerformanceFactory()
     assert performance.seat_group_capacity_remaining(SeatGroupFactory()) == 0
+
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
