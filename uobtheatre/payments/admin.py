@@ -23,7 +23,7 @@ def refresh_from_square(modeladmin, request, queryset):
     modeladmin.message_user(request, f"{successful_updates} payments refreshed.")
 
 
-class PaymentAdmin(admin.ModelAdmin):
+class TransactionAdmin(admin.ModelAdmin):
     actions = [refresh_from_square]
     list_filter = (
         "type",
@@ -32,4 +32,4 @@ class PaymentAdmin(admin.ModelAdmin):
     )
 
 
-admin.site.register(Transaction, PaymentAdmin)
+admin.site.register(Transaction, TransactionAdmin)
