@@ -33,6 +33,7 @@ setup:
 	python -m venv .venv
 	source .venv/bin/activate
 	make setup-precommit
+	make up
 
 setup-precommit:
 	pip install pre-commit
