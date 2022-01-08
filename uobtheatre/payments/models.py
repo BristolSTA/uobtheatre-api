@@ -35,6 +35,9 @@ class TransactionQuerySet(QuerySet):
         }
         return self.aggregate(**annotations)
 
+    # def payments(self):
+    #     return self.filter(type=Transaction.Type.Payment)
+
 
 class Transaction(TimeStampedMixin, models.Model):
 
@@ -47,8 +50,8 @@ class Transaction(TimeStampedMixin, models.Model):
     class PaymentType(models.TextChoices):
         """Whether the payment was a refund or purchase."""
 
-        PURCHASE = "PURCHASE", "Purchase payment"
-        REFUND = "REFUND", "Refund payment"
+        PAYMENT = "PAYMENT", "Payment"
+        REFUND = "REFUND", "Refund"
 
     class PaymentStatus(models.TextChoices):
         """The status of the payment."""
@@ -93,7 +96,7 @@ class Transaction(TimeStampedMixin, models.Model):
     type = models.CharField(
         max_length=20,
         choices=PaymentType.choices,
-        default=PaymentType.PURCHASE,
+        default=PaymentType.PAYMENT,
     )
     status: TextChoices = models.CharField(
         max_length=20,
@@ -253,9 +256,9 @@ TOTAL_PROVIDER_FEE = Coalesce(
 )
 NET_TOTAL = Sum("value")
 NET_CARD_TOTAL = Sum("value", filter=(~Q(provider=Cash.name)))
-TOTAL_SALES = Sum("value", filter=Q(type=Transaction.PaymentType.PURCHASE))
+TOTAL_SALES = Sum("value", filter=Q(type=Transaction.PaymentType.PAYMENT))
 TOTAL_CARD_SALES = Sum(
-    "value", filter=(~Q(provider=Cash.name) & Q(type=Transaction.PaymentType.PURCHASE))
+    "value", filter=(~Q(provider=Cash.name) & Q(type=Transaction.PaymentType.PAYMENT))
 )
 TOTAL_REFUNDS = Sum("value", filter=Q(type=Transaction.PaymentType.REFUND))
 TOTAL_CARD_REFUNDS = Sum(

@@ -84,7 +84,7 @@ def test_is_refunded(payment_values, has_pending, is_refunded):
     pay_object = BookingFactory()
     [
         TransactionFactory(
-            value=value, type=Transaction.PaymentType.PURCHASE, pay_object=pay_object
+            value=value, type=Transaction.PaymentType.PAYMENT, pay_object=pay_object
         )
         for value in payment_values
     ]

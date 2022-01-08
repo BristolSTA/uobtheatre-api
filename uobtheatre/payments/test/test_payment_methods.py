@@ -108,7 +108,7 @@ def test_generate_name(input_name, expected_output_name):
 @pytest.mark.parametrize(
     "payment_method, expected_type",
     [
-        (SquareOnline, Transaction.PaymentType.PURCHASE),
+        (SquareOnline, Transaction.PaymentType.PAYMENT),
         (SquareRefund, Transaction.PaymentType.REFUND),
     ],
 )
@@ -172,7 +172,7 @@ def test_square_online_pay_success(mock_square):
     assert payment.last_4 == "1234"
     assert payment.provider_payment_id == "abc"
     assert payment.provider == "SQUARE_ONLINE"
-    assert payment.type == Transaction.PaymentType.PURCHASE
+    assert payment.type == Transaction.PaymentType.PAYMENT
     assert payment.status == Transaction.PaymentStatus.COMPLETED
     assert payment.app_fee == 10
 
@@ -602,7 +602,7 @@ def test_manual_pay(payment_method, value, expected_method_str):
     assert payment.value == value
     assert payment.currency == "GBP"
     assert payment.provider == expected_method_str
-    assert payment.type == Transaction.PaymentType.PURCHASE
+    assert payment.type == Transaction.PaymentType.PAYMENT
     assert payment.app_fee == 12
 
 

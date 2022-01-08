@@ -128,7 +128,7 @@ class PaymentMethod(TransactionMethod, abc.ABC):
             pay_object,
             value,
             app_fee,
-            type=payment_models.Transaction.PaymentType.PURCHASE,
+            type=payment_models.Transaction.PaymentType.PAYMENT,
             **kwargs,
         )
         return payment

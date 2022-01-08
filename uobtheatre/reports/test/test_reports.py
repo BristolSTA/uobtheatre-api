@@ -283,7 +283,7 @@ def test_period_totals_breakdown_report():
         [
             str(payment_1.id),
             "2021-09-08 00:00:01",
-            "PURCHASE",
+            "PAYMENT",
             str(booking_1.id),
             "Booking",
             str(booking_1.performance.production.id),
@@ -295,7 +295,7 @@ def test_period_totals_breakdown_report():
         [
             str(payment_3.id),
             "2021-09-08 12:00:01",
-            "PURCHASE",
+            "PAYMENT",
             str(booking_3.id),
             "Booking",
             str(booking_3.performance.production.id),
@@ -307,7 +307,7 @@ def test_period_totals_breakdown_report():
         [
             str(payment_4.id),
             "2021-09-08 22:00:01",
-            "PURCHASE",
+            "PAYMENT",
             str(booking_5.id),
             "Booking",
             str(booking_5.performance.production.id),

@@ -77,7 +77,7 @@ class Payable(models.Model, metaclass=AbstractModelMeta):  # type: ignore
             )
 
         for payment in self.transactions.filter(
-            type=Transaction.PaymentType.PURCHASE
+            type=Transaction.PaymentType.PAYMENT
         ).all():
             payment.refund()
 
