@@ -17,7 +17,7 @@ from guardian.shortcuts import get_objects_for_user
 from uobtheatre.images.models import Image
 from uobtheatre.payments.emails import payable_refund_initiated_email
 from uobtheatre.payments.exceptions import CantBeRefundedException
-from uobtheatre.payments.models import Payment
+from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
 from uobtheatre.societies.models import Society
 from uobtheatre.users.abilities import AbilitiesMixin
@@ -623,7 +623,7 @@ class Performance(
         """Generates a breakdown of the sales of this performance"""
         from uobtheatre.bookings.models import Booking
 
-        return Payment.objects.filter(
+        return Transaction.objects.filter(
             pay_object_id__in=self.bookings.values_list("id", flat=True),
             pay_object_type=ContentType.objects.get_for_model(Booking),
         ).annotate_sales_breakdown(  # type: ignore
@@ -921,7 +921,7 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin):
         """Generates a breakdown of the sales of this production"""
         from uobtheatre.bookings.models import Booking
 
-        return Payment.objects.filter(
+        return Transaction.objects.filter(
             pay_object_id__in=self.bookings.values_list("id", flat=True),
             pay_object_type=ContentType.objects.get_for_model(Booking),
         ).annotate_sales_breakdown(  # type: ignore

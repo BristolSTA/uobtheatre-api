@@ -3,7 +3,7 @@ from graphene import relay
 from graphene_django import DjangoObjectType
 
 from uobtheatre.bookings.schema import BookingNode
-from uobtheatre.payments.models import Payment
+from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payment_methods import PaymentMethod, SquarePOS
 from uobtheatre.users.abilities import OpenBoxoffice
 from uobtheatre.utils.enums import GrapheneEnumMixin
@@ -14,7 +14,7 @@ PaymentMethodsEnum = graphene.Enum("PaymentMethod", PaymentMethod.choices)
 
 class PaymentFilter(FilterSet):
     class Meta:
-        model = Payment
+        model = Transaction
         fields = ("type", "provider", "created_at")
 
 
@@ -45,7 +45,7 @@ class PaymentNode(GrapheneEnumMixin, DjangoObjectType):
         return self.url()
 
     class Meta:
-        model = Payment
+        model = Transaction
         interfaces = (relay.Node,)
         filterset_class = PaymentFilter
         exclude = ("pay_object_id", "pay_object_type")

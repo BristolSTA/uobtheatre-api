@@ -25,7 +25,7 @@ from uobtheatre.discounts.test.factories import (
     DiscountRequirementFactory,
 )
 from uobtheatre.payments import payment_methods
-from uobtheatre.payments.models import Payment
+from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.payment_methods import SquarePOS
 from uobtheatre.payments.test.factories import PaymentFactory
@@ -830,7 +830,7 @@ def test_booking_pay_with_payment():
 
     class MockPaymentMethod:  # pylint: disable=no-method-argument
         def pay(*_):
-            return Payment()
+            return Transaction()
 
     payment_method = MockPaymentMethod()
     booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
@@ -849,21 +849,21 @@ def test_booking_pay_deletes_pending_payments(mock_square):
 
     class MockPaymentMethod:  # pylint: disable=no-method-argument
         def pay(*_):
-            return Payment()
+            return Transaction()
 
     payment_method = MockPaymentMethod()
     booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
 
     # Deleted
     pending_payment = PaymentFactory(
-        status=Payment.PaymentStatus.PENDING,
+        status=Transaction.PaymentStatus.PENDING,
         pay_object=booking,
         provider=SquarePOS.name,
     )
 
     # Not deleted
     completed_payment = PaymentFactory(
-        status=Payment.PaymentStatus.COMPLETED, pay_object=booking
+        status=Transaction.PaymentStatus.COMPLETED, pay_object=booking
     )
 
     with mock_square(
@@ -877,10 +877,10 @@ def test_booking_pay_deletes_pending_payments(mock_square):
     mock.assert_called_once_with(pending_payment.provider_payment_id)
 
     # And pending payment deleted
-    assert not Payment.objects.filter(id=pending_payment.id).exists()
+    assert not Transaction.objects.filter(id=pending_payment.id).exists()
 
     # Assert completed payment is not cancelled
-    assert Payment.objects.filter(id=completed_payment.id).exists()
+    assert Transaction.objects.filter(id=completed_payment.id).exists()
 
 
 @pytest.mark.django_db

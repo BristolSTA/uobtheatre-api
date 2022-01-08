@@ -1,6 +1,6 @@
 from django.contrib import admin, messages
 
-from uobtheatre.payments.models import Payment
+from uobtheatre.payments.models import Transaction
 from uobtheatre.utils.exceptions import SquareException
 
 
@@ -32,4 +32,4 @@ class PaymentAdmin(admin.ModelAdmin):
     )
 
 
-admin.site.register(Payment, PaymentAdmin)
+admin.site.register(Transaction, PaymentAdmin)

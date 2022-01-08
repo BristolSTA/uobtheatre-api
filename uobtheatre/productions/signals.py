@@ -2,7 +2,7 @@ from django.core.exceptions import ValidationError
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 
-from uobtheatre.payments.models import Payment
+from uobtheatre.payments.models import Transaction
 from uobtheatre.productions.models import Production
 
 
@@ -29,7 +29,7 @@ def check_production_status_validation(production_instance: Production):
         # Get number of performances that have payments that are not complete
         num_performances_with_uncomplete_payments = (
             production_instance.performances.filter(
-                bookings__payments__status=Payment.PaymentStatus.PENDING
+                bookings__transactions__status=Transaction.PaymentStatus.PENDING
             ).count()
         )
         if num_performances_with_uncomplete_payments > 0:

@@ -2,7 +2,7 @@ import pytest
 from django.core.exceptions import ValidationError
 
 from uobtheatre.bookings.test.factories import BookingFactory
-from uobtheatre.payments.models import Payment
+from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.test.factories import PaymentFactory
 from uobtheatre.productions.models import Production
 
@@ -12,9 +12,9 @@ from uobtheatre.productions.models import Production
 def test_production_pre_save_closed_signal(with_pending_payment):
     payment = PaymentFactory(
         pay_object=BookingFactory(),
-        status=Payment.PaymentStatus.PENDING
+        status=Transaction.PaymentStatus.PENDING
         if with_pending_payment
-        else Payment.PaymentStatus.COMPLETED,
+        else Transaction.PaymentStatus.COMPLETED,
     )
 
     # Create a payment that is always complete

@@ -2,7 +2,6 @@ import math
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 from urllib.parse import urlencode
 
-from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.aggregates import BoolAnd
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -15,7 +14,7 @@ from graphql_relay.node.node import to_global_id
 
 from uobtheatre.discounts.models import ConcessionType, DiscountCombination
 from uobtheatre.mail.composer import MailComposer
-from uobtheatre.payments.models import Payment
+from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.users.models import User
@@ -212,10 +211,6 @@ class Booking(TimeStampedMixin, Payable):
         Performance,
         on_delete=models.RESTRICT,
         related_name="bookings",
-    )
-
-    payments = GenericRelation(
-        Payment, object_id_field="pay_object_id", content_type_field="pay_object_type"
     )
 
     # An additional discount that can be applied to the booking by an admin
@@ -517,7 +512,7 @@ class Booking(TimeStampedMixin, Payable):
             (len(self.tickets.all()) + len(add_tickets) - len(delete_tickets)),
         )
 
-    def pay(self, payment_method: "PaymentMethod") -> Optional["Payment"]:
+    def pay(self, payment_method: "PaymentMethod") -> Optional["Transaction"]:
         """
         Pay for booking using provided payment method.
 
@@ -529,13 +524,15 @@ class Booking(TimeStampedMixin, Payable):
             Payment: The payment created by the checkout (optional)
         """
         # Cancel and delete pending payments for this booking
-        for payment in self.payments.filter(status=Payment.PaymentStatus.PENDING):
+        for payment in self.transactions.filter(
+            status=Transaction.PaymentStatus.PENDING
+        ):
             payment.cancel()
 
         payment = payment_method.pay(self.total, self.misc_costs_value(), self)
 
         # If a payment is created set the booking as paid
-        if payment.status == Payment.PaymentStatus.COMPLETED:
+        if payment.status == Transaction.PaymentStatus.COMPLETED:
             self.complete()
 
         return payment
@@ -593,7 +590,7 @@ class Booking(TimeStampedMixin, Payable):
         if self.user.status.verified:
             composer.action("/user/booking/%s" % self.reference, "View Booking")
 
-        payment = self.payments.first()
+        payment = self.transactions.first()
         # If this booking includes a payment, we will include details of this payment as a reciept
         if payment:
             composer.heading("Payment Information").line(

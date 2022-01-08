@@ -4,13 +4,13 @@ import factory
 
 from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.payments import payment_methods
-from uobtheatre.payments.models import Payment
+from uobtheatre.payments.models import Transaction
 
 
 class PaymentFactory(factory.django.DjangoModelFactory):
 
     pay_object = factory.SubFactory(BookingFactory)
-    type = Payment.PaymentType.PURCHASE
+    type = Transaction.PaymentType.PURCHASE
     provider = payment_methods.SquareOnline.name
     value = factory.Faker("pyint", min_value=0)
     currency = "GBP"
@@ -22,7 +22,7 @@ class PaymentFactory(factory.django.DjangoModelFactory):
     )
 
     class Meta:
-        model = Payment
+        model = Transaction
 
 
 class MockApiResponse:
@@ -55,7 +55,7 @@ def mock_payment_method(is_refundable: bool = True, refund_method=None):
     """
 
     class MockPaymentMethod:  # pylint: disable=missing-class-docstring
-        pay = MagicMock(return_value=Payment())
+        pay = MagicMock(return_value=Transaction())
 
         @classmethod
         @property

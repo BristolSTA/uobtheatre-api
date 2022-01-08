@@ -7,7 +7,7 @@ from django.db.models import Sum
 
 from uobtheatre.payments.emails import payable_refund_initiated_email
 from uobtheatre.payments.exceptions import CantBeRefundedException
-from uobtheatre.payments.models import Payment
+from uobtheatre.payments.models import Transaction
 from uobtheatre.users.models import User
 from uobtheatre.utils.models import AbstractModelMeta
 
@@ -17,8 +17,10 @@ class Payable(models.Model, metaclass=AbstractModelMeta):  # type: ignore
     An model which can be paid for
     """
 
-    payments = GenericRelation(
-        Payment, object_id_field="pay_object_id", content_type_field="pay_object_type"
+    transactions = GenericRelation(
+        Transaction,
+        object_id_field="pay_object_id",
+        content_type_field="pay_object_type",
     )
 
     class PayableStatus(models.TextChoices):
@@ -53,11 +55,11 @@ class Payable(models.Model, metaclass=AbstractModelMeta):  # type: ignore
         completed.
         """
         # If any pending payments exist for this payment's pay_object then it cannot be refunded
-        if self.payments.filter(status=Payment.PaymentStatus.PENDING).exists():
+        if self.transactions.filter(status=Transaction.PaymentStatus.PENDING).exists():
             return False
 
         # Check that the total sum of ALL payments is equal to zero
-        aggregations = self.payments.aggregate(payment_value=Sum("value"))
+        aggregations = self.transactions.aggregate(payment_value=Sum("value"))
         return not aggregations["payment_value"]
 
     @property
@@ -74,7 +76,9 @@ class Payable(models.Model, metaclass=AbstractModelMeta):  # type: ignore
                 f"{self.__class__.__name__} ({self}) cannot be refunded"
             )
 
-        for payment in self.payments.filter(type=Payment.PaymentType.PURCHASE).all():
+        for payment in self.transactions.filter(
+            type=Transaction.PaymentType.PURCHASE
+        ).all():
             payment.refund()
 
         if send_admin_email:
@@ -88,35 +92,35 @@ class Payable(models.Model, metaclass=AbstractModelMeta):  # type: ignore
     @property
     def total_sales(self) -> int:
         """The amount paid by the user for this object."""
-        return self.payments.annotate_sales_breakdown(["total_sales"])[  # type: ignore
+        return self.transactions.annotate_sales_breakdown(["total_sales"])[  # type: ignore
             "total_sales"
         ]
 
     @property
     def provider_payment_value(self) -> int:
         """The amount taken by the payment provider in paying for this object."""
-        return self.payments.annotate_sales_breakdown(["provider_payment_value"])[  # type: ignore
+        return self.transactions.annotate_sales_breakdown(["provider_payment_value"])[  # type: ignore
             "provider_payment_value"
         ]
 
     @property
     def app_payment_value(self) -> int:
         """The amount taken by us in paying for this object."""
-        return self.payments.annotate_sales_breakdown(["app_payment_value"])[  # type: ignore
+        return self.transactions.annotate_sales_breakdown(["app_payment_value"])[  # type: ignore
             "app_payment_value"
         ]
 
     @property
     def society_revenue(self) -> int:
         """The revenue for the society for selling this object."""
-        return self.payments.annotate_sales_breakdown(["society_revenue"])[  # type: ignore
+        return self.transactions.annotate_sales_breakdown(["society_revenue"])[  # type: ignore
             "society_revenue"
         ]
 
     @property
     def society_transfer_value(self) -> int:
         """The amount of money to transfere to the society for object."""
-        return self.payments.annotate_sales_breakdown(["society_transfer_value"])[  # type: ignore
+        return self.transactions.annotate_sales_breakdown(["society_transfer_value"])[  # type: ignore
             "society_transfer_value"
         ]
 

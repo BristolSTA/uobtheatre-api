@@ -3,7 +3,7 @@ from unittest.mock import patch
 import pytest
 
 from uobtheatre.bookings.test.factories import BookingFactory
-from uobtheatre.payments.models import Payment
+from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.signals import on_payment_save_callback
 from uobtheatre.payments.test.factories import PaymentFactory
@@ -23,8 +23,8 @@ def test_payment_model_post_save_status_update(mailoutbox):
         refund_payment = PaymentFactory(
             value=-200,
             pay_object=booking,
-            type=Payment.PaymentType.REFUND,
-            status=Payment.PaymentStatus.PENDING,
+            type=Transaction.PaymentType.REFUND,
+            status=Transaction.PaymentStatus.PENDING,
         )
         mock.assert_called_once()
 
@@ -36,7 +36,7 @@ def test_payment_model_post_save_status_update(mailoutbox):
         "uobtheatre.payments.signals.on_payment_save_callback",
         wraps=on_payment_save_callback,
     ) as mock:
-        refund_payment.status = Payment.PaymentStatus.COMPLETED
+        refund_payment.status = Transaction.PaymentStatus.COMPLETED
         refund_payment.save()
         mock.assert_called_once()
     assert len(mailoutbox) == 1  # Email confirming successful refund

@@ -2,7 +2,7 @@ import pytest
 from graphql_relay.node.node import to_global_id
 
 from uobtheatre.bookings.test.factories import BookingFactory
-from uobtheatre.payments.models import Payment
+from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payment_methods import SquarePOS
 from uobtheatre.payments.test.factories import PaymentFactory
 
@@ -13,7 +13,7 @@ def test_cancel_payment_completed_payment(gql_client):
     booking = BookingFactory(creator=gql_client.user)
     payment = PaymentFactory(
         pay_object=booking,
-        status=Payment.PaymentStatus.COMPLETED,
+        status=Transaction.PaymentStatus.COMPLETED,
         provider=SquarePOS.name,
     )
 
@@ -50,7 +50,7 @@ def test_cancel_payment_success(gql_client, mock_square):
     booking = BookingFactory(creator=gql_client.user)
     payment = PaymentFactory(
         pay_object=booking,
-        status=Payment.PaymentStatus.PENDING,
+        status=Transaction.PaymentStatus.PENDING,
         provider=SquarePOS.name,
     )
 
@@ -89,7 +89,7 @@ def test_cancel_payment_not_creator_of_booking(gql_client):
     booking = BookingFactory()
     payment = PaymentFactory(
         pay_object=booking,
-        status=Payment.PaymentStatus.PENDING,
+        status=Transaction.PaymentStatus.PENDING,
         provider=SquarePOS.name,
     )
 

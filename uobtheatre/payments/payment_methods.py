@@ -39,7 +39,7 @@ class TransactionMethod(abc.ABC):
     @classmethod
     @property
     def non_manual_methods(cls) -> list[Type["TransactionMethod"]]:
-        return [method for method in cls.__all__ if not method.is_manual]
+        return [method for method in cls.__all__ if not method.is_manual]  # type: ignore
 
     @staticmethod
     def generate_name(name):
@@ -57,8 +57,8 @@ class TransactionMethod(abc.ABC):
     @classmethod
     def create_payment_object(
         cls, pay_object: "Payable", value: int, app_fee, **kwargs
-    ) -> "payment_models.Payment":
-        return payment_models.Payment.objects.create(
+    ) -> "payment_models.Transaction":
+        return payment_models.Transaction.objects.create(
             provider=cls.name,
             pay_object=pay_object,
             value=value,
@@ -67,12 +67,12 @@ class TransactionMethod(abc.ABC):
         )
 
     @classmethod
-    def sync_transaction(cls, payment: "payment_models.Payment", data: dict = None):
+    def sync_transaction(cls, payment: "payment_models.Transaction", data: dict = None):
         """Syncs the refund payment from the provider"""
 
     @classmethod
     def cancel(
-        cls, payment: "payment_models.Payment"  # pylint: disable=unused-argument
+        cls, payment: "payment_models.Transaction"  # pylint: disable=unused-argument
     ):
         """Cancel the payment
 
@@ -88,7 +88,7 @@ class TransactionMethod(abc.ABC):
         return issubclass(cls, ManualPaymentMethodMixin)
 
     @classmethod
-    def get_payment_provider_id(cls, payment: "payment_models.Payment") -> str:
+    def get_payment_provider_id(cls, payment: "payment_models.Transaction") -> str:
         """Get the ID of the provided payment assigned by the provider"""
         if not payment.provider_payment_id:
             raise PaymentException("Payment has no provider_payment_id")
@@ -117,18 +117,18 @@ class PaymentMethod(TransactionMethod, abc.ABC):
     @abc.abstractmethod
     def pay(
         self, value: int, app_fee: int, pay_object: "Payable"
-    ) -> "payment_models.Payment":
+    ) -> "payment_models.Transaction":
         raise NotImplementedError
 
     @classmethod
     def create_payment_object(
         cls, pay_object: "Payable", value: int, app_fee, **kwargs
-    ) -> "payment_models.Payment":
+    ) -> "payment_models.Transaction":
         payment = super().create_payment_object(
             pay_object,
             value,
             app_fee,
-            type=payment_models.Payment.PaymentType.PURCHASE,
+            type=payment_models.Transaction.PaymentType.PURCHASE,
             **kwargs,
         )
         return payment
@@ -148,7 +148,7 @@ class PaymentMethod(TransactionMethod, abc.ABC):
     def auto_refundable_payment_methods(cls) -> tuple[Type["Refundable"], ...]:
         return tuple(
             method
-            for method in cls.refundable_payment_methods
+            for method in cls.refundable_payment_methods  # type: ignore
             if issubclass(method, Refundable) and method.is_auto_refundable
         )
 
@@ -174,18 +174,18 @@ class RefundMethod(TransactionMethod, abc.ABC):
         """
 
     @abc.abstractmethod
-    def refund(self, payment: "payment_models.Payment"):
+    def refund(self, payment: "payment_models.Transaction"):
         pass
 
     @classmethod
     def create_payment_object(
         cls, pay_object: "Payable", value: int, app_fee, **kwargs
-    ) -> "payment_models.Payment":
+    ) -> "payment_models.Transaction":
         payment = super().create_payment_object(
             pay_object,
             value,
             app_fee,
-            type=payment_models.Payment.PaymentType.REFUND,
+            type=payment_models.Transaction.PaymentType.REFUND,
             **kwargs,
         )
         return payment
@@ -214,7 +214,7 @@ class Refundable(abc.ABC):
         interaction from the uob team.
         """
         return next(
-            (method for method in cls.refund_methods if method.is_automatic), None
+            (method for method in cls.refund_methods if method.is_automatic), None  # type: ignore
         )
 
     @classmethod
@@ -294,13 +294,13 @@ class ManualRefund(RefundMethod):
     description = "Manually refund"
     is_automatic = False
 
-    def refund(self, payment: "payment_models.Payment"):
+    def refund(self, payment: "payment_models.Transaction"):
         self.create_payment_object(
             payment.pay_object,
             -payment.value,
             -payment.app_fee if payment.app_fee else None,
             provider_fee=-payment.provider_fee if payment.provider_fee else None,
-            status=payment_models.Payment.PaymentStatus.COMPLETED,
+            status=payment_models.Transaction.PaymentStatus.COMPLETED,
         )
 
 
@@ -315,7 +315,7 @@ class SquareRefund(RefundMethod, SquareAPIMixin):
     def __init__(self, idempotency_key: str):
         self.idempotency_key = idempotency_key
 
-    def refund(self, payment: "payment_models.Payment"):
+    def refund(self, payment: "payment_models.Transaction"):
         body = {
             "idempotency_key": str(self.idempotency_key),
             "amount_money": {"amount": payment.value, "currency": payment.currency},
@@ -333,11 +333,11 @@ class SquareRefund(RefundMethod, SquareAPIMixin):
             -payment.app_fee if payment.app_fee else None,
             provider_payment_id=square_refund_id,
             currency=amount_details["currency"],
-            status=payment_models.Payment.PaymentStatus.PENDING,
+            status=payment_models.Transaction.PaymentStatus.PENDING,
         )
 
     @classmethod
-    def sync_transaction(cls, payment: "payment_models.Payment", data: dict = None):
+    def sync_transaction(cls, payment: "payment_models.Transaction", data: dict = None):
         if not data:
             response = cls.client.refunds.get_payment_refund(
                 cls.get_payment_provider_id(payment)
@@ -350,7 +350,7 @@ class SquareRefund(RefundMethod, SquareAPIMixin):
     @classmethod
     def _fill_payment_from_response_object(cls, payment, response_object):
         """Updates and fills a payment model from a refund response object"""
-        payment.status = payment_models.Payment.PaymentStatus.from_square_status(
+        payment.status = payment_models.Transaction.PaymentStatus.from_square_status(
             response_object["status"]
         )
         if processing_fees := response_object.get("processing_fee"):
@@ -373,7 +373,7 @@ class ManualPaymentMethodMixin(Refundable, abc.ABC):
 
     def pay(
         self, value: int, app_fee: int, pay_object: "Payable"
-    ) -> "payment_models.Payment":
+    ) -> "payment_models.Transaction":
         return self.create_payment_object(pay_object, value, app_fee)  # type: ignore # pylint: disable=arguments-differ
 
     @classmethod
@@ -416,7 +416,7 @@ class SquarePOS(PaymentMethod, SquarePaymentMethod):
 
     def pay(
         self, value: int, app_fee: int, pay_object: "Payable"
-    ) -> "payment_models.Payment":
+    ) -> "payment_models.Transaction":
         """Send payment to point of sale device.
 
         Args:
@@ -452,7 +452,7 @@ class SquarePOS(PaymentMethod, SquarePaymentMethod):
             app_fee,
             provider_payment_id=response.body["checkout"]["id"],
             currency="GBP",
-            status=payment_models.Payment.PaymentStatus.PENDING,
+            status=payment_models.Transaction.PaymentStatus.PENDING,
         )
 
     @classmethod
@@ -470,20 +470,20 @@ class SquarePOS(PaymentMethod, SquarePaymentMethod):
         booking = Booking.objects.get(reference=checkout["reference_id"])
 
         if checkout["status"] == "COMPLETED":
-            payment = payment_models.Payment.objects.get(
+            payment = payment_models.Transaction.objects.get(
                 provider_payment_id=checkout["id"]
             )
 
-            payment.status = payment_models.Payment.PaymentStatus.COMPLETED
+            payment.status = payment_models.Transaction.PaymentStatus.COMPLETED
             payment.save()
             booking.complete()
 
         if checkout["status"] == "CANCELED":
             # Delete any payments that are linked to this checkout
-            payment_models.Payment.objects.filter(
+            payment_models.Transaction.objects.filter(
                 provider_payment_id=checkout["id"],
                 provider=SquarePOS.name,
-                status=payment_models.Payment.PaymentStatus.PENDING,
+                status=payment_models.Transaction.PaymentStatus.PENDING,
             ).delete()
 
     @classmethod
@@ -530,7 +530,7 @@ class SquarePOS(PaymentMethod, SquarePaymentMethod):
         return response.body["checkout"]
 
     @classmethod
-    def cancel(cls, payment: "payment_models.Payment") -> None:
+    def cancel(cls, payment: "payment_models.Transaction") -> None:
         """Cancel terminal checkout.
 
         Args:
@@ -545,7 +545,7 @@ class SquarePOS(PaymentMethod, SquarePaymentMethod):
         cls._handle_response_failure(response)
 
     @classmethod
-    def sync_transaction(cls, payment: "payment_models.Payment", data: dict = None):
+    def sync_transaction(cls, payment: "payment_models.Transaction", data: dict = None):
         """Syncs the given payment with the raw payment data"""
         payment_id = cls.get_payment_provider_id(payment)
 
@@ -559,7 +559,7 @@ class SquarePOS(PaymentMethod, SquarePaymentMethod):
                 ],
             )
         )
-        payment.status = payment_models.Payment.PaymentStatus.from_square_status(
+        payment.status = payment_models.Transaction.PaymentStatus.from_square_status(
             checkout["status"]
         )
         payment.save()
@@ -602,7 +602,7 @@ class SquareOnline(Refundable, PaymentMethod, SquarePaymentMethod):
 
     def pay(
         self, value: int, app_fee: int, pay_object: "Payable"
-    ) -> "payment_models.Payment":
+    ) -> "payment_models.Transaction":
         """Make a payment using Square
 
         This makes a request to square to make a payment.
@@ -643,14 +643,14 @@ class SquareOnline(Refundable, PaymentMethod, SquarePaymentMethod):
         )
 
     @classmethod
-    def sync_transaction(cls, payment: "payment_models.Payment", data: dict = None):
+    def sync_transaction(cls, payment: "payment_models.Transaction", data: dict = None):
         """Syncs the given payment with the raw payment data"""
         payment_id = cls.get_payment_provider_id(payment)
 
         if data is None:
             data = cls.get_payment(payment_id)
         payment.provider_fee = cls.payment_processing_fee(data)
-        payment.status = payment_models.Payment.PaymentStatus.from_square_status(
+        payment.status = payment_models.Transaction.PaymentStatus.from_square_status(
             data["status"]
         )
         payment.save()

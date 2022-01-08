@@ -16,7 +16,7 @@ from uobtheatre.discounts.test.factories import (
     DiscountRequirementFactory,
 )
 from uobtheatre.payments import payment_methods
-from uobtheatre.payments.models import Payment
+from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.test.factories import PaymentFactory
 from uobtheatre.productions.models import Performance, Production
@@ -47,7 +47,9 @@ def create_fixtures():
                 society=SocietyFactory(name="Society 1"),
                 status=Production.Status.CLOSED,
             ),
-            start=timezone.datetime(2021, 9, 23, 15, 0, tzinfo=timezone.get_current_timezone()),
+            start=timezone.datetime(
+                2021, 9, 23, 15, 0, tzinfo=timezone.get_current_timezone()
+            ),
         ),
         user=UserFactory(first_name="Joe", last_name="Bloggs", email="joe@example.org"),
         reference="booking1",
@@ -164,7 +166,7 @@ def create_fixtures():
         pay_object=booking_5,
         value=-booking_5.total,
         provider=payment_methods.SquareRefund.name,
-        type=Payment.PaymentType.REFUND,
+        type=Transaction.PaymentType.REFUND,
         app_fee=-5,
         provider_fee=-2,
     )
@@ -172,7 +174,7 @@ def create_fixtures():
     refund_1.save()
 
     # Create a pending payment (shouldn't show in reports)
-    PaymentFactory(status=Payment.PaymentStatus.PENDING)
+    PaymentFactory(status=Transaction.PaymentStatus.PENDING)
 
     return (payment_1, payment_2, payment_3, payment_4, refund_1)
 
@@ -236,7 +238,7 @@ def test_period_totals_breakdown_report():
     booking_5 = payment_4.pay_object
 
     # Generate report that covers this period
-    with patch.object(Payment, "sync_payments") as mock_sync:
+    with patch.object(Transaction, "sync_payments") as mock_sync:
         report = PeriodTotalsBreakdown(
             datetime.fromisoformat("2021-09-08T00:00:00"),
             datetime.fromisoformat("2021-09-08T23:00:00"),
@@ -335,7 +337,7 @@ def test_outstanding_society_payments_report():
     society_1 = Society.objects.all()[0]
     production_1 = Production.objects.all()[0]
     # NB: As production 2 is not "closed", it shouldn't show in this report
-    with patch.object(Payment, "sync_payments") as mock_sync:
+    with patch.object(Transaction, "sync_payments") as mock_sync:
         report = OutstandingSocietyPayments()
 
     mock_sync.assert_called_once()
@@ -386,7 +388,7 @@ def test_outstanding_society_payments_report():
 def test_outstanding_society_payments_report_production_no_society():
     ProductionFactory(id=1, status=Production.Status.CLOSED, society=None)
 
-    with patch.object(Payment, "sync_payments"):
+    with patch.object(Transaction, "sync_payments"):
         with pytest.raises(Exception) as exception:
             OutstandingSocietyPayments()
             assert exception.value == "Production 1 has no society"

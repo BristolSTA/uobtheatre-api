@@ -246,7 +246,7 @@ class BookingNode(GrapheneEnumMixin, DjangoObjectType):
     expired = graphene.Boolean(required=True)
 
     def resolve_payments(self, _):
-        return self.payments.all()
+        return self.transactions.all()
 
     def resolve_price_breakdown(self, _):
         return self

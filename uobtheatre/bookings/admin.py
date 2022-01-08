@@ -5,7 +5,7 @@ from django.core.mail import mail_admins
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
 from uobtheatre.payments.emails import payable_refund_initiated_email
 from uobtheatre.payments.exceptions import CantBeRefundedException
-from uobtheatre.payments.models import Payment
+from uobtheatre.payments.models import Transaction
 from uobtheatre.utils.admin import (
     DangerousAdminConfirmMixin,
     ReadOnlyInlineMixin,
@@ -21,7 +21,7 @@ class SeatBookingInline(admin.StackedInline):
 
 
 class PaymentsInline(GenericTabularInline, ReadOnlyInlineMixin):
-    model = Payment
+    model = Transaction
     ct_fk_field = "pay_object_id"
     ct_field = "pay_object_type"
 

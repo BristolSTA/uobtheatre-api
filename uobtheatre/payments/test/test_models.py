@@ -3,8 +3,13 @@ from unittest.mock import PropertyMock, patch
 
 import pytest
 
-from uobtheatre.payments.models import Payment
-from uobtheatre.payments.payment_methods import Cash, SquareOnline, SquarePOS, SquareRefund
+from uobtheatre.payments.models import Transaction
+from uobtheatre.payments.payment_methods import (
+    Cash,
+    SquareOnline,
+    SquarePOS,
+    SquareRefund,
+)
 from uobtheatre.payments.test.factories import (
     PaymentFactory,
     mock_payment_method,
@@ -155,7 +160,7 @@ def test_handle_update_payment_webhook_checkout(mock_square):
             }
         },
     ):
-        Payment.handle_update_payment_webhook(
+        Transaction.handle_update_payment_webhook(
             {
                 "type": "payment",
                 "object": {
@@ -176,9 +181,9 @@ def test_handle_update_payment_webhook_checkout(mock_square):
 @pytest.mark.parametrize(
     "provider, status, is_cancelled",
     [
-        (SquarePOS.name, Payment.PaymentStatus.PENDING, True),
-        (SquareOnline.name, Payment.PaymentStatus.PENDING, False),
-        (SquarePOS.name, Payment.PaymentStatus.COMPLETED, False),
+        (SquarePOS.name, Transaction.PaymentStatus.PENDING, True),
+        (SquareOnline.name, Transaction.PaymentStatus.PENDING, False),
+        (SquarePOS.name, Transaction.PaymentStatus.COMPLETED, False),
     ],
 )
 def test_cancel(provider, status, is_cancelled, mock_square):
@@ -195,8 +200,8 @@ def test_cancel(provider, status, is_cancelled, mock_square):
             mock_cancel.assert_not_called()
 
     # If pending assert this payment is deleted
-    is_pending = status == Payment.PaymentStatus.PENDING
-    assert not Payment.objects.filter(id=payment.id).exists() == is_pending
+    is_pending = status == Transaction.PaymentStatus.PENDING
+    assert not Transaction.objects.filter(id=payment.id).exists() == is_pending
 
 
 @pytest.mark.parametrize(
@@ -207,12 +212,12 @@ def test_cancel(provider, status, is_cancelled, mock_square):
     ],
 )
 def test_provider_class(provider_name, provider_class):
-    payment = Payment(provider=provider_name)
+    payment = Transaction(provider=provider_name)
     assert payment.provider_class == provider_class
 
 
 def test_provider_class_unknown():
-    payment = Payment(provider="abc")
+    payment = Transaction(provider="abc")
     with pytest.raises(StopIteration):
         payment.provider_class  # pylint: disable=pointless-statement
 
@@ -227,26 +232,30 @@ def test_sync_all_payments():
     with patch.object(SquareOnline, "sync_transaction") as online_sync, patch.object(
         Cash, "sync_transaction"
     ) as cash_sync:
-        Payment.sync_payments()
+        Transaction.sync_payments()
         cash_sync.assert_not_called()  # Not called because no provider ID
         online_sync.assert_called_once_with(to_update, None)
 
 
 @pytest.mark.django_db
 def test_handle_update_refund_webhook():
-    payment = PaymentFactory(provider_payment_id="abc", type=Payment.PaymentType.REFUND, provider=SquareRefund.name)
+    payment = PaymentFactory(
+        provider_payment_id="abc",
+        type=Transaction.PaymentType.REFUND,
+        provider=SquareRefund.name,
+    )
     with patch(
         "uobtheatre.payments.payment_methods.SquareRefund.sync_transaction",
         return_value=None,
     ) as update_mock:
-        Payment.handle_update_refund_webhook("abc", {"id": "abc"})
+        Transaction.handle_update_refund_webhook("abc", {"id": "abc"})
 
     update_mock.assert_called_once_with(payment, {"id": "abc"})
 
 
 @pytest.mark.django_db
 def test_refund_pending_payment():
-    payment = PaymentFactory(status=Payment.PaymentStatus.PENDING)
+    payment = PaymentFactory(status=Transaction.PaymentStatus.PENDING)
     with pytest.raises(GQLException) as exc:
         payment.refund()
         assert exc.message == "You cannot refund a pending payment"
@@ -254,9 +263,10 @@ def test_refund_pending_payment():
 
 @pytest.mark.django_db
 def test_refund_unrefundable_payment():
-    payment = PaymentFactory(status=Payment.PaymentStatus.COMPLETED)
+    payment = PaymentFactory(status=Transaction.PaymentStatus.COMPLETED)
     with mock.patch(
-        "uobtheatre.payments.models.Payment.provider_class", new_callable=PropertyMock
+        "uobtheatre.payments.models.Transaction.provider_class",
+        new_callable=PropertyMock,
     ) as p_mock:
         p_mock.return_value = mock_payment_method(is_refundable=False)
         with pytest.raises(GQLException) as exc:
@@ -266,11 +276,12 @@ def test_refund_unrefundable_payment():
 
 @pytest.mark.django_db
 def test_refund_payment_with_refund_method():
-    payment = PaymentFactory(status=Payment.PaymentStatus.COMPLETED)
+    payment = PaymentFactory(status=Transaction.PaymentStatus.COMPLETED)
     refund_method = mock_refund_method()
     other_refund_method = mock_refund_method()
     with mock.patch(
-        "uobtheatre.payments.models.Payment.provider_class", new_callable=PropertyMock
+        "uobtheatre.payments.models.Transaction.provider_class",
+        new_callable=PropertyMock,
     ) as p_mock:
         p_mock.return_value = mock_payment_method(is_refundable=True)
         payment.refund(refund_method=other_refund_method)
@@ -282,10 +293,11 @@ def test_refund_payment_with_refund_method():
 
 @pytest.mark.django_db
 def test_refund_payment_without_refund_method():
-    payment = PaymentFactory(status=Payment.PaymentStatus.COMPLETED)
+    payment = PaymentFactory(status=Transaction.PaymentStatus.COMPLETED)
     refund_method = mock_refund_method()
     with mock.patch(
-        "uobtheatre.payments.models.Payment.provider_class", new_callable=PropertyMock
+        "uobtheatre.payments.models.Transaction.provider_class",
+        new_callable=PropertyMock,
     ) as p_mock:
         p_mock.return_value = mock_payment_method(
             is_refundable=True, refund_method=refund_method

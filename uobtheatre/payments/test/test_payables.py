@@ -5,7 +5,7 @@ import pytest
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.payments.exceptions import CantBeRefundedException
-from uobtheatre.payments.models import Payment
+from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payment_methods import Card, Cash, SquareOnline
 from uobtheatre.payments.test.factories import PaymentFactory
 from uobtheatre.users.test.factories import UserFactory
@@ -79,22 +79,22 @@ def test_society_transfer_value():
 )
 def test_is_refunded(payment_values, has_pending, is_refunded):
     # Create some payments for different payobjects
-    [PaymentFactory(status=Payment.PaymentStatus.COMPLETED) for _ in range(10)]
+    [PaymentFactory(status=Transaction.PaymentStatus.COMPLETED) for _ in range(10)]
 
     pay_object = BookingFactory()
     [
         PaymentFactory(
-            value=value, type=Payment.PaymentType.PURCHASE, pay_object=pay_object
+            value=value, type=Transaction.PaymentType.PURCHASE, pay_object=pay_object
         )
         for value in payment_values
     ]
 
     if has_pending:
-        PaymentFactory(pay_object=pay_object, status=Payment.PaymentStatus.PENDING)
+        PaymentFactory(pay_object=pay_object, status=Transaction.PaymentStatus.PENDING)
 
     assert pay_object.is_refunded == is_refunded
 
-    if payment := pay_object.payments.first():
+    if payment := pay_object.transactions.first():
         assert payment.is_refunded == is_refunded
 
 
@@ -113,7 +113,7 @@ def test_payable_refund(mailoutbox, can_be_refunded, send_email):
         "can_be_refunded",
         new_callable=PropertyMock(return_value=can_be_refunded),
     ), patch(
-        "uobtheatre.payments.models.Payment.refund", autospec=True
+        "uobtheatre.payments.models.Transaction.refund", autospec=True
     ) as payment_refund:
 
         def test():

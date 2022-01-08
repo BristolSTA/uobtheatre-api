@@ -8,7 +8,7 @@ from uobtheatre.bookings.test.factories import (
     TicketFactory,
     ValueMiscCostFactory,
 )
-from uobtheatre.payments.models import Payment
+from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payment_methods import SquareOnline
 
 pytestmark = pytest.mark.system_test
@@ -28,8 +28,8 @@ def test_create_and_refund_booking(square_client):
     )
     booking.pay(payment_method)
 
-    assert Payment.objects.count() == 1
-    payment = Payment.objects.first()
+    assert Transaction.objects.count() == 1
+    payment = Transaction.objects.first()
     assert payment.value == 1300
     assert payment.app_fee == 100
     # This is async so should not be set yet (set by the webhooks)
@@ -44,12 +44,12 @@ def test_create_and_refund_booking(square_client):
     # Refund the payment
     payment.refund()
 
-    assert Payment.objects.count() == 2
-    refund = Payment.objects.last()
+    assert Transaction.objects.count() == 2
+    refund = Transaction.objects.last()
 
     assert refund.value == -1300
     assert refund.app_fee == -100
-    assert refund.status == Payment.PaymentStatus.PENDING
+    assert refund.status == Transaction.PaymentStatus.PENDING
 
     response = square_client.refunds.get_payment_refund(refund.provider_payment_id)
     assert response.is_success()

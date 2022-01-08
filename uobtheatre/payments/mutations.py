@@ -1,6 +1,6 @@
 import graphene
 
-from uobtheatre.payments.models import Payment
+from uobtheatre.payments.models import Transaction
 from uobtheatre.utils.exceptions import (
     AuthorizationException,
     GQLException,
@@ -24,8 +24,8 @@ class CancelPayment(AuthRequiredMixin, SafeMutation):
 
     @classmethod
     def resolve_mutation(cls, _, info, payment_id):
-        payment = Payment.objects.get(id=payment_id)
-        if not payment.status == Payment.PaymentStatus.PENDING:
+        payment = Transaction.objects.get(id=payment_id)
+        if not payment.status == Transaction.PaymentStatus.PENDING:
             raise GQLException(
                 "A payment must be in progress to be canceled.",
                 code=400,

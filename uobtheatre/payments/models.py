@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from uobtheatre.payments.payables import Payable
 
 
-class PaymentQuerySet(QuerySet):
+class TransactionQuerySet(QuerySet):
     """The query set for payments"""
 
     def annotate_sales_breakdown(self, breakdowns: list[str] = None):
@@ -36,7 +36,7 @@ class PaymentQuerySet(QuerySet):
         return self.aggregate(**annotations)
 
 
-class Payment(TimeStampedMixin, models.Model):
+class Transaction(TimeStampedMixin, models.Model):
 
     """The model for a transaction.
 
@@ -70,7 +70,7 @@ class Payment(TimeStampedMixin, models.Model):
             }
             return status_map[square_status]
 
-    objects = PaymentQuerySet.as_manager()
+    objects = TransactionQuerySet.as_manager()
 
     # List of models which can be paid for
     payables = models.Q(app_label="bookings", model="booking")
@@ -103,7 +103,7 @@ class Payment(TimeStampedMixin, models.Model):
 
     provider_payment_id = models.CharField(max_length=128, null=True, blank=True)
     provider = models.CharField(
-        max_length=20, choices=payment_methods.TransactionMethod.choices
+        max_length=20, choices=payment_methods.TransactionMethod.choices  # type: ignore
     )
 
     value = models.IntegerField()
@@ -189,7 +189,7 @@ class Payment(TimeStampedMixin, models.Model):
             # the sync payment method to avoid an extra call to square.
             data = square_payment
 
-        payment = Payment.objects.get(provider_payment_id=payment_id)
+        payment = Transaction.objects.get(provider_payment_id=payment_id)
         payment.sync_payment_with_provider(data=data)
 
     @staticmethod
@@ -201,8 +201,8 @@ class Payment(TimeStampedMixin, models.Model):
             provider_payment_id (str): The payment ID given by the provider
             data (dict): The body of the square webhook
         """
-        payment = Payment.objects.get(
-            provider_payment_id=provider_payment_id, type=Payment.PaymentType.REFUND
+        payment = Transaction.objects.get(
+            provider_payment_id=provider_payment_id, type=Transaction.PaymentType.REFUND
         )
         payment.sync_payment_with_provider(data)
 
@@ -217,13 +217,13 @@ class Payment(TimeStampedMixin, models.Model):
         This is currently only possible for SquarePOS payments that are
         pending.
         """
-        if self.status == Payment.PaymentStatus.PENDING:
+        if self.status == Transaction.PaymentStatus.PENDING:
             self.provider_class.cancel(self)
             self.delete()
 
     def can_be_refunded(self, raises=False):
         """If the payment can be refunded either automatically or manually"""
-        if self.status != Payment.PaymentStatus.COMPLETED:
+        if self.status != Transaction.PaymentStatus.COMPLETED:
             if raises:
                 raise PaymentException(
                     f"A {self.status.label.lower()} payment can't refunded"
@@ -253,13 +253,13 @@ TOTAL_PROVIDER_FEE = Coalesce(
 )
 NET_TOTAL = Sum("value")
 NET_CARD_TOTAL = Sum("value", filter=(~Q(provider=Cash.name)))
-TOTAL_SALES = Sum("value", filter=Q(type=Payment.PaymentType.PURCHASE))
+TOTAL_SALES = Sum("value", filter=Q(type=Transaction.PaymentType.PURCHASE))
 TOTAL_CARD_SALES = Sum(
-    "value", filter=(~Q(provider=Cash.name) & Q(type=Payment.PaymentType.PURCHASE))
+    "value", filter=(~Q(provider=Cash.name) & Q(type=Transaction.PaymentType.PURCHASE))
 )
-TOTAL_REFUNDS = Sum("value", filter=Q(type=Payment.PaymentType.REFUND))
+TOTAL_REFUNDS = Sum("value", filter=Q(type=Transaction.PaymentType.REFUND))
 TOTAL_CARD_REFUNDS = Sum(
-    "value", filter=(~Q(provider=Cash.name) & Q(type=Payment.PaymentType.REFUND))
+    "value", filter=(~Q(provider=Cash.name) & Q(type=Transaction.PaymentType.REFUND))
 )
 APP_FEE = Coalesce(Sum("app_fee"), 0)
 

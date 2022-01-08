@@ -6,7 +6,7 @@ from typing import Dict, List, Union
 from graphql_relay.node.node import from_global_id
 
 from uobtheatre.bookings.models import Booking
-from uobtheatre.payments.models import Payment
+from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.users.models import User
@@ -80,7 +80,7 @@ class PeriodTotalsBreakdown(Report):
 
     def __init__(self, start: datetime, end: datetime) -> None:
         super().__init__()
-        Payment.sync_payments()
+        Transaction.sync_payments()
         production_totals_set = DataSet(
             "Production Totals",
             ["Production ID", "Production Name", "Total Income (Pence)"],
@@ -90,9 +90,9 @@ class PeriodTotalsBreakdown(Report):
             "Provider Totals", ["Provider Name", "Total Income (Pence)"]
         )
 
-        payments = Payment.objects.filter(
+        payments = Transaction.objects.filter(
             created_at__gt=start,
-            status=Payment.PaymentStatus.COMPLETED,
+            status=Transaction.PaymentStatus.COMPLETED,
             created_at__lt=end,
         ).prefetch_related("pay_object__performance__production__society")
 
@@ -191,7 +191,7 @@ class OutstandingSocietyPayments(Report):
 
     def __init__(self) -> None:
         super().__init__()
-        Payment.sync_payments()
+        Transaction.sync_payments()
         productions_dataset = DataSet(
             "Productions",
             [
@@ -294,7 +294,10 @@ class PerformanceBookings(Report):
         for booking in (
             performance.bookings.filter(status=Payable.PayableStatus.PAID)
             .prefetch_related(
-                "payments", "user", "tickets__seat_group", "tickets__concession_type"
+                "transactions",
+                "user",
+                "tickets__seat_group",
+                "tickets__concession_type",
             )
             .all()
         ):

@@ -3,17 +3,17 @@ from unittest.mock import PropertyMock, patch
 import pytest
 
 from uobtheatre.bookings.test.factories import BookingFactory
-from uobtheatre.payments.models import Payment
+from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.payment_methods import (
     Card,
     Cash,
+    ManualRefund,
     PaymentMethod,
     RefundMethod,
     SquareOnline,
     SquarePOS,
     SquareRefund,
-    ManualRefund,
     TransactionMethod,
 )
 from uobtheatre.payments.square_webhooks import SquareWebhooks
@@ -70,7 +70,7 @@ def test_payment_method_choice():
     ],
 )
 def test_get_provider_payment_id(payment_id, raises_exception):
-    payment = Payment()
+    payment = Transaction()
     payment.provider_payment_id = payment_id
 
     if raises_exception:
@@ -108,16 +108,16 @@ def test_generate_name(input_name, expected_output_name):
 @pytest.mark.parametrize(
     "payment_method, expected_type",
     [
-        (SquareOnline, Payment.PaymentType.PURCHASE),
-        (SquareRefund, Payment.PaymentType.REFUND),
+        (SquareOnline, Transaction.PaymentType.PURCHASE),
+        (SquareRefund, Transaction.PaymentType.REFUND),
     ],
 )
 def test_create_payment_object(payment_method, expected_type):
     booking = BookingFactory()
     payment_method.create_payment_object(booking, 10, 5, currency="ABC")
 
-    assert Payment.objects.count() == 1
-    payment = Payment.objects.first()
+    assert Transaction.objects.count() == 1
+    payment = Transaction.objects.first()
 
     assert payment.provider == payment_method.name
     assert payment.type == expected_type
@@ -160,8 +160,8 @@ def test_square_online_pay_success(mock_square):
         payment = payment_method.pay(20, 10, booking)
 
     # Assert the returned payment gets saved
-    assert Payment.objects.count() == 1
-    assert Payment.objects.first() == payment
+    assert Transaction.objects.count() == 1
+    assert Transaction.objects.first() == payment
 
     # Assert a payment of the correct type is created
     assert payment is not None
@@ -172,8 +172,8 @@ def test_square_online_pay_success(mock_square):
     assert payment.last_4 == "1234"
     assert payment.provider_payment_id == "abc"
     assert payment.provider == "SQUARE_ONLINE"
-    assert payment.type == Payment.PaymentType.PURCHASE
-    assert payment.status == Payment.PaymentStatus.COMPLETED
+    assert payment.type == Transaction.PaymentType.PURCHASE
+    assert payment.status == Transaction.PaymentStatus.COMPLETED
     assert payment.app_fee == 10
 
     assert payment.provider_fee is None
@@ -196,13 +196,13 @@ def test_square_online_pay_failure(mock_square):
             payment_method.pay(100, 0, BookingFactory())
 
     # Assert no payments are created
-    assert Payment.objects.count() == 0
+    assert Transaction.objects.count() == 0
 
 
 @pytest.mark.django_db
 def test_square_online_sync_payment(mock_square):
     payment = PaymentFactory(
-        value=100, provider_fee=None, status=Payment.PaymentStatus.PENDING
+        value=100, provider_fee=None, status=Transaction.PaymentStatus.PENDING
     )
     with mock_square(
         SquareOnline.client.payments,
@@ -221,7 +221,7 @@ def test_square_online_sync_payment(mock_square):
         payment.sync_payment_with_provider()
         payment.refresh_from_db()
     assert payment.provider_fee == -10
-    assert payment.status == Payment.PaymentStatus.COMPLETED
+    assert payment.status == Transaction.PaymentStatus.COMPLETED
 
 
 ###
@@ -249,11 +249,11 @@ def test_square_pos_pay_success(mock_square):
         payment_method.pay(100, 14, BookingFactory())
 
     # Assert a payment is created that links to the checkout.
-    assert Payment.objects.count() == 1
+    assert Transaction.objects.count() == 1
 
-    payment = Payment.objects.first()
+    payment = Transaction.objects.first()
     assert payment.value == 100
-    assert payment.status == Payment.PaymentStatus.PENDING
+    assert payment.status == Transaction.PaymentStatus.PENDING
     assert payment.app_fee == 14
     assert payment.provider_fee is None
     assert payment.provider_payment_id == "ScegTcoaJ0kqO"
@@ -273,7 +273,7 @@ def test_square_pos_pay_failure(mock_square):
             payment_method.pay(100, 0, BookingFactory())
 
     # Assert no payments are created
-    assert Payment.objects.count() == 0
+    assert Transaction.objects.count() == 0
 
 
 @pytest.mark.django_db
@@ -320,10 +320,10 @@ def test_handle_terminal_checkout_updated_webhook_completed():
     booking.refresh_from_db()
 
     assert booking.status == Payable.PayableStatus.PAID
-    assert Payment.objects.count() == 1
+    assert Transaction.objects.count() == 1
 
-    payment = Payment.objects.first()
-    assert payment.status == Payment.PaymentStatus.COMPLETED
+    payment = Transaction.objects.first()
+    assert payment.status == Transaction.PaymentStatus.COMPLETED
 
 
 @pytest.mark.django_db
@@ -350,7 +350,7 @@ def test_handle_terminal_checkout_updated_canceled():
     payment = PaymentFactory(
         provider_payment_id="abc",
         provider=SquarePOS.name,
-        status=Payment.PaymentStatus.PENDING,
+        status=Transaction.PaymentStatus.PENDING,
     )
     data = {
         "object": {
@@ -366,7 +366,7 @@ def test_handle_terminal_checkout_updated_canceled():
 
     booking.refresh_from_db()
     assert booking.status == Payable.PayableStatus.IN_PROGRESS
-    assert not Payment.objects.filter(id=payment.id).exists()
+    assert not Transaction.objects.filter(id=payment.id).exists()
 
 
 @pytest.mark.django_db
@@ -431,7 +431,7 @@ def test_square_pos_cancel_failure(mock_square):
             payment_method.cancel(payment)
 
     # Assert payment not deleted
-    assert Payment.objects.filter(id=payment.id).exists()
+    assert Transaction.objects.filter(id=payment.id).exists()
 
 
 @pytest.mark.django_db
@@ -439,7 +439,7 @@ def test_square_pos_sync_payment():
     payment = PaymentFactory(
         value=100,
         provider_fee=None,
-        status=Payment.PaymentStatus.PENDING,
+        status=Transaction.PaymentStatus.PENDING,
         provider=SquarePOS.name,
         provider_payment_id="abc",
     )
@@ -465,7 +465,7 @@ def test_square_pos_sync_payment():
         get_payment_mock.assert_called_once_with("abc123")
         payment.refresh_from_db()
     assert payment.provider_fee == -10
-    assert payment.status == Payment.PaymentStatus.COMPLETED
+    assert payment.status == Transaction.PaymentStatus.COMPLETED
 
 
 ###
@@ -595,14 +595,14 @@ def test_manual_pay(payment_method, value, expected_method_str):
     booking = BookingFactory()
     payment = payment_method.pay(value, 12, booking)
 
-    assert Payment.objects.count() == 1
-    assert Payment.objects.first() == payment
+    assert Transaction.objects.count() == 1
+    assert Transaction.objects.first() == payment
 
     assert payment.pay_object == booking
     assert payment.value == value
     assert payment.currency == "GBP"
     assert payment.provider == expected_method_str
-    assert payment.type == Payment.PaymentType.PURCHASE
+    assert payment.type == Transaction.PaymentType.PURCHASE
     assert payment.app_fee == 12
 
 

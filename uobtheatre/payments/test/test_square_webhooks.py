@@ -4,11 +4,11 @@ from unittest.mock import PropertyMock, patch
 import pytest
 
 from uobtheatre.bookings.test.factories import BookingFactory
-from uobtheatre.payments.models import Payment
+from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
+from uobtheatre.payments.payment_methods import SquareRefund
 from uobtheatre.payments.square_webhooks import SquareWebhooks
 from uobtheatre.payments.test.factories import PaymentFactory
-from uobtheatre.payments.payment_methods import SquareRefund
 
 TEST_TERMINAL_CHECKOUT_PAYLOAD = {
     "merchant_id": "ML8M1AQ1GQG2K",
@@ -261,7 +261,7 @@ def test_handle_refund_update_webhook(rest_client):
     payment = PaymentFactory(
         provider_payment_id="xwo62Kt4WIOAh9LrczZxzbQbIZCZY_RVpsRbbUP3LmklUotq0kfiJnn1jDOqhNHymoqa6iDpd",
         provider_fee=0,
-        type=Payment.PaymentType.REFUND,
+        type=Transaction.PaymentType.REFUND,
         provider=SquareRefund.name,
     )
 
@@ -276,4 +276,4 @@ def test_handle_refund_update_webhook(rest_client):
     payment.refresh_from_db()
     assert response.status_code == 200
     assert payment.provider_fee == -7
-    assert payment.status == Payment.PaymentStatus.COMPLETED
+    assert payment.status == Transaction.PaymentStatus.COMPLETED

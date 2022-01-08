@@ -3,8 +3,9 @@ from uuid import uuid4
 
 import pytest
 
-from uobtheatre.payments.models import Payment
+from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payment_methods import (
+    Card,
     Cash,
     ManualRefund,
     PaymentMethod,
@@ -20,15 +21,17 @@ def test_refund_method_all():
 
 
 def test_refundable_payment_methods():
-    assert PaymentMethod.refundable_payment_methods == [
-        SquareOnline
-    ]  # pylint: disable=comparison-with-callable
+    # type: ignore # pylint: disable=comparison-with-callable
+    assert PaymentMethod.refundable_payment_methods == (
+        Cash,
+        Card,
+        SquareOnline,
+    )
 
 
 def test_auto_refundable_payment_methods():
-    assert PaymentMethod.auto_refundable_payment_methods == [
-        SquareOnline
-    ]  # pylint: disable=comparison-with-callable
+    # type: ignore # pylint: disable=comparison-with-callable
+    assert PaymentMethod.auto_refundable_payment_methods == (SquareOnline,)
 
 
 @pytest.mark.parametrize(
@@ -63,18 +66,18 @@ def test_manual_refund_method_refund():
         provider_fee=10,
         app_fee=20,
         provider=Cash.name,
-        status=Payment.PaymentStatus.COMPLETED,
+        status=Transaction.PaymentStatus.COMPLETED,
     )
     ManualRefund().refund(refund_payment)
 
-    assert Payment.objects.count() == 2
+    assert Transaction.objects.count() == 2
 
-    payment = Payment.objects.last()
+    payment = Transaction.objects.last()
     assert payment.value == -100
     assert payment.app_fee == -20
     assert payment.provider_fee == -10
     assert payment.provider == ManualRefund.name
-    assert payment.type == Payment.PaymentType.REFUND
+    assert payment.type == Transaction.PaymentType.REFUND
 
 
 ###
@@ -116,7 +119,7 @@ def test_square_refund_refund(mock_square):
         None,
         provider_payment_id="abc",
         currency="GBP",
-        status=Payment.PaymentStatus.PENDING,
+        status=Transaction.PaymentStatus.PENDING,
     )
     mock.assert_called_once_with(
         {
@@ -138,7 +141,9 @@ def test_square_refund_refund(mock_square):
     ],
 )
 def test_square_online_sync_transaction(data_fees, data_status):
-    payment = PaymentFactory(status=Payment.PaymentStatus.PENDING, provider_fee=None)
+    payment = PaymentFactory(
+        status=Transaction.PaymentStatus.PENDING, provider_fee=None
+    )
 
     data = {
         "status": data_status,
@@ -156,9 +161,9 @@ def test_square_online_sync_transaction(data_fees, data_status):
 
     payment.refresh_from_db()
     if data_status == "COMPLETED":
-        assert payment.status == Payment.PaymentStatus.COMPLETED
+        assert payment.status == Transaction.PaymentStatus.COMPLETED
     else:
-        assert payment.status == Payment.PaymentStatus.PENDING
+        assert payment.status == Transaction.PaymentStatus.PENDING
 
     if data_fees:
         assert payment.provider_fee == sum(data_fees)
@@ -173,7 +178,7 @@ def test_square_refund_sync_payment(mock_square, with_data):
         value=-100,
         provider_fee=None,
         provider=SquareRefund.name,
-        status=Payment.PaymentStatus.PENDING,
+        status=Transaction.PaymentStatus.PENDING,
     )
     data = {
         "id": "abc",
@@ -189,4 +194,4 @@ def test_square_refund_sync_payment(mock_square, with_data):
         payment.sync_payment_with_provider(data=data if with_data else None)
         payment.refresh_from_db()
     assert payment.provider_fee == -10
-    assert payment.status == Payment.PaymentStatus.COMPLETED
+    assert payment.status == Transaction.PaymentStatus.COMPLETED

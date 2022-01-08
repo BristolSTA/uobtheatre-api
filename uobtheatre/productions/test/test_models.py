@@ -22,7 +22,7 @@ from uobtheatre.discounts.test.factories import (
     DiscountRequirementFactory,
 )
 from uobtheatre.payments.exceptions import CantBeRefundedException
-from uobtheatre.payments.models import Payment
+from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.payment_methods import Card, Cash, SquareOnline
 from uobtheatre.payments.test.factories import PaymentFactory
@@ -906,7 +906,9 @@ def test_qs_has_boxoffice_permission():
 
 @pytest.mark.django_db
 def test_qs_running_on():
-    query_date = timezone.datetime(year=2021, month=7, day=14, tzinfo=timezone.get_current_timezone())
+    query_date = timezone.datetime(
+        year=2021, month=7, day=14, tzinfo=timezone.get_current_timezone()
+    )
     one_day = timezone.timedelta(days=1)
     # Past performance
     PerformanceFactory(start=query_date - one_day, end=query_date - one_day)
@@ -974,7 +976,7 @@ def test_sales_breakdown_production():
         app_fee=-200,
         value=-600,
         provider=Card.name,
-        type=Payment.PaymentType.REFUND,
+        type=Transaction.PaymentType.REFUND,
     )
     PaymentFactory(
         pay_object=booking_2,

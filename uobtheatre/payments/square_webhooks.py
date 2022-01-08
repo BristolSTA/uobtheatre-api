@@ -6,7 +6,7 @@ from django.conf import settings
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from uobtheatre.payments.models import Payment
+from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payment_methods import SquarePOS
 
 
@@ -73,11 +73,11 @@ class SquareWebhooks(APIView):
             return Response(status=200)
 
         if request.data["type"] == "payment.updated":
-            Payment.handle_update_payment_webhook(request.data["data"])
+            Transaction.handle_update_payment_webhook(request.data["data"])
             return Response(status=200)
 
         if request.data["type"] == "refund.updated":
-            Payment.handle_update_refund_webhook(
+            Transaction.handle_update_refund_webhook(
                 request.data["data"]["id"], request.data["data"]["object"]["refund"]
             )
             return Response(status=200)

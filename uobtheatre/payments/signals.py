@@ -2,16 +2,16 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from uobtheatre.mail.composer import MailComposer
-from uobtheatre.payments.models import Payment
+from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
 
 
-@receiver(post_save, sender=Payment)
-def on_payment_save(instance: Payment, **_):
+@receiver(post_save, sender=Transaction)
+def on_payment_save(instance: Transaction, **_):
     on_payment_save_callback(instance)
 
 
-def on_payment_save_callback(payment_instance: Payment):
+def on_payment_save_callback(payment_instance: Transaction):
     """Post payment save actions"""
 
     # If the payobject is classed as refunded, make it so
@@ -34,6 +34,6 @@ def on_payment_save_callback(payment_instance: Payment):
         return
 
     # If the payment is of type refund, ensure that the pay_object is marked locked
-    if payment_instance.type == Payment.PaymentType.REFUND:
+    if payment_instance.type == Transaction.PaymentType.REFUND:
         payment_instance.pay_object.status = Payable.PayableStatus.LOCKED
         payment_instance.pay_object.save()
