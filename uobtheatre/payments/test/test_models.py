@@ -291,11 +291,11 @@ def test_cant_be_refunded_if_not_payment():
 @pytest.mark.django_db
 def test_cant_be_refunded_if_provider_not_refundable():
     transaction = TransactionFactory(
-        status=Transaction.Status.COMPLETED, provider="SQUARE_ONLINE"
+        status=Transaction.Status.COMPLETED, provider_name="SQUARE_ONLINE"
     )
 
     with mock.patch(
-        "uobtheatre.payments.models.Transaction.provider_class",
+        "uobtheatre.payments.models.Transaction.provider",
         new_callable=PropertyMock(
             return_value=mock_payment_method(is_refundable=False)
         ),
@@ -311,7 +311,7 @@ def test_can_be_refunded():
     transaction = TransactionFactory(status=Transaction.Status.COMPLETED)
 
     with mock.patch(
-        "uobtheatre.payments.models.Transaction.provider_class",
+        "uobtheatre.payments.models.Transaction.provider",
         new_callable=PropertyMock(return_value=mock_payment_method(is_refundable=True)),
     ):
         assert transaction.can_be_refunded() is True
