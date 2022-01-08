@@ -615,6 +615,34 @@ def test_production_permissions_without_change_permission(gql_client):
 
 
 @pytest.mark.django_db
+def test_production_permissions_with_invalid_user(gql_client):
+    production = ProductionFactory()
+    request = """
+        mutation {
+            productionPermissions(id: "%s", userEmail: "example@example.org", permissions: ["add_production"]) {
+                success
+                errors {
+                    ... on FieldError {
+                        message
+                        field
+                    }
+                }
+            }
+        }
+    """ % (
+        to_global_id("ProductionNode", production.id),
+    )
+    assign_perm("change_production", gql_client.login().user, production)
+
+    response = gql_client.execute(request)
+    assert response["data"]["productionPermissions"]["success"] is False
+    assert response["data"]["productionPermissions"]["errors"][0] == {
+        "message": "A user with that email does not exist",
+        "field": "userEmail",
+    }
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize("permission", ["add_production"])
 def test_production_permissions_unassignable_permission(gql_client, permission):
     production = ProductionFactory()

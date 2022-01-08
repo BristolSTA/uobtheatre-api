@@ -226,15 +226,19 @@ class Transaction(TimeStampedMixin, models.Model):
 
     def can_be_refunded(self, raises=False):
         """If the payment can be refunded either automatically or manually"""
+        if self.type != Transaction.Type.PAYMENT:
+            if raises:
+                raise PaymentException(f"A {self.type.label.lower()} can't be refunded")
+            return False
         if self.status != Transaction.Status.COMPLETED:
             if raises:
                 raise PaymentException(
-                    f"A {self.status.label.lower()} payment can't refunded"
+                    f"A {self.status.label.lower()} payment can't be refunded"
                 )
             return False
         if not self.provider_class.is_refundable:
             if raises:
-                raise PaymentException(f"A {self.provider} payment cannot be refunded")
+                raise PaymentException(f"A {self.provider} payment can't be refunded")
             return False
         return True
 

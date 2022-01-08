@@ -15,7 +15,7 @@ from uobtheatre.payments.test.factories import (
     mock_payment_method,
     mock_refund_method,
 )
-from uobtheatre.utils.exceptions import GQLException, PaymentException
+from uobtheatre.utils.exceptions import PaymentException
 
 
 @pytest.mark.django_db
@@ -254,53 +254,93 @@ def test_handle_update_refund_webhook():
 
 
 @pytest.mark.django_db
-def test_refund_pending_payment():
-    payment = TransactionFactory(status=Transaction.Status.PENDING)
-    with pytest.raises(GQLException) as exc:
-        payment.refund()
-        assert exc.message == "You cannot refund a pending payment"
+@pytest.mark.parametrize(
+    "status",
+    [
+        Transaction.Status.PENDING,
+        Transaction.Status.FAILED,
+    ],
+)
+def test_cant_be_refunded_when_not_completed(status):
+    transaction = TransactionFactory(status=status)
+
+    assert transaction.can_be_refunded() is False
+    with pytest.raises(PaymentException) as exception:
+        transaction.can_be_refunded(raises=True)
+    assert (
+        exception.value.message == f"A {status.label.lower()} payment can't be refunded"
+    )
 
 
 @pytest.mark.django_db
-def test_refund_unrefundable_payment():
-    payment = TransactionFactory(status=Transaction.Status.COMPLETED)
+def test_cant_be_refunded_if_not_payment():
+    transaction = TransactionFactory(
+        status=Transaction.Status.COMPLETED, type=Transaction.Type.REFUND
+    )
+
+    assert transaction.can_be_refunded() is False
+    with pytest.raises(PaymentException) as exception:
+        transaction.can_be_refunded(raises=True)
+    assert exception.value.message == "A refund can't be refunded"
+
+
+@pytest.mark.django_db
+def test_cant_be_refunded_if_provider_not_refundable():
+    transaction = TransactionFactory(
+        status=Transaction.Status.COMPLETED, provider="SQUARE_ONLINE"
+    )
+
     with mock.patch(
         "uobtheatre.payments.models.Transaction.provider_class",
-        new_callable=PropertyMock,
-    ) as p_mock:
-        p_mock.return_value = mock_payment_method(is_refundable=False)
-        with pytest.raises(GQLException) as exc:
-            payment.refund()
-            assert exc.message == "You cannot refund a payment that is not refundable"
+        new_callable=PropertyMock(
+            return_value=mock_payment_method(is_refundable=False)
+        ),
+    ):
+        assert transaction.can_be_refunded() is False
+        with pytest.raises(PaymentException) as exception:
+            transaction.can_be_refunded(raises=True)
+        assert exception.value.message == "A SQUARE_ONLINE payment can't be refunded"
 
 
 @pytest.mark.django_db
-def test_refund_payment_with_refund_method():
-    payment = TransactionFactory(status=Transaction.Status.COMPLETED)
+def test_can_be_refunded():
+    transaction = TransactionFactory(status=Transaction.Status.COMPLETED)
+
+    with mock.patch(
+        "uobtheatre.payments.models.Transaction.provider_class",
+        new_callable=PropertyMock(return_value=mock_payment_method(is_refundable=True)),
+    ):
+        assert transaction.can_be_refunded() is True
+        assert transaction.can_be_refunded(raises=True) is True
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("with_refund_method", [True, False])
+def test_refund_payment(with_refund_method):
+    payment = TransactionFactory()
     refund_method = mock_refund_method()
     other_refund_method = mock_refund_method()
     with mock.patch(
         "uobtheatre.payments.models.Transaction.provider_class",
         new_callable=PropertyMock,
-    ) as p_mock:
-        p_mock.return_value = mock_payment_method(is_refundable=True)
-        payment.refund(refund_method=other_refund_method)
+    ) as p_mock, mock.patch.object(
+        payment, "can_be_refunded", return_value=True
+    ) as can_be_refunded_mock:
+        args = {}
+        if with_refund_method:
+            args["refund_method"] = other_refund_method
+        p_mock.return_value = mock_payment_method(
+            is_refundable=True,
+            refund_method=other_refund_method if with_refund_method else refund_method,
+        )
+        payment.refund(**args)
+
+        can_be_refunded_mock.assert_called_once_with(raises=True)
 
         # Assert correct refund method is called
-        refund_method.refund.assert_not_called()
-        other_refund_method.refund.assert_called_once_with(payment)
-
-
-@pytest.mark.django_db
-def test_refund_payment_without_refund_method():
-    payment = TransactionFactory(status=Transaction.Status.COMPLETED)
-    refund_method = mock_refund_method()
-    with mock.patch(
-        "uobtheatre.payments.models.Transaction.provider_class",
-        new_callable=PropertyMock,
-    ) as p_mock:
-        p_mock.return_value = mock_payment_method(
-            is_refundable=True, refund_method=refund_method
-        )
-        payment.refund()
-        refund_method.refund.assert_called_once_with(payment)
+        if with_refund_method:
+            refund_method.refund.assert_not_called()
+            other_refund_method.refund.assert_called_once_with(payment)
+        else:
+            refund_method.refund.assert_called_once_with(payment)
+            other_refund_method.refund.assert_not_called()

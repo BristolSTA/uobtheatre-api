@@ -40,11 +40,12 @@ from uobtheatre.venues.test.factories import SeatGroupFactory
 
 def create_fixtures():
     """Creates productions, bookings, and payment fixtures for the reports"""
+    society_1 = SocietyFactory(name="Society 1")
     booking_1 = BookingFactory(
         performance=PerformanceFactory(
             production=ProductionFactory(
                 name="Amazing Show 1",
-                society=SocietyFactory(name="Society 1"),
+                society=society_1,
                 status=Production.Status.CLOSED,
             ),
             start=timezone.datetime(
