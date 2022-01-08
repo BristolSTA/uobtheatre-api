@@ -121,9 +121,9 @@ class PeriodTotalsBreakdown(Report):
 
             # Handle Provider
             row = provider_totals_set.find_or_create_row_by_first_column(
-                payment.provider,
+                payment.provider_name,
                 [
-                    payment.provider,
+                    payment.provider_name,
                     0,
                 ],
             )
@@ -150,8 +150,8 @@ class PeriodTotalsBreakdown(Report):
                     else ""
                 ),
                 str(payment.value),
-                str(payment.provider),
-                str(payment.provider_payment_id or ""),
+                str(payment.provider_name),
+                str(payment.provider_transaction_id or ""),
             ]
             for payment in payments
         ]

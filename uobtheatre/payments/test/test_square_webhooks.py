@@ -135,7 +135,7 @@ TEST_UPDATE_REFUND_PAYLOAD = {
 
 @pytest.mark.django_db
 def test_handle_checkout_webhook(rest_client, monkeypatch):
-    TransactionFactory(provider_payment_id="dhgENdnFOPXqO")
+    TransactionFactory(provider_transaction_id="dhgENdnFOPXqO")
     monkeypatch.setenv("SQUARE_WEBHOOK_SIGNATURE_KEY", "Hd_mmQkhER3EPkpRpNQh9Q")
     booking = BookingFactory(
         reference="id72709", status=Payable.PayableStatus.IN_PROGRESS
@@ -184,7 +184,7 @@ def test_handle_webhooks_invalid_signature(rest_client):
 @pytest.mark.django_db
 def test_handle_payment_update_webhook_no_processing_fee(rest_client):
     payment = TransactionFactory(
-        provider_payment_id="hYy9pRFVxpDsO1FB05SunFWUe9JZY", provider_fee=None
+        provider_transaction_id="hYy9pRFVxpDsO1FB05SunFWUe9JZY", provider_fee=None
     )
 
     with patch.object(
@@ -211,7 +211,7 @@ def test_handle_payment_update_webhook_no_processing_fee(rest_client):
 @pytest.mark.django_db
 def test_handle_payment_update_webhook(rest_client):
     payment = TransactionFactory(
-        provider_payment_id="hYy9pRFVxpDsO1FB05SunFWUe9JZY", provider_fee=0
+        provider_transaction_id="hYy9pRFVxpDsO1FB05SunFWUe9JZY", provider_fee=0
     )
 
     payload = deepcopy(TEST_PAYMENT_UPDATE_PAYLOAD)
@@ -259,10 +259,10 @@ def test_square_webhook_unknown_type(rest_client):
 @pytest.mark.django_db
 def test_handle_refund_update_webhook(rest_client):
     payment = TransactionFactory(
-        provider_payment_id="xwo62Kt4WIOAh9LrczZxzbQbIZCZY_RVpsRbbUP3LmklUotq0kfiJnn1jDOqhNHymoqa6iDpd",
+        provider_transaction_id="xwo62Kt4WIOAh9LrczZxzbQbIZCZY_RVpsRbbUP3LmklUotq0kfiJnn1jDOqhNHymoqa6iDpd",
         provider_fee=0,
         type=Transaction.Type.REFUND,
-        provider=SquareRefund.name,
+        provider_name=SquareRefund.name,
     )
 
     with patch.object(SquareWebhooks, "is_valid_callback", return_value=True):

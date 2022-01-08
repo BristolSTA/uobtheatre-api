@@ -8,8 +8,8 @@ from uobtheatre.payments.payment_methods import (
     Card,
     Cash,
     ManualRefund,
-    PaymentMethod,
-    RefundMethod,
+    PaymentProvider,
+    RefundProvider,
     SquareOnline,
     SquareRefund,
 )
@@ -17,12 +17,12 @@ from uobtheatre.payments.test.factories import TransactionFactory
 
 
 def test_refund_method_all():
-    assert RefundMethod.__all__ == [ManualRefund, SquareRefund]
+    assert RefundProvider.__all__ == [ManualRefund, SquareRefund]
 
 
 def test_refundable_payment_methods():
     # type: ignore # pylint: disable=comparison-with-callable
-    assert PaymentMethod.refundable_payment_methods == (
+    assert PaymentProvider.refundable_payment_methods == (
         Cash,
         Card,
         SquareOnline,
@@ -31,7 +31,7 @@ def test_refundable_payment_methods():
 
 def test_auto_refundable_payment_methods():
     # type: ignore # pylint: disable=comparison-with-callable
-    assert PaymentMethod.auto_refundable_payment_methods == (SquareOnline,)
+    assert PaymentProvider.auto_refundable_payment_methods == (SquareOnline,)
 
 
 @pytest.mark.parametrize(
@@ -40,10 +40,10 @@ def test_auto_refundable_payment_methods():
 )
 def test_automatic_refund_method(payment_method, automatic_refund_method_type):
     if automatic_refund_method_type is None:
-        assert payment_method.automatic_refund_method is None
+        assert payment_method.automatic_refund_provider is None
     else:
         assert isinstance(
-            payment_method.automatic_refund_method, automatic_refund_method_type
+            payment_method.automatic_refund_provider, automatic_refund_method_type
         )
 
 
@@ -65,7 +65,7 @@ def test_manual_refund_method_refund():
         value=100,
         provider_fee=10,
         app_fee=20,
-        provider=Cash.name,
+        provider_name=Cash.name,
         status=Transaction.Status.COMPLETED,
     )
     ManualRefund().refund(refund_payment)
@@ -76,7 +76,7 @@ def test_manual_refund_method_refund():
     assert payment.value == -100
     assert payment.app_fee == -20
     assert payment.provider_fee == -10
-    assert payment.provider == ManualRefund.name
+    assert payment.provider_name == ManualRefund.name
     assert payment.type == Transaction.Type.REFUND
 
 
@@ -117,7 +117,7 @@ def test_square_refund_refund(mock_square):
         payment.pay_object,
         -100,
         None,
-        provider_payment_id="abc",
+        provider_transaction_id="abc",
         currency="GBP",
         status=Transaction.Status.PENDING,
     )
@@ -125,7 +125,7 @@ def test_square_refund_refund(mock_square):
         {
             "idempotency_key": idempotency_key,
             "amount_money": {"amount": payment.value, "currency": payment.currency},
-            "payment_id": payment.provider_payment_id,
+            "payment_id": payment.provider_transaction_id,
         }
     )
 
@@ -175,7 +175,7 @@ def test_square_refund_sync_payment(mock_square, with_data):
     payment = TransactionFactory(
         value=-100,
         provider_fee=None,
-        provider=SquareRefund.name,
+        provider_name=SquareRefund.name,
         status=Transaction.Status.PENDING,
     )
     data = {

@@ -11,12 +11,12 @@ class TransactionFactory(factory.django.DjangoModelFactory):
 
     pay_object = factory.SubFactory(BookingFactory)
     type = Transaction.Type.PAYMENT
-    provider = payment_methods.SquareOnline.name
+    provider_name = payment_methods.SquareOnline.name
     value = factory.Faker("pyint", min_value=0)
     currency = "GBP"
     card_brand = "MASTERCARD"
     last_4 = "1111"
-    provider_payment_id = factory.Faker(
+    provider_transaction_id = factory.Faker(
         "bothify",
         text="##??",
     )

@@ -35,7 +35,7 @@ def test_create_and_refund_booking(square_client):
     # This is async so should not be set yet (set by the webhooks)
     assert payment.provider_fee is None
 
-    response = square_client.payments.get_payment(payment.provider_payment_id)
+    response = square_client.payments.get_payment(payment.provider_transaction_id)
     assert response.is_success()
 
     square_payment = response.body["payment"]
@@ -51,7 +51,7 @@ def test_create_and_refund_booking(square_client):
     assert refund.app_fee == -100
     assert refund.status == Transaction.Status.PENDING
 
-    response = square_client.refunds.get_payment_refund(refund.provider_payment_id)
+    response = square_client.refunds.get_payment_refund(refund.provider_transaction_id)
     assert response.is_success()
 
     square_refund = response.body["refund"]

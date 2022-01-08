@@ -32,7 +32,7 @@ type BookingNode implements Node {
   expiresAt: DateTime!
   tickets: [TicketNode!]
   priceBreakdown: PriceBreakdownNode
-  payments(offset: Int, before: String, after: String, first: Int, last: Int, type: String, provider: String, createdAt: DateTime, id: ID): PaymentNodeConnection
+  payments(offset: Int, before: String, after: String, first: Int, last: Int, type: String, providerName: String, createdAt: DateTime, id: ID): PaymentNodeConnection
   expired: Boolean!
 }
 
@@ -380,8 +380,8 @@ type PaymentNode implements Node {
   updatedAt: DateTime!
   type: EnumNode
   status: EnumNode
-  providerPaymentId: String
-  provider: EnumNode
+  providerTransactionId: String
+  providerName: EnumNode
   value: Int!
   currency: String!
   cardBrand: String

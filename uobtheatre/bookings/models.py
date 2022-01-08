@@ -23,7 +23,7 @@ from uobtheatre.utils.utils import combinations, create_short_uuid
 from uobtheatre.venues.models import Seat, SeatGroup
 
 if TYPE_CHECKING:
-    from uobtheatre.payments.payment_methods import PaymentMethod
+    from uobtheatre.payments.payment_methods import PaymentProvider
 
 
 class MiscCost(models.Model):
@@ -512,7 +512,7 @@ class Booking(TimeStampedMixin, Payable):
             (len(self.tickets.all()) + len(add_tickets) - len(delete_tickets)),
         )
 
-    def pay(self, payment_method: "PaymentMethod") -> Optional["Transaction"]:
+    def pay(self, payment_method: "PaymentProvider") -> Optional["Transaction"]:
         """
         Pay for booking using provided payment method.
 
@@ -592,7 +592,7 @@ class Booking(TimeStampedMixin, Payable):
         # If this booking includes a payment, we will include details of this payment as a reciept
         if payment:
             composer.heading("Payment Information").line(
-                f"{payment.value_currency} paid ({payment.provider_class.description}{' - ID ' + payment.provider_payment_id if payment.provider_payment_id else '' })"
+                f"{payment.value_currency} paid ({payment.provider.description}{' - ID ' + payment.provider_transaction_id if payment.provider_transaction_id else '' })"
             )
 
         composer.line(

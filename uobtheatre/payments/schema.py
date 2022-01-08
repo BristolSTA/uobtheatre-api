@@ -4,18 +4,18 @@ from graphene_django import DjangoObjectType
 
 from uobtheatre.bookings.schema import BookingNode
 from uobtheatre.payments.models import Transaction
-from uobtheatre.payments.payment_methods import PaymentMethod, SquarePOS
+from uobtheatre.payments.payment_methods import PaymentProvider, SquarePOS
 from uobtheatre.users.abilities import OpenBoxoffice
 from uobtheatre.utils.enums import GrapheneEnumMixin
 from uobtheatre.utils.filters import FilterSet
 
-PaymentMethodsEnum = graphene.Enum("PaymentMethod", PaymentMethod.choices)
+PaymentMethodsEnum = graphene.Enum("PaymentMethod", PaymentProvider.choices)
 
 
 class PaymentFilter(FilterSet):
     class Meta:
         model = Transaction
-        fields = ("type", "provider", "created_at")
+        fields = ("type", "provider_name", "created_at")
 
 
 class PayObjectUnion(graphene.Union):

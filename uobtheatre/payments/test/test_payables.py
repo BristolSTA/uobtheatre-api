@@ -55,10 +55,14 @@ def test_payable_total_sales():
 def test_society_transfer_value():
     booking = BookingFactory()
 
-    TransactionFactory(pay_object=booking, app_fee=100, value=200, provider=Cash.name)
-    TransactionFactory(pay_object=booking, app_fee=200, value=600, provider=Card.name)
     TransactionFactory(
-        pay_object=booking, app_fee=150, value=400, provider=SquareOnline.name
+        pay_object=booking, app_fee=100, value=200, provider_name=Cash.name
+    )
+    TransactionFactory(
+        pay_object=booking, app_fee=200, value=600, provider_name=Card.name
+    )
+    TransactionFactory(
+        pay_object=booking, app_fee=150, value=400, provider_name=SquareOnline.name
     )
 
     assert booking.society_transfer_value == 550

@@ -1728,7 +1728,7 @@ def test_pay_booking_success(mock_square, gql_client):
             payment {
               last4
               cardBrand
-              provider {
+              providerName {
                 value
               }
               currency
@@ -1786,7 +1786,7 @@ def test_pay_booking_success(mock_square, gql_client):
                 "payment": {
                     "last4": "1111",
                     "cardBrand": "VISA",
-                    "provider": {
+                    "providerName": {
                         "value": "SQUARE_ONLINE",
                     },
                     "currency": "GBP",
@@ -1836,7 +1836,7 @@ def test_pay_booking_success_square_pos(mock_square, gql_client):
             }
 
             payment {
-              provider {
+              providerName {
                 value
               }
             }
@@ -1886,7 +1886,7 @@ def test_pay_booking_success_square_pos(mock_square, gql_client):
                     },
                 },
                 "payment": {
-                    "provider": {"value": "SQUARE_POS"},
+                    "providerName": {"value": "SQUARE_POS"},
                 },
                 "success": True,
                 "errors": None,
@@ -1935,7 +1935,7 @@ def test_pay_booking_manual(gql_client, payment_method):
             payment {
               last4
               cardBrand
-              provider {
+              providerName {
                 value
               }
               currency
@@ -1972,7 +1972,7 @@ def test_pay_booking_manual(gql_client, payment_method):
                 "payment": {
                     "last4": None,
                     "cardBrand": None,
-                    "provider": {
+                    "providerName": {
                         "value": payment_method,
                     },
                     "currency": "GBP",

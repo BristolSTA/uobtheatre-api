@@ -9,12 +9,12 @@ from uobtheatre.payments.payment_methods import (
     Card,
     Cash,
     ManualRefund,
-    PaymentMethod,
-    RefundMethod,
+    PaymentProvider,
+    RefundProvider,
     SquareOnline,
     SquarePOS,
     SquareRefund,
-    TransactionMethod,
+    TransactionProvider,
 )
 from uobtheatre.payments.square_webhooks import SquareWebhooks
 from uobtheatre.payments.test.factories import TransactionFactory
@@ -22,7 +22,7 @@ from uobtheatre.utils.exceptions import PaymentException, SquareException
 
 
 def test_payment_method_all():
-    assert PaymentMethod.__all__ == [
+    assert PaymentProvider.__all__ == [
         Cash,
         Card,
         SquarePOS,
@@ -31,7 +31,7 @@ def test_payment_method_all():
 
 
 def test_transaction_method_all():
-    assert TransactionMethod.__all__ == [  # pylint: disable=comparison-with-callable
+    assert TransactionProvider.__all__ == [  # pylint: disable=comparison-with-callable
         Cash,
         Card,
         SquarePOS,
@@ -43,7 +43,7 @@ def test_transaction_method_all():
 
 def test_payment_method_non_manual():
     assert (
-        PaymentMethod.non_manual_methods  # pylint: disable=comparison-with-callable
+        PaymentProvider.non_manual_methods  # pylint: disable=comparison-with-callable
         == [
             SquarePOS,
             SquareOnline,
@@ -52,7 +52,7 @@ def test_payment_method_non_manual():
 
 
 def test_payment_method_choice():
-    assert PaymentMethod.choices == [  # pylint: disable=comparison-with-callable
+    assert PaymentProvider.choices == [  # pylint: disable=comparison-with-callable
         ("CASH", "CASH"),
         ("CARD", "CARD"),
         ("SQUARE_POS", "SQUARE_POS"),
@@ -69,15 +69,15 @@ def test_payment_method_choice():
         ("abc", False),
     ],
 )
-def test_get_provider_payment_id(payment_id, raises_exception):
+def test_get_provider_transaction_id(payment_id, raises_exception):
     payment = Transaction()
-    payment.provider_payment_id = payment_id
+    payment.provider_transaction_id = payment_id
 
     if raises_exception:
         with pytest.raises(PaymentException):
-            TransactionMethod.get_payment_provider_id(payment)
+            TransactionProvider.get_payment_provider_id(payment)
     else:
-        assert TransactionMethod.get_payment_provider_id(payment) == payment_id
+        assert TransactionProvider.get_payment_provider_id(payment) == payment_id
 
 
 @pytest.mark.parametrize(
@@ -101,7 +101,7 @@ def test_payment_method_name(payment_method, expected_name):
     ],
 )
 def test_generate_name(input_name, expected_output_name):
-    assert PaymentMethod.generate_name(input_name) == expected_output_name
+    assert PaymentProvider.generate_name(input_name) == expected_output_name
 
 
 @pytest.mark.django_db
@@ -119,7 +119,7 @@ def test_create_payment_object(payment_method, expected_type):
     assert Transaction.objects.count() == 1
     payment = Transaction.objects.first()
 
-    assert payment.provider == payment_method.name
+    assert payment.provider_name == payment_method.name
     assert payment.type == expected_type
     assert payment.pay_object == booking
     assert payment.value == 10
@@ -170,8 +170,8 @@ def test_square_online_pay_success(mock_square):
     assert payment.currency == "GBP"
     assert payment.card_brand == "MASTERCARD"
     assert payment.last_4 == "1234"
-    assert payment.provider_payment_id == "abc"
-    assert payment.provider == "SQUARE_ONLINE"
+    assert payment.provider_transaction_id == "abc"
+    assert payment.provider_name == "SQUARE_ONLINE"
     assert payment.type == Transaction.Type.PAYMENT
     assert payment.status == Transaction.Status.COMPLETED
     assert payment.app_fee == 10
@@ -256,7 +256,7 @@ def test_square_pos_pay_success(mock_square):
     assert payment.status == Transaction.Status.PENDING
     assert payment.app_fee == 14
     assert payment.provider_fee is None
-    assert payment.provider_payment_id == "ScegTcoaJ0kqO"
+    assert payment.provider_transaction_id == "ScegTcoaJ0kqO"
 
 
 @pytest.mark.django_db
@@ -307,7 +307,7 @@ def test_handle_terminal_checkout_updated_webhook_completed():
     data = {
         "object": {
             "checkout": {
-                "id": payment.provider_payment_id,
+                "id": payment.provider_transaction_id,
                 "amount_money": {"amount": 111, "currency": "USD"},
                 "reference_id": booking.payment_reference_id,
                 "payment_ids": ["dgzrZTeIeVuOGwYgekoTHsPouaB"],
@@ -348,8 +348,8 @@ def test_handle_terminal_checkout_updated_webhook_not_completed():
 def test_handle_terminal_checkout_updated_canceled():
     booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
     payment = TransactionFactory(
-        provider_payment_id="abc",
-        provider=SquarePOS.name,
+        provider_transaction_id="abc",
+        provider_name=SquarePOS.name,
         status=Transaction.Status.PENDING,
     )
     data = {
@@ -440,8 +440,8 @@ def test_square_pos_sync_payment():
         value=100,
         provider_fee=None,
         status=Transaction.Status.PENDING,
-        provider=SquarePOS.name,
-        provider_payment_id="abc",
+        provider_name=SquarePOS.name,
+        provider_transaction_id="abc",
     )
     with patch.object(
         SquarePOS,
@@ -601,14 +601,14 @@ def test_manual_pay(payment_method, value, expected_method_str):
     assert payment.pay_object == booking
     assert payment.value == value
     assert payment.currency == "GBP"
-    assert payment.provider == expected_method_str
+    assert payment.provider_name == expected_method_str
     assert payment.type == Transaction.Type.PAYMENT
     assert payment.app_fee == 12
 
 
 @pytest.mark.django_db
 def test_cash_payment_sync():
-    payment = TransactionFactory(provider=Cash.name)
+    payment = TransactionFactory(provider_name=Cash.name)
     assert payment.sync_payment_with_provider() is None
 
 

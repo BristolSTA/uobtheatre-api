@@ -858,7 +858,7 @@ def test_booking_pay_deletes_pending_payments(mock_square):
     pending_payment = TransactionFactory(
         status=Transaction.Status.PENDING,
         pay_object=booking,
-        provider=SquarePOS.name,
+        provider_name=SquarePOS.name,
     )
 
     # Not deleted
@@ -874,7 +874,7 @@ def test_booking_pay_deletes_pending_payments(mock_square):
     assert booking.status == Payable.PayableStatus.PAID
 
     # Assert pending payment cancelled with square
-    mock.assert_called_once_with(pending_payment.provider_payment_id)
+    mock.assert_called_once_with(pending_payment.provider_transaction_id)
 
     # And pending payment deleted
     assert not Transaction.objects.filter(id=pending_payment.id).exists()
@@ -1045,10 +1045,10 @@ def test_complete():
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "with_payment, provider_payment_id",
+    "with_payment, provider_transaction_id",
     [(True, "SQUARE_PAYMENT_ID"), (True, None), (False, None)],
 )
-def test_send_confirmation_email(mailoutbox, with_payment, provider_payment_id):
+def test_send_confirmation_email(mailoutbox, with_payment, provider_transaction_id):
     production = ProductionFactory(name="Legally Ginger")
     venue = VenueFactory(address=AddressFactory(latitude=51.4, longitude=-2.61))
     performance = PerformanceFactory(
@@ -1082,8 +1082,8 @@ def test_send_confirmation_email(mailoutbox, with_payment, provider_payment_id):
         TransactionFactory(
             pay_object=booking,
             value=1000,
-            provider=payment_methods.SquareOnline.name,
-            provider_payment_id=provider_payment_id,
+            provider_name=payment_methods.SquareOnline.name,
+            provider_transaction_id=provider_transaction_id,
         )
 
     booking.send_confirmation_email()
@@ -1102,7 +1102,7 @@ def test_send_confirmation_email(mailoutbox, with_payment, provider_payment_id):
         assert "10.00 GBP" in email.body
         assert (
             "(Square online card payment - ID SQUARE_PAYMENT_ID)"
-            if provider_payment_id
+            if provider_transaction_id
             else "(Square online card payment)" in email.body
         )
     else:

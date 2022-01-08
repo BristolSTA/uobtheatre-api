@@ -962,20 +962,32 @@ def test_sales_breakdown_production():
     booking_2 = BookingFactory(performance=performance_2)
 
     TransactionFactory(
-        pay_object=booking_1, provider_fee=2, app_fee=100, value=200, provider=Cash.name
+        pay_object=booking_1,
+        provider_fee=2,
+        app_fee=100,
+        value=200,
+        provider_name=Cash.name,
     )
     TransactionFactory(
-        pay_object=booking_1, provider_fee=4, app_fee=200, value=600, provider=Card.name
+        pay_object=booking_1,
+        provider_fee=4,
+        app_fee=200,
+        value=600,
+        provider_name=Card.name,
     )
     TransactionFactory(
-        pay_object=booking_1, provider_fee=4, app_fee=200, value=600, provider=Card.name
+        pay_object=booking_1,
+        provider_fee=4,
+        app_fee=200,
+        value=600,
+        provider_name=Card.name,
     )
     TransactionFactory(
         pay_object=booking_1,
         provider_fee=-4,
         app_fee=-200,
         value=-600,
-        provider=Card.name,
+        provider_name=Card.name,
         type=Transaction.Type.REFUND,
     )
     TransactionFactory(
@@ -983,7 +995,7 @@ def test_sales_breakdown_production():
         provider_fee=10,
         app_fee=150,
         value=400,
-        provider=SquareOnline.name,
+        provider_name=SquareOnline.name,
     )
 
     assert production.sales_breakdown() == {
@@ -1008,17 +1020,25 @@ def test_sales_breakdown_performance():
     booking_3 = BookingFactory()
 
     TransactionFactory(
-        pay_object=booking_1, provider_fee=2, app_fee=100, value=200, provider=Cash.name
+        pay_object=booking_1,
+        provider_fee=2,
+        app_fee=100,
+        value=200,
+        provider_name=Cash.name,
     )
     TransactionFactory(
-        pay_object=booking_1, provider_fee=4, app_fee=200, value=600, provider=Card.name
+        pay_object=booking_1,
+        provider_fee=4,
+        app_fee=200,
+        value=600,
+        provider_name=Card.name,
     )
     TransactionFactory(
         pay_object=booking_2,
         provider_fee=10,
         app_fee=150,
         value=400,
-        provider=SquareOnline.name,
+        provider_name=SquareOnline.name,
     )
 
     TransactionFactory(
@@ -1026,7 +1046,7 @@ def test_sales_breakdown_performance():
         provider_fee=10,
         app_fee=150,
         value=400,
-        provider=SquareOnline.name,
+        provider_name=SquareOnline.name,
     )
 
     assert performance.sales_breakdown() == {
