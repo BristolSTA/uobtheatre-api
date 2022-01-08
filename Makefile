@@ -142,6 +142,7 @@ pr: ## Runs everything required (that is not included in precommit) for a pr
 	make test
 
 build:
+	python precommit_config_generator.py
 	docker-compose build api
 
 django-shell: ## Open django shell
