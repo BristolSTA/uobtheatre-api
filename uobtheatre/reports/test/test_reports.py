@@ -132,8 +132,8 @@ def create_fixtures():
     payment_1 = TransactionFactory(
         pay_object=booking_1,
         value=booking_1.total,
-        provider=payment_methods.SquarePOS.name,
-        provider_payment_id="square_id",
+        provider_name=payment_methods.SquarePOS.name,
+        provider_transaction_id="square_id",
         app_fee=booking_1.misc_costs_value(),
         provider_fee=10,
     )
@@ -143,7 +143,7 @@ def create_fixtures():
     payment_2 = TransactionFactory(
         pay_object=booking_2,
         value=booking_2.total,
-        provider=payment_methods.Cash.name,
+        provider_name=payment_methods.Cash.name,
         app_fee=booking_2.misc_costs_value(),
     )
     payment_2.created_at = "2021-09-05T12:00:01-00:00"
@@ -165,7 +165,7 @@ def create_fixtures():
     refund_1 = TransactionFactory(
         pay_object=booking_5,
         value=-booking_5.total,
-        provider=payment_methods.SquareRefund.name,
+        provider_name=payment_methods.SquareRefund.name,
         type=Transaction.Type.REFUND,
         app_fee=-5,
         provider_fee=-2,
@@ -302,7 +302,7 @@ def test_period_totals_breakdown_report():
             "Amazing Show 2",
             "580",
             "SQUARE_ONLINE",
-            payment_3.provider_payment_id,
+            payment_3.provider_transaction_id,
         ],
         [
             str(payment_4.id),
@@ -314,7 +314,7 @@ def test_period_totals_breakdown_report():
             "Amazing Show 1",
             "1100",
             "SQUARE_ONLINE",
-            payment_4.provider_payment_id,
+            payment_4.provider_transaction_id,
         ],
         [
             str(refund_1.id),
@@ -326,7 +326,7 @@ def test_period_totals_breakdown_report():
             "Amazing Show 1",
             "-1100",
             "SQUARE_REFUND",
-            refund_1.provider_payment_id,
+            refund_1.provider_transaction_id,
         ],
     ]
 

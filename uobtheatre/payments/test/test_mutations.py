@@ -14,7 +14,7 @@ def test_cancel_payment_completed_payment(gql_client):
     payment = TransactionFactory(
         pay_object=booking,
         status=Transaction.Status.COMPLETED,
-        provider=SquarePOS.name,
+        provider_name=SquarePOS.name,
     )
 
     response = gql_client.execute(
@@ -51,7 +51,7 @@ def test_cancel_payment_success(gql_client, mock_square):
     payment = TransactionFactory(
         pay_object=booking,
         status=Transaction.Status.PENDING,
-        provider=SquarePOS.name,
+        provider_name=SquarePOS.name,
     )
 
     with mock_square(
@@ -90,7 +90,7 @@ def test_cancel_payment_not_creator_of_booking(gql_client):
     payment = TransactionFactory(
         pay_object=booking,
         status=Transaction.Status.PENDING,
-        provider=SquarePOS.name,
+        provider_name=SquarePOS.name,
     )
 
     response = gql_client.execute(

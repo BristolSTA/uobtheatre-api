@@ -35,7 +35,9 @@ def test_value_currency(value, result):
 
 @pytest.mark.django_db
 def test_payment_url():
-    payment = TransactionFactory(provider=SquareOnline.name, provider_payment_id="abc")
+    payment = TransactionFactory(
+        provider_name=SquareOnline.name, provider_transaction_id="abc"
+    )
     assert (
         payment.url() == "https://squareupsandbox.com/dashboard/sales/transactions/abc"
     )
@@ -43,13 +45,15 @@ def test_payment_url():
 
 @pytest.mark.django_db
 def test_payment_url_none():
-    payment = TransactionFactory(provider=Cash.__name__, provider_payment_id="abc")
+    payment = TransactionFactory(
+        provider_name=Cash.__name__, provider_transaction_id="abc"
+    )
     assert payment.url() is None
 
 
 @pytest.mark.django_db
 def test_update_payment_from_square(mock_square):
-    payment = TransactionFactory(provider_fee=0, provider_payment_id="abc")
+    payment = TransactionFactory(provider_fee=0, provider_transaction_id="abc")
     with mock_square(
         SquareOnline.client.payments,
         "get_payment",
@@ -82,7 +86,7 @@ def test_update_payment_from_square(mock_square):
 
 @pytest.mark.django_db
 def test_update_payment_from_square_no_provider_id(mock_square):
-    payment = TransactionFactory(provider_fee=0, provider_payment_id=None)
+    payment = TransactionFactory(provider_fee=0, provider_transaction_id=None)
     with mock_square(
         SquareOnline.client.payments,
         "get_payment",
@@ -95,7 +99,7 @@ def test_update_payment_from_square_no_provider_id(mock_square):
 
 @pytest.mark.django_db
 def test_update_payment_from_square_no_processing_fee(mock_square):
-    payment = TransactionFactory(provider_fee=None, provider_payment_id="abc")
+    payment = TransactionFactory(provider_fee=None, provider_transaction_id="abc")
     with mock_square(
         SquareOnline.client.payments,
         "get_payment",
@@ -122,7 +126,7 @@ def test_update_payment_from_square_no_processing_fee(mock_square):
 @pytest.mark.django_db
 def test_handle_update_payment_webhook_checkout(mock_square):
     payment = TransactionFactory(
-        provider_fee=None, provider_payment_id="abc", provider=SquarePOS.name
+        provider_fee=None, provider_transaction_id="abc", provider_name=SquarePOS.name
     )
 
     with mock_square(
@@ -187,7 +191,7 @@ def test_handle_update_payment_webhook_checkout(mock_square):
     ],
 )
 def test_cancel(provider, status, is_cancelled, mock_square):
-    payment = TransactionFactory(provider=provider, status=status)
+    payment = TransactionFactory(provider_name=provider, status=status)
     with mock_square(
         SquarePOS.client.terminal, "cancel_terminal_checkout", success=True
     ) as mock_cancel:
@@ -195,7 +199,7 @@ def test_cancel(provider, status, is_cancelled, mock_square):
 
         # If cancelled this should have been called
         if is_cancelled:
-            mock_cancel.assert_called_once_with(payment.provider_payment_id)
+            mock_cancel.assert_called_once_with(payment.provider_transaction_id)
         else:
             mock_cancel.assert_not_called()
 
@@ -212,22 +216,22 @@ def test_cancel(provider, status, is_cancelled, mock_square):
     ],
 )
 def test_provider_class(provider_name, provider_class):
-    payment = Transaction(provider=provider_name)
+    payment = Transaction(provider_name=provider_name)
     assert payment.provider_class == provider_class
 
 
 def test_provider_class_unknown():
-    payment = Transaction(provider="abc")
+    payment = Transaction(provider_name="abc")
     with pytest.raises(StopIteration):
         payment.provider_class  # pylint: disable=pointless-statement
 
 
 @pytest.mark.django_db
 def test_sync_all_payments():
-    TransactionFactory(provider=SquareOnline.name, provider_fee=10)
-    TransactionFactory(provider=Cash.name, provider_fee=None)
+    TransactionFactory(provider_name=SquareOnline.name, provider_fee=10)
+    TransactionFactory(provider_name=Cash.name, provider_fee=None)
 
-    to_update = TransactionFactory(provider=SquareOnline.name, provider_fee=None)
+    to_update = TransactionFactory(provider_name=SquareOnline.name, provider_fee=None)
 
     with patch.object(SquareOnline, "sync_transaction") as online_sync, patch.object(
         Cash, "sync_transaction"
@@ -240,9 +244,9 @@ def test_sync_all_payments():
 @pytest.mark.django_db
 def test_handle_update_refund_webhook():
     payment = TransactionFactory(
-        provider_payment_id="abc",
+        provider_transaction_id="abc",
         type=Transaction.Type.REFUND,
-        provider=SquareRefund.name,
+        provider_name=SquareRefund.name,
     )
     with patch(
         "uobtheatre.payments.payment_methods.SquareRefund.sync_transaction",

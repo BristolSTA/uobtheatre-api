@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from uobtheatre.payments.payables import Payable
 
 
-class TransactionMethod(abc.ABC):
+class TransactionProvider(abc.ABC):
     """
     Absctact class for transactions methods. This includes both refunds and
     payments.
@@ -23,12 +23,12 @@ class TransactionMethod(abc.ABC):
     name: str
 
     def __init_subclass__(cls) -> None:
-        cls.name = TransactionMethod.generate_name(cls.__name__)
+        cls.name = TransactionProvider.generate_name(cls.__name__)
 
     @classmethod
     @property
-    def __all__(cls) -> Sequence[Type["TransactionMethod"]]:
-        return PaymentMethod.__all__ + RefundMethod.__all__  # type: ignore
+    def __all__(cls) -> Sequence[Type["TransactionProvider"]]:
+        return PaymentProvider.__all__ + RefundProvider.__all__  # type: ignore
 
     @classmethod
     @property
@@ -38,7 +38,7 @@ class TransactionMethod(abc.ABC):
 
     @classmethod
     @property
-    def non_manual_methods(cls) -> list[Type["TransactionMethod"]]:
+    def non_manual_methods(cls) -> list[Type["TransactionProvider"]]:
         return [method for method in cls.__all__ if not method.is_manual]  # type: ignore
 
     @staticmethod
@@ -59,7 +59,7 @@ class TransactionMethod(abc.ABC):
         cls, pay_object: "Payable", value: int, app_fee, **kwargs
     ) -> "payment_models.Transaction":
         return payment_models.Transaction.objects.create(
-            provider=cls.name,
+            provider_name=cls.name,
             pay_object=pay_object,
             value=value,
             app_fee=app_fee,
@@ -90,12 +90,12 @@ class TransactionMethod(abc.ABC):
     @classmethod
     def get_payment_provider_id(cls, payment: "payment_models.Transaction") -> str:
         """Get the ID of the provided payment assigned by the provider"""
-        if not payment.provider_payment_id:
-            raise PaymentException("Payment has no provider_payment_id")
-        return payment.provider_payment_id
+        if not payment.provider_transaction_id:
+            raise PaymentException("Payment has no provider_transaction_id")
+        return payment.provider_transaction_id
 
 
-class PaymentMethod(TransactionMethod, abc.ABC):
+class PaymentProvider(TransactionProvider, abc.ABC):
     """
     Abstract class for all payment methods.
 
@@ -108,7 +108,7 @@ class PaymentMethod(TransactionMethod, abc.ABC):
     choices field and the graphene enum.
     """
 
-    __all__: Sequence[Type["PaymentMethod"]] = []
+    __all__: Sequence[Type["PaymentProvider"]] = []
 
     def __init_subclass__(cls) -> None:
         super().__init_subclass__()
@@ -153,12 +153,12 @@ class PaymentMethod(TransactionMethod, abc.ABC):
         )
 
 
-class RefundMethod(TransactionMethod, abc.ABC):
+class RefundProvider(TransactionProvider, abc.ABC):
     """
     Abscract class for all refund methods.
     """
 
-    __all__: Sequence[Type["RefundMethod"]] = []
+    __all__: Sequence[Type["RefundProvider"]] = []
 
     def __init_subclass__(cls) -> None:
         super().__init_subclass__()
@@ -202,19 +202,19 @@ class Refundable(abc.ABC):
     @classmethod
     @property
     @abc.abstractmethod
-    def refund_methods(cls) -> tuple[RefundMethod]:
+    def refund_providers(cls) -> tuple[RefundProvider]:
         """A tuple of methods that can be used to refund payments"""
 
     @classmethod
     @property
-    def automatic_refund_method(cls) -> Optional[RefundMethod]:
+    def automatic_refund_provider(cls) -> Optional[RefundProvider]:
         """
         Return the first payment method that can be used automatically. This
         means it can be used to refund the payment method without any
         interaction from the uob team.
         """
         return next(
-            (method for method in cls.refund_methods if method.is_automatic), None  # type: ignore
+            (method for method in cls.refund_providers if method.is_automatic), None  # type: ignore
         )
 
     @classmethod
@@ -223,7 +223,7 @@ class Refundable(abc.ABC):
         """
         Returns whether this payment method has an automatic refund method.
         """
-        return cls.automatic_refund_method is not None
+        return cls.automatic_refund_provider is not None
 
 
 class SquareAPIMixin(abc.ABC):
@@ -286,7 +286,7 @@ class SquarePaymentMethod(SquareAPIMixin, abc.ABC):
         )
 
 
-class ManualRefund(RefundMethod):
+class ManualRefund(RefundProvider):
     """
     Refund method for refunding square payments.
     """
@@ -304,7 +304,7 @@ class ManualRefund(RefundMethod):
         )
 
 
-class SquareRefund(RefundMethod, SquareAPIMixin):
+class SquareRefund(RefundProvider, SquareAPIMixin):
     """
     Refund method for refunding square payments.
     """
@@ -319,7 +319,7 @@ class SquareRefund(RefundMethod, SquareAPIMixin):
         body = {
             "idempotency_key": str(self.idempotency_key),
             "amount_money": {"amount": payment.value, "currency": payment.currency},
-            "payment_id": payment.provider_payment_id,
+            "payment_id": payment.provider_transaction_id,
         }
         response = self.client.refunds.refund_payment(body)
         self._handle_response_failure(response)
@@ -331,7 +331,7 @@ class SquareRefund(RefundMethod, SquareAPIMixin):
             payment.pay_object,
             -amount_details["amount"],
             -payment.app_fee if payment.app_fee else None,
-            provider_payment_id=square_refund_id,
+            provider_transaction_id=square_refund_id,
             currency=amount_details["currency"],
             status=payment_models.Transaction.Status.PENDING,
         )
@@ -368,7 +368,7 @@ class ManualPaymentMethodMixin(Refundable, abc.ABC):
 
     @classmethod
     @property
-    def refund_methods(cls):
+    def refund_providers(cls):
         return (ManualRefund(),)
 
     def pay(
@@ -381,19 +381,19 @@ class ManualPaymentMethodMixin(Refundable, abc.ABC):
         return
 
 
-class Cash(ManualPaymentMethodMixin, PaymentMethod):
+class Cash(ManualPaymentMethodMixin, PaymentProvider):
     """Manual cash payment method"""
 
     description = "Manual cash payment"
 
 
-class Card(ManualPaymentMethodMixin, PaymentMethod):
+class Card(ManualPaymentMethodMixin, PaymentProvider):
     """Manual card payment method"""
 
     description = "Manual card payment"
 
 
-class SquarePOS(PaymentMethod, SquarePaymentMethod):
+class SquarePOS(PaymentProvider, SquarePaymentMethod):
     """
     Uses Square terminal api to create payment. Used for inperson card
     transactions.
@@ -450,7 +450,7 @@ class SquarePOS(PaymentMethod, SquarePaymentMethod):
             pay_object,
             value,
             app_fee,
-            provider_payment_id=response.body["checkout"]["id"],
+            provider_transaction_id=response.body["checkout"]["id"],
             currency="GBP",
             status=payment_models.Transaction.Status.PENDING,
         )
@@ -471,7 +471,7 @@ class SquarePOS(PaymentMethod, SquarePaymentMethod):
 
         if checkout["status"] == "COMPLETED":
             payment = payment_models.Transaction.objects.get(
-                provider_payment_id=checkout["id"]
+                provider_transaction_id=checkout["id"]
             )
 
             payment.status = payment_models.Transaction.Status.COMPLETED
@@ -481,8 +481,8 @@ class SquarePOS(PaymentMethod, SquarePaymentMethod):
         if checkout["status"] == "CANCELED":
             # Delete any payments that are linked to this checkout
             payment_models.Transaction.objects.filter(
-                provider_payment_id=checkout["id"],
-                provider=SquarePOS.name,
+                provider_transaction_id=checkout["id"],
+                provider_name=SquarePOS.name,
                 status=payment_models.Transaction.Status.PENDING,
             ).delete()
 
@@ -540,7 +540,7 @@ class SquarePOS(PaymentMethod, SquarePaymentMethod):
             SquareException: When request is not successful
         """
         response = cls.client.terminal.cancel_terminal_checkout(
-            payment.provider_payment_id
+            payment.provider_transaction_id
         )
         cls._handle_response_failure(response)
 
@@ -565,7 +565,7 @@ class SquarePOS(PaymentMethod, SquarePaymentMethod):
         payment.save()
 
 
-class SquareOnline(Refundable, PaymentMethod, SquarePaymentMethod):
+class SquareOnline(Refundable, PaymentProvider, SquarePaymentMethod):
     """
     Uses Square checkout api to create payment. Used for online transactions.
 
@@ -582,7 +582,7 @@ class SquareOnline(Refundable, PaymentMethod, SquarePaymentMethod):
 
     @classmethod
     @property
-    def refund_methods(cls):
+    def refund_providers(cls):
         return (SquareRefund(idempotency_key=str(uuid4())),)
 
     def __init__(self, nonce: str, idempotency_key: str) -> None:
@@ -638,7 +638,7 @@ class SquareOnline(Refundable, PaymentMethod, SquarePaymentMethod):
             app_fee,
             card_brand=card_details["card_brand"],
             last_4=card_details["last_4"],
-            provider_payment_id=square_payment_id,
+            provider_transaction_id=square_payment_id,
             currency=amount_details["currency"],
         )
 

@@ -11,10 +11,10 @@ from django.db.models.query import QuerySet
 from uobtheatre.payments import payment_methods
 from uobtheatre.payments.payment_methods import (
     Cash,
-    PaymentMethod,
+    PaymentProvider,
     Refundable,
-    RefundMethod,
-    TransactionMethod,
+    RefundProvider,
+    TransactionProvider,
 )
 from uobtheatre.utils.exceptions import PaymentException
 from uobtheatre.utils.models import TimeStampedMixin
@@ -104,9 +104,9 @@ class Transaction(TimeStampedMixin, models.Model):
         default=Status.COMPLETED,
     )  # type: ignore
 
-    provider_payment_id = models.CharField(max_length=128, null=True, blank=True)
-    provider = models.CharField(
-        max_length=20, choices=payment_methods.TransactionMethod.choices  # type: ignore
+    provider_transaction_id = models.CharField(max_length=128, null=True, blank=True)
+    provider_name = models.CharField(
+        max_length=20, choices=payment_methods.TransactionProvider.choices  # type: ignore
     )
 
     value = models.IntegerField()
@@ -138,9 +138,9 @@ class Transaction(TimeStampedMixin, models.Model):
 
         for payment in cls.objects.filter(
             provider_fee=None,
-            provider__in=[
+            provider_name__in=[
                 method.name
-                for method in PaymentMethod.non_manual_methods  # pylint: disable=not-an-iterable
+                for method in PaymentProvider.non_manual_methods  # pylint: disable=not-an-iterable
             ],
         ):
             payment.sync_payment_with_provider()
@@ -149,8 +149,8 @@ class Transaction(TimeStampedMixin, models.Model):
     def provider_class(self):
         return next(
             method
-            for method in list(TransactionMethod.__all__)
-            if method.name == self.provider
+            for method in list(TransactionProvider.__all__)
+            if method.name == self.provider_name
         )
 
     def url(self):
@@ -159,8 +159,8 @@ class Transaction(TimeStampedMixin, models.Model):
         Returns:
             string, optional: url to provider's payment reference
         """
-        if self.provider == payment_methods.SquareOnline.name:
-            return f"https://squareupsandbox.com/dashboard/sales/transactions/{self.provider_payment_id}"
+        if self.provider_name == payment_methods.SquareOnline.name:
+            return f"https://squareupsandbox.com/dashboard/sales/transactions/{self.provider_transaction_id}"
         return None
 
     @property
@@ -192,20 +192,21 @@ class Transaction(TimeStampedMixin, models.Model):
             # the sync payment method to avoid an extra call to square.
             data = square_payment
 
-        payment = Transaction.objects.get(provider_payment_id=payment_id)
+        payment = Transaction.objects.get(provider_transaction_id=payment_id)
         payment.sync_payment_with_provider(data=data)
 
     @staticmethod
-    def handle_update_refund_webhook(provider_payment_id: str, data: dict):
+    def handle_update_refund_webhook(provider_transaction_id: str, data: dict):
         """
         Handle an update refund webhook from square.
 
         Args:
-            provider_payment_id (str): The payment ID given by the provider
+            provider_transaction_id (str): The payment ID given by the provider
             data (dict): The body of the square webhook
         """
         payment = Transaction.objects.get(
-            provider_payment_id=provider_payment_id, type=Transaction.Type.REFUND
+            provider_transaction_id=provider_transaction_id,
+            type=Transaction.Type.REFUND,
         )
         payment.sync_payment_with_provider(data)
 
@@ -234,11 +235,13 @@ class Transaction(TimeStampedMixin, models.Model):
             return False
         if not self.provider_class.is_refundable:
             if raises:
-                raise PaymentException(f"A {self.provider} payment cannot be refunded")
+                raise PaymentException(
+                    f"A {self.provider_name} payment cannot be refunded"
+                )
             return False
         return True
 
-    def refund(self, refund_method: RefundMethod = None):
+    def refund(self, refund_method: RefundProvider = None):
         """Refund the payment"""
         self.can_be_refunded(raises=True)
 
@@ -255,14 +258,14 @@ TOTAL_PROVIDER_FEE = Coalesce(
     0,
 )
 NET_TOTAL = Sum("value")
-NET_CARD_TOTAL = Sum("value", filter=(~Q(provider=Cash.name)))
+NET_CARD_TOTAL = Sum("value", filter=(~Q(provider_name=Cash.name)))
 TOTAL_SALES = Sum("value", filter=Q(type=Transaction.Type.PAYMENT))
 TOTAL_CARD_SALES = Sum(
-    "value", filter=(~Q(provider=Cash.name) & Q(type=Transaction.Type.PAYMENT))
+    "value", filter=(~Q(provider_name=Cash.name) & Q(type=Transaction.Type.PAYMENT))
 )
 TOTAL_REFUNDS = Sum("value", filter=Q(type=Transaction.Type.REFUND))
 TOTAL_CARD_REFUNDS = Sum(
-    "value", filter=(~Q(provider=Cash.name) & Q(type=Transaction.Type.REFUND))
+    "value", filter=(~Q(provider_name=Cash.name) & Q(type=Transaction.Type.REFUND))
 )
 APP_FEE = Coalesce(Sum("app_fee"), 0)
 

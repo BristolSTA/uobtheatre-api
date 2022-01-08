@@ -30,11 +30,11 @@ def test_payment_schema(gql_client):
                           value
                           description
                         }
-                        provider {
+                        providerName {
                           value
                           description
                         }
-                        providerPaymentId
+                        providerTransactionId
                         value
                         currency
                         cardBrand
@@ -80,13 +80,13 @@ def test_payment_schema(gql_client):
                                                     "value": str(payment.type).upper(),
                                                     "description": payment.get_type_display(),
                                                 },
-                                                "provider": {
+                                                "providerName": {
                                                     "value": str(
-                                                        payment.provider
+                                                        payment.provider_name
                                                     ).upper(),
-                                                    "description": payment.get_provider_display(),
+                                                    "description": payment.get_provider_name_display(),
                                                 },
-                                                "providerPaymentId": payment.provider_payment_id,
+                                                "providerTransactionId": payment.provider_transaction_id,
                                                 "value": payment.value,
                                                 "currency": payment.currency,
                                                 "cardBrand": payment.card_brand,
