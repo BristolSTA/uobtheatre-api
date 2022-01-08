@@ -27,7 +27,7 @@ def on_payment_save_callback(payment_instance: Transaction):
         MailComposer().line(
             f"Your payment of {payment_instance.value_currency} has been successfully refunded (ID: {payment_instance.provider_transaction_id} | {payment_instance.id})."
         ).line(
-            f"This will have been refunded in your original payment method ({payment_instance.provider_class.description}{f' {payment_instance.card_brand} ending {payment_instance.last_4}' if payment_instance.card_brand and payment_instance.last_4 else ''})"
+            f"This will have been refunded in your original payment method ({payment_instance.provider.description}{f' {payment_instance.card_brand} ending {payment_instance.last_4}' if payment_instance.card_brand and payment_instance.last_4 else ''})"
         ).send(
             "Refund successfully processed", user.email
         )

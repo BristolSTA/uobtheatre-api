@@ -217,13 +217,13 @@ def test_cancel(provider, status, is_cancelled, mock_square):
 )
 def test_provider_class(provider_name, provider_class):
     payment = Transaction(provider_name=provider_name)
-    assert payment.provider_class == provider_class
+    assert payment.provider == provider_class
 
 
 def test_provider_class_unknown():
     payment = Transaction(provider_name="abc")
     with pytest.raises(StopIteration):
-        payment.provider_class  # pylint: disable=pointless-statement
+        payment.provider  # pylint: disable=pointless-statement
 
 
 @pytest.mark.django_db
@@ -269,7 +269,7 @@ def test_refund_pending_payment():
 def test_refund_unrefundable_payment():
     payment = TransactionFactory(status=Transaction.Status.COMPLETED)
     with mock.patch(
-        "uobtheatre.payments.models.Transaction.provider_class",
+        "uobtheatre.payments.models.Transaction.provider",
         new_callable=PropertyMock,
     ) as p_mock:
         p_mock.return_value = mock_payment_method(is_refundable=False)
@@ -284,7 +284,7 @@ def test_refund_payment_with_refund_method():
     refund_method = mock_refund_method()
     other_refund_method = mock_refund_method()
     with mock.patch(
-        "uobtheatre.payments.models.Transaction.provider_class",
+        "uobtheatre.payments.models.Transaction.provider",
         new_callable=PropertyMock,
     ) as p_mock:
         p_mock.return_value = mock_payment_method(is_refundable=True)
@@ -300,7 +300,7 @@ def test_refund_payment_without_refund_method():
     payment = TransactionFactory(status=Transaction.Status.COMPLETED)
     refund_method = mock_refund_method()
     with mock.patch(
-        "uobtheatre.payments.models.Transaction.provider_class",
+        "uobtheatre.payments.models.Transaction.provider",
         new_callable=PropertyMock,
     ) as p_mock:
         p_mock.return_value = mock_payment_method(

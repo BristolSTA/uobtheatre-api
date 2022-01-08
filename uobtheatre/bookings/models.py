@@ -592,7 +592,7 @@ class Booking(TimeStampedMixin, Payable):
         # If this booking includes a payment, we will include details of this payment as a reciept
         if payment:
             composer.heading("Payment Information").line(
-                f"{payment.value_currency} paid ({payment.provider_class.description}{' - ID ' + payment.provider_transaction_id if payment.provider_transaction_id else '' })"
+                f"{payment.value_currency} paid ({payment.provider.description}{' - ID ' + payment.provider_transaction_id if payment.provider_transaction_id else '' })"
             )
 
         composer.line(

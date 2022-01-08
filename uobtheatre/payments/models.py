@@ -146,7 +146,7 @@ class Transaction(TimeStampedMixin, models.Model):
             payment.sync_payment_with_provider()
 
     @property
-    def provider_class(self):
+    def provider(self):
         return next(
             method
             for method in list(TransactionProvider.__all__)
@@ -212,7 +212,7 @@ class Transaction(TimeStampedMixin, models.Model):
 
     def sync_payment_with_provider(self, data=None):
         """Sync the payment with the provider payment"""
-        self.provider_class.sync_transaction(self, data)
+        self.provider.sync_transaction(self, data)
 
     def cancel(self):
         """
@@ -222,7 +222,7 @@ class Transaction(TimeStampedMixin, models.Model):
         pending.
         """
         if self.status == Transaction.Status.PENDING:
-            self.provider_class.cancel(self)
+            self.provider.cancel(self)
             self.delete()
 
     def can_be_refunded(self, raises=False):
@@ -233,7 +233,7 @@ class Transaction(TimeStampedMixin, models.Model):
                     f"A {self.status.label.lower()} payment can't refunded"
                 )
             return False
-        if not self.provider_class.is_refundable:
+        if not self.provider.is_refundable:
             if raises:
                 raise PaymentException(
                     f"A {self.provider_name} payment cannot be refunded"
@@ -246,7 +246,7 @@ class Transaction(TimeStampedMixin, models.Model):
         self.can_be_refunded(raises=True)
 
         if refund_method is None:
-            refund_method = self.provider_class.refund_method
+            refund_method = self.provider.refund_method
 
         refund_method.refund(self)
 
