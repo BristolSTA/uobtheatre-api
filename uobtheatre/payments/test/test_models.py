@@ -11,7 +11,7 @@ from uobtheatre.payments.payment_methods import (
     SquareRefund,
 )
 from uobtheatre.payments.test.factories import (
-    PaymentFactory,
+    TransactionFactory,
     mock_payment_method,
     mock_refund_method,
 )
@@ -29,13 +29,13 @@ from uobtheatre.utils.exceptions import GQLException, PaymentException
     ],
 )
 def test_value_currency(value, result):
-    payment = PaymentFactory(value=value, currency="GBP")
+    payment = TransactionFactory(value=value, currency="GBP")
     assert payment.value_currency == result
 
 
 @pytest.mark.django_db
 def test_payment_url():
-    payment = PaymentFactory(provider=SquareOnline.name, provider_payment_id="abc")
+    payment = TransactionFactory(provider=SquareOnline.name, provider_payment_id="abc")
     assert (
         payment.url() == "https://squareupsandbox.com/dashboard/sales/transactions/abc"
     )
@@ -43,13 +43,13 @@ def test_payment_url():
 
 @pytest.mark.django_db
 def test_payment_url_none():
-    payment = PaymentFactory(provider=Cash.__name__, provider_payment_id="abc")
+    payment = TransactionFactory(provider=Cash.__name__, provider_payment_id="abc")
     assert payment.url() is None
 
 
 @pytest.mark.django_db
 def test_update_payment_from_square(mock_square):
-    payment = PaymentFactory(provider_fee=0, provider_payment_id="abc")
+    payment = TransactionFactory(provider_fee=0, provider_payment_id="abc")
     with mock_square(
         SquareOnline.client.payments,
         "get_payment",
@@ -82,7 +82,7 @@ def test_update_payment_from_square(mock_square):
 
 @pytest.mark.django_db
 def test_update_payment_from_square_no_provider_id(mock_square):
-    payment = PaymentFactory(provider_fee=0, provider_payment_id=None)
+    payment = TransactionFactory(provider_fee=0, provider_payment_id=None)
     with mock_square(
         SquareOnline.client.payments,
         "get_payment",
@@ -95,7 +95,7 @@ def test_update_payment_from_square_no_provider_id(mock_square):
 
 @pytest.mark.django_db
 def test_update_payment_from_square_no_processing_fee(mock_square):
-    payment = PaymentFactory(provider_fee=None, provider_payment_id="abc")
+    payment = TransactionFactory(provider_fee=None, provider_payment_id="abc")
     with mock_square(
         SquareOnline.client.payments,
         "get_payment",
@@ -121,7 +121,7 @@ def test_update_payment_from_square_no_processing_fee(mock_square):
 
 @pytest.mark.django_db
 def test_handle_update_payment_webhook_checkout(mock_square):
-    payment = PaymentFactory(
+    payment = TransactionFactory(
         provider_fee=None, provider_payment_id="abc", provider=SquarePOS.name
     )
 
@@ -187,7 +187,7 @@ def test_handle_update_payment_webhook_checkout(mock_square):
     ],
 )
 def test_cancel(provider, status, is_cancelled, mock_square):
-    payment = PaymentFactory(provider=provider, status=status)
+    payment = TransactionFactory(provider=provider, status=status)
     with mock_square(
         SquarePOS.client.terminal, "cancel_terminal_checkout", success=True
     ) as mock_cancel:
@@ -224,10 +224,10 @@ def test_provider_class_unknown():
 
 @pytest.mark.django_db
 def test_sync_all_payments():
-    PaymentFactory(provider=SquareOnline.name, provider_fee=10)
-    PaymentFactory(provider=Cash.name, provider_fee=None)
+    TransactionFactory(provider=SquareOnline.name, provider_fee=10)
+    TransactionFactory(provider=Cash.name, provider_fee=None)
 
-    to_update = PaymentFactory(provider=SquareOnline.name, provider_fee=None)
+    to_update = TransactionFactory(provider=SquareOnline.name, provider_fee=None)
 
     with patch.object(SquareOnline, "sync_transaction") as online_sync, patch.object(
         Cash, "sync_transaction"
@@ -239,7 +239,7 @@ def test_sync_all_payments():
 
 @pytest.mark.django_db
 def test_handle_update_refund_webhook():
-    payment = PaymentFactory(
+    payment = TransactionFactory(
         provider_payment_id="abc",
         type=Transaction.PaymentType.REFUND,
         provider=SquareRefund.name,
@@ -255,7 +255,7 @@ def test_handle_update_refund_webhook():
 
 @pytest.mark.django_db
 def test_refund_pending_payment():
-    payment = PaymentFactory(status=Transaction.PaymentStatus.PENDING)
+    payment = TransactionFactory(status=Transaction.PaymentStatus.PENDING)
     with pytest.raises(GQLException) as exc:
         payment.refund()
         assert exc.message == "You cannot refund a pending payment"
@@ -263,7 +263,7 @@ def test_refund_pending_payment():
 
 @pytest.mark.django_db
 def test_refund_unrefundable_payment():
-    payment = PaymentFactory(status=Transaction.PaymentStatus.COMPLETED)
+    payment = TransactionFactory(status=Transaction.PaymentStatus.COMPLETED)
     with mock.patch(
         "uobtheatre.payments.models.Transaction.provider_class",
         new_callable=PropertyMock,
@@ -276,7 +276,7 @@ def test_refund_unrefundable_payment():
 
 @pytest.mark.django_db
 def test_refund_payment_with_refund_method():
-    payment = PaymentFactory(status=Transaction.PaymentStatus.COMPLETED)
+    payment = TransactionFactory(status=Transaction.PaymentStatus.COMPLETED)
     refund_method = mock_refund_method()
     other_refund_method = mock_refund_method()
     with mock.patch(
@@ -293,7 +293,7 @@ def test_refund_payment_with_refund_method():
 
 @pytest.mark.django_db
 def test_refund_payment_without_refund_method():
-    payment = PaymentFactory(status=Transaction.PaymentStatus.COMPLETED)
+    payment = TransactionFactory(status=Transaction.PaymentStatus.COMPLETED)
     refund_method = mock_refund_method()
     with mock.patch(
         "uobtheatre.payments.models.Transaction.provider_class",

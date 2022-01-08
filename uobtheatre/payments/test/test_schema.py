@@ -4,14 +4,14 @@ from guardian.shortcuts import assign_perm
 
 from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.payments.payment_methods import SquarePOS
-from uobtheatre.payments.test.factories import PaymentFactory
+from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.productions.test.factories import PerformanceFactory
 
 
 @pytest.mark.django_db
 def test_payment_schema(gql_client):
     booking = BookingFactory(user=gql_client.login().user)
-    payment = PaymentFactory(pay_object=booking)
+    payment = TransactionFactory(pay_object=booking)
 
     response = gql_client.execute(
         """

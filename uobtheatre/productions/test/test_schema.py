@@ -17,7 +17,7 @@ from uobtheatre.discounts.test.factories import (
     DiscountRequirementFactory,
 )
 from uobtheatre.payments.payables import Payable
-from uobtheatre.payments.test.factories import PaymentFactory
+from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.productions.test.factories import (
     AudienceWarningFactory,
@@ -562,7 +562,7 @@ def test_production_and_performance_sales_breakdowns(gql_client):
     )
     perf_seat_group = PerformanceSeatingFactory(performance=performance, price=100)
     TicketFactory(booking=booking, seat_group=perf_seat_group.seat_group)
-    PaymentFactory(pay_object=booking, value=booking.total)
+    TransactionFactory(pay_object=booking, value=booking.total)
 
     request = """
         {
@@ -1208,7 +1208,9 @@ def test_performances_are_shown_with_permission(gql_client):
 
 @pytest.mark.django_db
 def test_performance_run_on(gql_client):
-    query_datetime = timezone.datetime(year=2000, month=6, day=20, tzinfo=timezone.get_current_timezone())
+    query_datetime = timezone.datetime(
+        year=2000, month=6, day=20, tzinfo=timezone.get_current_timezone()
+    )
     _ = [
         PerformanceFactory(
             start=query_datetime + timezone.timedelta(days=i),

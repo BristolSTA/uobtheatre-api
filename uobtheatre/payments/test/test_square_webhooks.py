@@ -8,7 +8,7 @@ from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.payment_methods import SquareRefund
 from uobtheatre.payments.square_webhooks import SquareWebhooks
-from uobtheatre.payments.test.factories import PaymentFactory
+from uobtheatre.payments.test.factories import TransactionFactory
 
 TEST_TERMINAL_CHECKOUT_PAYLOAD = {
     "merchant_id": "ML8M1AQ1GQG2K",
@@ -135,7 +135,7 @@ TEST_UPDATE_REFUND_PAYLOAD = {
 
 @pytest.mark.django_db
 def test_handle_checkout_webhook(rest_client, monkeypatch):
-    PaymentFactory(provider_payment_id="dhgENdnFOPXqO")
+    TransactionFactory(provider_payment_id="dhgENdnFOPXqO")
     monkeypatch.setenv("SQUARE_WEBHOOK_SIGNATURE_KEY", "Hd_mmQkhER3EPkpRpNQh9Q")
     booking = BookingFactory(
         reference="id72709", status=Payable.PayableStatus.IN_PROGRESS
@@ -183,7 +183,7 @@ def test_handle_webhooks_invalid_signature(rest_client):
 
 @pytest.mark.django_db
 def test_handle_payment_update_webhook_no_processing_fee(rest_client):
-    payment = PaymentFactory(
+    payment = TransactionFactory(
         provider_payment_id="hYy9pRFVxpDsO1FB05SunFWUe9JZY", provider_fee=None
     )
 
@@ -210,7 +210,7 @@ def test_handle_payment_update_webhook_no_processing_fee(rest_client):
 
 @pytest.mark.django_db
 def test_handle_payment_update_webhook(rest_client):
-    payment = PaymentFactory(
+    payment = TransactionFactory(
         provider_payment_id="hYy9pRFVxpDsO1FB05SunFWUe9JZY", provider_fee=0
     )
 
@@ -258,7 +258,7 @@ def test_square_webhook_unknown_type(rest_client):
 
 @pytest.mark.django_db
 def test_handle_refund_update_webhook(rest_client):
-    payment = PaymentFactory(
+    payment = TransactionFactory(
         provider_payment_id="xwo62Kt4WIOAh9LrczZxzbQbIZCZY_RVpsRbbUP3LmklUotq0kfiJnn1jDOqhNHymoqa6iDpd",
         provider_fee=0,
         type=Transaction.PaymentType.REFUND,

@@ -17,7 +17,7 @@ from uobtheatre.payments.payment_methods import (
     TransactionMethod,
 )
 from uobtheatre.payments.square_webhooks import SquareWebhooks
-from uobtheatre.payments.test.factories import PaymentFactory
+from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.utils.exceptions import PaymentException, SquareException
 
 
@@ -201,7 +201,7 @@ def test_square_online_pay_failure(mock_square):
 
 @pytest.mark.django_db
 def test_square_online_sync_payment(mock_square):
-    payment = PaymentFactory(
+    payment = TransactionFactory(
         value=100, provider_fee=None, status=Transaction.PaymentStatus.PENDING
     )
     with mock_square(
@@ -303,7 +303,7 @@ def test_square_pos_list_devices_failure(mock_square):
 @pytest.mark.django_db
 def test_handle_terminal_checkout_updated_webhook_completed():
     booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
-    payment = PaymentFactory()
+    payment = TransactionFactory()
     data = {
         "object": {
             "checkout": {
@@ -347,7 +347,7 @@ def test_handle_terminal_checkout_updated_webhook_not_completed():
 @pytest.mark.django_db
 def test_handle_terminal_checkout_updated_canceled():
     booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
-    payment = PaymentFactory(
+    payment = TransactionFactory(
         provider_payment_id="abc",
         provider=SquarePOS.name,
         status=Transaction.PaymentStatus.PENDING,
@@ -418,7 +418,7 @@ def test_square_get_checkout(mock_square):
 
 @pytest.mark.django_db
 def test_square_pos_cancel_failure(mock_square):
-    payment = PaymentFactory()
+    payment = TransactionFactory()
     with mock_square(
         SquarePOS.client.terminal,
         "cancel_terminal_checkout",
@@ -436,7 +436,7 @@ def test_square_pos_cancel_failure(mock_square):
 
 @pytest.mark.django_db
 def test_square_pos_sync_payment():
-    payment = PaymentFactory(
+    payment = TransactionFactory(
         value=100,
         provider_fee=None,
         status=Transaction.PaymentStatus.PENDING,
@@ -608,7 +608,7 @@ def test_manual_pay(payment_method, value, expected_method_str):
 
 @pytest.mark.django_db
 def test_cash_payment_sync():
-    payment = PaymentFactory(provider=Cash.name)
+    payment = TransactionFactory(provider=Cash.name)
     assert payment.sync_payment_with_provider() is None
 
 

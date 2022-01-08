@@ -25,7 +25,7 @@ from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.payment_methods import Card, Cash, SquareOnline
-from uobtheatre.payments.test.factories import PaymentFactory
+from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.productions.models import Performance, PerformanceSeatGroup, Production
 from uobtheatre.productions.test.factories import (
     AudienceWarningFactory,
@@ -961,16 +961,16 @@ def test_sales_breakdown_production():
     booking_1 = BookingFactory(performance=performance_1)
     booking_2 = BookingFactory(performance=performance_2)
 
-    PaymentFactory(
+    TransactionFactory(
         pay_object=booking_1, provider_fee=2, app_fee=100, value=200, provider=Cash.name
     )
-    PaymentFactory(
+    TransactionFactory(
         pay_object=booking_1, provider_fee=4, app_fee=200, value=600, provider=Card.name
     )
-    PaymentFactory(
+    TransactionFactory(
         pay_object=booking_1, provider_fee=4, app_fee=200, value=600, provider=Card.name
     )
-    PaymentFactory(
+    TransactionFactory(
         pay_object=booking_1,
         provider_fee=-4,
         app_fee=-200,
@@ -978,7 +978,7 @@ def test_sales_breakdown_production():
         provider=Card.name,
         type=Transaction.PaymentType.REFUND,
     )
-    PaymentFactory(
+    TransactionFactory(
         pay_object=booking_2,
         provider_fee=10,
         app_fee=150,
@@ -1007,13 +1007,13 @@ def test_sales_breakdown_performance():
     booking_2 = BookingFactory(performance=performance)
     booking_3 = BookingFactory()
 
-    PaymentFactory(
+    TransactionFactory(
         pay_object=booking_1, provider_fee=2, app_fee=100, value=200, provider=Cash.name
     )
-    PaymentFactory(
+    TransactionFactory(
         pay_object=booking_1, provider_fee=4, app_fee=200, value=600, provider=Card.name
     )
-    PaymentFactory(
+    TransactionFactory(
         pay_object=booking_2,
         provider_fee=10,
         app_fee=150,
@@ -1021,7 +1021,7 @@ def test_sales_breakdown_performance():
         provider=SquareOnline.name,
     )
 
-    PaymentFactory(
+    TransactionFactory(
         pay_object=booking_3,
         provider_fee=10,
         app_fee=150,
@@ -1048,7 +1048,7 @@ def test_sales_breakdown_with_blank_fees():
     performance = PerformanceFactory()
     booking = BookingFactory(performance=performance)
 
-    PaymentFactory(pay_object=booking, value=200)
+    TransactionFactory(pay_object=booking, value=200)
 
     assert performance.sales_breakdown() == {
         "app_payment_value": 0,

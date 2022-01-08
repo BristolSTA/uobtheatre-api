@@ -13,7 +13,7 @@ from uobtheatre.payments.payment_methods import (
     SquareOnline,
     SquareRefund,
 )
-from uobtheatre.payments.test.factories import PaymentFactory
+from uobtheatre.payments.test.factories import TransactionFactory
 
 
 def test_refund_method_all():
@@ -61,7 +61,7 @@ def test_is_auto_refundable(payment_method, is_auto_refundable):
 
 @pytest.mark.django_db
 def test_manual_refund_method_refund():
-    refund_payment = PaymentFactory(
+    refund_payment = TransactionFactory(
         value=100,
         provider_fee=10,
         app_fee=20,
@@ -91,7 +91,7 @@ def test_square_refund_refund(mock_square):
     refund_method = SquareRefund(idempotency_key=idempotency_key)
 
     refund_method.create_payment_object = MagicMock()
-    payment = PaymentFactory()
+    payment = TransactionFactory()
 
     with mock_square(
         SquareRefund.client.refunds,
@@ -141,7 +141,7 @@ def test_square_refund_refund(mock_square):
     ],
 )
 def test_square_online_sync_transaction(data_fees, data_status):
-    payment = PaymentFactory(
+    payment = TransactionFactory(
         status=Transaction.PaymentStatus.PENDING, provider_fee=None
     )
 
@@ -174,7 +174,7 @@ def test_square_online_sync_transaction(data_fees, data_status):
 @pytest.mark.django_db
 @pytest.mark.parametrize("with_data", [False, True])
 def test_square_refund_sync_payment(mock_square, with_data):
-    payment = PaymentFactory(
+    payment = TransactionFactory(
         value=-100,
         provider_fee=None,
         provider=SquareRefund.name,

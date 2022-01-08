@@ -7,7 +7,7 @@ from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payment_methods import Card, Cash, SquareOnline
-from uobtheatre.payments.test.factories import PaymentFactory
+from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.users.test.factories import UserFactory
 
 
@@ -15,8 +15,8 @@ from uobtheatre.users.test.factories import UserFactory
 def test_payable_provider_payment_value():
     booking = BookingFactory()
 
-    PaymentFactory(pay_object=booking, provider_fee=20)
-    PaymentFactory(pay_object=booking, provider_fee=10)
+    TransactionFactory(pay_object=booking, provider_fee=20)
+    TransactionFactory(pay_object=booking, provider_fee=10)
 
     assert booking.provider_payment_value == 30
 
@@ -25,8 +25,8 @@ def test_payable_provider_payment_value():
 def test_payable_app_payment_value():
     booking = BookingFactory()
 
-    PaymentFactory(pay_object=booking, provider_fee=20, app_fee=100)
-    PaymentFactory(pay_object=booking, provider_fee=10, app_fee=150)
+    TransactionFactory(pay_object=booking, provider_fee=20, app_fee=100)
+    TransactionFactory(pay_object=booking, provider_fee=10, app_fee=150)
 
     assert booking.app_payment_value == 220
 
@@ -35,8 +35,8 @@ def test_payable_app_payment_value():
 def test_payable_society_payment_value():
     booking = BookingFactory()
 
-    PaymentFactory(pay_object=booking, app_fee=100, value=200)
-    PaymentFactory(pay_object=booking, app_fee=150, value=400)
+    TransactionFactory(pay_object=booking, app_fee=100, value=200)
+    TransactionFactory(pay_object=booking, app_fee=150, value=400)
 
     assert booking.society_revenue == 350
 
@@ -45,8 +45,8 @@ def test_payable_society_payment_value():
 def test_payable_total_sales():
     booking = BookingFactory()
 
-    PaymentFactory(pay_object=booking, app_fee=100, value=200)
-    PaymentFactory(pay_object=booking, app_fee=150, value=400)
+    TransactionFactory(pay_object=booking, app_fee=100, value=200)
+    TransactionFactory(pay_object=booking, app_fee=150, value=400)
 
     assert booking.total_sales == 600
 
@@ -55,9 +55,9 @@ def test_payable_total_sales():
 def test_society_transfer_value():
     booking = BookingFactory()
 
-    PaymentFactory(pay_object=booking, app_fee=100, value=200, provider=Cash.name)
-    PaymentFactory(pay_object=booking, app_fee=200, value=600, provider=Card.name)
-    PaymentFactory(
+    TransactionFactory(pay_object=booking, app_fee=100, value=200, provider=Cash.name)
+    TransactionFactory(pay_object=booking, app_fee=200, value=600, provider=Card.name)
+    TransactionFactory(
         pay_object=booking, app_fee=150, value=400, provider=SquareOnline.name
     )
 
@@ -79,18 +79,20 @@ def test_society_transfer_value():
 )
 def test_is_refunded(payment_values, has_pending, is_refunded):
     # Create some payments for different payobjects
-    [PaymentFactory(status=Transaction.PaymentStatus.COMPLETED) for _ in range(10)]
+    [TransactionFactory(status=Transaction.PaymentStatus.COMPLETED) for _ in range(10)]
 
     pay_object = BookingFactory()
     [
-        PaymentFactory(
+        TransactionFactory(
             value=value, type=Transaction.PaymentType.PURCHASE, pay_object=pay_object
         )
         for value in payment_values
     ]
 
     if has_pending:
-        PaymentFactory(pay_object=pay_object, status=Transaction.PaymentStatus.PENDING)
+        TransactionFactory(
+            pay_object=pay_object, status=Transaction.PaymentStatus.PENDING
+        )
 
     assert pay_object.is_refunded == is_refunded
 
@@ -104,9 +106,9 @@ def test_is_refunded(payment_values, has_pending, is_refunded):
 )
 def test_payable_refund(mailoutbox, can_be_refunded, send_email):
     pay_object = BookingFactory()
-    payment_1 = PaymentFactory(pay_object=pay_object)
-    payment_2 = PaymentFactory(pay_object=pay_object)
-    PaymentFactory()  # Payment not associated with booking
+    payment_1 = TransactionFactory(pay_object=pay_object)
+    payment_2 = TransactionFactory(pay_object=pay_object)
+    TransactionFactory()  # Payment not associated with booking
 
     with patch.object(
         Booking,

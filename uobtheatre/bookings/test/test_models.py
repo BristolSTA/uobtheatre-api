@@ -28,7 +28,7 @@ from uobtheatre.payments import payment_methods
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.payment_methods import SquarePOS
-from uobtheatre.payments.test.factories import PaymentFactory
+from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.productions.models import Production
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.users.test.factories import UserFactory
@@ -855,14 +855,14 @@ def test_booking_pay_deletes_pending_payments(mock_square):
     booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
 
     # Deleted
-    pending_payment = PaymentFactory(
+    pending_payment = TransactionFactory(
         status=Transaction.PaymentStatus.PENDING,
         pay_object=booking,
         provider=SquarePOS.name,
     )
 
     # Not deleted
-    completed_payment = PaymentFactory(
+    completed_payment = TransactionFactory(
         status=Transaction.PaymentStatus.COMPLETED, pay_object=booking
     )
 
@@ -1079,7 +1079,7 @@ def test_send_confirmation_email(mailoutbox, with_payment, provider_payment_id):
     booking.user.status.verified = True
 
     if with_payment:
-        PaymentFactory(
+        TransactionFactory(
             pay_object=booking,
             value=1000,
             provider=payment_methods.SquareOnline.name,

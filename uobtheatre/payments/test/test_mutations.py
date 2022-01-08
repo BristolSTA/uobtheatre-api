@@ -4,14 +4,14 @@ from graphql_relay.node.node import to_global_id
 from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payment_methods import SquarePOS
-from uobtheatre.payments.test.factories import PaymentFactory
+from uobtheatre.payments.test.factories import TransactionFactory
 
 
 @pytest.mark.django_db
 def test_cancel_payment_completed_payment(gql_client):
     gql_client.login()
     booking = BookingFactory(creator=gql_client.user)
-    payment = PaymentFactory(
+    payment = TransactionFactory(
         pay_object=booking,
         status=Transaction.PaymentStatus.COMPLETED,
         provider=SquarePOS.name,
@@ -48,7 +48,7 @@ def test_cancel_payment_completed_payment(gql_client):
 def test_cancel_payment_success(gql_client, mock_square):
     gql_client.login()
     booking = BookingFactory(creator=gql_client.user)
-    payment = PaymentFactory(
+    payment = TransactionFactory(
         pay_object=booking,
         status=Transaction.PaymentStatus.PENDING,
         provider=SquarePOS.name,
@@ -87,7 +87,7 @@ def test_cancel_payment_success(gql_client, mock_square):
 def test_cancel_payment_not_creator_of_booking(gql_client):
     gql_client.login()
     booking = BookingFactory()
-    payment = PaymentFactory(
+    payment = TransactionFactory(
         pay_object=booking,
         status=Transaction.PaymentStatus.PENDING,
         provider=SquarePOS.name,

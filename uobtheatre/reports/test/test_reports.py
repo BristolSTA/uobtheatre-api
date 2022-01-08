@@ -18,7 +18,7 @@ from uobtheatre.discounts.test.factories import (
 from uobtheatre.payments import payment_methods
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
-from uobtheatre.payments.test.factories import PaymentFactory
+from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.reports.reports import (
@@ -129,7 +129,7 @@ def create_fixtures():
         booking=booking_5, seat_group=seat_group_1, concession_type=concession_1
     )
 
-    payment_1 = PaymentFactory(
+    payment_1 = TransactionFactory(
         pay_object=booking_1,
         value=booking_1.total,
         provider=payment_methods.SquarePOS.name,
@@ -140,7 +140,7 @@ def create_fixtures():
     payment_1.created_at = "2021-09-08T00:00:01-00:00"
     payment_1.save()
 
-    payment_2 = PaymentFactory(
+    payment_2 = TransactionFactory(
         pay_object=booking_2,
         value=booking_2.total,
         provider=payment_methods.Cash.name,
@@ -149,20 +149,20 @@ def create_fixtures():
     payment_2.created_at = "2021-09-05T12:00:01-00:00"
     payment_2.save()
 
-    payment_3 = PaymentFactory(
+    payment_3 = TransactionFactory(
         pay_object=booking_3,
         value=booking_3.total,
     )
     payment_3.created_at = "2021-09-08T12:00:01-00:00"
     payment_3.save()
 
-    payment_4 = PaymentFactory(
+    payment_4 = TransactionFactory(
         pay_object=booking_5, value=booking_5.total, app_fee=5, provider_fee=2
     )
     payment_4.created_at = "2021-09-08T22:00:01-00:00"
     payment_4.save()
 
-    refund_1 = PaymentFactory(
+    refund_1 = TransactionFactory(
         pay_object=booking_5,
         value=-booking_5.total,
         provider=payment_methods.SquareRefund.name,
@@ -174,7 +174,7 @@ def create_fixtures():
     refund_1.save()
 
     # Create a pending payment (shouldn't show in reports)
-    PaymentFactory(status=Transaction.PaymentStatus.PENDING)
+    TransactionFactory(status=Transaction.PaymentStatus.PENDING)
 
     return (payment_1, payment_2, payment_3, payment_4, refund_1)
 
