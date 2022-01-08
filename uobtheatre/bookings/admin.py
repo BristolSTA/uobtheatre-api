@@ -20,7 +20,7 @@ class SeatBookingInline(admin.StackedInline):
     extra = 1
 
 
-class PaymentsInline(GenericTabularInline, ReadOnlyInlineMixin):
+class TransactionInline(GenericTabularInline, ReadOnlyInlineMixin):
     model = Transaction
     ct_fk_field = "pay_object_id"
     ct_field = "pay_object_type"
@@ -44,7 +44,7 @@ class BookingAdmin(DangerousAdminConfirmMixin, admin.ModelAdmin):
         "user__email",
     ]
     actions = ["issue_refund"]
-    inlines = [PaymentsInline, SeatBookingInline]
+    inlines = [TransactionInline, SeatBookingInline]
 
     @confirm_dangerous_action
     @admin.action(description="Issue refund", permissions=["change"])
