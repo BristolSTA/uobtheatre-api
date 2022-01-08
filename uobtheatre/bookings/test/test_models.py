@@ -856,14 +856,14 @@ def test_booking_pay_deletes_pending_payments(mock_square):
 
     # Deleted
     pending_payment = TransactionFactory(
-        status=Transaction.PaymentStatus.PENDING,
+        status=Transaction.Status.PENDING,
         pay_object=booking,
         provider=SquarePOS.name,
     )
 
     # Not deleted
     completed_payment = TransactionFactory(
-        status=Transaction.PaymentStatus.COMPLETED, pay_object=booking
+        status=Transaction.Status.COMPLETED, pay_object=booking
     )
 
     with mock_square(

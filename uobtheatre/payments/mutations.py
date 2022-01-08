@@ -25,7 +25,7 @@ class CancelPayment(AuthRequiredMixin, SafeMutation):
     @classmethod
     def resolve_mutation(cls, _, info, payment_id):
         payment = Transaction.objects.get(id=payment_id)
-        if not payment.status == Transaction.PaymentStatus.PENDING:
+        if not payment.status == Transaction.Status.PENDING:
             raise GQLException(
                 "A payment must be in progress to be canceled.",
                 code=400,

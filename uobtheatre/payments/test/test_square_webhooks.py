@@ -261,7 +261,7 @@ def test_handle_refund_update_webhook(rest_client):
     payment = TransactionFactory(
         provider_payment_id="xwo62Kt4WIOAh9LrczZxzbQbIZCZY_RVpsRbbUP3LmklUotq0kfiJnn1jDOqhNHymoqa6iDpd",
         provider_fee=0,
-        type=Transaction.PaymentType.REFUND,
+        type=Transaction.Type.REFUND,
         provider=SquareRefund.name,
     )
 
@@ -276,4 +276,4 @@ def test_handle_refund_update_webhook(rest_client):
     payment.refresh_from_db()
     assert response.status_code == 200
     assert payment.provider_fee == -7
-    assert payment.status == Transaction.PaymentStatus.COMPLETED
+    assert payment.status == Transaction.Status.COMPLETED

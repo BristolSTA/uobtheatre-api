@@ -976,7 +976,7 @@ def test_sales_breakdown_production():
         app_fee=-200,
         value=-600,
         provider=Card.name,
-        type=Transaction.PaymentType.REFUND,
+        type=Transaction.Type.REFUND,
     )
     TransactionFactory(
         pay_object=booking_2,

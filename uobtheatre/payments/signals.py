@@ -34,6 +34,6 @@ def on_payment_save_callback(payment_instance: Transaction):
         return
 
     # If the payment is of type refund, ensure that the pay_object is marked locked
-    if payment_instance.type == Transaction.PaymentType.REFUND:
+    if payment_instance.type == Transaction.Type.REFUND:
         payment_instance.pay_object.status = Payable.PayableStatus.LOCKED
         payment_instance.pay_object.save()

@@ -79,20 +79,18 @@ def test_society_transfer_value():
 )
 def test_is_refunded(payment_values, has_pending, is_refunded):
     # Create some payments for different payobjects
-    [TransactionFactory(status=Transaction.PaymentStatus.COMPLETED) for _ in range(10)]
+    [TransactionFactory(status=Transaction.Status.COMPLETED) for _ in range(10)]
 
     pay_object = BookingFactory()
     [
         TransactionFactory(
-            value=value, type=Transaction.PaymentType.PAYMENT, pay_object=pay_object
+            value=value, type=Transaction.Type.PAYMENT, pay_object=pay_object
         )
         for value in payment_values
     ]
 
     if has_pending:
-        TransactionFactory(
-            pay_object=pay_object, status=Transaction.PaymentStatus.PENDING
-        )
+        TransactionFactory(pay_object=pay_object, status=Transaction.Status.PENDING)
 
     assert pay_object.is_refunded == is_refunded
 

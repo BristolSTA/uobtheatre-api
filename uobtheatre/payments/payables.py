@@ -55,7 +55,7 @@ class Payable(models.Model, metaclass=AbstractModelMeta):  # type: ignore
         completed.
         """
         # If any pending payments exist for this payment's pay_object then it cannot be refunded
-        if self.transactions.filter(status=Transaction.PaymentStatus.PENDING).exists():
+        if self.transactions.filter(status=Transaction.Status.PENDING).exists():
             return False
 
         # Check that the total sum of ALL payments is equal to zero
@@ -76,9 +76,7 @@ class Payable(models.Model, metaclass=AbstractModelMeta):  # type: ignore
                 f"{self.__class__.__name__} ({self}) cannot be refunded"
             )
 
-        for payment in self.transactions.filter(
-            type=Transaction.PaymentType.PAYMENT
-        ).all():
+        for payment in self.transactions.filter(type=Transaction.Type.PAYMENT).all():
             payment.refund()
 
         if send_admin_email:

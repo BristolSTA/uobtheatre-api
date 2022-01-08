@@ -92,7 +92,7 @@ class PeriodTotalsBreakdown(Report):
 
         payments = Transaction.objects.filter(
             created_at__gt=start,
-            status=Transaction.PaymentStatus.COMPLETED,
+            status=Transaction.Status.COMPLETED,
             created_at__lt=end,
         ).prefetch_related("pay_object__performance__production__society")
 

@@ -66,7 +66,7 @@ def test_manual_refund_method_refund():
         provider_fee=10,
         app_fee=20,
         provider=Cash.name,
-        status=Transaction.PaymentStatus.COMPLETED,
+        status=Transaction.Status.COMPLETED,
     )
     ManualRefund().refund(refund_payment)
 
@@ -77,7 +77,7 @@ def test_manual_refund_method_refund():
     assert payment.app_fee == -20
     assert payment.provider_fee == -10
     assert payment.provider == ManualRefund.name
-    assert payment.type == Transaction.PaymentType.REFUND
+    assert payment.type == Transaction.Type.REFUND
 
 
 ###
@@ -119,7 +119,7 @@ def test_square_refund_refund(mock_square):
         None,
         provider_payment_id="abc",
         currency="GBP",
-        status=Transaction.PaymentStatus.PENDING,
+        status=Transaction.Status.PENDING,
     )
     mock.assert_called_once_with(
         {
@@ -141,9 +141,7 @@ def test_square_refund_refund(mock_square):
     ],
 )
 def test_square_online_sync_transaction(data_fees, data_status):
-    payment = TransactionFactory(
-        status=Transaction.PaymentStatus.PENDING, provider_fee=None
-    )
+    payment = TransactionFactory(status=Transaction.Status.PENDING, provider_fee=None)
 
     data = {
         "status": data_status,
@@ -161,9 +159,9 @@ def test_square_online_sync_transaction(data_fees, data_status):
 
     payment.refresh_from_db()
     if data_status == "COMPLETED":
-        assert payment.status == Transaction.PaymentStatus.COMPLETED
+        assert payment.status == Transaction.Status.COMPLETED
     else:
-        assert payment.status == Transaction.PaymentStatus.PENDING
+        assert payment.status == Transaction.Status.PENDING
 
     if data_fees:
         assert payment.provider_fee == sum(data_fees)
@@ -178,7 +176,7 @@ def test_square_refund_sync_payment(mock_square, with_data):
         value=-100,
         provider_fee=None,
         provider=SquareRefund.name,
-        status=Transaction.PaymentStatus.PENDING,
+        status=Transaction.Status.PENDING,
     )
     data = {
         "id": "abc",
@@ -194,4 +192,4 @@ def test_square_refund_sync_payment(mock_square, with_data):
         payment.sync_payment_with_provider(data=data if with_data else None)
         payment.refresh_from_db()
     assert payment.provider_fee == -10
-    assert payment.status == Transaction.PaymentStatus.COMPLETED
+    assert payment.status == Transaction.Status.COMPLETED

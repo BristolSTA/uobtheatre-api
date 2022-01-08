@@ -128,7 +128,7 @@ class PaymentMethod(TransactionMethod, abc.ABC):
             pay_object,
             value,
             app_fee,
-            type=payment_models.Transaction.PaymentType.PAYMENT,
+            type=payment_models.Transaction.Type.PAYMENT,
             **kwargs,
         )
         return payment
@@ -185,7 +185,7 @@ class RefundMethod(TransactionMethod, abc.ABC):
             pay_object,
             value,
             app_fee,
-            type=payment_models.Transaction.PaymentType.REFUND,
+            type=payment_models.Transaction.Type.REFUND,
             **kwargs,
         )
         return payment
@@ -300,7 +300,7 @@ class ManualRefund(RefundMethod):
             -payment.value,
             -payment.app_fee if payment.app_fee else None,
             provider_fee=-payment.provider_fee if payment.provider_fee else None,
-            status=payment_models.Transaction.PaymentStatus.COMPLETED,
+            status=payment_models.Transaction.Status.COMPLETED,
         )
 
 
@@ -333,7 +333,7 @@ class SquareRefund(RefundMethod, SquareAPIMixin):
             -payment.app_fee if payment.app_fee else None,
             provider_payment_id=square_refund_id,
             currency=amount_details["currency"],
-            status=payment_models.Transaction.PaymentStatus.PENDING,
+            status=payment_models.Transaction.Status.PENDING,
         )
 
     @classmethod
@@ -350,7 +350,7 @@ class SquareRefund(RefundMethod, SquareAPIMixin):
     @classmethod
     def _fill_payment_from_response_object(cls, payment, response_object):
         """Updates and fills a payment model from a refund response object"""
-        payment.status = payment_models.Transaction.PaymentStatus.from_square_status(
+        payment.status = payment_models.Transaction.Status.from_square_status(
             response_object["status"]
         )
         if processing_fees := response_object.get("processing_fee"):
@@ -452,7 +452,7 @@ class SquarePOS(PaymentMethod, SquarePaymentMethod):
             app_fee,
             provider_payment_id=response.body["checkout"]["id"],
             currency="GBP",
-            status=payment_models.Transaction.PaymentStatus.PENDING,
+            status=payment_models.Transaction.Status.PENDING,
         )
 
     @classmethod
@@ -474,7 +474,7 @@ class SquarePOS(PaymentMethod, SquarePaymentMethod):
                 provider_payment_id=checkout["id"]
             )
 
-            payment.status = payment_models.Transaction.PaymentStatus.COMPLETED
+            payment.status = payment_models.Transaction.Status.COMPLETED
             payment.save()
             booking.complete()
 
@@ -483,7 +483,7 @@ class SquarePOS(PaymentMethod, SquarePaymentMethod):
             payment_models.Transaction.objects.filter(
                 provider_payment_id=checkout["id"],
                 provider=SquarePOS.name,
-                status=payment_models.Transaction.PaymentStatus.PENDING,
+                status=payment_models.Transaction.Status.PENDING,
             ).delete()
 
     @classmethod
@@ -559,7 +559,7 @@ class SquarePOS(PaymentMethod, SquarePaymentMethod):
                 ],
             )
         )
-        payment.status = payment_models.Transaction.PaymentStatus.from_square_status(
+        payment.status = payment_models.Transaction.Status.from_square_status(
             checkout["status"]
         )
         payment.save()
@@ -650,7 +650,7 @@ class SquareOnline(Refundable, PaymentMethod, SquarePaymentMethod):
         if data is None:
             data = cls.get_payment(payment_id)
         payment.provider_fee = cls.payment_processing_fee(data)
-        payment.status = payment_models.Transaction.PaymentStatus.from_square_status(
+        payment.status = payment_models.Transaction.Status.from_square_status(
             data["status"]
         )
         payment.save()

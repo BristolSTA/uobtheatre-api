@@ -524,15 +524,13 @@ class Booking(TimeStampedMixin, Payable):
             Payment: The payment created by the checkout (optional)
         """
         # Cancel and delete pending payments for this booking
-        for payment in self.transactions.filter(
-            status=Transaction.PaymentStatus.PENDING
-        ):
+        for payment in self.transactions.filter(status=Transaction.Status.PENDING):
             payment.cancel()
 
         payment = payment_method.pay(self.total, self.misc_costs_value(), self)
 
         # If a payment is created set the booking as paid
-        if payment.status == Transaction.PaymentStatus.COMPLETED:
+        if payment.status == Transaction.Status.COMPLETED:
             self.complete()
 
         return payment

@@ -108,8 +108,8 @@ def test_generate_name(input_name, expected_output_name):
 @pytest.mark.parametrize(
     "payment_method, expected_type",
     [
-        (SquareOnline, Transaction.PaymentType.PAYMENT),
-        (SquareRefund, Transaction.PaymentType.REFUND),
+        (SquareOnline, Transaction.Type.PAYMENT),
+        (SquareRefund, Transaction.Type.REFUND),
     ],
 )
 def test_create_payment_object(payment_method, expected_type):
@@ -172,8 +172,8 @@ def test_square_online_pay_success(mock_square):
     assert payment.last_4 == "1234"
     assert payment.provider_payment_id == "abc"
     assert payment.provider == "SQUARE_ONLINE"
-    assert payment.type == Transaction.PaymentType.PAYMENT
-    assert payment.status == Transaction.PaymentStatus.COMPLETED
+    assert payment.type == Transaction.Type.PAYMENT
+    assert payment.status == Transaction.Status.COMPLETED
     assert payment.app_fee == 10
 
     assert payment.provider_fee is None
@@ -202,7 +202,7 @@ def test_square_online_pay_failure(mock_square):
 @pytest.mark.django_db
 def test_square_online_sync_payment(mock_square):
     payment = TransactionFactory(
-        value=100, provider_fee=None, status=Transaction.PaymentStatus.PENDING
+        value=100, provider_fee=None, status=Transaction.Status.PENDING
     )
     with mock_square(
         SquareOnline.client.payments,
@@ -221,7 +221,7 @@ def test_square_online_sync_payment(mock_square):
         payment.sync_payment_with_provider()
         payment.refresh_from_db()
     assert payment.provider_fee == -10
-    assert payment.status == Transaction.PaymentStatus.COMPLETED
+    assert payment.status == Transaction.Status.COMPLETED
 
 
 ###
@@ -253,7 +253,7 @@ def test_square_pos_pay_success(mock_square):
 
     payment = Transaction.objects.first()
     assert payment.value == 100
-    assert payment.status == Transaction.PaymentStatus.PENDING
+    assert payment.status == Transaction.Status.PENDING
     assert payment.app_fee == 14
     assert payment.provider_fee is None
     assert payment.provider_payment_id == "ScegTcoaJ0kqO"
@@ -323,7 +323,7 @@ def test_handle_terminal_checkout_updated_webhook_completed():
     assert Transaction.objects.count() == 1
 
     payment = Transaction.objects.first()
-    assert payment.status == Transaction.PaymentStatus.COMPLETED
+    assert payment.status == Transaction.Status.COMPLETED
 
 
 @pytest.mark.django_db
@@ -350,7 +350,7 @@ def test_handle_terminal_checkout_updated_canceled():
     payment = TransactionFactory(
         provider_payment_id="abc",
         provider=SquarePOS.name,
-        status=Transaction.PaymentStatus.PENDING,
+        status=Transaction.Status.PENDING,
     )
     data = {
         "object": {
@@ -439,7 +439,7 @@ def test_square_pos_sync_payment():
     payment = TransactionFactory(
         value=100,
         provider_fee=None,
-        status=Transaction.PaymentStatus.PENDING,
+        status=Transaction.Status.PENDING,
         provider=SquarePOS.name,
         provider_payment_id="abc",
     )
@@ -465,7 +465,7 @@ def test_square_pos_sync_payment():
         get_payment_mock.assert_called_once_with("abc123")
         payment.refresh_from_db()
     assert payment.provider_fee == -10
-    assert payment.status == Transaction.PaymentStatus.COMPLETED
+    assert payment.status == Transaction.Status.COMPLETED
 
 
 ###
@@ -602,7 +602,7 @@ def test_manual_pay(payment_method, value, expected_method_str):
     assert payment.value == value
     assert payment.currency == "GBP"
     assert payment.provider == expected_method_str
-    assert payment.type == Transaction.PaymentType.PAYMENT
+    assert payment.type == Transaction.Type.PAYMENT
     assert payment.app_fee == 12
 
 

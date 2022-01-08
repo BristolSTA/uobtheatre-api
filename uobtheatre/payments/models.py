@@ -47,13 +47,13 @@ class Transaction(TimeStampedMixin, models.Model):
     created. This stores the key information about the transaction.
     """
 
-    class PaymentType(models.TextChoices):
+    class Type(models.TextChoices):
         """Whether the payment was a refund or purchase."""
 
         PAYMENT = "PAYMENT", "Payment"
         REFUND = "REFUND", "Refund"
 
-    class PaymentStatus(models.TextChoices):
+    class Status(models.TextChoices):
         """The status of the payment."""
 
         PENDING = "PENDING", "In progress"
@@ -95,13 +95,13 @@ class Transaction(TimeStampedMixin, models.Model):
 
     type = models.CharField(
         max_length=20,
-        choices=PaymentType.choices,
-        default=PaymentType.PAYMENT,
+        choices=Type.choices,
+        default=Type.PAYMENT,
     )
     status: TextChoices = models.CharField(
         max_length=20,
-        choices=PaymentStatus.choices,
-        default=PaymentStatus.COMPLETED,
+        choices=Status.choices,
+        default=Status.COMPLETED,
     )  # type: ignore
 
     provider_payment_id = models.CharField(max_length=128, null=True, blank=True)
@@ -205,7 +205,7 @@ class Transaction(TimeStampedMixin, models.Model):
             data (dict): The body of the square webhook
         """
         payment = Transaction.objects.get(
-            provider_payment_id=provider_payment_id, type=Transaction.PaymentType.REFUND
+            provider_payment_id=provider_payment_id, type=Transaction.Type.REFUND
         )
         payment.sync_payment_with_provider(data)
 
@@ -220,13 +220,13 @@ class Transaction(TimeStampedMixin, models.Model):
         This is currently only possible for SquarePOS payments that are
         pending.
         """
-        if self.status == Transaction.PaymentStatus.PENDING:
+        if self.status == Transaction.Status.PENDING:
             self.provider_class.cancel(self)
             self.delete()
 
     def can_be_refunded(self, raises=False):
         """If the payment can be refunded either automatically or manually"""
-        if self.status != Transaction.PaymentStatus.COMPLETED:
+        if self.status != Transaction.Status.COMPLETED:
             if raises:
                 raise PaymentException(
                     f"A {self.status.label.lower()} payment can't refunded"
@@ -256,13 +256,13 @@ TOTAL_PROVIDER_FEE = Coalesce(
 )
 NET_TOTAL = Sum("value")
 NET_CARD_TOTAL = Sum("value", filter=(~Q(provider=Cash.name)))
-TOTAL_SALES = Sum("value", filter=Q(type=Transaction.PaymentType.PAYMENT))
+TOTAL_SALES = Sum("value", filter=Q(type=Transaction.Type.PAYMENT))
 TOTAL_CARD_SALES = Sum(
-    "value", filter=(~Q(provider=Cash.name) & Q(type=Transaction.PaymentType.PAYMENT))
+    "value", filter=(~Q(provider=Cash.name) & Q(type=Transaction.Type.PAYMENT))
 )
-TOTAL_REFUNDS = Sum("value", filter=Q(type=Transaction.PaymentType.REFUND))
+TOTAL_REFUNDS = Sum("value", filter=Q(type=Transaction.Type.REFUND))
 TOTAL_CARD_REFUNDS = Sum(
-    "value", filter=(~Q(provider=Cash.name) & Q(type=Transaction.PaymentType.REFUND))
+    "value", filter=(~Q(provider=Cash.name) & Q(type=Transaction.Type.REFUND))
 )
 APP_FEE = Coalesce(Sum("app_fee"), 0)
 

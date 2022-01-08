@@ -23,8 +23,8 @@ def test_payment_model_post_save_status_update(mailoutbox):
         refund_payment = TransactionFactory(
             value=-200,
             pay_object=booking,
-            type=Transaction.PaymentType.REFUND,
-            status=Transaction.PaymentStatus.PENDING,
+            type=Transaction.Type.REFUND,
+            status=Transaction.Status.PENDING,
         )
         mock.assert_called_once()
 
@@ -36,7 +36,7 @@ def test_payment_model_post_save_status_update(mailoutbox):
         "uobtheatre.payments.signals.on_payment_save_callback",
         wraps=on_payment_save_callback,
     ) as mock:
-        refund_payment.status = Transaction.PaymentStatus.COMPLETED
+        refund_payment.status = Transaction.Status.COMPLETED
         refund_payment.save()
         mock.assert_called_once()
     assert len(mailoutbox) == 1  # Email confirming successful refund

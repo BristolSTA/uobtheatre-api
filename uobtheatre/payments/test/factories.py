@@ -10,7 +10,7 @@ from uobtheatre.payments.models import Transaction
 class TransactionFactory(factory.django.DjangoModelFactory):
 
     pay_object = factory.SubFactory(BookingFactory)
-    type = Transaction.PaymentType.PAYMENT
+    type = Transaction.Type.PAYMENT
     provider = payment_methods.SquareOnline.name
     value = factory.Faker("pyint", min_value=0)
     currency = "GBP"

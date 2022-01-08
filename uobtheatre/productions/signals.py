@@ -29,7 +29,7 @@ def check_production_status_validation(production_instance: Production):
         # Get number of performances that have payments that are not complete
         num_performances_with_uncomplete_payments = (
             production_instance.performances.filter(
-                bookings__transactions__status=Transaction.PaymentStatus.PENDING
+                bookings__transactions__status=Transaction.Status.PENDING
             ).count()
         )
         if num_performances_with_uncomplete_payments > 0:

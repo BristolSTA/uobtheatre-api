@@ -12,9 +12,9 @@ from uobtheatre.productions.models import Production
 def test_production_pre_save_closed_signal(with_pending_payment):
     payment = TransactionFactory(
         pay_object=BookingFactory(),
-        status=Transaction.PaymentStatus.PENDING
+        status=Transaction.Status.PENDING
         if with_pending_payment
-        else Transaction.PaymentStatus.COMPLETED,
+        else Transaction.Status.COMPLETED,
     )
 
     # Create a payment that is always complete

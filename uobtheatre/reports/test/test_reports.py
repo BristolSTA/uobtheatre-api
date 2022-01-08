@@ -166,7 +166,7 @@ def create_fixtures():
         pay_object=booking_5,
         value=-booking_5.total,
         provider=payment_methods.SquareRefund.name,
-        type=Transaction.PaymentType.REFUND,
+        type=Transaction.Type.REFUND,
         app_fee=-5,
         provider_fee=-2,
     )
@@ -174,7 +174,7 @@ def create_fixtures():
     refund_1.save()
 
     # Create a pending payment (shouldn't show in reports)
-    TransactionFactory(status=Transaction.PaymentStatus.PENDING)
+    TransactionFactory(status=Transaction.Status.PENDING)
 
     return (payment_1, payment_2, payment_3, payment_4, refund_1)
 
