@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 import factory
 
 from uobtheatre.bookings.test.factories import BookingFactory
-from uobtheatre.payments import payment_methods
+from uobtheatre.payments import transaction_providers
 from uobtheatre.payments.models import Transaction
 
 
@@ -11,7 +11,7 @@ class TransactionFactory(factory.django.DjangoModelFactory):
 
     pay_object = factory.SubFactory(BookingFactory)
     type = Transaction.Type.PAYMENT
-    provider_name = payment_methods.SquareOnline.name
+    provider_name = transaction_providers.SquareOnline.name
     value = factory.Faker("pyint", min_value=0)
     currency = "GBP"
     card_brand = "MASTERCARD"

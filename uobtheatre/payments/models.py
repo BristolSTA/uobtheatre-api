@@ -8,8 +8,8 @@ from django.db.models.enums import TextChoices
 from django.db.models.functions import Coalesce
 from django.db.models.query import QuerySet
 
-from uobtheatre.payments import payment_methods
-from uobtheatre.payments.payment_methods import (
+from uobtheatre.payments import transaction_providers
+from uobtheatre.payments.transaction_providers import (
     Cash,
     PaymentProvider,
     Refundable,
@@ -106,7 +106,7 @@ class Transaction(TimeStampedMixin, models.Model):
 
     provider_transaction_id = models.CharField(max_length=128, null=True, blank=True)
     provider_name = models.CharField(
-        max_length=20, choices=payment_methods.TransactionProvider.choices  # type: ignore
+        max_length=20, choices=transaction_providers.TransactionProvider.choices  # type: ignore
     )
 
     value = models.IntegerField()
@@ -159,7 +159,7 @@ class Transaction(TimeStampedMixin, models.Model):
         Returns:
             string, optional: url to provider's payment reference
         """
-        if self.provider_name == payment_methods.SquareOnline.name:
+        if self.provider_name == transaction_providers.SquareOnline.name:
             return f"https://squareupsandbox.com/dashboard/sales/transactions/{self.provider_transaction_id}"
         return None
 

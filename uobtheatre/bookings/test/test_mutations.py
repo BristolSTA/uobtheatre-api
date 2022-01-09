@@ -20,7 +20,7 @@ from uobtheatre.bookings.test.factories import (
 from uobtheatre.discounts.test.factories import ConcessionTypeFactory
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
-from uobtheatre.payments.payment_methods import SquareOnline, SquarePOS
+from uobtheatre.payments.transaction_providers import SquareOnline, SquarePOS
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.models import User
 from uobtheatre.users.test.factories import UserFactory

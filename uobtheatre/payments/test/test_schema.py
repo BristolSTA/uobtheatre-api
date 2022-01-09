@@ -3,8 +3,8 @@ from graphql_relay.node.node import to_global_id
 from guardian.shortcuts import assign_perm
 
 from uobtheatre.bookings.test.factories import BookingFactory
-from uobtheatre.payments.payment_methods import SquarePOS
 from uobtheatre.payments.test.factories import TransactionFactory
+from uobtheatre.payments.transaction_providers import SquarePOS
 from uobtheatre.productions.test.factories import PerformanceFactory
 
 

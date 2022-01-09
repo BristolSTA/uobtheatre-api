@@ -6,9 +6,9 @@ import pytest
 from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
-from uobtheatre.payments.payment_methods import SquareRefund
 from uobtheatre.payments.square_webhooks import SquareWebhooks
 from uobtheatre.payments.test.factories import TransactionFactory
+from uobtheatre.payments.transaction_providers import SquareRefund
 
 TEST_TERMINAL_CHECKOUT_PAYLOAD = {
     "merchant_id": "ML8M1AQ1GQG2K",

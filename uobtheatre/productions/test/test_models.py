@@ -24,8 +24,8 @@ from uobtheatre.discounts.test.factories import (
 from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
-from uobtheatre.payments.payment_methods import Card, Cash, SquareOnline
 from uobtheatre.payments.test.factories import TransactionFactory
+from uobtheatre.payments.transaction_providers import Card, Cash, SquareOnline
 from uobtheatre.productions.models import Performance, PerformanceSeatGroup, Production
 from uobtheatre.productions.test.factories import (
     AudienceWarningFactory,

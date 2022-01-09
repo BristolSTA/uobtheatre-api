@@ -4,7 +4,8 @@ from uuid import uuid4
 import pytest
 
 from uobtheatre.payments.models import Transaction
-from uobtheatre.payments.payment_methods import (
+from uobtheatre.payments.test.factories import TransactionFactory
+from uobtheatre.payments.transaction_providers import (
     Card,
     Cash,
     ManualRefund,
@@ -13,7 +14,6 @@ from uobtheatre.payments.payment_methods import (
     SquareOnline,
     SquareRefund,
 )
-from uobtheatre.payments.test.factories import TransactionFactory
 
 
 def test_refund_method_all():

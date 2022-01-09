@@ -7,7 +7,12 @@ from uobtheatre.bookings.models import Booking, Ticket, max_tickets_per_booking
 from uobtheatre.bookings.schema import BookingNode
 from uobtheatre.discounts.models import ConcessionType
 from uobtheatre.payments.payables import Payable
-from uobtheatre.payments.payment_methods import Card, Cash, SquareOnline, SquarePOS
+from uobtheatre.payments.transaction_providers import (
+    Card,
+    Cash,
+    SquareOnline,
+    SquarePOS,
+)
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.users.models import User
 from uobtheatre.utils.exceptions import (

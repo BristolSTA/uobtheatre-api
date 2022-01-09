@@ -4,7 +4,7 @@ from graphene_django import DjangoObjectType
 
 from uobtheatre.bookings.schema import BookingNode
 from uobtheatre.payments.models import Transaction
-from uobtheatre.payments.payment_methods import PaymentProvider, SquarePOS
+from uobtheatre.payments.transaction_providers import PaymentProvider, SquarePOS
 from uobtheatre.users.abilities import OpenBoxoffice
 from uobtheatre.utils.enums import GrapheneEnumMixin
 from uobtheatre.utils.filters import FilterSet

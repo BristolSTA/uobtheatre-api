@@ -9,7 +9,7 @@ from uobtheatre.bookings.test.factories import (
     ValueMiscCostFactory,
 )
 from uobtheatre.payments.models import Transaction
-from uobtheatre.payments.payment_methods import SquareOnline
+from uobtheatre.payments.transaction_providers import SquareOnline
 
 pytestmark = pytest.mark.system_test
 

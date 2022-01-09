@@ -3,8 +3,8 @@ from graphql_relay.node.node import to_global_id
 
 from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.payments.models import Transaction
-from uobtheatre.payments.payment_methods import SquarePOS
 from uobtheatre.payments.test.factories import TransactionFactory
+from uobtheatre.payments.transaction_providers import SquarePOS
 
 
 @pytest.mark.django_db

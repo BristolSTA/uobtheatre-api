@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from uobtheatre.payments.models import Transaction
-from uobtheatre.payments.payment_methods import SquarePOS
+from uobtheatre.payments.transaction_providers import SquarePOS
 
 
 class SquareWebhooks(APIView):

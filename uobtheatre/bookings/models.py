@@ -23,7 +23,7 @@ from uobtheatre.utils.utils import combinations, create_short_uuid
 from uobtheatre.venues.models import Seat, SeatGroup
 
 if TYPE_CHECKING:
-    from uobtheatre.payments.payment_methods import PaymentProvider
+    from uobtheatre.payments.transaction_providers import PaymentProvider
 
 
 class MiscCost(models.Model):

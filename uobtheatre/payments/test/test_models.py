@@ -4,16 +4,16 @@ from unittest.mock import PropertyMock, patch
 import pytest
 
 from uobtheatre.payments.models import Transaction
-from uobtheatre.payments.payment_methods import (
-    Cash,
-    SquareOnline,
-    SquarePOS,
-    SquareRefund,
-)
 from uobtheatre.payments.test.factories import (
     TransactionFactory,
     mock_payment_method,
     mock_refund_method,
+)
+from uobtheatre.payments.transaction_providers import (
+    Cash,
+    SquareOnline,
+    SquarePOS,
+    SquareRefund,
 )
 from uobtheatre.utils.exceptions import PaymentException
 
@@ -249,7 +249,7 @@ def test_handle_update_refund_webhook():
         provider_name=SquareRefund.name,
     )
     with patch(
-        "uobtheatre.payments.payment_methods.SquareRefund.sync_transaction",
+        "uobtheatre.payments.transaction_providers.SquareRefund.sync_transaction",
         return_value=None,
     ) as update_mock:
         Transaction.handle_update_refund_webhook("abc", {"id": "abc"})

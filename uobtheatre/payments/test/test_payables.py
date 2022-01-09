@@ -6,8 +6,8 @@ from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Transaction
-from uobtheatre.payments.payment_methods import Card, Cash, SquareOnline
 from uobtheatre.payments.test.factories import TransactionFactory
+from uobtheatre.payments.transaction_providers import Card, Cash, SquareOnline
 from uobtheatre.users.test.factories import UserFactory
 
 

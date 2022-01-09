@@ -15,7 +15,7 @@ from uobtheatre.discounts.test.factories import (
     ConcessionTypeFactory,
     DiscountRequirementFactory,
 )
-from uobtheatre.payments import payment_methods
+from uobtheatre.payments import transaction_providers
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.test.factories import TransactionFactory
@@ -133,7 +133,7 @@ def create_fixtures():
     payment_1 = TransactionFactory(
         pay_object=booking_1,
         value=booking_1.total,
-        provider_name=payment_methods.SquarePOS.name,
+        provider_name=transaction_providers.SquarePOS.name,
         provider_transaction_id="square_id",
         app_fee=booking_1.misc_costs_value(),
         provider_fee=10,
@@ -144,7 +144,7 @@ def create_fixtures():
     payment_2 = TransactionFactory(
         pay_object=booking_2,
         value=booking_2.total,
-        provider_name=payment_methods.Cash.name,
+        provider_name=transaction_providers.Cash.name,
         app_fee=booking_2.misc_costs_value(),
     )
     payment_2.created_at = "2021-09-05T12:00:01-00:00"
@@ -166,7 +166,7 @@ def create_fixtures():
     refund_1 = TransactionFactory(
         pay_object=booking_5,
         value=-booking_5.total,
-        provider_name=payment_methods.SquareRefund.name,
+        provider_name=transaction_providers.SquareRefund.name,
         type=Transaction.Type.REFUND,
         app_fee=-5,
         provider_fee=-2,

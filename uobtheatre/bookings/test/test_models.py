@@ -24,11 +24,11 @@ from uobtheatre.discounts.test.factories import (
     DiscountFactory,
     DiscountRequirementFactory,
 )
-from uobtheatre.payments import payment_methods
+from uobtheatre.payments import transaction_providers
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
-from uobtheatre.payments.payment_methods import SquarePOS
 from uobtheatre.payments.test.factories import TransactionFactory
+from uobtheatre.payments.transaction_providers import SquarePOS
 from uobtheatre.productions.models import Production
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.users.test.factories import UserFactory
@@ -1082,7 +1082,7 @@ def test_send_confirmation_email(mailoutbox, with_payment, provider_transaction_
         TransactionFactory(
             pay_object=booking,
             value=1000,
-            provider_name=payment_methods.SquareOnline.name,
+            provider_name=transaction_providers.SquareOnline.name,
             provider_transaction_id=provider_transaction_id,
         )
 

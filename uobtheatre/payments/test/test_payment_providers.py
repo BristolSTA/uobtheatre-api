@@ -5,7 +5,9 @@ import pytest
 from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
-from uobtheatre.payments.payment_methods import (
+from uobtheatre.payments.square_webhooks import SquareWebhooks
+from uobtheatre.payments.test.factories import TransactionFactory
+from uobtheatre.payments.transaction_providers import (
     Card,
     Cash,
     ManualRefund,
@@ -16,8 +18,6 @@ from uobtheatre.payments.payment_methods import (
     SquareRefund,
     TransactionProvider,
 )
-from uobtheatre.payments.square_webhooks import SquareWebhooks
-from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.utils.exceptions import PaymentException, SquareException
 
 
