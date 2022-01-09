@@ -145,11 +145,14 @@ class PaymentProvider(TransactionProvider, abc.ABC):
 
     @classmethod
     @property
-    def auto_refundable_payment_methods(cls) -> tuple[Type["Refundable"], ...]:
-        return tuple(
-            method
-            for method in cls.refundable_payment_methods  # type: ignore
-            if issubclass(method, Refundable) and method.is_auto_refundable
+    def auto_refundable_providers(cls) -> Optional["Refundable"]:
+        return next(
+            (
+                method
+                for method in cls.refundable_payment_methods  # type: ignore
+                if issubclass(method, Refundable) and method.is_auto_refundable
+            ),
+            None,
         )
 
 

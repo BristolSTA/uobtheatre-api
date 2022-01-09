@@ -333,10 +333,12 @@ def test_refund_payment(with_refund_method):
     ) as can_be_refunded_mock:
         args = {}
         if with_refund_method:
-            args["refund_method"] = other_refund_method
+            args["refund_provider"] = other_refund_method
         p_mock.return_value = mock_payment_method(
             is_refundable=True,
-            refund_method=other_refund_method if with_refund_method else refund_method,
+            automatic_refund_provider=other_refund_method
+            if with_refund_method
+            else refund_method,
         )
         payment.refund(**args)
 

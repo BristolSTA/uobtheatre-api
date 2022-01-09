@@ -231,6 +231,7 @@ class Transaction(TimeStampedMixin, models.Model):
             if raises:
                 raise PaymentException(f"A {self.type.label.lower()} can't be refunded")
             return False
+
         if self.status != Transaction.Status.COMPLETED:
             if raises:
                 raise PaymentException(
@@ -245,18 +246,18 @@ class Transaction(TimeStampedMixin, models.Model):
             return False
         return True
 
-    def refund(self, refund_method: RefundProvider = None):
+    def refund(self, refund_provider: RefundProvider = None):
         """Refund the payment"""
         self.can_be_refunded(raises=True)
 
-        if refund_method is None:
-            if not self.provider.auto_refundable_payment_methods:
+        if refund_provider is None:
+            # If no method is provided, use the default refund
+            if not (refund_provider := self.provider.automatic_refund_provider):
                 raise PaymentException(
                     f"A {self.provider_name} payment has no auto reundable payment method"
                 )
-            refund_method = self.provider.auto_refundable_payment_methods[0]
 
-        refund_method.refund(self)
+        refund_provider.refund(self)
 
 
 TOTAL_PROVIDER_FEE = Coalesce(
