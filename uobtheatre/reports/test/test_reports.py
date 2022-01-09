@@ -228,7 +228,7 @@ def test_require_option():
 
     with pytest.raises(GQLException) as exception:
         require_option(options, "MyOtherName")
-        assert exception.message == "You must supply the MyOtherName option"
+    assert exception.value.message == "You must supply the MyOtherName option"
 
 
 @pytest.mark.django_db
@@ -390,9 +390,9 @@ def test_outstanding_society_payments_report_production_no_society():
     ProductionFactory(id=1, status=Production.Status.CLOSED, society=None)
 
     with patch.object(Transaction, "sync_payments"):
-        with pytest.raises(Exception) as exception:
+        with pytest.raises(GQLException) as exception:
             OutstandingSocietyPayments()
-            assert exception.value == "Production 1 has no society"
+        assert exception.value.message == "Production 1 has no society"
 
 
 @pytest.mark.django_db

@@ -250,7 +250,11 @@ class Transaction(TimeStampedMixin, models.Model):
         self.can_be_refunded(raises=True)
 
         if refund_method is None:
-            refund_method = self.provider.refund_method
+            if not self.provider.auto_refundable_payment_methods:
+                raise PaymentException(
+                    f"A {self.provider_name} payment has no auto reundable payment method"
+                )
+            refund_method = self.provider.auto_refundable_payment_methods[0]
 
         refund_method.refund(self)
 

@@ -2066,13 +2066,17 @@ def test_pay_booking_when_free(gql_client):
 @pytest.mark.django_db
 def test_paybooking_unsupported_payment_provider(info):
     booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
+    ticket = TicketFactory(booking=booking)
+    PerformanceSeatingFactory(
+        performance=booking.performance, seat_group=ticket.seat_group
+    )
     assign_perm("boxoffice", info.context.user, booking.performance.production)
 
     with pytest.raises(GQLException) as exc:
         PayBooking.resolve_mutation(
             None, info, booking.id, booking.total, payment_provider="NOT_A_THING"
         )
-        assert exc.message == "Unsupported payment provider NOT_A_THING."
+    assert exc.value.message == "Unsupported payment provider NOT_A_THING."
 
 
 @pytest.mark.django_db
