@@ -225,7 +225,7 @@ class Transaction(TimeStampedMixin, models.Model):
             self.provider.cancel(self)
             self.delete()
 
-    def can_be_refunded(self, raises=False):
+    def can_be_refunded(self, refund_provider=None, raises=False):
         """If the payment can be refunded either automatically or manually"""
         if self.type != Transaction.Type.PAYMENT:
             if raises:
@@ -244,17 +244,26 @@ class Transaction(TimeStampedMixin, models.Model):
                     f"A {self.provider_name} payment can't be refunded"
                 )
             return False
+        if refund_provider is not None and not self.provider.is_valid_refund_provider(
+            refund_provider
+        ):
+            if raises:
+                raise PaymentException(
+                    f"Cannot use refund provider {refund_provider.name} with a {self.provider.name} payment"
+                )
+            return False
+
         return True
 
     def refund(self, refund_provider: RefundProvider = None):
         """Refund the payment"""
-        self.can_be_refunded(raises=True)
+        self.can_be_refunded(refund_provider=refund_provider, raises=True)
 
         if refund_provider is None:
-            # If no method is provided, use the default refund
+            # If no provider is provided, use the auto refund provider
             if not (refund_provider := self.provider.automatic_refund_provider):
                 raise PaymentException(
-                    f"A {self.provider_name} payment has no auto reundable payment method"
+                    f"A {self.provider_name} payment cannot be automatically refunded"
                 )
 
         refund_provider.refund(self)

@@ -145,14 +145,11 @@ class PaymentProvider(TransactionProvider, abc.ABC):
 
     @classmethod
     @property
-    def auto_refundable_providers(cls) -> Optional["Refundable"]:
-        return next(
-            (
-                method
-                for method in cls.refundable_payment_methods  # type: ignore
-                if issubclass(method, Refundable) and method.is_auto_refundable
-            ),
-            None,
+    def auto_refundable_providers(cls) -> tuple[Type["Refundable"], ...]:
+        return tuple(
+            method
+            for method in cls.refundable_payment_methods  # type: ignore
+            if issubclass(method, Refundable) and method.is_auto_refundable
         )
 
 
@@ -175,10 +172,6 @@ class RefundProvider(TransactionProvider, abc.ABC):
         This determines wether the refund method can be used without any
         interaction from the uob team.
         """
-
-    @abc.abstractmethod
-    def refund(self, payment: "payment_models.Transaction"):
-        pass
 
     @classmethod
     def create_payment_object(
@@ -207,6 +200,12 @@ class Refundable(abc.ABC):
     @abc.abstractmethod
     def refund_providers(cls) -> tuple[RefundProvider]:
         """A tuple of methods that can be used to refund payments"""
+
+    @classmethod
+    def is_valid_refund_provider(cls, provider: RefundProvider) -> bool:
+        return type(provider) in set(
+            type(provider) for provider in cls.refund_providers  # type: ignore
+        )
 
     @classmethod
     @property
@@ -319,6 +318,9 @@ class SquareRefund(RefundProvider, SquareAPIMixin):
         self.idempotency_key = idempotency_key
 
     def refund(self, payment: "payment_models.Transaction"):
+        """
+        Refund payment using square refund api
+        """
         body = {
             "idempotency_key": str(self.idempotency_key),
             "amount_money": {"amount": payment.value, "currency": payment.currency},

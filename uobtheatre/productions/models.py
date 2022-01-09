@@ -930,7 +930,8 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin):
         )
 
     def validate(self) -> Optional[ValidationErrors]:
-        return self.VALIDATOR.validate(self)
+        errors = self.VALIDATOR.validate(self)
+        return errors
 
     class Meta:
         ordering = ["id"]

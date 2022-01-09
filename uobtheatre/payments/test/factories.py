@@ -50,7 +50,10 @@ class MockApiResponse:
 
 
 def mock_payment_method(
-    is_refundable: bool = True, refund_providers=None, automatic_refund_provider=None
+    name="payment_method",
+    is_refundable: bool = True,
+    refund_providers=None,
+    automatic_refund_provider=None,
 ):
     """
     Mock of the payment method class.
@@ -58,6 +61,11 @@ def mock_payment_method(
 
     class MockPaymentMethod:  # pylint: disable=missing-class-docstring
         pay = MagicMock(return_value=Transaction())
+
+        @classmethod
+        @property
+        def name(cls):
+            return name
 
         @classmethod
         @property
@@ -77,8 +85,17 @@ def mock_payment_method(
     return MockPaymentMethod()
 
 
-def mock_refund_method():
-    class MockRefundMethod:  # pylint: disable=no-method-argument
+def mock_refund_method(name="refund_method"):
+    """
+    Mock of refund provider
+    """
+
+    class MockRefundMethod:  # pylint: disable=no-method-argument,missing-class-docstring
         refund = MagicMock(return_value=None)
+
+        @classmethod
+        @property
+        def name(cls):
+            return name
 
     return MockRefundMethod()

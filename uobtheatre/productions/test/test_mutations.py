@@ -15,7 +15,7 @@ from uobtheatre.productions.test.factories import PerformanceFactory, Production
 from uobtheatre.societies.test.factories import SocietyFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.utils.exceptions import AuthorizationException
-from uobtheatre.utils.validators import ValidationError
+from uobtheatre.utils.validators import ValidationError, ValidationErrors
 from uobtheatre.venues.test.factories import SeatGroupFactory, VenueFactory
 
 ###
@@ -563,10 +563,14 @@ def test_set_production_status_draft_errors(gql_client):
     ), patch.object(
         Production.VALIDATOR,
         "validate",
-        return_value=[
-            ValidationError(message="We need that thing."),
-            ValidationError(message="Something about the attribute", attribute="abc"),
-        ],
+        return_value=ValidationErrors(
+            [
+                ValidationError(message="We need that thing."),
+                ValidationError(
+                    message="Something about the attribute", attribute="abc"
+                ),
+            ]
+        ),
     ) as validator:
         response = gql_client.execute(query)
 

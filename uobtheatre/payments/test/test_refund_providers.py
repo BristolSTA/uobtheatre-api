@@ -31,7 +31,18 @@ def test_refundable_payment_methods():
 
 def test_auto_refundable_payment_methods():
     # type: ignore # pylint: disable=comparison-with-callable
-    assert PaymentProvider.auto_refundable_providers == SquareOnline
+    assert PaymentProvider.auto_refundable_providers == (SquareOnline,)
+
+
+@pytest.mark.parametrize(
+    "payment_provider, refund_provider, is_valid",
+    [
+        (SquareOnline, SquareRefund(idempotency_key="abc"), True),
+        (Cash, SquareRefund(idempotency_key="abc"), False),
+    ],
+)
+def test_is_valid_refund_provider(payment_provider, refund_provider, is_valid):
+    assert payment_provider.is_valid_refund_provider(refund_provider) == is_valid
 
 
 @pytest.mark.parametrize(

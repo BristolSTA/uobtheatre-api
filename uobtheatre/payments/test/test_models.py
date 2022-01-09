@@ -1,5 +1,5 @@
 from unittest import mock
-from unittest.mock import PropertyMock, patch
+from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
 
@@ -277,6 +277,43 @@ def test_cant_be_refunded_when_not_completed(status):
 
 
 @pytest.mark.django_db
+def test_cant_be_refunded_when_invalid_refund_provider():
+    transaction = TransactionFactory()
+    payment_method = mock_payment_method(name="payment_provider_name")
+    refund_provider = mock_refund_method(name="refund_provider_name")
+
+    with mock.patch(
+        "uobtheatre.payments.models.Transaction.provider",
+        new_callable=PropertyMock(return_value=payment_method),
+    ):
+        payment_method.is_valid_refund_provider = MagicMock(return_value=False)
+
+        transaction.can_be_refunded(refund_provider) is False
+        with pytest.raises(PaymentException) as exception:
+            transaction.can_be_refunded(refund_provider, raises=True)
+        assert (
+            exception.value.message
+            == "Cannot use refund provider refund_provider_name with a payment_provider_name payment"
+        )
+        payment_method.is_valid_refund_provider.assert_called_with(refund_provider)
+
+
+@pytest.mark.django_db
+def test_can_be_refunded_when_valid_refund_provider():
+    transaction = TransactionFactory()
+    payment_method = mock_payment_method(name="payment_provider_name")
+    refund_provider = mock_refund_method(name="refund_provider_name")
+
+    with mock.patch(
+        "uobtheatre.payments.models.Transaction.provider",
+        new_callable=PropertyMock(return_value=payment_method),
+    ):
+        payment_method.is_valid_refund_provider = MagicMock(return_value=True)
+        transaction.can_be_refunded(refund_provider, raises=True)
+        payment_method.is_valid_refund_provider.assert_called_with(refund_provider)
+
+
+@pytest.mark.django_db
 def test_cant_be_refunded_if_not_payment():
     transaction = TransactionFactory(
         status=Transaction.Status.COMPLETED, type=Transaction.Type.REFUND
@@ -319,41 +356,69 @@ def test_can_be_refunded():
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("with_refund_method", [True, False])
-def test_refund_payment(with_refund_method):
-    # TODO - Fix mocking of refund methods
+def test_refund_payment_with_provider():
+    """
+    When refund is called on a provider, check the refund method of the
+    provided refund provider is called.
+    """
     payment = TransactionFactory()
     refund_method = mock_refund_method()
-    other_refund_method = mock_refund_method()
+    default_refund_method = mock_refund_method()
     with mock.patch(
         "uobtheatre.payments.models.Transaction.provider",
         new_callable=PropertyMock,
     ) as p_mock, mock.patch.object(
         payment, "can_be_refunded", return_value=True
     ) as can_be_refunded_mock:
-        args = {}
-        if with_refund_method:
-            args["refund_provider"] = other_refund_method
         p_mock.return_value = mock_payment_method(
             is_refundable=True,
-            automatic_refund_provider=other_refund_method
-            if with_refund_method
-            else refund_method,
+            automatic_refund_provider=default_refund_method,
         )
-        payment.refund(**args)
+        payment.refund(refund_method)
 
-        can_be_refunded_mock.assert_called_once_with(raises=True)
+        # Assert we check it can be refunded
+        can_be_refunded_mock.assert_called_once_with(
+            refund_provider=refund_method, raises=True
+        )
 
-        # Assert correct refund method is called
-        if with_refund_method:
-            refund_method.refund.assert_not_called()
-            other_refund_method.refund.assert_called_once_with(payment)
-        else:
-            refund_method.refund.assert_called_once_with(payment)
-            other_refund_method.refund.assert_not_called()
+        # Assert the refund method on the correct provider is called
+        refund_method.refund.assert_called_once_with(payment)
+        default_refund_method.refund.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_refund_payment_with_default_provider():
+    payment = TransactionFactory()
+    refund_method = mock_refund_method()
+    with mock.patch(
+        "uobtheatre.payments.models.Transaction.provider",
+        new_callable=PropertyMock,
+    ) as p_mock, mock.patch.object(
+        payment, "can_be_refunded", return_value=True
+    ) as can_be_refunded_mock:
+        p_mock.return_value = mock_payment_method(
+            is_refundable=True,
+            automatic_refund_provider=refund_method,
+        )
+        payment.refund()
+
+        # Assert we check it can be refunded
+        can_be_refunded_mock.assert_called_once_with(refund_provider=None, raises=True)
+        refund_method.refund.assert_called_once_with(payment)
 
 
 @pytest.mark.django_db
 def test_refund_payment_with_no_auto_refund_method():
-    # TODO
-    pass
+    payment = TransactionFactory(provider_name="abc")
+    with mock.patch(
+        "uobtheatre.payments.models.Transaction.provider",
+        new_callable=PropertyMock,
+    ) as p_mock, mock.patch.object(payment, "can_be_refunded", return_value=True):
+        p_mock.return_value = mock_payment_method(
+            is_refundable=True, automatic_refund_provider=None
+        )
+
+        with pytest.raises(PaymentException) as exc:
+            payment.refund()
+
+        assert exc.value.message == "A abc payment cannot be automatically refunded"
