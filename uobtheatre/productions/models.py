@@ -27,6 +27,7 @@ from uobtheatre.utils.validators import (
     RelatedObjectsValidator,
     RequiredFieldsValidator,
     ValidationError,
+    ValidationErrors,
 )
 from uobtheatre.venues.models import SeatGroup, Venue
 
@@ -928,7 +929,7 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin):
             breakdowns
         )
 
-    def validate(self) -> list[ValidationError]:
+    def validate(self) -> Optional[ValidationErrors]:
         return self.VALIDATOR.validate(self)
 
     class Meta:

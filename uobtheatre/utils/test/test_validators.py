@@ -160,14 +160,14 @@ def test_realted_objects_validator_min_number(
         (1, None),
         (1.0, None),
         ("1", "A percentage must be a valid number"),
-        (1.1, "1.1 is not a valid percentage. A percentage must be between 0 and 1"),
-        (2, "2 is not a valid percentage. A percentage must be between 0 and 1"),
+        (1.1, "1.10 is not a valid percentage. A percentage must be between 0 and 1"),
+        (2, "2.00 is not a valid percentage. A percentage must be between 0 and 1"),
         (
             2.22222222,
             "2.22 is not a valid percentage. A percentage must be between 0 and 1",
         ),
-        (-0.1, "-0.1 is not a valid percentage. A percentage must be between 0 and 1"),
-        (-0.1, "-0.1 is not a valid percentage. A percentage must be between 0 and 1"),
+        (-0.1, "-0.10 is not a valid percentage. A percentage must be between 0 and 1"),
+        (-0.1, "-0.10 is not a valid percentage. A percentage must be between 0 and 1"),
     ],
 )
 def test_percentage_validator(percentage, error):
@@ -177,9 +177,9 @@ def test_percentage_validator(percentage, error):
     else:
         with pytest.raises(ValidationErrors) as exception:
             validator(percentage)
-            assert exception.exceptions.length == 1
-            assert exception.exceptions[0].message == error
-            assert exception.exceptions[0].field == "percentage"
+        assert len(exception.value.exceptions) == 1
+        assert exception.value.exceptions[0].message == error
+        assert exception.value.exceptions[0].attribute == "percentage"
 
 
 @pytest.mark.parametrize(

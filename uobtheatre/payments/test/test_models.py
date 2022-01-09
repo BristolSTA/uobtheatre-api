@@ -92,7 +92,7 @@ def test_update_payment_from_square_no_provider_id(mock_square):
         "get_payment",
     ) as mock_get, pytest.raises(PaymentException):
         payment.sync_payment_with_provider()
-        mock_get.assert_not_called()
+    mock_get.assert_not_called()
 
     assert payment.provider_fee == 0
 
@@ -321,6 +321,7 @@ def test_can_be_refunded():
 @pytest.mark.django_db
 @pytest.mark.parametrize("with_refund_method", [True, False])
 def test_refund_payment(with_refund_method):
+    # TODO - Fix mocking of refund methods
     payment = TransactionFactory()
     refund_method = mock_refund_method()
     other_refund_method = mock_refund_method()
@@ -348,3 +349,9 @@ def test_refund_payment(with_refund_method):
         else:
             refund_method.refund.assert_called_once_with(payment)
             other_refund_method.refund.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_refund_payment_with_no_auto_refund_method():
+    # TODO
+    pass

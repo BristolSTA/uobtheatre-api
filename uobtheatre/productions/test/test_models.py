@@ -1142,8 +1142,8 @@ def test_performance_refund_bookings(
         if not disabled:
             with pytest.raises(CantBeRefundedException) as exception:
                 test()
-                assert exception == f"{performance} is not set to disabled"
-                booking_refund.assert_not_called()
+            assert exception.value.message == f"{performance} is not set to disabled"
+            booking_refund.assert_not_called()
         else:
             test()
             assert booking_refund.call_count == (2 if bookings_can_refund else 0)
