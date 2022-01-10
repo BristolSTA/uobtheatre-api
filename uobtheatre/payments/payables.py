@@ -82,7 +82,7 @@ class Payable(models.Model, metaclass=AbstractModelMeta):  # type: ignore
         if send_admin_email:
             mail = payable_refund_initiated_email(authorizing_user, [self])
             mail_admins(
-                "Booking Refund Initiated",
+                f"{self.__class__.__name__} Refunds Initiated",
                 mail.to_plain_text(),
                 html_message=mail.to_html(),
             )
