@@ -1716,7 +1716,7 @@ def test_pay_booking_success(mock_square, gql_client):
               status {
                 value
               }
-              payments {
+              transactions {
                 edges {
                   node {
                     id
@@ -1771,12 +1771,13 @@ def test_pay_booking_success(mock_square, gql_client):
                     "status": {
                         "value": "PAID",
                     },
-                    "payments": {
+                    "transactions": {
                         "edges": [
                             {
                                 "node": {
                                     "id": to_global_id(
-                                        "PaymentNode", booking.transactions.first().id
+                                        "TransactionNode",
+                                        booking.transactions.first().id,
                                     )
                                 }
                             }
@@ -1826,7 +1827,7 @@ def test_pay_booking_success_square_pos(mock_square, gql_client):
               status {
                 value
               }
-              payments {
+              transactions {
                 edges {
                   node {
                     id
@@ -1879,9 +1880,13 @@ def test_pay_booking_success_square_pos(mock_square, gql_client):
                     "status": {
                         "value": "IN_PROGRESS",
                     },
-                    "payments": {
+                    "transactions": {
                         "edges": [
-                            {"node": {"id": to_global_id("PaymentNode", payment.id)}}
+                            {
+                                "node": {
+                                    "id": to_global_id("TransactionNode", payment.id)
+                                }
+                            }
                         ]
                     },
                 },
@@ -1923,7 +1928,7 @@ def test_pay_booking_manual(gql_client, payment_method):
               status {
                 value
               }
-              payments {
+              transactions {
                 edges {
                   node {
                     id
@@ -1956,12 +1961,12 @@ def test_pay_booking_manual(gql_client, payment_method):
                     "status": {
                         "value": "PAID",
                     },
-                    "payments": {
+                    "transactions": {
                         "edges": [
                             {
                                 "node": {
                                     "id": to_global_id(
-                                        "PaymentNode",
+                                        "TransactionNode",
                                         booking.transactions.first().id,
                                     )
                                 }
@@ -2040,7 +2045,7 @@ def test_pay_booking_when_free(gql_client):
             ) {
                 success
                 booking {
-                    payments {
+                    transactions {
                         edges {
                             node {
                                 id
@@ -2058,7 +2063,7 @@ def test_pay_booking_when_free(gql_client):
 
     assert response == {
         "data": {
-            "payBooking": {"success": True, "booking": {"payments": {"edges": []}}}
+            "payBooking": {"success": True, "booking": {"transactions": {"edges": []}}}
         }
     }
 

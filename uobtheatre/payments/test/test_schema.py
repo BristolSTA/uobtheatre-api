@@ -20,7 +20,7 @@ def test_payment_schema(gql_client):
             bookings {
               edges {
                 node {
-                  payments {
+                  transactions {
                     edges {
                       node {
                         id
@@ -67,12 +67,12 @@ def test_payment_schema(gql_client):
                     "edges": [
                         {
                             "node": {
-                                "payments": {
+                                "transactions": {
                                     "edges": [
                                         {
                                             "node": {
                                                 "id": to_global_id(
-                                                    "PaymentNode", payment.id
+                                                    "TransactionNode", payment.id
                                                 ),
                                                 "createdAt": payment.created_at.isoformat(),
                                                 "updatedAt": payment.updated_at.isoformat(),

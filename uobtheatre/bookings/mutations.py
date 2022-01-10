@@ -369,7 +369,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
 
     Returns:
         booking (BookingNode): The Booking which was paid for.
-        payment (PaymentNode): The Payment which was created by the
+        transaction (TransactionNode): The Transaction which was created by the
             transaction.
 
     Raises:
@@ -377,7 +377,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
     """
 
     booking = graphene.Field(BookingNode)
-    payment = graphene.Field("uobtheatre.payments.schema.PaymentNode")
+    payment = graphene.Field("uobtheatre.payments.schema.TransactionNode")
 
     class Arguments:
         booking_id = IdInputField(required=True)
@@ -483,8 +483,8 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
                 message=f"Unsupported payment provider {payment_provider}."
             )
 
-        payment = booking.pay(payment_method)
-        return PayBooking(booking=booking, payment=payment)
+        transaction = booking.pay(payment_method)
+        return PayBooking(booking=booking, payment=transaction)
 
 
 class CheckInBooking(AuthRequiredMixin, SafeMutation):
@@ -500,7 +500,7 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
 
     Returns:
         booking (BookingNode): The Booking which was paid for.
-        performance (PaymentNode): The Performance.
+        performance (PerformanceNode): The Performance.
 
     Raises:
         GQLException: If the booking does not match the performance booking
@@ -589,7 +589,7 @@ class UnCheckInBooking(AuthRequiredMixin, SafeMutation):
 
     Returns:
         booking (BookingNode): The Booking.
-        performance (PaymentNode): The Performance.
+        performance (PerformanceNOde): The Performance.
 
     Raises:
         GQLException: If the un-check in was unsuccessful

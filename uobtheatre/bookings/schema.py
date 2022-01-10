@@ -242,10 +242,12 @@ class BookingNode(GrapheneEnumMixin, DjangoObjectType):
     price_breakdown = graphene.Field(PriceBreakdownNode)
     tickets = DjangoListField(TicketNode)
     user = graphene.Field(UserNode)
-    payments = DjangoFilterConnectionField("uobtheatre.payments.schema.PaymentNode")
+    transactions = DjangoFilterConnectionField(
+        "uobtheatre.payments.schema.TransactionNode"
+    )
     expired = graphene.Boolean(required=True)
 
-    def resolve_payments(self, _):
+    def resolve_transactions(self, _):
         return self.transactions.all()
 
     def resolve_price_breakdown(self, _):

@@ -12,7 +12,7 @@ from uobtheatre.utils.filters import FilterSet
 PaymentMethodsEnum = graphene.Enum("PaymentMethod", PaymentProvider.choices)
 
 
-class PaymentFilter(FilterSet):
+class TransactionFilter(FilterSet):
     class Meta:
         model = Transaction
         fields = ("type", "provider_name", "created_at")
@@ -37,7 +37,7 @@ class SquarePaymentDevice(graphene.ObjectType):
     status = graphene.String()
 
 
-class PaymentNode(GrapheneEnumMixin, DjangoObjectType):
+class TransactionNode(GrapheneEnumMixin, DjangoObjectType):
     url = graphene.String(required=False)
     pay_object = PayObjectUnion()
 
@@ -47,7 +47,7 @@ class PaymentNode(GrapheneEnumMixin, DjangoObjectType):
     class Meta:
         model = Transaction
         interfaces = (relay.Node,)
-        filterset_class = PaymentFilter
+        filterset_class = TransactionFilter
         exclude = ("pay_object_id", "pay_object_type")
 
 

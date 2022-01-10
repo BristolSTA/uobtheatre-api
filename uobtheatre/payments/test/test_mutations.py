@@ -32,7 +32,7 @@ def test_cancel_payment_completed_payment(gql_client):
           }
         }
         """
-        % to_global_id("PaymentNode", payment.id)
+        % to_global_id("TransactionNode", payment.id)
     )
 
     assert response["data"]["cancelPayment"]["errors"] == [
@@ -76,7 +76,7 @@ def test_cancel_payment_success(gql_client, mock_square):
               }
             }
             """
-            % to_global_id("PaymentNode", payment.id)
+            % to_global_id("TransactionNode", payment.id)
         )
 
     assert response["data"]["cancelPayment"]["success"]
@@ -108,7 +108,7 @@ def test_cancel_payment_not_creator_of_booking(gql_client):
           }
         }
         """
-        % to_global_id("PaymentNode", payment.id)
+        % to_global_id("TransactionNode", payment.id)
     )
 
     assert response["data"]["cancelPayment"]["errors"] == [
