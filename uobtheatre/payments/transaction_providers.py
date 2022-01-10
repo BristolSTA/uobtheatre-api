@@ -83,7 +83,7 @@ class TransactionProvider(abc.ABC):
 
     @classmethod
     @property
-    def is_manual(cls):
+    def is_manual(cls) -> bool:
         """Whether this payment method is a manual payment method"""
         return issubclass(cls, ManualPaymentMethodMixin)
 
@@ -135,7 +135,7 @@ class PaymentProvider(TransactionProvider, abc.ABC):
 
     @classmethod
     @property
-    def is_refundable(cls):
+    def is_refundable(cls) -> bool:
         return issubclass(cls, Refundable)
 
     @classmethod
@@ -242,6 +242,35 @@ class SquareAPIMixin(abc.ABC):
         if not response.is_success():
             raise SquareException(response)
 
+    @classmethod
+    def _square_transaction_processing_fee(cls, square_object: dict) -> Optional[int]:
+        """
+        Get processing fee from a square transaction object dict.
+
+        Args:
+            square_object (dict): Square object from square.
+
+        Returns:
+            int: Processing fee for payment
+        """
+        # If the processing fee has not be added to the payment
+        if "processing_fee" not in square_object:
+            return None
+
+        return sum(
+            fee["amount_money"]["amount"] for fee in square_object["processing_fee"]
+        )
+
+    @classmethod
+    def _fill_payment_from_square_response_object(cls, payment, response_object):
+        """Updates and fills a payment model from a refund response object"""
+        payment.status = payment_models.Transaction.Status.from_square_status(
+            response_object["status"]
+        )
+        if processing_fees := cls._square_transaction_processing_fee(response_object):
+            payment.provider_fee = processing_fees
+        return payment
+
 
 class SquarePaymentMethod(SquareAPIMixin, abc.ABC):
     """
@@ -267,25 +296,6 @@ class SquarePaymentMethod(SquareAPIMixin, abc.ABC):
         cls._handle_response_failure(response)  # pylint: disable=no-member
 
         return response.body["payment"]
-
-    @classmethod
-    def payment_processing_fee(cls, square_payment: dict) -> Optional[int]:
-        """
-        Get processing fee from a square payment dict.
-
-        Args:
-            square_payment (dict): Square object from square.
-
-        Returns:
-            int: Processing fee for payment
-        """
-        # If the processing fee has not be added to the payment
-        if "processing_fee" not in square_payment:
-            return None
-
-        return sum(
-            fee["amount_money"]["amount"] for fee in square_payment["processing_fee"]
-        )
 
 
 class ManualRefund(RefundProvider):
@@ -350,19 +360,7 @@ class SquareRefund(RefundProvider, SquareAPIMixin):
             cls._handle_response_failure(response)
             data = response.body["refund"]
 
-        cls._fill_payment_from_response_object(payment, data).save()
-
-    @classmethod
-    def _fill_payment_from_response_object(cls, payment, response_object):
-        """Updates and fills a payment model from a refund response object"""
-        payment.status = payment_models.Transaction.Status.from_square_status(
-            response_object["status"]
-        )
-        if processing_fees := response_object.get("processing_fee"):
-            payment.provider_fee = sum(
-                fee["amount_money"]["amount"] for fee in processing_fees
-            )
-        return payment
+        cls._fill_payment_from_square_response_object(payment, data).save()
 
 
 class ManualPaymentMethodMixin(Refundable, abc.ABC):
@@ -559,7 +557,7 @@ class SquarePOS(PaymentProvider, SquarePaymentMethod):
             filter(
                 None,
                 [
-                    cls.payment_processing_fee(cls.get_payment(payment_id))
+                    cls._square_transaction_processing_fee(cls.get_payment(payment_id))
                     for payment_id in checkout["payment_ids"]
                 ],
             )
@@ -654,8 +652,4 @@ class SquareOnline(Refundable, PaymentProvider, SquarePaymentMethod):
 
         if data is None:
             data = cls.get_payment(payment_id)
-        payment.provider_fee = cls.payment_processing_fee(data)
-        payment.status = payment_models.Transaction.Status.from_square_status(
-            data["status"]
-        )
-        payment.save()
+        cls._fill_payment_from_square_response_object(payment, data).save()

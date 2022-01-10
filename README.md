@@ -33,7 +33,7 @@ Pre-commit is required to format code and do lots of nice checks.
 
 It should be installed by `make setup`.
 
-Otherwise it can be install manually with:
+Otherwise, it can be installed manually with:
 ```
 pip install pre-commit
 pre-commit install
@@ -135,6 +135,6 @@ make build
 
 This does the following:
 - Set the requirements for mypy precommit
-- Rebuild the api with the correct dependencies
+- Rebuild the api
 
 If mypy gives an error about not being able to find the new package, add it to the list of "additional_dependencies" in `.pre-commit-config.yaml`.
