@@ -2,6 +2,7 @@ from unittest import mock
 from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
+from pytest_django.asserts import assertQuerysetEqual
 
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.test.factories import (
@@ -49,6 +50,15 @@ def test_payment_url_none():
         provider_name=Cash.__name__, provider_transaction_id="abc"
     )
     assert payment.url() is None
+
+
+@pytest.mark.django_db
+def test_transaction_type_filters():
+    payment_1 = TransactionFactory(type=Transaction.Type.PAYMENT)
+    refund_1 = TransactionFactory(type=Transaction.Type.REFUND)
+
+    assertQuerysetEqual(Transaction.objects.payments(), [payment_1])
+    assertQuerysetEqual(Transaction.objects.refunds(), [refund_1])
 
 
 @pytest.mark.django_db

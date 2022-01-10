@@ -35,8 +35,11 @@ class TransactionQuerySet(QuerySet):
         }
         return self.aggregate(**annotations)
 
-    # def payments(self):
-    #     return self.filter(type=Transaction.Type.Payment)
+    def payments(self):
+        return self.filter(type=Transaction.Type.PAYMENT)
+
+    def refunds(self):
+        return self.filter(type=Transaction.Type.REFUND)
 
 
 class Transaction(TimeStampedMixin, models.Model):
