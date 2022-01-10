@@ -24,6 +24,7 @@ from uobtheatre.discounts.test.factories import (
     DiscountFactory,
     DiscountRequirementFactory,
 )
+from uobtheatre.images.test.factories import ImageFactory
 from uobtheatre.payments import transaction_providers
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
@@ -1041,11 +1042,14 @@ def test_complete(with_payment):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "with_payment, provider_transaction_id",
-    [(True, "SQUARE_PAYMENT_ID"), (True, None), (False, None)],
+    "with_payment, provider_transaction_id, with_image",
+    [(True, "SQUARE_PAYMENT_ID", True), (True, None, False), (False, None, True)],
 )
-def test_send_confirmation_email(mailoutbox, with_payment, provider_transaction_id):
-    production = ProductionFactory(name="Legally Ginger")
+def test_send_confirmation_email(
+    mailoutbox, with_payment, provider_transaction_id, with_image
+):
+    image = ImageFactory() if with_image else None
+    production = ProductionFactory(name="Legally Ginger", featured_image=image)
     venue = VenueFactory(address=AddressFactory(latitude=51.4, longitude=-2.61))
     performance = PerformanceFactory(
         venue=venue,
@@ -1094,6 +1098,9 @@ def test_send_confirmation_email(mailoutbox, with_payment, provider_transaction_
     assert (
         "View Tickets (https://example.com%s" % booking.web_tickets_path in email.body
     )
+    if with_image:
+        print(email.body)
+        assert image.file.url in email.body
     assert "Legally Ginger" in email.body
     assert "opens at 04 November 2021 18:15 GMT for a 19:15 GMT start" in email.body
     if with_payment:
