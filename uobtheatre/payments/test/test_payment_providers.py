@@ -218,7 +218,7 @@ def test_square_online_sync_payment(mock_square):
         },
         success=True,
     ):
-        payment.sync_payment_with_provider()
+        payment.sync_transaction_with_provider()
         payment.refresh_from_db()
     assert payment.provider_fee == -10
     assert payment.status == Transaction.Status.COMPLETED
@@ -459,7 +459,7 @@ def test_square_pos_sync_payment():
             "processing_fee": [{"amount_money": {"amount": -10, "currency": "GBP"}}],
         },
     ) as get_payment_mock:
-        payment.sync_payment_with_provider()
+        payment.sync_transaction_with_provider()
 
         get_checkout_mock.assert_called_once_with("abc")
         get_payment_mock.assert_called_once_with("abc123")
@@ -609,7 +609,7 @@ def test_manual_pay(payment_method, value, expected_method_str):
 @pytest.mark.django_db
 def test_cash_payment_sync():
     payment = TransactionFactory(provider_name=Cash.name)
-    assert payment.sync_payment_with_provider() is None
+    assert payment.sync_transaction_with_provider() is None
 
 
 ###

@@ -200,7 +200,7 @@ def test_square_refund_sync_payment(mock_square, with_data):
         body={"refund": data},
         success=True,
     ):
-        payment.sync_payment_with_provider(data=data if with_data else None)
+        payment.sync_transaction_with_provider(data=data if with_data else None)
         payment.refresh_from_db()
     assert payment.provider_fee == -10
     assert payment.status == Transaction.Status.COMPLETED

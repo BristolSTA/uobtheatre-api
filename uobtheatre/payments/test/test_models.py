@@ -88,7 +88,7 @@ def test_update_payment_from_square(mock_square):
             }
         },
     ):
-        payment.sync_payment_with_provider()
+        payment.sync_transaction_with_provider()
 
     payment.refresh_from_db()
     assert payment.provider_fee == 58
@@ -101,7 +101,7 @@ def test_update_payment_from_square_no_provider_id(mock_square):
         SquareOnline.client.payments,
         "get_payment",
     ) as mock_get, pytest.raises(PaymentException):
-        payment.sync_payment_with_provider()
+        payment.sync_transaction_with_provider()
     mock_get.assert_not_called()
 
     assert payment.provider_fee == 0
@@ -127,7 +127,7 @@ def test_update_payment_from_square_no_processing_fee(mock_square):
             }
         },
     ):
-        payment.sync_payment_with_provider()
+        payment.sync_transaction_with_provider()
 
     payment.refresh_from_db()
     assert payment.provider_fee is None

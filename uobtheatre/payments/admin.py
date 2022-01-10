@@ -12,7 +12,7 @@ def refresh_from_square(modeladmin, request, queryset):
     successful_updates = 0
     for payment in queryset.all():
         try:
-            payment.sync_payment_with_provider()
+            payment.sync_transaction_with_provider()
             successful_updates += 1
         except SquareException as exc:
             modeladmin.message_user(

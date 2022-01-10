@@ -146,7 +146,7 @@ class Transaction(TimeStampedMixin, models.Model):
                 for method in PaymentProvider.non_manual_methods  # pylint: disable=not-an-iterable
             ],
         ):
-            payment.sync_payment_with_provider()
+            payment.sync_transaction_with_provider()
 
     @property
     def provider(self):
@@ -196,7 +196,7 @@ class Transaction(TimeStampedMixin, models.Model):
             data = square_payment
 
         payment = Transaction.objects.get(provider_transaction_id=payment_id)
-        payment.sync_payment_with_provider(data=data)
+        payment.sync_transaction_with_provider(data=data)
 
     @staticmethod
     def handle_update_refund_webhook(provider_transaction_id: str, data: dict):
@@ -207,13 +207,13 @@ class Transaction(TimeStampedMixin, models.Model):
             provider_transaction_id (str): The payment ID given by the provider
             data (dict): The body of the square webhook
         """
-        payment = Transaction.objects.get(
+        transaction = Transaction.objects.get(
             provider_transaction_id=provider_transaction_id,
             type=Transaction.Type.REFUND,
         )
-        payment.sync_payment_with_provider(data)
+        transaction.sync_transaction_with_provider(data)
 
-    def sync_payment_with_provider(self, data=None):
+    def sync_transaction_with_provider(self, data=None):
         """Sync the payment with the provider payment"""
         self.provider.sync_transaction(self, data)
 
@@ -241,12 +241,15 @@ class Transaction(TimeStampedMixin, models.Model):
                     f"A {self.status.label.lower()} payment can't be refunded"
                 )
             return False
+
         if not self.provider.is_refundable:
             if raises:
                 raise PaymentException(
                     f"A {self.provider_name} payment can't be refunded"
                 )
             return False
+
+        # Check that the refund provider (if supplied) is valid for the original provider
         if refund_provider is not None and not self.provider.is_valid_refund_provider(
             refund_provider
         ):
