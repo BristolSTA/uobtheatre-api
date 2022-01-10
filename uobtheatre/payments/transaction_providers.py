@@ -479,7 +479,7 @@ class SquarePOS(PaymentProvider, SquarePaymentMethod):
 
             payment.status = payment_models.Transaction.Status.COMPLETED
             payment.save()
-            booking.complete()
+            booking.complete(payment)
 
         if checkout["status"] == "CANCELED":
             # Delete any payments that are linked to this checkout

@@ -109,8 +109,6 @@ class SetProductionStatus(AuthRequiredMixin, SafeMutation):
         # If we are setting this production to anything other than draft it must
         # be valid.
         if status != Production.Status.DRAFT and (error := production.validate()):
-            print("ERROR")
-            print(error)
             raise error
 
         production.status = status

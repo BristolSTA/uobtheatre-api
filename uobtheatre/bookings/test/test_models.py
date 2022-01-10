@@ -27,7 +27,7 @@ from uobtheatre.discounts.test.factories import (
 from uobtheatre.payments import transaction_providers
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
-from uobtheatre.payments.test.factories import TransactionFactory
+from uobtheatre.payments.test.factories import TransactionFactory, mock_payment_method
 from uobtheatre.payments.transaction_providers import SquarePOS
 from uobtheatre.productions.models import Production
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
@@ -828,11 +828,7 @@ def test_booking_pay_with_payment():
     as paid.
     """
 
-    class MockPaymentMethod:  # pylint: disable=no-method-argument
-        def pay(*_):
-            return Transaction()
-
-    payment_method = MockPaymentMethod()
+    payment_method = mock_payment_method()
     booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
 
     booking.pay(payment_method)  # type: ignore
@@ -847,11 +843,7 @@ def test_booking_pay_deletes_pending_payments(mock_square):
     this booking should be deleted.
     """
 
-    class MockPaymentMethod:  # pylint: disable=no-method-argument
-        def pay(*_):
-            return Transaction()
-
-    payment_method = MockPaymentMethod()
+    payment_method = mock_payment_method()
     booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
 
     # Deleted
@@ -1033,10 +1025,14 @@ def test_booking_can_be_refunded(is_refunded, status, production_status, expecte
 
 
 @pytest.mark.django_db
-def test_complete():
+@pytest.mark.parametrize("with_payment", [False, True])
+def test_complete(with_payment):
     booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
     with patch.object(booking, "send_confirmation_email") as mock_send_email:
-        booking.complete()
+        kwargs = {}
+        if with_payment:
+            kwargs["payment"] = TransactionFactory()
+        booking.complete(**kwargs)
         mock_send_email.assert_called_once()
 
     booking.refresh_from_db()
@@ -1078,15 +1074,18 @@ def test_send_confirmation_email(mailoutbox, with_payment, provider_transaction_
     )
     booking.user.status.verified = True
 
-    if with_payment:
+    payment = (
         TransactionFactory(
             pay_object=booking,
             value=1000,
             provider_name=transaction_providers.SquareOnline.name,
             provider_transaction_id=provider_transaction_id,
         )
+        if with_payment
+        else None
+    )
 
-    booking.send_confirmation_email()
+    booking.send_confirmation_email(payment)
 
     assert len(mailoutbox) == 1
     email = mailoutbox[0]

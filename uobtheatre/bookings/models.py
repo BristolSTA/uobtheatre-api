@@ -531,18 +531,18 @@ class Booking(TimeStampedMixin, Payable):
 
         # If a payment is created set the booking as paid
         if payment.status == Transaction.Status.COMPLETED:
-            self.complete()
+            self.complete(payment)
 
         return payment
 
-    def complete(self):
+    def complete(self, payment: Transaction = None):
         """
         Complete the booking (after it has been paid for) and send the
         confirmation email.
         """
         self.status = Payable.PayableStatus.PAID
         self.save()
-        self.send_confirmation_email()
+        self.send_confirmation_email(payment)
 
     @property
     def web_tickets_path(self):
@@ -556,7 +556,7 @@ class Booking(TimeStampedMixin, Payable):
         }
         return f"/user/booking/{self.reference}/tickets?" + urlencode(params, True)
 
-    def send_confirmation_email(self):
+    def send_confirmation_email(self, payment: Transaction = None):
         """
         Send email confirmation which includes a link to the booking.
         """
@@ -564,20 +564,23 @@ class Booking(TimeStampedMixin, Payable):
 
         composer.line(
             "Your booking to %s has been confirmed!" % self.performance.production.name
-        ).image(self.performance.production.featured_image.file.url)
+        )
+
+        if self.performance.production.featured_image:
+            composer.image(self.performance.production.featured_image.file.url)
 
         composer.line(
             (
                 "This event opens at %s for a %s start. Please bring your tickets (printed or on your phone) or your booking reference (<strong>%s</strong>)."
-                if self.user.status.verified
+                if self.user.status.verified  # type: ignore
                 else "This event opens at %s for a %s start. Please bring your booking reference (<strong>%s</strong>)."
             )
             % (
-                self.performance.doors_open.astimezone(
-                    self.performance.venue.address.timezone
+                self.performance.doors_open.astimezone(  # type: ignore
+                    self.performance.venue.address.timezone  # type: ignore
                 ).strftime("%d %B %Y %H:%M %Z"),
-                self.performance.start.astimezone(
-                    self.performance.venue.address.timezone
+                self.performance.start.astimezone(  # type: ignore
+                    self.performance.venue.address.timezone  # type: ignore
                 ).strftime("%H:%M %Z"),
                 self.reference,
             )
@@ -585,10 +588,9 @@ class Booking(TimeStampedMixin, Payable):
 
         composer.action(self.web_tickets_path, "View Tickets")
 
-        if self.user.status.verified:
+        if self.user.status.verified:  # type: ignore
             composer.action("/user/booking/%s" % self.reference, "View Booking")
 
-        payment = self.transactions.first()
         # If this booking includes a payment, we will include details of this payment as a reciept
         if payment:
             composer.heading("Payment Information").line(

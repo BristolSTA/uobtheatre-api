@@ -798,7 +798,7 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin):
         @classmethod
         @property
         def PRIVATE_STATUSES(cls):  # pylint: disable=invalid-name
-            return [cls.DRAFT, cls.PENDING]
+            return [cls.DRAFT, cls.PENDING, cls.APPROVED]
 
     status = models.CharField(
         max_length=10, choices=Status.choices, default=Status.DRAFT

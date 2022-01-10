@@ -60,7 +60,7 @@ def mock_payment_method(
     """
 
     class MockPaymentMethod:  # pylint: disable=missing-class-docstring
-        pay = MagicMock(return_value=Transaction())
+        pay = MagicMock(return_value=TransactionFactory())
 
         @classmethod
         @property
