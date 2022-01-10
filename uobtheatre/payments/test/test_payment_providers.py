@@ -302,7 +302,7 @@ def test_square_pos_list_devices_failure(mock_square):
 
 @pytest.mark.django_db
 def test_handle_terminal_checkout_updated_webhook_completed():
-    booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
+    booking = BookingFactory(status=Payable.Status.IN_PROGRESS)
     payment = TransactionFactory()
     data = {
         "object": {
@@ -319,7 +319,7 @@ def test_handle_terminal_checkout_updated_webhook_completed():
     SquarePOS.handle_terminal_checkout_updated_webhook(data)
     booking.refresh_from_db()
 
-    assert booking.status == Payable.PayableStatus.PAID
+    assert booking.status == Payable.Status.PAID
     assert Transaction.objects.count() == 1
 
     payment = Transaction.objects.first()
@@ -328,7 +328,7 @@ def test_handle_terminal_checkout_updated_webhook_completed():
 
 @pytest.mark.django_db
 def test_handle_terminal_checkout_updated_webhook_not_completed():
-    booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
+    booking = BookingFactory(status=Payable.Status.IN_PROGRESS)
     data = {
         "object": {
             "checkout": {
@@ -341,12 +341,12 @@ def test_handle_terminal_checkout_updated_webhook_not_completed():
     SquarePOS.handle_terminal_checkout_updated_webhook(data)
 
     booking.refresh_from_db()
-    assert booking.status == Payable.PayableStatus.IN_PROGRESS
+    assert booking.status == Payable.Status.IN_PROGRESS
 
 
 @pytest.mark.django_db
 def test_handle_terminal_checkout_updated_canceled():
-    booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
+    booking = BookingFactory(status=Payable.Status.IN_PROGRESS)
     payment = TransactionFactory(
         provider_transaction_id="abc",
         provider_name=SquarePOS.name,
@@ -365,7 +365,7 @@ def test_handle_terminal_checkout_updated_canceled():
     SquarePOS.handle_terminal_checkout_updated_webhook(data)
 
     booking.refresh_from_db()
-    assert booking.status == Payable.PayableStatus.IN_PROGRESS
+    assert booking.status == Payable.Status.IN_PROGRESS
     assert not Transaction.objects.filter(id=payment.id).exists()
 
 
@@ -375,7 +375,7 @@ def test_handle_terminal_checkout_updated_canceled_no_payments():
     When square sends a webhook that cancels a checkout. If there is no
     associated payment then do nothing.
     """
-    booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
+    booking = BookingFactory(status=Payable.Status.IN_PROGRESS)
     data = {
         "object": {
             "checkout": {
@@ -389,7 +389,7 @@ def test_handle_terminal_checkout_updated_canceled_no_payments():
     SquarePOS.handle_terminal_checkout_updated_webhook(data)
 
     booking.refresh_from_db()
-    assert booking.status == Payable.PayableStatus.IN_PROGRESS
+    assert booking.status == Payable.Status.IN_PROGRESS
 
 
 @pytest.mark.django_db

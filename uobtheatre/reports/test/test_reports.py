@@ -82,11 +82,11 @@ def create_fixtures():
     booking_5 = BookingFactory(
         performance=booking_1.performance,
         reference="booking5",
-        status=Booking.PayableStatus.REFUNDED,
+        status=Booking.Status.REFUNDED,
     )  # A refunded booking (of 1100 cost)
 
     BookingFactory(
-        performance=booking_1.performance, status=Payable.PayableStatus.IN_PROGRESS
+        performance=booking_1.performance, status=Payable.Status.IN_PROGRESS
     )  # This booking is in progress - it shouldn't show in any reports
 
     discount_requirement = DiscountRequirementFactory()

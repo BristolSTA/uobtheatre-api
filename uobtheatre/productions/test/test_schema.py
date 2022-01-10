@@ -557,9 +557,7 @@ def test_productions_are_shown_with_permission(gql_client):
 @pytest.mark.django_db
 def test_production_and_performance_sales_breakdowns(gql_client):
     performance = PerformanceFactory()
-    booking = BookingFactory(
-        performance=performance, status=Payable.PayableStatus.IN_PROGRESS
-    )
+    booking = BookingFactory(performance=performance, status=Payable.Status.IN_PROGRESS)
     perf_seat_group = PerformanceSeatingFactory(performance=performance, price=100)
     TicketFactory(booking=booking, seat_group=perf_seat_group.seat_group)
     TransactionFactory(pay_object=booking, value=booking.total)

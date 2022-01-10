@@ -33,7 +33,7 @@ class BookingFactory(factory.django.DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
     creator = factory.SubFactory(UserFactory)
     performance = factory.SubFactory(PerformanceFactory)
-    status = Payable.PayableStatus.PAID
+    status = Payable.Status.PAID
 
     class Meta:
         model = Booking

@@ -637,7 +637,7 @@ class Performance(
             raise CantBeRefundedException(f"{self} is not set to disabled")
 
         refunded_bookings = []
-        for booking in self.bookings.filter(status=Payable.PayableStatus.PAID):
+        for booking in self.bookings.filter(status=Payable.Status.PAID):
             if not booking.can_be_refunded:
                 continue
             booking.refund(authorizing_user=authorizing_user, send_admin_email=False)

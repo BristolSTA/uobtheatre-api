@@ -390,7 +390,7 @@ def test_performance_checked_in_tickets():
 
     # Ticket in an in progress booking - shouldn't be included
     in_progress_booking = BookingFactory(
-        performance=booking.performance, status=Payable.PayableStatus.IN_PROGRESS
+        performance=booking.performance, status=Payable.Status.IN_PROGRESS
     )
     TicketFactory(booking=in_progress_booking)
 
@@ -408,7 +408,7 @@ def test_performance_unchecked_in_tickets():
 
     # Ticket in an in progress booking - shouldn't be included
     in_progress_booking = BookingFactory(
-        performance=booking.performance, status=Payable.PayableStatus.IN_PROGRESS
+        performance=booking.performance, status=Payable.Status.IN_PROGRESS
     )
     TicketFactory(booking=in_progress_booking)
 
@@ -424,7 +424,7 @@ def test_performance_total_tickets_sold():
     TicketFactory(booking=booking)
 
     # Draft booking with 3 tickets (shouldn't be counted)
-    draft_booking = BookingFactory(status=Payable.PayableStatus.IN_PROGRESS)
+    draft_booking = BookingFactory(status=Payable.Status.IN_PROGRESS)
     TicketFactory(booking=draft_booking)
     TicketFactory(booking=draft_booking)
     TicketFactory(booking=draft_booking)
@@ -432,7 +432,7 @@ def test_performance_total_tickets_sold():
     # Expired Booking with 4 tickets (shouldn't be counted)
     expires_draft_booking = BookingFactory(
         expires_at=timezone.now() - timedelta(minutes=16),
-        status=Payable.PayableStatus.IN_PROGRESS,
+        status=Payable.Status.IN_PROGRESS,
     )
     TicketFactory(booking=expires_draft_booking)
     TicketFactory(booking=expires_draft_booking)
@@ -454,7 +454,7 @@ def test_performance_total_tickets_sold_or_reserved():
 
     # Draft booking with 3 tickets
     draft_booking = BookingFactory(
-        status=Payable.PayableStatus.IN_PROGRESS, performance=booking.performance
+        status=Payable.Status.IN_PROGRESS, performance=booking.performance
     )
     TicketFactory(booking=draft_booking)
     TicketFactory(booking=draft_booking)
@@ -463,7 +463,7 @@ def test_performance_total_tickets_sold_or_reserved():
     # Expired Booking with 4 tickets (shouldn't be counted)
     expires_draft_booking = BookingFactory(
         expires_at=timezone.now() - timedelta(minutes=16),
-        status=Payable.PayableStatus.IN_PROGRESS,
+        status=Payable.Status.IN_PROGRESS,
         performance=booking.performance,
     )
     TicketFactory(booking=expires_draft_booking)
@@ -543,27 +543,25 @@ def test_performance_capacity_remaining():
     # Check an expired booking with tickets (should not be included)
     booking_3 = BookingFactory(
         performance=perf,
-        status=Payable.PayableStatus.IN_PROGRESS,
+        status=Payable.Status.IN_PROGRESS,
         expires_at=timezone.now() - timedelta(minutes=16),
     )
     TicketFactory(booking=booking_3, seat_group=seat_group)
     assert perf.capacity_remaining() == 60 - 5
 
     # Check a draft booking with tickets
-    booking_4 = BookingFactory(
-        performance=perf, status=Payable.PayableStatus.IN_PROGRESS
-    )
+    booking_4 = BookingFactory(performance=perf, status=Payable.Status.IN_PROGRESS)
     TicketFactory(booking=booking_4, seat_group=seat_group)
     TicketFactory(booking=booking_4, seat_group=seat_group)
     assert perf.capacity_remaining() == 60 - 7
 
     # Check a locked booking
-    booking_5 = BookingFactory(performance=perf, status=Payable.PayableStatus.LOCKED)
+    booking_5 = BookingFactory(performance=perf, status=Payable.Status.LOCKED)
     TicketFactory(booking=booking_5, seat_group=seat_group)
     assert perf.capacity_remaining() == 60 - 8
 
     # Check a cancelled booking
-    booking_6 = BookingFactory(performance=perf, status=Payable.PayableStatus.CANCELLED)
+    booking_6 = BookingFactory(performance=perf, status=Payable.Status.CANCELLED)
     TicketFactory(booking=booking_6, seat_group=seat_group)
     assert perf.capacity_remaining() == 60 - 8
 

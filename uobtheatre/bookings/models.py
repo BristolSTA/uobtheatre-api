@@ -540,7 +540,7 @@ class Booking(TimeStampedMixin, Payable):
         Complete the booking (after it has been paid for) and send the
         confirmation email.
         """
-        self.status = Payable.PayableStatus.PAID
+        self.status = Payable.Status.PAID
         self.save()
         self.send_confirmation_email(payment)
 
@@ -608,7 +608,7 @@ class Booking(TimeStampedMixin, Payable):
         """Returns whether the booking is considered expired"""
 
         return (
-            self.status == Payable.PayableStatus.IN_PROGRESS
+            self.status == Payable.Status.IN_PROGRESS
             and self.expires_at
             and timezone.now() > self.expires_at
         )
@@ -628,12 +628,12 @@ class TicketQuerySet(QuerySet):
         return self.filter(
             Q(
                 booking__status__in=[
-                    Payable.PayableStatus.PAID,
-                    Payable.PayableStatus.LOCKED,
+                    Payable.Status.PAID,
+                    Payable.Status.LOCKED,
                 ]
             )
             | Q(
-                booking__status=Payable.PayableStatus.IN_PROGRESS,
+                booking__status=Payable.Status.IN_PROGRESS,
                 booking__expires_at__gt=timezone.now(),
             )
         )

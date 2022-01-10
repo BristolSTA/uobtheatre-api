@@ -11,7 +11,7 @@ from uobtheatre.payments.test.factories import TransactionFactory
 
 @pytest.mark.django_db
 def test_payment_model_post_save_status_update(mailoutbox):
-    booking = BookingFactory(status=Payable.PayableStatus.PAID)
+    booking = BookingFactory(status=Payable.Status.PAID)
     booking.user.email = "myuser@example.org"
     TransactionFactory(value=200, pay_object=booking)
 
@@ -28,7 +28,7 @@ def test_payment_model_post_save_status_update(mailoutbox):
         )
         mock.assert_called_once()
 
-    assert booking.status == Payable.PayableStatus.LOCKED
+    assert booking.status == Payable.Status.LOCKED
     assert len(mailoutbox) == 0
 
     # Now update that payment to completed
@@ -42,4 +42,4 @@ def test_payment_model_post_save_status_update(mailoutbox):
     assert len(mailoutbox) == 1  # Email confirming successful refund
     assert mailoutbox[0].subject == "Refund successfully processed"
     assert mailoutbox[0].to[0] == "myuser@example.org"
-    assert booking.status == Payable.PayableStatus.REFUNDED
+    assert booking.status == Payable.Status.REFUNDED

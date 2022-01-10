@@ -292,7 +292,7 @@ class PerformanceBookings(Report):
 
         self.meta.append(MetaItem("Performance", str(performance)))
         for booking in (
-            performance.bookings.filter(status=Payable.PayableStatus.PAID)
+            performance.bookings.filter(status=Payable.Status.PAID)
             .prefetch_related(
                 "transactions",
                 "user",

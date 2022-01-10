@@ -160,7 +160,7 @@ def delete_user_drafts(user, performance_id, booking_id=None):
     if booking_id:
         bookings = bookings.exclude(id=booking_id)
     bookings.filter(
-        status=Payable.PayableStatus.IN_PROGRESS, performance_id=performance_id
+        status=Payable.Status.IN_PROGRESS, performance_id=performance_id
     ).delete()
 
 
@@ -290,7 +290,7 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
             )
 
         # Booking must be in progress to update
-        if booking.status != Payable.PayableStatus.IN_PROGRESS:
+        if booking.status != Payable.Status.IN_PROGRESS:
             raise GQLException(
                 message="This booking is not in progress, and so cannot be edited"
             )
@@ -414,7 +414,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
             )
 
         # Booking must not be paid for already
-        if booking.status == Payable.PayableStatus.PAID:
+        if booking.status == Payable.Status.PAID:
             raise GQLException(message="This booking has already been paid for")
 
         # Check if booking hasn't expired
@@ -537,7 +537,7 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
             )
 
         # Check the booking has been paid for
-        if not booking.status == Payable.PayableStatus.PAID:
+        if not booking.status == Payable.Status.PAID:
             raise GQLException(
                 field="booking_reference",
                 message=f"This booking has not been paid for (Status: {booking.get_status_display()})",

@@ -137,9 +137,7 @@ TEST_UPDATE_REFUND_PAYLOAD = {
 def test_handle_checkout_webhook(rest_client, monkeypatch):
     TransactionFactory(provider_transaction_id="dhgENdnFOPXqO")
     monkeypatch.setenv("SQUARE_WEBHOOK_SIGNATURE_KEY", "Hd_mmQkhER3EPkpRpNQh9Q")
-    booking = BookingFactory(
-        reference="id72709", status=Payable.PayableStatus.IN_PROGRESS
-    )
+    booking = BookingFactory(reference="id72709", status=Payable.Status.IN_PROGRESS)
 
     with patch.object(
         SquareWebhooks, "webhook_url", new_callable=PropertyMock
@@ -160,14 +158,12 @@ def test_handle_checkout_webhook(rest_client, monkeypatch):
 
     assert response.status_code == 200
     booking.refresh_from_db()
-    assert booking.status == Payable.PayableStatus.PAID
+    assert booking.status == Payable.Status.PAID
 
 
 @pytest.mark.django_db
 def test_handle_webhooks_invalid_signature(rest_client):
-    booking = BookingFactory(
-        reference="id72709", status=Payable.PayableStatus.IN_PROGRESS
-    )
+    booking = BookingFactory(reference="id72709", status=Payable.Status.IN_PROGRESS)
     response = rest_client.post(
         "/square",
         TEST_TERMINAL_CHECKOUT_PAYLOAD,
@@ -178,7 +174,7 @@ def test_handle_webhooks_invalid_signature(rest_client):
     assert response.data == "Invalid signature"
 
     booking.refresh_from_db()
-    assert booking.status == Payable.PayableStatus.IN_PROGRESS
+    assert booking.status == Payable.Status.IN_PROGRESS
 
 
 @pytest.mark.django_db

@@ -23,7 +23,7 @@ class Payable(models.Model, metaclass=AbstractModelMeta):  # type: ignore
         content_type_field="pay_object_type",
     )
 
-    class PayableStatus(models.TextChoices):
+    class Status(models.TextChoices):
         IN_PROGRESS = "IN_PROGRESS", "In Progress"
         CANCELLED = "CANCELLED", "Cancelled"
         PAID = "PAID", "Paid"
@@ -32,8 +32,8 @@ class Payable(models.Model, metaclass=AbstractModelMeta):  # type: ignore
 
     status = models.CharField(
         max_length=20,
-        choices=PayableStatus.choices,
-        default=PayableStatus.IN_PROGRESS,
+        choices=Status.choices,
+        default=Status.IN_PROGRESS,
     )
 
     @property
@@ -65,7 +65,7 @@ class Payable(models.Model, metaclass=AbstractModelMeta):  # type: ignore
     @property
     def can_be_refunded(self):
         return (
-            self.status in [self.PayableStatus.PAID, self.PayableStatus.CANCELLED]
+            self.status in [self.Status.PAID, self.Status.CANCELLED]
             and not self.is_refunded
         )
 
