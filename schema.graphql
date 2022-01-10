@@ -32,7 +32,7 @@ type BookingNode implements Node {
   expiresAt: DateTime!
   tickets: [TicketNode!]
   priceBreakdown: PriceBreakdownNode
-  payments(offset: Int, before: String, after: String, first: Int, last: Int, type: String, providerName: String, createdAt: DateTime, id: ID): PaymentNodeConnection
+  transactions(offset: Int, before: String, after: String, first: Int, last: Int, type: String, providerName: String, createdAt: DateTime, id: ID): TransactionNodeConnection
   expired: Boolean!
 }
 
@@ -362,7 +362,7 @@ type PayBooking {
   success: Boolean
   errors: [GQLErrorUnion]
   booking: BookingNode
-  payment: PaymentNode
+  payment: TransactionNode
 }
 
 union PayObjectUnion = BookingNode
@@ -372,34 +372,6 @@ enum PaymentMethod {
   CARD
   SQUARE_POS
   SQUARE_ONLINE
-}
-
-type PaymentNode implements Node {
-  id: ID!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  type: EnumNode
-  status: EnumNode
-  providerTransactionId: String
-  providerName: EnumNode
-  value: Int!
-  currency: String!
-  cardBrand: String
-  last4: String
-  providerFee: Int
-  appFee: Int
-  url: String
-  payObject: PayObjectUnion
-}
-
-type PaymentNodeConnection {
-  pageInfo: PageInfo!
-  edges: [PaymentNodeEdge]!
-}
-
-type PaymentNodeEdge {
-  node: PaymentNode
-  cursor: String!
 }
 
 input PerformanceMutationInput {
@@ -761,6 +733,34 @@ type TicketNode implements Node {
   concessionType: ConcessionTypeNode!
   seat: SeatNode
   checkedIn: Boolean!
+}
+
+type TransactionNode implements Node {
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  type: EnumNode
+  status: EnumNode
+  providerTransactionId: String
+  providerName: EnumNode
+  value: Int!
+  currency: String!
+  cardBrand: String
+  last4: String
+  providerFee: Int
+  appFee: Int
+  url: String
+  payObject: PayObjectUnion
+}
+
+type TransactionNodeConnection {
+  pageInfo: PageInfo!
+  edges: [TransactionNodeEdge]!
+}
+
+type TransactionNodeEdge {
+  node: TransactionNode
+  cursor: String!
 }
 
 type UnCheckInBooking {
