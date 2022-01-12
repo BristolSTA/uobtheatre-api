@@ -48,8 +48,6 @@ class Payable(models.Model, metaclass=AbstractModelMeta):  # type: ignore
         IN_PROGRESS = "IN_PROGRESS", "In Progress"
         CANCELLED = "CANCELLED", "Cancelled"
         PAID = "PAID", "Paid"
-        LOCKED = "LOCKED", "Locked"
-        REFUNDED = "REFUNDED", "Refunded"
 
     status = models.CharField(
         max_length=20,
