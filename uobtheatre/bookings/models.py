@@ -15,7 +15,7 @@ from graphql_relay.node.node import to_global_id
 from uobtheatre.discounts.models import ConcessionType, DiscountCombination
 from uobtheatre.mail.composer import MailComposer
 from uobtheatre.payments.models import Transaction
-from uobtheatre.payments.payables import Payable
+from uobtheatre.payments.payables import Payable, PayableQuerySet
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.users.models import User
 from uobtheatre.utils.models import TimeStampedMixin
@@ -90,7 +90,7 @@ class MiscCost(models.Model):
         ]
 
 
-class BookingQuerySet(QuerySet):
+class BookingQuerySet(PayableQuerySet):
     """QuerySet for bookings"""
 
     def annotate_checked_in(self) -> QuerySet:
@@ -626,12 +626,7 @@ class TicketQuerySet(QuerySet):
 
     def sold_or_reserved(self) -> QuerySet:
         return self.filter(
-            Q(
-                booking__status__in=[
-                    Payable.Status.PAID,
-                    Payable.Status.LOCKED,
-                ]
-            )
+            Q(booking__status=Payable.Status.PAID)
             | Q(
                 booking__status=Payable.Status.IN_PROGRESS,
                 booking__expires_at__gt=timezone.now(),

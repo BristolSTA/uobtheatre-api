@@ -3,6 +3,7 @@ from datetime import datetime
 from unittest.mock import patch
 
 import pytest
+import pytz
 from graphql_relay.node.node import to_global_id
 from guardian.shortcuts import assign_perm
 
@@ -978,8 +979,8 @@ def test_performance_mutation_update_new_production(
     gql_client, has_old_permission, has_new_permission, error_message
 ):
     performance = PerformanceFactory(
-        doors_open=datetime(day=9, month=11, year=2021),
-        end=datetime(day=11, month=11, year=2021),
+        doors_open=datetime(day=9, month=11, year=2021, tzinfo=pytz.UTC),
+        end=datetime(day=11, month=11, year=2021, tzinfo=pytz.UTC),
     )
     new_production = ProductionFactory()
     request = """
@@ -987,7 +988,7 @@ def test_performance_mutation_update_new_production(
           performance(
             input: {
                 id: "%s"
-                start: "2021-11-10T00:00:00"
+                start: "2021-11-10T00:00:00+00:00"
                 production: "%s"
              }
           ) {

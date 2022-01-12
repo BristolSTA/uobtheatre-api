@@ -432,3 +432,19 @@ def test_refund_payment_with_no_auto_refund_method():
             payment.refund()
 
         assert exc.value.message == "A abc payment cannot be automatically refunded"
+
+
+@pytest.mark.django_db
+def test_notify_user_refund_email(mailoutbox):
+    transaction = TransactionFactory(
+        type=Transaction.Type.REFUND, status=Transaction.Status.PENDING
+    )
+
+    transaction.notify_user()
+    assert len(mailoutbox) == 0
+
+    transaction.status = Transaction.Status.COMPLETED
+
+    transaction.notify_user()
+    assert len(mailoutbox) == 1
+    assert mailoutbox[0].subject == "Refund successfully processed"

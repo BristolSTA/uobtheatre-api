@@ -8,6 +8,7 @@ from django.db.models.enums import TextChoices
 from django.db.models.functions import Coalesce
 from django.db.models.query import QuerySet
 
+from uobtheatre.mail.composer import MailComposer
 from uobtheatre.payments import transaction_providers
 from uobtheatre.payments.transaction_providers import (
     Cash,
@@ -216,6 +217,22 @@ class Transaction(TimeStampedMixin, models.Model):
     def sync_transaction_with_provider(self, data=None):
         """Sync the payment with the provider payment"""
         self.provider.sync_transaction(self, data)
+
+    def notify_user(self):
+        """Notifies the owner of the transaction of the current status of this transaction. Currently used only for refunds"""
+        user = self.pay_object.user
+        if (
+            self.type == Transaction.Type.REFUND
+            and self.status == Transaction.Status.COMPLETED
+        ):
+            MailComposer().line(
+                f"Your payment of {self.value_currency} has been successfully refunded (ID: {self.provider_transaction_id} | {self.id})."
+            ).line(
+                f"This will have been refunded in your original payment method ({self.provider.description}{f' {self.card_brand} ending {self.last_4}' if self.card_brand and self.last_4 else ''})"
+            ).send(
+                "Refund successfully processed", user.email
+            )
+            return
 
     def cancel(self):
         """

@@ -31,7 +31,6 @@ from uobtheatre.reports.reports import (
     get_option,
     require_option,
 )
-from uobtheatre.societies.models import Society
 from uobtheatre.societies.test.factories import SocietyFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.utils.exceptions import GQLException
@@ -40,7 +39,7 @@ from uobtheatre.venues.test.factories import SeatGroupFactory
 
 def create_fixtures():
     """Creates productions, bookings, and payment fixtures for the reports"""
-    society_1 = SocietyFactory(name="Society 1")
+    society_1 = SocietyFactory(id=1, name="Society 1")
     booking_1 = BookingFactory(
         performance=PerformanceFactory(
             production=ProductionFactory(
@@ -67,7 +66,7 @@ def create_fixtures():
     booking_3 = BookingFactory(
         performance=PerformanceFactory(
             production=ProductionFactory(
-                name="Amazing Show 2", society=SocietyFactory(name="Society 2")
+                name="Amazing Show 2", society=SocietyFactory(id=2, name="Society 2")
             )
         ),
         reference="booking3",
@@ -82,7 +81,7 @@ def create_fixtures():
     booking_5 = BookingFactory(
         performance=booking_1.performance,
         reference="booking5",
-        status=Booking.Status.REFUNDED,
+        status=Booking.Status.CANCELLED,
     )  # A refunded booking (of 1100 cost)
 
     BookingFactory(
@@ -241,8 +240,8 @@ def test_period_totals_breakdown_report():
     # Generate report that covers this period
     with patch.object(Transaction, "sync_payments") as mock_sync:
         report = PeriodTotalsBreakdown(
-            datetime.fromisoformat("2021-09-08T00:00:00"),
-            datetime.fromisoformat("2021-09-08T23:00:00"),
+            datetime.fromisoformat("2021-09-08T00:00:00+00:00"),
+            datetime.fromisoformat("2021-09-08T23:00:00+00:00"),
         )
 
         mock_sync.assert_called_once()
@@ -335,7 +334,6 @@ def test_period_totals_breakdown_report():
 @pytest.mark.django_db
 def test_outstanding_society_payments_report():
     create_fixtures()
-    society_1 = Society.objects.all()[0]
     production_1 = Production.objects.all()[0]
     # NB: As production 2 is not "closed", it shouldn't show in this report
     with patch.object(Transaction, "sync_payments") as mock_sync:
@@ -353,7 +351,7 @@ def test_outstanding_society_payments_report():
     assert len(report.datasets[0].headings) == 3
     assert report.datasets[0].data == [
         [
-            society_1.id,
+            1,
             "Society 1",
             900,
         ],
@@ -370,7 +368,7 @@ def test_outstanding_society_payments_report():
         [
             production_1.id,
             "Amazing Show 1",
-            society_1.id,
+            1,
             "Society 1",
             4300,  # Payments total (2200 + 2100)
             2200,  # Of which card: 1100*2

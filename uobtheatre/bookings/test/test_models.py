@@ -1007,7 +1007,8 @@ def test_booking_expiration():
         (False, Payable.Status.PAID, Production.Status.PUBLISHED, True),
         (False, Payable.Status.PAID, Production.Status.PENDING, True),
         (True, Payable.Status.PAID, Production.Status.PUBLISHED, False),
-        (False, Payable.Status.REFUNDED, Production.Status.PUBLISHED, False),
+        (False, Payable.Status.CANCELLED, Production.Status.PUBLISHED, True),
+        (True, Payable.Status.CANCELLED, Production.Status.PUBLISHED, False),
         (False, Payable.Status.PAID, Production.Status.CLOSED, False),
     ],
 )

@@ -556,7 +556,8 @@ def test_performance_capacity_remaining():
     assert perf.capacity_remaining() == 60 - 7
 
     # Check a locked booking
-    booking_5 = BookingFactory(performance=perf, status=Payable.Status.LOCKED)
+    booking_5 = BookingFactory(performance=perf)
+    TransactionFactory(pay_object=booking_5, status=Transaction.Status.PENDING)
     TicketFactory(booking=booking_5, seat_group=seat_group)
     assert perf.capacity_remaining() == 60 - 8
 

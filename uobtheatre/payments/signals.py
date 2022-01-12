@@ -1,39 +1,46 @@
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
-from uobtheatre.mail.composer import MailComposer
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
 
 
+@receiver(pre_save, sender=Transaction)
+def pre_transaction_save(instance: Transaction, **_):
+    pre_transaction_save_callback(instance)
+
+
 @receiver(post_save, sender=Transaction)
-def on_payment_save(instance: Transaction, **_):
-    on_payment_save_callback(instance)
+def post_transaction_save(instance: Transaction, **_):
+    post_transaction_save_callback(instance)
 
 
-def on_payment_save_callback(payment_instance: Transaction):
-    """Post payment save actions"""
+def pre_transaction_save_callback(transaction_instance: Transaction):
+    """Pre save payment actions"""
+    old_instance = (
+        Transaction.objects.get(pk=transaction_instance.id)
+        if transaction_instance.id
+        and not transaction_instance._state.adding  # pylint: disable=protected-access
+        else None
+    )
 
-    # If the payobject is classed as refunded, make it so
+    if old_instance:
+        if (
+            transaction_instance.type == Transaction.Type.REFUND
+            and transaction_instance.status == Transaction.Status.COMPLETED
+            and not old_instance.status == Transaction.Status.COMPLETED
+        ):
+            # This refund transaction has now been completed. Notify the payment owner
+            transaction_instance.notify_user()
+
+
+def post_transaction_save_callback(transaction_instance: Transaction):
+    """Post save payment actions"""
+    # If the object is refunded and not locked, set it to cancelled
     if (
-        payment_instance.pay_object.is_refunded
-        and not payment_instance.pay_object.status == Payable.Status.REFUNDED
+        not transaction_instance.Status == Payable.Status.CANCELLED
+        and not transaction_instance.pay_object.is_locked
+        and transaction_instance.pay_object.is_refunded
     ):
-        payment_instance.pay_object.status = Payable.Status.REFUNDED
-        payment_instance.pay_object.save()
-
-        # Notify the user
-        user = payment_instance.pay_object.user
-        MailComposer().line(
-            f"Your payment of {payment_instance.value_currency} has been successfully refunded (ID: {payment_instance.provider_transaction_id} | {payment_instance.id})."
-        ).line(
-            f"This will have been refunded in your original payment method ({payment_instance.provider.description}{f' {payment_instance.card_brand} ending {payment_instance.last_4}' if payment_instance.card_brand and payment_instance.last_4 else ''})"
-        ).send(
-            "Refund successfully processed", user.email
-        )
-        return
-
-    # If the payment is of type refund, ensure that the pay_object is marked locked
-    if payment_instance.type == Transaction.Type.REFUND:
-        payment_instance.pay_object.status = Payable.Status.LOCKED
-        payment_instance.pay_object.save()
+        transaction_instance.pay_object.status = Payable.Status.CANCELLED
+        transaction_instance.pay_object.save()

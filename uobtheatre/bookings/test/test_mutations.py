@@ -2288,8 +2288,6 @@ def test_check_in_booking(
     [
         Payable.Status.IN_PROGRESS,
         Payable.Status.CANCELLED,
-        Payable.Status.LOCKED,
-        Payable.Status.REFUNDED,
     ],
 )
 def test_check_in_booking_fails_if_not_paid(gql_client, status):

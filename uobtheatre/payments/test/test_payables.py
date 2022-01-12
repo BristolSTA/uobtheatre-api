@@ -1,6 +1,7 @@
 from unittest.mock import PropertyMock, patch
 
 import pytest
+from pytest_django.asserts import assertQuerysetEqual
 
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import BookingFactory
@@ -9,6 +10,31 @@ from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.payments.transaction_providers import Card, Cash, SquareOnline
 from uobtheatre.users.test.factories import UserFactory
+
+
+@pytest.mark.django_db
+def test_payable_query_set():
+    booking_1 = BookingFactory()  # Booking with pending payments - locked
+    TransactionFactory(pay_object=booking_1, status=Transaction.Status.PENDING)
+
+    booking_2 = (
+        BookingFactory()
+    )  # Booking with a transaciton value sum of zero - refunded
+    TransactionFactory(
+        pay_object=booking_2, status=Transaction.Status.COMPLETED, value=200
+    )
+    TransactionFactory(
+        pay_object=booking_2,
+        status=Transaction.Status.COMPLETED,
+        value=-200,
+        type=Transaction.Type.REFUND,
+    )
+
+    booking_3 = BookingFactory()  # A completed and paid for booking. Shouldn't show up
+    TransactionFactory(pay_object=booking_3, status=Transaction.Status.COMPLETED)
+
+    assertQuerysetEqual(Booking.objects.locked(), [booking_1])
+    assertQuerysetEqual(Booking.objects.refunded(), [booking_2])
 
 
 @pytest.mark.django_db
@@ -100,6 +126,23 @@ def test_is_refunded(payment_values, has_pending, is_refunded):
 
     if payment := pay_object.transactions.first():
         assert payment.is_refunded == is_refunded
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "has_pending_transaction",
+    [False, True],
+)
+def test_is_locked(has_pending_transaction):
+    booking = BookingFactory()
+    TransactionFactory(
+        pay_object=booking,
+        status=Transaction.Status.PENDING
+        if has_pending_transaction
+        else Transaction.Status.COMPLETED,
+    )
+
+    assert booking.is_locked == has_pending_transaction
 
 
 @pytest.mark.django_db
