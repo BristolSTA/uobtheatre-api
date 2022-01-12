@@ -1,6 +1,10 @@
+from typing import List
+
+from uobtheatre.bookings.models import Booking
 from uobtheatre.mail.composer import MailComposer
-from uobtheatre.productions.models import Production
+from uobtheatre.productions.models import Performance, Production
 from uobtheatre.users.models import User
+from uobtheatre.utils.lang import pluralize
 
 
 def send_production_approved_email(user: User, production: Production):
@@ -52,3 +56,56 @@ def send_production_ready_for_review_email(user: User, production: Production):
     ).send(
         f"{production.name} is ready for approval", user.email
     )
+
+
+def performances_refunded_email(
+    authorizing_user: User,
+    performances: List[Performance],
+    refunded_bookings: List[Booking],
+    failed_bookings: List[Booking],
+    skipped_bookings: List[Booking],
+):
+    """Generate an email detailing performance refund statistics
+
+    Args:
+        authorizing_user (User): The user authorising the refunds
+        performances (List[Performance]): The performances refunded
+        refunded_bookings (List[Booking]): The bookings refunded
+        failed_bookings (List[Booking]): The bookings that failed to be refunded
+        skipped_bookings (List[Booking]): The bookings that were skipped
+
+    Returns:
+        MailComposer: Mail instance
+    """
+    mail = (
+        MailComposer()
+        .greeting()
+        .line(
+            f"Refund(s) have been initiated for the following {pluralize('performance', performances)}:"
+        )
+        .line(", ".join(str(performance) for performance in performances))
+        .line(
+            f"This action was requested by {authorizing_user.full_name} ({authorizing_user.email})"
+        )
+        .heading("Refunded Bookings")
+        .line(
+            ", ".join(
+                f"{booking.reference} ({booking.id})" for booking in refunded_bookings
+            )
+        )
+    )
+
+    if len(failed_bookings):
+        mail.heading("Failed Bookings").line(
+            ", ".join(
+                f"{booking.reference} ({booking.id})" for booking in failed_bookings
+            )
+        )
+
+    if len(skipped_bookings):
+        mail.heading("Skipped Bookings").line(
+            ", ".join(
+                f"{booking.reference} ({booking.id})" for booking in skipped_bookings
+            )
+        )
+    return mail

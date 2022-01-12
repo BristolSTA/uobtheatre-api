@@ -1,7 +1,7 @@
 # pylint: disable=too-many-public-methods
 import datetime
 import math
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 from autoslug import AutoSlugField
 from django.contrib.contenttypes.models import ContentType
@@ -13,9 +13,9 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django_tiptap.fields import TipTapTextField
 from guardian.shortcuts import get_objects_for_user
+from sentry_sdk import capture_exception
 
 from uobtheatre.images.models import Image
-from uobtheatre.payments.emails import payable_refund_initiated_email
 from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
@@ -631,25 +631,46 @@ class Performance(
             breakdowns
         )
 
-    def refund_bookings(self, authorizing_user: User, send_admin_email=True):
+    def refund_bookings(
+        self, authorizing_user: User, send_admin_email=True
+    ) -> Tuple[List, List, List]:
         """Refund the performance's bookings"""
         if not self.disabled:
             raise CantBeRefundedException(f"{self} is not set to disabled")
 
         refunded_bookings = []
+        failed_bookings = []
+        skipped_bookings = []
         for booking in self.bookings.filter(status=Payable.Status.PAID):
             if not booking.can_be_refunded:
+                skipped_bookings.append(booking)
                 continue
-            booking.refund(authorizing_user=authorizing_user, send_admin_email=False)
-            refunded_bookings.append(booking)
+
+            try:
+                booking.refund(
+                    authorizing_user=authorizing_user, send_admin_email=False
+                )
+                refunded_bookings.append(booking)
+            except Exception as exception:  # pylint: disable=broad-except
+                capture_exception(exception)
+                failed_bookings.append(booking)
 
         if len(refunded_bookings) != 0 and send_admin_email:
-            mail = payable_refund_initiated_email(authorizing_user, [self])
+            from uobtheatre.productions.emails import performances_refunded_email
+
+            mail = performances_refunded_email(
+                authorizing_user,
+                [self],
+                refunded_bookings,
+                failed_bookings,
+                skipped_bookings,
+            )
             mail_admins(
                 "Performance Refunds Initiated",
                 mail.to_plain_text(),
                 html_message=mail.to_html(),
             )
+        return (refunded_bookings, failed_bookings, skipped_bookings)
 
     def __str__(self):
         if self.start is None:

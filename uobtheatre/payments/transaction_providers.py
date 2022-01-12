@@ -310,7 +310,7 @@ class ManualRefund(RefundProvider):
         self.create_payment_object(
             payment.pay_object,
             -payment.value,
-            -payment.app_fee if payment.app_fee else None,
+            -payment.app_fee if payment.app_fee is not None else None,
             provider_fee=-payment.provider_fee if payment.provider_fee else None,
             status=payment_models.Transaction.Status.COMPLETED,
         )
@@ -345,7 +345,7 @@ class SquareRefund(RefundProvider, SquareAPIMixin):
         self.create_payment_object(
             payment.pay_object,
             -amount_details["amount"],
-            -payment.app_fee if payment.app_fee else None,
+            -payment.app_fee if payment.app_fee is not None else None,
             provider_transaction_id=square_refund_id,
             currency=amount_details["currency"],
             status=payment_models.Transaction.Status.PENDING,

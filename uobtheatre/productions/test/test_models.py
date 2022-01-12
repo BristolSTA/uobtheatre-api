@@ -1156,3 +1156,24 @@ def test_performance_refund_bookings(
         assert len(mailoutbox) == (
             1 if disabled and send_email and bookings_can_refund else 0
         )
+
+
+@pytest.mark.django_db
+def test_performance_refund_bookings_with_exception():
+    performance = PerformanceFactory(disabled=True)
+    booking = BookingFactory(performance=performance)
+    TransactionFactory(pay_object=booking)
+
+    with patch(
+        "uobtheatre.bookings.models.Booking.can_be_refunded",
+        new_callable=PropertyMock(return_value=True),
+    ), patch("uobtheatre.payments.models.Transaction.refund", side_effect=Exception()):
+        (
+            refunded_bookings,
+            failed_bookings,
+            skipped_bookings,
+        ) = performance.refund_bookings(UserFactory())
+
+    assert booking in failed_bookings
+    assert refunded_bookings == []
+    assert skipped_bookings == []

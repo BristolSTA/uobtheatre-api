@@ -3,8 +3,8 @@ from django.contrib.admin.options import ModelAdmin, TabularInline
 from django.core.mail import mail_admins
 from guardian.admin import GuardedModelAdmin
 
-from uobtheatre.payments.emails import payable_refund_initiated_email
 from uobtheatre.payments.exceptions import CantBeRefundedException
+from uobtheatre.productions.emails import performances_refunded_email
 from uobtheatre.productions.models import (
     AudienceWarning,
     CastMember,
@@ -41,13 +41,23 @@ class PerformanceAdmin(DangerousAdminConfirmMixin, ModelAdmin):
     @admin.action(description="Issue refunds", permissions=["change"])
     def issue_refunds(self, request, queryset):
         """Action to issue refund for bookings in selected performances(s)"""
-        refunded_performances = []
+        refunded_bookings = []
+        failed_bookings = []
+        skipped_bookings = []
+        performances = []
         for performance in queryset:
             try:
-                performance.refund_bookings(
+                (
+                    performance_refunded_bookings,
+                    performance_failed_bookings,
+                    performance_skipped_bookings,
+                ) = performance.refund_bookings(
                     authorizing_user=request.user, send_admin_email=False
                 )
-                refunded_performances.append(performance)
+                refunded_bookings += performance_refunded_bookings
+                failed_bookings += performance_failed_bookings
+                skipped_bookings += performance_skipped_bookings
+                performances.append(performance)
             except CantBeRefundedException as exception:
                 self.message_user(
                     request,
@@ -55,12 +65,19 @@ class PerformanceAdmin(DangerousAdminConfirmMixin, ModelAdmin):
                     level=messages.ERROR,
                 )
 
-        if len(refunded_performances) > 0:
+        if len(performances) > 0:
             self.message_user(
                 request,
-                "Eligable bookings on the performance(s) have had refunds requested ",
+                "Eligable bookings on the performance(s) have had refunds requested (Refunded: %s, Skipped: %s, Failed: %s)"
+                % (len(refunded_bookings), len(skipped_bookings), len(failed_bookings)),
             )
-            mail = payable_refund_initiated_email(request.user, refunded_performances)
+            mail = performances_refunded_email(
+                request.user,
+                performances,
+                refunded_bookings,
+                skipped_bookings,
+                failed_bookings,
+            )
             mail_admins(
                 "Performance Refunds Initiated",
                 mail.to_plain_text(),
