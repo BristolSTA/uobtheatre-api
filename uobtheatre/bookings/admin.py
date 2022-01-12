@@ -1,4 +1,5 @@
 from django.contrib import admin, messages
+from django.contrib.admin import SimpleListFilter
 from django.contrib.contenttypes.admin import GenericTabularInline
 from django.core.mail import mail_admins
 
@@ -26,6 +27,21 @@ class TransactionInline(GenericTabularInline, ReadOnlyInlineMixin):
     ct_field = "pay_object_type"
 
 
+class RefundedFilter(SimpleListFilter):
+    """A filter for to get refunded bookings"""
+
+    title = "refunded"
+    parameter_name = "refunded"
+
+    def lookups(self, _, __):
+        return (("yes", "Yes"),)
+
+    def queryset(self, _, queryset):
+        if self.value() == "yes":
+            return queryset.refunded()
+        return queryset
+
+
 @admin.register(Booking)
 class BookingAdmin(DangerousAdminConfirmMixin, admin.ModelAdmin):
     """Admin for Booking model.
@@ -35,8 +51,8 @@ class BookingAdmin(DangerousAdminConfirmMixin, admin.ModelAdmin):
         - price and discounted_price in list view
     """
 
-    list_filter = ("status",)
-    readonly_fields = ("subtotal", "total")
+    list_filter = ("status", RefundedFilter)
+    readonly_fields = ("subtotal", "total", "is_refunded", "is_locked")
     list_display = ("reference", "status", "get_performance_name")
     search_fields = [
         "reference",
