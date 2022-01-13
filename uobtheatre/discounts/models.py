@@ -158,7 +158,7 @@ class DiscountRequirement(models.Model):
         Each concession (ticket) can only be used in a single discount.
     """
 
-    number = models.SmallIntegerField()
+    number = models.PositiveSmallIntegerField()
     discount = models.ForeignKey(
         Discount, on_delete=models.CASCADE, related_name="requirements"
     )

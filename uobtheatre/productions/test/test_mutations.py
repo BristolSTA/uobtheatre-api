@@ -1082,7 +1082,18 @@ def test_delete_performance_mutation(gql_client, with_permission, with_bookings)
 
 
 @pytest.mark.django_db
-def test_performance_seat_group_mutation_create(gql_client):
+@pytest.mark.parametrize(
+    "price,fails",
+    [
+        (
+            0,
+            False,
+        ),
+        (1000, False),
+        (-10, True),
+    ],
+)
+def test_performance_seat_group_mutation_create(gql_client, price, fails):
     sg_gid = to_global_id("SeatGroupNode", SeatGroupFactory().id)
     performance_gid = to_global_id("PerformanceNode", PerformanceFactory().id)
     request = """
@@ -1091,7 +1102,7 @@ def test_performance_seat_group_mutation_create(gql_client):
             input: {
                 seatGroup: "%s"
                 performance: "%s"
-                price: 1000
+                price: %s
              }
           ) {
             success
@@ -1116,13 +1127,17 @@ def test_performance_seat_group_mutation_create(gql_client):
     """ % (
         sg_gid,
         performance_gid,
+        price,
     )
 
     with patch.object(
         EditProduction, "user_has_for", return_value=True
     ) as ability_mock:
         response = gql_client.login().execute(request)
-        print(response)
+
+        if fails:
+            assert response["data"]["performanceSeatGroup"]["success"] is False
+            return
 
         ability_mock.assert_called()
         assert response["data"]["performanceSeatGroup"]["success"] is True

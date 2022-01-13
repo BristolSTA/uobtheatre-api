@@ -3,13 +3,12 @@
 import pytest
 from graphql_relay.node.node import to_global_id
 from guardian.shortcuts import assign_perm
+
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
     PerformanceSeatingFactory,
     TicketFactory,
 )
-from uobtheatre.bookings.models import Booking
-
 from uobtheatre.images.test.factories import ImageFactory
 from uobtheatre.productions.models import Performance, PerformanceSeatGroup
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
@@ -361,8 +360,6 @@ def test_correct_capacities(gql_client):
     TicketFactory(booking=booking2, seat_group=seat_group_all)
     TicketFactory(booking=booking2, seat_group=seat_group_best)
 
-    print(perf_1.capacity_remaining)
-
     request = (
         """
         query {
@@ -393,8 +390,6 @@ def test_correct_capacities(gql_client):
     )
 
     response = gql_client.execute(request)
-
-    print(response)
 
     assert response["data"]["production"] == {
         "totalCapacity": venue_capacity + performance_limit_capacity + 170,
