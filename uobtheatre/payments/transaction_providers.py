@@ -95,56 +95,6 @@ class TransactionProvider(abc.ABC):
         return payment.provider_transaction_id
 
 
-class PaymentProvider(TransactionProvider, abc.ABC):
-    """
-    Abstract class for all payment methods.
-
-    Every payment method should define a `pay` method. This will take a value
-    and the the object being payed for and return (and save) a payment object
-    if the payment is completed.
-
-    Whenever a payment method is created it is automatically added to the
-    __all__ attirbute of PaymentMethod. This will therefore add it to the
-    choices field and the graphene enum.
-    """
-
-    __all__: Sequence[Type["PaymentProvider"]] = []
-
-    def __init_subclass__(cls) -> None:
-        super().__init_subclass__()
-        cls.__all__.append(cls)  # type: ignore
-
-    @abc.abstractmethod
-    def pay(
-        self, value: int, app_fee: int, pay_object: "Payable"
-    ) -> "payment_models.Transaction":
-        raise NotImplementedError
-
-    @classmethod
-    def create_payment_object(cls, *args, **kwargs) -> "payment_models.Transaction":
-        kwargs["type"] = payment_models.Transaction.Type.PAYMENT
-        return super().create_payment_object(*args, **kwargs)
-
-    @classmethod
-    @property
-    def is_refundable(cls) -> bool:
-        return issubclass(cls, Refundable)
-
-    @classmethod
-    @property
-    def refundable_payment_methods(cls) -> tuple[Type["Refundable"], ...]:
-        return tuple(method for method in cls.__all__ if issubclass(method, Refundable))
-
-    @classmethod
-    @property
-    def auto_refundable_providers(cls) -> tuple[Type["Refundable"], ...]:
-        return tuple(
-            method
-            for method in cls.refundable_payment_methods  # type: ignore
-            if issubclass(method, Refundable) and method.is_auto_refundable
-        )
-
-
 class RefundProvider(TransactionProvider, abc.ABC):
     """
     Abscract class for all refund methods.
@@ -171,19 +121,50 @@ class RefundProvider(TransactionProvider, abc.ABC):
         return super().create_payment_object(*args, **kwargs)
 
 
-class Refundable(abc.ABC):
+class PaymentProvider(TransactionProvider, abc.ABC):
     """
-    A mixin which can be added to a payment method. This makes the payment
-    method refundable. A refundable payment method must have refund_methods.
+    Abstract class for all payment methods.
+
+    Every payment method should define a `pay` method. This will take a value
+    and the the object being payed for and return (and save) a payment object
+    if the payment is completed.
+
+    Whenever a payment method is created it is automatically added to the
+    __all__ attirbute of PaymentMethod. This will therefore add it to the
+    choices field and the graphene enum.
+
+    If the payment method has refund_methods it can be refunded.
     These are the methods that can be used to refund payments created with this
     payment method.
     """
 
+    __all__: Sequence[Type["PaymentProvider"]] = []
+
+    def __init_subclass__(cls) -> None:
+        super().__init_subclass__()
+        cls.__all__.append(cls)  # type: ignore
+
+    @abc.abstractmethod
+    def pay(
+        self, value: int, app_fee: int, pay_object: "Payable"
+    ) -> "payment_models.Transaction":
+        raise NotImplementedError
+
+    @classmethod
+    def create_payment_object(cls, *args, **kwargs) -> "payment_models.Transaction":
+        kwargs["type"] = payment_models.Transaction.Type.PAYMENT
+        return super().create_payment_object(*args, **kwargs)
+
     @classmethod
     @property
-    @abc.abstractmethod
-    def refund_providers(cls) -> tuple[RefundProvider]:
+    def refund_providers(cls) -> tuple[RefundProvider, ...]:
         """A tuple of methods that can be used to refund payments"""
+        return tuple()
+
+    @classmethod
+    @property
+    def is_refundable(cls) -> bool:
+        return bool(cls.refund_providers)
 
     @classmethod
     def is_valid_refund_provider(cls, provider: RefundProvider) -> bool:
@@ -347,7 +328,7 @@ class SquareRefund(RefundProvider, SquareAPIMixin):
         cls._fill_payment_from_square_response_object(payment, data).save()
 
 
-class ManualPaymentMethodMixin(Refundable, abc.ABC):
+class ManualPaymentMethodMixin(abc.ABC):
     """
     Mixin for any manual payment method (one with no regiestered
     provider)
@@ -552,7 +533,7 @@ class SquarePOS(PaymentProvider, SquarePaymentMethod):
         payment.save()
 
 
-class SquareOnline(Refundable, PaymentProvider, SquarePaymentMethod):
+class SquareOnline(PaymentProvider, SquarePaymentMethod):
     """
     Uses Square checkout api to create payment. Used for online transactions.
 

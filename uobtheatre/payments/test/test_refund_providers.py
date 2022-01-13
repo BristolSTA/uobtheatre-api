@@ -20,20 +20,6 @@ def test_refund_method_all():
     assert RefundProvider.__all__ == [ManualRefund, SquareRefund]
 
 
-def test_refundable_payment_methods():
-    # type: ignore # pylint: disable=comparison-with-callable
-    assert PaymentProvider.refundable_payment_methods == (
-        Cash,
-        Card,
-        SquareOnline,
-    )
-
-
-def test_auto_refundable_payment_methods():
-    # type: ignore # pylint: disable=comparison-with-callable
-    assert PaymentProvider.auto_refundable_providers == (SquareOnline,)
-
-
 @pytest.mark.parametrize(
     "payment_provider, refund_provider, is_valid",
     [

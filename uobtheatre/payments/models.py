@@ -13,7 +13,6 @@ from uobtheatre.payments import transaction_providers
 from uobtheatre.payments.transaction_providers import (
     Cash,
     PaymentProvider,
-    Refundable,
     RefundProvider,
     TransactionProvider,
 )
