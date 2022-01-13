@@ -1,6 +1,7 @@
 from typing import Dict, List, Tuple
 
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from uobtheatre.productions.models import Performance
@@ -59,8 +60,10 @@ class Discount(models.Model):
     eligible for a given booking.
     """
 
-    name = models.CharField(max_length=255)
-    percentage = models.FloatField()
+    name = models.CharField(max_length=255, null=True)
+    percentage = models.FloatField(
+        validators=[MaxValueValidator(1), MinValueValidator(0)]
+    )
     performances = models.ManyToManyField(
         Performance,
         blank=True,
@@ -82,7 +85,9 @@ class Discount(models.Model):
 
         super().validate_unique(*args, **kwargs)
 
-        discounts = self.__class__._default_manager.all()  # pylint: disable=W0212
+        discounts = (
+            self.__class__._default_manager.all()  # pylint: disable=protected-access
+        )
         if not self._state.adding and self.pk is not None:
             discounts = discounts.exclude(pk=self.pk)
 
@@ -153,11 +158,13 @@ class DiscountRequirement(models.Model):
         Each concession (ticket) can only be used in a single discount.
     """
 
-    number = models.SmallIntegerField()
+    number = models.PositiveSmallIntegerField()
     discount = models.ForeignKey(
         Discount, on_delete=models.CASCADE, related_name="requirements"
     )
-    concession_type = models.ForeignKey(ConcessionType, on_delete=models.CASCADE)
+    concession_type = models.ForeignKey(
+        ConcessionType, on_delete=models.CASCADE, related_name="discount_requirements"
+    )
 
 
 class DiscountCombination:

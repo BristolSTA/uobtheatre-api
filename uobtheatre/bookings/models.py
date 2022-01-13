@@ -4,6 +4,7 @@ from urllib.parse import urlencode
 
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.aggregates import BoolAnd
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Case, F, FloatField, Q, Value, When
 from django.db.models.functions import Cast
@@ -18,7 +19,7 @@ from uobtheatre.payments.models import Payment
 from uobtheatre.payments.payables import Payable
 from uobtheatre.productions.models import Performance
 from uobtheatre.users.models import User
-from uobtheatre.utils.models import TimeStampedMixin, validate_percentage
+from uobtheatre.utils.models import TimeStampedMixin
 from uobtheatre.utils.utils import combinations, create_short_uuid
 from uobtheatre.venues.models import Seat, SeatGroup
 
@@ -42,7 +43,7 @@ class MiscCost(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
     percentage = models.FloatField(
-        null=True, blank=True, validators=[validate_percentage]
+        null=True, blank=True, validators=[MaxValueValidator(1), MinValueValidator(0)]
     )
     value = models.FloatField(null=True, blank=True)
 
@@ -228,7 +229,7 @@ class Booking(TimeStampedMixin, Payable, models.Model):
     # An additional discount that can be applied to the booking by an admin
     # To create a concession ticket a 100% discount can be applied.
     admin_discount_percentage = models.FloatField(
-        default=0, validators=[validate_percentage]
+        default=0, validators=[MaxValueValidator(1), MinValueValidator(0)]
     )
 
     expires_at = models.DateTimeField(default=generate_expires_at)
@@ -573,13 +574,6 @@ class Booking(TimeStampedMixin, Payable, models.Model):
         Send email confirmation which includes a link to the booking.
         """
         composer = MailComposer()
-
-        # Add greating
-        composer.heading(
-            "Hi %s" % self.user.first_name.capitalize()
-            if self.user.status.verified
-            else "Hello"
-        )
 
         composer.line(
             "Your booking to %s has been confirmed!" % self.performance.production.name

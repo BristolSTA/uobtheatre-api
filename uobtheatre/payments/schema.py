@@ -79,7 +79,7 @@ class Query(graphene.ObjectType):
 
         devices = []
         include_all = not payment_provider
-        if not OpenBoxoffice.user_has(info.context.user, None):
+        if not OpenBoxoffice.user_has(info.context.user):
             return None
 
         if include_all or payment_provider == SquarePOS.name:

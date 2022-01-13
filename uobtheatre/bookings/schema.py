@@ -3,7 +3,6 @@ from typing import List, Optional
 
 import django_filters
 import graphene
-from django.core.exceptions import ValidationError
 from django.db.models import Q
 from django_filters import OrderingFilter
 from graphene import relay
@@ -30,7 +29,6 @@ from uobtheatre.utils.exceptions import (
     SafeMutation,
 )
 from uobtheatre.utils.filters import FilterSet
-from uobtheatre.utils.models import validate_percentage
 from uobtheatre.utils.schema import AuthRequiredMixin, IdInputField
 from uobtheatre.venues.models import Seat, SeatGroup
 
@@ -418,13 +416,11 @@ def parse_admin_discount_percentage(
             message="You do not have permission to assign an admin discount",
             field="admin_discount_percentage",
         )
-    try:
-        validate_percentage(admin_discount_percentage)
-    except ValidationError as error:
+    if not 0 < admin_discount_percentage < 1:
         raise GQLException(
-            message=error.message,
+            message="Percentage must be between 0 and 1",
             field="admin_discount_percentage",
-        ) from error
+        )
     return admin_discount_percentage
 
 

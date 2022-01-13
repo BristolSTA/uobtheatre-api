@@ -4,7 +4,7 @@ import math
 
 import pytest
 from django.utils import timezone
-from graphql_relay.node.node import to_global_id
+from graphql_relay.node.node import from_global_id, to_global_id
 from guardian.shortcuts import assign_perm
 
 from uobtheatre.bookings.models import Booking
@@ -29,6 +29,10 @@ from uobtheatre.productions.test.factories import (
     create_production,
 )
 from uobtheatre.users.test.factories import UserFactory
+
+###
+# Production Queries
+###
 
 
 @pytest.mark.django_db
@@ -291,8 +295,491 @@ def test_productions_filter(factories, requests, gql_client):
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    "query_args, expected_production",
+    [
+        ('slug: "example-show"', 1),
+        ('slug: "not-a-thing"', None),
+        (f'id: "{to_global_id("ProductionNode", 1)}"', 1),
+        (f'id: "{to_global_id("ProductionNode", 2)}"', 2),
+        (f'id: "{to_global_id("ProductionNode", 3)}"', None),
+        (f'id: "{to_global_id("ProductionNode", 1)}" slug: "example-show"', 1),
+        (f'id: "{to_global_id("ProductionNode", 1)}" slug: "not-a-thing"', None),
+        (None, None),
+    ],
+)
+def test_resolve_production(gql_client, query_args, expected_production):
+    ProductionFactory(slug="example-show", id=1)
+    ProductionFactory(slug="other-show", id=2)
+
+    request = """
+      query {
+	    production%s {
+          id
+        }
+      }
+    """
+    response = gql_client.execute(request % (f"({query_args})" if query_args else ""))
+
+    if expected_production is not None:
+        assert response["data"]["production"]["id"] == to_global_id(
+            "ProductionNode", expected_production
+        )
+    else:
+        assert response["data"]["production"] is None
+
+
+@pytest.mark.django_db
+def test_upcoming_productions(gql_client):
+    def create_prod(start, end):
+        production = ProductionFactory()
+        diff = end - start
+        for i in range(5):
+            time = start + (diff / 5) * i
+            PerformanceFactory(start=time, end=time, production=production)
+        return production
+
+    current_time = timezone.now()
+    # Create some producitons in the past
+    for _ in range(10):
+        create_prod(
+            start=current_time - datetime.timedelta(days=11),
+            end=current_time - datetime.timedelta(days=1),
+        )
+
+    # Create some prodcution going on right now
+    productions = [
+        create_production(
+            start=current_time - datetime.timedelta(days=i),
+            end=current_time + datetime.timedelta(days=i),
+        )
+        for i in range(1, 11)
+    ]
+
+    # Check we get 6 of the upcoming productions back in the right order
+    request = """
+        {
+          productions(end_Gte: "%s", first: 6, orderBy: "end") {
+            edges {
+              node {
+                end
+              }
+            }
+          }
+        }
+        """
+
+    # Ask for nothing and check you get nothing
+    response = gql_client.execute(request % current_time.isoformat())
+    assert response["data"]["productions"] == {
+        "edges": [
+            {"node": {"end": productions[i].end_date().isoformat()}} for i in range(6)
+        ]
+    }
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "order_by, expected_order",
+    [
+        ("start", [0, 1, 2, 3]),
+        ("-start", [3, 2, 1, 0]),
+        ("end", [0, 1, 3, 2]),
+        ("-end", [2, 3, 1, 0]),
+    ],
+)
+def test_productions_orderby(order_by, expected_order, gql_client):
+    current_time = timezone.now()
+
+    productions = [
+        create_production(
+            start=current_time + datetime.timedelta(days=1),
+            end=current_time + datetime.timedelta(days=1),
+            production_id=0,
+        ),
+        create_production(
+            start=current_time + datetime.timedelta(days=2),
+            end=current_time + datetime.timedelta(days=2),
+            production_id=1,
+        ),
+        create_production(
+            start=current_time + datetime.timedelta(days=3),
+            end=current_time + datetime.timedelta(days=6),
+            production_id=2,
+        ),
+        create_production(
+            start=current_time + datetime.timedelta(days=4),
+            end=current_time + datetime.timedelta(days=5),
+            production_id=3,
+        ),
+    ]
+    request = """
+        {
+          productions(orderBy: "%s") {
+            edges {
+              node {
+                end
+              }
+            }
+          }
+        }
+        """
+
+    # Ask for nothing and check you get nothing
+    response = gql_client.execute(request % order_by)
+    assert response["data"]["productions"]["edges"] == [
+        {"node": {"end": productions[i].end_date().isoformat()}} for i in expected_order
+    ]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "filter_name, value_days, expected_outputs",
+    [
+        ("start_Gte", 2, [3, 2]),
+        ("start_Lte", 2, [0, 1, 2]),
+        ("end_Gte", 2, [3, 2]),
+        ("end_Lte", 2, [0, 1]),
+    ],
+)
+def test_production_time_filters(filter_name, value_days, expected_outputs, gql_client):
+    current_time = timezone.now().replace(microsecond=0, second=0)
+
+    productions = [
+        create_production(
+            start=current_time + datetime.timedelta(days=0),
+            end=current_time + datetime.timedelta(days=0),
+            production_id=0,
+        ),
+        create_production(
+            start=current_time + datetime.timedelta(days=1),
+            end=current_time + datetime.timedelta(days=1),
+            production_id=1,
+        ),
+        create_production(
+            start=current_time + datetime.timedelta(days=2),
+            end=current_time + datetime.timedelta(days=5),
+            production_id=2,
+        ),
+        create_production(
+            start=current_time + datetime.timedelta(days=3),
+            end=current_time + datetime.timedelta(days=4),
+            production_id=3,
+        ),
+    ]
+    # Check we get 6 of the upcoming productions back in the right order
+    request = """
+        {
+          productions(%s: "%s", orderBy: "end") {
+            edges {
+              node {
+                end
+              }
+            }
+          }
+        }
+        """
+
+    # Ask for nothing and check you get nothing
+    response = gql_client.execute(
+        request
+        % (
+            filter_name,
+            (current_time + datetime.timedelta(days=value_days)).isoformat(),
+        )
+    )
+    assert response["data"]["productions"]["edges"] == [
+        {"node": {"end": productions[i].end_date().isoformat()}}
+        for i in expected_outputs
+    ]
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "query,results",
+    [
+        ("trash", ["TRASh 2021"]),
+        ("gin", ["Legally Ginger"]),
+        ("Nothing", []),
+        ("", ["TRASh 2021", "Legally Ginger"]),
+    ],
+)
+def test_production_search_filter(gql_client, query, results):
+    ProductionFactory(name="TRASh 2021")
+    ProductionFactory(name="Legally Ginger")
+    request = """
+        {
+          productions(search: "%s") {
+            edges {
+              node {
+                name
+              }
+            }
+          }
+        }
+        """
+
+    response = gql_client.execute(request % query)
+    assert len(response["data"]["productions"]["edges"]) == len(results)
+
+    for result in results:
+        assert {"node": {"name": result}} in response["data"]["productions"]["edges"]
+
+
+@pytest.mark.django_db
+def test_productions_are_shown_with_permission(gql_client):
+    _ = [ProductionFactory() for _ in range(3)]
+    draft_production = ProductionFactory(status=Production.Status.DRAFT, slug="my-show")
+    assign_perm(
+        "productions.view_production", gql_client.login().user, draft_production
+    )
+
+    request = """
+        {
+          productions {
+            edges {
+              node {
+                id
+              }
+            }
+          }
+          production(slug: "my-show") {
+              name
+          }
+        }
+        """
+    response = gql_client.execute(request)
+
+    assert len(response["data"]["productions"]["edges"]) == 4
+    assert response["data"]["production"] is not None
+
+
+@pytest.mark.django_db
+def test_production_and_performance_sales_breakdowns(gql_client):
+    performance = PerformanceFactory()
+    booking = BookingFactory(
+        performance=performance, status=Booking.BookingStatus.IN_PROGRESS
+    )
+    perf_seat_group = PerformanceSeatingFactory(performance=performance, price=100)
+    TicketFactory(booking=booking, seat_group=perf_seat_group.seat_group)
+    PaymentFactory(pay_object=booking, value=booking.total)
+
+    request = """
+        {
+          productions(id: "%s") {
+            edges {
+                node {
+                    salesBreakdown {
+                        totalSales
+                        totalCardSales
+                        providerPaymentValue
+                        appPaymentValue
+                        societyTransferValue
+                        societyRevenue
+                    }
+                    performances {
+                        edges {
+                            node {
+                                salesBreakdown {
+                                    totalSales
+                                    totalCardSales
+                                    providerPaymentValue
+                                    appPaymentValue
+                                    societyTransferValue
+                                    societyRevenue
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        }
+        """
+
+    # First, test as unauthenticated/unauthorised
+    user = UserFactory()
+    gql_client.login(user)
+    response = gql_client.execute(
+        request % to_global_id("ProductionNode", performance.production.id)
+    )
+    assert response["data"]["productions"]["edges"][0]["node"]["salesBreakdown"] is None
+    assert (
+        response["data"]["productions"]["edges"][0]["node"]["performances"]["edges"][0][
+            "node"
+        ]["salesBreakdown"]
+        is None
+    )
+
+    # Second, add permission to view sales for production
+    assign_perm("sales", user, performance.production)
+    response = gql_client.execute(
+        request % to_global_id("ProductionNode", performance.production.id)
+    )
+    assert response["data"]["productions"]["edges"][0]["node"]["salesBreakdown"] == {
+        "appPaymentValue": 0,
+        "providerPaymentValue": 0,
+        "societyRevenue": 100,
+        "societyTransferValue": 100,
+        "totalCardSales": 100,
+        "totalSales": 100,
+    }
+    assert response["data"]["productions"]["edges"][0]["node"]["performances"]["edges"][
+        0
+    ]["node"]["salesBreakdown"] == {
+        "appPaymentValue": 0,
+        "providerPaymentValue": 0,
+        "societyRevenue": 100,
+        "societyTransferValue": 100,
+        "totalCardSales": 100,
+        "totalSales": 100,
+    }
+
+
+@pytest.mark.django_db
+def test_production_totals(gql_client):
+    perf_1 = PerformanceFactory(capacity=100)
+    perf_2 = PerformanceFactory(production=perf_1.production, capacity=150)
+    PerformanceSeatingFactory(performance=perf_1, capacity=1000)
+    PerformanceSeatingFactory(performance=perf_2, capacity=140)
+
+    booking_1 = BookingFactory(performance=perf_1)
+    TicketFactory(booking=booking_1)
+
+    request = """
+        {
+          productions(id: "%s") {
+            edges {
+                node {
+                    totalCapacity
+                    totalTicketsSold
+                }
+            }
+        }
+        }
+        """
+
+    response = gql_client.login(user=UserFactory(is_superuser=True)).execute(
+        request % to_global_id("ProductionNode", perf_1.production.id)
+    )
+    assert response["data"]["productions"]["edges"][0]["node"]["totalCapacity"] == 240
+    assert response["data"]["productions"]["edges"][0]["node"]["totalTicketsSold"] == 1
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "with_perm,users,expected_users",
+    [
+        (False, [], []),
+        (False, [[], ["change_production"]], []),
+        (True, [], []),
+        (True, [[], ["change_production"]], [1]),
+        (True, [[], ["change_production"], ["boxoffice"]], [1, 2]),
+    ],
+)
+def test_production_assigned_users(gql_client, with_perm, users, expected_users):
+    production = ProductionFactory(slug="my-production")
+    request = """
+        query {
+            production(slug: "my-production") {
+                assignedUsers {
+                    user {
+                        id
+                    }
+                    assignedPermissions
+                }
+            }
+        }
+    """
+
+    user_models = []
+    for permissions in users:
+        user_model = UserFactory()
+        user_models.append(user_model)
+        for perm in permissions:
+            assign_perm(perm, user_model, production)
+
+    gql_client.login()
+    if with_perm:
+        assign_perm("change_production", gql_client.user, production)
+
+    response = gql_client.execute(request)
+
+    if not with_perm:
+        assert response["data"]["production"]["assignedUsers"] is None
+    else:
+        present_users = [
+            from_global_id(assignedUser["user"]["id"])[1]
+            for assignedUser in response["data"]["production"]["assignedUsers"]
+        ]
+
+        for user_index in expected_users:
+            # Check the user's ID is in the present users
+            assert str(user_models[user_index].id) in present_users
+
+            # Check that the permissions reported are equal to the expected permissions
+            assert (
+                response["data"]["production"]["assignedUsers"][
+                    present_users.index(str(user_models[user_index].id))
+                ]["assignedPermissions"]
+                == users[user_index]
+            )
+
+        assert (
+            str(gql_client.user.id) in present_users
+        )  # They have been assigned change_production too!
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    ("perms", "can_assign"),
+    [([], False), (["boxoffice"], False), (["boxoffice", "change_production"], True)],
+)
+def test_assignable_permissions(gql_client, perms, can_assign):
+    production = ProductionFactory(slug="my-production")
+    gql_client.login()
+
+    for perm in perms:
+        assign_perm(perm, gql_client.user, production)
+
+    request = """
+        query {
+            production(slug: "my-production") {
+                assignablePermissions {
+                    name
+                    description
+                    userCanAssign
+                }
+            }
+        }
+    """
+
+    response = gql_client.execute(request)
+
+    if can_assign is False:
+        assert response["data"]["production"]["assignablePermissions"] is None
+        return
+    assert len(response["data"]["production"]["assignablePermissions"]) == 9
+    assert {
+        "name": "boxoffice",
+        "description": "Can use boxoffice for production",
+        "userCanAssign": True,
+    } in response["data"]["production"]["assignablePermissions"]
+    assert {
+        "name": "add_production",
+        "description": "Can add production",
+        "userCanAssign": False,
+    } in response["data"]["production"]["assignablePermissions"]
+
+
+###
+# Performance Queries
+###
+
+
+@pytest.mark.django_db
 def test_performance_schema(gql_client):
-    performances = [PerformanceFactory() for i in range(1)]
+    performances = [PerformanceFactory() for _ in range(1)]
 
     response = gql_client.execute(
         """
@@ -306,7 +793,11 @@ def test_performance_schema(gql_client):
                 description
                 disabled
                 discounts {
-                    id
+                  edges {
+                    node {
+                      id
+                    }
+                  }
                 }
                 doorsOpen
                 durationMins
@@ -344,12 +835,14 @@ def test_performance_schema(gql_client):
                             "capacity": performance.capacity,
                             "description": performance.description,
                             "disabled": performance.disabled,
-                            "discounts": [
-                                {
-                                    "id": to_global_id("DiscountNode", discount.id),
-                                }
-                                for discount in performance.discounts.all()
-                            ],
+                            "discounts": {
+                                "edges": [
+                                    {
+                                        "id": to_global_id("DiscountNode", discount.id),
+                                    }
+                                    for discount in performance.discounts.all()
+                                ]
+                            },
                             "doorsOpen": performance.doors_open.isoformat(),
                             "durationMins": performance.duration().seconds // 60,
                             "end": performance.end.isoformat(),
@@ -363,7 +856,7 @@ def test_performance_schema(gql_client):
                                 )
                             },
                             "start": performance.start.isoformat(),
-                            "capacityRemaining": performance.capacity_remaining(),
+                            "capacityRemaining": performance.capacity_remaining,
                             "venue": {
                                 "id": to_global_id("VenueNode", performance.venue.id)
                             },
@@ -513,7 +1006,7 @@ def test_tickets_breakdown(gql_client):
                         "node": {
                             "ticketOptions": [
                                 {
-                                    "capacityRemaining": performance.capacity_remaining(
+                                    "capacityRemaining": performance.seat_group_capacity_remaining(
                                         performance_seat_group_1.seat_group
                                     ),
                                     "concessionTypes": [
@@ -562,7 +1055,7 @@ def test_tickets_breakdown(gql_client):
                                     },
                                 },
                                 {
-                                    "capacityRemaining": performance.capacity_remaining(
+                                    "capacityRemaining": performance.seat_group_capacity_remaining(
                                         performance_seat_group_2.seat_group
                                     ),
                                     "concessionTypes": [
@@ -620,29 +1113,6 @@ def test_tickets_breakdown(gql_client):
 
 
 @pytest.mark.django_db
-def test_production_single_slug(gql_client):
-    productions = [ProductionFactory() for i in range(2)]
-
-    request = """
-        query {
-	  production(slug:"%s") {
-            id
-          }
-        }
-
-        """
-    response = gql_client.execute(request % "")
-
-    assert not response.get("errors", None)
-    assert response["data"] == {"production": None}
-
-    response = gql_client.execute(request % productions[0].slug)
-    assert response["data"] == {
-        "production": {"id": to_global_id("ProductionNode", productions[0].id)}
-    }
-
-
-@pytest.mark.django_db
 def test_performance_single_id(gql_client):
     performances = [PerformanceFactory() for i in range(2)]
 
@@ -652,7 +1122,6 @@ def test_performance_single_id(gql_client):
             id
           }
         }
-
         """
 
     # Ask for nothing and check you get nothing
@@ -666,203 +1135,6 @@ def test_performance_single_id(gql_client):
     assert response["data"] == {
         "performance": {"id": to_global_id("PerformanceNode", performances[0].id)}
     }
-
-
-@pytest.mark.django_db
-def test_upcoming_productions(gql_client):
-    def create_prod(start, end):
-        production = ProductionFactory()
-        diff = end - start
-        for i in range(5):
-            time = start + (diff / 5) * i
-            PerformanceFactory(start=time, end=time, production=production)
-        return production
-
-    current_time = timezone.now()
-    # Create some producitons in the past
-    for _ in range(10):
-        create_prod(
-            start=current_time - datetime.timedelta(days=11),
-            end=current_time - datetime.timedelta(days=1),
-        )
-
-    # Create some prodcution going on right now
-    productions = [
-        create_production(
-            start=current_time - datetime.timedelta(days=i),
-            end=current_time + datetime.timedelta(days=i),
-        )
-        for i in range(1, 11)
-    ]
-
-    # Check we get 6 of the upcoming productions back in the right order
-    request = """
-        {
-          productions(end_Gte: "%s", first: 6, orderBy: "end") {
-            edges {
-              node {
-                end
-              }
-            }
-          }
-        }
-        """
-
-    # Ask for nothing and check you get nothing
-    response = gql_client.execute(request % current_time.isoformat())
-    assert response["data"]["productions"] == {
-        "edges": [
-            {"node": {"end": productions[i].end_date().isoformat()}} for i in range(6)
-        ]
-    }
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    "order_by, expected_order",
-    [
-        ("start", [0, 1, 2, 3]),
-        ("-start", [3, 2, 1, 0]),
-        ("end", [0, 1, 3, 2]),
-        ("-end", [2, 3, 1, 0]),
-    ],
-)
-def test_productions_orderby(order_by, expected_order, gql_client):
-    current_time = timezone.now()
-
-    productions = [
-        create_production(
-            start=current_time + datetime.timedelta(days=1),
-            end=current_time + datetime.timedelta(days=1),
-            production_id=0,
-        ),
-        create_production(
-            start=current_time + datetime.timedelta(days=2),
-            end=current_time + datetime.timedelta(days=2),
-            production_id=1,
-        ),
-        create_production(
-            start=current_time + datetime.timedelta(days=3),
-            end=current_time + datetime.timedelta(days=6),
-            production_id=2,
-        ),
-        create_production(
-            start=current_time + datetime.timedelta(days=4),
-            end=current_time + datetime.timedelta(days=5),
-            production_id=3,
-        ),
-    ]
-    request = """
-        {
-          productions(orderBy: "%s") {
-            edges {
-              node {
-                end
-              }
-            }
-          }
-        }
-        """
-
-    # Ask for nothing and check you get nothing
-    response = gql_client.execute(request % order_by)
-    assert response["data"]["productions"]["edges"] == [
-        {"node": {"end": productions[i].end_date().isoformat()}} for i in expected_order
-    ]
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    "filter_name, value_days, expected_outputs",
-    [
-        ("start_Gte", 2, [2, 3]),
-        ("start_Lte", 2, [0, 1, 2]),
-        ("end_Gte", 2, [2, 3]),
-        ("end_Lte", 2, [0, 1]),
-    ],
-)
-def test_production_time_filters(filter_name, value_days, expected_outputs, gql_client):
-    current_time = timezone.now()
-
-    productions = [
-        create_production(
-            start=current_time + datetime.timedelta(days=0),
-            end=current_time + datetime.timedelta(days=0),
-            production_id=0,
-        ),
-        create_production(
-            start=current_time + datetime.timedelta(days=1),
-            end=current_time + datetime.timedelta(days=1),
-            production_id=1,
-        ),
-        create_production(
-            start=current_time + datetime.timedelta(days=2),
-            end=current_time + datetime.timedelta(days=5),
-            production_id=2,
-        ),
-        create_production(
-            start=current_time + datetime.timedelta(days=3),
-            end=current_time + datetime.timedelta(days=4),
-            production_id=3,
-        ),
-    ]
-    # Check we get 6 of the upcoming productions back in the right order
-    request = """
-        {
-          productions(%s: "%s") {
-            edges {
-              node {
-                end
-              }
-            }
-          }
-        }
-        """
-
-    # Ask for nothing and check you get nothing
-    response = gql_client.execute(
-        request
-        % (
-            filter_name,
-            (current_time + datetime.timedelta(days=value_days)).isoformat(),
-        )
-    )
-    assert response["data"]["productions"]["edges"] == [
-        {"node": {"end": productions[i].end_date().isoformat()}}
-        for i in expected_outputs
-    ]
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    "query,results",
-    [
-        ("trash", ["TRASh 2021"]),
-        ("gin", ["Legally Ginger"]),
-        ("Nothing", []),
-        ("", ["TRASh 2021", "Legally Ginger"]),
-    ],
-)
-def test_production_search_filter(gql_client, query, results):
-    ProductionFactory(name="TRASh 2021")
-    ProductionFactory(name="Legally Ginger")
-    request = """
-        {
-          productions(search: "%s") {
-            edges {
-              node {
-                name
-              }
-            }
-          }
-        }
-        """
-
-    response = gql_client.execute(request % query)
-    assert len(response["data"]["productions"]["edges"]) == len(results)
-
-    for result in results:
-        assert {"node": {"name": result}} in response["data"]["productions"]["edges"]
 
 
 @pytest.mark.django_db
@@ -900,70 +1172,6 @@ def test_productions_are_filtered_out(logged_in, status, gql_client):
 
 
 @pytest.mark.django_db
-def test_productions_are_shown_with_permission(gql_client):
-    _ = [ProductionFactory() for _ in range(3)]
-    draft_production = ProductionFactory(status=Production.Status.DRAFT, slug="my-show")
-    assign_perm(
-        "productions.change_production", gql_client.login().user, draft_production
-    )
-
-    request = """
-        {
-          productions {
-            edges {
-              node {
-                id
-              }
-            }
-          }
-          production(slug: "my-show") {
-              name
-          }
-        }
-        """
-    response = gql_client.execute(request)
-
-    assert len(response["data"]["productions"]["edges"]) == 4
-    assert response["data"]["production"] is not None
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    "logged_in,status",
-    [(True, "DRAFT"), (True, "PENDING"), (False, "DRAFT"), (False, "PENDING")],
-)
-def test_performances_are_filtered_out(logged_in, status, gql_client):
-    _ = [PerformanceFactory() for _ in range(3)]
-    draft_performance = PerformanceFactory(production=ProductionFactory(status=status))
-
-    request = """
-        {
-          performances {
-            edges {
-              node {
-                id
-              }
-            }
-          }
-          performance(id: "%s") {
-              start
-          }
-        }
-        """ % to_global_id(
-        "PerformanceNode", draft_performance.id
-    )
-    if logged_in:
-        gql_client.login()
-    response = gql_client.execute(request)
-
-    assert len(response["data"]["performances"]["edges"]) == 3
-    assert to_global_id("PerformanceNode", draft_performance.id) not in [
-        edge["node"]["id"] for edge in response["data"]["performances"]["edges"]
-    ]
-    assert response["data"]["performance"] is None
-
-
-@pytest.mark.django_db
 def test_performances_are_shown_with_permission(gql_client):
     _ = [PerformanceFactory() for _ in range(3)]
     draft_performance = PerformanceFactory(
@@ -971,7 +1179,7 @@ def test_performances_are_shown_with_permission(gql_client):
     )
 
     assign_perm(
-        "productions.change_production",
+        "productions.view_production",
         gql_client.login().user,
         draft_performance.production,
     )
@@ -1063,113 +1271,32 @@ def test_performance_has_permission(gql_client):
     ]
 
 
+###
+# Warnings Queries
+###
+
+
 @pytest.mark.django_db
-def test_production_and_performance_sales_breakdowns(gql_client):
-    performance = PerformanceFactory()
-    booking = BookingFactory(
-        performance=performance, status=Booking.BookingStatus.IN_PROGRESS
-    )
-    perf_seat_group = PerformanceSeatingFactory(performance=performance, price=100)
-    TicketFactory(booking=booking, seat_group=perf_seat_group.seat_group)
-    PaymentFactory(pay_object=booking, value=booking.total)
+def test_warnings(gql_client):
+    AudienceWarningFactory(description="Beware of the children")
+    AudienceWarningFactory(description="Pyrotechnics go bang")
+    AudienceWarningFactory(description="Strobe do be flickering")
 
     request = """
-        {
-          productions(id: "%s") {
-            edges {
-                node {
-                    salesBreakdown {
-                        totalSales
-                        totalCardSales
-                        providerPaymentValue
-                        appPaymentValue
-                        societyTransferValue
-                        societyRevenue
-                    }
-                    performances {
-                        edges {
-                            node {
-                                salesBreakdown {
-                                    totalSales
-                                    totalCardSales
-                                    providerPaymentValue
-                                    appPaymentValue
-                                    societyTransferValue
-                                    societyRevenue
-                                }
-                            }
-                        }
+        query {
+            warnings{
+                edges {
+                    node {
+                        description
                     }
                 }
             }
         }
-        }
-        """
+    """
 
-    # First, test as unauthenticated/unauthorised
-    user = UserFactory()
-    gql_client.login(user)
-    response = gql_client.execute(
-        request % to_global_id("ProductionNode", performance.production.id)
-    )
-    assert response["data"]["productions"]["edges"][0]["node"]["salesBreakdown"] is None
-    assert (
-        response["data"]["productions"]["edges"][0]["node"]["performances"]["edges"][0][
-            "node"
-        ]["salesBreakdown"]
-        is None
-    )
-
-    # Second, add permission to view sales for production
-    assign_perm("sales", user, performance.production)
-    response = gql_client.execute(
-        request % to_global_id("ProductionNode", performance.production.id)
-    )
-    assert response["data"]["productions"]["edges"][0]["node"]["salesBreakdown"] == {
-        "appPaymentValue": 0,
-        "providerPaymentValue": 0,
-        "societyRevenue": 100,
-        "societyTransferValue": 100,
-        "totalCardSales": 100,
-        "totalSales": 100,
-    }
-    assert response["data"]["productions"]["edges"][0]["node"]["performances"]["edges"][
-        0
-    ]["node"]["salesBreakdown"] == {
-        "appPaymentValue": 0,
-        "providerPaymentValue": 0,
-        "societyRevenue": 100,
-        "societyTransferValue": 100,
-        "totalCardSales": 100,
-        "totalSales": 100,
-    }
-
-
-@pytest.mark.django_db
-def test_production_totals(gql_client):
-    perf_1 = PerformanceFactory(capacity=100)
-    perf_2 = PerformanceFactory(production=perf_1.production, capacity=150)
-    PerformanceSeatingFactory(performance=perf_1, capacity=1000)
-    PerformanceSeatingFactory(performance=perf_2, capacity=140)
-
-    booking_1 = BookingFactory(performance=perf_1)
-    TicketFactory(booking=booking_1)
-
-    request = """
-        {
-          productions(id: "%s") {
-            edges {
-                node {
-                    totalCapacity
-                    totalTicketsSold
-                }
-            }
-        }
-        }
-        """
-
-    response = gql_client.login(user=UserFactory(is_superuser=True)).execute(
-        request % to_global_id("ProductionNode", perf_1.production.id)
-    )
-    assert response["data"]["productions"]["edges"][0]["node"]["totalCapacity"] == 240
-    assert response["data"]["productions"]["edges"][0]["node"]["totalTicketsSold"] == 1
+    response = gql_client.execute(request)
+    assert response["data"]["warnings"]["edges"] == [
+        {"node": {"description": "Beware of the children"}},
+        {"node": {"description": "Pyrotechnics go bang"}},
+        {"node": {"description": "Strobe do be flickering"}},
+    ]

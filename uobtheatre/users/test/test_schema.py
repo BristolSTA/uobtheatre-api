@@ -273,8 +273,8 @@ def test_user_schema_abilities(
             """
         )
 
-    mock_open_boxoffice.assert_called_once_with(gql_client.user, gql_client.user)
-    mock_open_admin.assert_called_once_with(gql_client.user, gql_client.user)
+    mock_open_boxoffice.assert_called_once_with(gql_client.user)
+    mock_open_admin.assert_called_once_with(gql_client.user)
     permissions = response["data"]["me"]["permissions"]
     assert ("boxoffice_open" in permissions) == user_can_open_boxoffice
     assert ("admin_open" in permissions) == user_can_open_admin

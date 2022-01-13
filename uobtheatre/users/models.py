@@ -1,9 +1,9 @@
 import uuid
 from typing import Union
 
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, Permission
 from django.db import models
-from guardian.shortcuts import get_objects_for_user
+from guardian.shortcuts import assign_perm, get_objects_for_user
 
 from uobtheatre.users.abilities import AbilitiesMixin, OpenAdmin, OpenBoxoffice
 
@@ -49,6 +49,9 @@ class User(AbilitiesMixin, AbstractUser):
         """
         return super().has_perm(perm) or (super().has_perm(perm, obj) if obj else False)
 
+    def assign_perm(self, perm: str, obj=None):
+        return assign_perm(perm, self, obj)
+
     def get_objects_with_perm(self, permissions: Union[str, list[str]]):
         """
         Returns all the objects which the user has the request permissions for.
@@ -68,9 +71,18 @@ class User(AbilitiesMixin, AbstractUser):
         Returns:
             bool: Whether the user has any of the permissions
         """
+        if isinstance(permissions, str):
+            permissions = [permissions]
+
         return (
             # Here we check explicitly check global permissions as no objects
             # are returned if no objects exist for get_objects_with_perm.
-            any(self.has_perm(perm) for perm in permissions)
-            or self.get_objects_with_perm(permissions).exists()
+            self.get_objects_with_perm(permissions).exists()
+            or any(self.has_perm(perm) for perm in permissions)
         )
+
+    @property
+    def global_perms(self):
+        if self.is_superuser:
+            return Permission.objects.all()
+        return self.user_permissions.all() | Permission.objects.filter(group__user=self)

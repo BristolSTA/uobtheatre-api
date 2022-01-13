@@ -1,6 +1,7 @@
 import abc
 
 import graphene
+from django.contrib.contenttypes.models import ContentType
 from guardian.shortcuts import get_perms
 
 
@@ -15,9 +16,12 @@ class AbilitiesMixin:
         raise NotImplementedError
 
     def get_perms(self, user, obj):
+        """Override get_perms method to return perms as well as abilities"""
         django_perms = get_perms(user, self)
         computed_perms = [
-            ability.name for ability in self.abilities if ability.user_has(user, obj)
+            ability.name
+            for ability in self.abilities
+            if ability.user_has_for(user, obj)
         ]
         return django_perms + computed_perms
 
@@ -35,10 +39,30 @@ class Ability(abc.ABC):
     def name(self) -> str:
         raise NotImplementedError
 
-    @staticmethod
-    @abc.abstractmethod
-    def user_has(user, obj) -> bool:
-        raise NotImplementedError
+    @classmethod
+    def user_has(cls, user) -> bool:  # pylint: disable=unused-argument
+        """Returns whether the user has the ability for any / at all
+
+        Args:
+            user (User): The user being queried
+
+        Returns:
+            bool: Whether the user has the abiltiy
+        """
+        return False
+
+    @classmethod
+    def user_has_for(cls, user, obj) -> bool:  # pylint: disable=unused-argument
+        """Returns whether the user has the ability for a specific object
+
+        Args:
+            user (User): The user being queried
+            obj (Model): The object to query the user on
+
+        Returns:
+            bool: Whether the user has the ability for the object
+        """
+        return cls.user_has(user)
 
 
 class OpenBoxoffice(Ability):
@@ -47,7 +71,7 @@ class OpenBoxoffice(Ability):
     name = "boxoffice_open"
 
     @staticmethod
-    def user_has(user, _) -> bool:
+    def user_has(user) -> bool:
         from uobtheatre.productions.models import Performance  # type: ignore
 
         return Performance.objects.has_boxoffice_permission(user).exists()  # type: ignore
@@ -59,7 +83,9 @@ class OpenAdmin(Ability):
     name = "admin_open"
 
     @staticmethod
-    def user_has(user, _) -> bool:
+    def user_has(user) -> bool:
+        from uobtheatre.productions.abilities import AddProduction
+
         return (
             user.has_any_objects_with_perms(
                 [
@@ -68,7 +94,9 @@ class OpenAdmin(Ability):
                     "productions.view_production",
                 ]
             )
+            or user.has_any_objects_with_perms(["societies.add_production"])
             or user.has_perm("reports.finance_reports")
+            or AddProduction.user_has(user)
         )
 
 
@@ -81,6 +109,12 @@ class PermissionsMixin:
     permissions = graphene.List(graphene.String)
 
     def resolve_permissions(self, info):
+        global_perms = [
+            perm.codename
+            for perm in info.context.user.user_permissions.filter(
+                content_type=ContentType.objects.get_for_model(self)
+            ).all()
+        ]
         if hasattr(self, "get_perms"):
-            return self.get_perms(info.context.user, self)
-        return get_perms(info.context.user, self)
+            return self.get_perms(info.context.user, self) + global_perms
+        return get_perms(info.context.user, self) + global_perms
