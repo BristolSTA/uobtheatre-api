@@ -6,7 +6,7 @@ from uobtheatre.bookings.schema import BookingNode
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.transaction_providers import PaymentProvider, SquarePOS
 from uobtheatre.users.abilities import OpenBoxoffice
-from uobtheatre.utils.enums import GrapheneEnumMixin
+from uobtheatre.utils.enums import EnumNode, GrapheneEnumMixin
 from uobtheatre.utils.filters import FilterSet
 
 PaymentMethodsEnum = graphene.Enum("PaymentMethod", PaymentProvider.choices)
@@ -40,6 +40,10 @@ class SquarePaymentDevice(graphene.ObjectType):
 class TransactionNode(GrapheneEnumMixin, DjangoObjectType):
     url = graphene.String(required=False)
     pay_object = PayObjectUnion()
+    provider = graphene.Field(EnumNode)
+
+    def resolve_provider(self, info):
+        return GrapheneEnumMixin._generate_enum_resolver("provider_name")(self, info)
 
     def resolve_url(self, info):
         return self.url()
@@ -48,7 +52,7 @@ class TransactionNode(GrapheneEnumMixin, DjangoObjectType):
         model = Transaction
         interfaces = (relay.Node,)
         filterset_class = TransactionFilter
-        exclude = ("pay_object_id", "pay_object_type")
+        exclude = ("pay_object_id", "pay_object_type", "provider_name")
 
 
 class Query(graphene.ObjectType):
