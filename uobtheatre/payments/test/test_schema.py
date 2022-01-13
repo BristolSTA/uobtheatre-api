@@ -30,7 +30,7 @@ def test_payment_schema(gql_client):
                           value
                           description
                         }
-                        providerName {
+                        provider {
                           value
                           description
                         }
@@ -80,7 +80,7 @@ def test_payment_schema(gql_client):
                                                     "value": str(payment.type).upper(),
                                                     "description": payment.get_type_display(),
                                                 },
-                                                "providerName": {
+                                                "provider": {
                                                     "value": str(
                                                         payment.provider_name
                                                     ).upper(),
