@@ -80,7 +80,7 @@ class PeriodTotalsBreakdown(Report):
 
     def __init__(self, start: datetime, end: datetime) -> None:
         super().__init__()
-        Transaction.sync_payments()
+
         production_totals_set = DataSet(
             "Production Totals",
             ["Production ID", "Production Name", "Total Income (Pence)"],
@@ -95,6 +95,9 @@ class PeriodTotalsBreakdown(Report):
             status=Transaction.Status.COMPLETED,
             created_at__lt=end,
         ).prefetch_related("pay_object__performance__production__society")
+
+        # Resync any payments that dont have provider fees
+        payments.missing_provider_fee().sync()
 
         self.meta.append(MetaItem("No. of Payments", str(len(payments))))
         self.meta.append(
@@ -191,7 +194,10 @@ class OutstandingSocietyPayments(Report):
 
     def __init__(self) -> None:
         super().__init__()
-        Transaction.sync_payments()
+
+        # TODO only sync transactions in the productions
+        Transaction.objects.missing_provider_fee().sync()
+
         productions_dataset = DataSet(
             "Productions",
             [

@@ -41,6 +41,17 @@ class TransactionQuerySet(QuerySet):
     def refunds(self):
         return self.filter(type=Transaction.Type.REFUND)
 
+    def missing_provider_fee(self):
+        return self.filter(provider_fee=None)
+
+    def sync(self):
+        """
+        Sync all (non manual) payments with their providers. Currently the only
+        syncing we do is for the processing fee.
+        """
+        for payment in self.objects.all():
+            payment.sync_transaction_with_provider()
+
 
 class Transaction(TimeStampedMixin, models.Model):
 
@@ -131,22 +142,6 @@ class Transaction(TimeStampedMixin, models.Model):
         completed.
         """
         return self.pay_object.is_refunded
-
-    @classmethod
-    def sync_payments(cls):
-        """
-        Sync all (non manual) payments with their providers. Currently the only
-        syncing we do is for the processing fee.
-        """
-
-        for payment in cls.objects.filter(
-            provider_fee=None,
-            provider_name__in=[
-                method.name
-                for method in PaymentProvider.non_manual_methods  # pylint: disable=not-an-iterable
-            ],
-        ):
-            payment.sync_transaction_with_provider()
 
     @property
     def provider(self):
