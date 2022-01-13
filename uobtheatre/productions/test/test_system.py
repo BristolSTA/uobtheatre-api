@@ -4,8 +4,14 @@ import pytest
 from graphql_relay.node.node import to_global_id
 from guardian.shortcuts import assign_perm
 
+from uobtheatre.bookings.test.factories import (
+    BookingFactory,
+    PerformanceSeatingFactory,
+    TicketFactory,
+)
 from uobtheatre.images.test.factories import ImageFactory
 from uobtheatre.productions.models import Performance, PerformanceSeatGroup
+from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.societies.test.factories import SocietyFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory, VenueFactory
@@ -318,3 +324,161 @@ def test_total_production_creation_workflow(gql_client):
     print(response)
 
     assert response["data"]["setProductionStatus"]["success"] is True
+
+
+@pytest.mark.django_db
+def test_correct_capacities(gql_client):
+
+    venue_capacity = 207
+    venue = VenueFactory(internal_capacity=venue_capacity)
+    sg_all_capacity = venue_capacity  # 207
+    seat_group_all = SeatGroupFactory(venue=venue, capacity=sg_all_capacity)
+    sg_small_capacity = 50
+    seat_group_small = SeatGroupFactory(venue=venue, capacity=sg_small_capacity)
+    sg_best_capacity = 157
+    seat_group_best = SeatGroupFactory(venue=venue, capacity=sg_best_capacity)
+    production = ProductionFactory()
+
+    perf_1 = PerformanceFactory(production=production, venue=venue)
+    PerformanceSeatingFactory(
+        performance=perf_1, seat_group=seat_group_all, capacity=sg_all_capacity
+    )
+    PerformanceSeatingFactory(
+        performance=perf_1, seat_group=seat_group_small, capacity=sg_small_capacity
+    )
+    PerformanceSeatingFactory(
+        performance=perf_1, seat_group=seat_group_best, capacity=147
+    )
+
+    # check performance with a capacity limit
+    performance_limit_capacity = 180
+    perf_2 = PerformanceFactory(
+        production=production, venue=venue, capacity=performance_limit_capacity
+    )
+    PerformanceSeatingFactory(
+        performance=perf_2, seat_group=seat_group_all, capacity=sg_all_capacity
+    )
+    PerformanceSeatingFactory(
+        performance=perf_2, seat_group=seat_group_small, capacity=sg_small_capacity
+    )
+    PerformanceSeatingFactory(
+        performance=perf_2, seat_group=seat_group_best, capacity=147
+    )
+
+    # check performanceSeatGroup limit below performace capacity
+    perf_3 = PerformanceFactory(
+        production=production, venue=venue, capacity=performance_limit_capacity
+    )
+    psg_capacity = 170
+    PerformanceSeatingFactory(
+        performance=perf_3, seat_group=seat_group_all, capacity=psg_capacity
+    )
+
+    # booking in small seatgroup should reduce capacity remaining on this seatgroup and
+    # any seatgroup with capacity remamining > performance capacity remaining
+    booking1 = BookingFactory(performance=perf_1)
+    TicketFactory(booking=booking1, seat_group=seat_group_small)
+
+    # check bookings with performance capacity limit
+    booking2 = BookingFactory(performance=perf_2)
+    TicketFactory(booking=booking2, seat_group=seat_group_all)
+    TicketFactory(booking=booking2, seat_group=seat_group_best)
+
+    request = (
+        """
+        query {
+            production(slug: "%s") {
+                totalCapacity
+                performances{
+                    edges{
+                        node{
+                            capacity
+                            capacityRemaining
+                            ticketsBreakdown{
+                                totalCapacity
+                            }
+                            ticketOptions{
+                                capacity
+                                capacityRemaining
+                            }
+                            venue{
+                                internalCapacity
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    """
+        % production.slug
+    )
+
+    response = gql_client.execute(request)
+
+    assert response["data"]["production"] == {
+        "totalCapacity": venue_capacity + performance_limit_capacity + 170,
+        "performances": {
+            "edges": [
+                {
+                    "node": {
+                        "capacity": None,
+                        "capacityRemaining": venue_capacity - 1,
+                        "ticketsBreakdown": {"totalCapacity": venue_capacity},
+                        "ticketOptions": [
+                            {
+                                "capacity": sg_all_capacity,
+                                "capacityRemaining": sg_all_capacity - 1,
+                            },
+                            {
+                                "capacity": sg_small_capacity,
+                                "capacityRemaining": sg_small_capacity - 1,
+                            },
+                            {
+                                "capacity": sg_best_capacity - 10,
+                                "capacityRemaining": sg_best_capacity - 10,
+                            },
+                        ],
+                        "venue": {"internalCapacity": venue_capacity},
+                    }
+                },
+                {
+                    "node": {
+                        "capacity": performance_limit_capacity,
+                        "capacityRemaining": performance_limit_capacity - 2,
+                        "ticketsBreakdown": {
+                            "totalCapacity": performance_limit_capacity
+                        },
+                        "ticketOptions": [
+                            {
+                                "capacity": sg_all_capacity,
+                                "capacityRemaining": performance_limit_capacity - 2,
+                            },
+                            {
+                                "capacity": sg_small_capacity,
+                                "capacityRemaining": sg_small_capacity,
+                            },
+                            {
+                                "capacity": sg_best_capacity - 10,
+                                "capacityRemaining": sg_best_capacity - 10 - 1,
+                            },
+                        ],
+                        "venue": {"internalCapacity": venue_capacity},
+                    }
+                },
+                {
+                    "node": {
+                        "capacity": performance_limit_capacity,
+                        "capacityRemaining": psg_capacity,
+                        "ticketsBreakdown": {"totalCapacity": psg_capacity},
+                        "ticketOptions": [
+                            {
+                                "capacity": psg_capacity,
+                                "capacityRemaining": psg_capacity,
+                            },
+                        ],
+                        "venue": {"internalCapacity": venue_capacity},
+                    }
+                },
+            ]
+        },
+    }

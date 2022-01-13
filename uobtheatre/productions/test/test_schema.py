@@ -854,7 +854,7 @@ def test_performance_schema(gql_client):
                                 )
                             },
                             "start": performance.start.isoformat(),
-                            "capacityRemaining": performance.capacity_remaining(),
+                            "capacityRemaining": performance.capacity_remaining,
                             "venue": {
                                 "id": to_global_id("VenueNode", performance.venue.id)
                             },
@@ -1004,7 +1004,7 @@ def test_tickets_breakdown(gql_client):
                         "node": {
                             "ticketOptions": [
                                 {
-                                    "capacityRemaining": performance.capacity_remaining(
+                                    "capacityRemaining": performance.seat_group_capacity_remaining(
                                         performance_seat_group_1.seat_group
                                     ),
                                     "concessionTypes": [
@@ -1053,7 +1053,7 @@ def test_tickets_breakdown(gql_client):
                                     },
                                 },
                                 {
-                                    "capacityRemaining": performance.capacity_remaining(
+                                    "capacityRemaining": performance.seat_group_capacity_remaining(
                                         performance_seat_group_2.seat_group
                                     ),
                                     "concessionTypes": [
