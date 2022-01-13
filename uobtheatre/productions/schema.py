@@ -245,7 +245,7 @@ class PerformanceSeatGroupNode(DjangoObjectType):
         ]
 
     def resolve_capacity_remaining(self, info):
-        return self.performance.capacity_remaining(self.seat_group)
+        return self.performance.seat_group_capacity_remaining(self.seat_group)
 
     class Meta:
         model = PerformanceSeatGroup
@@ -311,7 +311,7 @@ class PerformanceNode(DjangoObjectType):
         return self.performance_seat_groups.all()
 
     def resolve_capacity_remaining(self, info):
-        return self.capacity_remaining()
+        return self.capacity_remaining
 
     def resolve_min_seat_price(self, info):
         return self.min_seat_price()
@@ -334,7 +334,7 @@ class PerformanceNode(DjangoObjectType):
             self.total_tickets_sold(),
             self.total_tickets_checked_in,
             self.total_tickets_unchecked_in,
-            self.capacity_remaining(),
+            self.capacity_remaining,
         )
 
     def resolve_sales_breakdown(self, info):

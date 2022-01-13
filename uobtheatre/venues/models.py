@@ -30,7 +30,7 @@ class Venue(TimeStampedMixin, models.Model):
     """
 
     name = models.CharField(max_length=255)
-    internal_capacity = models.SmallIntegerField()
+    internal_capacity = models.PositiveSmallIntegerField()
     description = TipTapTextField(null=True, blank=True)
     address = models.ForeignKey(Address, on_delete=models.CASCADE)
     image = models.ForeignKey(Image, on_delete=models.RESTRICT, related_name="venues")
