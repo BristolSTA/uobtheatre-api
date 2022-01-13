@@ -414,8 +414,10 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
             )
 
         # Booking must not be paid for already
-        if booking.status == Payable.Status.PAID:
-            raise GQLException(message="This booking has already been paid for")
+        if not booking.status == Payable.Status.IN_PROGRESS:
+            raise GQLException(
+                message=f"This booking can't be paid for ({booking.get_status_display()})"
+            )
 
         # Check if booking hasn't expired
         if booking.is_reservation_expired:
