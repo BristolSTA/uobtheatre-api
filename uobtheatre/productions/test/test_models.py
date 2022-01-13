@@ -2,7 +2,7 @@
 import math
 import random
 from datetime import timedelta
-from unittest.mock import patch
+from unittest.mock import PropertyMock, patch
 
 import pytest
 from dateutil import parser
@@ -35,7 +35,7 @@ from uobtheatre.productions.test.factories import (
 )
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.utils.validators import ValidationError
-from uobtheatre.venues.test.factories import SeatGroupFactory
+from uobtheatre.venues.test.factories import SeatGroupFactory, VenueFactory
 
 ###
 # Production
@@ -487,73 +487,122 @@ def test_performance_total_tickets_checked_in():
 
 
 @pytest.mark.django_db
-def test_performance_total_capacity():
-    perf1 = PerformanceFactory()
-    seating = [PerformanceSeatingFactory(performance=perf1) for _ in range(3)]
-    set_capacity = 100
-    perf2 = PerformanceFactory(capacity=set_capacity)
-    for _ in range(3):
-        PerformanceSeatingFactory(performance=perf2)
+@pytest.mark.parametrize(
+    "seat_group_capacities,performance_capacity,venue_capacity,expected",
+    [
+        ([50, 30], None, 100, 80),
+        ([50, 200], None, 100, 100),
+        ([50, 200], 40, 100, 40),
+        ([], 40, 100, 0),
+    ],
+)
+def test_performance_total_capacity(
+    seat_group_capacities, performance_capacity, venue_capacity, expected
+):
+    performance = PerformanceFactory(
+        venue=VenueFactory(internal_capacity=venue_capacity),
+        capacity=performance_capacity,
+    )
 
-    assert perf1.total_capacity == sum(perf_seat.capacity for perf_seat in seating) != 0
-    assert perf1.total_capacity == perf1.total_seat_group_capacity()
-    assert perf2.total_capacity == set_capacity
+    for capacity in seat_group_capacities:
+        PerformanceSeatingFactory(performance=performance, capacity=capacity)
 
-    seat_group = SeatGroupFactory()
-    assert perf1.total_seat_group_capacity(seat_group) == 0
-
-    seating[0].seat_group = seat_group
-    seating[0].save()
-    assert perf1.total_seat_group_capacity(seat_group) == seating[0].capacity != 0
+    assert performance.total_capacity == expected
 
 
 @pytest.mark.django_db
-def test_performance_capacity_remaining():
-    perf = PerformanceFactory()
+@pytest.mark.parametrize(
+    "total_performance_capacity,seat_groups_capacities_remaining,sold_tickets,expected",
+    [
+        (
+            100,
+            [50, 20],
+            2,
+            70,  # Note that it is seat group capacities __remaining__
+        ),
+        (
+            100,
+            [50, 20],
+            40,
+            60,  # Now the performance becomes the dominating factor
+        ),
+        (
+            100,
+            [50, 207],
+            2,
+            98,
+        ),
+        (
+            100,
+            [],
+            1,
+            0,
+        ),
+    ],
+)
+def test_performance_capacity_remaining(
+    total_performance_capacity, seat_groups_capacities_remaining, sold_tickets, expected
+):
+    performance = PerformanceFactory()
+    for _ in seat_groups_capacities_remaining:
+        PerformanceSeatingFactory(performance=performance)
 
-    seating = [PerformanceSeatingFactory(performance=perf) for _ in range(3)]
+    with patch(
+        "uobtheatre.productions.models.Performance.total_capacity",
+        new_callable=PropertyMock(return_value=total_performance_capacity),
+    ), patch.object(
+        performance,
+        "seat_group_capacity_remaining",
+        side_effect=seat_groups_capacities_remaining,
+    ), patch.object(
+        performance, "total_tickets_sold_or_reserved", return_value=sold_tickets
+    ):
 
-    # Check total capacity is the same as capacity_remaining when no bookings
-    assert perf.capacity_remaining() == perf.total_capacity
+        assert performance.capacity_remaining == expected
 
-    seat_group = SeatGroupFactory()
-    assert perf.total_seat_group_capacity(seat_group) == 0
 
-    seating[0].seat_group = seat_group
-    seating[0].save()
-    assert (
-        perf.capacity_remaining(seat_group)
-        == perf.total_seat_group_capacity(seat_group)
-        != 0
-    )
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "total_performance_capacity,total_sold_tickets,total_seat_group_capacity,seat_group_sold_tickets,expected",
+    [
+        (100, 10, 50, 5, 45),
+        (100, 10, 207, 5, 90),
+        (100, 10, 207, 127, 80),
+    ],
+)
+def test_performance_seat_group_capacity_remaining(
+    total_performance_capacity,
+    total_sold_tickets,
+    total_seat_group_capacity,
+    seat_group_sold_tickets,
+    expected,
+):
+    performance = PerformanceFactory()
+    seat_group = PerformanceSeatingFactory().seat_group
+    with patch(
+        "uobtheatre.productions.models.Performance.total_capacity",
+        new_callable=PropertyMock(return_value=total_performance_capacity),
+    ), patch.object(
+        performance,
+        "total_seat_group_capacity",
+        return_value=total_seat_group_capacity,
+    ) as total_seat_group_capacity_mock, patch.object(
+        performance,
+        "total_tickets_sold_or_reserved",
+        side_effect=lambda seat_group=None: seat_group_sold_tickets
+        if seat_group
+        else total_sold_tickets,
+    ) as total_tickets_sold_or_reserved_mock:
 
-    # Create some tickets for this performance
-    booking_1 = BookingFactory(performance=perf)
-    booking_2 = BookingFactory(performance=perf)
-    _ = [TicketFactory(booking=booking_1, seat_group=seat_group) for _ in range(3)]
-    _ = [TicketFactory(booking=booking_2, seat_group=seat_group) for _ in range(2)]
-    assert (
-        perf.capacity_remaining(seat_group)
-        == perf.total_seat_group_capacity(seat_group) - 5
-    )
-    assert perf.capacity_remaining() == perf.total_capacity - 5
+        assert performance.seat_group_capacity_remaining(seat_group) == expected
+        total_seat_group_capacity_mock.assert_called_once_with(seat_group=seat_group)
+        total_tickets_sold_or_reserved_mock.assert_any_call(seat_group=seat_group)
 
-    # Check an expired booking with tickets (should not be included)
-    booking_3 = BookingFactory(
-        performance=perf,
-        status=Booking.BookingStatus.IN_PROGRESS,
-        expires_at=timezone.now() - timedelta(minutes=16),
-    )
-    TicketFactory(booking=booking_3, seat_group=seat_group)
-    assert perf.capacity_remaining() == perf.total_capacity - 5
 
-    # Check a draft booking with tickets
-    booking_4 = BookingFactory(
-        performance=perf, status=Booking.BookingStatus.IN_PROGRESS
-    )
-    TicketFactory(booking=booking_4, seat_group=seat_group)
-    TicketFactory(booking=booking_4, seat_group=seat_group)
-    assert perf.capacity_remaining() == perf.total_capacity - 7
+@pytest.mark.django_db
+def test_performance_seat_group_capacity_reamining_with_invalid_seat_group():
+    performance = PerformanceFactory()
+    assert performance.seat_group_capacity_remaining(SeatGroupFactory()) == 0
 
 
 @pytest.mark.django_db

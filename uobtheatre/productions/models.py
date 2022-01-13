@@ -321,6 +321,43 @@ class Performance(
         response = self.performance_seat_groups.aggregate(Sum("capacity"))
         return response["capacity__sum"] or 0
 
+    def seat_group_capacity_remaining(self, seat_group: SeatGroup):
+        """Get the number of available tickets able to be sold on a seat group"""
+        return min(
+            self.total_capacity
+            - self.total_tickets_sold_or_reserved(),  # Top-level performance capacity remaining
+            self.total_seat_group_capacity(seat_group=seat_group)
+            - self.total_tickets_sold_or_reserved(
+                seat_group=seat_group
+            ),  # The capacity remaining for the local seat group capacity
+        )
+
+    @property
+    def capacity_remaining(self):
+        """Remaining capacity of the Performance.
+
+        The is the total number of seats (Tickets) which can be booked for this
+        performance when factoring in existing Bookings.
+
+        Note:
+            The sum of the remaining capacities of all the seat groups is not
+            necessarily equal to that of the Performance (the performance may
+            be less).
+
+        Returns:
+            int: The remaining capacity of the show (or SeatGroup if provided)
+        """
+        seat_groups_remaining_capacity = sum(
+            self.seat_group_capacity_remaining(performance_seat_group.seat_group)
+            for performance_seat_group in self.performance_seat_groups.all()
+        )
+
+        # The number of tickets remaining is the number of tickets left in the seat groups or the total capacity left for the performance - which ever is lower
+        return min(
+            seat_groups_remaining_capacity,
+            self.total_capacity - self.total_tickets_sold_or_reserved(),
+        )
+
     @property
     def total_capacity(self) -> int:
         """Total capacity of the Performance.
@@ -332,11 +369,15 @@ class Performance(
             int: The capacity of the show
         """
 
-        return (
-            min(self.capacity, self.total_seat_group_capacity())
-            if self.capacity
-            else self.total_seat_group_capacity()
-        )
+        limiting_capacities = [
+            self.total_seat_group_capacity(),
+            self.venue.internal_capacity,
+        ]
+
+        if self.capacity:
+            limiting_capacities.append(self.capacity)
+
+        return min(limiting_capacities)
 
     def total_tickets_sold(self, **kwargs):
         """The number of tickets sold for the performance
@@ -389,43 +430,6 @@ class Performance(
             int: The number of tickets
         """
         return self.unchecked_in_tickets.count()
-
-    def capacity_remaining(self, seat_group: SeatGroup = None):
-        """Remaining capacity of the Performance.
-
-        The is the total number of seats (Tickets) which can be booked for this
-        performance when factoring in existing Bookings.
-
-        Note:
-            The sum of the remaining capacities of all the seat groups is not
-            necessarily equal to that of the Performance (the performance may
-            be less).
-
-        Args:
-            seat_group (SeatGroup): If supplied the remaining capacity of that
-                SeatGroup is returned.
-                (default None)
-
-        Returns:
-            int: The remaining capacity of the show (or SeatGroup if provided)
-        """
-        if seat_group:
-            return self.total_seat_group_capacity(
-                seat_group=seat_group
-            ) - self.total_tickets_sold_or_reserved(seat_group=seat_group)
-
-        seat_groups_remaining_capacity = sum(
-            self.capacity_remaining(seat_group=performance_seat_group.seat_group)
-            for performance_seat_group in self.performance_seat_groups.all()
-        )
-        return (
-            seat_groups_remaining_capacity
-            if not self.capacity
-            else min(
-                self.capacity - self.total_tickets_sold_or_reserved(),
-                seat_groups_remaining_capacity,
-            )
-        )
 
     def duration(self):
         """The performances duration.
@@ -520,7 +524,7 @@ class Performance(
         Returns:
             bool: if the performance is soldout.
         """
-        return self.capacity_remaining() == 0
+        return self.capacity_remaining == 0
 
     @property
     def is_bookable(self) -> bool:
@@ -592,15 +596,11 @@ class Performance(
 
         # Check that each seat group has enough capacity
         for seat_group, number_booked in seat_group_counts.items():
-            seat_group_remaining_capacity = self.capacity_remaining(
+            seat_group_remaining_capacity = self.seat_group_capacity_remaining(
                 seat_group=seat_group
             )
             if seat_group_remaining_capacity < number_booked:
                 return f"There are only {seat_group_remaining_capacity} seats reamining in {seat_group} but you have booked {number_booked}. Please updated your seat selections and try again."
-
-        # Also check total capacity
-        if self.capacity_remaining() < len(tickets) - len(deleted_tickets):
-            return f"There are only {self.capacity_remaining()} seats available for this performance. You attempted to book {len(tickets)}. Please remove some tickets and try again or select a different performance."
 
         return None
 
