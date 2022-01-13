@@ -2097,7 +2097,7 @@ def test_pay_booking_fails_if_already_paid(gql_client):
                 "errors": [
                     {
                         "__typename": "NonFieldError",
-                        "message": "This booking has already been paid for",
+                        "message": "This booking can't be paid for (Paid)",
                     }
                 ],
             }
