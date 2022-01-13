@@ -121,17 +121,9 @@ class PaymentProvider(TransactionProvider, abc.ABC):
         raise NotImplementedError
 
     @classmethod
-    def create_payment_object(
-        cls, pay_object: "Payable", value: int, app_fee, **kwargs
-    ) -> "payment_models.Transaction":
-        payment = super().create_payment_object(
-            pay_object,
-            value,
-            app_fee,
-            type=payment_models.Transaction.Type.PAYMENT,
-            **kwargs,
-        )
-        return payment
+    def create_payment_object(cls, *args, **kwargs) -> "payment_models.Transaction":
+        kwargs["type"] = payment_models.Transaction.Type.PAYMENT
+        return super().create_payment_object(*args, **kwargs)
 
     @classmethod
     @property
@@ -174,17 +166,9 @@ class RefundProvider(TransactionProvider, abc.ABC):
         """
 
     @classmethod
-    def create_payment_object(
-        cls, pay_object: "Payable", value: int, app_fee, **kwargs
-    ) -> "payment_models.Transaction":
-        payment = super().create_payment_object(
-            pay_object,
-            value,
-            app_fee,
-            type=payment_models.Transaction.Type.REFUND,
-            **kwargs,
-        )
-        return payment
+    def create_payment_object(cls, *args, **kwargs) -> "payment_models.Transaction":
+        kwargs["type"] = payment_models.Transaction.Type.REFUND
+        return super().create_payment_object(*args, **kwargs)
 
 
 class Refundable(abc.ABC):
