@@ -97,7 +97,7 @@ class PeriodTotalsBreakdown(Report):
         ).prefetch_related("pay_object__performance__production__society")
 
         # Resync any payments that dont have provider fees
-        payments.missing_provider_fee().sync()
+        payments.missing_provider_fee().sync()  # type: ignore
 
         self.meta.append(MetaItem("No. of Payments", str(len(payments))))
         self.meta.append(
@@ -195,9 +195,6 @@ class OutstandingSocietyPayments(Report):
     def __init__(self) -> None:
         super().__init__()
 
-        # TODO only sync transactions in the productions
-        Transaction.objects.missing_provider_fee().sync()
-
         productions_dataset = DataSet(
             "Productions",
             [
@@ -230,6 +227,9 @@ class OutstandingSocietyPayments(Report):
         productions = Production.objects.filter(
             status=Production.Status.CLOSED
         ).prefetch_related("society")
+
+        # Sync all payments associated with these productions
+        productions.transactions.missing_provider_fee().sync()  # type: ignore
 
         sta_total_due = 0
 

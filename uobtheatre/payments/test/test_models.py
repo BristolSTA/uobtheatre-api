@@ -237,21 +237,6 @@ def test_provider_class_unknown():
 
 
 @pytest.mark.django_db
-def test_sync_all_payments():
-    TransactionFactory(provider_name=SquareOnline.name, provider_fee=10)
-    TransactionFactory(provider_name=Cash.name, provider_fee=None)
-
-    to_update = TransactionFactory(provider_name=SquareOnline.name, provider_fee=None)
-
-    with patch.object(SquareOnline, "sync_transaction") as online_sync, patch.object(
-        Cash, "sync_transaction"
-    ) as cash_sync:
-        Transaction.sync_payments()
-        cash_sync.assert_not_called()  # Not called because no provider ID
-        online_sync.assert_called_once_with(to_update, None)
-
-
-@pytest.mark.django_db
 def test_handle_update_refund_webhook():
     payment = TransactionFactory(
         provider_transaction_id="abc",

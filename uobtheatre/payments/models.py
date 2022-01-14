@@ -49,7 +49,7 @@ class TransactionQuerySet(QuerySet):
         Sync all (non manual) payments with their providers. Currently the only
         syncing we do is for the processing fee.
         """
-        for payment in self.objects.all():
+        for payment in self:
             payment.sync_transaction_with_provider()
 
 

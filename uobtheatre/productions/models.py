@@ -22,7 +22,7 @@ from uobtheatre.payments.payables import Payable
 from uobtheatre.societies.models import Society
 from uobtheatre.users.abilities import AbilitiesMixin
 from uobtheatre.users.models import User
-from uobtheatre.utils.models import PermissionableModel, TimeStampedMixin
+from uobtheatre.utils.models import BaseModel, PermissionableModel, TimeStampedMixin
 from uobtheatre.utils.validators import (
     RelatedObjectsValidator,
     RequiredFieldsValidator,
@@ -199,9 +199,32 @@ class PerformanceQuerySet(QuerySet):
         productions_user_can_view = Production.objects.user_can_see(user)  # type: ignore
         return self.filter(production__in=productions_user_can_view)
 
+    @property
+    def bookings(self):
+        """
+        Returns a queryset of all of the bookings associated with this
+        booking.
+        """
+        from uobtheatre.bookings.models import Booking
+
+        return Booking.objects.filter(performance__in=self)
+
+    @property
+    def transactions(self) -> QuerySet[Transaction]:
+        """
+        Returns a queryset of all of the transactions associated with this
+        performance.
+        """
+        from uobtheatre.bookings.models import Booking
+
+        return Transaction.objects.filter(
+            pay_object_id__in=self.bookings.values_list("id", flat=True),
+            pay_object_type=ContentType.objects.get_for_model(Booking),
+        )
+
 
 class Performance(
-    TimeStampedMixin, models.Model
+    TimeStampedMixin, BaseModel
 ):  # pylint: disable=too-many-public-methods
     """The model for a Performance of a Production.
 
@@ -623,14 +646,7 @@ class Performance(
 
     def sales_breakdown(self, breakdowns: list[str] = None):
         """Generates a breakdown of the sales of this performance"""
-        from uobtheatre.bookings.models import Booking
-
-        return Transaction.objects.filter(
-            pay_object_id__in=self.bookings.values_list("id", flat=True),
-            pay_object_type=ContentType.objects.get_for_model(Booking),
-        ).annotate_sales_breakdown(  # type: ignore
-            breakdowns
-        )
+        return self.qs.transactions.annotate_sales_breakdown(breakdowns)
 
     def refund_bookings(
         self, authorizing_user: User, send_admin_email=True
@@ -740,8 +756,24 @@ class ProductionQuerySet(QuerySet):
             | Q(id__in=productions_user_can_view_admin)
         )
 
+    @property
+    def performances(self):
+        """
+        Returns a queryset of all performances for the productions in the
+        queryset.
+        """
+        return Performance.objects.filter(production__in=self)
 
-class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin):
+    @property
+    def transactions(self) -> QuerySet[Transaction]:
+        """
+        Returns a queryset of all of the transactions associated with this
+        production.
+        """
+        return self.performances.transactions
+
+
+class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseModel):
     """The model for a production.
 
     A production is a show (like the 2 weeks things) and can have many
@@ -942,14 +974,7 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin):
 
     def sales_breakdown(self, breakdowns: list[str] = None):
         """Generates a breakdown of the sales of this production"""
-        from uobtheatre.bookings.models import Booking
-
-        return Transaction.objects.filter(
-            pay_object_id__in=self.bookings.values_list("id", flat=True),
-            pay_object_type=ContentType.objects.get_for_model(Booking),
-        ).annotate_sales_breakdown(  # type: ignore
-            breakdowns
-        )
+        return self.qs.transactions.annotate_sales_breakdown(breakdowns)
 
     def validate(self) -> Optional[ValidationErrors]:
         return self.VALIDATOR.validate(self)

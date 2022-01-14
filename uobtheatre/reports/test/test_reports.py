@@ -238,7 +238,7 @@ def test_period_totals_breakdown_report():
     booking_5 = payment_4.pay_object
 
     # Generate report that covers this period
-    with patch.object(Transaction, "sync_payments") as mock_sync:
+    with patch("uobtheatre.payments.models.TransactionQuerySet.sync") as mock_sync:
         report = PeriodTotalsBreakdown(
             datetime.fromisoformat("2021-09-08T00:00:00+00:00"),
             datetime.fromisoformat("2021-09-08T23:00:00+00:00"),
@@ -335,8 +335,9 @@ def test_period_totals_breakdown_report():
 def test_outstanding_society_payments_report():
     create_fixtures()
     production_1 = Production.objects.all()[0]
+
     # NB: As production 2 is not "closed", it shouldn't show in this report
-    with patch.object(Transaction, "sync_payments") as mock_sync:
+    with patch("uobtheatre.payments.models.TransactionQuerySet.sync") as mock_sync:
         report = OutstandingSocietyPayments()
 
     mock_sync.assert_called_once()
@@ -387,10 +388,11 @@ def test_outstanding_society_payments_report():
 def test_outstanding_society_payments_report_production_no_society():
     ProductionFactory(id=1, status=Production.Status.CLOSED, society=None)
 
-    with patch.object(Transaction, "sync_payments"):
+    with patch("uobtheatre.payments.models.TransactionQuerySet.sync") as mock_sync:
         with pytest.raises(GQLException) as exception:
             OutstandingSocietyPayments()
         assert exception.value.message == "Production 1 has no society"
+    mock_sync.aassert_not_called()
 
 
 @pytest.mark.django_db
