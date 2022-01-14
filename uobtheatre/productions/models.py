@@ -1,4 +1,4 @@
-# pylint: disable=too-many-public-methods
+# pylint: disable=too-many-public-methods,too-many-lines
 import datetime
 import math
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
@@ -649,7 +649,20 @@ class Performance(
     def refund_bookings(
         self, authorizing_user: User, send_admin_email=True
     ) -> Tuple[List, List, List]:
-        """Refund the performance's bookings"""
+        """Refund the performance's bookings
+
+        Args:
+            authorizing_user (User): The user authorizing the refund
+            send_admin_email (bool, optional): Wether to authorize the refund. Defaults to True.
+
+        Raises:
+            CantBeRefundedException: Raised if the performance can't be refunded
+
+        Returns:
+            List[Booking]: List of refunded bookings
+            List[Booking]: List of failed bookings
+            List[Booking]: List of skipped bookings
+        """
         if not self.disabled:
             raise CantBeRefundedException(f"{self} is not set to disabled")
 
