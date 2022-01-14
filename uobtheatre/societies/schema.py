@@ -6,17 +6,21 @@ from graphene_django.filter import DjangoFilterConnectionField
 from uobtheatre.images.schema import ImageNode  # noqa
 from uobtheatre.societies.models import Society
 from uobtheatre.users.abilities import PermissionsMixin
+from uobtheatre.utils.filters import FilterSet
+from uobtheatre.utils.schema import UserPermissionFilterMixin
+
+
+class SocietyFilterSet(FilterSet, UserPermissionFilterMixin):
+    class Meta:
+        fields = ("id", "name", "slug")
+        model = Society
 
 
 class SocietyNode(PermissionsMixin, DjangoObjectType):
     class Meta:
         model = Society
         interfaces = (relay.Node,)
-        filter_fields = {
-            "id": ("exact",),
-            "name": ("exact",),
-            "slug": ("exact",),
-        }
+        filterset_class = SocietyFilterSet
 
 
 class Query(graphene.ObjectType):
