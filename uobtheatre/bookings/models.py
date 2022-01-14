@@ -620,6 +620,10 @@ class Booking(TimeStampedMixin, Payable):
             in [Production.Status.CLOSED, Production.Status.COMPLETE]
         )
 
+    @property
+    def display_name(self):
+        return f"Booking Ref. {self.reference} for {str(self.performance).lower()}"
+
 
 class TicketQuerySet(QuerySet):
     """A custom Manager for ticket queries"""
