@@ -14,7 +14,6 @@ from uobtheatre.productions.models import (
     PerformanceSeatGroup,
     Production,
     ProductionTeamMember,
-    Society,
 )
 from uobtheatre.utils.admin import (
     DangerousAdminConfirmMixin,
@@ -86,7 +85,6 @@ class PerformanceAdmin(DangerousAdminConfirmMixin, ModelAdmin):
 
 
 admin.site.register(Production, ProductionAdmin)
-admin.site.register(Society)
 admin.site.register(AudienceWarning)
 admin.site.register(CrewMember)
 admin.site.register(CastMember)
