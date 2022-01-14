@@ -104,6 +104,11 @@ class Payable(models.Model, metaclass=AbstractModelMeta):  # type: ignore
                 html_message=mail.to_html(),
             )
 
+    def complete(self, payment: Transaction = None):
+        """
+        Called once the pay object has been completly paid for. Payment passed is the finishing transaction
+        """
+
     @property
     def total_sales(self) -> int:
         """The amount paid by the user for this object."""

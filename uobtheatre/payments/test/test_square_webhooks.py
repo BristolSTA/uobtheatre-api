@@ -8,7 +8,7 @@ from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.square_webhooks import SquareWebhooks
 from uobtheatre.payments.test.factories import TransactionFactory
-from uobtheatre.payments.transaction_providers import SquareRefund
+from uobtheatre.payments.transaction_providers import SquarePOS, SquareRefund
 
 TEST_TERMINAL_CHECKOUT_PAYLOAD = {
     "merchant_id": "ML8M1AQ1GQG2K",
@@ -135,7 +135,9 @@ TEST_UPDATE_REFUND_PAYLOAD = {
 
 @pytest.mark.django_db
 def test_handle_checkout_webhook(rest_client, monkeypatch):
-    TransactionFactory(provider_transaction_id="dhgENdnFOPXqO")
+    TransactionFactory(
+        provider_transaction_id="dhgENdnFOPXqO", provider_name=SquarePOS.name
+    )
     monkeypatch.setenv("SQUARE_WEBHOOK_SIGNATURE_KEY", "Hd_mmQkhER3EPkpRpNQh9Q")
     booking = BookingFactory(reference="id72709", status=Payable.Status.IN_PROGRESS)
 
@@ -143,7 +145,10 @@ def test_handle_checkout_webhook(rest_client, monkeypatch):
         SquareWebhooks, "webhook_url", new_callable=PropertyMock
     ) as url_mock, patch.object(
         SquareWebhooks, "webhook_signature_key", new_callable=PropertyMock
-    ) as key_mock:
+    ) as key_mock, patch.object(
+        SquarePOS,
+        "sync_transaction",
+    ):
         url_mock.return_value = (
             "https://webhook.site/5bca8c49-e6f0-40ed-9415-4035bc05b48d"
         )
@@ -158,7 +163,6 @@ def test_handle_checkout_webhook(rest_client, monkeypatch):
 
     assert response.status_code == 200
     booking.refresh_from_db()
-    assert booking.status == Payable.Status.PAID
 
 
 @pytest.mark.django_db

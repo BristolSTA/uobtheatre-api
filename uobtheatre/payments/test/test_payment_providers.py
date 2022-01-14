@@ -437,12 +437,15 @@ def test_square_pos_cancel_failure(mock_square):
 @pytest.mark.django_db
 def test_square_pos_sync_payment():
     payment = TransactionFactory(
+        pay_object=BookingFactory(status=Payable.Status.IN_PROGRESS),
         value=100,
         provider_fee=None,
         status=Transaction.Status.PENDING,
         provider_name=SquarePOS.name,
         provider_transaction_id="abc",
     )
+    assert not payment.pay_object.status == Payable.Status.PAID
+
     with patch.object(
         SquarePOS,
         "get_checkout",
@@ -466,6 +469,7 @@ def test_square_pos_sync_payment():
         payment.refresh_from_db()
     assert payment.provider_fee == -10
     assert payment.status == Transaction.Status.COMPLETED
+    assert payment.pay_object.status == Payable.Status.PAID
 
 
 ###
