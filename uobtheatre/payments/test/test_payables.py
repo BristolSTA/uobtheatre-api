@@ -16,6 +16,7 @@ from uobtheatre.users.test.factories import UserFactory
 def test_payable_query_set():
     booking_1 = BookingFactory()  # Booking with pending payments - locked
     TransactionFactory(pay_object=booking_1, status=Transaction.Status.PENDING)
+    TransactionFactory(pay_object=booking_1, status=Transaction.Status.COMPLETED)
 
     booking_2 = (
         BookingFactory()
