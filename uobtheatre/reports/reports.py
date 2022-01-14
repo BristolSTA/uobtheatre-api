@@ -229,7 +229,7 @@ class OutstandingSocietyPayments(Report):
         ).prefetch_related("society")
 
         # Sync all payments associated with these productions
-        productions.transactions.missing_provider_fee().sync()  # type: ignore
+        productions.transactions().missing_provider_fee().sync()  # type: ignore
 
         sta_total_due = 0
 

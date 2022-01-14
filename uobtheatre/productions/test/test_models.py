@@ -8,6 +8,7 @@ import pytest
 from dateutil import parser
 from django.utils import timezone
 from guardian.shortcuts import assign_perm
+from pytest_django.asserts import assertQuerysetEqual
 
 from uobtheatre.bookings.models import Ticket
 from uobtheatre.bookings.test.factories import (
@@ -1226,12 +1227,35 @@ def test_performance_refund_bookings_with_exception():
 
 @pytest.mark.django_db
 def test_performance_queryset_bookings():
-    assert False
+    performance = PerformanceFactory()
+    booking_1 = BookingFactory(performance=performance)
+    booking_2 = BookingFactory()  # Booking not in the performance
+
+    assertQuerysetEqual(
+        Performance.objects.bookings(), [booking_1, booking_2], ordered=False
+    )
+    assertQuerysetEqual(
+        Performance.objects.filter(pk=performance.pk).bookings(), [booking_1]
+    )
 
 
 @pytest.mark.django_db
 def test_performance_queryset_transactions():
-    assert False
+    performance = PerformanceFactory()
+    transaction_1 = TransactionFactory(
+        pay_object=BookingFactory(performance=performance)
+    )
+    transaction_2 = TransactionFactory()  # Transaction not in the performance
+
+    assertQuerysetEqual(
+        Performance.objects.transactions().all(),
+        [transaction_1, transaction_2],
+        ordered=False,
+    )
+    assertQuerysetEqual(
+        Performance.objects.filter(pk=performance.pk).transactions().all(),
+        [transaction_1],
+    )
 
 
 @pytest.mark.django_db
