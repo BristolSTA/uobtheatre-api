@@ -59,6 +59,11 @@ class Payable(models.Model, metaclass=AbstractModelMeta):  # type: ignore
 
     @property
     @abc.abstractmethod
+    def display_name(self):
+        """Return a publically displayable name that represents this payable"""
+
+    @property
+    @abc.abstractmethod
     def user(self):
         raise NotImplementedError
 

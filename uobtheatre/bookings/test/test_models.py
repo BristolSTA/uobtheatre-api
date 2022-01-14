@@ -5,6 +5,7 @@ from unittest.mock import PropertyMock, patch
 from urllib.parse import quote_plus
 
 import pytest
+import pytz
 from django.db.utils import IntegrityError
 from django.utils import timezone
 from graphql_relay.node.node import to_global_id
@@ -1169,4 +1170,19 @@ def test_web_tickets_path_property():
     assert (
         booking.web_tickets_path
         == f"/user/booking/abcd1234/tickets?performanceID={performance_id}&ticketID={ticket_ids[0]}&ticketID={ticket_ids[1]}&ticketID={ticket_ids[2]}"
+    )
+
+
+@pytest.mark.django_db
+def test_booking_display_name():
+    production = ProductionFactory(name="My Production")
+    performance = PerformanceFactory(
+        production=production,
+        start=datetime.datetime(2022, 1, 14, 10, 0, tzinfo=pytz.UTC),
+    )
+    booking = BookingFactory(performance=performance, reference="abcd")
+
+    assert (
+        booking.display_name
+        == "Booking Ref. abcd for performance of my production at 10:00 on 14/01/2022"
     )

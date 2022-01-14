@@ -27,6 +27,7 @@ from uobtheatre.utils.exceptions import PaymentException
         (150, "1.50 GBP"),
         (199, "1.99 GBP"),
         (100.1, "1.00 GBP"),
+        (-1000, "10.00 GBP"),
     ],
 )
 def test_value_currency(value, result):
