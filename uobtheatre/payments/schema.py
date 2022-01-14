@@ -1,10 +1,15 @@
+import django_filters
 import graphene
 from graphene import relay
 from graphene_django import DjangoObjectType
 
 from uobtheatre.bookings.schema import BookingNode
 from uobtheatre.payments.models import Transaction
-from uobtheatre.payments.transaction_providers import PaymentProvider, SquarePOS
+from uobtheatre.payments.transaction_providers import (
+    PaymentProvider,
+    SquarePOS,
+    TransactionProvider,
+)
 from uobtheatre.users.abilities import OpenBoxoffice
 from uobtheatre.utils.enums import EnumNode, GrapheneEnumMixin
 from uobtheatre.utils.filters import FilterSet
@@ -13,9 +18,18 @@ PaymentMethodsEnum = graphene.Enum("PaymentMethod", PaymentProvider.choices)
 
 
 class TransactionFilter(FilterSet):
+    """
+    GQL filter for transactions.
+    Its exposes type, created_at and provider (alias for provider_name).
+    """
+
+    provider = django_filters.ChoiceFilter(
+        field_name="provider_name", choices=TransactionProvider.choices
+    )
+
     class Meta:
         model = Transaction
-        fields = ("type", "provider_name", "created_at")
+        fields = ("type", "provider", "created_at")
 
 
 class PayObjectUnion(graphene.Union):
