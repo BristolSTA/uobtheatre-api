@@ -46,6 +46,6 @@ jobs:
           envs: SERVICE_NAME
           script: |
             cd /var/sta
-            docker-compose  -f prod.yml pull $SERVICE_NAME
-            docker-compose  -f prod.yml up -d $SERVICE_NAME
-            docker-compose  -f prod.yml exec -T $SERVICE_NAME python manage.py migrate
+            docker-compose pull $SERVICE_NAME
+            docker-compose up -d $SERVICE_NAME
+            docker-compose exec -T $SERVICE_NAME python manage.py migrate
