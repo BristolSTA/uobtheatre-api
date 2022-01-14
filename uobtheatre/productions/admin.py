@@ -10,7 +10,6 @@ from uobtheatre.productions.models import (
     PerformanceSeatGroup,
     Production,
     ProductionTeamMember,
-    Society,
 )
 
 
@@ -19,8 +18,6 @@ class ProductionAdmin(GuardedModelAdmin):
 
 
 admin.site.register(Production, ProductionAdmin)
-
-admin.site.register(Society)
 admin.site.register(Performance)
 admin.site.register(AudienceWarning)
 admin.site.register(CrewMember)
