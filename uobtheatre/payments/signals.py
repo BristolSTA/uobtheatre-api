@@ -24,14 +24,16 @@ def pre_transaction_save_callback(transaction_instance: Transaction):
         else None
     )
 
-    if old_instance:
-        if (
-            transaction_instance.type == Transaction.Type.REFUND
-            and transaction_instance.status == Transaction.Status.COMPLETED
-            and not old_instance.status == Transaction.Status.COMPLETED
-        ):
-            # This refund transaction has now been completed. Notify the payment owner
-            transaction_instance.notify_user()
+    if not old_instance:
+        return
+
+    if (
+        transaction_instance.type == Transaction.Type.REFUND
+        and transaction_instance.status == Transaction.Status.COMPLETED
+        and not old_instance.status == Transaction.Status.COMPLETED
+    ):
+        # This refund transaction has now been completed. Notify the payment owner
+        transaction_instance.notify_user()
 
 
 def post_transaction_save_callback(transaction_instance: Transaction):
