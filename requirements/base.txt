@@ -15,6 +15,9 @@ Pillow>=8.1.2
 # Cors
 django-cors-headers==3.11.0
 
+# Admin confirmation messages
+django-admin-confirm==0.2.4
+
 # TODO check if required
 django-configurations==2.3.1
 
@@ -23,9 +26,6 @@ django-environ==0.8.1  # https://github.com/joke2k/django-environ
 
 # Spreadsheet generation
 xlsxwriter==3.0.2
-
-# Used in tests and for MutationForm
-factory-boy==3.2.1
 
 #=== Database ===#
 

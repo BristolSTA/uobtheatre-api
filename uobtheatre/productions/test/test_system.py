@@ -110,6 +110,20 @@ def test_total_production_creation_workflow(gql_client):
         assert response["data"]["performance"]["success"] is True
     assert Performance.objects.count() == 3
 
+    # Delete all but first performance
+    for performance in Performance.objects.all()[1:]:
+        request = """
+            mutation {
+                deletePerformance(id: "%s") {
+                    success
+                }
+            }
+        """ % to_global_id(
+            "PerformanceNode", performance.id
+        )
+        response = gql_client.execute(request)
+        assert response["data"]["deletePerformance"]["success"] is True
+
     performance_gid = to_global_id("PerformanceNode", Performance.objects.first().id)
 
     # Step 3: Query available seat groups, and set seat groups
@@ -291,6 +305,15 @@ def test_total_production_creation_workflow(gql_client):
         mutation {
             setProductionStatus(productionId: "%s", status: PENDING) {
                 success
+                 errors {
+                    ...on FieldError {
+                        message
+                        field
+                    }
+                    ...on NonFieldError {
+                        message
+                    }
+                }
             }
         }
     """
@@ -298,6 +321,7 @@ def test_total_production_creation_workflow(gql_client):
     )
 
     response = gql_client.execute(request)
+    print(response)
 
     assert response["data"]["setProductionStatus"]["success"] is True
 

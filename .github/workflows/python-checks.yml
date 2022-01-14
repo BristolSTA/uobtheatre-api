@@ -41,10 +41,10 @@ jobs:
     - uses: actions/checkout@v2
 
     # Setup python
-    - name: set up python 3.9
+    - name: set up python 3.10
       uses: actions/setup-python@v2
       with:
-        python-version: "3.9"
+        python-version: "3.10"
 
     # Install dependencies
     - name: Install dependencies
@@ -54,11 +54,18 @@ jobs:
     - name: Collect Static
       run: ./manage.py collectstatic --noinput
 
-    - name: pytest - check tests pass and coverage is 100%
+    - name: Tests
       run: |
-        pytest --cov uobtheatre --cov-fail-under 100 -m "not square_integration"
+        pytest --cov uobtheatre --cov-fail-under 100 -m "not system_test"
       env:
         DATABASE_URL: postgresql://postgres:postgres@0.0.0.0:5432/uobtheatre_api
+
+    - name: System tests
+      run: |
+        pytest --cov uobtheatre -m "system_test"
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@0.0.0.0:5432/uobtheatre_api
+        SQUARE_ACCESS_TOKEN: ${{ secrets.SQUARE_SANDBOX_ACCESS_TOKEN }}
 
   lint:
     runs-on: ubuntu-latest
@@ -75,10 +82,10 @@ jobs:
     - uses: actions/checkout@v2
 
     # Setup python
-    - name: set up python 3.9
+    - name: set up python 3.10
       uses: actions/setup-python@v2
       with:
-        python-version: "3.9"
+        python-version: "3.10"
 
     # Install dependencies
     - name: Install dependencies
@@ -96,9 +103,9 @@ jobs:
       run: |
         pylint uobtheatre
 
-        # - name: mypy - static type checking
-        #   run: |
-        #     mypy uobtheatre
+    - name: mypy - static type checking
+      run: |
+        mypy uobtheatre
 
   schema:
     runs-on: ubuntu-latest
@@ -115,10 +122,10 @@ jobs:
     - uses: actions/checkout@v2
 
     # Setup python
-    - name: set up python 3.9
+    - name: set up python 3.10
       uses: actions/setup-python@v2
       with:
-        python-version: "3.9"
+        python-version: "3.10"
 
     # Install dependencies
     - name: Install dependencies

@@ -1,6 +1,6 @@
 from django.contrib import admin, messages
 
-from uobtheatre.payments.models import Payment
+from uobtheatre.payments.models import Transaction
 from uobtheatre.utils.exceptions import SquareException
 
 
@@ -12,7 +12,7 @@ def refresh_from_square(modeladmin, request, queryset):
     successful_updates = 0
     for payment in queryset.all():
         try:
-            payment.sync_payment_with_provider()
+            payment.sync_transaction_with_provider()
             successful_updates += 1
         except SquareException as exc:
             modeladmin.message_user(
@@ -23,7 +23,7 @@ def refresh_from_square(modeladmin, request, queryset):
     modeladmin.message_user(request, f"{successful_updates} payments refreshed.")
 
 
-class PaymentAdmin(admin.ModelAdmin):
+class TransactionAdmin(admin.ModelAdmin):
     actions = [refresh_from_square]
     list_filter = (
         "type",
@@ -32,4 +32,4 @@ class PaymentAdmin(admin.ModelAdmin):
     )
 
 
-admin.site.register(Payment, PaymentAdmin)
+admin.site.register(Transaction, TransactionAdmin)

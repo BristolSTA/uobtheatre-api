@@ -6,7 +6,8 @@ from typing import Dict, List, Union
 from graphql_relay.node.node import from_global_id
 
 from uobtheatre.bookings.models import Booking
-from uobtheatre.payments.models import Payment
+from uobtheatre.payments.models import Transaction
+from uobtheatre.payments.payables import Payable
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.users.models import User
 from uobtheatre.utils.exceptions import AuthorizationException, GQLException
@@ -79,7 +80,7 @@ class PeriodTotalsBreakdown(Report):
 
     def __init__(self, start: datetime, end: datetime) -> None:
         super().__init__()
-        Payment.sync_payments()
+
         production_totals_set = DataSet(
             "Production Totals",
             ["Production ID", "Production Name", "Total Income (Pence)"],
@@ -89,11 +90,14 @@ class PeriodTotalsBreakdown(Report):
             "Provider Totals", ["Provider Name", "Total Income (Pence)"]
         )
 
-        payments = (
-            Payment.objects.filter(created_at__gt=start)
-            .filter(created_at__lt=end)
-            .prefetch_related("pay_object__performance__production__society")
-        )
+        payments = Transaction.objects.filter(
+            created_at__gt=start,
+            status=Transaction.Status.COMPLETED,
+            created_at__lt=end,
+        ).prefetch_related("pay_object__performance__production__society")
+
+        # Resync any payments that dont have provider fees
+        payments.missing_provider_fee().sync()  # type: ignore
 
         self.meta.append(MetaItem("No. of Payments", str(len(payments))))
         self.meta.append(
@@ -120,9 +124,9 @@ class PeriodTotalsBreakdown(Report):
 
             # Handle Provider
             row = provider_totals_set.find_or_create_row_by_first_column(
-                payment.provider,
+                payment.provider_name,
                 [
-                    payment.provider,
+                    payment.provider_name,
                     0,
                 ],
             )
@@ -131,11 +135,11 @@ class PeriodTotalsBreakdown(Report):
         # Sort alphabetically
         provider_totals_set.data.sort(key=lambda provider: provider[0])
         production_totals_set.data.sort(key=lambda production: production[0])
-
         payments_data = [
             [
                 str(payment.id),
                 payment.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                payment.type,
                 str(payment.pay_object.id) if payment.pay_object else "",
                 type(payment.pay_object).__name__ if payment.pay_object else "",
                 str(
@@ -149,8 +153,8 @@ class PeriodTotalsBreakdown(Report):
                     else ""
                 ),
                 str(payment.value),
-                str(payment.provider),
-                str(payment.provider_payment_id or ""),
+                str(payment.provider_name),
+                str(payment.provider_transaction_id or ""),
             ]
             for payment in payments
         ]
@@ -165,6 +169,7 @@ class PeriodTotalsBreakdown(Report):
                     [
                         "Payment ID",
                         "Timestamp",
+                        "Payment Type",
                         "Pay Object ID",
                         "Pay Object Type",
                         "Production ID",
@@ -189,7 +194,7 @@ class OutstandingSocietyPayments(Report):
 
     def __init__(self) -> None:
         super().__init__()
-        Payment.sync_payments()
+
         productions_dataset = DataSet(
             "Productions",
             [
@@ -197,8 +202,12 @@ class OutstandingSocietyPayments(Report):
                 "Production Name",
                 "Society ID",
                 "Society Name",
-                "Gross Takings",
-                "Gross Takings via Square",
+                "Total Sales",
+                "Total Sales via Card",
+                "Total Refunds",
+                "Total Refunds via Card",
+                "Net Income",
+                "Net Income via Card",
                 "Processing Fees",
                 "STA Fees",
                 "Society Net Income",
@@ -219,6 +228,9 @@ class OutstandingSocietyPayments(Report):
             status=Production.Status.CLOSED
         ).prefetch_related("society")
 
+        # Sync all payments associated with these productions
+        productions.transactions().missing_provider_fee().sync()  # type: ignore
+
         sta_total_due = 0
 
         for production in productions:
@@ -226,6 +238,8 @@ class OutstandingSocietyPayments(Report):
             production_sta_fees = sales_breakdown["app_payment_value"]
             sta_total_due += production_sta_fees
 
+            if production.society is None:
+                raise GQLException(f"Production {production.id} has no society")
             productions_dataset.find_or_create_row_by_first_column(
                 production.id,
                 [
@@ -235,6 +249,10 @@ class OutstandingSocietyPayments(Report):
                     production.society.name,
                     sales_breakdown["total_sales"],
                     sales_breakdown["total_card_sales"],
+                    sales_breakdown["total_refunds"],
+                    sales_breakdown["total_card_refunds"],
+                    sales_breakdown["net_income"],
+                    sales_breakdown["net_card_income"],
                     sales_breakdown["provider_payment_value"],
                     production_sta_fees,
                     sales_breakdown["society_transfer_value"],
@@ -280,9 +298,12 @@ class PerformanceBookings(Report):
 
         self.meta.append(MetaItem("Performance", str(performance)))
         for booking in (
-            performance.bookings.filter(status=Booking.BookingStatus.PAID)
+            performance.bookings.filter(status=Payable.Status.PAID)
             .prefetch_related(
-                "payments", "user", "tickets__seat_group", "tickets__concession_type"
+                "transactions",
+                "user",
+                "tickets__seat_group",
+                "tickets__concession_type",
             )
             .all()
         ):

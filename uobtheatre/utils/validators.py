@@ -1,16 +1,22 @@
 from __future__ import annotations
 
 import abc
+import operator
 from dataclasses import dataclass
+from functools import reduce
 from typing import Generator, Optional
 
-from django.core.validators import ValidationError as DjangoValidationError
+from django.core.exceptions import ValidationError as DjangoValidationError
 
 from uobtheatre.utils import exceptions
 from uobtheatre.utils.form_validators import OptionalSchemeURLValidator
 
 
-@dataclass
+class ValidationErrors(exceptions.GQLExceptions):
+    pass
+
+
+@dataclass  # type: ignore
 class ValidationError(exceptions.MutationException):
     """
     Hold an error result from the validate method of a validator.
@@ -38,25 +44,42 @@ class Validator(abc.ABC):
     """
 
     @abc.abstractmethod
-    def validate(self, instance) -> list[ValidationError]:
+    def validate(self, instance) -> Optional[ValidationErrors]:
         pass
 
     def __and__(self, other):
         return AndValidator(self, other)
 
     @staticmethod
-    def all_errors(generator: Generator):
+    def combine_errors(generator: Generator) -> Optional[ValidationErrors]:
         """
-        Given a generator (for a list of list of errors) combine all the errors
-        into a flat list.
-        This is handy for combining validate on a list of validators. E.g.
+        Given a generator of ValidationErrors combine all the errors in those
+        errors into a flat list.
+        This is handy for combining the result of validate on a list of
+        validators. E.g.
         ```
-        all_errors(
+        combine_errors(
             validator.validate(obj) for validator in validators
         )
+
+        Args:
+            generator: A generator of ValidationErrors.
+
+        Returns:
+            ValidationErrors: A ValidationErrors object, containing all the
+            errors. If no errors are in of the ValidationErrors in the
+            generator then None is returned.
         ```
         """
-        return [error for sublist in generator for error in sublist]
+        errors = reduce(
+            operator.add, (filter(None, generator)), ValidationErrors(exceptions=[])
+        )
+        return errors or None
+
+    def __call__(self, value):
+        errors = self.validate(value)
+        if errors:
+            raise errors
 
 
 @dataclass  # type: ignore
@@ -68,12 +91,17 @@ class AttributeValidator(Validator):
     attribute: str
 
     @abc.abstractmethod
-    def validate_attribute(self, value) -> list[ValidationError]:
+    def validate_attribute(self, value) -> Optional[ValidationErrors]:
         pass
 
-    def validate(self, instance) -> list[ValidationError]:
+    def validate(self, instance) -> Optional[ValidationErrors]:
         attribute_value = getattr(instance, self.attribute)
         return self.validate_attribute(attribute_value)
+
+    def __call__(self, value):
+        errors = self.validate_attribute(value)
+        if errors:
+            raise errors
 
 
 @dataclass
@@ -82,15 +110,17 @@ class RequiredFieldValidator(AttributeValidator):
     A validator that checks its required attribute is provided (not null).
     """
 
-    def validate_attribute(self, value):
+    def validate_attribute(self, value) -> Optional[ValidationErrors]:
         if value is None:
-            return [
-                ValidationError(
-                    message=f"{self.attribute.replace('_', ' ')} is required",
-                    attribute=self.attribute,
-                )
-            ]
-        return []
+            return ValidationErrors(
+                exceptions=[
+                    ValidationError(
+                        message="Required",
+                        attribute=self.attribute,
+                    )
+                ]
+            )
+        return None
 
 
 @dataclass
@@ -103,14 +133,16 @@ class UrlValidator(AttributeValidator):
         validate = OptionalSchemeURLValidator()
         try:
             validate(value)
-            return []
         except DjangoValidationError:
-            return [
-                ValidationError(
-                    message=f"{self.attribute.replace('_', ' ')} is not a valid url",
-                    attribute=self.attribute,
-                )
-            ]
+            return ValidationErrors(
+                exceptions=[
+                    ValidationError(
+                        message=f"{self.attribute.replace('_', ' ')} is not a valid url",
+                        attribute=self.attribute,
+                    )
+                ]
+            )
+        return None
 
 
 @dataclass
@@ -122,7 +154,7 @@ class AndValidator(Validator):
         super().__init__()
 
     def validate(self, instance):
-        return self.all_errors(
+        return self.combine_errors(
             validator.validate(instance) for validator in self.validators
         )
 
@@ -136,6 +168,35 @@ class RequiredFieldsValidator(AndValidator):
 
 
 @dataclass
+class PercentageValidator(AttributeValidator):
+    """
+    A validator that checks it's required attribute is a percentage.
+    """
+
+    def __init__(self, attribute="percentage"):
+        super().__init__(attribute=attribute)
+
+    def validate_attribute(self, value):
+        errors = []
+        if not isinstance(value, float) and not isinstance(value, int):
+            errors.append(
+                ValidationError(
+                    message="A percentage must be a valid number",
+                    attribute=self.attribute,
+                )
+            )
+        elif value < 0 or value > 1:
+            errors.append(
+                ValidationError(
+                    message=f"{value:.2f} is not a valid percentage. A percentage must be between 0 and 1",
+                    attribute=self.attribute,
+                )
+            )
+
+        return ValidationErrors(exceptions=errors)
+
+
+@dataclass
 class RelatedObjectsValidator(Validator):
     """
     Validate all instances of a related attribute. Applies the provided
@@ -146,7 +207,7 @@ class RelatedObjectsValidator(Validator):
     performance.
     """
 
-    def __init__(self, attribute: str, validator, min_number: int = None):
+    def __init__(self, attribute: str, validator=None, min_number: int = None):
         self.attribute = attribute
         self.validator = validator
         self.min_number = min_number
@@ -170,11 +231,13 @@ class RelatedObjectsValidator(Validator):
             )
         return None
 
-    def validate(self, instance) -> list[ValidationError]:
-        errors = self.all_errors(
+    def validate(self, instance) -> Optional[ValidationErrors]:
+        errors = self.combine_errors(
             self.validator.validate(related_instance)
             for related_instance in self._get_attributes(instance)
-        )
+            if self.validator
+        ) or ValidationErrors(exceptions=[])
+
         if number_error := self._validate_number(instance):
-            errors.append(number_error)
-        return errors
+            errors.add_exception(number_error)
+        return errors or None

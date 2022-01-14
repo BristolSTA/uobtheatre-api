@@ -8,8 +8,9 @@ import pytest
 from dateutil import parser
 from django.utils import timezone
 from guardian.shortcuts import assign_perm
+from pytest_django.asserts import assertQuerysetEqual
 
-from uobtheatre.bookings.models import Booking, Ticket
+from uobtheatre.bookings.models import Ticket
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
     PerformanceSeatingFactory,
@@ -21,8 +22,11 @@ from uobtheatre.discounts.test.factories import (
     DiscountFactory,
     DiscountRequirementFactory,
 )
-from uobtheatre.payments.payment_methods import Card, Cash, SquareOnline
-from uobtheatre.payments.test.factories import PaymentFactory
+from uobtheatre.payments.exceptions import CantBeRefundedException
+from uobtheatre.payments.models import Transaction
+from uobtheatre.payments.payables import Payable
+from uobtheatre.payments.test.factories import TransactionFactory
+from uobtheatre.payments.transaction_providers import Card, Cash, SquareOnline
 from uobtheatre.productions.models import Performance, PerformanceSeatGroup, Production
 from uobtheatre.productions.test.factories import (
     AudienceWarningFactory,
@@ -387,7 +391,7 @@ def test_performance_checked_in_tickets():
 
     # Ticket in an in progress booking - shouldn't be included
     in_progress_booking = BookingFactory(
-        performance=booking.performance, status=Booking.BookingStatus.IN_PROGRESS
+        performance=booking.performance, status=Payable.Status.IN_PROGRESS
     )
     TicketFactory(booking=in_progress_booking)
 
@@ -405,7 +409,7 @@ def test_performance_unchecked_in_tickets():
 
     # Ticket in an in progress booking - shouldn't be included
     in_progress_booking = BookingFactory(
-        performance=booking.performance, status=Booking.BookingStatus.IN_PROGRESS
+        performance=booking.performance, status=Payable.Status.IN_PROGRESS
     )
     TicketFactory(booking=in_progress_booking)
 
@@ -421,7 +425,7 @@ def test_performance_total_tickets_sold():
     TicketFactory(booking=booking)
 
     # Draft booking with 3 tickets (shouldn't be counted)
-    draft_booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    draft_booking = BookingFactory(status=Payable.Status.IN_PROGRESS)
     TicketFactory(booking=draft_booking)
     TicketFactory(booking=draft_booking)
     TicketFactory(booking=draft_booking)
@@ -429,7 +433,7 @@ def test_performance_total_tickets_sold():
     # Expired Booking with 4 tickets (shouldn't be counted)
     expires_draft_booking = BookingFactory(
         expires_at=timezone.now() - timedelta(minutes=16),
-        status=Booking.BookingStatus.IN_PROGRESS,
+        status=Payable.Status.IN_PROGRESS,
     )
     TicketFactory(booking=expires_draft_booking)
     TicketFactory(booking=expires_draft_booking)
@@ -451,7 +455,7 @@ def test_performance_total_tickets_sold_or_reserved():
 
     # Draft booking with 3 tickets
     draft_booking = BookingFactory(
-        status=Booking.BookingStatus.IN_PROGRESS, performance=booking.performance
+        status=Payable.Status.IN_PROGRESS, performance=booking.performance
     )
     TicketFactory(booking=draft_booking)
     TicketFactory(booking=draft_booking)
@@ -460,7 +464,7 @@ def test_performance_total_tickets_sold_or_reserved():
     # Expired Booking with 4 tickets (shouldn't be counted)
     expires_draft_booking = BookingFactory(
         expires_at=timezone.now() - timedelta(minutes=16),
-        status=Booking.BookingStatus.IN_PROGRESS,
+        status=Payable.Status.IN_PROGRESS,
         performance=booking.performance,
     )
     TicketFactory(booking=expires_draft_booking)
@@ -494,13 +498,17 @@ def test_performance_total_tickets_checked_in():
         ([50, 200], None, 100, 100),
         ([50, 200], 40, 100, 40),
         ([], 40, 100, 0),
+        ([], 40, None, 0),
+        ([40], None, None, 40),
     ],
 )
 def test_performance_total_capacity(
     seat_group_capacities, performance_capacity, venue_capacity, expected
 ):
     performance = PerformanceFactory(
-        venue=VenueFactory(internal_capacity=venue_capacity),
+        venue=VenueFactory(internal_capacity=venue_capacity)
+        if not venue_capacity is None
+        else None,
         capacity=performance_capacity,
     )
 
@@ -943,7 +951,9 @@ def test_qs_has_boxoffice_permission():
 
 @pytest.mark.django_db
 def test_qs_running_on():
-    query_date = timezone.datetime(year=2021, month=7, day=14)
+    query_date = timezone.datetime(
+        year=2021, month=7, day=14, tzinfo=timezone.get_current_timezone()
+    )
     one_day = timezone.timedelta(days=1)
     # Past performance
     PerformanceFactory(start=query_date - one_day, end=query_date - one_day)
@@ -996,18 +1006,41 @@ def test_sales_breakdown_production():
     booking_1 = BookingFactory(performance=performance_1)
     booking_2 = BookingFactory(performance=performance_2)
 
-    PaymentFactory(
-        pay_object=booking_1, provider_fee=2, app_fee=100, value=200, provider=Cash.name
+    TransactionFactory(
+        pay_object=booking_1,
+        provider_fee=2,
+        app_fee=100,
+        value=200,
+        provider_name=Cash.name,
     )
-    PaymentFactory(
-        pay_object=booking_1, provider_fee=4, app_fee=200, value=600, provider=Card.name
+    TransactionFactory(
+        pay_object=booking_1,
+        provider_fee=4,
+        app_fee=200,
+        value=600,
+        provider_name=Card.name,
     )
-    PaymentFactory(
+    TransactionFactory(
+        pay_object=booking_1,
+        provider_fee=4,
+        app_fee=200,
+        value=600,
+        provider_name=Card.name,
+    )
+    TransactionFactory(
+        pay_object=booking_1,
+        provider_fee=-4,
+        app_fee=-200,
+        value=-600,
+        provider_name=Card.name,
+        type=Transaction.Type.REFUND,
+    )
+    TransactionFactory(
         pay_object=booking_2,
         provider_fee=10,
         app_fee=150,
         value=400,
-        provider=SquareOnline.name,
+        provider_name=SquareOnline.name,
     )
 
     assert production.sales_breakdown() == {
@@ -1015,8 +1048,12 @@ def test_sales_breakdown_production():
         "provider_payment_value": 16,
         "society_revenue": 750,
         "society_transfer_value": 550,
-        "total_card_sales": 1000,
-        "total_sales": 1200,
+        "total_card_sales": 1600,
+        "total_sales": 1800,
+        "total_refunds": -600,
+        "total_card_refunds": -600,
+        "net_income": 1200,
+        "net_card_income": 1000,
     }
 
 
@@ -1027,26 +1064,34 @@ def test_sales_breakdown_performance():
     booking_2 = BookingFactory(performance=performance)
     booking_3 = BookingFactory()
 
-    PaymentFactory(
-        pay_object=booking_1, provider_fee=2, app_fee=100, value=200, provider=Cash.name
+    TransactionFactory(
+        pay_object=booking_1,
+        provider_fee=2,
+        app_fee=100,
+        value=200,
+        provider_name=Cash.name,
     )
-    PaymentFactory(
-        pay_object=booking_1, provider_fee=4, app_fee=200, value=600, provider=Card.name
+    TransactionFactory(
+        pay_object=booking_1,
+        provider_fee=4,
+        app_fee=200,
+        value=600,
+        provider_name=Card.name,
     )
-    PaymentFactory(
+    TransactionFactory(
         pay_object=booking_2,
         provider_fee=10,
         app_fee=150,
         value=400,
-        provider=SquareOnline.name,
+        provider_name=SquareOnline.name,
     )
 
-    PaymentFactory(
+    TransactionFactory(
         pay_object=booking_3,
         provider_fee=10,
         app_fee=150,
         value=400,
-        provider=SquareOnline.name,
+        provider_name=SquareOnline.name,
     )
 
     assert performance.sales_breakdown() == {
@@ -1056,6 +1101,10 @@ def test_sales_breakdown_performance():
         "society_transfer_value": 550,
         "total_card_sales": 1000,
         "total_sales": 1200,
+        "total_refunds": 0,
+        "total_card_refunds": 0,
+        "net_income": 1200,
+        "net_card_income": 1000,
     }
 
 
@@ -1064,7 +1113,7 @@ def test_sales_breakdown_with_blank_fees():
     performance = PerformanceFactory()
     booking = BookingFactory(performance=performance)
 
-    PaymentFactory(pay_object=booking, value=200)
+    TransactionFactory(pay_object=booking, value=200)
 
     assert performance.sales_breakdown() == {
         "app_payment_value": 0,
@@ -1073,6 +1122,10 @@ def test_sales_breakdown_with_blank_fees():
         "society_transfer_value": 200,
         "total_card_sales": 200,
         "total_sales": 200,
+        "total_refunds": 0,
+        "total_card_refunds": 0,
+        "net_income": 200,
+        "net_card_income": 200,
     }
 
 
@@ -1085,3 +1138,155 @@ def test_performance_validate():
     ) as validator:
         assert performance.validate() == [error]
         validator.assert_called_once()
+
+
+@pytest.mark.django_db
+def test_performance_validate_without_possible_tickets():
+    performance = PerformanceFactory()
+    assert performance.validate() is not None
+
+    PerformanceSeatingFactory(performance=performance)
+
+    assert performance.validate() is not None
+
+    performance.discounts.add(DiscountFactory())
+    assert performance.validate() is None
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "disabled,bookings_can_refund,send_email",
+    [
+        (True, True, True),
+        (True, True, False),
+        (True, False, True),
+        (False, True, True),
+        (False, False, True),
+        (False, False, False),
+    ],
+)
+def test_performance_refund_bookings(
+    mailoutbox, disabled, bookings_can_refund, send_email
+):
+    performance = PerformanceFactory(disabled=disabled)
+    booking_1 = BookingFactory(performance=performance)
+    booking_2 = BookingFactory(performance=performance)
+    BookingFactory()  # Booking not associated with booking
+    user = UserFactory()
+
+    with patch(
+        "uobtheatre.bookings.models.Booking.refund", autospec=True
+    ) as booking_refund, patch(
+        "uobtheatre.bookings.models.Booking.can_be_refunded",
+        new_callable=PropertyMock(return_value=bookings_can_refund),
+    ):
+
+        def test():
+            performance.refund_bookings(user, send_admin_email=send_email)
+
+        if not disabled:
+            with pytest.raises(CantBeRefundedException) as exception:
+                test()
+            assert exception.value.message == f"{performance} is not set to disabled"
+            booking_refund.assert_not_called()
+        else:
+            test()
+            assert booking_refund.call_count == (2 if bookings_can_refund else 0)
+            if bookings_can_refund:
+                booking_refund.assert_any_call(
+                    booking_1, authorizing_user=user, send_admin_email=False
+                )
+                booking_refund.assert_any_call(
+                    booking_2, authorizing_user=user, send_admin_email=False
+                )
+        assert len(mailoutbox) == (
+            1 if disabled and send_email and bookings_can_refund else 0
+        )
+
+
+@pytest.mark.django_db
+def test_performance_refund_bookings_with_exception():
+    performance = PerformanceFactory(disabled=True)
+    booking = BookingFactory(performance=performance)
+    TransactionFactory(pay_object=booking)
+
+    with patch(
+        "uobtheatre.bookings.models.Booking.can_be_refunded",
+        new_callable=PropertyMock(return_value=True),
+    ), patch("uobtheatre.payments.models.Transaction.refund", side_effect=Exception()):
+        (
+            refunded_bookings,
+            failed_bookings,
+            skipped_bookings,
+        ) = performance.refund_bookings(UserFactory())
+
+    assert booking in failed_bookings
+    assert refunded_bookings == []
+    assert skipped_bookings == []
+
+
+@pytest.mark.django_db
+def test_performance_queryset_bookings():
+    performance = PerformanceFactory()
+    booking_1 = BookingFactory(performance=performance)
+    booking_2 = BookingFactory()  # Booking not in the performance
+
+    assertQuerysetEqual(
+        Performance.objects.bookings(), [booking_1, booking_2], ordered=False
+    )
+    assertQuerysetEqual(
+        Performance.objects.filter(pk=performance.pk).bookings(), [booking_1]
+    )
+
+
+@pytest.mark.django_db
+def test_performance_queryset_transactions():
+    performance = PerformanceFactory()
+    transaction_1 = TransactionFactory(
+        pay_object=BookingFactory(performance=performance)
+    )
+    transaction_2 = TransactionFactory()  # Transaction not in the performance
+
+    assertQuerysetEqual(
+        Performance.objects.transactions().all(),
+        [transaction_1, transaction_2],
+        ordered=False,
+    )
+    assertQuerysetEqual(
+        Performance.objects.filter(pk=performance.pk).transactions().all(),
+        [transaction_1],
+    )
+
+
+@pytest.mark.django_db
+def test_production_queryset_performances():
+    performance_1 = PerformanceFactory()
+    performance_2 = PerformanceFactory()
+
+    assertQuerysetEqual(
+        Production.objects.performances().all(),
+        [performance_1, performance_2],
+        ordered=False,
+    )
+    assertQuerysetEqual(
+        Production.objects.filter(pk=performance_1.production.pk).performances().all(),
+        [performance_1],
+    )
+
+
+@pytest.mark.django_db
+def test_production_queryset_transactions():
+    transaction_1 = TransactionFactory()
+    transaction_2 = TransactionFactory()
+
+    assertQuerysetEqual(
+        Production.objects.transactions().all(),
+        [transaction_1, transaction_2],
+        ordered=False,
+    )
+    assertQuerysetEqual(
+        Production.objects.filter(pk=transaction_1.pay_object.performance.production.pk)
+        .transactions()
+        .all(),
+        [transaction_1],
+    )

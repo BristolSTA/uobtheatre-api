@@ -1,20 +1,34 @@
+import django_filters
 import graphene
 from graphene import relay
 from graphene_django import DjangoObjectType
 
 from uobtheatre.bookings.schema import BookingNode
-from uobtheatre.payments.models import Payment
-from uobtheatre.payments.payment_methods import PaymentMethod, SquarePOS
+from uobtheatre.payments.models import Transaction
+from uobtheatre.payments.transaction_providers import (
+    PaymentProvider,
+    SquarePOS,
+    TransactionProvider,
+)
 from uobtheatre.users.abilities import OpenBoxoffice
-from uobtheatre.utils.enums import GrapheneEnumMixin
+from uobtheatre.utils.enums import EnumNode, GrapheneEnumMixin
 from uobtheatre.utils.filters import FilterSet
 
-PaymentMethodsEnum = graphene.Enum("PaymentMethod", PaymentMethod.choices)
+PaymentMethodsEnum = graphene.Enum("PaymentMethod", PaymentProvider.choices)
 
 
-class PaymentFilter(FilterSet):
+class TransactionFilter(FilterSet):
+    """
+    GQL filter for transactions.
+    Its exposes type, created_at and provider (alias for provider_name).
+    """
+
+    provider = django_filters.ChoiceFilter(
+        field_name="provider_name", choices=TransactionProvider.choices
+    )
+
     class Meta:
-        model = Payment
+        model = Transaction
         fields = ("type", "provider", "created_at")
 
 
@@ -37,18 +51,22 @@ class SquarePaymentDevice(graphene.ObjectType):
     status = graphene.String()
 
 
-class PaymentNode(GrapheneEnumMixin, DjangoObjectType):
+class TransactionNode(GrapheneEnumMixin, DjangoObjectType):
     url = graphene.String(required=False)
     pay_object = PayObjectUnion()
+    provider = graphene.Field(EnumNode)
+
+    def resolve_provider(self, info):
+        return GrapheneEnumMixin._generate_enum_resolver("provider_name")(self, info)
 
     def resolve_url(self, info):
         return self.url()
 
     class Meta:
-        model = Payment
+        model = Transaction
         interfaces = (relay.Node,)
-        filterset_class = PaymentFilter
-        exclude = ("pay_object_id", "pay_object_type")
+        filterset_class = TransactionFilter
+        exclude = ("pay_object_id", "pay_object_type", "provider_name")
 
 
 class Query(graphene.ObjectType):

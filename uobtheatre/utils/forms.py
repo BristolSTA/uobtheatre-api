@@ -1,6 +1,6 @@
 from django.core.exceptions import ValidationError
+from django.forms.fields import FileField
 from django.forms.models import ModelForm
-from factory.django import FileField
 
 
 class MutationForm(ModelForm):

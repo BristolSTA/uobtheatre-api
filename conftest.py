@@ -4,10 +4,12 @@ from typing import List, Optional
 from unittest.mock import patch
 
 import pytest
+from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory
 from graphene.test import Client as GQLClient
 from rest_framework.test import APIClient
+from square.client import Client
 
 from uobtheatre.payments.test.factories import MockApiResponse
 from uobtheatre.schema import schema as app_schema
@@ -55,6 +57,15 @@ class AuthenticateableGQLClient(GQLClient):
         return super().execute(
             query, context_value=self.request_factory, variable_values=variable_values
         )
+
+
+@pytest.fixture
+def square_client():
+    return Client(
+        square_version="2020-11-18",
+        access_token=settings.SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],  # type: ignore
+        environment=settings.SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],  # type: ignore
+    )
 
 
 @pytest.fixture(scope="session")

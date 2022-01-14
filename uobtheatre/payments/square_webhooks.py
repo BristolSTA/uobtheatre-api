@@ -6,8 +6,8 @@ from django.conf import settings
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from uobtheatre.payments.models import Payment
-from uobtheatre.payments.payment_methods import SquarePOS
+from uobtheatre.payments.models import Transaction
+from uobtheatre.payments.transaction_providers import SquarePOS
 
 
 class SquareWebhooks(APIView):
@@ -68,12 +68,41 @@ class SquareWebhooks(APIView):
         if not self.is_valid_callback(request.data, signature):
             return Response("Invalid signature", status=400)
 
-        if request.data["type"] == "terminal.checkout.updated":
-            SquarePOS.handle_terminal_checkout_updated_webhook(request.data["data"])
-            return Response(status=200)
+        request_data = request.data
 
-        if request.data["type"] == "payment.updated":
-            Payment.handle_update_payment_webhook(request.data["data"])
-            return Response(status=200)
+        if request_data["type"] == "terminal.checkout.updated":
+            # This is a terminal checkout
+            Transaction.objects.get(
+                provider_transaction_id=request_data["data"]["object"]["checkout"][
+                    "id"
+                ],
+                provider_name=SquarePOS.name,
+            ).sync_transaction_with_provider()
 
-        return Response(status=202)
+        elif request_data["type"] == "payment.updated":
+            # This is a payment update webhook
+            square_payment = request_data["data"]["object"]["payment"]
+
+            # First, check if this is a terminal checkout payment update. If it is, the data inside is for the payment not the checkout, so we don't use it
+            provider_id = square_payment.get("terminal_checkout_id")
+            data = None
+
+            if not provider_id:
+                # Not a terminal checkout, therefore it is a standard payment
+                provider_id = square_payment["id"]
+                data = square_payment
+
+            Transaction.objects.get(
+                provider_transaction_id=provider_id,
+            ).sync_transaction_with_provider(data)
+
+        elif request_data["type"] == "refund.updated":
+            # This is a refund webhook
+            Transaction.objects.get(
+                provider_transaction_id=request_data["data"]["id"],
+                type=Transaction.Type.REFUND,
+            ).sync_transaction_with_provider(request_data["data"]["object"]["refund"])
+        else:
+            return Response(status=202)
+
+        return Response(status=200)

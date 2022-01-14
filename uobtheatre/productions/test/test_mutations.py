@@ -3,6 +3,7 @@ from datetime import datetime
 from unittest.mock import patch
 
 import pytest
+import pytz
 from graphql_relay.node.node import to_global_id
 from guardian.shortcuts import assign_perm
 
@@ -15,7 +16,7 @@ from uobtheatre.productions.test.factories import PerformanceFactory, Production
 from uobtheatre.societies.test.factories import SocietyFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.utils.exceptions import AuthorizationException
-from uobtheatre.utils.validators import ValidationError
+from uobtheatre.utils.validators import ValidationError, ValidationErrors
 from uobtheatre.venues.test.factories import SeatGroupFactory, VenueFactory
 
 ###
@@ -563,10 +564,14 @@ def test_set_production_status_draft_errors(gql_client):
     ), patch.object(
         Production.VALIDATOR,
         "validate",
-        return_value=[
-            ValidationError(message="We need that thing."),
-            ValidationError(message="Something about the attribute", attribute="abc"),
-        ],
+        return_value=ValidationErrors(
+            [
+                ValidationError(message="We need that thing."),
+                ValidationError(
+                    message="Something about the attribute", attribute="abc"
+                ),
+            ]
+        ),
     ) as validator:
         response = gql_client.execute(query)
 
@@ -612,6 +617,34 @@ def test_production_permissions_without_change_permission(gql_client):
     )
     response = gql_client.execute(request)
     assert response["data"]["productionPermissions"]["success"] is False
+
+
+@pytest.mark.django_db
+def test_production_permissions_with_invalid_user(gql_client):
+    production = ProductionFactory()
+    request = """
+        mutation {
+            productionPermissions(id: "%s", userEmail: "example@example.org", permissions: ["add_production"]) {
+                success
+                errors {
+                    ... on FieldError {
+                        message
+                        field
+                    }
+                }
+            }
+        }
+    """ % (
+        to_global_id("ProductionNode", production.id),
+    )
+    assign_perm("change_production", gql_client.login().user, production)
+
+    response = gql_client.execute(request)
+    assert response["data"]["productionPermissions"]["success"] is False
+    assert response["data"]["productionPermissions"]["errors"][0] == {
+        "message": "A user with that email does not exist",
+        "field": "userEmail",
+    }
 
 
 @pytest.mark.django_db
@@ -946,8 +979,8 @@ def test_performance_mutation_update_new_production(
     gql_client, has_old_permission, has_new_permission, error_message
 ):
     performance = PerformanceFactory(
-        doors_open=datetime(day=9, month=11, year=2021),
-        end=datetime(day=11, month=11, year=2021),
+        doors_open=datetime(day=9, month=11, year=2021, tzinfo=pytz.UTC),
+        end=datetime(day=11, month=11, year=2021, tzinfo=pytz.UTC),
     )
     new_production = ProductionFactory()
     request = """
@@ -955,7 +988,7 @@ def test_performance_mutation_update_new_production(
           performance(
             input: {
                 id: "%s"
-                start: "2021-11-10T00:00:00"
+                start: "2021-11-10T00:00:00+00:00"
                 production: "%s"
              }
           ) {

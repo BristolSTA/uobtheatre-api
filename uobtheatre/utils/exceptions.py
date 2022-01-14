@@ -11,7 +11,7 @@ error: Union[FieldError, NonFieldError])
 
 
 import traceback
-from typing import Iterable, List, Union
+from typing import Any, Iterable, List, Union
 
 import graphene
 from django.core.exceptions import ObjectDoesNotExist
@@ -40,9 +40,16 @@ class NonFieldError(graphene.ObjectType):
 
 
 class FieldError(graphene.ObjectType):
+    """
+    FieldError is used to return errors which are for a specific field.
+    """
+
     message = graphene.String()
     field = graphene.String()
     code = graphene.String()
+
+    def resolve_field(self, _):
+        return to_camel_case(self.field)
 
 
 class GQLErrorUnion(graphene.Union):
@@ -53,6 +60,7 @@ class GQLErrorUnion(graphene.Union):
 class MutationResult:
     success = graphene.Boolean(default_value=True)
     errors = graphene.List(GQLErrorUnion)
+
 
 class AuthOutput(MutationResult):
     """
@@ -86,8 +94,17 @@ class AuthOutput(MutationResult):
 
 
 class MutationException(Exception):
+    """
+    Base class for all exceptions raised during mutations.
+    """
+
     def resolve(self):
         raise NotImplementedError
+
+    def __eq__(self, other: Any):
+        if not isinstance(other, MutationException):
+            raise NotImplementedError
+        return self.__dict__ == other.__dict__
 
 
 class GQLException(MutationException):
@@ -105,7 +122,9 @@ class GQLException(MutationException):
     def resolve(self) -> List[Union[FieldError, NonFieldError]]:
         return [
             FieldError(
-                message=self.message, code=self.code, field=to_camel_case(self.field)
+                message=self.message,
+                code=self.code,
+                field=self.field,
             )
             if self.field
             else NonFieldError(message=self.message, code=self.code)
@@ -132,6 +151,23 @@ class GQLExceptions(MutationException):
         for exception in self.exceptions:
             resovled_exceptions.extend(exception.resolve())
         return resovled_exceptions
+
+    def __bool__(self):
+        return self.has_exceptions()
+
+    def __add__(self, other):
+        if not isinstance(other, GQLExceptions):
+            raise NotImplementedError
+        return GQLExceptions(self.exceptions + other.exceptions)
+
+    def __eq__(self, other: Any):
+        if not isinstance(other, GQLExceptions):
+            raise NotImplementedError
+        return self.exceptions == other.exceptions
+
+
+class PaymentException(GQLException):
+    pass
 
 
 class SquareException(GQLException):
@@ -196,12 +232,17 @@ class FormExceptions(GQLExceptions):
         and a list of error message. This init method creates a field error for
         each error message.
         """
-        exceptions = [
-            GQLException(message, field=error.field)
-            for error in list(form_errors)
-            for message in error.messages
-        ] if form_errors else []
+        exceptions = (
+            [
+                GQLException(message, field=error.field)
+                for error in list(form_errors)
+                for message in error.messages
+            ]
+            if form_errors
+            else []
+        )
         super().__init__(exceptions)
+
 
 class NotFoundException(GQLException):
     """An exception for when a resource is not found."""

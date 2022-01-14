@@ -53,6 +53,7 @@ INSTALLED_APPS = (
     "uobtheatre.reports",
     "uobtheatre.mail",
     "uobtheatre",
+    "admin_confirm",
 )
 
 # https://docs.djangoproject.com/en/2.0/topics/http/middleware/
@@ -82,6 +83,8 @@ EMAIL_PORT = env("EMAIL_PORT", default=1025)
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", default=None)
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default=None)
 DEFAULT_FROM_EMAIL = "UOB Theatre <no-reply@uobtheatre.com>"
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
+EMAIL_SUBJECT_PREFIX = "[UOBTheatre] "
 
 ADMINS = (("Author", "webmaster@bristolsta.com"),)
 

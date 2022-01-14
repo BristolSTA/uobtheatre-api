@@ -3,15 +3,15 @@ from graphql_relay.node.node import to_global_id
 from guardian.shortcuts import assign_perm
 
 from uobtheatre.bookings.test.factories import BookingFactory
-from uobtheatre.payments.payment_methods import SquarePOS
-from uobtheatre.payments.test.factories import PaymentFactory
+from uobtheatre.payments.test.factories import TransactionFactory
+from uobtheatre.payments.transaction_providers import SquarePOS
 from uobtheatre.productions.test.factories import PerformanceFactory
 
 
 @pytest.mark.django_db
 def test_payment_schema(gql_client):
     booking = BookingFactory(user=gql_client.login().user)
-    payment = PaymentFactory(pay_object=booking)
+    payment = TransactionFactory(pay_object=booking)
 
     response = gql_client.execute(
         """
@@ -20,7 +20,7 @@ def test_payment_schema(gql_client):
             bookings {
               edges {
                 node {
-                  payments {
+                  transactions {
                     edges {
                       node {
                         id
@@ -34,7 +34,7 @@ def test_payment_schema(gql_client):
                           value
                           description
                         }
-                        providerPaymentId
+                        providerTransactionId
                         value
                         currency
                         cardBrand
@@ -67,12 +67,12 @@ def test_payment_schema(gql_client):
                     "edges": [
                         {
                             "node": {
-                                "payments": {
+                                "transactions": {
                                     "edges": [
                                         {
                                             "node": {
                                                 "id": to_global_id(
-                                                    "PaymentNode", payment.id
+                                                    "TransactionNode", payment.id
                                                 ),
                                                 "createdAt": payment.created_at.isoformat(),
                                                 "updatedAt": payment.updated_at.isoformat(),
@@ -82,11 +82,11 @@ def test_payment_schema(gql_client):
                                                 },
                                                 "provider": {
                                                     "value": str(
-                                                        payment.provider
+                                                        payment.provider_name
                                                     ).upper(),
-                                                    "description": payment.get_provider_display(),
+                                                    "description": payment.get_provider_name_display(),
                                                 },
-                                                "providerPaymentId": payment.provider_payment_id,
+                                                "providerTransactionId": payment.provider_transaction_id,
                                                 "value": payment.value,
                                                 "currency": payment.currency,
                                                 "cardBrand": payment.card_brand,

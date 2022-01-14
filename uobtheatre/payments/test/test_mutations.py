@@ -2,19 +2,19 @@ import pytest
 from graphql_relay.node.node import to_global_id
 
 from uobtheatre.bookings.test.factories import BookingFactory
-from uobtheatre.payments.models import Payment
-from uobtheatre.payments.payment_methods import SquarePOS
-from uobtheatre.payments.test.factories import PaymentFactory
+from uobtheatre.payments.models import Transaction
+from uobtheatre.payments.test.factories import TransactionFactory
+from uobtheatre.payments.transaction_providers import SquarePOS
 
 
 @pytest.mark.django_db
 def test_cancel_payment_completed_payment(gql_client):
     gql_client.login()
     booking = BookingFactory(creator=gql_client.user)
-    payment = PaymentFactory(
+    payment = TransactionFactory(
         pay_object=booking,
-        status=Payment.PaymentStatus.COMPLETED,
-        provider=SquarePOS.name,
+        status=Transaction.Status.COMPLETED,
+        provider_name=SquarePOS.name,
     )
 
     response = gql_client.execute(
@@ -32,7 +32,7 @@ def test_cancel_payment_completed_payment(gql_client):
           }
         }
         """
-        % to_global_id("PaymentNode", payment.id)
+        % to_global_id("TransactionNode", payment.id)
     )
 
     assert response["data"]["cancelPayment"]["errors"] == [
@@ -48,10 +48,10 @@ def test_cancel_payment_completed_payment(gql_client):
 def test_cancel_payment_success(gql_client, mock_square):
     gql_client.login()
     booking = BookingFactory(creator=gql_client.user)
-    payment = PaymentFactory(
+    payment = TransactionFactory(
         pay_object=booking,
-        status=Payment.PaymentStatus.PENDING,
-        provider=SquarePOS.name,
+        status=Transaction.Status.PENDING,
+        provider_name=SquarePOS.name,
     )
 
     with mock_square(
@@ -76,7 +76,7 @@ def test_cancel_payment_success(gql_client, mock_square):
               }
             }
             """
-            % to_global_id("PaymentNode", payment.id)
+            % to_global_id("TransactionNode", payment.id)
         )
 
     assert response["data"]["cancelPayment"]["success"]
@@ -87,10 +87,10 @@ def test_cancel_payment_success(gql_client, mock_square):
 def test_cancel_payment_not_creator_of_booking(gql_client):
     gql_client.login()
     booking = BookingFactory()
-    payment = PaymentFactory(
+    payment = TransactionFactory(
         pay_object=booking,
-        status=Payment.PaymentStatus.PENDING,
-        provider=SquarePOS.name,
+        status=Transaction.Status.PENDING,
+        provider_name=SquarePOS.name,
     )
 
     response = gql_client.execute(
@@ -108,7 +108,7 @@ def test_cancel_payment_not_creator_of_booking(gql_client):
           }
         }
         """
-        % to_global_id("PaymentNode", payment.id)
+        % to_global_id("TransactionNode", payment.id)
     )
 
     assert response["data"]["cancelPayment"]["errors"] == [

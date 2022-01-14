@@ -3,6 +3,7 @@ import factory
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
 from uobtheatre.discounts.models import DiscountRequirement
 from uobtheatre.discounts.test.factories import DiscountFactory
+from uobtheatre.payments.payables import Payable
 from uobtheatre.productions.models import PerformanceSeatGroup
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.test.factories import UserFactory
@@ -32,7 +33,7 @@ class BookingFactory(factory.django.DjangoModelFactory):
     user = factory.SubFactory(UserFactory)
     creator = factory.SubFactory(UserFactory)
     performance = factory.SubFactory(PerformanceFactory)
-    status = Booking.BookingStatus.PAID
+    status = Payable.Status.PAID
 
     class Meta:
         model = Booking
