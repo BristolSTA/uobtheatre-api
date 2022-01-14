@@ -27,18 +27,30 @@ class TransactionInline(GenericTabularInline, ReadOnlyInlineMixin):
     ct_field = "pay_object_type"
 
 
-class RefundedFilter(SimpleListFilter):
+class StatusFilter(SimpleListFilter):
     """A filter for to get refunded bookings"""
 
-    title = "refunded"
-    parameter_name = "refunded"
+    title = "Status"
+    parameter_name = "Status"
 
     def lookups(self, _, __):
-        return (("yes", "Yes"),)
+        return (
+            ("refunded", "Refunded"),
+            ("locked", "Locked"),
+        ) + tuple(Booking.Status.choices)
 
     def queryset(self, _, queryset):
-        if self.value() == "yes":
+        """
+        Filter the status based on the lookup. First checks for refunded and
+        locked, then handled the db statuses.
+        """
+        if self.value() == "refunded":
             return queryset.refunded()
+        if self.value() == "locked":
+            return queryset.locked()
+        # If the query is a valid choice
+        if self.value() in [choice[0] for choice in Booking.Status.choices]:
+            return queryset.filter(status=self.value())
         return queryset
 
 
@@ -51,7 +63,7 @@ class BookingAdmin(DangerousAdminConfirmMixin, admin.ModelAdmin):
         - price and discounted_price in list view
     """
 
-    list_filter = ("status", RefundedFilter)
+    list_filter = (StatusFilter,)
     readonly_fields = ("subtotal", "total", "is_refunded", "is_locked")
     list_display = ("reference", "status", "get_performance_name")
     search_fields = [
