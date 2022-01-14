@@ -36,11 +36,6 @@ class TransactionProvider(abc.ABC):
     def description(cls):
         pass
 
-    @classmethod
-    @property
-    def non_manual_methods(cls) -> list[Type["TransactionProvider"]]:
-        return [method for method in cls.__all__ if not method.is_manual]  # type: ignore
-
     @staticmethod
     def generate_name(name):
         name = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1_\2", name)
@@ -80,12 +75,6 @@ class TransactionProvider(abc.ABC):
         pending) so the default implementation is just to return.
         """
         return
-
-    @classmethod
-    @property
-    def is_manual(cls) -> bool:
-        """Whether this payment method is a manual payment method"""
-        return issubclass(cls, ManualPaymentMethodMixin)
 
     @classmethod
     def get_payment_provider_id(cls, payment: "payment_models.Transaction") -> str:
@@ -263,7 +252,7 @@ class SquarePaymentMethod(SquareAPIMixin, abc.ABC):
         return response.body["payment"]
 
 
-class ManualRefund(RefundProvider):
+class ManualCardRefund(RefundProvider):
     """
     Refund method for refunding square payments.
     """
@@ -334,11 +323,6 @@ class ManualPaymentMethodMixin(abc.ABC):
     provider)
     """
 
-    @classmethod
-    @property
-    def refund_providers(cls):
-        return (ManualRefund(),)
-
     def pay(
         self, value: int, app_fee: int, pay_object: "Payable"
     ) -> "payment_models.Transaction":
@@ -359,6 +343,11 @@ class Card(ManualPaymentMethodMixin, PaymentProvider):
     """Manual card payment method"""
 
     description = "Manual card payment"
+
+    @classmethod
+    @property
+    def refund_providers(cls):
+        return (ManualCardRefund(),)
 
 
 class SquarePOS(PaymentProvider, SquarePaymentMethod):

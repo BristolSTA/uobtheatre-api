@@ -10,7 +10,7 @@ from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.payments.transaction_providers import (
     Card,
     Cash,
-    ManualRefund,
+    ManualCardRefund,
     PaymentProvider,
     RefundProvider,
     SquareOnline,
@@ -36,19 +36,9 @@ def test_transaction_method_all():
         Card,
         SquarePOS,
         SquareOnline,
-        ManualRefund,
+        ManualCardRefund,
         SquareRefund,
     ]
-
-
-def test_payment_method_non_manual():
-    assert (
-        PaymentProvider.non_manual_methods  # pylint: disable=comparison-with-callable
-        == [
-            SquarePOS,
-            SquareOnline,
-        ]
-    )
 
 
 def test_payment_method_choice():
@@ -566,7 +556,7 @@ def test_cash_payment_sync():
 @pytest.mark.parametrize(
     "payment_method, is_refundable",
     [
-        (Cash, True),
+        (Cash, False),
         (Card, True),
         (SquarePOS, False),
         (SquareOnline, True),

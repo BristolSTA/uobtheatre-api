@@ -8,7 +8,7 @@ from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.payments.transaction_providers import (
     Card,
     Cash,
-    ManualRefund,
+    ManualCardRefund,
     PaymentProvider,
     RefundProvider,
     SquareOnline,
@@ -17,7 +17,7 @@ from uobtheatre.payments.transaction_providers import (
 
 
 def test_refund_method_all():
-    assert RefundProvider.__all__ == [ManualRefund, SquareRefund]
+    assert RefundProvider.__all__ == [ManualCardRefund, SquareRefund]
 
 
 @pytest.mark.parametrize(
@@ -65,7 +65,7 @@ def test_manual_refund_method_refund():
         provider_name=Cash.name,
         status=Transaction.Status.COMPLETED,
     )
-    ManualRefund().refund(refund_payment)
+    ManualCardRefund().refund(refund_payment)
 
     assert Transaction.objects.count() == 2
 
@@ -73,7 +73,7 @@ def test_manual_refund_method_refund():
     assert payment.value == -100
     assert payment.app_fee == -20
     assert payment.provider_fee == -10
-    assert payment.provider_name == ManualRefund.name
+    assert payment.provider_name == ManualCardRefund.name
     assert payment.type == Transaction.Type.REFUND
 
 
