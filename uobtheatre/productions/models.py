@@ -865,12 +865,6 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
 
     slug = AutoSlugField(populate_from="name", unique=True, blank=True, editable=True)
 
-    @property
-    def bookings(self):
-        from uobtheatre.bookings.models import Booking
-
-        return Booking.objects.filter(performance__in=self.performances.all())
-
     def __str__(self):
         return str(self.name)
 

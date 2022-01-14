@@ -134,64 +134,6 @@ def test_update_payment_from_square_no_processing_fee(mock_square):
 
 
 @pytest.mark.django_db
-def test_handle_update_payment_webhook_checkout(mock_square):
-    payment = TransactionFactory(
-        provider_fee=None, provider_transaction_id="abc", provider_name=SquarePOS.name
-    )
-
-    with mock_square(
-        SquarePOS.client.terminal,
-        "get_terminal_checkout",
-        success=True,
-        status_code=200,
-        body={
-            "checkout": {
-                "amount_money": {"amount": 100, "currency": "GBP"},
-                "id": "abc",
-                "payment_ids": [
-                    "3fgpz1iUfuxTkK83AqcK9Akx068YY",
-                    "3fgpz1iUfuxTkK83AqcK9Akx068YZ",
-                ],
-                "status": "COMPLETED",
-            },
-        },
-    ) as get_termial_checkout_mock, mock_square(
-        SquarePOS.client.payments,
-        "get_payment",
-        success=True,
-        status_code=200,
-        body={
-            "payment": {
-                "id": "3fgpz1iUfuxTkK83AqcK9Akx068YY",
-                "status": "COMPLETED",
-                "processing_fee": [
-                    {
-                        "amount_money": {"amount": 58, "currency": "GBP"},
-                    }
-                ],
-                "total_money": {"amount": 1990, "currency": "GBP"},
-                "approved_money": {"amount": 1990, "currency": "GBP"},
-            }
-        },
-    ):
-        Transaction.handle_update_payment_webhook(
-            {
-                "type": "payment",
-                "object": {
-                    "payment": {
-                        "id": "notabc",
-                        "terminal_checkout_id": "abc",
-                    }
-                },
-            },
-        )
-
-    get_termial_checkout_mock.assert_called_once_with("abc")
-    payment.refresh_from_db()
-    assert payment.provider_fee == 58 * 2
-
-
-@pytest.mark.django_db
 @pytest.mark.parametrize(
     "provider, status, is_cancelled",
     [
@@ -237,22 +179,6 @@ def test_provider_class_unknown():
 
 
 @pytest.mark.django_db
-def test_handle_update_refund_webhook():
-    payment = TransactionFactory(
-        provider_transaction_id="abc",
-        type=Transaction.Type.REFUND,
-        provider_name=SquareRefund.name,
-    )
-    with patch(
-        "uobtheatre.payments.transaction_providers.SquareRefund.sync_transaction",
-        return_value=None,
-    ) as update_mock:
-        Transaction.handle_update_refund_webhook("abc", {"id": "abc"})
-
-    update_mock.assert_called_once_with(payment, {"id": "abc"})
-
-
-@pytest.mark.django_db
 @pytest.mark.parametrize(
     "status",
     [
@@ -269,6 +195,20 @@ def test_cant_be_refunded_when_not_completed(status):
     assert (
         exception.value.message == f"A {status.label.lower()} payment can't be refunded"
     )
+
+
+@pytest.mark.django_db
+def test_transaction_qs_sync():
+    transactions = [TransactionFactory() for _ in range(3)]
+    with patch(
+        "uobtheatre.payments.models.Transaction.sync_transaction_with_provider",
+        autospec=True,
+    ) as mock_sync:
+        Transaction.objects.sync()
+
+    assert mock_sync.call_count == 3
+    for transaction in transactions:
+        mock_sync.assert_any_call(transaction)
 
 
 @pytest.mark.django_db

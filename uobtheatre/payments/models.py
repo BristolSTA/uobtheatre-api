@@ -165,49 +165,6 @@ class Transaction(TimeStampedMixin, models.Model):
     def value_currency(self):
         return f"{(self.value / 100):.2f} {self.currency}"
 
-    @staticmethod
-    def handle_update_payment_webhook(request):
-        """
-        Handle an update payment webhook from square.
-
-        Args:
-            request (dict): The body of the square webhook
-        """
-        square_payment = request["object"]["payment"]
-
-        # Get payment id. if the payment is part of a terminal checkout it will
-        # have id stored in `terminal_checkout_id` else it will be a regular
-        # payment and id will be stored in `id`
-        if checkout_id := square_payment.get("terminal_checkout_id"):
-            payment_id = checkout_id
-            # The data in the webhook is the payment data not the data for the
-            # overall checkout so we cannot use it. If we give the below method
-            # no data it goes and get what is needs so we can just do that.
-            data = None
-        else:
-            payment_id = square_payment["id"]
-            # Here we have all the data we need so we can just parse that into
-            # the sync payment method to avoid an extra call to square.
-            data = square_payment
-
-        payment = Transaction.objects.get(provider_transaction_id=payment_id)
-        payment.sync_transaction_with_provider(data=data)
-
-    @staticmethod
-    def handle_update_refund_webhook(provider_transaction_id: str, data: dict):
-        """
-        Handle an update refund webhook from square.
-
-        Args:
-            provider_transaction_id (str): The payment ID given by the provider
-            data (dict): The body of the square webhook
-        """
-        transaction = Transaction.objects.get(
-            provider_transaction_id=provider_transaction_id,
-            type=Transaction.Type.REFUND,
-        )
-        transaction.sync_transaction_with_provider(data)
-
     def sync_transaction_with_provider(self, data=None):
         """Sync the payment with the provider payment"""
         self.provider.sync_transaction(self, data)

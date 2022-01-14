@@ -424,37 +424,6 @@ class SquarePOS(PaymentProvider, SquarePaymentMethod):
         )
 
     @classmethod
-    def handle_terminal_checkout_updated_webhook(cls, data: dict):
-        """Handle a terminal checkout update event
-
-        Function to handle a square webhook containing terminal checkout
-        udpate. If the status of the checkout is completed the booking can be
-        completed and a payment object can be created.
-        """
-
-        from uobtheatre.bookings.models import Booking
-
-        checkout = data["object"]["checkout"]
-        booking = Booking.objects.get(reference=checkout["reference_id"])
-
-        if checkout["status"] == "COMPLETED":
-            payment = payment_models.Transaction.objects.get(
-                provider_transaction_id=checkout["id"]
-            )
-
-            payment.status = payment_models.Transaction.Status.COMPLETED
-            payment.save()
-            booking.complete(payment)
-
-        if checkout["status"] == "CANCELED":
-            # Delete any payments that are linked to this checkout
-            payment_models.Transaction.objects.filter(
-                provider_transaction_id=checkout["id"],
-                provider_name=SquarePOS.name,
-                status=payment_models.Transaction.Status.PENDING,
-            ).delete()
-
-    @classmethod
     def list_devices(cls, product_type: str = None, status: str = None) -> list[dict]:
         """List the device codes available on square.
 
@@ -527,10 +496,29 @@ class SquarePOS(PaymentProvider, SquarePaymentMethod):
                 ],
             )
         )
+        old_status = payment.status
         payment.status = payment_models.Transaction.Status.from_square_status(
             checkout["status"]
         )
+        status_changed = not payment.status == old_status
+        # If the checkout has failed
+        if payment.status == payment_models.Transaction.Status.FAILED:
+            # Delete the cehckout payment
+            payment_models.Transaction.objects.get(
+                provider_transaction_id=checkout["id"],
+                provider_name=SquarePOS.name,
+                status=payment_models.Transaction.Status.PENDING,
+            ).delete()
+            return
+
         payment.save()
+
+        # If the checkout has been completed
+        if (
+            payment.status == payment_models.Transaction.Status.COMPLETED
+            and status_changed
+        ):
+            payment.pay_object.complete(payment)
 
 
 class SquareOnline(PaymentProvider, SquarePaymentMethod):

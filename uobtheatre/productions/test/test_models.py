@@ -1222,3 +1222,23 @@ def test_performance_refund_bookings_with_exception():
     assert booking in failed_bookings
     assert refunded_bookings == []
     assert skipped_bookings == []
+
+
+@pytest.mark.django_db
+def test_performance_queryset_bookings():
+    assert False
+
+
+@pytest.mark.django_db
+def test_performance_queryset_transactions():
+    assert False
+
+
+@pytest.mark.django_db
+def test_produciton_queryset_performances():
+    assert False
+
+
+@pytest.mark.django_db
+def test_produciton_queryset_transactions():
+    assert False
