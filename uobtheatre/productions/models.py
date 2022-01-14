@@ -754,7 +754,6 @@ class ProductionQuerySet(QuerySet):
             | Q(id__in=productions_user_can_view_admin)
         )
 
-    @property
     def performances(self):
         """
         Returns a queryset of all performances for the productions in the
@@ -762,13 +761,12 @@ class ProductionQuerySet(QuerySet):
         """
         return Performance.objects.filter(production__in=self)
 
-    @property
     def transactions(self) -> QuerySet[Transaction]:
         """
         Returns a queryset of all of the transactions associated with this
         production.
         """
-        return self.performances.transactions
+        return self.performances().transactions()
 
 
 class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseModel):

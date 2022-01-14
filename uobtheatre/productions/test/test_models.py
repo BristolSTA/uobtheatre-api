@@ -1260,18 +1260,33 @@ def test_performance_queryset_transactions():
 
 @pytest.mark.django_db
 def test_production_queryset_performances():
-    productions = [ProductionFactory() for _ in range(3)]
-    expected_performances = []
-    for production in productions:
-        ps = [PerformanceFactory(production=production) for _ in range(3)]
-        expected_performances.extend(ps)
+    performance_1 = PerformanceFactory()
+    performance_2 = PerformanceFactory()
 
     assertQuerysetEqual(
-        Production.objects.exclude(pk=productions[2].pk).performances,
-        productions[0].performances + productions[1].performances,
+        Production.objects.performances().all(),
+        [performance_1, performance_2],
+        ordered=False,
+    )
+    assertQuerysetEqual(
+        Production.objects.filter(pk=performance_1.production.pk).performances().all(),
+        [performance_1],
     )
 
 
 @pytest.mark.django_db
 def test_production_queryset_transactions():
-    assert False
+    transaction_1 = TransactionFactory()
+    transaction_2 = TransactionFactory()
+
+    assertQuerysetEqual(
+        Production.objects.transactions().all(),
+        [transaction_1, transaction_2],
+        ordered=False,
+    )
+    assertQuerysetEqual(
+        Production.objects.filter(pk=transaction_1.pay_object.performance.production.pk)
+        .transactions()
+        .all(),
+        [transaction_1],
+    )
