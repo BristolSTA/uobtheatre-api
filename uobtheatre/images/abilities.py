@@ -1,4 +1,4 @@
-from uobtheatre.productions.abilities import EditProduction
+from uobtheatre.productions.abilities import AddProduction, EditProduction
 from uobtheatre.users.abilities import Ability
 from uobtheatre.users.models import User
 
@@ -10,4 +10,4 @@ class UploadImage(Ability):
 
     @staticmethod
     def user_has(user: User) -> bool:
-        return EditProduction.user_has(user)
+        return EditProduction.user_has(user) or AddProduction.user_has(user)
