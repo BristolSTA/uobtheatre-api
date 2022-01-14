@@ -24,5 +24,6 @@ def test_image_upload_ability(can_add_production, can_edit_production, expected)
         EditProduction, "user_has", return_value=can_edit_production
     ) as mock_2:
         assert UploadImage.user_has(user) is expected
-        mock_1.assert_called_once_with(user)
+        if not can_edit_production:
+            mock_1.assert_called_once_with(user)
         mock_2.assert_called_once_with(user)
