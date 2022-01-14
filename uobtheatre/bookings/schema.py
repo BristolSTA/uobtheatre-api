@@ -188,6 +188,10 @@ class BookingFilter(FilterSet):
     ordering filter for created_at.
     """
 
+    status_in = django_filters.MultipleChoiceFilter(
+        choices=Booking.Status.choices, field_name="status"
+    )
+
     search = django_filters.CharFilter(method="search_bookings", label="Search")
     checked_in = django_filters.BooleanFilter(
         method="filter_checked_in", label="Checked In"
