@@ -241,6 +241,30 @@ def test_handle_payment_update_webhook(rest_client):
 
 
 @pytest.mark.django_db
+def test_handle_payment_update_checkout_webhook(rest_client):
+    payment = TransactionFactory(
+        provider_transaction_id="dhgENdnFOPXqO",
+        provider_fee=0,
+        provider_name=SquarePOS.name,
+    )
+
+    payload = deepcopy(TEST_PAYMENT_UPDATE_PAYLOAD)
+    payload["data"]["object"]["payment"]["terminal_checkout_id"] = "dhgENdnFOPXqO"
+
+    with patch.object(
+        SquareWebhooks, "is_valid_callback", return_value=True
+    ), patch.object(SquarePOS, "sync_transaction", autospec=True) as sync_mock:
+        rest_client.post(
+            "/square",
+            payload,
+            HTTP_X_SQUARE_SIGNATURE="signature",
+            format="json",
+        )
+
+    sync_mock.assert_called_once_with(payment, None)
+
+
+@pytest.mark.django_db
 def test_square_webhook_unknown_type(rest_client):
     with patch.object(SquareWebhooks, "is_valid_callback", return_value=True):
         response = rest_client.post(

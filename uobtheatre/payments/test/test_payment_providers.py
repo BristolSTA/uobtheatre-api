@@ -364,6 +364,15 @@ def test_square_pos_cancel_failure(mock_square):
             Transaction.Status.FAILED,
             Payable.Status.IN_PROGRESS,
         ),
+        (
+            {
+                "id": "abc",
+                "status": "PENDING",
+                "payment_ids": ["abc123"],
+            },
+            Transaction.Status.PENDING,
+            Payable.Status.IN_PROGRESS,
+        ),
     ],
 )
 def test_square_pos_sync_payment(
