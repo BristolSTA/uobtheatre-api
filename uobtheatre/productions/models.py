@@ -199,7 +199,6 @@ class PerformanceQuerySet(QuerySet):
         productions_user_can_view = Production.objects.user_can_see(user)  # type: ignore
         return self.filter(production__in=productions_user_can_view)
 
-    @property
     def bookings(self):
         """
         Returns a queryset of all of the bookings associated with this
@@ -209,7 +208,6 @@ class PerformanceQuerySet(QuerySet):
 
         return Booking.objects.filter(performance__in=self)
 
-    @property
     def transactions(self) -> QuerySet[Transaction]:
         """
         Returns a queryset of all of the transactions associated with this
@@ -218,7 +216,7 @@ class PerformanceQuerySet(QuerySet):
         from uobtheatre.bookings.models import Booking
 
         return Transaction.objects.filter(
-            pay_object_id__in=self.bookings.values_list("id", flat=True),
+            pay_object_id__in=self.bookings().values_list("id", flat=True),
             pay_object_type=ContentType.objects.get_for_model(Booking),
         )
 
@@ -646,7 +644,7 @@ class Performance(
 
     def sales_breakdown(self, breakdowns: list[str] = None):
         """Generates a breakdown of the sales of this performance"""
-        return self.qs.transactions.annotate_sales_breakdown(breakdowns)
+        return self.qs.transactions().annotate_sales_breakdown(breakdowns)
 
     def refund_bookings(
         self, authorizing_user: User, send_admin_email=True
@@ -968,7 +966,7 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
 
     def sales_breakdown(self, breakdowns: list[str] = None):
         """Generates a breakdown of the sales of this production"""
-        return self.qs.transactions.annotate_sales_breakdown(breakdowns)
+        return self.qs.transactions().annotate_sales_breakdown(breakdowns)
 
     def validate(self) -> Optional[ValidationErrors]:
         return self.VALIDATOR.validate(self)
