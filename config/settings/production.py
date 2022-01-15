@@ -59,4 +59,8 @@ AWS_HEADERS = {
     "Cache-Control": "max-age=86400, s-maxage=86400, must-revalidate",
 }
 
-EMAIL_BACKEND = "anymail.backends.amazon_ses.EmailBackend"
+EMAIL_BACKEND = (
+    "anymail.backends.amazon_ses.EmailBackend"
+    if strtobool(env("EMAIL_ENABLED", default="yes"))
+    else "django.core.mail.backends.console.EmailBackend"
+)
