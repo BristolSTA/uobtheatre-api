@@ -61,6 +61,6 @@ AWS_HEADERS = {
 
 EMAIL_BACKEND = (
     "anymail.backends.amazon_ses.EmailBackend"
-    if not strtobool(env("DISABLE_EMAIL"))
+    if strtobool(env("EMAIL_ENABLED", default="yes"))
     else "django.core.mail.backends.console.EmailBackend"
 )
