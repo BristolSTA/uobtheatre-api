@@ -670,16 +670,15 @@ class Performance(
         failed_bookings = []
         skipped_bookings = []
         for booking in self.bookings.filter(status=Payable.Status.PAID):
-            if not booking.can_be_refunded:
-                skipped_bookings.append(booking)
-                continue
-
             try:
                 booking.refund(
                     authorizing_user=authorizing_user, send_admin_email=False
                 )
                 refunded_bookings.append(booking)
             except Exception as exception:  # pylint: disable=broad-except
+                if isinstance(exception, CantBeRefundedException):
+                    skipped_bookings.append(booking)
+                    continue
                 capture_exception(exception)
                 failed_bookings.append(booking)
 

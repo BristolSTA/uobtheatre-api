@@ -97,7 +97,6 @@ class Payable(models.Model, metaclass=AbstractModelMeta):  # type: ignore
             raise CantBeRefundedException(
                 f"{self.__class__.__name__} ({self}) cannot be refunded"
             )
-
         for payment in self.transactions.filter(type=Transaction.Type.PAYMENT).all():
             payment.refund()
 

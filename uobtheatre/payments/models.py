@@ -10,6 +10,7 @@ from django.db.models.query import QuerySet
 
 from uobtheatre.mail.composer import MailComposer
 from uobtheatre.payments import transaction_providers
+from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.transaction_providers import (
     Cash,
     PaymentProvider,
@@ -236,7 +237,7 @@ class Transaction(TimeStampedMixin, models.Model):
         if refund_provider is None:
             # If no provider is provided, use the auto refund provider
             if not (refund_provider := self.provider.automatic_refund_provider):
-                raise PaymentException(
+                raise CantBeRefundedException(
                     f"A {self.provider_name} payment cannot be automatically refunded"
                 )
 

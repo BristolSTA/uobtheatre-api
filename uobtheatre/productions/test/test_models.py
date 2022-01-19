@@ -38,6 +38,7 @@ from uobtheatre.productions.test.factories import (
     ProductionTeamMemberFactory,
 )
 from uobtheatre.users.test.factories import UserFactory
+from uobtheatre.utils.exceptions import PaymentException
 from uobtheatre.utils.validators import ValidationError
 from uobtheatre.venues.test.factories import SeatGroupFactory, VenueFactory
 
@@ -1155,18 +1156,19 @@ def test_performance_validate_without_possible_tickets():
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "disabled,bookings_can_refund,send_email",
+    "disabled,bookings_can_refund,fails,send_email",
     [
-        (True, True, True),
-        (True, True, False),
-        (True, False, True),
-        (False, True, True),
-        (False, False, True),
-        (False, False, False),
+        (True, True, False, True),
+        (True, True, False, False),
+        (True, False, False, True),
+        (False, True, False, True),
+        (False, False, False, True),
+        (False, False, False, False),
+        (False, True, True, False),
     ],
 )
 def test_performance_refund_bookings(
-    mailoutbox, disabled, bookings_can_refund, send_email
+    mailoutbox, disabled, bookings_can_refund, fails, send_email
 ):
     performance = PerformanceFactory(disabled=disabled)
     booking_1 = BookingFactory(performance=performance)
@@ -1175,14 +1177,17 @@ def test_performance_refund_bookings(
     user = UserFactory()
 
     with patch(
-        "uobtheatre.bookings.models.Booking.refund", autospec=True
-    ) as booking_refund, patch(
-        "uobtheatre.bookings.models.Booking.can_be_refunded",
-        new_callable=PropertyMock(return_value=bookings_can_refund),
-    ):
+        "uobtheatre.bookings.models.Booking.refund",
+        autospec=True,
+        side_effect=(
+            (PaymentException(message="Failed") if fails else None)
+            if bookings_can_refund
+            else CantBeRefundedException()
+        ),
+    ) as booking_refund:
 
         def test():
-            performance.refund_bookings(user, send_admin_email=send_email)
+            return performance.refund_bookings(user, send_admin_email=send_email)
 
         if not disabled:
             with pytest.raises(CantBeRefundedException) as exception:
@@ -1190,15 +1195,18 @@ def test_performance_refund_bookings(
             assert exception.value.message == f"{performance} is not set to disabled"
             booking_refund.assert_not_called()
         else:
-            test()
-            assert booking_refund.call_count == (2 if bookings_can_refund else 0)
-            if bookings_can_refund:
-                booking_refund.assert_any_call(
-                    booking_1, authorizing_user=user, send_admin_email=False
-                )
-                booking_refund.assert_any_call(
-                    booking_2, authorizing_user=user, send_admin_email=False
-                )
+            (refunded, failed, skipped) = test()
+            assert booking_refund.call_count == 2
+            assert len(refunded) == (2 if bookings_can_refund else 0)
+            assert len(skipped) == (2 if not bookings_can_refund else 0)
+            assert len(failed) == (2 if fails else 0)
+
+            booking_refund.assert_any_call(
+                booking_1, authorizing_user=user, send_admin_email=False
+            )
+            booking_refund.assert_any_call(
+                booking_2, authorizing_user=user, send_admin_email=False
+            )
         assert len(mailoutbox) == (
             1 if disabled and send_email and bookings_can_refund else 0
         )
