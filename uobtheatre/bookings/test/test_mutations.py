@@ -544,6 +544,32 @@ def test_create_booking_admin_discount(gql_client, discount, should_be_valid):
 
 
 @pytest.mark.django_db
+def test_create_booking_not_bookable(gql_client):
+    performance = PerformanceFactory()
+    request = """
+        mutation {
+          createBooking(
+            performanceId: "%s"
+          ) {
+            errors {
+              ... on NonFieldError {
+                message
+              }
+            }
+         }
+        }
+    """ % (
+        to_global_id("PerformanceNode", performance.id),
+    )
+
+    response = gql_client.login().execute(request)
+
+    assert response["data"]["createBooking"]["errors"] == [
+        {"message": "This performance is not able to be booked at the moment"}
+    ]
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     "current_tickets, planned_tickets, expected_tickets",
     [
@@ -1047,6 +1073,7 @@ def test_update_booking_admin_discount_without_perms(gql_client):
         "BookingNode", booking.id
     )
     gql_client.login(booking.user)
+
     response = gql_client.execute(request)
 
     assert response["data"]["updateBooking"]["success"] is False
@@ -1096,6 +1123,7 @@ def test_update_booking_admin_discount(gql_client, discount, should_be_valid):
     )
     gql_client.login(booking.user)
     assign_perm("change_production", gql_client.user, booking.performance.production)
+
     response = gql_client.execute(request)
 
     assert response["data"]["updateBooking"]["success"] is should_be_valid
@@ -1190,6 +1218,7 @@ def test_update_booking_capacity_error(gql_client):
         to_global_id("SeatGroupNode", seat_group.id),
         to_global_id("ConcessionTypeNode", concession_type.id),
     )
+
     response = gql_client.execute(request_query)
 
     assert response == {
@@ -1338,9 +1367,11 @@ def test_pay_booking_mutation_wrong_price(gql_client):
           }
         }
     """
+
     response = gql_client.execute(
         request_query % to_global_id("BookingNode", booking.id)
     )
+
     assert response == {
         "data": {
             "payBooking": {
@@ -1482,9 +1513,11 @@ def test_pay_booking_mutation_unauthorized_provider(gql_client):
           }
         }
     """
+
     response = gql_client.execute(
         request_query % to_global_id("BookingNode", booking.id)
     )
+
     assert response == {
         "data": {
             "payBooking": {

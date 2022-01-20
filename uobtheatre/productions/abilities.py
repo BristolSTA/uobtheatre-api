@@ -52,7 +52,7 @@ class EditProduction(Ability):
 class BookForPerformance(Ability):
     """Determine if the user can book for performances"""
 
-    name = "book"
+    name = "book_for_production"
 
     @staticmethod
     def user_has(_):
@@ -66,8 +66,9 @@ class BookForPerformance(Ability):
             obj.production.status
             == Production.Status.PUBLISHED  # Must be bookable and published
             or (
-                EditProduction.user_has_for(
-                    user, obj
+                (
+                    user.has_perm("productions.change_production", obj)
+                    or user.has_perm("productions.force_change_production", obj)
                 )  # If the user can edit the production
                 and obj.production.status
                 in [
