@@ -39,6 +39,7 @@ INSTALLED_APPS = (
     "django_tiptap",
     "rest_framework",
     "django_inlinecss",
+    "django_celery_results",
     # Your apps
     "uobtheatre.users",
     "uobtheatre.productions",
@@ -323,3 +324,7 @@ SQUARE_SETTINGS = {
 }
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
+
+# Celery
+CELERY_BROKER_URL = "redis://redis:6379"
+CELERY_RESULT_BACKEND = "redis://redis:6379"
