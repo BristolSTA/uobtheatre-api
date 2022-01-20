@@ -339,9 +339,7 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
             )
 
         # Check the capacity of the show and its seat_groups
-        err = booking.performance.check_capacity(ticket_objects)
-        if err:
-            raise GQLException(message=err, code=400)
+        booking.performance.check_capacity(ticket_objects)
 
         # Save all the validated tickets
         for ticket in add_tickets:

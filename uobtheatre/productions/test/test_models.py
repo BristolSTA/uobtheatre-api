@@ -29,6 +29,7 @@ from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.payments.transaction_providers import Card, Cash, SquareOnline
 from uobtheatre.productions.exceptions import (
     CapacityException,
+    UnassignedConcessionTypeException,
     UnassignedSeatGroupException,
 )
 from uobtheatre.productions.models import Performance, PerformanceSeatGroup, Production
@@ -841,6 +842,19 @@ def test_performance_check_capacity_seat_group_not_in_performance():
             exception.value.message
             == f"{seat_group} are not assigned to this performance"
         )
+
+
+@pytest.mark.django_db
+def test_performance_check_capacity_concession_type_not_in_performance():
+    psg = PerformanceSeatingFactory(capacity=100)
+
+    # But then try and book a concession type that is not assigned to the performance
+    tickets = [
+        Ticket(seat_group=psg.seat_group, concession_type=ConcessionTypeFactory())
+    ]
+
+    with pytest.raises(UnassignedConcessionTypeException):
+        psg.performance.check_capacity(tickets=tickets)
 
 
 @pytest.mark.django_db
