@@ -17,7 +17,10 @@ from uobtheatre.bookings.test.factories import (
     ValueMiscCostFactory,
     add_ticket_to_booking,
 )
-from uobtheatre.discounts.test.factories import ConcessionTypeFactory
+from uobtheatre.discounts.test.factories import (
+    ConcessionTypeFactory,
+    DiscountRequirementFactory,
+)
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.transaction_providers import SquareOnline, SquarePOS
@@ -159,7 +162,10 @@ def test_create_booking_mutation(
     PerformanceSeatingFactory(
         performance=performance, seat_group=seat_group, capacity=seat_group_capacity
     )
-    ConcessionTypeFactory(id=1)
+    requirement = DiscountRequirementFactory(
+        concession_type=ConcessionTypeFactory(id=1)
+    )
+    requirement.discount.performances.set([performance])
     request = """
         mutation {
           createBooking(
@@ -253,7 +259,10 @@ def test_create_booking_with_too_many_tickets(gql_client, with_boxoffice_perms):
     PerformanceSeatingFactory(
         performance=performance, seat_group=seat_group, capacity=100
     )
-    concession_type = ConcessionTypeFactory()
+    requirement = DiscountRequirementFactory(
+        concession_type=ConcessionTypeFactory(id=2)
+    )
+    requirement.discount.performances.set([performance])
 
     request = """
         mutation {{
@@ -285,7 +294,7 @@ def test_create_booking_with_too_many_tickets(gql_client, with_boxoffice_perms):
     """.format(
         to_global_id("PerformanceNode", performance.id),
         to_global_id("SeatGroupNode", seat_group.id),
-        to_global_id("ConcessionType", concession_type.id),
+        to_global_id("ConcessionType", 2),
     )
 
     gql_client.login()
@@ -737,11 +746,18 @@ def test_update_booking(current_tickets, planned_tickets, expected_tickets, gql_
 
     seat_group_1 = SeatGroupFactory(id=1)
     seat_group_2 = SeatGroupFactory(id=2)
-    ConcessionTypeFactory(id=1)
-    ConcessionTypeFactory(id=2)
+    performance = PerformanceFactory()
+    requirement_1 = DiscountRequirementFactory(
+        concession_type=ConcessionTypeFactory(id=1)
+    )
+    requirement_1.discount.performances.set([performance])
+    requirement_2 = DiscountRequirementFactory(
+        concession_type=ConcessionTypeFactory(id=2)
+    )
+    requirement_2.discount.performances.set([performance])
+
     SeatFactory(id=1)
     SeatFactory(id=2)
-    performance = PerformanceFactory()
     PerformanceSeatingFactory(performance=performance, seat_group=seat_group_1)
     PerformanceSeatingFactory(performance=performance, seat_group=seat_group_2)
 
@@ -863,7 +879,9 @@ def test_update_booking_with_too_many_tickets(gql_client, with_boxoffice_perms):
     PerformanceSeatingFactory(
         performance=performance, seat_group=seat_group, capacity=100
     )
-    concession_type = ConcessionTypeFactory()
+    requirement = DiscountRequirementFactory()
+    requirement.discount.performances.set([performance])
+    concession_type = requirement.concession_type
     TicketFactory(
         booking=booking, seat_group=seat_group, concession_type=concession_type
     )  # 3 exisiting tickets
@@ -1180,7 +1198,6 @@ def test_update_booking_capacity_error(gql_client):
                   __typename
                   ... on NonFieldError {
                     message
-                    code
                   }
                 }
             }
@@ -1200,8 +1217,7 @@ def test_update_booking_capacity_error(gql_client):
                 "errors": [
                     {
                         "__typename": "NonFieldError",
-                        "message": f"You cannot book a seat group that is not assigned to this performance, you have booked {seat_group} but the performance only has ",
-                        "code": "400",
+                        "message": f"{seat_group} are not assigned to this performance",
                     }
                 ],
             }
@@ -1286,7 +1302,6 @@ def test_booking_with_invalid_seat_group(gql_client):
                   __typename
                   ... on NonFieldError {
                     message
-                    code
                   }
                 }
             }
@@ -1306,8 +1321,7 @@ def test_booking_with_invalid_seat_group(gql_client):
                 "errors": [
                     {
                         "__typename": "NonFieldError",
-                        "message": f"You cannot book a seat group that is not assigned to this performance, you have booked {seat_group} but the performance only has My seat group",
-                        "code": "400",
+                        "message": f"{seat_group} are not assigned to this performance",
                     }
                 ],
             }

@@ -16,6 +16,11 @@ from uobtheatre.discounts.models import ConcessionType, DiscountCombination
 from uobtheatre.mail.composer import MailComposer
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable, PayableQuerySet
+from uobtheatre.productions.exceptions import (
+    CapacityException,
+    UnassignedConcessionTypeException,
+    UnassignedSeatGroupException,
+)
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.users.models import User
 from uobtheatre.utils.models import TimeStampedMixin
@@ -543,6 +548,31 @@ class Booking(TimeStampedMixin, Payable):
         self.status = Payable.Status.PAID
         self.save()
         self.send_confirmation_email(payment)
+
+    @property
+    def transferable_performances(self):
+        """Gets the performances that this booking could be transfered to (without changes)"""
+        eligible_performances = []
+        for performance in self.performance.production.performances.exclude(
+            pk=self.performance.pk
+        ).all():
+
+            # Check it is bookable
+            if not performance.is_bookable:
+                continue
+
+            # Check that the performance has the seat group & concession type with enough capacity
+            try:
+                performance.check_capacity(self.tickets.all())
+            except (
+                UnassignedSeatGroupException,
+                UnassignedConcessionTypeException,
+                CapacityException,
+            ):
+                continue
+
+            eligible_performances.append(performance)
+        return eligible_performances
 
     @property
     def web_tickets_path(self):

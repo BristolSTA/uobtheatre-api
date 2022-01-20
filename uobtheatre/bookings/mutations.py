@@ -218,9 +218,7 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
         ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))
 
         # Check the capacity of the show and its seat_groups
-        err = performance.check_capacity(ticket_objects)
-        if err:
-            raise GQLException(message=err, code=400)
+        performance.check_capacity(ticket_objects)
 
         user = parse_target_user_email(
             target_user_email, info.context.user, performance

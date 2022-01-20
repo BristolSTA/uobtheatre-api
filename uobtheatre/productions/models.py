@@ -19,6 +19,11 @@ from uobtheatre.images.models import Image
 from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
+from uobtheatre.productions.exceptions import (
+    CapacityException,
+    UnassignedConcessionTypeException,
+    UnassignedSeatGroupException,
+)
 from uobtheatre.societies.models import Society
 from uobtheatre.users.abilities import AbilitiesMixin
 from uobtheatre.users.models import User
@@ -558,7 +563,7 @@ class Performance(
             or (self.end and self.end < timezone.now())
         )
 
-    def check_capacity(self, tickets, deleted_tickets=None) -> Optional[str]:
+    def check_capacity(self, tickets, deleted_tickets=None):
         """Check the capacity with ticket changes.
 
         Used to check if an update to the Performances Tickets is possible with
@@ -575,9 +580,11 @@ class Performance(
                 be deleted.
                 (default: [])
 
-        Returns:
-            str, Optional: The reason why the new capacity (after ticket
-                update) is not valid. If update is valid None is returned.
+        Raises:
+            UnassignedSeatGroupException: If one or more tickets contain a seat group not assigned to the performance
+            UnassignedConcessionTypeException: If one or more tickets contain a concession type not assigned to the performance
+            CapacityException: If the requested tickets would result in the performance exceeding capacity
+
         """
 
         if deleted_tickets is None:
@@ -586,7 +593,6 @@ class Performance(
         # Get the number of each seat group
         seat_group_counts: Dict[SeatGroup, int] = {}
         for ticket in tickets:
-            # If a SeatGroup with this id does not exist an error will the thrown
             seat_group = ticket.seat_group
             seat_group_count = seat_group_counts.get(seat_group)
             seat_group_counts[seat_group] = (seat_group_count or 0) + 1
@@ -613,10 +619,27 @@ class Performance(
             seat_groups_not_in_performance_str = ", ".join(
                 seat_groups_not_in_performance
             )
-            performance_seat_groups_str = ", ".join(
-                [seat_group.name for seat_group in self.seat_groups.all()]
+
+            raise UnassignedSeatGroupException(
+                f"{seat_groups_not_in_performance_str} are not assigned to this performance"
             )
-            return f"You cannot book a seat group that is not assigned to this performance, you have booked {seat_groups_not_in_performance_str} but the performance only has {performance_seat_groups_str}"
+
+        # Check each concession type is in the performance
+        concession_types = {ticket.concession_type for ticket in tickets}
+        concession_types_not_in_performance: List[str] = [
+            concession_type.name
+            for concession_type in concession_types  # pylint: disable=consider-iterating-dictionary
+            if concession_type not in self.single_discounts_map.keys()
+        ]
+
+        if len(concession_types_not_in_performance) != 0:
+            concession_types_not_in_performance = ", ".join(
+                concession_types_not_in_performance
+            )
+
+            raise UnassignedConcessionTypeException(
+                f"{concession_types_not_in_performance} are not assigned to this performance"
+            )
 
         # Check that each seat group has enough capacity
         for seat_group, number_booked in seat_group_counts.items():
@@ -624,9 +647,9 @@ class Performance(
                 seat_group=seat_group
             )
             if seat_group_remaining_capacity < number_booked:
-                return f"There are only {seat_group_remaining_capacity} seats reamining in {seat_group} but you have booked {number_booked}. Please updated your seat selections and try again."
-
-        return None
+                raise CapacityException(
+                    f"There are only {seat_group_remaining_capacity} seats reamining in {seat_group} but you have booked {number_booked}."
+                )
 
     def has_boxoffice_permission(self, user: "User") -> bool:
         """

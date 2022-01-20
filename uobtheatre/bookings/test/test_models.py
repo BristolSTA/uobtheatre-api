@@ -1186,3 +1186,63 @@ def test_booking_display_name():
         booking.display_name
         == "Booking Ref. abcd for performance of my production at 10:00 on 14/01/2022"
     )
+
+
+@pytest.mark.django_db
+def test_transferable_performances():
+    seat_group = SeatGroupFactory()
+    concession_type = ConcessionTypeFactory()
+
+    def setup_discount(performance):
+        discount = DiscountFactory()
+        discount.performances.set([performance])
+        DiscountRequirementFactory(concession_type=concession_type, discount=discount)
+
+    ## The current performance
+    performance_1 = PerformanceFactory(
+        end=datetime.datetime.now(tz=pytz.UTC) + datetime.timedelta(days=1)
+    )
+    setup_discount(performance_1)
+    PerformanceSeatingFactory(performance=performance_1, seat_group=seat_group)
+
+    ## Another performance with the same seat group
+    performance_2 = PerformanceFactory(
+        end=datetime.datetime.now(tz=pytz.UTC) + datetime.timedelta(days=1),
+        production=performance_1.production,
+    )
+    setup_discount(performance_2)
+    PerformanceSeatingFactory(performance=performance_2, seat_group=seat_group)
+
+    ## Performance without the seat group
+    performance_3 = PerformanceFactory(
+        end=datetime.datetime.now(tz=pytz.UTC) + datetime.timedelta(days=1),
+        production=performance_1.production,
+    )
+    setup_discount(performance_3)
+    PerformanceSeatingFactory(performance=performance_3)  # Note the lack of seat group
+
+    ## Performance with the seat group, but not bookable
+    performance_4 = PerformanceFactory(
+        end=datetime.datetime.now(tz=pytz.UTC) - datetime.timedelta(days=1),
+        production=performance_1.production,
+    )
+    setup_discount(performance_4)
+    PerformanceSeatingFactory(
+        performance=performance_4, seat_group=seat_group
+    )  # Note the lack of seat group
+
+    ## Performance with the seat group, but not concession_type
+    performance_5 = PerformanceFactory(
+        end=datetime.datetime.now(tz=pytz.UTC) - datetime.timedelta(days=1),
+        production=performance_1.production,
+    )
+    PerformanceSeatingFactory(performance=performance_5, seat_group=seat_group)
+
+    exisiting_booking = BookingFactory(performance=performance_1)
+    TicketFactory(
+        booking=exisiting_booking,
+        seat_group=seat_group,
+        concession_type=concession_type,
+    )
+
+    assert exisiting_booking.transferable_performances == [performance_2]
