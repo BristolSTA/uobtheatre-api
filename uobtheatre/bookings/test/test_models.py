@@ -27,6 +27,7 @@ from uobtheatre.discounts.test.factories import (
 )
 from uobtheatre.images.test.factories import ImageFactory
 from uobtheatre.payments import transaction_providers
+from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.test.factories import TransactionFactory, mock_payment_method
@@ -1025,6 +1026,14 @@ def test_booking_can_be_refunded(is_refunded, status, production_status, expecte
             performance=PerformanceFactory(production=production), status=status
         )
         assert booking.can_be_refunded == expected
+
+        if expected:
+            assert booking.validate_cant_be_refunded() is None
+        else:
+            assert (
+                isinstance(booking.validate_cant_be_refunded(), CantBeRefundedException)
+                is True
+            )
 
 
 @pytest.mark.django_db

@@ -1,4 +1,5 @@
 import abc
+from typing import Optional
 
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
@@ -86,11 +87,23 @@ class Payable(models.Model, metaclass=AbstractModelMeta):  # type: ignore
 
     @property
     def can_be_refunded(self):
-        return (
-            self.status in [self.Status.PAID, self.Status.CANCELLED]
-            and not self.is_refunded
-            and not self.is_locked
-        )
+        return not bool(self.validate_cant_be_refunded())
+
+    def validate_cant_be_refunded(self) -> Optional[CantBeRefundedException]:
+        """Validates if the booking can't be refunded. If it can't, it returns an exception. If it can, it returns None"""
+        if self.status not in [self.Status.PAID, self.Status.CANCELLED]:
+            return CantBeRefundedException(
+                f"{self.__class__.__name__} ({self}) can't be refunded due to it's status ({self.status})"
+            )
+        if self.is_refunded:
+            return CantBeRefundedException(
+                f"{self.__class__.__name__} ({self}) can't be refunded because is already refunded"
+            )
+        if self.is_locked:
+            return CantBeRefundedException(
+                f"{self.__class__.__name__} ({self}) can't be refunded because it is locked"
+            )
+        return None
 
     def async_refund(self, authorizing_user: User):
         from uobtheatre.utils.tasks import refund_payable
@@ -100,10 +113,8 @@ class Payable(models.Model, metaclass=AbstractModelMeta):  # type: ignore
 
     def refund(self, authorizing_user: User, send_admin_email=True):
         """Refund the payable"""
-        if not self.can_be_refunded:
-            raise CantBeRefundedException(
-                f"{self.__class__.__name__} ({self}) cannot be refunded"
-            )
+        if error := self.validate_cant_be_refunded():
+            raise error  # type: ignore
 
         for payment in self.transactions.filter(type=Transaction.Type.PAYMENT).all():
             payment.refund()

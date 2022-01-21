@@ -14,6 +14,7 @@ from graphql_relay.node.node import to_global_id
 
 from uobtheatre.discounts.models import ConcessionType, DiscountCombination
 from uobtheatre.mail.composer import MailComposer
+from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable, PayableQuerySet
 from uobtheatre.productions.models import Performance, Production
@@ -612,6 +613,18 @@ class Booking(TimeStampedMixin, Payable):
             and self.expires_at
             and timezone.now() > self.expires_at
         )
+
+    def validate_cant_be_refunded(self) -> Optional[CantBeRefundedException]:
+        if error := super().validate_cant_be_refunded():
+            return error
+        if self.performance.production.status in [
+            Production.Status.CLOSED,
+            Production.Status.COMPLETE,
+        ]:
+            return CantBeRefundedException(
+                f"The Booking ({self}) can't be refunded because of it's performances' status ({self.performance.production.status})"
+            )
+        return None
 
     @property
     def can_be_refunded(self):
