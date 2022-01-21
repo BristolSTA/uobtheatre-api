@@ -69,6 +69,8 @@ MIDDLEWARE = (
     "django.contrib.auth.middleware.AuthenticationMiddleware",
 )
 
+MIGRATION_MODULES = {"django_celery_results": "uobtheatre.utils.celery_migrations"}
+
 ALLOWED_HOSTS = ["*"]
 ROOT_URLCONF = "uobtheatre.urls"
 SECRET_KEY = env(
@@ -248,6 +250,7 @@ LOGGING = {
         },
         "uobtheatre": {"handlers": ["file"], "level": "INFO", "propagate": True},
         "psycopg2": {"handlers": ["file"], "level": "INFO", "propagate": True},
+        "celery": {"handlers": ["console"], "level": "DEBUG", "propagate": True},
     },
 }
 
@@ -326,5 +329,12 @@ SQUARE_SETTINGS = {
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 # Celery
+# CELERY_RESULT_BACKEND = f"psql://{env('POSTGRES_USER')}:{env('POSTGRES_PASSWORD')}@{env('POSTGRES_HOST')}:{env('POSTGRES_PORT')}/{env('POSTGRES_DB')}"
+CELERY_RESULT_BACKEND = "django-db"
 CELERY_BROKER_URL = "redis://redis:6379"
-CELERY_RESULT_BACKEND = "redis://redis:6379"
+CELERY_TASK_TRACK_STARTED = True
+CELERY_ACCEPT_CONTENT = ["application/json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_INCLUDE = ["uobtheatre.utils.tasks"]
+CELERY_WORKER_REDIRECT_STDOUTS_LEVEL = "INFO"

@@ -26,9 +26,9 @@ services:
     build:
       context: .
       dockerfile: ./compose/local/django/Dockerfile
-    command: celery -A core worker -l info
+    command: celery -A config worker -l debug
     volumes:
-      - ./project/:/usr/src/app/
+      - .:/app/uobtheatre-api:z
     env_file:
       - ./.envs/.local/.django
       - ./.envs/.local/.postgres
@@ -39,9 +39,9 @@ services:
     build:
       context: .
       dockerfile: ./compose/local/django/Dockerfile
-    command: celery -A core beat -l info
+    command: celery -A config beat -l debug
     volumes:
-      - ./project/:/usr/src/app/
+      - .:/app/uobtheatre-api:z
     env_file:
       - ./.envs/.local/.django
       - ./.envs/.local/.postgres

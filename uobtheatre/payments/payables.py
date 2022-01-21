@@ -1,6 +1,7 @@
 import abc
 
 from django.contrib.contenttypes.fields import GenericRelation
+from django.contrib.contenttypes.models import ContentType
 from django.core.mail import mail_admins
 from django.db import models
 from django.db.models import Sum
@@ -90,6 +91,12 @@ class Payable(models.Model, metaclass=AbstractModelMeta):  # type: ignore
             and not self.is_refunded
             and not self.is_locked
         )
+
+    def async_refund(self, authorizing_user: User):
+        from uobtheatre.utils.tasks import refund_payable
+
+        content_type = ContentType.objects.get_for_model(self)
+        refund_payable.delay(self.pk, content_type.pk, authorizing_user.pk)
 
     def refund(self, authorizing_user: User, send_admin_email=True):
         """Refund the payable"""

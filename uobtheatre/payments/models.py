@@ -229,6 +229,11 @@ class Transaction(TimeStampedMixin, models.Model):
 
         return True
 
+    def async_refund(self):
+        from uobtheatre.utils.tasks import refund_payment
+
+        refund_payment.delay(self.pk)
+
     def refund(self, refund_provider: RefundProvider = None):
         """Refund the payment"""
         self.can_be_refunded(refund_provider=refund_provider, raises=True)
