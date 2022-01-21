@@ -67,24 +67,12 @@ def refund_performance(performance_id: int, authorizing_user_id: int):
     performance = Performance.objects.get(pk=performance_id)
     authorizing_user = User.objects.get(pk=authorizing_user_id)
 
-    print("Refunding performance")
-    refunded_bookings = []
-    failed_bookings = []
-    skipped_bookings = []
     for booking in performance.bookings.filter(status=Payable.Status.PAID):
-        try:
-            booking.async_refund(authorizing_user=authorizing_user)
-            refunded_bookings.append(booking)
-        except Exception as exception:  # pylint: disable=broad-except
-            capture_exception(exception)
-            failed_bookings.append(booking)
+        booking.async_refund(authorizing_user=authorizing_user)
 
     mail = performances_refunded_email(
         authorizing_user,
         [performance],
-        refunded_bookings,
-        failed_bookings,
-        skipped_bookings,
     )
     mail_admins(
         "Performance Refunds Initiated",
