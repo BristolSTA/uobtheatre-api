@@ -61,18 +61,12 @@ def send_production_ready_for_review_email(user: User, production: Production):
 def performances_refunded_email(
     authorizing_user: User,
     performances: List[Performance],
-    refunded_bookings: List[Booking],
-    failed_bookings: List[Booking],
-    skipped_bookings: List[Booking],
 ):
     """Generate an email detailing performance refund statistics
 
     Args:
         authorizing_user (User): The user authorising the refunds
         performances (List[Performance]): The performances refunded
-        refunded_bookings (List[Booking]): The bookings refunded
-        failed_bookings (List[Booking]): The bookings that failed to be refunded
-        skipped_bookings (List[Booking]): The bookings that were skipped
 
     Returns:
         MailComposer: Mail instance
@@ -87,25 +81,8 @@ def performances_refunded_email(
         .line(
             f"This action was requested by {authorizing_user.full_name} ({authorizing_user.email})"
         )
-        .heading("Refunded Bookings")
         .line(
-            ", ".join(
-                f"{booking.reference} ({booking.id})" for booking in refunded_bookings
-            )
+            f"For more info please check the admin pannel."
         )
     )
-
-    if len(failed_bookings):
-        mail.heading("Failed Bookings").line(
-            ", ".join(
-                f"{booking.reference} ({booking.id})" for booking in failed_bookings
-            )
-        )
-
-    if len(skipped_bookings):
-        mail.heading("Skipped Bookings").line(
-            ", ".join(
-                f"{booking.reference} ({booking.id})" for booking in skipped_bookings
-            )
-        )
     return mail

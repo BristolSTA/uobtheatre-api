@@ -110,6 +110,7 @@ class Payable(models.Model, metaclass=AbstractModelMeta):  # type: ignore
 
         content_type = ContentType.objects.get_for_model(self)
         refund_payable.delay(self.pk, content_type.pk, authorizing_user.pk)
+        refund_payable.update_state(meta={"payable_id": self.pk})
 
     def refund(self, authorizing_user: User, send_admin_email=True):
         """Refund the payable"""
@@ -166,6 +167,17 @@ class Payable(models.Model, metaclass=AbstractModelMeta):  # type: ignore
         return self.transactions.annotate_sales_breakdown(["society_transfer_value"])[  # type: ignore
             "society_transfer_value"
         ]
+
+    def associated_tasks(self):
+        from django.db.models.functions import Cast
+        from django.db.models import JSONField
+        from django_celery_results.models import TaskResult
+
+        tasks = TaskResult.objects.annotate(
+            meta_json=Cast("meta", JSONField())
+        )
+        tasks.filter(meta_json__payable_id__is_null=False)
+        print(tasks)
 
     class Meta:
         abstract = True
