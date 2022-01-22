@@ -97,7 +97,6 @@ class Payable(models.Model, metaclass=AbstractModelMeta):  # type: ignore
 
         content_type = ContentType.objects.get_for_model(self)
         refund_payable.delay(self.pk, content_type.pk, authorizing_user.pk)
-        refund_payable.update_state(meta={"payable_id": self.pk})
 
     def refund(self, authorizing_user: User, send_admin_email=True):
         """Refund the payable"""

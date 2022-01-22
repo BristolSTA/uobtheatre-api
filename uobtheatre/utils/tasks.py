@@ -36,11 +36,11 @@ def refund_payment(payment_pk: int):
     payment.refund()
 
 
-@app.task(base=RefundTask, throws=(CantBeRefundedException,))
+@app.task(base=RefundTask, throws=(CantBeRefundedException,), bind=True)
 def refund_payable(
-    payable_id: int, payable_content_type_id: int, authorizing_user_id: int
+    self, payable_id: int, payable_content_type_id: int, authorizing_user_id: int
 ):
-    PayableModel = ContentType.objects.get(pk=payable_content_type_id)
+    PayableModel = ContentType.objects.get(pk=payable_content_type_id).model_class()
     payable = PayableModel.objects.get(pk=payable_id)
     assert isinstance(payable, Payable)
 
@@ -49,6 +49,7 @@ def refund_payable(
     authorizing_user = User.objects.get(pk=authorizing_user_id)
 
     payable.refund(authorizing_user, send_admin_email=False)
+    self.update_state(meta={"payable_id": self.pk})
 
 
 @app.task(base=RefundTask)
