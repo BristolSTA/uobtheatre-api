@@ -21,8 +21,9 @@ from uobtheatre.utils.admin import (
 admin.site.register(MiscCost)
 
 
-class SeatBookingInline(ReadOnlyInlineMixin, admin.StackedInline):
+class SeatBookingInline(admin.StackedInline):
     model = Ticket
+    extra = 0
 
 
 class TransactionInline(GenericTabularInline, ReadOnlyInlineMixin):
@@ -61,8 +62,9 @@ class StatusFilter(SimpleListFilter):
 class BookingTaskStackedInline(ReadOnlyInlineMixin, NonrelatedStackedInline):
     model = TaskResult
     fields = [
-        'id',
+        "id",
         "status",
+        "task_name",
     ]
 
     def get_form_queryset(self, obj):
