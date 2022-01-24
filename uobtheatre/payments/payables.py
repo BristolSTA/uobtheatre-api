@@ -171,12 +171,12 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
         from django.db.models import JSONField
         from django_celery_results.models import TaskResult
 
-        payale_tasks = TaskResult.objects.filter(
+        payable_tasks = TaskResult.objects.filter(
             task_name="uobtheatre.payments.tasks.refund_payable",
             task_args__iregex=f"\({self.pk}, {self.content_type.pk}",
         )
         payment_taks = self.transactions.associated_tasks()
-        return payale_tasks | payment_taks
+        return payable_tasks | payment_taks
 
     class Meta:
         abstract = True

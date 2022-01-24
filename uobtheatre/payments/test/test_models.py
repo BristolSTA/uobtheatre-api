@@ -17,6 +17,7 @@ from uobtheatre.payments.transaction_providers import (
     SquareRefund,
 )
 from uobtheatre.utils.exceptions import PaymentException
+from uobtheatre.utils.test.factories import TaskResultFactory
 
 
 @pytest.mark.django_db
@@ -374,3 +375,40 @@ def test_notify_user_refund_email(mailoutbox):
     transaction.notify_user()
     assert len(mailoutbox) == 1
     assert mailoutbox[0].subject == "Refund successfully processed"
+
+
+@pytest.mark.django_db
+def test_payment_associated_tasks():
+    transaction = TransactionFactory(
+        type=Transaction.Type.PAYMENT, status=Transaction.Status.COMPLETED
+    )
+    # Different transaction
+    other_transaction = TransactionFactory(
+        type=Transaction.Type.PAYMENT, status=Transaction.Status.COMPLETED
+    )
+
+    # A related task
+    related_task = TaskResultFactory(
+        task_name="uobtheatre.payments.tasks.refund_payment",
+        task_args=f"\"({transaction.id}, {transaction.content_type.id}, abc))\""
+    )
+
+    # Unrelated, different transaction
+    TaskResultFactory(
+        task_name="uobtheatre.payments.tasks.refund_payment",
+        task_args=f"\"({other_transaction.id}, {transaction.content_type.id}, abc))\""
+    )
+
+    # Unrelated, different content type
+    TaskResultFactory(
+        task_name="uobtheatre.payments.tasks.refund_payment",
+        task_args=f"\"({transaction.id}, {transaction.content_type.id + 1}, abc))\""
+    )
+
+    # Unrelated, different task type
+    TaskResultFactory(
+        task_name="uobtheatre.payments.tasks.refund_production",
+        task_args=f"\"({transaction.id}, {transaction.content_type.id}, abc))\""
+    )
+
+    assert list(transaction.qs.associated_tasks()) == [related_task]
