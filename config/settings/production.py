@@ -64,3 +64,11 @@ EMAIL_BACKEND = (
     if strtobool(env("EMAIL_ENABLED", default="yes"))
     else "django.core.mail.backends.console.EmailBackend"
 )
+
+
+SQS_BROKER_URL = "sqs://{aws_access_key}:{aws_secret_key}@".format(
+    aws_access_key=AWS_ACCESS_KEY_ID,
+    aws_secret_key=AWS_SECRET_ACCESS_KEY,
+)
+CELERY_BROKER_URL = SQS_BROKER_URL
+CELERY_BROKER_TRANSPORT_OPTIONS = {"queue_name_prefix": "uobtheatre-api-tasks-"}

@@ -329,7 +329,6 @@ SQUARE_SETTINGS = {
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 # Celery
-# CELERY_RESULT_BACKEND = f"psql://{env('POSTGRES_USER')}:{env('POSTGRES_PASSWORD')}@{env('POSTGRES_HOST')}:{env('POSTGRES_PORT')}/{env('POSTGRES_DB')}"
 CELERY_RESULT_BACKEND = "django-db"
 CELERY_BROKER_URL = "redis://redis:6379"
 CELERY_TASK_TRACK_STARTED = True
