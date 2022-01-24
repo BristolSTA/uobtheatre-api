@@ -1155,78 +1155,23 @@ def test_performance_validate_without_possible_tickets():
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "disabled,bookings_can_refund,send_email",
-    [
-        (True, True, True),
-        (True, True, False),
-        (True, False, True),
-        (False, True, True),
-        (False, False, True),
-        (False, False, False),
-    ],
+    "disabled,fails",
+    [(False, True), (True, False)],
 )
-def test_performance_refund_bookings(
-    mailoutbox, disabled, bookings_can_refund
-):
-    performance = PerformanceFactory(disabled=disabled)
-    booking_1 = BookingFactory(performance=performance)
-    booking_2 = BookingFactory(performance=performance)
-    BookingFactory()  # Booking not associated with booking
-    user = UserFactory()
+def test_performance_refund_bookings(disabled, fails):
+    performance = PerformanceFactory(id=1, disabled=disabled)
+    user = UserFactory(id=123)
 
     with patch(
-        "uobtheatre.bookings.models.Booking.refund", autospec=True
-    ) as booking_refund, patch(
-        "uobtheatre.bookings.models.Booking.can_be_refunded",
-        new_callable=PropertyMock(return_value=bookings_can_refund),
-    ):
+        "uobtheatre.productions.tasks.refund_performance",
+    ) as refund_task_mock:
 
-        def test():
-            performance.refund_bookings(user)
-
-        if not disabled:
-            with pytest.raises(CantBeRefundedException) as exception:
-                test()
-            assert exception.value.message == f"{performance} is not set to disabled"
-            booking_refund.assert_not_called()
+        if fails:
+            with pytest.raises(CantBeRefundedException):
+                performance.refund_bookings(user)
         else:
-            test()
-            assert booking_refund.call_count == (2 if bookings_can_refund else 0)
-            if bookings_can_refund:
-                booking_refund.assert_any_call(
-                    booking_1, authorizing_user=user, send_admin_email=False
-                )
-                booking_refund.assert_any_call(
-                    booking_2, authorizing_user=user, send_admin_email=False
-                )
-        assert len(mailoutbox) == (
-            1 if disabled and bookings_can_refund else 0
-        )
-
-
-@pytest.mark.django_db
-def test_performance_refund_bookings():
-    performance = PerformanceFactory(disabled=True)
-    user = UserFactory()
-
-    with patch(
-        "uobtheatre.productions.models.refund_performance.delay"
-    ) as refund_performance:
-        performance.refund_bookings(user)
-    refund_performance.assert_called_once_with(performance.id, user.id)
-
-
-@pytest.mark.django_db
-def test_performance_refund_bookings_with_exception():
-    performance = PerformanceFactory(disabled=True)
-    booking = BookingFactory(performance=performance)
-    TransactionFactory(pay_object=booking)
-
-    with patch(
-        "uobtheatre.bookings.models.Booking.can_be_refunded",
-        new_callable=PropertyMock(return_value=True),
-    ), patch("uobtheatre.payments.models.Transaction.refund", side_effect=Exception()):
-        performance.refund_bookings(UserFactory())
+            performance.refund_bookings(user)
+            refund_task_mock.assert_called_once_with(1, 123)
 
 
 @pytest.mark.django_db

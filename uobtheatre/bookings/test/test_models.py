@@ -999,6 +999,11 @@ def test_booking_expiration():
     assert expired_booking.is_reservation_expired
 
     expired_booking.status = Payable.Status.PAID
+    expired_booking.save()
+    assert not expired_booking.is_reservation_expired
+
+    expired_booking.status = Payable.Status.CANCELLED
+    expired_booking.save()
     assert not expired_booking.is_reservation_expired
 
 

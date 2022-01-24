@@ -11,6 +11,7 @@ from django_celery_results.models import TaskResult
 
 from uobtheatre.mail.composer import MailComposer
 from uobtheatre.payments import transaction_providers
+from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.tasks import refund_payment
 from uobtheatre.payments.transaction_providers import (
     Cash,
@@ -252,7 +253,7 @@ class Transaction(TimeStampedMixin, BaseModel):
         if refund_provider is None:
             # If no provider is provided, use the auto refund provider
             if not (refund_provider := self.provider.automatic_refund_provider):
-                raise PaymentException(
+                raise CantBeRefundedException(
                     f"A {self.provider_name} payment cannot be automatically refunded"
                 )
 
