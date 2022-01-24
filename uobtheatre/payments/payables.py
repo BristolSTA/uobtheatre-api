@@ -7,6 +7,7 @@ from django.db import models
 from django.db.models import Sum
 from django.db.models.functions.comparison import Coalesce
 from django.db.models.query import QuerySet
+from django_celery_results.models import TaskResult
 
 from uobtheatre.payments.emails import payable_refund_initiated_email
 from uobtheatre.payments.exceptions import CantBeRefundedException
@@ -167,14 +168,12 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
     @property
     def associated_tasks(self):
         """Get tasks associated with this payable"""
-        from django_celery_results.models import TaskResult
-
         payable_tasks = TaskResult.objects.filter(
             task_name="uobtheatre.payments.tasks.refund_payable",
             task_args__iregex=f"\({self.pk}, {self.content_type.pk}",  # pylint: disable=anomalous-backslash-in-string
         )
-        payment_taks = self.transactions.associated_tasks()
-        return payable_tasks | payment_taks
+        payment_tasks = self.transactions.associated_tasks()
+        return payable_tasks | payment_tasks
 
     class Meta:
         abstract = True
