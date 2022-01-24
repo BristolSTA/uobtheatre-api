@@ -218,8 +218,7 @@ def test_payable_refund(mailoutbox, can_be_refunded, send_email):
     with patch.object(
         Payable,
         "validate_cant_be_refunded",
-        side_effect=(CantBeRefundedException if not can_be_refunded else None),
-        return_value=None,
+        return_value=(CantBeRefundedException if not can_be_refunded else None),
     ), patch(
         "uobtheatre.payments.models.Transaction.refund", autospec=True
     ) as payment_refund:
@@ -244,36 +243,34 @@ def test_payable_refund(mailoutbox, can_be_refunded, send_email):
 def test_payable_associated_tasks():
     payable = BookingFactory()
     other_payable = BookingFactory()
-    transaction = TransactionFactory(
-        type=Transaction.Type.PAYMENT, pay_object=payable
-    )
+    transaction = TransactionFactory(type=Transaction.Type.PAYMENT, pay_object=payable)
 
     # A related task for the payments
     related_payment_task = TaskResultFactory(
         task_name="uobtheatre.payments.tasks.refund_payment",
-        task_args=f"\"({transaction.id}, {transaction.content_type.id}, abc))\""
+        task_args=f'"({transaction.id}, {transaction.content_type.id}, abc))"',
     )
 
-    # A related task for the booking 
+    # A related task for the booking
     related_task = TaskResultFactory(
         task_name="uobtheatre.payments.tasks.refund_payable",
-        task_args=f"\"({payable.id}, {payable.content_type.id}, abc)\""
+        task_args=f'"({payable.id}, {payable.content_type.id}, abc)"',
     )
 
-    # Task for different booking 
+    # Task for different booking
     TaskResultFactory(
         task_name="uobtheatre.payments.tasks.refund_payable",
-        task_args=f"\"({other_payable.id}, {payable.content_type.id}, abc)\""
+        task_args=f'"({other_payable.id}, {payable.content_type.id}, abc)"',
     )
-    # Task for different contenttype 
+    # Task for different contenttype
     TaskResultFactory(
         task_name="uobtheatre.payments.tasks.refund_payable",
-        task_args=f"\"({payable.id}, {payable.content_type.id + 1}, abc)\""
+        task_args=f'"({payable.id}, {payable.content_type.id + 1}, abc)"',
     )
     # Differnt tasks
     TaskResultFactory(
         task_name="uobtheatre.payments.tasks.refund_performance",
-        task_args=f"\"({payable.id}, {payable.content_type.id}, abc)\""
+        task_args=f'"({payable.id}, {payable.content_type.id}, abc)"',
     )
 
     assertQuerysetEqual(payable.associated_tasks, [related_task, related_payment_task])

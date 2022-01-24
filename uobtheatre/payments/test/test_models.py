@@ -6,6 +6,7 @@ from pytest_django.asserts import assertQuerysetEqual
 
 from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Transaction
+from uobtheatre.payments.tasks import refund_payment
 from uobtheatre.payments.test.factories import (
     TransactionFactory,
     mock_payment_method,
@@ -282,6 +283,14 @@ def test_cant_be_refunded_if_provider_not_refundable():
 
 
 @pytest.mark.django_db
+def test_async_refund():
+    transaction = TransactionFactory(id=45)
+    with patch.object(refund_payment, "delay") as delay_mock:
+        transaction.async_refund()
+        delay_mock.assert_called_once_with(45)
+
+
+@pytest.mark.django_db
 def test_can_be_refunded():
     transaction = TransactionFactory(status=Transaction.Status.COMPLETED)
 
@@ -391,25 +400,25 @@ def test_payment_associated_tasks():
     # A related task
     related_task = TaskResultFactory(
         task_name="uobtheatre.payments.tasks.refund_payment",
-        task_args=f"\"({transaction.id}, {transaction.content_type.id}, abc))\""
+        task_args=f'"({transaction.id}, {transaction.content_type.id}, abc))"',
     )
 
     # Unrelated, different transaction
     TaskResultFactory(
         task_name="uobtheatre.payments.tasks.refund_payment",
-        task_args=f"\"({other_transaction.id}, {transaction.content_type.id}, abc))\""
+        task_args=f'"({other_transaction.id}, {transaction.content_type.id}, abc))"',
     )
 
     # Unrelated, different content type
     TaskResultFactory(
         task_name="uobtheatre.payments.tasks.refund_payment",
-        task_args=f"\"({transaction.id}, {transaction.content_type.id + 1}, abc))\""
+        task_args=f'"({transaction.id}, {transaction.content_type.id + 1}, abc))"',
     )
 
     # Unrelated, different task type
     TaskResultFactory(
         task_name="uobtheatre.payments.tasks.refund_production",
-        task_args=f"\"({transaction.id}, {transaction.content_type.id}, abc))\""
+        task_args=f'"({transaction.id}, {transaction.content_type.id}, abc))"',
     )
 
     assert list(transaction.qs.associated_tasks()) == [related_task]

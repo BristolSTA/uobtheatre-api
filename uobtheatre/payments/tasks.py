@@ -14,7 +14,7 @@ class RefundTask(BaseTask):
         if isinstance(exc, CantBeRefundedException):
             self.update_state(state="SKIPPED")
         else:
-            super().on_failure(exec, task_id, args, kwargs, einfo)
+            super().on_failure(exc, task_id, args, kwargs, einfo)
 
 
 @app.task(base=RefundTask, throws=(CantBeRefundedException,))
