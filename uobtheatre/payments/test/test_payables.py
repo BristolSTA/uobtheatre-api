@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import PropertyMock, patch
 
 import pytest
 from pytest_django.asserts import assertQuerysetEqual
@@ -7,6 +7,8 @@ from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Transaction
+from uobtheatre.payments.payables import Payable
+from uobtheatre.payments.tasks import refund_payable
 from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.payments.transaction_providers import Card, Cash, SquareOnline
 from uobtheatre.users.test.factories import UserFactory
@@ -148,6 +150,62 @@ def test_is_locked(has_pending_transaction):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
+    "status,is_refunded,is_locked,error_message",
+    [
+        (
+            Booking.Status.IN_PROGRESS,
+            True,
+            True,
+            "Booking (ABCD123) can't be refunded due to it's status (IN_PROGRESS)",
+        ),
+        (
+            Booking.Status.PAID,
+            True,
+            True,
+            "Booking (ABCD123) can't be refunded because is already refunded",
+        ),
+        (
+            Booking.Status.PAID,
+            False,
+            True,
+            "Booking (ABCD123) can't be refunded because it is locked",
+        ),
+        (
+            Booking.Status.PAID,
+            False,
+            False,
+            None,
+        ),
+    ],
+)
+def test_validate_cant_be_refunded(status, is_refunded, is_locked, error_message):
+    booking = BookingFactory(status=status, reference="ABCD123")
+
+    with patch(
+        "uobtheatre.payments.payables.Payable.is_refunded",
+        new_callable=PropertyMock(return_value=is_refunded),
+    ), patch(
+        "uobtheatre.payments.payables.Payable.is_locked",
+        new_callable=PropertyMock(return_value=is_locked),
+    ):
+        value = booking.validate_cant_be_refunded()
+        if error_message:
+            assert isinstance(value, CantBeRefundedException)
+            assert value.message == error_message
+        else:
+            assert value is None
+
+
+@pytest.mark.django_db
+def test_async_refund():
+    booking = BookingFactory(id=45)
+    with patch.object(refund_payable, "delay") as mock:
+        booking.async_refund(UserFactory(id=3))
+        mock.assert_called_once_with(45, booking.content_type.pk, 3)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
     "can_be_refunded,send_email", [(True, False), (False, True), (True, True)]
 )
 def test_payable_refund(mailoutbox, can_be_refunded, send_email):
@@ -157,7 +215,7 @@ def test_payable_refund(mailoutbox, can_be_refunded, send_email):
     TransactionFactory()  # Payment not associated with booking
 
     with patch.object(
-        Booking,
+        Payable,
         "validate_cant_be_refunded",
         side_effect=(CantBeRefundedException if not can_be_refunded else None),
         return_value=None,
