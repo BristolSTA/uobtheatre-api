@@ -14,7 +14,8 @@ from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Transaction
 from uobtheatre.users.models import User
 from uobtheatre.utils.filters import filter_passes_on_model
-from uobtheatre.utils.models import AbstractModelMeta
+from uobtheatre.utils.models import AbstractModelMeta, BaseModel
+from uobtheatre.payments.tasks import refund_payable
 
 
 class PayableQuerySet(QuerySet):
@@ -35,7 +36,7 @@ class PayableQuerySet(QuerySet):
         ).filter(transaction_totals=0)
 
 
-class Payable(models.Model, metaclass=AbstractModelMeta):  # type: ignore
+class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
     """
     An model which can be paid for
     """
@@ -106,10 +107,7 @@ class Payable(models.Model, metaclass=AbstractModelMeta):  # type: ignore
         return None
 
     def async_refund(self, authorizing_user: User):
-        from uobtheatre.utils.tasks import refund_payable
-
-        content_type = ContentType.objects.get_for_model(self)
-        refund_payable.delay(self.pk, content_type.pk, authorizing_user.pk)
+        refund_payable.delay(self.pk, self.content_type.pk, authorizing_user.pk)
 
     def refund(self, authorizing_user: User, send_admin_email=True):
         """Refund the payable"""
@@ -167,16 +165,18 @@ class Payable(models.Model, metaclass=AbstractModelMeta):  # type: ignore
             "society_transfer_value"
         ]
 
+    @property
     def associated_tasks(self):
         from django.db.models.functions import Cast
         from django.db.models import JSONField
         from django_celery_results.models import TaskResult
 
-        tasks = TaskResult.objects.annotate(
-            meta_json=Cast("meta", JSONField())
+        payale_tasks = TaskResult.objects.filter(
+            task_name="uobtheatre.payments.tasks.refund_payable",
+            task_args__iregex=f"\({self.pk}, {self.content_type.pk}",
         )
-        tasks.filter(meta_json__payable_id__is_null=False)
-        print(tasks)
+        payment_taks = self.transactions.associated_tasks()
+        return payale_tasks | payment_taks
 
     class Meta:
         abstract = True

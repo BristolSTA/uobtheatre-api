@@ -27,6 +27,7 @@ from uobtheatre.utils.validators import (
     ValidationErrors,
 )
 from uobtheatre.venues.models import SeatGroup, Venue
+from uobtheatre.productions.tasks import refund_performance
 
 if TYPE_CHECKING:
     from uobtheatre.bookings.models import ConcessionType, Ticket
@@ -655,8 +656,6 @@ class Performance(
         """
         if not self.disabled:
             raise CantBeRefundedException(f"{self} is not set to disabled")
-
-        from uobtheatre.utils.tasks import refund_performance
 
         refund_performance.delay(self.pk, authorizing_user.id)
 

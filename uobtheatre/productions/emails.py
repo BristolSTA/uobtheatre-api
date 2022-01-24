@@ -77,7 +77,7 @@ def performances_refunded_email(
         .line(
             f"Refund(s) have been initiated for the following {pluralize('performance', performances)}:"
         )
-        .line(", ".join(str(performance) for performance in performances))
+        .line(", ".join(f"{performance.pk} | {str(performance)}" for performance in performances))
         .line(
             f"This action was requested by {authorizing_user.full_name} ({authorizing_user.email})"
         )

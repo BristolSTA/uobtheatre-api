@@ -1,7 +1,8 @@
 from admin_confirm.admin import AdminConfirmMixin
 from admin_confirm.utils import snake_to_title_case
-from django.contrib.admin import helpers
+from django.contrib.admin import helpers, TabularInline
 from django.contrib.admin.options import InlineModelAdmin
+from django_celery_results.models import TaskResult
 
 
 class ReadOnlyInlineMixin(InlineModelAdmin):
@@ -62,3 +63,7 @@ def confirm_dangerous_action(func):
 
 class DangerousAdminConfirmMixin(AdminConfirmMixin):
     action_confirmation_template = "dangerous_action_confirmation.html"
+
+
+class TaskResultInline(TabularInline):
+    model = TaskResult

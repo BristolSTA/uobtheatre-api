@@ -40,6 +40,7 @@ INSTALLED_APPS = (
     "rest_framework",
     "django_inlinecss",
     "django_celery_results",
+    "nonrelated_inlines",
     # Your apps
     "uobtheatre.users",
     "uobtheatre.productions",

@@ -2,6 +2,10 @@ from django.contrib import admin, messages
 from django.contrib.admin import SimpleListFilter
 from django.contrib.contenttypes.admin import GenericTabularInline
 from django.core.mail import mail_admins
+from django.forms.models import BaseInlineFormSet
+from django_celery_results.models import TaskResult
+from django.utils.html import format_html
+from nonrelated_inlines.admin import NonrelatedStackedInline
 
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
 from uobtheatre.payments.emails import payable_refund_initiated_email
@@ -10,15 +14,15 @@ from uobtheatre.payments.models import Transaction
 from uobtheatre.utils.admin import (
     DangerousAdminConfirmMixin,
     ReadOnlyInlineMixin,
+    TaskResultInline,
     confirm_dangerous_action,
 )
 
 admin.site.register(MiscCost)
 
 
-class SeatBookingInline(admin.StackedInline):
+class SeatBookingInline(ReadOnlyInlineMixin, admin.StackedInline):
     model = Ticket
-    extra = 1
 
 
 class TransactionInline(GenericTabularInline, ReadOnlyInlineMixin):
@@ -54,6 +58,19 @@ class StatusFilter(SimpleListFilter):
         return queryset
 
 
+class BookingTaskStackedInline(ReadOnlyInlineMixin, NonrelatedStackedInline):
+    model = TaskResult
+    fields = [
+        'id',
+        "status",
+    ]
+
+    def get_form_queryset(self, obj):
+        return obj.associated_tasks.all()
+
+    def save_new_instance(self, parent, instance):
+        raise NotImplementedError
+
 @admin.register(Booking)
 class BookingAdmin(DangerousAdminConfirmMixin, admin.ModelAdmin):
     """Admin for Booking model.
@@ -72,7 +89,7 @@ class BookingAdmin(DangerousAdminConfirmMixin, admin.ModelAdmin):
         "user__email",
     ]
     actions = ["issue_refund"]
-    inlines = [TransactionInline, SeatBookingInline]
+    inlines = [TransactionInline, SeatBookingInline, BookingTaskStackedInline]
 
     @confirm_dangerous_action
     @admin.action(description="Issue refund", permissions=["change"])

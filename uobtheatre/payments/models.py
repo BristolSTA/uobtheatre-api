@@ -7,6 +7,7 @@ from django.db.models import Q, Sum
 from django.db.models.enums import TextChoices
 from django.db.models.functions import Coalesce
 from django.db.models.query import QuerySet
+from django_celery_results.models import TaskResult
 
 from uobtheatre.mail.composer import MailComposer
 from uobtheatre.payments import transaction_providers
@@ -17,7 +18,8 @@ from uobtheatre.payments.transaction_providers import (
     TransactionProvider,
 )
 from uobtheatre.utils.exceptions import PaymentException
-from uobtheatre.utils.models import TimeStampedMixin
+from uobtheatre.utils.models import BaseModel, TimeStampedMixin
+from uobtheatre.payments.tasks import refund_payment
 
 if TYPE_CHECKING:
     from uobtheatre.payments.payables import Payable
@@ -52,8 +54,18 @@ class TransactionQuerySet(QuerySet):
         for payment in self:
             payment.sync_transaction_with_provider()
 
+    def associated_tasks(self):
+        """
+        Return a queryset of tasks associated with these transactions
+        """
+        pks = self.values_list("pk", flat=True)
+        return TaskResult.objects.filter(
+            task_name="uobtheatre.payments.tasks.refund_payment",
+            task_args__iregex=f"\(({'|'.join(pks)}), {self.model.content_type.pk},",
+        )
 
-class Transaction(TimeStampedMixin, models.Model):
+
+class Transaction(TimeStampedMixin, BaseModel):
 
     """The model for a transaction.
 
@@ -230,8 +242,6 @@ class Transaction(TimeStampedMixin, models.Model):
         return True
 
     def async_refund(self):
-        from uobtheatre.utils.tasks import refund_payment
-
         refund_payment.delay(self.pk)
 
     def refund(self, refund_provider: RefundProvider = None):

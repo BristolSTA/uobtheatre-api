@@ -1166,7 +1166,7 @@ def test_performance_validate_without_possible_tickets():
     ],
 )
 def test_performance_refund_bookings(
-    mailoutbox, disabled, bookings_can_refund, send_email
+    mailoutbox, disabled, bookings_can_refund
 ):
     performance = PerformanceFactory(disabled=disabled)
     booking_1 = BookingFactory(performance=performance)
@@ -1182,7 +1182,7 @@ def test_performance_refund_bookings(
     ):
 
         def test():
-            performance.refund_bookings(user, send_admin_email=send_email)
+            performance.refund_bookings(user)
 
         if not disabled:
             with pytest.raises(CantBeRefundedException) as exception:
@@ -1200,8 +1200,20 @@ def test_performance_refund_bookings(
                     booking_2, authorizing_user=user, send_admin_email=False
                 )
         assert len(mailoutbox) == (
-            1 if disabled and send_email and bookings_can_refund else 0
+            1 if disabled and bookings_can_refund else 0
         )
+
+
+@pytest.mark.django_db
+def test_performance_refund_bookings():
+    performance = PerformanceFactory(disabled=True)
+    user = UserFactory()
+
+    with patch(
+        "uobtheatre.productions.models.refund_performance.delay"
+    ) as refund_performance:
+        performance.refund_bookings(user)
+    refund_performance.assert_called_once_with(performance.id, user.id)
 
 
 @pytest.mark.django_db
@@ -1214,15 +1226,7 @@ def test_performance_refund_bookings_with_exception():
         "uobtheatre.bookings.models.Booking.can_be_refunded",
         new_callable=PropertyMock(return_value=True),
     ), patch("uobtheatre.payments.models.Transaction.refund", side_effect=Exception()):
-        (
-            refunded_bookings,
-            failed_bookings,
-            skipped_bookings,
-        ) = performance.refund_bookings(UserFactory())
-
-    assert booking in failed_bookings
-    assert refunded_bookings == []
-    assert skipped_bookings == []
+        performance.refund_bookings(UserFactory())
 
 
 @pytest.mark.django_db
