@@ -19,13 +19,17 @@ from uobtheatre.users.test.factories import UserFactory
 def test_base_refund_task_on_failure(exception, makes_skipped):
     instance = RefundTask()
 
-    with patch.object(instance, "update_state") as mock:
+    with patch.object(instance, "update_state") as update_state_mock, patch(
+        "uobtheatre.utils.tasks.BaseTask.on_failure",
+    ) as super_mock:
         instance.on_failure(exception, "1234", tuple(), {}, None)
 
     if makes_skipped:
-        mock.assert_called_once_with(state="SKIPPED")
+        update_state_mock.assert_called_once_with(state="SKIPPED")
+        super_mock.assert_not_called()
     else:
-        mock.assert_not_called()
+        update_state_mock.assert_not_called()
+        super_mock.assert_called_once_with(exception, "1234", tuple(), {}, None)
 
 
 @pytest.mark.django_db

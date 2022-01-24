@@ -11,6 +11,4 @@ if TYPE_CHECKING:
 class BaseTask(Task):
     def on_failure(self, exc, task_id, args, kwargs, einfo):
         capture_exception(exc)
-        super().on_failure(exec, task_id, args, kwargs, einfo)
-
-
+        super().on_failure(exc, task_id, args, kwargs, einfo)
