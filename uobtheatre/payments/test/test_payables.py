@@ -12,6 +12,7 @@ from uobtheatre.payments.tasks import refund_payable
 from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.payments.transaction_providers import Card, Cash, SquareOnline
 from uobtheatre.users.test.factories import UserFactory
+from uobtheatre.utils.test.factories import TaskResultFactory
 
 
 @pytest.mark.django_db
@@ -237,3 +238,42 @@ def test_payable_refund(mailoutbox, can_be_refunded, send_email):
         if can_be_refunded:
             payment_refund.assert_any_call(payment_1)
             payment_refund.assert_any_call(payment_2)
+
+
+@pytest.mark.django_db
+def test_payable_associated_tasks():
+    payable = BookingFactory()
+    other_payable = BookingFactory()
+    transaction = TransactionFactory(
+        type=Transaction.Type.PAYMENT, pay_object=payable
+    )
+
+    # A related task for the payments
+    related_payment_task = TaskResultFactory(
+        task_name="uobtheatre.payments.tasks.refund_payment",
+        task_args=f"\"({transaction.id}, {transaction.content_type.id}, abc))\""
+    )
+
+    # A related task for the booking 
+    related_task = TaskResultFactory(
+        task_name="uobtheatre.payments.tasks.refund_payable",
+        task_args=f"\"({payable.id}, {payable.content_type.id}, abc)\""
+    )
+
+    # Task for different booking 
+    TaskResultFactory(
+        task_name="uobtheatre.payments.tasks.refund_payable",
+        task_args=f"\"({other_payable.id}, {payable.content_type.id}, abc)\""
+    )
+    # Task for different contenttype 
+    TaskResultFactory(
+        task_name="uobtheatre.payments.tasks.refund_payable",
+        task_args=f"\"({payable.id}, {payable.content_type.id + 1}, abc)\""
+    )
+    # Differnt tasks
+    TaskResultFactory(
+        task_name="uobtheatre.payments.tasks.refund_performance",
+        task_args=f"\"({payable.id}, {payable.content_type.id}, abc)\""
+    )
+
+    assertQuerysetEqual(payable.associated_tasks, [related_task, related_payment_task])
