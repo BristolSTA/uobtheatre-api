@@ -66,9 +66,9 @@ EMAIL_BACKEND = (
 )
 
 
-SQS_BROKER_URL = "sqs://{aws_access_key}:{aws_secret_key}@".format(
-    aws_access_key=AWS_ACCESS_KEY_ID,
-    aws_secret_key=AWS_SECRET_ACCESS_KEY,
-)
+SQS_BROKER_URL = f"sqs://{AWS_ACCESS_KEY_ID}:{AWS_SECRET_ACCESS_KEY}@"
 CELERY_BROKER_URL = SQS_BROKER_URL
-CELERY_BROKER_TRANSPORT_OPTIONS = {"queue_name_prefix": env("CELERY_QUEUE_PREFIX")}
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    "queue_name_prefix": env("CELERY_QUEUE_PREFIX"),
+    "region": env("AWS_DEFAULT_REGION", default="eu-west-2"),
+}
