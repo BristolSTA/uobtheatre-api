@@ -88,7 +88,7 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
 
     @property
     def can_be_refunded(self):
-        return not bool(self.validate_cant_be_refunded())
+        return self.validate_cant_be_refunded() is None
 
     def validate_cant_be_refunded(self) -> Optional[CantBeRefundedException]:
         """Validates if the booking can't be refunded. If it can't, it returns an exception. If it can, it returns None"""
