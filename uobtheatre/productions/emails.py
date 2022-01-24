@@ -1,6 +1,5 @@
 from typing import List
 
-from uobtheatre.bookings.models import Booking
 from uobtheatre.mail.composer import MailComposer
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.users.models import User
@@ -77,12 +76,14 @@ def performances_refunded_email(
         .line(
             f"Refund(s) have been initiated for the following {pluralize('performance', performances)}:"
         )
-        .line(", ".join(f"{performance.pk} | {str(performance)}" for performance in performances))
+        .line(
+            ", ".join(
+                f"{performance.pk} | {str(performance)}" for performance in performances
+            )
+        )
         .line(
             f"This action was requested by {authorizing_user.full_name} ({authorizing_user.email})"
         )
-        .line(
-            f"For more info please check the admin pannel."
-        )
+        .line("For more info please check the admin panel.")
     )
     return mail

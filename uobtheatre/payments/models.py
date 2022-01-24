@@ -19,7 +19,6 @@ from uobtheatre.payments.transaction_providers import (
     RefundProvider,
     TransactionProvider,
 )
-from uobtheatre.utils.exceptions import PaymentException
 from uobtheatre.utils.models import BaseModel, TimeStampedMixin
 
 if TYPE_CHECKING:
@@ -214,19 +213,21 @@ class Transaction(TimeStampedMixin, BaseModel):
         """If the payment can be refunded either automatically or manually"""
         if self.type != Transaction.Type.PAYMENT:
             if raises:
-                raise PaymentException(f"A {self.type.label.lower()} can't be refunded")
+                raise CantBeRefundedException(
+                    f"A {self.type.label.lower()} can't be refunded"
+                )
             return False
 
         if self.status != Transaction.Status.COMPLETED:
             if raises:
-                raise PaymentException(
+                raise CantBeRefundedException(
                     f"A {self.status.label.lower()} payment can't be refunded"
                 )
             return False
 
         if not self.provider.is_refundable:
             if raises:
-                raise PaymentException(
+                raise CantBeRefundedException(
                     f"A {self.provider_name} payment can't be refunded"
                 )
             return False
@@ -236,7 +237,7 @@ class Transaction(TimeStampedMixin, BaseModel):
             refund_provider
         ):
             if raises:
-                raise PaymentException(
+                raise CantBeRefundedException(
                     f"Cannot use refund provider {refund_provider.name} with a {self.provider.name} payment"
                 )
             return False
