@@ -1,7 +1,7 @@
 # pylint: disable=too-many-public-methods,too-many-lines
 import datetime
 import math
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from autoslug import AutoSlugField
 from django.contrib.contenttypes.models import ContentType
@@ -16,6 +16,7 @@ from guardian.shortcuts import get_objects_for_user
 from uobtheatre.images.models import Image
 from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Transaction
+from uobtheatre.productions.tasks import refund_performance
 from uobtheatre.societies.models import Society
 from uobtheatre.users.abilities import AbilitiesMixin
 from uobtheatre.users.models import User
@@ -27,7 +28,6 @@ from uobtheatre.utils.validators import (
     ValidationErrors,
 )
 from uobtheatre.venues.models import SeatGroup, Venue
-from uobtheatre.productions.tasks import refund_performance
 
 if TYPE_CHECKING:
     from uobtheatre.bookings.models import ConcessionType, Ticket
@@ -649,7 +649,6 @@ class Performance(
 
         Args:
             authorizing_user (User): The user authorizing the refund
-            send_admin_email (bool, optional): Wether to authorize the refund. Defaults to True.
 
         Raises:
             CantBeRefundedException: Raised if the performance can't be refunded

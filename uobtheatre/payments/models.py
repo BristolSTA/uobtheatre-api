@@ -11,6 +11,8 @@ from django_celery_results.models import TaskResult
 
 from uobtheatre.mail.composer import MailComposer
 from uobtheatre.payments import transaction_providers
+from uobtheatre.payments.exceptions import CantBeRefundedException
+from uobtheatre.payments.tasks import refund_payment
 from uobtheatre.payments.transaction_providers import (
     Cash,
     PaymentProvider,
@@ -19,7 +21,6 @@ from uobtheatre.payments.transaction_providers import (
 )
 from uobtheatre.utils.exceptions import PaymentException
 from uobtheatre.utils.models import BaseModel, TimeStampedMixin
-from uobtheatre.payments.tasks import refund_payment
 
 if TYPE_CHECKING:
     from uobtheatre.payments.payables import Payable
@@ -59,9 +60,10 @@ class TransactionQuerySet(QuerySet):
         Return a queryset of tasks associated with these transactions
         """
         pks = self.values_list("pk", flat=True)
+        pks_regex = "|".join(map(str, pks))
         return TaskResult.objects.filter(
             task_name="uobtheatre.payments.tasks.refund_payment",
-            task_args__iregex=f"\(({'|'.join(pks)}), {self.model.content_type.pk},",
+            task_args__iregex=f"\(({pks_regex}), {self.model.content_type.pk},",  # pylint: disable=anomalous-backslash-in-string
         )
 
 
@@ -251,7 +253,7 @@ class Transaction(TimeStampedMixin, BaseModel):
         if refund_provider is None:
             # If no provider is provided, use the auto refund provider
             if not (refund_provider := self.provider.automatic_refund_provider):
-                raise PaymentException(
+                raise CantBeRefundedException(
                     f"A {self.provider_name} payment cannot be automatically refunded"
                 )
 

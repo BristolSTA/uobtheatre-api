@@ -7,7 +7,6 @@ from typing import List
 import environ
 
 env = environ.Env()
-
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Take environment variables from .env file

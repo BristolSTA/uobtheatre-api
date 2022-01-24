@@ -909,8 +909,8 @@ def test_performance_mutation_create_with_no_production(gql_client):
 @pytest.mark.parametrize("with_permission", [True, False])
 def test_performance_mutation_update(gql_client, with_permission):
     performance = PerformanceFactory(
-        doors_open=datetime(day=9, month=11, year=2021),
-        end=datetime(day=11, month=11, year=2021),
+        doors_open=datetime(day=9, month=11, year=2021, tzinfo=pytz.UTC),
+        end=datetime(day=11, month=11, year=2021, tzinfo=pytz.UTC),
     )
     request = """
         mutation {

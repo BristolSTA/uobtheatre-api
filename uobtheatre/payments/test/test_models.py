@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, PropertyMock, patch
 import pytest
 from pytest_django.asserts import assertQuerysetEqual
 
+from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.test.factories import (
     TransactionFactory,
@@ -355,7 +356,7 @@ def test_refund_payment_with_no_auto_refund_method():
             is_refundable=True, automatic_refund_provider=None
         )
 
-        with pytest.raises(PaymentException) as exc:
+        with pytest.raises(CantBeRefundedException) as exc:
             payment.refund()
 
         assert exc.value.message == "A abc payment cannot be automatically refunded"

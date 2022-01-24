@@ -19,6 +19,7 @@ from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable, PayableQuerySet
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.users.models import User
+from uobtheatre.utils.filters import filter_passes_on_model
 from uobtheatre.utils.models import TimeStampedMixin
 from uobtheatre.utils.utils import combinations, create_short_uuid
 from uobtheatre.venues.models import Seat, SeatGroup
@@ -153,7 +154,7 @@ class BookingQuerySet(PayableQuerySet):
 
         return query_set
 
-    def expired(self, bool_val=False) -> QuerySet:
+    def expired(self, bool_val=True) -> QuerySet:
         """Bookings that are not expired will be returned
 
         Args:
@@ -164,8 +165,12 @@ class BookingQuerySet(PayableQuerySet):
             QuerySet: the filtered queryset
         """
         if bool_val:
-            return self.exclude(status="PAID").filter(expires_at__lt=timezone.now())
-        return self.filter(Q(status="PAID") | Q(expires_at__gt=timezone.now()))
+            return self.filter(
+                status=Payable.Status.IN_PROGRESS, expires_at__lt=timezone.now()
+            )
+        return self.filter(
+            ~Q(status=Payable.Status.IN_PROGRESS) | Q(expires_at__gt=timezone.now())
+        )
 
 
 def generate_expires_at():
@@ -607,12 +612,7 @@ class Booking(TimeStampedMixin, Payable):
     @property
     def is_reservation_expired(self):
         """Returns whether the booking is considered expired"""
-
-        return (
-            self.status == Payable.Status.IN_PROGRESS
-            and self.expires_at
-            and timezone.now() > self.expires_at
-        )
+        return filter_passes_on_model(self, lambda qs: qs.expired())
 
     def validate_cant_be_refunded(self) -> Optional[CantBeRefundedException]:
         if error := super().validate_cant_be_refunded():

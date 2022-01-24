@@ -2,7 +2,6 @@ import abc
 from typing import Optional
 
 from django.contrib.contenttypes.fields import GenericRelation
-from django.contrib.contenttypes.models import ContentType
 from django.core.mail import mail_admins
 from django.db import models
 from django.db.models import Sum
@@ -12,10 +11,10 @@ from django.db.models.query import QuerySet
 from uobtheatre.payments.emails import payable_refund_initiated_email
 from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Transaction
+from uobtheatre.payments.tasks import refund_payable
 from uobtheatre.users.models import User
 from uobtheatre.utils.filters import filter_passes_on_model
 from uobtheatre.utils.models import AbstractModelMeta, BaseModel
-from uobtheatre.payments.tasks import refund_payable
 
 
 class PayableQuerySet(QuerySet):
@@ -111,8 +110,8 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
 
     def refund(self, authorizing_user: User, send_admin_email=True):
         """Refund the payable"""
-        if error := self.validate_cant_be_refunded():
-            raise error  # type: ignore
+        if error := self.validate_cant_be_refunded():  # type: ignore
+            raise error  # pylint: disable=raising-bad-type
 
         for payment in self.transactions.filter(type=Transaction.Type.PAYMENT).all():
             payment.refund()
@@ -167,13 +166,12 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
 
     @property
     def associated_tasks(self):
-        from django.db.models.functions import Cast
-        from django.db.models import JSONField
+        """Get tasks associated with this payable"""
         from django_celery_results.models import TaskResult
 
         payable_tasks = TaskResult.objects.filter(
             task_name="uobtheatre.payments.tasks.refund_payable",
-            task_args__iregex=f"\({self.pk}, {self.content_type.pk}",
+            task_args__iregex=f"\({self.pk}, {self.content_type.pk}",  # pylint: disable=anomalous-backslash-in-string
         )
         payment_taks = self.transactions.associated_tasks()
         return payable_tasks | payment_taks
