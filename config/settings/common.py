@@ -69,6 +69,9 @@ MIDDLEWARE = (
     "django.contrib.auth.middleware.AuthenticationMiddleware",
 )
 
+# This overrides the location of the django_celery_results. This allows us to
+# override the migrations. This is because we add an additional status in
+# config/__init__.py
 MIGRATION_MODULES = {"django_celery_results": "uobtheatre.utils.celery_migrations"}
 
 ALLOWED_HOSTS = ["*"]
