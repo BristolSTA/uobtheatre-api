@@ -1,12 +1,13 @@
-from unittest.mock import PropertyMock, patch
+from unittest.mock import patch
+
 import pytest
 
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import BookingFactory
+from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.users.test.factories import UserFactory
 
-from uobtheatre.payments.exceptions import CantBeRefundedException
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
@@ -20,8 +21,9 @@ def test_payable_refund_task(mailoutbox, can_be_refunded, send_email):
 
     with patch.object(
         Booking,
-        "can_be_refunded",
-        new_callable=PropertyMock(return_value=can_be_refunded),
+        "validate_cant_be_refunded",
+        side_effect=(CantBeRefundedException if not can_be_refunded else None),
+        return_value=None,
     ), patch(
         "uobtheatre.payments.models.Transaction.refund", autospec=True
     ) as payment_refund:

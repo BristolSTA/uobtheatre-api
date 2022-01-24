@@ -1,4 +1,4 @@
-from unittest.mock import PropertyMock, patch
+from unittest.mock import patch
 
 import pytest
 from pytest_django.asserts import assertQuerysetEqual
@@ -158,8 +158,9 @@ def test_payable_refund(mailoutbox, can_be_refunded, send_email):
 
     with patch.object(
         Booking,
-        "can_be_refunded",
-        new_callable=PropertyMock(return_value=can_be_refunded),
+        "validate_cant_be_refunded",
+        side_effect=(CantBeRefundedException if not can_be_refunded else None),
+        return_value=None,
     ), patch(
         "uobtheatre.payments.models.Transaction.refund", autospec=True
     ) as payment_refund:
@@ -178,4 +179,3 @@ def test_payable_refund(mailoutbox, can_be_refunded, send_email):
         if can_be_refunded:
             payment_refund.assert_any_call(payment_1)
             payment_refund.assert_any_call(payment_2)
-

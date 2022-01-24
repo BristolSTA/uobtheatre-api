@@ -1163,7 +1163,7 @@ def test_performance_refund_bookings(disabled, fails):
     user = UserFactory(id=123)
 
     with patch(
-        "uobtheatre.productions.tasks.refund_performance",
+        "uobtheatre.productions.tasks.refund_performance.delay",
     ) as refund_task_mock:
 
         if fails:
