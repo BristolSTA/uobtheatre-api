@@ -73,4 +73,4 @@ pytz==2021.3
 
 #=== Task Queue ===#
 django-celery-results==2.2.0
-pycurl==7.44.1
+redis==4.1.1
