@@ -1,7 +1,7 @@
 import graphene
 from graphql_auth import mutations, schema
 from graphql_relay.node.node import to_global_id
-from guardian.shortcuts import get_perms
+
 from uobtheatre.users.models import User
 
 

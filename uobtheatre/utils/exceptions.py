@@ -103,7 +103,7 @@ class MutationException(Exception):
 
     def __eq__(self, other: Any):
         if not isinstance(other, MutationException):
-            raise NotImplementedError
+            return False
         return self.__dict__ == other.__dict__
 
 

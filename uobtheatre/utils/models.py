@@ -19,6 +19,11 @@ class BaseModel(models.Model):
     def qs(self):
         return self.__class__.objects.filter(pk=self.pk)
 
+    @classmethod
+    @property
+    def content_type(cls):
+        return ContentType.objects.get_for_model(cls)
+
     class Meta:
         abstract = True
 

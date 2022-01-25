@@ -64,3 +64,11 @@ EMAIL_BACKEND = (
     if strtobool(env("EMAIL_ENABLED", default="yes"))
     else "django.core.mail.backends.console.EmailBackend"
 )
+
+
+SQS_BROKER_URL = f"sqs://{AWS_ACCESS_KEY_ID}:{AWS_SECRET_ACCESS_KEY}@"
+CELERY_BROKER_URL = SQS_BROKER_URL
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    "queue_name_prefix": env("CELERY_QUEUE_PREFIX"),
+    "region": env("AWS_DEFAULT_REGION", default="eu-west-2"),
+}

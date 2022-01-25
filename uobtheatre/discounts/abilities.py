@@ -1,6 +1,6 @@
 from uobtheatre.discounts.models import ConcessionType, Discount
 from uobtheatre.productions.abilities import EditProduction
-from uobtheatre.productions.models import Production, Performance
+from uobtheatre.productions.models import Performance, Production
 from uobtheatre.users.abilities import Ability
 from uobtheatre.users.models import User
 

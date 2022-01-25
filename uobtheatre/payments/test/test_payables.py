@@ -7,9 +7,12 @@ from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Transaction
+from uobtheatre.payments.payables import Payable
+from uobtheatre.payments.tasks import refund_payable
 from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.payments.transaction_providers import Card, Cash, SquareOnline
 from uobtheatre.users.test.factories import UserFactory
+from uobtheatre.utils.test.factories import TaskResultFactory
 
 
 @pytest.mark.django_db
@@ -148,6 +151,62 @@ def test_is_locked(has_pending_transaction):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
+    "status,is_refunded,is_locked,error_message",
+    [
+        (
+            Booking.Status.IN_PROGRESS,
+            True,
+            True,
+            "Booking (ABCD123) can't be refunded due to it's status (IN_PROGRESS)",
+        ),
+        (
+            Booking.Status.PAID,
+            True,
+            True,
+            "Booking (ABCD123) can't be refunded because is already refunded",
+        ),
+        (
+            Booking.Status.PAID,
+            False,
+            True,
+            "Booking (ABCD123) can't be refunded because it is locked",
+        ),
+        (
+            Booking.Status.PAID,
+            False,
+            False,
+            None,
+        ),
+    ],
+)
+def test_validate_cant_be_refunded(status, is_refunded, is_locked, error_message):
+    booking = BookingFactory(status=status, reference="ABCD123")
+
+    with patch(
+        "uobtheatre.payments.payables.Payable.is_refunded",
+        new_callable=PropertyMock(return_value=is_refunded),
+    ), patch(
+        "uobtheatre.payments.payables.Payable.is_locked",
+        new_callable=PropertyMock(return_value=is_locked),
+    ):
+        value = booking.validate_cant_be_refunded()
+        if error_message:
+            assert isinstance(value, CantBeRefundedException)
+            assert value.message == error_message
+        else:
+            assert value is None
+
+
+@pytest.mark.django_db
+def test_async_refund():
+    booking = BookingFactory(id=45)
+    with patch.object(refund_payable, "delay") as mock:
+        booking.async_refund(UserFactory(id=3))
+        mock.assert_called_once_with(45, booking.content_type.pk, 3)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
     "can_be_refunded,send_email", [(True, False), (False, True), (True, True)]
 )
 def test_payable_refund(mailoutbox, can_be_refunded, send_email):
@@ -157,9 +216,9 @@ def test_payable_refund(mailoutbox, can_be_refunded, send_email):
     TransactionFactory()  # Payment not associated with booking
 
     with patch.object(
-        Booking,
-        "can_be_refunded",
-        new_callable=PropertyMock(return_value=can_be_refunded),
+        Payable,
+        "validate_cant_be_refunded",
+        return_value=(CantBeRefundedException if not can_be_refunded else None),
     ), patch(
         "uobtheatre.payments.models.Transaction.refund", autospec=True
     ) as payment_refund:
@@ -178,3 +237,40 @@ def test_payable_refund(mailoutbox, can_be_refunded, send_email):
         if can_be_refunded:
             payment_refund.assert_any_call(payment_1)
             payment_refund.assert_any_call(payment_2)
+
+
+@pytest.mark.django_db
+def test_payable_associated_tasks():
+    payable = BookingFactory()
+    other_payable = BookingFactory()
+    transaction = TransactionFactory(type=Transaction.Type.PAYMENT, pay_object=payable)
+
+    # A related task for the payments
+    related_payment_task = TaskResultFactory(
+        task_name="uobtheatre.payments.tasks.refund_payment",
+        task_args=f'"({transaction.id}, {transaction.content_type.id}, abc))"',
+    )
+
+    # A related task for the booking
+    related_task = TaskResultFactory(
+        task_name="uobtheatre.payments.tasks.refund_payable",
+        task_args=f'"({payable.id}, {payable.content_type.id}, abc)"',
+    )
+
+    # Task for different booking
+    TaskResultFactory(
+        task_name="uobtheatre.payments.tasks.refund_payable",
+        task_args=f'"({other_payable.id}, {payable.content_type.id}, abc)"',
+    )
+    # Task for different contenttype
+    TaskResultFactory(
+        task_name="uobtheatre.payments.tasks.refund_payable",
+        task_args=f'"({payable.id}, {payable.content_type.id + 1}, abc)"',
+    )
+    # Differnt tasks
+    TaskResultFactory(
+        task_name="uobtheatre.payments.tasks.refund_performance",
+        task_args=f'"({payable.id}, {payable.content_type.id}, abc)"',
+    )
+
+    assertQuerysetEqual(payable.associated_tasks, [related_task, related_payment_task])

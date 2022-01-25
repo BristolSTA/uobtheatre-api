@@ -78,7 +78,7 @@ class OpenBoxoffice(Ability):
 
 
 class OpenAdmin(Ability):
-    """Whether the user has permission to open the admin pannel."""
+    """Whether the user has permission to open the admin panel."""
 
     name = "admin_open"
 

@@ -1,4 +1,3 @@
-
 import pytest
 
 from uobtheatre.discounts.forms import DiscountForm

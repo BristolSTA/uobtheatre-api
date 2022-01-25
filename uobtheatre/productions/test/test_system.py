@@ -1,6 +1,7 @@
 # pylint: disable=R0914,too-many-statements
 
 import pytest
+from graphql_relay import from_global_id
 from graphql_relay.node.node import to_global_id
 from guardian.shortcuts import assign_perm
 
@@ -10,7 +11,7 @@ from uobtheatre.bookings.test.factories import (
     TicketFactory,
 )
 from uobtheatre.images.test.factories import ImageFactory
-from uobtheatre.productions.models import Performance, PerformanceSeatGroup
+from uobtheatre.productions.models import Performance, PerformanceSeatGroup, Production
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.societies.test.factories import SocietyFactory
 from uobtheatre.users.test.factories import UserFactory
@@ -96,6 +97,9 @@ def test_total_production_creation_workflow(gql_client):
                 }
             ) {
                 success
+                performance {
+                    id
+                }
             }
             }
         """ % (
@@ -247,7 +251,9 @@ def test_total_production_creation_workflow(gql_client):
         assert response["data"]["discountRequirement"]["success"] is True
 
     # Assert against performance
-    performance = Performance.objects.first()
+    performance = Production.objects.get(
+        pk=from_global_id(production_gid)[1]
+    ).performances.first()
     assert performance.total_capacity == 150
 
     # Step 5: Assign permisisons to users

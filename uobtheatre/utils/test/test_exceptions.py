@@ -225,6 +225,7 @@ def test_form_exceptions(form_errors, expected_resolve_output):
             ),
             False,
         ),
+        (MutationException(), ValueError("Some error"), False),
     ],
 )
 def test_eq(exception1, exception2, expect_eq):

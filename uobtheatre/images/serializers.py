@@ -1,4 +1,4 @@
-from rest_framework.serializers import CharField, ModelSerializer
+from rest_framework.serializers import ModelSerializer
 
 from uobtheatre.images.models import Image
 

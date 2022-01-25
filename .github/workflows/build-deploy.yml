@@ -8,7 +8,8 @@ env:
   IMAGE_NAME: api
   IMAGE_OWNER: bristolsta
 
-  SERVICE_NAME: "${{ github.ref == 'refs/heads/main' && 'uobtheatre-api' || 'uobtheatre-api-staging' }}"
+  API_SERVICE_NAME: "${{ github.ref == 'refs/heads/main' && 'uobtheatre-api' || 'uobtheatre-api-staging' }}"
+  AUX_SERVICE_NAMES: "${{ github.ref == 'refs/heads/main' && 'uobtheatre-api-celery-worker' || 'uobtheatre-api-staging-celery-worker' }}"
 
 jobs:
   build:
@@ -37,15 +38,16 @@ jobs:
       - name: Deploy new image
         uses: appleboy/ssh-action@master
         env:
-          SERVICE_NAME: ${{ env.SERVICE_NAME }}
+          API_SERVICE_NAME: ${{ env.API_SERVICE_NAME }}
+          AUX_SERVICE_NAMES: ${{ env.AUX_SERVICE_NAMES }}
         with:
           host: ${{ secrets.SERVER_SSH_HOST }}
           username: ${{ secrets.SERVER_SSH_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_SSH_PORT }}
-          envs: SERVICE_NAME
+          envs: API_SERVICE_NAME, AUX_SERVICE_NAMES
           script: |
             cd /var/sta
-            docker-compose pull $SERVICE_NAME
-            docker-compose up -d $SERVICE_NAME
-            docker-compose exec -T $SERVICE_NAME python manage.py migrate
+            docker-compose pull $API_SERVICE_NAME $AUX_SERVICE_NAMES
+            docker-compose up -d $API_SERVICE_NAME $AUX_SERVICE_NAMES
+            docker-compose exec -T $API_SERVICE_NAME python manage.py migrate

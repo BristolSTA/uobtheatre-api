@@ -22,6 +22,35 @@ services:
       - '8000:8000'
     command: /start
 
+  celery:
+    build:
+      context: .
+      dockerfile: ./compose/local/django/Dockerfile
+    command: celery -A config worker -l debug
+    volumes:
+      - .:/app/uobtheatre-api:z
+    env_file:
+      - ./.envs/.local/.django
+      - ./.envs/.local/.postgres
+    depends_on:
+      - redis
+
+  celery-beat:
+    build:
+      context: .
+      dockerfile: ./compose/local/django/Dockerfile
+    command: celery -A config beat -l debug
+    volumes:
+      - .:/app/uobtheatre-api:z
+    env_file:
+      - ./.envs/.local/.django
+      - ./.envs/.local/.postgres
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:alpine
+
   postgres:
     build:
       context: .

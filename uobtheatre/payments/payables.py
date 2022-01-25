@@ -1,4 +1,5 @@
 import abc
+from typing import Optional
 
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.mail import mail_admins
@@ -6,10 +7,12 @@ from django.db import models
 from django.db.models import Sum
 from django.db.models.functions.comparison import Coalesce
 from django.db.models.query import QuerySet
+from django_celery_results.models import TaskResult
 
 from uobtheatre.payments.emails import payable_refund_initiated_email
 from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Transaction
+from uobtheatre.payments.tasks import refund_payable
 from uobtheatre.users.models import User
 from uobtheatre.utils.filters import filter_passes_on_model
 from uobtheatre.utils.models import AbstractModelMeta, BaseModel
@@ -85,18 +88,32 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
 
     @property
     def can_be_refunded(self):
-        return (
-            self.status in [self.Status.PAID, self.Status.CANCELLED]
-            and not self.is_refunded
-            and not self.is_locked
-        )
+        return self.validate_cant_be_refunded() is None
+
+    def validate_cant_be_refunded(self) -> Optional[CantBeRefundedException]:
+        """Validates if the booking can't be refunded. If it can't, it returns an exception. If it can, it returns None"""
+        if self.status not in [self.Status.PAID, self.Status.CANCELLED]:
+            return CantBeRefundedException(
+                f"{self.__class__.__name__} ({self}) can't be refunded due to it's status ({self.status})"
+            )
+        if self.is_refunded:
+            return CantBeRefundedException(
+                f"{self.__class__.__name__} ({self}) can't be refunded because is already refunded"
+            )
+        if self.is_locked:
+            return CantBeRefundedException(
+                f"{self.__class__.__name__} ({self}) can't be refunded because it is locked"
+            )
+        return None
+
+    def async_refund(self, authorizing_user: User):
+        refund_payable.delay(self.pk, self.content_type.pk, authorizing_user.pk)
 
     def refund(self, authorizing_user: User, send_admin_email=True):
         """Refund the payable"""
-        if not self.can_be_refunded:
-            raise CantBeRefundedException(
-                f"{self.__class__.__name__} ({self}) cannot be refunded"
-            )
+        if error := self.validate_cant_be_refunded():  # type: ignore
+            raise error  # pylint: disable=raising-bad-type
+
         for payment in self.transactions.filter(type=Transaction.Type.PAYMENT).all():
             payment.refund()
 
@@ -147,6 +164,16 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
         return self.transactions.annotate_sales_breakdown(["society_transfer_value"])[  # type: ignore
             "society_transfer_value"
         ]
+
+    @property
+    def associated_tasks(self):
+        """Get tasks associated with this payable"""
+        payable_tasks = TaskResult.objects.filter(
+            task_name="uobtheatre.payments.tasks.refund_payable",
+            task_args__iregex=f"\({self.pk}, {self.content_type.pk}",  # pylint: disable=anomalous-backslash-in-string
+        )
+        payment_tasks = self.transactions.associated_tasks()
+        return payable_tasks | payment_tasks
 
     class Meta:
         abstract = True
