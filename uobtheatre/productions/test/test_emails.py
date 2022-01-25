@@ -2,7 +2,6 @@ from unittest.mock import patch
 
 import pytest
 
-from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.mail.composer import MailComposer
 from uobtheatre.productions.emails import (
     performances_refunded_email,

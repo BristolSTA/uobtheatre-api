@@ -1,19 +1,18 @@
-from PIL import Image as PILImage
 import tempfile
-import json
-import pytest
-
-from django.core.files.uploadedfile import InMemoryUploadedFile
 from io import BytesIO
 
-from uobtheatre.images.serializers import ImageSerializer
+import pytest
+from django.core.files.uploadedfile import InMemoryUploadedFile
+from PIL import Image as PILImage
+
 from uobtheatre.images.models import Image
+from uobtheatre.images.serializers import ImageSerializer
 
 
 @pytest.mark.django_db
 def test_image_serializer():
     image = PILImage.new("RGB", (100, 100))
-    tmp_file = tempfile.NamedTemporaryFile(suffix=".png")
+    tmp_file = tempfile.NamedTemporaryFile(suffix=".png") # pylint: disable=consider-using-with
     image.save(tmp_file)
 
     with open(tmp_file.name, "rb") as temp_file:

@@ -11,8 +11,8 @@ from django.views.generic.base import RedirectView
 from graphene_django.views import GraphQLView
 
 from config.settings.common import SQUARE_SETTINGS
-from uobtheatre.payments.square_webhooks import SquareWebhooks
 from uobtheatre.images.views import ImageView
+from uobtheatre.payments.square_webhooks import SquareWebhooks
 
 urlpatterns = [
     path(

@@ -2,9 +2,7 @@ from django.contrib import admin, messages
 from django.contrib.admin import SimpleListFilter
 from django.contrib.contenttypes.admin import GenericTabularInline
 from django.core.mail import mail_admins
-from django.forms.models import BaseInlineFormSet
 from django_celery_results.models import TaskResult
-from django.utils.html import format_html
 from nonrelated_inlines.admin import NonrelatedStackedInline
 
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket

@@ -26,6 +26,3 @@ def test_pluralize(word, num_items, suffix, plural_word, expected):
         args["plural_word"] = plural_word
     assert pluralize(items=range(num_items), **args) == expected
     assert pluralize(items=num_items, **args) == expected
-
-
-

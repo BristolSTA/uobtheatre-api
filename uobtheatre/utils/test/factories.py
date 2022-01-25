@@ -1,6 +1,7 @@
-from dataclasses import dataclass
+
 import factory
 from django_celery_results.models import TaskResult
+
 
 class TaskResultFactory(factory.django.DjangoModelFactory):
 

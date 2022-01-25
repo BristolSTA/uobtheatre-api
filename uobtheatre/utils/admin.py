@@ -1,6 +1,6 @@
 from admin_confirm.admin import AdminConfirmMixin
 from admin_confirm.utils import snake_to_title_case
-from django.contrib.admin import helpers, TabularInline
+from django.contrib.admin import TabularInline, helpers
 from django.contrib.admin.options import InlineModelAdmin
 from django_celery_results.models import TaskResult
 
