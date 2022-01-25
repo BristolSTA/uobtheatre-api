@@ -44,7 +44,10 @@ RUN addgroup --system django \
 # Install required system dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \
   # psycopg2 dependencies
+  build-essential \
   libpq-dev \
+  libcurl4-nss-dev \
+  libssl-dev \
   python-pycurl \
   # Translations dependencies
   gettext \
@@ -59,6 +62,9 @@ COPY --from=python-build-stage /usr/src/app/wheels  /wheels/
 # use wheels to install python dependencies
 RUN pip install --no-cache-dir --no-index --find-links=/wheels/ /wheels/* \
   && rm -rf /wheels/
+
+RUN export PYCURL_SSL_LIBRARY=nss
+RUN pip install pycurl
 
 COPY --chown=django:django ./compose/production/django/entrypoint /entrypoint
 RUN sed -i 's/\r$//g' /entrypoint
