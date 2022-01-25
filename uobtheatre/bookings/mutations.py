@@ -13,6 +13,7 @@ from uobtheatre.payments.transaction_providers import (
     SquareOnline,
     SquarePOS,
 )
+from uobtheatre.productions.abilities import BookForPerformance
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.users.models import User
 from uobtheatre.utils.exceptions import (
@@ -210,7 +211,7 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
             )
 
         # Check performance is bookable
-        if not performance.is_bookable:
+        if not BookForPerformance.user_has_for(info.context.user, performance):
             raise GQLException(
                 message="This performance is not able to be booked at the moment"
             )
