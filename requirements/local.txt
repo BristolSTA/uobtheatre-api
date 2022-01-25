@@ -26,3 +26,6 @@ faker==11.3.0; python_version >= '3.6'
 
 # Unsure
 jedi==0.18.1; python_version >= '3.6'
+
+# Local queue
+redis==4.1.1
