@@ -194,7 +194,7 @@ def test_cant_be_refunded_when_not_completed(status):
     transaction = TransactionFactory(status=status)
 
     assert transaction.can_be_refunded() is False
-    with pytest.raises(PaymentException) as exception:
+    with pytest.raises(CantBeRefundedException) as exception:
         transaction.can_be_refunded(raises=True)
     assert (
         exception.value.message == f"A {status.label.lower()} payment can't be refunded"
@@ -228,7 +228,7 @@ def test_cant_be_refunded_when_invalid_refund_provider():
         payment_method.is_valid_refund_provider = MagicMock(return_value=False)
 
         transaction.can_be_refunded(refund_provider) is False
-        with pytest.raises(PaymentException) as exception:
+        with pytest.raises(CantBeRefundedException) as exception:
             transaction.can_be_refunded(refund_provider, raises=True)
         assert (
             exception.value.message
@@ -259,7 +259,7 @@ def test_cant_be_refunded_if_not_payment():
     )
 
     assert transaction.can_be_refunded() is False
-    with pytest.raises(PaymentException) as exception:
+    with pytest.raises(CantBeRefundedException) as exception:
         transaction.can_be_refunded(raises=True)
     assert exception.value.message == "A refund can't be refunded"
 
@@ -277,7 +277,7 @@ def test_cant_be_refunded_if_provider_not_refundable():
         ),
     ):
         assert transaction.can_be_refunded() is False
-        with pytest.raises(PaymentException) as exception:
+        with pytest.raises(CantBeRefundedException) as exception:
             transaction.can_be_refunded(raises=True)
         assert exception.value.message == "A SQUARE_ONLINE payment can't be refunded"
 

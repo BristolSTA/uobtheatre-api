@@ -42,7 +42,6 @@ def test_auth_error_handling_no_error():
     auth_handling.errors = None
     assert auth_handling.resolve_errors(None) is None
 
-
 @pytest.mark.django_db
 def test_safe_mutation_throws_unknown_exception():
     class SomeMutation(SafeMutation):
@@ -225,6 +224,11 @@ def test_form_exceptions(form_errors, expected_resolve_output):
             ),
             False,
         ),
+        (
+            MutationException(),
+            ValueError("Some error"),
+            False
+        )
     ],
 )
 def test_eq(exception1, exception2, expect_eq):
