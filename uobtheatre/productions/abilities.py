@@ -73,7 +73,6 @@ class BookForPerformance(Ability):
                 and obj.production.status
                 in [
                     Production.Status.APPROVED,
-                    Production.Status.PUBLISHED,
                 ]  # and the status is approved or published (e.g. creating comps)
             )
         )
