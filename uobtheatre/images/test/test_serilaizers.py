@@ -12,7 +12,8 @@ from uobtheatre.images.serializers import ImageSerializer
 @pytest.mark.django_db
 def test_image_serializer():
     image = PILImage.new("RGB", (100, 100))
-    tmp_file = tempfile.NamedTemporaryFile(suffix=".png") # pylint: disable=consider-using-with
+    # pylint: disable=consider-using-with
+    tmp_file = tempfile.NamedTemporaryFile(suffix=".png")
     image.save(tmp_file)
 
     with open(tmp_file.name, "rb") as temp_file:

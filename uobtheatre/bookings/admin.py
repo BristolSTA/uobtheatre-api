@@ -58,6 +58,10 @@ class StatusFilter(SimpleListFilter):
 
 
 class BookingTaskStackedInline(ReadOnlyInlineMixin, NonrelatedStackedInline):
+    """
+    Inline for tasks associated with a booking.
+    """
+
     model = TaskResult
     fields = [
         "id",
