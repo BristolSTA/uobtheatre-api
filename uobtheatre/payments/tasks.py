@@ -1,3 +1,5 @@
+import abc
+
 from django.contrib.contenttypes.models import ContentType
 
 from config.celery import app
@@ -5,7 +7,7 @@ from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.utils.tasks import BaseTask
 
 
-class RefundTask(BaseTask):
+class RefundTask(BaseTask, abc.ABC):
     """Base task for tasks that refund things"""
 
     def on_failure(

@@ -72,6 +72,9 @@ class BookingTaskStackedInline(ReadOnlyInlineMixin, NonrelatedStackedInline):
     def get_form_queryset(self, obj):
         return obj.associated_tasks.all()
 
+    def save_new_instance(self, *_, **__):
+        raise NotImplementedError
+
 
 @admin.register(Booking)
 class BookingAdmin(DangerousAdminConfirmMixin, admin.ModelAdmin):

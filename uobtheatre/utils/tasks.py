@@ -1,9 +1,11 @@
+import abc
+
 from celery import Task
 from sentry_sdk import capture_exception
 
 
 # Tasks
-class BaseTask(Task):
+class BaseTask(Task, abc.ABC):
     def on_failure(
         self, exc, task_id, args, kwargs, einfo
     ):  # pylint: disable=too-many-arguments
