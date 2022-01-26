@@ -242,3 +242,4 @@ def test_square_exception_args():
         )
     )
     assert exc.args == ("abc", 200, None, None)
+    assert str(exc) == "('abc', 200, None, None)"
