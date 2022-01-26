@@ -107,10 +107,24 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
         return None
 
     def async_refund(self, authorizing_user: User):
+        """
+        Create "refund_payable" task to refund all the payments for the
+        payable. This tasks calls the refund method with `do_async` to queue a
+        refund tasks for each payment.
+        """
         refund_payable.delay(self.pk, self.content_type.pk, authorizing_user.pk)
 
     def refund(self, authorizing_user: User, do_async=True, send_admin_email=True):
-        """Refund the payable"""
+        """
+        Refund the all the payments in the payable.
+
+        Args:
+            authorizing_user (User): The user authorizing the refund
+            do_async (bool): If true a task is queued to refund each payment.
+                Otherwise payments are refunded synchronously.
+            send_admin_email (bool): If true send an email to the admins after the
+                refunds are created/queued.
+        """
         if error := self.validate_cant_be_refunded():  # type: ignore
             raise error  # pylint: disable=raising-bad-type
 
