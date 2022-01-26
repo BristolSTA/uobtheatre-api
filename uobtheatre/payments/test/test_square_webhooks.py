@@ -3,10 +3,12 @@ from unittest.mock import PropertyMock, patch
 
 import pytest
 
-from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import BookingFactory
+from uobtheatre.payments.models import Transaction
+from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.square_webhooks import SquareWebhooks
-from uobtheatre.payments.test.factories import PaymentFactory
+from uobtheatre.payments.test.factories import TransactionFactory
+from uobtheatre.payments.transaction_providers import SquarePOS, SquareRefund
 
 TEST_TERMINAL_CHECKOUT_PAYLOAD = {
     "merchant_id": "ML8M1AQ1GQG2K",
@@ -94,20 +96,58 @@ TEST_PAYMENT_UPDATE_PAYLOAD = {
     },
 }
 
+TEST_UPDATE_REFUND_PAYLOAD = {
+    "merchant_id": "ML8M1AQ1GQG2K",
+    "type": "refund.updated",
+    "event_id": "e4f5bcd7-6c4d-4c29-8637-115738d759e1",
+    "created_at": "2021-12-13T21:01:40.805Z",
+    "data": {
+        "type": "refund",
+        "id": "xwo62Kt4WIOAh9LrczZxzbQbIZCZY_RVpsRbbUP3LmklUotq0kfiJnn1jDOqhNHymoqa6iDpd",
+        "object": {
+            "refund": {
+                "amount_money": {"amount": 100, "currency": "GBP"},
+                "created_at": "2021-12-13T21:01:32.340Z",
+                "id": "xwo62Kt4WIOAh9LrczZxzbQbIZCZY_RVpsRbbUP3LmklUotq0kfiJnn1jDOqhNHymoqa6iDpd",
+                "location_id": "LN9PN3P67S0QV",
+                "order_id": "tsjSHOoLci0yftfu8Z5BYFO2Me4F",
+                "payment_id": "xwo62Kt4WIOAh9LrczZxzbQbIZCZY",
+                "processing_fee": [
+                    {
+                        "amount_money": {"amount": -2, "currency": "GBP"},
+                        "effective_at": "2021-04-15T13:27:08.000Z",
+                        "type": "INITIAL",
+                    },
+                    {
+                        "amount_money": {"amount": -5, "currency": "GBP"},
+                        "effective_at": "2021-04-15T13:27:08.000Z",
+                        "type": "INITIAL",
+                    },
+                ],
+                "status": "COMPLETED",
+                "updated_at": "2021-12-13T21:01:35.266Z",
+                "version": 19,
+            }
+        },
+    },
+}
+
 
 @pytest.mark.django_db
 def test_handle_checkout_webhook(rest_client, monkeypatch):
-    PaymentFactory(provider_payment_id="dhgENdnFOPXqO")
-    monkeypatch.setenv("SQUARE_WEBHOOK_SIGNATURE_KEY", "Hd_mmQkhER3EPkpRpNQh9Q")
-    booking = BookingFactory(
-        reference="id72709", status=Booking.BookingStatus.IN_PROGRESS
+    transaction = TransactionFactory(
+        provider_transaction_id="dhgENdnFOPXqO", provider_name=SquarePOS.name
     )
+    monkeypatch.setenv("SQUARE_WEBHOOK_SIGNATURE_KEY", "Hd_mmQkhER3EPkpRpNQh9Q")
+    BookingFactory(reference="id72709", status=Payable.Status.IN_PROGRESS)
 
     with patch.object(
         SquareWebhooks, "webhook_url", new_callable=PropertyMock
     ) as url_mock, patch.object(
         SquareWebhooks, "webhook_signature_key", new_callable=PropertyMock
-    ) as key_mock:
+    ) as key_mock, patch.object(
+        SquarePOS, "sync_transaction", autospec=True
+    ) as sync_mock:
         url_mock.return_value = (
             "https://webhook.site/5bca8c49-e6f0-40ed-9415-4035bc05b48d"
         )
@@ -121,15 +161,12 @@ def test_handle_checkout_webhook(rest_client, monkeypatch):
         )
 
     assert response.status_code == 200
-    booking.refresh_from_db()
-    assert booking.status == Booking.BookingStatus.PAID
+    sync_mock.assert_called_once_with(transaction, None)
 
 
 @pytest.mark.django_db
 def test_handle_webhooks_invalid_signature(rest_client):
-    booking = BookingFactory(
-        reference="id72709", status=Booking.BookingStatus.IN_PROGRESS
-    )
+    booking = BookingFactory(reference="id72709", status=Payable.Status.IN_PROGRESS)
     response = rest_client.post(
         "/square",
         TEST_TERMINAL_CHECKOUT_PAYLOAD,
@@ -140,13 +177,13 @@ def test_handle_webhooks_invalid_signature(rest_client):
     assert response.data == "Invalid signature"
 
     booking.refresh_from_db()
-    assert booking.status == Booking.BookingStatus.IN_PROGRESS
+    assert booking.status == Payable.Status.IN_PROGRESS
 
 
 @pytest.mark.django_db
 def test_handle_payment_update_webhook_no_processing_fee(rest_client):
-    payment = PaymentFactory(
-        provider_payment_id="hYy9pRFVxpDsO1FB05SunFWUe9JZY", provider_fee=None
+    payment = TransactionFactory(
+        provider_transaction_id="hYy9pRFVxpDsO1FB05SunFWUe9JZY", provider_fee=None
     )
 
     with patch.object(
@@ -172,8 +209,8 @@ def test_handle_payment_update_webhook_no_processing_fee(rest_client):
 
 @pytest.mark.django_db
 def test_handle_payment_update_webhook(rest_client):
-    payment = PaymentFactory(
-        provider_payment_id="hYy9pRFVxpDsO1FB05SunFWUe9JZY", provider_fee=0
+    payment = TransactionFactory(
+        provider_transaction_id="hYy9pRFVxpDsO1FB05SunFWUe9JZY", provider_fee=0
     )
 
     payload = deepcopy(TEST_PAYMENT_UPDATE_PAYLOAD)
@@ -204,6 +241,30 @@ def test_handle_payment_update_webhook(rest_client):
 
 
 @pytest.mark.django_db
+def test_handle_payment_update_checkout_webhook(rest_client):
+    payment = TransactionFactory(
+        provider_transaction_id="dhgENdnFOPXqO",
+        provider_fee=0,
+        provider_name=SquarePOS.name,
+    )
+
+    payload = deepcopy(TEST_PAYMENT_UPDATE_PAYLOAD)
+    payload["data"]["object"]["payment"]["terminal_checkout_id"] = "dhgENdnFOPXqO"
+
+    with patch.object(
+        SquareWebhooks, "is_valid_callback", return_value=True
+    ), patch.object(SquarePOS, "sync_transaction", autospec=True) as sync_mock:
+        rest_client.post(
+            "/square",
+            payload,
+            HTTP_X_SQUARE_SIGNATURE="signature",
+            format="json",
+        )
+
+    sync_mock.assert_called_once_with(payment, None)
+
+
+@pytest.mark.django_db
 def test_square_webhook_unknown_type(rest_client):
     with patch.object(SquareWebhooks, "is_valid_callback", return_value=True):
         response = rest_client.post(
@@ -216,3 +277,26 @@ def test_square_webhook_unknown_type(rest_client):
         )
 
     assert response.status_code == 202
+
+
+@pytest.mark.django_db
+def test_handle_refund_update_webhook(rest_client):
+    payment = TransactionFactory(
+        provider_transaction_id="xwo62Kt4WIOAh9LrczZxzbQbIZCZY_RVpsRbbUP3LmklUotq0kfiJnn1jDOqhNHymoqa6iDpd",
+        provider_fee=0,
+        type=Transaction.Type.REFUND,
+        provider_name=SquareRefund.name,
+    )
+
+    with patch.object(SquareWebhooks, "is_valid_callback", return_value=True):
+        response = rest_client.post(
+            "/square",
+            TEST_UPDATE_REFUND_PAYLOAD,
+            HTTP_X_SQUARE_SIGNATURE="signature",
+            format="json",
+        )
+
+    payment.refresh_from_db()
+    assert response.status_code == 200
+    assert payment.provider_fee == -7
+    assert payment.status == Transaction.Status.COMPLETED

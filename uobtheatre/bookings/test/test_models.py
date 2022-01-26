@@ -1,10 +1,11 @@
 # pylint: disable=too-many-lines
 import datetime
 import math
-from unittest.mock import patch
+from unittest.mock import PropertyMock, patch
 from urllib.parse import quote_plus
 
 import pytest
+import pytz
 from django.db.utils import IntegrityError
 from django.utils import timezone
 from graphql_relay.node.node import to_global_id
@@ -24,10 +25,14 @@ from uobtheatre.discounts.test.factories import (
     DiscountFactory,
     DiscountRequirementFactory,
 )
-from uobtheatre.payments import payment_methods
-from uobtheatre.payments.models import Payment
-from uobtheatre.payments.payment_methods import SquarePOS
-from uobtheatre.payments.test.factories import PaymentFactory
+from uobtheatre.images.test.factories import ImageFactory
+from uobtheatre.payments import transaction_providers
+from uobtheatre.payments.exceptions import CantBeRefundedException
+from uobtheatre.payments.models import Transaction
+from uobtheatre.payments.payables import Payable
+from uobtheatre.payments.test.factories import TransactionFactory, mock_payment_method
+from uobtheatre.payments.transaction_providers import SquarePOS
+from uobtheatre.productions.models import Production
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.utils.test_utils import ticket_dict_list_dict_gen, ticket_list_dict_gen
@@ -535,12 +540,12 @@ def test_draft_uniqueness():
     args = {
         "user": UserFactory(),
         "performance": PerformanceFactory(),
-        "status": Booking.BookingStatus.IN_PROGRESS,
+        "status": Payable.Status.IN_PROGRESS,
     }
 
     # Check that can make more bookings that are no in_progress
     BookingFactory(
-        status=Booking.BookingStatus.PAID,
+        status=Payable.Status.PAID,
         performance=args["performance"],
         user=args["user"],
     )
@@ -826,16 +831,12 @@ def test_booking_pay_with_payment():
     as paid.
     """
 
-    class MockPaymentMethod:  # pylint: disable=no-method-argument
-        def pay(*_):
-            return Payment()
-
-    payment_method = MockPaymentMethod()
-    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    payment_method = mock_payment_method()
+    booking = BookingFactory(status=Payable.Status.IN_PROGRESS)
 
     booking.pay(payment_method)  # type: ignore
 
-    assert booking.status == Booking.BookingStatus.PAID
+    assert booking.status == Payable.Status.PAID
 
 
 @pytest.mark.django_db
@@ -845,23 +846,19 @@ def test_booking_pay_deletes_pending_payments(mock_square):
     this booking should be deleted.
     """
 
-    class MockPaymentMethod:  # pylint: disable=no-method-argument
-        def pay(*_):
-            return Payment()
-
-    payment_method = MockPaymentMethod()
-    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    payment_method = mock_payment_method()
+    booking = BookingFactory(status=Payable.Status.IN_PROGRESS)
 
     # Deleted
-    pending_payment = PaymentFactory(
-        status=Payment.PaymentStatus.PENDING,
+    pending_payment = TransactionFactory(
+        status=Transaction.Status.PENDING,
         pay_object=booking,
-        provider=SquarePOS.name,
+        provider_name=SquarePOS.name,
     )
 
     # Not deleted
-    completed_payment = PaymentFactory(
-        status=Payment.PaymentStatus.COMPLETED, pay_object=booking
+    completed_payment = TransactionFactory(
+        status=Transaction.Status.COMPLETED, pay_object=booking
     )
 
     with mock_square(
@@ -869,16 +866,16 @@ def test_booking_pay_deletes_pending_payments(mock_square):
     ) as mock:
         booking.pay(payment_method)  # type: ignore
 
-    assert booking.status == Booking.BookingStatus.PAID
+    assert booking.status == Payable.Status.PAID
 
     # Assert pending payment cancelled with square
-    mock.assert_called_once_with(pending_payment.provider_payment_id)
+    mock.assert_called_once_with(pending_payment.provider_transaction_id)
 
     # And pending payment deleted
-    assert not Payment.objects.filter(id=pending_payment.id).exists()
+    assert not Transaction.objects.filter(id=pending_payment.id).exists()
 
     # Assert completed payment is not cancelled
-    assert Payment.objects.filter(id=completed_payment.id).exists()
+    assert Transaction.objects.filter(id=completed_payment.id).exists()
 
 
 @pytest.mark.django_db
@@ -984,10 +981,10 @@ def test_filter_by_active():
 
 @pytest.mark.django_db
 def test_booking_expiration():
-    unexpired_booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+    unexpired_booking = BookingFactory(status=Payable.Status.IN_PROGRESS)
 
     expired_booking = BookingFactory(
-        status=Booking.BookingStatus.IN_PROGRESS,
+        status=Payable.Status.IN_PROGRESS,
         expires_at=timezone.now() - datetime.timedelta(minutes=16),
     )
 
@@ -1001,28 +998,74 @@ def test_booking_expiration():
     assert not unexpired_booking.is_reservation_expired
     assert expired_booking.is_reservation_expired
 
-    expired_booking.status = Booking.BookingStatus.PAID
+    expired_booking.status = Payable.Status.PAID
+    expired_booking.save()
+    assert not expired_booking.is_reservation_expired
+
+    expired_booking.status = Payable.Status.CANCELLED
+    expired_booking.save()
     assert not expired_booking.is_reservation_expired
 
 
 @pytest.mark.django_db
-def test_complete():
-    booking = BookingFactory(status=Booking.BookingStatus.IN_PROGRESS)
+@pytest.mark.parametrize(
+    "is_refunded,status,production_status,expected",
+    [
+        (False, Payable.Status.PAID, Production.Status.PUBLISHED, True),
+        (False, Payable.Status.PAID, Production.Status.PENDING, True),
+        (True, Payable.Status.PAID, Production.Status.PUBLISHED, False),
+        (False, Payable.Status.CANCELLED, Production.Status.PUBLISHED, True),
+        (True, Payable.Status.CANCELLED, Production.Status.PUBLISHED, False),
+        (False, Payable.Status.PAID, Production.Status.CLOSED, False),
+    ],
+)
+def test_booking_can_be_refunded(is_refunded, status, production_status, expected):
+    production = ProductionFactory(status=production_status)
+
+    with patch(
+        "uobtheatre.bookings.models.Booking.is_refunded",
+        new_callable=PropertyMock(return_value=is_refunded),
+    ):
+
+        booking = BookingFactory(
+            performance=PerformanceFactory(production=production), status=status
+        )
+        assert booking.can_be_refunded == expected
+
+        if expected:
+            assert booking.validate_cant_be_refunded() is None
+        else:
+            assert (
+                isinstance(booking.validate_cant_be_refunded(), CantBeRefundedException)
+                is True
+            )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("with_payment", [False, True])
+def test_complete(with_payment):
+    booking = BookingFactory(status=Payable.Status.IN_PROGRESS)
     with patch.object(booking, "send_confirmation_email") as mock_send_email:
-        booking.complete()
+        kwargs = {}
+        if with_payment:
+            kwargs["payment"] = TransactionFactory()
+        booking.complete(**kwargs)
         mock_send_email.assert_called_once()
 
     booking.refresh_from_db()
-    assert booking.status == Booking.BookingStatus.PAID
+    assert booking.status == Payable.Status.PAID
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "with_payment, provider_payment_id",
-    [(True, "SQUARE_PAYMENT_ID"), (True, None), (False, None)],
+    "with_payment, provider_transaction_id, with_image",
+    [(True, "SQUARE_PAYMENT_ID", True), (True, None, False), (False, None, True)],
 )
-def test_send_confirmation_email(mailoutbox, with_payment, provider_payment_id):
-    production = ProductionFactory(name="Legally Ginger")
+def test_send_confirmation_email(
+    mailoutbox, with_payment, provider_transaction_id, with_image
+):
+    image = ImageFactory() if with_image else None
+    production = ProductionFactory(name="Legally Ginger", featured_image=image)
     venue = VenueFactory(address=AddressFactory(latitude=51.4, longitude=-2.61))
     performance = PerformanceFactory(
         venue=venue,
@@ -1045,21 +1088,24 @@ def test_send_confirmation_email(mailoutbox, with_payment, provider_payment_id):
         production=production,
     )
     booking = BookingFactory(
-        status=Booking.BookingStatus.IN_PROGRESS,
+        status=Payable.Status.IN_PROGRESS,
         reference="abc",
         performance=performance,
     )
     booking.user.status.verified = True
 
-    if with_payment:
-        PaymentFactory(
+    payment = (
+        TransactionFactory(
             pay_object=booking,
             value=1000,
-            provider=payment_methods.SquareOnline.__name__,
-            provider_payment_id=provider_payment_id,
+            provider_name=transaction_providers.SquareOnline.name,
+            provider_transaction_id=provider_transaction_id,
         )
+        if with_payment
+        else None
+    )
 
-    booking.send_confirmation_email()
+    booking.send_confirmation_email(payment)
 
     assert len(mailoutbox) == 1
     email = mailoutbox[0]
@@ -1074,9 +1120,9 @@ def test_send_confirmation_email(mailoutbox, with_payment, provider_payment_id):
         assert "Payment Information" in email.body
         assert "10.00 GBP" in email.body
         assert (
-            "(SquareOnline - ID SQUARE_PAYMENT_ID)"
-            if provider_payment_id
-            else "(SquareOnline)" in email.body
+            "(Square online card payment - ID SQUARE_PAYMENT_ID)"
+            if provider_transaction_id
+            else "(Square online card payment)" in email.body
         )
     else:
         assert "Payment Information" not in email.body
@@ -1107,7 +1153,7 @@ def test_send_confirmation_email_for_anonymous(mailoutbox):
         venue=venue,
     )
     booking = BookingFactory(
-        status=Booking.BookingStatus.IN_PROGRESS,
+        status=Payable.Status.IN_PROGRESS,
         reference="abc",
         performance=performance,
     )
@@ -1138,4 +1184,19 @@ def test_web_tickets_path_property():
     assert (
         booking.web_tickets_path
         == f"/user/booking/abcd1234/tickets?performanceID={performance_id}&ticketID={ticket_ids[0]}&ticketID={ticket_ids[1]}&ticketID={ticket_ids[2]}"
+    )
+
+
+@pytest.mark.django_db
+def test_booking_display_name():
+    production = ProductionFactory(name="My Production")
+    performance = PerformanceFactory(
+        production=production,
+        start=datetime.datetime(2022, 1, 14, 10, 0, tzinfo=pytz.UTC),
+    )
+    booking = BookingFactory(performance=performance, reference="abcd")
+
+    assert (
+        booking.display_name
+        == "Booking Ref. abcd for performance of my production at 10:00 on 14/01/2022"
     )

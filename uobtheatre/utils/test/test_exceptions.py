@@ -1,9 +1,12 @@
+from types import SimpleNamespace
+
 import pytest
 from graphene_django.types import ErrorType
 
 from uobtheatre.payments.test.factories import MockApiResponse
 from uobtheatre.productions.models import Performance
 from uobtheatre.utils.exceptions import (
+    AuthorizationException,
     AuthOutput,
     FieldError,
     FormExceptions,
@@ -72,19 +75,18 @@ def test_gql_non_field_exception():
 
 
 @pytest.mark.parametrize(
-    "field, resolved_field",
+    "field, code",
     [
-        ("booking", "booking"),
-        ("dateOfBirth", "dateOfBirth"),
-        ("date_of_birth", "dateOfBirth"),
+        ("booking", "400"),
+        ("dateOfBirth", "bad"),
     ],
 )
-def test_gql_field_exception(field, resolved_field):
-    exception = GQLException("Some exception", code=400, field=field)
+def test_gql_field_exception(field, code):
+    exception = GQLException("Some exception", code=code, field=field)
     assert len(exception.resolve()) == 1
     compare_gql_objects(
         exception.resolve()[0],
-        FieldError(message="Some exception", code=400, field=resolved_field),
+        FieldError(message="Some exception", code=code, field=field),
     )
 
 
@@ -192,3 +194,52 @@ def test_form_exceptions(form_errors, expected_resolve_output):
         resolved_exceptions, expected_resolve_output
     ):
         compare_gql_objects(exception, expected_exception)
+
+
+@pytest.mark.parametrize(
+    "exception1, exception2, expect_eq",
+    [
+        (
+            FormExceptions(
+                [ErrorType(messages=["too long", "too short"], field="field")]
+            ),
+            FormExceptions(
+                [ErrorType(messages=["too long", "too short"], field="field")]
+            ),
+            True,
+        ),
+        (
+            AuthorizationException(),
+            GQLException(
+                message="You are not authorized to perform this action", code=403
+            ),
+            True,
+        ),
+        (
+            AuthorizationException(),
+            GQLException(message="You are not authorized to perform this action"),
+            False,
+        ),
+        (
+            AuthorizationException(),
+            GQLException(
+                message="You are not authorized to perform this action", code=401
+            ),
+            False,
+        ),
+        (MutationException(), ValueError("Some error"), False),
+    ],
+)
+def test_eq(exception1, exception2, expect_eq):
+    assert (exception1 == exception2) == expect_eq
+
+
+def test_square_exception_args():
+    exc = SquareException(
+        SimpleNamespace(
+            errors=[{"detail": "abc", "category": "PAYMENT_METHOD_ERROR"}],
+            status_code=200,
+        )
+    )
+    assert exc.args == ("abc", 200, None, None)
+    assert str(exc) == "('abc', 200, None, None)"

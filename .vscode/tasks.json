@@ -22,7 +22,7 @@
         {
             "label": "test-coverage",
             "type": "shell",
-            "command": "coverage run --source=uobtheatre -m pytest -m \"not square_integration\" && coverage html",
+            "command": "coverage run --source=uobtheatre -m pytest -m \"not system_test\" && coverage html",
             "problemMatcher": []
         }
     ]

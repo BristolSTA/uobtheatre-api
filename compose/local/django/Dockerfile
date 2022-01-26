@@ -1,4 +1,4 @@
-ARG PYTHON_VERSION=3.9-slim-buster
+ARG PYTHON_VERSION=3.10-slim-buster
 
 # define an alias for the specfic python version used in this file.
 FROM python:${PYTHON_VERSION} as python
@@ -38,7 +38,7 @@ WORKDIR ${APP_HOME}
 # Install required system dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \
   # psycopg2 dependencies
-  libpq-dev \
+  libpq-dev gcc make \
   # Translations dependencies
   gettext \
   # Git & Dependencies

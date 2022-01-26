@@ -4,11 +4,12 @@ import pytest
 
 from uobtheatre.mail.composer import MailComposer
 from uobtheatre.productions.emails import (
+    performances_refunded_email,
     send_production_approved_email,
     send_production_needs_changes_email,
     send_production_ready_for_review_email,
 )
-from uobtheatre.productions.test.factories import ProductionFactory
+from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.users.test.factories import UserFactory
 
 
@@ -61,3 +62,18 @@ def test_send_production_needs_changes_email_with_message():
         send_mock.assert_called_once_with(
             "My Production needs changes", "myemail@example.org"
         )
+
+
+@pytest.mark.django_db
+def test_performances_refunded_email():
+    performances = [PerformanceFactory(), PerformanceFactory()]
+    mail = performances_refunded_email(
+        UserFactory(),
+        performances,
+    )
+
+    plain_text = mail.to_plain_text()
+    assert "Refund(s) have been initiated" in plain_text
+
+    for performance in performances:
+        assert str(performance.pk) in plain_text

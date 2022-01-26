@@ -1,8 +1,12 @@
 # pylint: disable=unused-wildcard-import,wildcard-import
 
+import logging
 import tempfile
 
 from .local import *  # noqa: F403,F401
+
+logging.getLogger("faker").setLevel(logging.INFO)
+logging.getLogger("factory").setLevel(logging.INFO)
 
 # GENERAL
 # ------------------------------------------------------------------------------

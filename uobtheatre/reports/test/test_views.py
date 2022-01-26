@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from unittest.mock import patch
 
 import pytest
+import pytz
 from django.http.response import HttpResponse
 from django.test import TestCase
 from django.test.client import RequestFactory
@@ -39,7 +40,10 @@ class PeriodTotalsTests(TestCase):
             response = self.client.get(
                 reverse(
                     "period_totals",
-                    args=(datetime.now() - timedelta(weeks=100), datetime.now()),
+                    args=(
+                        datetime.now(tz=pytz.UTC) - timedelta(weeks=100),
+                        datetime.now(tz=pytz.UTC),
+                    ),
                 )
                 + "?signature=%s"
                 % generate_report_download_signature(UserFactory(), "PeriodTotals")

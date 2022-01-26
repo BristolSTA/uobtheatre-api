@@ -7,7 +7,6 @@ from typing import List
 import environ
 
 env = environ.Env()
-
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Take environment variables from .env file
@@ -39,6 +38,8 @@ INSTALLED_APPS = (
     "django_tiptap",
     "rest_framework",
     "django_inlinecss",
+    "django_celery_results",
+    "nonrelated_inlines",
     # Your apps
     "uobtheatre.users",
     "uobtheatre.productions",
@@ -53,6 +54,7 @@ INSTALLED_APPS = (
     "uobtheatre.reports",
     "uobtheatre.mail",
     "uobtheatre",
+    "admin_confirm",
 )
 
 # https://docs.djangoproject.com/en/2.0/topics/http/middleware/
@@ -66,6 +68,11 @@ MIDDLEWARE = (
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
 )
+
+# This overrides the location of the django_celery_results. This allows us to
+# override the migrations. This is because we add an additional status in
+# config/__init__.py
+MIGRATION_MODULES = {"django_celery_results": "uobtheatre.utils.celery_migrations"}
 
 ALLOWED_HOSTS = ["*"]
 ROOT_URLCONF = "uobtheatre.urls"
@@ -82,6 +89,8 @@ EMAIL_PORT = env("EMAIL_PORT", default=1025)
 EMAIL_HOST_USER = env("EMAIL_HOST_USER", default=None)
 EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default=None)
 DEFAULT_FROM_EMAIL = "UOB Theatre <no-reply@uobtheatre.com>"
+SERVER_EMAIL = DEFAULT_FROM_EMAIL
+EMAIL_SUBJECT_PREFIX = "[UOBTheatre] "
 
 ADMINS = (("Author", "webmaster@bristolsta.com"),)
 
@@ -244,6 +253,7 @@ LOGGING = {
         },
         "uobtheatre": {"handlers": ["file"], "level": "INFO", "propagate": True},
         "psycopg2": {"handlers": ["file"], "level": "INFO", "propagate": True},
+        "celery": {"handlers": ["console"], "level": "DEBUG", "propagate": True},
     },
 }
 
@@ -320,3 +330,12 @@ SQUARE_SETTINGS = {
 }
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
+
+# Celery
+CELERY_RESULT_BACKEND = "django-db"
+CELERY_BROKER_URL = "redis://redis:6379"
+CELERY_TASK_TRACK_STARTED = True
+CELERY_ACCEPT_CONTENT = ["application/json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_INCLUDE = ["uobtheatre.utils.tasks"]

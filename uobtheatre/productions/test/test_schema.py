@@ -7,7 +7,6 @@ from django.utils import timezone
 from graphql_relay.node.node import from_global_id, to_global_id
 from guardian.shortcuts import assign_perm
 
-from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
     PerformanceSeatingFactory,
@@ -17,7 +16,8 @@ from uobtheatre.discounts.test.factories import (
     DiscountFactory,
     DiscountRequirementFactory,
 )
-from uobtheatre.payments.test.factories import PaymentFactory
+from uobtheatre.payments.payables import Payable
+from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.productions.test.factories import (
     AudienceWarningFactory,
@@ -557,12 +557,10 @@ def test_productions_are_shown_with_permission(gql_client):
 @pytest.mark.django_db
 def test_production_and_performance_sales_breakdowns(gql_client):
     performance = PerformanceFactory()
-    booking = BookingFactory(
-        performance=performance, status=Booking.BookingStatus.IN_PROGRESS
-    )
+    booking = BookingFactory(performance=performance, status=Payable.Status.IN_PROGRESS)
     perf_seat_group = PerformanceSeatingFactory(performance=performance, price=100)
     TicketFactory(booking=booking, seat_group=perf_seat_group.seat_group)
-    PaymentFactory(pay_object=booking, value=booking.total)
+    TransactionFactory(pay_object=booking, value=booking.total)
 
     request = """
         {
@@ -1208,11 +1206,13 @@ def test_performances_are_shown_with_permission(gql_client):
 
 @pytest.mark.django_db
 def test_performance_run_on(gql_client):
-    query_date = datetime.date(year=2000, month=6, day=20)
+    query_datetime = timezone.datetime(
+        year=2000, month=6, day=20, tzinfo=timezone.get_current_timezone()
+    )
     _ = [
         PerformanceFactory(
-            start=query_date + timezone.timedelta(days=i),
-            end=query_date + timezone.timedelta(days=i, hours=2),
+            start=query_datetime + timezone.timedelta(days=i),
+            end=query_datetime + timezone.timedelta(days=i, hours=2),
         )
         for i in range(-2, 2)
     ]
@@ -1231,10 +1231,10 @@ def test_performance_run_on(gql_client):
         """
 
     # Ask for nothing and check you get nothing
-    response = gql_client.execute(request % query_date)
+    response = gql_client.execute(request % query_datetime.date())
     assert response["data"]["performances"]["edges"] == [
         {"node": {"start": perm.start.isoformat()}}
-        for perm in Performance.objects.running_on(query_date)
+        for perm in Performance.objects.running_on(query_datetime.date())
     ]
 
 

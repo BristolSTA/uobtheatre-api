@@ -8,34 +8,36 @@
 If you have docker and docker-compose installed run:
 
 ```
-make up
+make setup
 ```
 
-(If you are on windows you will need to copy the command into git bash from the makefile or use wsl)
+This will:
+
+- Pull all the docker images
+- Build the api image
+- Collect the static files
+- Setup a venv and precommit
+- Start the api and db
+
+(If you are on windows you will need to copy the commands into git bash from the makefile or use wsl)
 
 # Prerequisites (Local dev)
 
-- Python 3.9
+- Python 3.10
 - [docker](https://docs.docker.com/get-docker/)
 - [docker-compose](https://docs.docker.com/compose/install/)
-
-
-At the moment precommit does not run in the docker container, so you will need to have things installed locally.
-
-Create a virtualenv and use it
-
-```
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements/local.txt
-```
 
 ## Pre-commit
 
 Pre-commit is required to format code and do lots of nice checks.
 
-Install precommit with (make sure you are in venv):
-`pre-commit install`
+It should be installed by `make setup`.
+
+Otherwise, it can be installed manually with:
+```
+pip install pre-commit
+pre-commit install
+```
 
 If this case every commit should trigger the precommit hook. You will always need to be commit from within the venv for this to work.
 
@@ -130,5 +132,9 @@ The API image will then need rebuilding to add this dependency. Run:
 ```
 make build
 ```
+
+This does the following:
+- Set the requirements for mypy precommit
+- Rebuild the api
 
 If mypy gives an error about not being able to find the new package, add it to the list of "additional_dependencies" in `.pre-commit-config.yaml`.

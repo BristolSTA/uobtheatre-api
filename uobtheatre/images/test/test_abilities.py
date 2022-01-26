@@ -1,8 +1,10 @@
-import pytest
 from unittest.mock import patch
+
+import pytest
+
 from uobtheatre.images.abilities import UploadImage
-from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.productions.abilities import AddProduction, EditProduction
+from uobtheatre.users.test.factories import UserFactory
 
 
 @pytest.mark.django_db

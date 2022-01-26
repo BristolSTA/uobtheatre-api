@@ -171,7 +171,9 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
                 if not create_ability
                 else create_ability.user_has(info.context.user)
             ):
-                raise AuthorizationException("You cannot create one of these")
+                raise AuthorizationException(
+                    "You cannot create a %s" % model_name.lower()
+                )
             return
 
         instance = cls.get_object_instance(root, info, **inputs)
@@ -183,7 +185,9 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
             if not update_ability
             else update_ability.user_has_for(info.context.user, instance)
         ):
-            raise AuthorizationException("You cannot change this instance")
+            raise AuthorizationException(
+                "You cannot change this %s instance" % model_name.lower()
+            )
 
     @classmethod
     def on_success(cls, info, response, is_creation):

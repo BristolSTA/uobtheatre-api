@@ -2,7 +2,6 @@ import math
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 from urllib.parse import urlencode
 
-from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.postgres.aggregates import BoolAnd
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -15,16 +14,18 @@ from graphql_relay.node.node import to_global_id
 
 from uobtheatre.discounts.models import ConcessionType, DiscountCombination
 from uobtheatre.mail.composer import MailComposer
-from uobtheatre.payments.models import Payment
-from uobtheatre.payments.payables import Payable
-from uobtheatre.productions.models import Performance
+from uobtheatre.payments.exceptions import CantBeRefundedException
+from uobtheatre.payments.models import Transaction
+from uobtheatre.payments.payables import Payable, PayableQuerySet
+from uobtheatre.productions.models import Performance, Production
 from uobtheatre.users.models import User
+from uobtheatre.utils.filters import filter_passes_on_model
 from uobtheatre.utils.models import TimeStampedMixin
 from uobtheatre.utils.utils import combinations, create_short_uuid
 from uobtheatre.venues.models import Seat, SeatGroup
 
 if TYPE_CHECKING:
-    from uobtheatre.payments.payment_methods import PaymentMethod
+    from uobtheatre.payments.transaction_providers import PaymentProvider
 
 
 class MiscCost(models.Model):
@@ -91,7 +92,7 @@ class MiscCost(models.Model):
         ]
 
 
-class BookingQuerySet(QuerySet):
+class BookingQuerySet(PayableQuerySet):
     """QuerySet for bookings"""
 
     def annotate_checked_in(self) -> QuerySet:
@@ -153,7 +154,7 @@ class BookingQuerySet(QuerySet):
 
         return query_set
 
-    def expired(self, bool_val=False) -> QuerySet:
+    def expired(self, bool_val=True) -> QuerySet:
         """Bookings that are not expired will be returned
 
         Args:
@@ -164,8 +165,12 @@ class BookingQuerySet(QuerySet):
             QuerySet: the filtered queryset
         """
         if bool_val:
-            return self.exclude(status="PAID").filter(expires_at__lt=timezone.now())
-        return self.filter(Q(status="PAID") | Q(expires_at__gt=timezone.now()))
+            return self.filter(
+                status=Payable.Status.IN_PROGRESS, expires_at__lt=timezone.now()
+            )
+        return self.filter(
+            ~Q(status=Payable.Status.IN_PROGRESS) | Q(expires_at__gt=timezone.now())
+        )
 
 
 def generate_expires_at():
@@ -173,7 +178,8 @@ def generate_expires_at():
     return timezone.now() + timezone.timedelta(minutes=15)
 
 
-class Booking(TimeStampedMixin, Payable, models.Model):
+# pylint: disable=too-many-public-methods
+class Booking(TimeStampedMixin, Payable):
     """A booking for a performance
 
     A booking holds a collection of tickets for a given performance.
@@ -183,10 +189,6 @@ class Booking(TimeStampedMixin, Payable, models.Model):
     """
 
     objects = BookingQuerySet.as_manager()
-
-    class BookingStatus(models.TextChoices):
-        IN_PROGRESS = "IN_PROGRESS", "In Progress"
-        PAID = "PAID", "Paid"
 
     class Meta:
         constraints = [
@@ -215,15 +217,6 @@ class Booking(TimeStampedMixin, Payable, models.Model):
         Performance,
         on_delete=models.RESTRICT,
         related_name="bookings",
-    )
-    status = models.CharField(
-        max_length=20,
-        choices=BookingStatus.choices,
-        default=BookingStatus.IN_PROGRESS,
-    )
-
-    payments = GenericRelation(
-        Payment, object_id_field="pay_object_id", content_type_field="pay_object_type"
     )
 
     # An additional discount that can be applied to the booking by an admin
@@ -525,7 +518,7 @@ class Booking(TimeStampedMixin, Payable, models.Model):
             (len(self.tickets.all()) + len(add_tickets) - len(delete_tickets)),
         )
 
-    def pay(self, payment_method: "PaymentMethod") -> Optional["Payment"]:
+    def pay(self, payment_method: "PaymentProvider") -> Optional["Transaction"]:
         """
         Pay for booking using provided payment method.
 
@@ -537,25 +530,25 @@ class Booking(TimeStampedMixin, Payable, models.Model):
             Payment: The payment created by the checkout (optional)
         """
         # Cancel and delete pending payments for this booking
-        for payment in self.payments.filter(status=Payment.PaymentStatus.PENDING):
+        for payment in self.transactions.filter(status=Transaction.Status.PENDING):
             payment.cancel()
 
         payment = payment_method.pay(self.total, self.misc_costs_value(), self)
 
         # If a payment is created set the booking as paid
-        if payment.status == Payment.PaymentStatus.COMPLETED:
-            self.complete()
+        if payment.status == Transaction.Status.COMPLETED:
+            self.complete(payment)
 
         return payment
 
-    def complete(self):
+    def complete(self, payment: Transaction = None):
         """
         Complete the booking (after it has been paid for) and send the
         confirmation email.
         """
-        self.status = self.BookingStatus.PAID
+        self.status = Payable.Status.PAID
         self.save()
-        self.send_confirmation_email()
+        self.send_confirmation_email(payment)
 
     @property
     def web_tickets_path(self):
@@ -569,7 +562,7 @@ class Booking(TimeStampedMixin, Payable, models.Model):
         }
         return f"/user/booking/{self.reference}/tickets?" + urlencode(params, True)
 
-    def send_confirmation_email(self):
+    def send_confirmation_email(self, payment: Transaction = None):
         """
         Send email confirmation which includes a link to the booking.
         """
@@ -577,20 +570,23 @@ class Booking(TimeStampedMixin, Payable, models.Model):
 
         composer.line(
             "Your booking to %s has been confirmed!" % self.performance.production.name
-        ).image(self.performance.production.featured_image.file.url)
+        )
+
+        if self.performance.production.featured_image:
+            composer.image(self.performance.production.featured_image.file.url)
 
         composer.line(
             (
                 "This event opens at %s for a %s start. Please bring your tickets (printed or on your phone) or your booking reference (<strong>%s</strong>)."
-                if self.user.status.verified
+                if self.user.status.verified  # type: ignore
                 else "This event opens at %s for a %s start. Please bring your booking reference (<strong>%s</strong>)."
             )
             % (
-                self.performance.doors_open.astimezone(
-                    self.performance.venue.address.timezone
+                self.performance.doors_open.astimezone(  # type: ignore
+                    self.performance.venue.address.timezone  # type: ignore
                 ).strftime("%d %B %Y %H:%M %Z"),
-                self.performance.start.astimezone(
-                    self.performance.venue.address.timezone
+                self.performance.start.astimezone(  # type: ignore
+                    self.performance.venue.address.timezone  # type: ignore
                 ).strftime("%H:%M %Z"),
                 self.reference,
             )
@@ -598,15 +594,13 @@ class Booking(TimeStampedMixin, Payable, models.Model):
 
         composer.action(self.web_tickets_path, "View Tickets")
 
-        if self.user.status.verified:
+        if self.user.status.verified:  # type: ignore
             composer.action("/user/booking/%s" % self.reference, "View Booking")
 
-        payment = self.payments.first()
         # If this booking includes a payment, we will include details of this payment as a reciept
         if payment:
             composer.heading("Payment Information").line(
-                "{:.2f}".format(payment.value / 100)
-                + f" {payment.currency} paid ({payment.provider}{' - ID' + payment.provider_payment_id if payment.provider_payment_id else '' })"
+                f"{payment.value_currency} paid ({payment.provider.description}{' - ID ' + payment.provider_transaction_id if payment.provider_transaction_id else '' })"
             )
 
         composer.line(
@@ -618,12 +612,30 @@ class Booking(TimeStampedMixin, Payable, models.Model):
     @property
     def is_reservation_expired(self):
         """Returns whether the booking is considered expired"""
+        return filter_passes_on_model(self, lambda qs: qs.expired())
 
-        return (
-            self.status == self.BookingStatus.IN_PROGRESS
-            and self.expires_at
-            and timezone.now() > self.expires_at
+    def validate_cant_be_refunded(self) -> Optional[CantBeRefundedException]:
+        if error := super().validate_cant_be_refunded():
+            return error
+        if self.performance.production.status in [
+            Production.Status.CLOSED,
+            Production.Status.COMPLETE,
+        ]:
+            return CantBeRefundedException(
+                f"The Booking ({self}) can't be refunded because of it's performances' status ({self.performance.production.status})"
+            )
+        return None
+
+    @property
+    def can_be_refunded(self):
+        return super().can_be_refunded and (
+            not self.performance.production.status
+            in [Production.Status.CLOSED, Production.Status.COMPLETE]
         )
+
+    @property
+    def display_name(self):
+        return f"Booking Ref. {self.reference} for {str(self.performance).lower()}"
 
 
 class TicketQuerySet(QuerySet):
@@ -631,7 +643,11 @@ class TicketQuerySet(QuerySet):
 
     def sold_or_reserved(self) -> QuerySet:
         return self.filter(
-            Q(booking__status="PAID") | Q(booking__expires_at__gt=timezone.now())
+            Q(booking__status=Payable.Status.PAID)
+            | Q(
+                booking__status=Payable.Status.IN_PROGRESS,
+                booking__expires_at__gt=timezone.now(),
+            )
         )
 
     def sold(self) -> QuerySet:

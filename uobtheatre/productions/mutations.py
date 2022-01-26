@@ -108,8 +108,8 @@ class SetProductionStatus(AuthRequiredMixin, SafeMutation):
 
         # If we are setting this production to anything other than draft it must
         # be valid.
-        if status != Production.Status.DRAFT and (errors := production.validate()):
-            raise GQLExceptions(errors)
+        if status != Production.Status.DRAFT and (error := production.validate()):
+            raise error
 
         production.status = status
         production.save()

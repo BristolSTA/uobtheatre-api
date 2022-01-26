@@ -10,6 +10,24 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
 
+class BaseModel(models.Model):
+    """
+    Base model for all UOB models. TODO actually use this
+    """
+
+    @property
+    def qs(self):
+        return self.__class__.objects.filter(pk=self.pk)
+
+    @classmethod
+    @property
+    def content_type(cls):
+        return ContentType.objects.get_for_model(cls)
+
+    class Meta:
+        abstract = True
+
+
 class AbstractModelMeta(abc.ABCMeta, type(models.Model)):  # type: ignore
     pass
 

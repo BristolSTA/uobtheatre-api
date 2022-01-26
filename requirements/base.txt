@@ -15,6 +15,9 @@ Pillow>=8.1.2
 # Cors
 django-cors-headers==3.11.0
 
+# Admin confirmation messages
+django-admin-confirm==0.2.4
+
 # TODO check if required
 django-configurations==2.3.1
 
@@ -23,9 +26,6 @@ django-environ==0.8.1  # https://github.com/joke2k/django-environ
 
 # Spreadsheet generation
 xlsxwriter==3.0.2
-
-# Used in tests and for MutationForm
-factory-boy==3.2.1
 
 #=== Database ===#
 
@@ -40,6 +40,7 @@ django==3.2.11
 django-guardian==2.4.0  # https://github.com/django-guardian/django-guardian
 django_tiptap==0.0.10  # https://github.com/django-tiptap/django_tiptap
 djangorestframework==3.13.1  # https://www.django-rest-framework.org
+django-nonrelated-inlines==0.1.1
 
 #=== GQL core ===#
 
@@ -59,13 +60,17 @@ squareup>=9.0.0.20210226
 
 #=== Logging ===#
 
-sentry-sdk==1.5.2
+sentry-sdk==1.5.3
 whitenoise==5.3.0  # https://github.com/evansd/whitenoise
 
 #=== Email ===#
-django-anymail[amazon_ses]==8.4  # https://github.com/anymail/django-anymail
+django-anymail[amazon_ses]==8.5  # https://github.com/anymail/django-anymail
 django-inlinecss==0.3.0
 
 #=== Timezones ===#
 timezonefinder==5.2.0
 pytz==2021.3
+
+#=== Task Queue ===#
+django-celery-results==2.2.0
+redis==4.1.1

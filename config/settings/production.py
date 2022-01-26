@@ -59,4 +59,16 @@ AWS_HEADERS = {
     "Cache-Control": "max-age=86400, s-maxage=86400, must-revalidate",
 }
 
-EMAIL_BACKEND = "anymail.backends.amazon_ses.EmailBackend"
+EMAIL_BACKEND = (
+    "anymail.backends.amazon_ses.EmailBackend"
+    if strtobool(env("EMAIL_ENABLED", default="yes"))
+    else "django.core.mail.backends.console.EmailBackend"
+)
+
+
+SQS_BROKER_URL = f"sqs://{AWS_ACCESS_KEY_ID}:{AWS_SECRET_ACCESS_KEY}@"
+CELERY_BROKER_URL = SQS_BROKER_URL
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    "queue_name_prefix": env("CELERY_QUEUE_PREFIX"),
+    "region": env("AWS_DEFAULT_REGION", default="eu-west-2"),
+}
