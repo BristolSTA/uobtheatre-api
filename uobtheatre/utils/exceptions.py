@@ -113,7 +113,7 @@ class GQLException(MutationException):
     """
 
     def __init__(self, message, code=None, field=None, params=None):
-        super().__init__()
+        super().__init__(message, code, field, params)
         self.message = str(message)
         self.code = code
         self.params = params
