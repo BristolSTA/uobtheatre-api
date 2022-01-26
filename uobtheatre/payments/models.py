@@ -245,10 +245,26 @@ class Transaction(TimeStampedMixin, BaseModel):
         return True
 
     def async_refund(self):
+        """
+        Create "refund_payment" task to refund the payment. The task queue the
+        refund method.
+        """
         refund_payment.delay(self.pk)
 
     def refund(self, refund_provider: RefundProvider = None):
-        """Refund the payment"""
+        """
+        Refund the payment
+
+        Args:
+            refund_provider (RefundProvider): If a refund provider is provider,
+                that is used to refund the payment. Otherwise the
+                automatic_refund_provider of the payment transaction provider
+                is used.
+
+        Raises:
+            CantBeRefundedException: Raised if the payment cannot be refunded
+                for a known reason.
+        """
         self.can_be_refunded(refund_provider=refund_provider, raises=True)
 
         if refund_provider is None:
