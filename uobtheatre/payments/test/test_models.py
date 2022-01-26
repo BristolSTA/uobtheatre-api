@@ -400,25 +400,19 @@ def test_payment_associated_tasks():
     # A related task
     related_task = TaskResultFactory(
         task_name="uobtheatre.payments.tasks.refund_payment",
-        task_args=f'"({transaction.id}, {transaction.content_type.id}, abc))"',
+        task_args=f'"({transaction.id},)"',
     )
 
     # Unrelated, different transaction
     TaskResultFactory(
         task_name="uobtheatre.payments.tasks.refund_payment",
-        task_args=f'"({other_transaction.id}, {transaction.content_type.id}, abc))"',
-    )
-
-    # Unrelated, different content type
-    TaskResultFactory(
-        task_name="uobtheatre.payments.tasks.refund_payment",
-        task_args=f'"({transaction.id}, {transaction.content_type.id + 1}, abc))"',
+        task_args=f'"({other_transaction.id},)"',
     )
 
     # Unrelated, different task type
     TaskResultFactory(
         task_name="uobtheatre.payments.tasks.refund_production",
-        task_args=f'"({transaction.id}, {transaction.content_type.id}, abc))"',
+        task_args=f'"({transaction.id},)"',
     )
 
     assert list(transaction.qs.associated_tasks()) == [related_task]
