@@ -241,4 +241,4 @@ def test_square_exception_args():
             status_code=200,
         )
     )
-    assert exc.args == ("abc",)
+    assert exc.args == ("abc", 200, None, None)
