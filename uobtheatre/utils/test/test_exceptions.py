@@ -1,3 +1,5 @@
+from types import SimpleNamespace
+
 import pytest
 from graphene_django.types import ErrorType
 
@@ -230,3 +232,13 @@ def test_form_exceptions(form_errors, expected_resolve_output):
 )
 def test_eq(exception1, exception2, expect_eq):
     assert (exception1 == exception2) == expect_eq
+
+
+def test_square_exception_str():
+    exc = SquareException(
+        SimpleNamespace(
+            errors=[{"detail": "abc", "category": "PAYMENT_METHOD_ERROR"}],
+            status_code=200,
+        )
+    )
+    assert str(exc) == "(message=abc)"
