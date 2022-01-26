@@ -118,6 +118,7 @@ class GQLException(MutationException):
         self.code = code
         self.params = params
         self.field = field
+        self.args = (message,)
 
     def resolve(self) -> List[Union[FieldError, NonFieldError]]:
         return [
@@ -193,9 +194,6 @@ class SquareException(GQLException):
         )
 
         super().__init__(message, square_response.status_code)
-
-    def __str__(self):
-        return f"{super().__str__()}(message={self.message})"
 
 
 class AuthException(GQLException):

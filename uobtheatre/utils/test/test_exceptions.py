@@ -234,11 +234,11 @@ def test_eq(exception1, exception2, expect_eq):
     assert (exception1 == exception2) == expect_eq
 
 
-def test_square_exception_str():
+def test_square_exception_args():
     exc = SquareException(
         SimpleNamespace(
             errors=[{"detail": "abc", "category": "PAYMENT_METHOD_ERROR"}],
             status_code=200,
         )
     )
-    assert str(exc) == "(message=abc)"
+    assert exc.args == ("abc",)
