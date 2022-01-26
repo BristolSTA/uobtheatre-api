@@ -194,6 +194,9 @@ class SquareException(GQLException):
 
         super().__init__(message, square_response.status_code)
 
+    def __str__(self):
+        return f"{super().__str__()}(message={self.message})"
+
 
 class AuthException(GQLException):
     def __init__(self, message="Authentication Error"):
