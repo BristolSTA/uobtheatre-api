@@ -262,7 +262,7 @@ def test_payable_associated_tasks():
     # A related task for the payments
     related_payment_task = TaskResultFactory(
         task_name="uobtheatre.payments.tasks.refund_payment",
-        task_args=f'"({transaction.id}, {transaction.content_type.id}, abc))"',
+        task_args=f'"({transaction.id},)"',
     )
 
     # A related task for the booking
