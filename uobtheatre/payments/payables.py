@@ -109,13 +109,13 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
     def async_refund(self, authorizing_user: User):
         refund_payable.delay(self.pk, self.content_type.pk, authorizing_user.pk)
 
-    def refund(self, authorizing_user: User, send_admin_email=True):
+    def refund(self, authorizing_user: User, do_async=True, send_admin_email=True):
         """Refund the payable"""
         if error := self.validate_cant_be_refunded():  # type: ignore
             raise error  # pylint: disable=raising-bad-type
 
         for payment in self.transactions.filter(type=Transaction.Type.PAYMENT).all():
-            payment.refund()
+            payment.async_refund() if do_async else payment.refund()
 
         if send_admin_email:
             mail = payable_refund_initiated_email(authorizing_user, [self])

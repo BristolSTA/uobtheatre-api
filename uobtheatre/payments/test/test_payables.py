@@ -207,9 +207,17 @@ def test_async_refund():
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "can_be_refunded,send_email", [(True, False), (False, True), (True, True)]
+    "can_be_refunded,send_email,do_async",
+    [
+        (True, False, False),
+        (False, True, False),
+        (True, True, False),
+        (True, False, True),
+        (False, True, True),
+        (True, True, True),
+    ],
 )
-def test_payable_refund(mailoutbox, can_be_refunded, send_email):
+def test_payable_refund(mailoutbox, can_be_refunded, send_email, do_async):
     pay_object = BookingFactory()
     payment_1 = TransactionFactory(pay_object=pay_object)
     payment_2 = TransactionFactory(pay_object=pay_object)
@@ -221,10 +229,14 @@ def test_payable_refund(mailoutbox, can_be_refunded, send_email):
         return_value=(CantBeRefundedException if not can_be_refunded else None),
     ), patch(
         "uobtheatre.payments.models.Transaction.refund", autospec=True
-    ) as payment_refund:
+    ) as payment_refund, patch(
+        "uobtheatre.payments.models.Transaction.async_refund", autospec=True
+    ) as payment_refund_async:
 
         def test():
-            pay_object.refund(UserFactory(), send_admin_email=send_email)
+            pay_object.refund(
+                UserFactory(), do_async=do_async, send_admin_email=send_email
+            )
 
         if not can_be_refunded:
             with pytest.raises(CantBeRefundedException):
@@ -232,11 +244,13 @@ def test_payable_refund(mailoutbox, can_be_refunded, send_email):
         else:
             test()
 
-        assert payment_refund.call_count == (2 if can_be_refunded else 0)
+        mock = payment_refund_async if do_async else payment_refund
+
+        assert mock.call_count == (2 if can_be_refunded else 0)
         assert len(mailoutbox) == (1 if can_be_refunded and send_email else 0)
         if can_be_refunded:
-            payment_refund.assert_any_call(payment_1)
-            payment_refund.assert_any_call(payment_2)
+            mock.assert_any_call(payment_1)
+            mock.assert_any_call(payment_2)
 
 
 @pytest.mark.django_db
