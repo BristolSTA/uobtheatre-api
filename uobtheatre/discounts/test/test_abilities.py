@@ -77,7 +77,12 @@ def test_modify_concession_type_ability_when_only_on_owned_production():
     concession_type = ConcessionTypeFactory()
 
     dis_1 = DiscountFactory()
-    dis_1.performances.set([PerformanceFactory(production=production)])
+    dis_1.performances.set(
+        [
+            PerformanceFactory(production=production),
+            PerformanceFactory(production=production),
+        ]
+    )
 
     DiscountRequirementFactory(discount=dis_1, concession_type=concession_type)
 
