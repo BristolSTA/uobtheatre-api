@@ -27,6 +27,16 @@ class ExtendedUserNode(schema.UserNode):
 
     class Meta:
         model = User
+        fields = (
+            "id",
+            "email",
+            "first_name",
+            "last_name",
+            "date_joined",
+            "bookings",
+            "createdBookings",
+            "permissions",
+        )
 
 
 class AuthMutation(graphene.ObjectType):
