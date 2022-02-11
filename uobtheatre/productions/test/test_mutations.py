@@ -218,6 +218,33 @@ def test_production_mutation_update_new_society(
 
 
 @pytest.mark.django_db
+def test_production_mutation_update_current_society(gql_client):
+    production = ProductionFactory()
+    request = """
+        mutation {
+          production(
+            input: {
+                id: "%s"
+                society: "%s"
+             }
+          ) {
+            success
+         }
+        }
+    """ % (
+        to_global_id("ProductionNode", production.id),
+        to_global_id("SocietyNode", production.society.id),
+    )
+
+    gql_client.login()
+
+    with patch.object(EditProduction, "user_has_for", return_value=True):
+        response = gql_client.execute(request)
+
+    assert response["data"]["production"]["success"] is True
+
+
+@pytest.mark.django_db
 def test_production_mutation_update_by_local_id(gql_client):
     production = ProductionFactory()
     new_society = SocietyFactory()
