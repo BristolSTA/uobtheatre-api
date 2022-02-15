@@ -34,7 +34,7 @@ class ExtendedUserNode(schema.UserNode):
             "last_name",
             "date_joined",
             "bookings",
-            "createdBookings",
+            "created_bookings",
             "permissions",
         )
 
