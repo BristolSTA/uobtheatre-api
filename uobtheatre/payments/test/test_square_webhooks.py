@@ -165,53 +165,15 @@ def test_handle_checkout_webhook(rest_client, monkeypatch):
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "is_in_db,square_status",
-    [
-        (False, "CANCELED"),
-        (False, "CANCEL_REQUESTED"),
-        (True, "CANCELED"),
-        (True, "CANCEL_REQUESTED"),
-    ],
-)
-def test_handle_checkout_webhook_when_cancelling(rest_client, is_in_db, square_status):
-    if is_in_db:
-        transaction = TransactionFactory(
-            provider_transaction_id="dhgENdnFOPXqO", provider_name=SquarePOS.name
-        )
-
-    payload = deepcopy(TEST_TERMINAL_CHECKOUT_PAYLOAD)
-    payload["data"]["object"]["checkout"]["status"] = square_status
-
-    with patch.object(SquareWebhooks, "is_valid_callback", return_value=True), patch(
-        "uobtheatre.payments.models.Transaction.sync_transaction_with_provider",
-        autospec=True,
-    ) as sync_mock:
-        response = rest_client.post(
-            "/square",
-            payload,
-            HTTP_X_SQUARE_SIGNATURE="signature",
-            format="json",
-        )
-
-    assert response.status_code == 200
-    if is_in_db:
-        sync_mock.assert_called_once_with(transaction)
-    else:
-        sync_mock.assert_not_called()
-
-
-@pytest.mark.django_db
 def test_handle_checkout_webhook_with_unknown_transaction(rest_client):
-    with patch.object(
-        SquareWebhooks, "is_valid_callback", return_value=True
-    ), pytest.raises(Transaction.DoesNotExist):
-        rest_client.post(
+    with patch.object(SquareWebhooks, "is_valid_callback", return_value=True):
+        response = rest_client.post(
             "/square",
             TEST_TERMINAL_CHECKOUT_PAYLOAD,
             HTTP_X_SQUARE_SIGNATURE="signature",
             format="json",
         )
+    assert response.status_code == 404
 
 
 @pytest.mark.django_db

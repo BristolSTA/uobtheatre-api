@@ -69,45 +69,44 @@ class SquareWebhooks(APIView):
             return Response("Invalid signature", status=400)
 
         request_data = request.data
-
-        if request_data["type"] == "terminal.checkout.updated":
-            # This is a terminal checkout
-            status = request_data["data"]["object"]["checkout"]["status"]
-            try:
+        try:
+            if request_data["type"] == "terminal.checkout.updated":
+                # This is a terminal checkout
                 Transaction.objects.get(
                     provider_transaction_id=request_data["data"]["object"]["checkout"][
                         "id"
                     ],
                     provider_name=SquarePOS.name,
                 ).sync_transaction_with_provider()
-            except Transaction.DoesNotExist as exception:
-                if status not in ["CANCEL_REQUESTED", "CANCELED"]:
-                    raise exception
 
-        elif request_data["type"] == "payment.updated":
-            # This is a payment update webhook
-            square_payment = request_data["data"]["object"]["payment"]
+            elif request_data["type"] == "payment.updated":
+                # This is a payment update webhook
+                square_payment = request_data["data"]["object"]["payment"]
 
-            # First, check if this is a terminal checkout payment update. If it is, the data inside is for the payment not the checkout, so we don't use it
-            provider_id = square_payment.get("terminal_checkout_id")
-            data = None
+                # First, check if this is a terminal checkout payment update. If it is, the data inside is for the payment not the checkout, so we don't use it
+                provider_id = square_payment.get("terminal_checkout_id")
+                data = None
 
-            if not provider_id:
-                # Not a terminal checkout, therefore it is a standard payment
-                provider_id = square_payment["id"]
-                data = square_payment
+                if not provider_id:
+                    # Not a terminal checkout, therefore it is a standard payment
+                    provider_id = square_payment["id"]
+                    data = square_payment
 
-            Transaction.objects.get(
-                provider_transaction_id=provider_id,
-            ).sync_transaction_with_provider(data)
+                Transaction.objects.get(
+                    provider_transaction_id=provider_id,
+                ).sync_transaction_with_provider(data)
 
-        elif request_data["type"] == "refund.updated":
-            # This is a refund webhook
-            Transaction.objects.get(
-                provider_transaction_id=request_data["data"]["id"],
-                type=Transaction.Type.REFUND,
-            ).sync_transaction_with_provider(request_data["data"]["object"]["refund"])
-        else:
-            return Response(status=202)
+            elif request_data["type"] == "refund.updated":
+                # This is a refund webhook
+                Transaction.objects.get(
+                    provider_transaction_id=request_data["data"]["id"],
+                    type=Transaction.Type.REFUND,
+                ).sync_transaction_with_provider(
+                    request_data["data"]["object"]["refund"]
+                )
+            else:
+                return Response(status=202)
+        except Transaction.DoesNotExist:
+            return Response("Unknown Transaction", status=404)
 
         return Response(status=200)

@@ -840,7 +840,7 @@ def test_booking_pay_with_payment():
 
 
 @pytest.mark.django_db
-def test_booking_pay_deletes_pending_payments(mock_square):
+def test_booking_pay_deletes_pending_payments():
     """
     When we try to pay for a booking, pending payments that already exist for
     this booking should be deleted.
@@ -861,18 +861,13 @@ def test_booking_pay_deletes_pending_payments(mock_square):
         status=Transaction.Status.COMPLETED, pay_object=booking
     )
 
-    with mock_square(
-        SquarePOS.client.terminal, "cancel_terminal_checkout", success=True
-    ) as mock:
+    with patch("uobtheatre.payments.models.Transaction.cancel", autospec=True) as mock:
         booking.pay(payment_method)  # type: ignore
 
     assert booking.status == Payable.Status.PAID
 
-    # Assert pending payment cancelled with square
-    mock.assert_called_once_with(pending_payment.provider_transaction_id)
-
-    # And pending payment deleted
-    assert not Transaction.objects.filter(id=pending_payment.id).exists()
+    # Assert pending payment cancelled
+    mock.assert_called_once_with(pending_payment)
 
     # Assert completed payment is not cancelled
     assert Transaction.objects.filter(id=completed_payment.id).exists()

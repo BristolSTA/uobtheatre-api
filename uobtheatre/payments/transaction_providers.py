@@ -588,6 +588,10 @@ class SquareOnline(PaymentProvider, SquarePaymentMethod):
         )
 
     @classmethod
+    def cancel(cls, payment: "payment_models.Transaction") -> None:
+        payment.delete()
+
+    @classmethod
     def sync_transaction(cls, payment: "payment_models.Transaction", data: dict = None):
         """Syncs the given payment with the raw payment data"""
         payment_id = cls.get_payment_provider_id(payment)

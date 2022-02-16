@@ -3,6 +3,10 @@ from unittest.mock import PropertyMock, patch
 import pytest
 
 from uobtheatre.bookings.test.factories import BookingFactory
+from uobtheatre.payments.exceptions import (
+    CantBeCanceledException,
+    CantBeRefundedException,
+)
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.square_webhooks import SquareWebhooks
@@ -214,6 +218,13 @@ def test_square_online_sync_payment(mock_square):
     assert payment.status == Transaction.Status.COMPLETED
 
 
+@pytest.mark.django_db
+def test_square_online_cancel_payment():
+    transaction = TransactionFactory(provider_name=SquareOnline.name)
+    SquareOnline.cancel(transaction)
+    assert not Transaction.objects.filter(pk=transaction.pk).exists()
+
+
 ###
 # Square POS PaymentMethod
 ###
@@ -327,9 +338,6 @@ def test_square_pos_cancel_failure(mock_square):
         with pytest.raises(SquareException):
             payment_method = SquarePOS("device_id", "ikey")
             payment_method.cancel(payment)
-
-    # Assert payment not deleted
-    assert Transaction.objects.filter(id=payment.id).exists()
 
 
 @pytest.mark.django_db
@@ -540,6 +548,16 @@ def test_manual_pay(payment_method, value, expected_method_str):
     assert payment.provider_name == expected_method_str
     assert payment.type == Transaction.Type.PAYMENT
     assert payment.app_fee == 12
+
+
+@pytest.mark.django_db
+def test_cash_cancel():
+    transaction = TransactionFactory(provider_name=Cash.name)
+    Cash.cancel(transaction)
+
+    assert Transaction.objects.filter(
+        pk=transaction.pk
+    ).exists()  # Nothing should have happened
 
 
 @pytest.mark.django_db
