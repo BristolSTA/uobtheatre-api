@@ -93,6 +93,7 @@ class Transaction(TimeStampedMixin, BaseModel):
             status_map = {
                 "APPROVED": cls.PENDING,
                 "PENDING": cls.PENDING,
+                "CANCEL_REQUESTED": cls.PENDING,
                 "COMPLETED": cls.COMPLETED,
                 "REJECTED": cls.FAILED,
                 "CANCELLED": cls.FAILED,
