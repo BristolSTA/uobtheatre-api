@@ -121,7 +121,8 @@ def test_create_payment_object(payment_method, expected_type):
 # Square Online PaymentMethod
 ###
 @pytest.mark.django_db
-def test_square_online_pay_success(mock_square):
+@pytest.mark.parametrize("with_sca_token", [True, False])
+def test_square_online_pay_success(mock_square, with_sca_token):
     """
     Test paying a booking with square
     """
@@ -144,14 +145,26 @@ def test_square_online_pay_success(mock_square):
             }
         },
         success=True,
-    ):
-        booking = BookingFactory()
-        payment_method = SquareOnline("nonce", "key")
+    ) as mock:
+        booking = BookingFactory(reference="abcd")
+        payment_method = SquareOnline(
+            "nonce", "key", "verify_token" if with_sca_token else None
+        )
         payment = payment_method.pay(20, 10, booking)
 
     # Assert the returned payment gets saved
     assert Transaction.objects.count() == 1
     assert Transaction.objects.first() == payment
+
+    expected_body = {
+        "idempotency_key": "key",
+        "source_id": "nonce",
+        "amount_money": {"amount": 20, "currency": "GBP"},
+        "reference_id": "abcd",
+    }
+    if with_sca_token:
+        expected_body["verification_token"] = "verify_token"
+    mock.assert_called_once_with(expected_body)
 
     # Assert a payment of the correct type is created
     assert payment is not None

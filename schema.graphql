@@ -311,7 +311,7 @@ type Mutation {
   generateReport(endTime: DateTime, name: String!, options: [ReportOption], startTime: DateTime): GenerateReport
   createBooking(adminDiscountPercentage: Float, performanceId: IdInputField, targetUserEmail: String, tickets: [CreateTicketInput]): CreateBooking
   updateBooking(adminDiscountPercentage: Float, bookingId: IdInputField, targetUserEmail: String, tickets: [UpdateTicketInput]): UpdateBooking
-  payBooking(bookingId: IdInputField!, deviceId: String, idempotencyKey: String, nonce: String, paymentProvider: PaymentMethod, price: Int!): PayBooking
+  payBooking(bookingId: IdInputField!, deviceId: String, idempotencyKey: String, nonce: String, paymentProvider: PaymentMethod, price: Int!, verifyToken: String): PayBooking
   checkInBooking(bookingReference: String!, performanceId: IdInputField!, tickets: [TicketIDInput]!): CheckInBooking
   uncheckInBooking(bookingReference: String!, performanceId: IdInputField!, tickets: [TicketIDInput]!): UnCheckInBooking
 }

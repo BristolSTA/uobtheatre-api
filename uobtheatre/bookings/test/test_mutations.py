@@ -1710,7 +1710,8 @@ def test_pay_booking_mutation_online_without_nonce(gql_client):
 
 
 @pytest.mark.django_db
-def test_pay_booking_success(mock_square, gql_client):
+@pytest.mark.parametrize("with_sca_token", [True, False])
+def test_pay_booking_success(mock_square, gql_client, with_sca_token):
     gql_client.login()
     booking = BookingFactory(status=Payable.Status.IN_PROGRESS, user=gql_client.user)
     add_ticket_to_booking(booking)
@@ -1723,6 +1724,7 @@ def test_pay_booking_success(mock_square, gql_client):
             price: 125
             nonce: "cnon:card-nonce-ok"
             idempotencyKey: "my_idempotency_key_string"
+            %s
         ) {
             success
             errors {
@@ -1778,9 +1780,12 @@ def test_pay_booking_success(mock_square, gql_client):
         success=True,
     ):
         response = gql_client.execute(
-            request_query % to_global_id("BookingNode", booking.id)
+            request_query
+            % (
+                to_global_id("BookingNode", booking.id),
+                'verifyToken: "verify_token"' if with_sca_token else "",
+            )
         )
-
     assert response == {
         "data": {
             "payBooking": {
