@@ -530,7 +530,9 @@ class SquareOnline(PaymentProvider, SquarePaymentMethod):
     def refund_providers(cls):
         return (SquareRefund(idempotency_key=str(uuid4())),)
 
-    def __init__(self, nonce: str, idempotency_key: str) -> None:
+    def __init__(
+        self, nonce: str, idempotency_key: str, verify_token: str = None
+    ) -> None:
         """
         Args:
             idempotency_key (str): This value is as unique indicator of
@@ -540,9 +542,11 @@ class SquareOnline(PaymentProvider, SquarePaymentMethod):
             nonce (str): The nonce is a reference to the completed payment
                 form on the front-end. This allows square to determine the
                 payment details to use.
+            verify_token(str): The verify token is used as part of 3D Secure verification, and is optional.
         """
         self.nonce = nonce
         self.idempotency_key = idempotency_key
+        self.verify_token = verify_token
         super().__init__()
 
     def pay(
@@ -569,6 +573,9 @@ class SquareOnline(PaymentProvider, SquarePaymentMethod):
             "amount_money": {"amount": value, "currency": "GBP"},
             "reference_id": pay_object.payment_reference_id,
         }
+        if self.verify_token:
+            body["verification_token"] = self.verify_token
+
         response = self.client.payments.create_payment(body)
         self._handle_response_failure(response)
 
