@@ -206,7 +206,7 @@ class Transaction(TimeStampedMixin, BaseModel):
         """
         Cancel payment
         """
-        if not self.status == self.Status.PENDING:
+        if self.status != self.Status.PENDING:
             raise CantBeCanceledException(
                 f"A transaction of status {self.status} cannot be canceled"
             )
