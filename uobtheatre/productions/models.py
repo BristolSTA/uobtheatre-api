@@ -228,6 +228,7 @@ class PerformanceQuerySet(QuerySet):
             self.bookings()
             .refunded(bool_val=False)
             .values_list("user__email", flat=True)
+            .distinct()
         )
 
 
