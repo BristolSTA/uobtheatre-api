@@ -237,6 +237,7 @@ def test_production_mutation_update_current_society(gql_client):
     )
 
     gql_client.login()
+    assert not gql_client.user.has_perm("add_production", production.society)
 
     with patch.object(EditProduction, "user_has_for", return_value=True):
         response = gql_client.execute(request)
