@@ -77,10 +77,15 @@ class PerformanceAdmin(DangerousAdminConfirmMixin, ModelAdmin):
         ids = map(int, ids.split(","))
         performances = Performance.objects.filter(pk__in=ids)
         users = list(performances.booked_users())
-        form = SendEmailForm(request.POST if request.method == "POST" else None)
+        reason = "You are reciving this email as you have a booking "
+
+        form = SendEmailForm(
+            request.POST if request.method == "POST" else None,
+            initial={"user_reason": reason, "users": users},
+        )
 
         if form.is_valid():
-            form.submit(users)
+            form.submit()
             self.message_user(request, "Emails sent succesfully!")
             return redirect("/admin/productions/performance/")
 

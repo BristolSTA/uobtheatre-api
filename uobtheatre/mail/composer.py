@@ -69,6 +69,11 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
         self.items.append(Html(html))
         return self
 
+    def rule(self):
+        """Add a rule"""
+        self.items.append(Rule())
+        return self
+
     def append(self, item):
         self.items.append(item)
         return self
@@ -166,6 +171,16 @@ class Html(ComposerItemInterface):
 
     def to_html(self):
         return self.html
+
+
+class Rule(ComposerItemInterface):
+    """A horizontal dividing line"""
+
+    def to_text(self):
+        return "---------"
+
+    def to_html(self):
+        return "<p><hr /></p>"
 
 
 class MailComposer(ComposerItemsContainer):

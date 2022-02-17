@@ -5,6 +5,7 @@ from django.forms.models import ModelForm
 from django_tiptap.fields import TipTapTextFormField
 
 from uobtheatre.mail.composer import MailComposer, MassMailComposer
+from uobtheatre.users.models import User
 
 
 class SendEmailForm(forms.Form):
@@ -13,19 +14,33 @@ class SendEmailForm(forms.Form):
     """
 
     subject = forms.CharField(label="Subject", required=True, min_length=5)
+    users = forms.ModelMultipleChoiceField(
+        queryset=User.objects.all(), required=True, disabled=True
+    )
+    user_reason = forms.CharField(
+        label="Reason",
+        disabled=True,
+        help_text="e.g. You are recieving this email because...",
+    )
     message = TipTapTextFormField(label="Message", required=True, min_length=5)
     lgtm = forms.BooleanField(
         label="Ready to send?",
         required=True,
     )
 
-    def submit(self, users):
+    def submit(self):
+        """Submit the form"""
+
+        def mail_compose_generator(user):
+            mail = MailComposer().greeting(user)
+            if preface := self.cleaned_data["user_reason"]:
+                mail.line(preface).rule()
+            return mail.html(self.cleaned_data["message"])
+
         MassMailComposer(
-            users,
+            self.cleaned_data["users"],
             subject=self.cleaned_data["subject"],
-            mail_composer_generator=lambda user: (
-                MailComposer().greeting(user).html(self.cleaned_data["message"])
-            ),
+            mail_composer_generator=mail_compose_generator,
         ).send()
 
 
