@@ -1,6 +1,18 @@
+from django import forms
 from django.core.exceptions import ValidationError
 from django.forms.fields import FileField
 from django.forms.models import ModelForm
+from django_tiptap.fields import TipTapTextFormField
+
+
+class SendEmailForm(forms.Form):
+    """
+    Form for sending emails
+    """
+
+    to = forms.EmailInput()
+    subject = forms.CharField(label="Subject", required=True)
+    message = TipTapTextFormField(label="Message", required=True)
 
 
 class MutationForm(ModelForm):

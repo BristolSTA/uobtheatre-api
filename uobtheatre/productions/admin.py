@@ -1,5 +1,8 @@
 from django.contrib import admin, messages
 from django.contrib.admin.options import ModelAdmin, TabularInline
+from django.shortcuts import redirect
+from django.template.response import TemplateResponse
+from django.urls import path
 from guardian.admin import GuardedModelAdmin
 
 from uobtheatre.payments.exceptions import CantBeRefundedException
@@ -18,6 +21,7 @@ from uobtheatre.utils.admin import (
     ReadOnlyInlineMixin,
     confirm_dangerous_action,
 )
+from uobtheatre.utils.forms import SendEmailForm
 from uobtheatre.utils.lang import pluralize
 
 
@@ -33,7 +37,7 @@ class ProductionAdmin(GuardedModelAdmin):
 class PerformanceAdmin(DangerousAdminConfirmMixin, ModelAdmin):
     """Custom performance admin page for actions"""
 
-    actions = ["issue_refunds"]
+    actions = ["issue_refunds", "email_users"]
 
     @confirm_dangerous_action
     @admin.action(description="Issue refunds", permissions=["change"])
@@ -54,6 +58,31 @@ class PerformanceAdmin(DangerousAdminConfirmMixin, ModelAdmin):
             request,
             f"Requested refunds for {successful_count} {pluralize('performance', successful_count)}.",
         )
+
+    @admin.action(description="Email users", permissions=["change"])
+    def email_users(self, _, queryset):
+        """Action to issue refund for bookings in selected performances(s)"""
+        return redirect(
+            f"/admin/productions/performance/email/{','.join(map(str, queryset.values_list('pk', flat=True)))}/"
+        )
+
+    def get_urls(self):
+        urls = super().get_urls()
+        return [path("email/<str:ids>/", self.send_email_view)] + urls
+
+    def send_email_view(self, request, ids):
+        """
+        View to send an email to users in a performances
+        """
+        ids = map(int, ids.split(","))
+        performances = Performance.objects.filter(pk__in=ids)
+        context = dict(
+            # Include common variables for rendering the admin template.
+            self.admin_site.each_context(request),
+            form=SendEmailForm,
+            emails=list(performances.booked_users_emails()),
+        )
+        return TemplateResponse(request, "send_email_form.html", context)
 
 
 admin.site.register(Production, ProductionAdmin)

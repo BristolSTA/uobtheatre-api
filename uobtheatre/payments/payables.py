@@ -4,7 +4,7 @@ from typing import Optional
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.mail import mail_admins
 from django.db import models
-from django.db.models import Sum
+from django.db.models import Count, Q, Sum
 from django.db.models.functions.comparison import Coalesce
 from django.db.models.query import QuerySet
 from django_celery_results.models import TaskResult
@@ -21,19 +21,28 @@ from uobtheatre.utils.models import AbstractModelMeta, BaseModel
 class PayableQuerySet(QuerySet):
     """Base queryset for payable objects"""
 
+    def annotate_transaction_count(self) -> QuerySet:
+        return self.annotate(transaction_count=Count("transactions"))
+
+    def annotate_transaction_value(self) -> QuerySet:
+        return self.annotate(transaction_totals=Coalesce(Sum("transactions__value"), 0))
+
     def locked(self) -> QuerySet:
         """A payable is locked if it has any pending transactions"""
         return self.filter(transactions__status=Transaction.Status.PENDING)
 
-    def refunded(self) -> QuerySet:
+    def refunded(self, bool_val=True) -> QuerySet:
         """
         A payable is refunded if the value of all the payments for the pay
         object are equal to the value of all the refunds and all payments are
         completed.
         """
-        return self.annotate(
-            transaction_totals=Coalesce(Sum("transactions__value"), 0)
-        ).filter(transaction_totals=0)
+        # TODO this change is going to cause chaos
+        qs = self.annotate_transaction_count().annotate_transaction_value()  # type: ignore
+        filter_query = Q(transaction_totals=0, transaction_count__gt=1)
+        if bool_val:
+            return qs.filter(filter_query)
+        return qs.exclude(filter_query)
 
 
 class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
