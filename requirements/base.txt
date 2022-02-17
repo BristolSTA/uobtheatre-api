@@ -27,6 +27,9 @@ django-environ==0.8.1  # https://github.com/joke2k/django-environ
 # Spreadsheet generation
 xlsxwriter==3.0.2
 
+# Text formatting
+beautifulsoup4==4.10.0
+
 #=== Database ===#
 
 psycopg2==2.9.3  # https://github.com/psycopg/psycopg2

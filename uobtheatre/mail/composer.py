@@ -2,6 +2,7 @@ import abc
 from datetime import datetime
 from typing import List, Union
 
+from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.mail import EmailMultiAlternatives
@@ -60,6 +61,11 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
     def image(self, url):
         """Create a full-width image"""
         self.items.append(Image(url))
+        return self
+
+    def html(self, html):
+        """Add raw HTML"""
+        self.items.append(Html(html))
         return self
 
     def append(self, item):
@@ -145,6 +151,21 @@ class Panel(ComposerItemsContainer):
         content = super().to_html()
 
         return get_template("components/panel.html").render({"content": content})
+
+
+class Html(ComposerItemInterface):
+    """A raw html item"""
+
+    def __init__(self, html) -> None:
+        super().__init__()
+        self.html = html
+
+    def to_text(self):
+        soup = BeautifulSoup(self.text)
+        return soup.get_text()
+
+    def to_html(self):
+        return self.text
 
 
 class MailComposer(ComposerItemsContainer):
