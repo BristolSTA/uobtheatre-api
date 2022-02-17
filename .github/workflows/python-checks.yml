@@ -61,7 +61,7 @@ jobs:
         DATABASE_URL: postgresql://postgres:postgres@0.0.0.0:5432/uobtheatre_api
 
     - name: System tests
-      if: ${{ github.actor == 'dependabot[bot]' }}
+      if: ${{ github.actor != 'dependabot[bot]' }}
       run: |
         pytest --cov uobtheatre -m "system_test"
       env:
