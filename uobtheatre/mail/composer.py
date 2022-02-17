@@ -1,13 +1,14 @@
 import abc
 from datetime import datetime
-from typing import List, Union
+from typing import Callable, List, Union
 
-from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib.sites.models import Site
+from django.core import mail
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import get_template
 from django.utils.html import strip_tags
+from html2text import html2text
 
 from uobtheatre.users.models import User
 
@@ -161,11 +162,10 @@ class Html(ComposerItemInterface):
         self.html = html
 
     def to_text(self):
-        soup = BeautifulSoup(self.text)
-        return soup.get_text()
+        return html2text(self.html)
 
     def to_html(self):
-        return self.text
+        return self.html
 
 
 class MailComposer(ComposerItemsContainer):
@@ -209,10 +209,36 @@ class MailComposer(ComposerItemsContainer):
         )
         return email
 
-    def send(self, subject, to_email):
-        """Send the email to the given email with the given subject"""
+    def get_email(self, subject, to_email):
         msg = EmailMultiAlternatives(
             subject, self.to_plain_text(), settings.DEFAULT_FROM_EMAIL, [to_email]
         )
         msg.attach_alternative(self.to_html(), "text/html")
+        return msg
+
+    def send(self, subject, to_email):
+        """Send the email to the given email with the given subject"""
+        msg = self.get_email(subject, to_email)
         msg.send()
+
+
+class MassMailComposer:
+    """Send many emails"""
+
+    def __init__(
+        self,
+        users: list[User],
+        subject: str,
+        mail_composer_generator: Callable[[User], MailComposer],
+    ) -> None:
+        """Initalise the mass mail"""
+        mails = []
+        for user in users:
+            mail_compose = mail_composer_generator(user)
+            mails.append(mail_compose.get_email(subject, user.email))
+        self.mails = mails
+
+    def send(self):
+        connection = mail.get_connection()
+        connection.send_messages(self.mails)
+        connection.close()

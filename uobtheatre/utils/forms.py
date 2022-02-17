@@ -4,15 +4,29 @@ from django.forms.fields import FileField
 from django.forms.models import ModelForm
 from django_tiptap.fields import TipTapTextFormField
 
+from uobtheatre.mail.composer import MailComposer, MassMailComposer
+
 
 class SendEmailForm(forms.Form):
     """
     Form for sending emails
     """
 
-    to = forms.EmailInput()
-    subject = forms.CharField(label="Subject", required=True)
-    message = TipTapTextFormField(label="Message", required=True)
+    subject = forms.CharField(label="Subject", required=True, min_length=5)
+    message = TipTapTextFormField(label="Message", required=True, min_length=5)
+    lgtm = forms.BooleanField(
+        label="Ready to send?",
+        required=True,
+    )
+
+    def submit(self, users):
+        MassMailComposer(
+            users,
+            subject=self.cleaned_data["subject"],
+            mail_composer_generator=lambda user: (
+                MailComposer().greeting(user).html(self.cleaned_data["message"])
+            ),
+        ).send()
 
 
 class MutationForm(ModelForm):

@@ -76,11 +76,19 @@ class PerformanceAdmin(DangerousAdminConfirmMixin, ModelAdmin):
         """
         ids = map(int, ids.split(","))
         performances = Performance.objects.filter(pk__in=ids)
+        users = list(performances.booked_users())
+        form = SendEmailForm(request.POST if request.method == "POST" else None)
+
+        if form.is_valid():
+            form.submit(users)
+            self.message_user(request, "Emails sent succesfully!")
+            return redirect("/admin/productions/performance/")
+
         context = dict(
             # Include common variables for rendering the admin template.
             self.admin_site.each_context(request),
-            form=SendEmailForm,
-            emails=list(performances.booked_users_emails()),
+            form=form,
+            emails=[user.email for user in users],
         )
         return TemplateResponse(request, "send_email_form.html", context)
 

@@ -28,7 +28,7 @@ django-environ==0.8.1  # https://github.com/joke2k/django-environ
 xlsxwriter==3.0.2
 
 # Text formatting
-beautifulsoup4==4.10.0
+html2text==2020.1.16
 
 #=== Database ===#
 

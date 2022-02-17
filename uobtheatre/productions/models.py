@@ -218,18 +218,15 @@ class PerformanceQuerySet(QuerySet):
             pay_object_type=ContentType.objects.get_for_model(Booking),
         )
 
-    def booked_users_emails(self):
+    def booked_users(self):
         """
-        Get all the emails for all the users that have booked this performance.
+        Get all the users that have booked this performance.
 
         This excludes any bookings that have been refunded.
         """
-        return (
-            self.bookings()
-            .refunded(bool_val=False)
-            .values_list("user__email", flat=True)
-            .distinct()
-        )
+        return User.objects.filter(
+            bookings__in=self.bookings().refunded(bool_val=False)
+        ).distinct()
 
 
 class Performance(

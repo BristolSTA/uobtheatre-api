@@ -57,6 +57,7 @@ repos:
     - django-configurations==2.3.1
     - django-environ==0.8.1
     - xlsxwriter==3.0.2
+    - html2text==2020.1.16
     - django==3.2.12
     - django-guardian==2.4.0
     - django_tiptap==0.0.10
