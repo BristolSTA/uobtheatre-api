@@ -156,7 +156,7 @@ def test_mass_mail_composer():
     mass_mail = MassMailComposer(
         [UserFactory(email="joe@example.org"), UserFactory(email="jill@example.org")],
         "My Subject",
-        lambda user: MailComposer().greeting(user).line("Test"),
+        mail_composer_generator=lambda user: MailComposer().greeting(user).line("Test"),
     )
 
     with patch("uobtheatre.mail.tasks.send_emails.delay") as mock:
@@ -178,9 +178,18 @@ def test_mass_mail_composer_no_users():
     mass_mail = MassMailComposer(
         [],
         "My Subject",
-        lambda _: None,
+        mail_composer_generator=lambda _: None,
     )
 
     with patch("uobtheatre.mail.tasks.send_emails.delay") as mock:
         mass_mail.send_async()
     mock.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_mass_mail_composer_no_composer():
+    with pytest.raises(ValueError):
+        MassMailComposer(
+            [],
+            "My Subject",
+        )

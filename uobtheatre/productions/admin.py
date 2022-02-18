@@ -1,5 +1,3 @@
-from typing import Iterable
-
 from django.contrib import admin, messages
 from django.contrib.admin.options import ModelAdmin, TabularInline
 from django.shortcuts import redirect
@@ -18,7 +16,6 @@ from uobtheatre.productions.models import (
     Production,
     ProductionTeamMember,
 )
-from uobtheatre.users.models import User
 from uobtheatre.utils.admin import (
     DangerousAdminConfirmMixin,
     ReadOnlyInlineMixin,
@@ -73,22 +70,6 @@ class PerformanceAdmin(DangerousAdminConfirmMixin, ModelAdmin):
         urls = super().get_urls()
         return [path("email/<str:ids>/", self.send_email_view)] + urls
 
-    @staticmethod
-    def _generate_user_reason(performances: Iterable["Performance"], user: User):
-        """
-        Generate string reason for why the user is being sent the email
-        """
-        user_bookings = user.bookings.filter(performance__in=performances)
-        user_performances = Performance.objects.filter(
-            bookings__in=user_bookings
-        ).distinct()
-
-        if len(user_performances) == 1:
-            return f"You are receiving this email as you have {pluralize('a booking', user_bookings, 'bookings')} for {str(user_performances.first())}."
-
-        performances_text = ", ".join(map(str, user_performances))
-        return f"You are receiving this email as you have bookings for the following performances: {performances_text}."
-
     def send_email_view(self, request, ids):
         """
         View to send an email to users in a performances
@@ -97,12 +78,13 @@ class PerformanceAdmin(DangerousAdminConfirmMixin, ModelAdmin):
         performances = Performance.objects.filter(pk__in=ids)
         users = list(performances.booked_users())
 
+        performances_text = ", ".join(map(str, performances))
+        reason = f"You are receiving this email as you have booking(s) for at least one of the following performances: {performances_text}."
+
         form = SendEmailForm(
             request.POST if request.method == "POST" else None,
             initial={
-                "user_reason": self._generate_user_reason(performances, users[0])
-                if len(users) > 0
-                else "",
+                "user_reason": reason,
                 "users": users,
             },
         )
@@ -116,9 +98,6 @@ class PerformanceAdmin(DangerousAdminConfirmMixin, ModelAdmin):
         ].help_text = "This will be generated automatically for each user, this is the example for the first user"
 
         if form.is_valid():
-            form.user_reason_generator = lambda user: self._generate_user_reason(
-                performances, user
-            )
             form.submit()
             self.message_user(request, "Emails sent succesfully!")
             return redirect("/admin/productions/performance/")
