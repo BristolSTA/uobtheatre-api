@@ -153,7 +153,7 @@ pr: ## Runs everything required (that is not included in precommit) for a pr
 
 build:
 	python precommit_config_generator.py
-	docker-compose build api
+	docker-compose build api celery
 
 django-shell: ## Open django shell
 	$(COMMAND_PREFIX) python manage.py shell

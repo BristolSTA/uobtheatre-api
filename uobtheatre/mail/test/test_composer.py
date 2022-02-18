@@ -1,4 +1,5 @@
 import importlib.resources as pkg_resources
+from unittest.mock import patch
 
 import pytest
 from django.template.loader import get_template
@@ -151,31 +152,35 @@ def test_heading_item(size):
 
 
 @pytest.mark.django_db
-def test_mass_mail_composer(mailoutbox):
+def test_mass_mail_composer():
     mass_mail = MassMailComposer(
         [UserFactory(email="joe@example.org"), UserFactory(email="jill@example.org")],
         "My Subject",
         lambda user: MailComposer().greeting(user).line("Test"),
     )
 
-    mass_mail.send()
+    with patch("uobtheatre.mail.tasks.send_emails.delay") as mock:
+        mass_mail.send_async()
 
-    assert len(mailoutbox) == 3
-    assert mailoutbox[0].subject == "My Subject"
-    assert "Test" in mailoutbox[0].body
-    assert mailoutbox[0].to == ["joe@example.org"]
-    assert mailoutbox[1].to == ["jill@example.org"]
-    assert mailoutbox[2].to == ["webmaster@bristolsta.com"]
-    assert mailoutbox[2].subject == "[UOBTheatre] Mass Email Sent: My Subject"
+    mock.assert_called_once()
+
+    mails = mock.call_args[0][0]
+    assert len(mails) == 2
+    assert mails[0]["subject"] == "My Subject"
+    assert "Test" in mails[0]["plain_text"]
+    assert "Test" in mails[0]["html"]
+    assert mails[0]["addresses"] == ["joe@example.org"]
+    assert mails[1]["addresses"] == ["jill@example.org"]
 
 
 @pytest.mark.django_db
-def test_mass_mail_composer_no_users(mailoutbox):
+def test_mass_mail_composer_no_users():
     mass_mail = MassMailComposer(
         [],
         "My Subject",
         lambda _: None,
     )
 
-    mass_mail.send()
-    assert len(mailoutbox) == 0
+    with patch("uobtheatre.mail.tasks.send_emails.delay") as mock:
+        mass_mail.send_async()
+    mock.assert_not_called()

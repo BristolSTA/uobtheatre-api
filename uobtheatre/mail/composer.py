@@ -9,6 +9,7 @@ from django.core.mail import EmailMultiAlternatives, mail_admins
 from django.template.loader import get_template
 from django.utils.html import strip_tags
 from html2text import html2text
+from uobtheatre.mail.tasks import send_emails
 
 from uobtheatre.users.models import User
 
@@ -248,32 +249,21 @@ class MassMailComposer:
     ) -> None:
         """Initalise the mass mail"""
         self.mails = [
-            mail_composer_generator(user).get_email(subject, user.email)
+            {
+                "subject": subject,
+                "plain_text": mail_composer_generator(user).to_plain_text(),
+                "html": mail_composer_generator(user).to_html(),
+                "addresses": [user.email],
+            }
             for user in users
         ]
         self.subject = subject
         self.users = users
         self.mail_composer_generator = mail_composer_generator
 
-    def send(self):
+    def send_async(self):
         """Send the mass mail"""
         if not self.mails:
             return
 
-        connection = mail.get_connection()
-        connection.send_messages(self.mails)
-        connection.close()
-        # Send a copy of the email to the Django admins
-        admin_mail = (
-            MailComposer()
-            .greeting()
-            .line(f"The following mass email was sent to {len(self.users)} users.")
-            .rule()
-        )
-        admin_mail.items += self.mail_composer_generator(self.users[0]).items
-        admin_mail.rule()
-        mail_admins(
-            "Mass Email Sent: %s" % self.subject,
-            admin_mail.to_plain_text(),
-            html_message=admin_mail.to_html(),
-        )
+        send_emails.delay(self.mails)

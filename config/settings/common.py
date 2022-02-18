@@ -242,7 +242,7 @@ LOGGING = {
             "propagate": True,
         },
         "django.request": {
-            "handlers": ["mail_admins", "console", "file"],
+            "handlers": ["console", "file"],
             "level": "ERROR",
             "propagate": True,
         },
