@@ -1030,6 +1030,7 @@ def test_booking_can_be_refunded(is_refunded, status, production_status, expecte
         booking = BookingFactory(
             performance=PerformanceFactory(production=production), status=status
         )
+        TransactionFactory(pay_object=booking)
         assert booking.can_be_refunded == expected
 
         if expected:
