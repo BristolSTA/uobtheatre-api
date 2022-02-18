@@ -38,20 +38,16 @@ class SendEmailForm(forms.Form):
         if not self.is_valid():
             raise ValidationError("You cannot submit an invalid form")
 
-        def mail_compose_generator(user):
-            mail = MailComposer().greeting(user)
-            if self.user_reason_generator:  # pylint: disable=using-constant-test
-                preface = self.user_reason_generator(user)
-                mail.line(preface).rule()
-            elif preface := self.cleaned_data.get("user_reason"):
-                mail.line(preface).rule()
-            return mail.html(self.cleaned_data["message"])
+        mail = MailComposer().greeting()
+        if preface := self.cleaned_data.get("user_reason"):
+            mail.line(preface).rule()
+        mail.html(self.cleaned_data["message"]).rule()
 
         MassMailComposer(
             self.cleaned_data["users"],
             subject=self.cleaned_data["subject"],
-            mail_composer_generator=mail_compose_generator,
-        ).send()
+            mail_compose=mail,
+        ).send_async()
 
 
 class MutationForm(ModelForm):
