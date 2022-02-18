@@ -6,20 +6,20 @@ from config.celery import app
 
 
 @app.task
-def send_emails(emails: list[dict[str, str]]):
+def send_emails(email_addresses: list[str], subject: str, plain_text: str, html: str):
     """Send emails async"""
 
     from uobtheatre.mail.composer import MailComposer
 
     django_emails = []
-    for email in emails:
+    for address in email_addresses:
         django_email = EmailMultiAlternatives(
-            email["subject"],
-            email["plain_text"],
+            subject,
+            plain_text,
             settings.DEFAULT_FROM_EMAIL,
-            email["addresses"],
+            [address],
         )
-        django_email.attach_alternative(email["html"], "text/html")
+        django_email.attach_alternative(html, "text/html")
         django_emails.append(django_email)
 
     connection = mail.get_connection()
@@ -32,11 +32,11 @@ def send_emails(emails: list[dict[str, str]]):
         .greeting()
         .line(f"The following mass email was sent {len(django_emails)} times.")
         .rule()
-        .html(emails[0]["html"])
+        .html(html)
         .rule()
     )
     mail_admins(
-        "Mass Email Sent: %s" % emails[0]["subject"],
+        "Mass Email Sent: %s" % subject,
         admin_mail.to_plain_text(),
         html_message=admin_mail.to_html(),
     )

@@ -6,22 +6,9 @@ from uobtheatre.mail.tasks import send_emails
 @pytest.mark.django_db
 def test_send_emails_task(mailoutbox):
 
-    emails = [
-        {
-            "subject": "Subject",
-            "plain_text": "Yes",
-            "html": "<p>Yes!</p>",
-            "addresses": ["joe@example.org"],
-        },
-        {
-            "subject": "Subject",
-            "plain_text": "Yes",
-            "html": "<p>Yes!</p>",
-            "addresses": ["jill@example.org"],
-        },
-    ]
-
-    send_emails(emails)
+    send_emails(
+        ["joe@example.org", "jill@example.org"], "Subject", "Yes", "<p>Yes!</p>"
+    )
 
     assert len(mailoutbox) == 3
     assert mailoutbox[0].subject == "Subject"

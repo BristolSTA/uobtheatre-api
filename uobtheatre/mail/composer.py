@@ -1,6 +1,6 @@
 import abc
 from datetime import datetime
-from typing import Callable, List, Union
+from typing import List, Union
 
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -244,45 +244,21 @@ class MassMailComposer:
         self,
         users: list[User],
         subject: str,
-        mail_compose: MailComposer = None,
-        mail_composer_generator: Callable[[User], MailComposer] = None,
+        mail_compose: MailComposer,
     ) -> None:
         """Initalise the mass mail"""
-        self.mails = []
-        if mail_compose:
-            plain_text = mail_compose.to_plain_text()
-            html = mail_compose.to_html()
-            self.mails = [
-                {
-                    "subject": subject,
-                    "plain_text": plain_text,
-                    "html": html,
-                    "addresses": [user.email],
-                }
-                for user in users
-            ]
-        elif mail_composer_generator:
-            for user in users:
-                compose = mail_composer_generator(user)
-                self.mails.append(
-                    {
-                        "subject": subject,
-                        "plain_text": compose.to_plain_text(),
-                        "html": compose.to_html(),
-                        "addresses": [user.email],
-                    }
-                )
-        else:
-            raise ValueError(
-                "You must provide either mail_compose or mail_composer_generator"
-            )
         self.subject = subject
         self.users = users
-        self.mail_composer_generator = mail_composer_generator
+        self.mail_compose = mail_compose
 
     def send_async(self):
         """Send the mass mail"""
-        if not self.mails:
+        if not self.users:
             return
 
-        send_emails.delay(self.mails)
+        send_emails.delay(
+            [user.email for user in self.users],
+            self.subject,
+            self.mail_compose.to_plain_text(),
+            self.mail_compose.to_html(),
+        )
