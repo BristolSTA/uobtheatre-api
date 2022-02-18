@@ -46,7 +46,7 @@ class SendEmailForm(forms.Form):
             if self.user_reason_generator:  # pylint: disable=using-constant-test
                 preface = self.user_reason_generator(user)
                 mail.line(preface).rule()
-            elif preface := self.cleaned_data["user_reason"]:
+            elif preface := self.cleaned_data.get("user_reason"):
                 mail.line(preface).rule()
             return mail.html(self.cleaned_data["message"])
 

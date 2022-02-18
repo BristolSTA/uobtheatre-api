@@ -84,10 +84,10 @@ class PerformanceAdmin(DangerousAdminConfirmMixin, ModelAdmin):
         ).distinct()
 
         if len(user_performances) == 1:
-            return f"You are reciving this email as you have {pluralize('a booking', user_bookings, 'bookings')} for {str(user_performances.first())}."
+            return f"You are receiving this email as you have {pluralize('a booking', user_bookings, 'bookings')} for {str(user_performances.first())}."
 
         performances_text = ", ".join(map(str, user_performances))
-        return f"You are reciving this email as you have bookings for the following performances: {performances_text}."
+        return f"You are receiving this email as you have bookings for the following performances: {performances_text}."
 
     def send_email_view(self, request, ids):
         """

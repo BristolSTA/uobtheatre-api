@@ -160,8 +160,22 @@ def test_mass_mail_composer(mailoutbox):
 
     mass_mail.send()
 
-    assert len(mailoutbox) == 2
+    assert len(mailoutbox) == 3
     assert mailoutbox[0].subject == "My Subject"
     assert "Test" in mailoutbox[0].body
     assert mailoutbox[0].to == ["joe@example.org"]
     assert mailoutbox[1].to == ["jill@example.org"]
+    assert mailoutbox[2].to == ["webmaster@bristolsta.com"]
+    assert mailoutbox[2].subject == "[UOBTheatre] Mass Email Sent: My Subject"
+
+
+@pytest.mark.django_db
+def test_mass_mail_composer_no_users(mailoutbox):
+    mass_mail = MassMailComposer(
+        [],
+        "My Subject",
+        lambda _: None,
+    )
+
+    mass_mail.send()
+    assert len(mailoutbox) == 0
