@@ -1,15 +1,16 @@
-import django
-from config.celery import app
-from django.core.mail import EmailMultiAlternatives, mail_admins
-from django.core import mail
-
-from uobtheatre.mail.composer import MailComposer
 from django.conf import settings
+from django.core import mail
+from django.core.mail import EmailMultiAlternatives, mail_admins
+
+from config.celery import app
 
 
 @app.task
 def send_emails(emails: list[dict[str, str]]):
     """Send emails async"""
+
+    from uobtheatre.mail.composer import MailComposer
+
     django_emails = []
     for email in emails:
         django_email = EmailMultiAlternatives(
@@ -19,7 +20,7 @@ def send_emails(emails: list[dict[str, str]]):
             email["addresses"],
         )
         django_email.attach_alternative(email["html"], "text/html")
-        django_emails.append(email)
+        django_emails.append(django_email)
 
     connection = mail.get_connection()
     connection.send_messages(django_emails)
@@ -31,9 +32,9 @@ def send_emails(emails: list[dict[str, str]]):
         .greeting()
         .line(f"The following mass email was sent {len(django_emails)} times.")
         .rule()
+        .html(emails[0]["html"])
+        .rule()
     )
-    admin_mail.items += emails[0]["html"]
-    admin_mail.rule()
     mail_admins(
         "Mass Email Sent: %s" % emails[0]["subject"],
         admin_mail.to_plain_text(),

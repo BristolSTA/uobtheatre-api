@@ -51,7 +51,7 @@ class SendEmailForm(forms.Form):
             self.cleaned_data["users"],
             subject=self.cleaned_data["subject"],
             mail_composer_generator=mail_compose_generator,
-        ).send()
+        ).send_async()
 
 
 class MutationForm(ModelForm):
