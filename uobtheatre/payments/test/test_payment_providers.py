@@ -222,7 +222,7 @@ def test_square_online_sync_payment(mock_square):
 def test_square_online_cancel_payment():
     transaction = TransactionFactory(provider_name=SquareOnline.name)
     SquareOnline.cancel(transaction)
-    assert not Transaction.objects.filter(pk=transaction.pk).exists()
+    assert Transaction.objects.filter(pk=transaction.pk).exists()
 
 
 ###
