@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from django.core.exceptions import ValidationError
@@ -43,9 +43,12 @@ def test_generate_user_reason():
     )
 
 
-@pytest.mark.parametrize("is_valid", [True, False])
+@pytest.mark.parametrize(
+    "is_valid, user_reasons_generator",
+    [(True, None), (False, None), (True, MagicMock())],
+)
 @pytest.mark.django_db
-def test_send_email_form_submit(is_valid):
+def test_send_email_form_submit(is_valid, user_reasons_generator):
     form = SendEmailForm(
         {
             "message": "My Message",
@@ -58,10 +61,15 @@ def test_send_email_form_submit(is_valid):
         },
     )
     form.is_valid()
+    form.user_reason_generator = user_reasons_generator
+
     with patch.object(form, "is_valid", return_value=is_valid):
         if not is_valid:
             with pytest.raises(ValidationError):
                 form.submit()
+
+            if user_reasons_generator:
+                assert user_reasons_generator.call_count == 1
         else:
             with patch("uobtheatre.mail.composer.MassMailComposer.send") as send_mock:
                 form.submit()
