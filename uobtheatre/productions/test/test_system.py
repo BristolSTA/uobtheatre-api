@@ -327,8 +327,6 @@ def test_total_production_creation_workflow(gql_client):
     )
 
     response = gql_client.execute(request)
-    print(response)
-
     assert response["data"]["setProductionStatus"]["success"] is True
 
 

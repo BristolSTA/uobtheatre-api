@@ -1,12 +1,14 @@
 import abc
 from datetime import datetime
-from typing import List, Union
+from typing import Callable, List, Union
 
 from django.conf import settings
 from django.contrib.sites.models import Site
-from django.core.mail import EmailMultiAlternatives
+from django.core import mail
+from django.core.mail import EmailMultiAlternatives, mail_admins
 from django.template.loader import get_template
 from django.utils.html import strip_tags
+from html2text import html2text
 
 from uobtheatre.users.models import User
 
@@ -60,6 +62,16 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
     def image(self, url):
         """Create a full-width image"""
         self.items.append(Image(url))
+        return self
+
+    def html(self, html):
+        """Add raw HTML"""
+        self.items.append(Html(html))
+        return self
+
+    def rule(self):
+        """Add a rule"""
+        self.items.append(Rule())
         return self
 
     def append(self, item):
@@ -147,6 +159,30 @@ class Panel(ComposerItemsContainer):
         return get_template("components/panel.html").render({"content": content})
 
 
+class Html(ComposerItemInterface):
+    """A raw html item"""
+
+    def __init__(self, html) -> None:
+        super().__init__()
+        self.html = html
+
+    def to_text(self):
+        return html2text(self.html)
+
+    def to_html(self):
+        return self.html
+
+
+class Rule(ComposerItemInterface):
+    """A horizontal dividing line"""
+
+    def to_text(self):
+        return "---------"
+
+    def to_html(self):
+        return "<p><hr /></p>"
+
+
 class MailComposer(ComposerItemsContainer):
     """Compose a mail notificaiton"""
 
@@ -188,10 +224,56 @@ class MailComposer(ComposerItemsContainer):
         )
         return email
 
-    def send(self, subject, to_email):
-        """Send the email to the given email with the given subject"""
+    def get_email(self, subject, to_email):
         msg = EmailMultiAlternatives(
             subject, self.to_plain_text(), settings.DEFAULT_FROM_EMAIL, [to_email]
         )
         msg.attach_alternative(self.to_html(), "text/html")
+        return msg
+
+    def send(self, subject, to_email):
+        """Send the email to the given email with the given subject"""
+        msg = self.get_email(subject, to_email)
         msg.send()
+
+
+class MassMailComposer:
+    """Send many emails"""
+
+    def __init__(
+        self,
+        users: list[User],
+        subject: str,
+        mail_composer_generator: Callable[[User], MailComposer],
+    ) -> None:
+        """Initalise the mass mail"""
+        self.mails = [
+            mail_composer_generator(user).get_email(subject, user.email)
+            for user in users
+        ]
+        self.subject = subject
+        self.users = users
+        self.mail_composer_generator = mail_composer_generator
+
+    def send(self):
+        """Send the mass mail"""
+        if not self.mails:
+            return
+
+        connection = mail.get_connection()
+        connection.send_messages(self.mails)
+        connection.close()
+        # Send a copy of the email to the Django admins
+        admin_mail = (
+            MailComposer()
+            .greeting()
+            .line(f"The following mass email was sent to {len(self.users)} users.")
+            .rule()
+        )
+        admin_mail.items += self.mail_composer_generator(self.users[0]).items
+        admin_mail.rule()
+        mail_admins(
+            "Mass Email Sent: %s" % self.subject,
+            admin_mail.to_plain_text(),
+            html_message=admin_mail.to_html(),
+        )

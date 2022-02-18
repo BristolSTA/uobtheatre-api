@@ -30,7 +30,7 @@ class ModifyConcessionType(Ability):
         performances = Performance.objects.filter(discounts__in=discounts)
         unique_productions_using_it = Production.objects.filter(
             performances__in=performances
-        )
+        ).distinct()
 
         if not unique_productions_using_it.count() == 1:
             return False

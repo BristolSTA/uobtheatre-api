@@ -4,7 +4,10 @@ from unittest.mock import MagicMock, PropertyMock, patch
 import pytest
 from pytest_django.asserts import assertQuerysetEqual
 
-from uobtheatre.payments.exceptions import CantBeRefundedException
+from uobtheatre.payments.exceptions import (
+    CantBeCanceledException,
+    CantBeRefundedException,
+)
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.tasks import refund_payment
 from uobtheatre.payments.test.factories import (
@@ -139,29 +142,25 @@ def test_update_payment_from_square_no_processing_fee(mock_square):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "provider, status, is_cancelled",
+    "status,fails",
     [
-        (SquarePOS.name, Transaction.Status.PENDING, True),
-        (SquareOnline.name, Transaction.Status.PENDING, False),
-        (SquarePOS.name, Transaction.Status.COMPLETED, False),
+        (Transaction.Status.COMPLETED, True),
+        (Transaction.Status.FAILED, True),
+        (Transaction.Status.PENDING, False),
     ],
 )
-def test_cancel(provider, status, is_cancelled, mock_square):
-    payment = TransactionFactory(provider_name=provider, status=status)
-    with mock_square(
-        SquarePOS.client.terminal, "cancel_terminal_checkout", success=True
-    ) as mock_cancel:
-        payment.cancel()
-
-        # If cancelled this should have been called
-        if is_cancelled:
-            mock_cancel.assert_called_once_with(payment.provider_transaction_id)
-        else:
-            mock_cancel.assert_not_called()
-
-    # If pending assert this payment is deleted
-    is_pending = status == Transaction.Status.PENDING
-    assert not Transaction.objects.filter(id=payment.id).exists() == is_pending
+def test_cancel(status, fails):
+    transaction = TransactionFactory(status=status)
+    if fails:
+        with pytest.raises(CantBeCanceledException):
+            transaction.cancel()
+        assert Transaction.objects.filter(pk=transaction.pk).exists()
+    else:
+        with patch(
+            "uobtheatre.payments.transaction_providers.SquareOnline.cancel"
+        ) as provider_mock:
+            transaction.cancel()
+        provider_mock.assert_called_once_with(transaction)
 
 
 @pytest.mark.parametrize(

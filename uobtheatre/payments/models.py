@@ -11,7 +11,10 @@ from django_celery_results.models import TaskResult
 
 from uobtheatre.mail.composer import MailComposer
 from uobtheatre.payments import transaction_providers
-from uobtheatre.payments.exceptions import CantBeRefundedException
+from uobtheatre.payments.exceptions import (
+    CantBeCanceledException,
+    CantBeRefundedException,
+)
 from uobtheatre.payments.tasks import refund_payment
 from uobtheatre.payments.transaction_providers import (
     Cash,
@@ -93,6 +96,7 @@ class Transaction(TimeStampedMixin, BaseModel):
             status_map = {
                 "APPROVED": cls.PENDING,
                 "PENDING": cls.PENDING,
+                "CANCEL_REQUESTED": cls.PENDING,
                 "COMPLETED": cls.COMPLETED,
                 "REJECTED": cls.FAILED,
                 "CANCELLED": cls.FAILED,
@@ -201,13 +205,12 @@ class Transaction(TimeStampedMixin, BaseModel):
     def cancel(self):
         """
         Cancel payment
-
-        This is currently only possible for SquarePOS payments that are
-        pending.
         """
-        if self.status == Transaction.Status.PENDING:
-            self.provider.cancel(self)
-            self.delete()
+        if self.status != self.Status.PENDING:
+            raise CantBeCanceledException(
+                f"A transaction of status {self.status} cannot be canceled"
+            )
+        self.provider.cancel(self)
 
     def can_be_refunded(self, refund_provider=None, raises=False):
         """If the payment can be refunded either automatically or manually"""

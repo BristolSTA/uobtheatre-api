@@ -389,6 +389,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         )
         device_id = graphene.String(required=False)
         idempotency_key = graphene.String(required=False)
+        verify_token = graphene.String(required=False)
 
     @classmethod
     def resolve_mutation(  # pylint: disable=too-many-arguments, too-many-branches
@@ -401,6 +402,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         payment_provider=SquareOnline.name,
         device_id=None,
         idempotency_key=None,
+        verify_token=None,
     ):
 
         # Get the performance and if it doesn't exist throw an error
@@ -468,7 +470,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
                     field="nonce",
                     code="missing_required",
                 )
-            payment_method = SquareOnline(nonce, idempotency_key)
+            payment_method = SquareOnline(nonce, idempotency_key, verify_token)
         elif payment_provider == SquarePOS.name:
             if not device_id:
                 raise GQLException(

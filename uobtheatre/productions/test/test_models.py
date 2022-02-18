@@ -1239,3 +1239,34 @@ def test_production_queryset_transactions():
         .all(),
         [transaction_1],
     )
+
+
+@pytest.mark.django_db
+def test_performances_booked_users():
+    performance_1 = PerformanceFactory()
+    # Refunded payable - Refunded
+    booking_1 = BookingFactory(performance=performance_1)
+    TransactionFactory(value=2, pay_object=booking_1)
+
+    booking_2 = BookingFactory(performance=performance_1)
+    TransactionFactory(value=-2, pay_object=booking_2)
+
+    # Not included as booking refunded
+    booking_3 = BookingFactory(performance=performance_1)
+    TransactionFactory(value=2, pay_object=booking_3)
+    TransactionFactory(value=-2, pay_object=booking_3)
+
+    # Make another booking for the same user and assert it only shows up once
+    performance_2 = PerformanceFactory()
+    TransactionFactory(
+        value=2,
+        pay_object=BookingFactory(performance=performance_2, user=booking_1.user),
+    )
+
+    assertQuerysetEqual(
+        Performance.objects.filter(
+            pk__in=[performance_1.pk, performance_2.pk]
+        ).booked_users(),
+        [booking_1.user, booking_2.user],
+        ordered=False,
+    )
