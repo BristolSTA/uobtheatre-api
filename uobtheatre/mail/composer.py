@@ -247,11 +247,10 @@ class MassMailComposer:
         mail_composer_generator: Callable[[User], MailComposer],
     ) -> None:
         """Initalise the mass mail"""
-        mails = []
-        for user in users:
-            mail_compose = mail_composer_generator(user)
-            mails.append(mail_compose.get_email(subject, user.email))
-        self.mails = mails
+        self.mails = [
+            mail_composer_generator(user).get_email(subject, user.email)
+            for user in users
+        ]
 
     def send(self):
         connection = mail.get_connection()

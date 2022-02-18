@@ -1162,7 +1162,6 @@ def test_send_confirmation_email_for_anonymous(mailoutbox):
 
     assert len(mailoutbox) == 1
     email = mailoutbox[0]
-    print(email.body)
     assert email.subject == "Your booking is confirmed!"
     assert "View Booking (https://example.com/user/booking/abc" not in email.body
     assert (
