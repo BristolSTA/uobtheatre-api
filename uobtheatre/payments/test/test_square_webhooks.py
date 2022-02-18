@@ -165,6 +165,18 @@ def test_handle_checkout_webhook(rest_client, monkeypatch):
 
 
 @pytest.mark.django_db
+def test_handle_checkout_webhook_with_unknown_transaction(rest_client):
+    with patch.object(SquareWebhooks, "is_valid_callback", return_value=True):
+        response = rest_client.post(
+            "/square",
+            TEST_TERMINAL_CHECKOUT_PAYLOAD,
+            HTTP_X_SQUARE_SIGNATURE="signature",
+            format="json",
+        )
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
 def test_handle_webhooks_invalid_signature(rest_client):
     booking = BookingFactory(reference="id72709", status=Payable.Status.IN_PROGRESS)
     response = rest_client.post(
