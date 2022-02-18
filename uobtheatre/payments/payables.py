@@ -37,7 +37,6 @@ class PayableQuerySet(QuerySet):
         object are equal to the value of all the refunds and all payments are
         completed.
         """
-        # TODO this change is going to cause chaos
         qs = self.annotate_transaction_count().annotate_transaction_value()  # type: ignore
         filter_query = Q(transaction_totals=0, transaction_count__gt=1)
         if bool_val:
@@ -104,6 +103,10 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
         if self.status not in [self.Status.PAID, self.Status.CANCELLED]:
             return CantBeRefundedException(
                 f"{self.__class__.__name__} ({self}) can't be refunded due to it's status ({self.status})"
+            )
+        if self.transactions.payments().count() == 0:
+            return CantBeRefundedException(
+                f"{self.__class__.__name__} ({self}) can't be refunded because it has no payments"
             )
         if self.is_refunded:
             return CantBeRefundedException(

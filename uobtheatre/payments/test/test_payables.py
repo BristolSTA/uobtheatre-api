@@ -151,36 +151,50 @@ def test_is_locked(has_pending_transaction):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "status,is_refunded,is_locked,error_message",
+    "status,num_payments,is_refunded,is_locked,error_message",
     [
         (
             Booking.Status.IN_PROGRESS,
+            1,
             True,
             True,
             "Booking (ABCD123) can't be refunded due to it's status (IN_PROGRESS)",
         ),
         (
             Booking.Status.PAID,
+            1,
             True,
             True,
             "Booking (ABCD123) can't be refunded because is already refunded",
         ),
         (
             Booking.Status.PAID,
+            1,
             False,
             True,
             "Booking (ABCD123) can't be refunded because it is locked",
         ),
         (
             Booking.Status.PAID,
+            1,
             False,
             False,
             None,
         ),
+        (
+            Booking.Status.PAID,
+            0,
+            False,
+            False,
+            "Booking (ABCD123) can't be refunded because it has no payments",
+        ),
     ],
 )
-def test_validate_cant_be_refunded(status, is_refunded, is_locked, error_message):
+def test_validate_cant_be_refunded(
+    status, num_payments, is_refunded, is_locked, error_message
+):
     booking = BookingFactory(status=status, reference="ABCD123")
+    [TransactionFactory(pay_object=booking) for _ in range(num_payments)]
 
     with patch(
         "uobtheatre.payments.payables.Payable.is_refunded",
