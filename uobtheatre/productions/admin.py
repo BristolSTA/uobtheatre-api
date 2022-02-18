@@ -106,6 +106,11 @@ class PerformanceAdmin(DangerousAdminConfirmMixin, ModelAdmin):
                 "users": users,
             },
         )
+
+        # Disabled user and user_reason fields as these are populdated
+        # automatically
+        form.fields["users"].disabled = True
+        form.fields["user_reason"].disabled = True
         form.fields[
             "user_reason"
         ].help_text = "This will be generated automatically for each user, this is the example for the first user"

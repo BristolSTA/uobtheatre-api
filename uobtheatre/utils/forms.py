@@ -16,13 +16,10 @@ class SendEmailForm(forms.Form):
     """
 
     subject = forms.CharField(label="Subject", required=True, min_length=5)
-    users = forms.ModelMultipleChoiceField(
-        queryset=User.objects.all(), required=True, disabled=True
-    )
+    users = forms.ModelMultipleChoiceField(queryset=User.objects.all(), required=True)
     # The first line in the email. Expalins why the user is receiving the email
     user_reason = forms.CharField(
         label="Reason",
-        disabled=True,
         help_text="e.g. You are recieving this email because...",
         widget=forms.Textarea,
     )
