@@ -20,7 +20,7 @@ def test_generate_user_reason():
         PerformanceAdmin._generate_user_reason(
             Performance.objects.filter(pk__in=[booking_1.performance.pk]), user
         )
-        == f"You are reciving this email as you have a booking for {str(booking_1.performance)}."
+        == f"You are receiving this email as you have a booking for {str(booking_1.performance)}."
     )
 
     BookingFactory(user=user, performance=booking_1.performance)
@@ -28,7 +28,7 @@ def test_generate_user_reason():
         PerformanceAdmin._generate_user_reason(
             Performance.objects.filter(pk__in=[booking_1.performance.pk]), user
         )
-        == f"You are reciving this email as you have bookings for {str(booking_1.performance)}."
+        == f"You are receiving this email as you have bookings for {str(booking_1.performance)}."
     )
 
     booking_2 = BookingFactory(user=user)
@@ -39,16 +39,21 @@ def test_generate_user_reason():
             ),
             user,
         )
-        == f"You are reciving this email as you have bookings for the following performances: {str(booking_1.performance)}, {str(booking_2.performance)}."
+        == f"You are receiving this email as you have bookings for the following performances: {str(booking_1.performance)}, {str(booking_2.performance)}."
     )
 
 
 @pytest.mark.parametrize(
-    "is_valid, user_reasons_generator",
-    [(True, None), (False, None), (True, MagicMock())],
+    "is_valid, user_reasons_generator, user_reason",
+    [
+        (True, None, None),
+        (True, None, "My reason"),
+        (False, None, "My reason"),
+        (True, MagicMock(), "My reason"),
+    ],
 )
 @pytest.mark.django_db
-def test_send_email_form_submit(is_valid, user_reasons_generator):
+def test_send_email_form_submit(is_valid, user_reasons_generator, user_reason):
     form = SendEmailForm(
         {
             "message": "My Message",
@@ -56,7 +61,7 @@ def test_send_email_form_submit(is_valid, user_reasons_generator):
         },
         initial={
             "users": [UserFactory()],
-            "user_reason": "My reason",
+            "user_reason": user_reason,
             "lgtm": True,
         },
     )
