@@ -55,8 +55,6 @@ def confirm_dangerous_action(func):
             "submit_name": "confirm_action",
         }
 
-        print("context", context)
-
         # Display confirmation page
         return modeladmin.render_action_confirmation(request, context)
 
