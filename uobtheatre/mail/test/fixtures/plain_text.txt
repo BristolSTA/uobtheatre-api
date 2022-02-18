@@ -2,6 +2,12 @@ This is a heading
 
 This is a paragraph
 
+---------
+
+**Bold!**
+
+
+
 This is another paragraph
 
 Call to Action (https://example.org/call/to/action)
