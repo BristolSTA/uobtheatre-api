@@ -1,14 +1,13 @@
+from unittest.mock import patch
+
 import pytest
+from django.core.exceptions import ValidationError
 
 from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.productions.admin import PerformanceAdmin
 from uobtheatre.productions.models import Performance
 from uobtheatre.users.test.factories import UserFactory
-
-
-@pytest.mark.django_db
-def test_send_email_form_submit():
-    pass
+from uobtheatre.utils.forms import SendEmailForm
 
 
 # pylint: disable=protected-access
@@ -42,3 +41,27 @@ def test_generate_user_reason():
         )
         == f"You are reciving this email as you have bookings for the following performances: {str(booking_1.performance)}, {str(booking_2.performance)}."
     )
+
+
+@pytest.mark.parametrize("is_valid", [True, False])
+def test_send_email_form_submit(is_valid):
+    form = SendEmailForm(
+        {
+            "message": "My Message",
+            "subject": "My Subject",
+        },
+        initial={
+            "users": [UserFactory()],
+            "user_reason": "My reason",
+            "lgtm": True,
+        },
+    )
+    form.is_valid()
+    with patch.object(form, "is_valid", return_value=is_valid):
+        if not is_valid:
+            with pytest.raises(ValidationError):
+                form.submit()
+        else:
+            with patch("uobtheatre.mail.composer.MassMailComposer.send") as send_mock:
+                form.submit()
+            send_mock.assert_called_once()

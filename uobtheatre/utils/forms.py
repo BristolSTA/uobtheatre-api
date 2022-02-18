@@ -38,6 +38,8 @@ class SendEmailForm(forms.Form):
 
     def submit(self):
         """Submit the form"""
+        if not self.is_valid():
+            raise ValidationError("You cannot submit an invalid form")
 
         def mail_compose_generator(user):
             mail = MailComposer().greeting(user)
