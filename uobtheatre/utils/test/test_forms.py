@@ -44,6 +44,7 @@ def test_generate_user_reason():
 
 
 @pytest.mark.parametrize("is_valid", [True, False])
+@pytest.mark.django_db
 def test_send_email_form_submit(is_valid):
     form = SendEmailForm(
         {
