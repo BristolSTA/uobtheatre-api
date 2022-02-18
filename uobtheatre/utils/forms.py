@@ -1,3 +1,5 @@
+from typing import Callable, Optional
+
 from django import forms
 from django.core.exceptions import ValidationError
 from django.forms.fields import FileField
@@ -17,10 +19,12 @@ class SendEmailForm(forms.Form):
     users = forms.ModelMultipleChoiceField(
         queryset=User.objects.all(), required=True, disabled=True
     )
+    # The first line in the email. Expalins why the user is receiving the email
     user_reason = forms.CharField(
         label="Reason",
         disabled=True,
         help_text="e.g. You are recieving this email because...",
+        widget=forms.Textarea,
     )
     message = TipTapTextFormField(label="Message", required=True, min_length=5)
     lgtm = forms.BooleanField(
@@ -28,12 +32,19 @@ class SendEmailForm(forms.Form):
         required=True,
     )
 
+    # A function to generate the preface for the email. This overrides the
+    # user_reason field.
+    user_reason_generator: Optional[Callable[[User], str]] = None
+
     def submit(self):
         """Submit the form"""
 
         def mail_compose_generator(user):
             mail = MailComposer().greeting(user)
-            if preface := self.cleaned_data["user_reason"]:
+            if self.user_reason_generator:  # pylint: disable=using-constant-test
+                preface = self.user_reason_generator(user)
+                mail.line(preface).rule()
+            elif preface := self.cleaned_data["user_reason"]:
                 mail.line(preface).rule()
             return mail.html(self.cleaned_data["message"])
 
