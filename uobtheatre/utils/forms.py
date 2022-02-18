@@ -45,7 +45,7 @@ class SendEmailForm(forms.Form):
                 mail.line(preface).rule()
             elif preface := self.cleaned_data.get("user_reason"):
                 mail.line(preface).rule()
-            return mail.html(self.cleaned_data["message"])
+            return mail.html(self.cleaned_data["message"]).rule()
 
         MassMailComposer(
             self.cleaned_data["users"],
