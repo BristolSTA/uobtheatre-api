@@ -70,6 +70,11 @@ class PerformanceAdmin(DangerousAdminConfirmMixin, ModelAdmin):
         urls = super().get_urls()
         return [path("email/<str:ids>/", self.send_email_view)] + urls
 
+    @staticmethod
+    def _generate_user_reason(user: "User"):
+        user_bookings = user.bookings.filter(performance__in=performances)
+        reason = "You are reciving this email as you have a booking "
+
     def send_email_view(self, request, ids):
         """
         View to send an email to users in a performances
@@ -77,11 +82,10 @@ class PerformanceAdmin(DangerousAdminConfirmMixin, ModelAdmin):
         ids = map(int, ids.split(","))
         performances = Performance.objects.filter(pk__in=ids)
         users = list(performances.booked_users())
-        reason = "You are reciving this email as you have a booking "
 
         form = SendEmailForm(
             request.POST if request.method == "POST" else None,
-            initial={"user_reason": reason, "users": users},
+            initial={"user_reason": self._generate_user_reason(user), "users": users},
         )
 
         if form.is_valid():

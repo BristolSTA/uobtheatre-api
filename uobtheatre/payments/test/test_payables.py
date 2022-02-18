@@ -105,7 +105,7 @@ def test_society_transfer_value():
         ([10, -10], False, True),
         ([1, 11, 12, -10], False, False),
         ([5, 5, -10], False, True),
-        ([], False, True),
+        ([], False, False),
         ([-10], False, False),
         ([10], False, False),
         ([5, -5], True, False),
@@ -288,3 +288,73 @@ def test_payable_associated_tasks():
     )
 
     assertQuerysetEqual(payable.associated_tasks, [related_task, related_payment_task])
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("count", [0, 4, 3])
+def test_annotate_transaction_count(count):
+    payable = BookingFactory()
+    [
+        TransactionFactory(type=Transaction.Type.PAYMENT, pay_object=payable)
+        for _ in range(count)
+    ]
+    assertQuerysetEqual(
+        payable.qs.annotate_transaction_count().values_list(
+            "transaction_count", flat=True
+        ),
+        [count],
+    )
+
+
+@pytest.mark.django_db
+def test_annotate_transaction_value():
+    payable = BookingFactory()
+    assertQuerysetEqual(
+        payable.qs.annotate_transaction_value().values_list(
+            "transaction_totals", flat=True
+        ),
+        [0],
+    )
+
+    TransactionFactory(value=10, pay_object=payable)
+    TransactionFactory(value=-20, pay_object=payable)
+    TransactionFactory(value=50, pay_object=payable)
+
+    assertQuerysetEqual(
+        payable.qs.annotate_transaction_value().values_list(
+            "transaction_totals", flat=True
+        ),
+        [40],
+    )
+
+
+@pytest.mark.django_db
+def test_queryset_refunded():
+    # Refunded payable - Refunded
+    payable1 = BookingFactory()
+    TransactionFactory(value=2, pay_object=payable1)
+    TransactionFactory(value=8, pay_object=payable1)
+    TransactionFactory(value=-10, pay_object=payable1)
+
+    # Payable with no payments - Not refunded
+    payable2 = BookingFactory()
+
+    # Payable with single payment - Not refunded
+    payable3 = BookingFactory()
+    TransactionFactory(value=2, pay_object=payable3)
+
+    # Payable with single payment - Not refunded
+    payable4 = BookingFactory()
+    TransactionFactory(value=2, pay_object=payable4)
+    TransactionFactory(value=-3, pay_object=payable4)
+
+    assertQuerysetEqual(
+        Booking.objects.refunded(),
+        [payable1],
+    )
+
+    assertQuerysetEqual(
+        Booking.objects.refunded(bool_val=False),
+        [payable2, payable3, payable4],
+        ordered=False,
+    )
