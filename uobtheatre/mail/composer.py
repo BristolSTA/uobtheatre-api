@@ -4,13 +4,12 @@ from typing import Callable, List, Union
 
 from django.conf import settings
 from django.contrib.sites.models import Site
-from django.core import mail
-from django.core.mail import EmailMultiAlternatives, mail_admins
+from django.core.mail import EmailMultiAlternatives
 from django.template.loader import get_template
 from django.utils.html import strip_tags
 from html2text import html2text
-from uobtheatre.mail.tasks import send_emails
 
+from uobtheatre.mail.tasks import send_emails
 from uobtheatre.users.models import User
 
 
@@ -245,18 +244,38 @@ class MassMailComposer:
         self,
         users: list[User],
         subject: str,
-        mail_composer_generator: Callable[[User], MailComposer],
+        mail_compose: MailComposer = None,
+        mail_composer_generator: Callable[[User], MailComposer] = None,
     ) -> None:
         """Initalise the mass mail"""
-        self.mails = [
-            {
-                "subject": subject,
-                "plain_text": mail_composer_generator(user).to_plain_text(),
-                "html": mail_composer_generator(user).to_html(),
-                "addresses": [user.email],
-            }
-            for user in users
-        ]
+        self.mails = []
+        if mail_compose:
+            plain_text = mail_compose.to_plain_text()
+            html = mail_compose.to_html()
+            self.mails = [
+                {
+                    "subject": subject,
+                    "plain_text": plain_text,
+                    "html": html,
+                    "addresses": [user.email],
+                }
+                for user in users
+            ]
+        elif mail_composer_generator:
+            for user in users:
+                compose = mail_composer_generator(user)
+                self.mails.append(
+                    {
+                        "subject": subject,
+                        "plain_text": compose.to_plain_text(),
+                        "html": compose.to_html(),
+                        "addresses": [user.email],
+                    }
+                )
+        else:
+            raise ValueError(
+                "You must provide either mail_compose or mail_composer_generator"
+            )
         self.subject = subject
         self.users = users
         self.mail_composer_generator = mail_composer_generator
