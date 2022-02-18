@@ -59,9 +59,9 @@ def test_send_email_form_submit(is_valid, user_reasons_generator, user_reason):
             "message": "My Message",
             "subject": "My Subject",
             "users": [UserFactory()],
+            "user_reason": user_reason,
         },
         initial={
-            "user_reason": user_reason,
             "lgtm": True,
         },
     )
