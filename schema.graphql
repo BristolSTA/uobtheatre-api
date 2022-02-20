@@ -449,6 +449,7 @@ type PerformanceSeatGroupNode implements Node {
   capacity: Int!
   id: ID!
   capacityRemaining: Int
+  numberTicketsSold: Int
   concessionTypes: [ConcessionTypeBookingType]
 }
 
