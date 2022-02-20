@@ -233,6 +233,7 @@ class ConcessionTypeBookingType(graphene.ObjectType):
 
 class PerformanceSeatGroupNode(DjangoObjectType):
     capacity_remaining = graphene.Int()
+    number_tickets_sold = graphene.Int()
     concession_types = graphene.List(ConcessionTypeBookingType)
 
     def resolve_concession_types(self, info):
@@ -246,6 +247,15 @@ class PerformanceSeatGroupNode(DjangoObjectType):
 
     def resolve_capacity_remaining(self, info):
         return self.performance.seat_group_capacity_remaining(self.seat_group)
+
+    def resolve_number_tickets_sold(self, info):
+        return (
+            self.performance.total_tickets_sold(seat_group=self.seat_group)
+            if info.context.user.has_perm(
+                "view_production", self.performance.production
+            )
+            else None
+        )
 
     class Meta:
         model = PerformanceSeatGroup
