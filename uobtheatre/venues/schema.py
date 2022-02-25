@@ -5,7 +5,7 @@ from graphene_django.filter import DjangoFilterConnectionField
 
 from uobtheatre.addresses.schema import AddressNode  # noqa
 from uobtheatre.images.schema import ImageNode  # noqa
-from uobtheatre.productions.schema import ProductionNode
+from uobtheatre.productions.schema import ProductionFilter, ProductionNode
 from uobtheatre.venues.models import Seat, SeatGroup, Venue
 
 
@@ -27,8 +27,8 @@ class VenueNode(DjangoObjectType):
 
     productions = DjangoFilterConnectionField(ProductionNode)
 
-    def resolve_productions(self, info):
-        return self.get_productions()
+    def resolve_productions(self, info, **kwargs):
+        return ProductionFilter(kwargs, self.get_productions()).qs
 
     class Meta:
         model = Venue
