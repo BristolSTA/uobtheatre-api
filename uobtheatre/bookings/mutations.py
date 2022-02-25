@@ -284,7 +284,7 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
 
         # Can only edit this booking if belongs to the user, or is box office
         if booking.user.id != info.context.user.id and not info.context.user.has_perm(
-            "boxoffice", booking.performance.production
+            "productions.boxoffice", booking.performance.production
         ):
             raise AuthorizationException(
                 message="You do not have permission to access this booking.",
@@ -410,7 +410,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
 
         # Verify user can access booking
         if booking.user.id != info.context.user.id and not info.context.user.has_perm(
-            "boxoffice", booking.performance.production
+            "productions.boxoffice", booking.performance.production
         ):
             raise AuthorizationException(
                 message="You do not have permission to access this booking.",
