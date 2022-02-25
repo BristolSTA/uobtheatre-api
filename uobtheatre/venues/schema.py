@@ -1,7 +1,6 @@
 import graphene
 from graphene import relay
 from graphene_django import DjangoObjectType
-from graphene_django.fields import DjangoConnectionField
 from graphene_django.filter import DjangoFilterConnectionField
 
 from uobtheatre.addresses.schema import AddressNode  # noqa
@@ -25,7 +24,8 @@ class SeatNode(DjangoObjectType):
 
 
 class VenueNode(DjangoObjectType):
-    productions = DjangoConnectionField(ProductionNode)
+
+    productions = DjangoFilterConnectionField(ProductionNode)
 
     def resolve_productions(self, info):
         return self.get_productions()
