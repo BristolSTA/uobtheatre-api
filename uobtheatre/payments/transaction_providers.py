@@ -476,14 +476,20 @@ class SquarePOS(PaymentProvider, SquarePaymentMethod):
         payment_id = cls.get_payment_provider_id(payment)
 
         checkout = data if data else cls.get_checkout(payment_id)
-        payment.provider_fee = sum(
-            filter(
-                None,
-                [
-                    cls._square_transaction_processing_fee(cls.get_payment(payment_id))
-                    for payment_id in checkout["payment_ids"]
-                ],
+        payment.provider_fee = (
+            sum(
+                filter(
+                    None,
+                    [
+                        cls._square_transaction_processing_fee(
+                            cls.get_payment(payment_id)
+                        )
+                        for payment_id in checkout["payment_ids"]
+                    ],
+                )
             )
+            if "payment_ids" in checkout
+            else None
         )
         old_status = payment.status
         payment.status = payment_models.Transaction.Status.from_square_status(
