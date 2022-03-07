@@ -158,5 +158,8 @@ build:
 django-shell: ## Open django shell
 	$(COMMAND_PREFIX) python manage.py shell
 
+attach: ## Open django shell
+	docker attach `docker-compose -f local.yml ps -q api`
+
 flush:
 	$(COMMAND_PREFIX) python manage.py flush
