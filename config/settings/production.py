@@ -2,6 +2,8 @@
 
 import os
 
+from boto3.session import Session
+
 from .common import *
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")  # type: ignore
@@ -57,6 +59,36 @@ if sentry_dns := os.getenv("SENTRY_DNS"):
 # 86400 = (60 seconds x 60 minutes x 24 hours)
 AWS_HEADERS = {
     "Cache-Control": "max-age=86400, s-maxage=86400, must-revalidate",
+}
+
+# Cloudwath logging
+logger_boto3_session = Session(
+    aws_access_key_id=AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+)
+LOGGING["formatters"]["aws"] = {  # type: ignore
+    "aws": {
+        "format": "%(asctime)s [%(levelname)-8s] %(message)s [%(pathname)s:%(lineno)d]",
+        "datefmt": "%Y-%m-%d %H:%M:%S",
+    },
+}
+LOGGING["handlers"]["cloudwatch"] = {  # type: ignore
+    "level": "INFO",
+    "class": "watchtower.CloudWatchLogHandler",
+    # From step 2
+    "boto3_session": logger_boto3_session,
+    "log_group": "DemoLogs",
+    # Different stream for each environment
+    "stream_name": f"logs",
+    "formatter": "aws",
+}
+LOGGING["handlers"]["loggers"] = {  # type: ignore
+    # Use this logger to send data just to Cloudwatch
+    "cloudwatch": {
+        "level": "INFO",
+        "handlers": ["cloudwatch"],
+        "propogate": False,
+    }
 }
 
 EMAIL_BACKEND = (
