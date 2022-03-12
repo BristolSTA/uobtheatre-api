@@ -162,6 +162,20 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
         return self.transactions.annotate_sales_breakdown(["total_sales"])[  # type: ignore
             "total_sales"
         ]
+    
+    @property
+    def total_refunds(self) -> int:
+        """The amount paid by the user for this object."""
+        return self.transactions.annotate_sales_breakdown(["total_refunds"])[  # type: ignore
+            "total_refunds"
+        ]
+    
+    @property
+    def net_income(self) -> int:
+        """The amount paid by the user for this object."""
+        return self.transactions.annotate_sales_breakdown(["net_income"])[  # type: ignore
+            "net_income"
+        ]
 
     @property
     def provider_payment_value(self) -> int:
