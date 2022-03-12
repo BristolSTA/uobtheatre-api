@@ -104,6 +104,13 @@ class SquareWebhooks(APIView):
                 ).sync_transaction_with_provider(
                     request_data["data"]["object"]["refund"]
                 )
+
+            elif request_data["type"] == "order.updated":
+                # This is a refund webhook
+                SquareConfectionery.handle_webhook(
+                    request_data["data"]["object"]["order_updated"]
+                )
+
             else:
                 return Response(status=202)
         except Transaction.DoesNotExist:

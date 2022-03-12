@@ -1,4 +1,5 @@
 import abc
+from os import wait
 import re
 from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Type
 from uuid import uuid4
@@ -9,6 +10,7 @@ from square.http.api_response import ApiResponse as SquareApiResponse
 
 from uobtheatre.payments import models as payment_models
 from uobtheatre.utils.exceptions import PaymentException, SquareException
+from uobtheatre.societies.models import Society
 
 if TYPE_CHECKING:
     from uobtheatre.payments.payables import Payable
@@ -62,7 +64,9 @@ class TransactionProvider(abc.ABC):
         )
 
     @classmethod
-    def sync_transaction(cls, payment: "payment_models.Transaction", data: dict = None):
+    def sync_transaction(
+        cls, payment: "payment_models.Transaction", data: Optional[dict] = None
+    ):
         """Syncs the refund payment from the provider"""
 
     @classmethod
@@ -608,3 +612,58 @@ class SquareOnline(PaymentProvider, SquarePaymentMethod):
         if data is None:
             data = cls.get_payment(payment_id)
         cls._fill_payment_from_square_response_object(payment, data).save()
+
+
+class SquareConfectionery(PaymentProvider, SquarePaymentMethod):
+    def pay(self):
+        """Payments for confectionary good are currently not supported"""
+        raise NotImplementedError
+
+    @classmethod
+    def create_society_location(cls, society: "Society") -> str:
+        """Create a location for the given society
+
+        Returns:
+            str: The location id
+        """
+        print("Creating location for society")
+        body = {
+            "location": {
+                "name": f"Society POS - {society.name}",
+                "description": f"Location for sales by {society.name}, excluding ticket sales",
+            }
+        }
+        response = cls.client.locations.create_location(body)
+        cls._handle_response_failure(response)
+        print("Created location")
+        return response.body["location"]["id"]
+
+    @classmethod
+    def get_order(cls, order_id: str) -> dict:
+        return cls.client.orders.retrieve_order(order_id)
+
+    @classmethod
+    def sync_transaction(
+        cls, payment: "payment_models.Transaction", data: Optional[dict] = None
+    ):
+        raise NotImplementedError("Cannot update existing order")
+
+    @classmethod
+    def handle_webhook(cls, data: dict):
+        order = cls.get_order(data["id"])
+
+        if data["state"] == "COMPLETED":
+            order = cls.get_order(data["id"])
+            if payment := payment_models.Transaction.objects.filter(
+                provider_transaction_id=data["id"], provider_name=cls.name
+            ).first():
+                cls.sync_transaction(payment, order)
+
+            society = Society.objects.get(square_location_id=data["location_id"])
+            cls.create_payment_object(
+                society,
+                order["order"]["total_money"]["amount"],
+                None,
+                provider_transaction_id=data["id"],
+                currency=order["order"]["total_money"]["currency"],
+            )

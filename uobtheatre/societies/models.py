@@ -24,6 +24,23 @@ class Society(TimeStampedMixin, models.Model):
 
     members = models.ManyToManyField("users.User", related_name="societies", blank=True)
 
+    # The id of the square location used for this society's inperson sales
+    square_pos_location = models.CharField(max_length=24, blank=True, null=True)
+    # This timestamp shows which orders have been synced with the api. Any
+    # payments after this timestamp may not be recorded in the api.
+    square_pos_sync_date = models.DateTimeField(blank=True, null=True)
+
+    def create_pos_location(self):
+        """Create a square location for this society
+
+        This is used for inperson sales of goods (not tickets).
+        """
+        from uobtheatre.payments.transaction_providers import SquareConfectionery
+
+        location_id = SquareConfectionery.create_society_location(self)
+        self.square_pos_location = location_id
+        self.save()
+
     def __str__(self):
         return str(self.name)
 
