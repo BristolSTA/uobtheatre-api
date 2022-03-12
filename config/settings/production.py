@@ -75,15 +75,12 @@ LOGGING["formatters"]["aws"] = {  # type: ignore
 LOGGING["handlers"]["cloudwatch"] = {  # type: ignore
     "level": "INFO",
     "class": "watchtower.CloudWatchLogHandler",
-    # From step 2
     "boto3_session": logger_boto3_session,
-    "log_group": "DemoLogs",
-    # Different stream for each environment
-    "stream_name": f"logs",
+    "log_group": env("CLOUDWATCH_LOG_GROUP_NAME"),
+    "stream_name": "api",
     "formatter": "aws",
 }
 LOGGING["handlers"]["loggers"] = {  # type: ignore
-    # Use this logger to send data just to Cloudwatch
     "cloudwatch": {
         "level": "INFO",
         "handlers": ["cloudwatch"],
