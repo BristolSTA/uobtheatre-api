@@ -1,7 +1,5 @@
 import itertools
 
-from numpy import empty
-
 import django_filters
 import graphene
 from django.db.models import Q
