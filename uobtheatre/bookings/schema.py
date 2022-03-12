@@ -1,5 +1,7 @@
 import itertools
 
+from numpy import empty
+
 import django_filters
 import graphene
 from django.db.models import Q
@@ -250,6 +252,9 @@ class BookingNode(GrapheneEnumMixin, DjangoObjectType):
         "uobtheatre.payments.schema.TransactionNode"
     )
     expired = graphene.Boolean(required=True)
+    total_sales = graphene.Int()
+    total_refunds = graphene.Int()
+    net_income = graphene.Int()
 
     def resolve_price_breakdown(self, _):
         return self
