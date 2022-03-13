@@ -34,6 +34,9 @@ type BookingNode implements Node {
   priceBreakdown: PriceBreakdownNode
   transactions(offset: Int, before: String, after: String, first: Int, last: Int, type: String, provider: String, createdAt: DateTime, id: ID): TransactionNodeConnection
   expired: Boolean!
+  totalSales: Int
+  totalRefunds: Int
+  netIncome: Int
 }
 
 type BookingNodeConnection {
