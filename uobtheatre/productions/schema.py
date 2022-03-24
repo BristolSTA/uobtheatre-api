@@ -172,7 +172,6 @@ class ProductionNode(
     cast = DjangoListField(CastMemberNode)
     production_team = DjangoListField(ProductionTeamMemberNode)
     venues = DjangoListField("uobtheatre.venues.schema.VenueNode")
-    unique_venues = DjangoListField("uobtheatre.venues.schema.VenueNode")
 
     start = graphene.DateTime()
     end = graphene.DateTime()
@@ -184,7 +183,7 @@ class ProductionNode(
     total_capacity = graphene.Int(required=True)
     total_tickets_sold = graphene.Int(required=True)
 
-    def resolve_unique_venues(self, info):
+    def resolve_venues(self, info):
         return self.venues.distinct()
 
     def resolve_start(self, info):

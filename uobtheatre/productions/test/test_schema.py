@@ -788,9 +788,6 @@ def test_production_venues(gql_client):
                 venues {
                     name
                 }
-                uniqueVenues {
-                    name
-                }
             }
         }
     """
@@ -804,8 +801,7 @@ def test_production_venues(gql_client):
     )
 
     assert response["data"]["production"] == {
-        "venues": [{"name": "Venue 1"}, {"name": "Venue 1"}, {"name": "Venue 2"}],
-        "uniqueVenues": [{"name": "Venue 1"}, {"name": "Venue 2"}],
+        "venues": [{"name": "Venue 1"}, {"name": "Venue 2"}],
     }
 
 
