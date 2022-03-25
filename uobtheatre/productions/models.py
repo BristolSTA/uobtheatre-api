@@ -766,6 +766,8 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
     subtitle = models.CharField(max_length=255, null=True, blank=True)
     description = TipTapTextField(null=True)
 
+    venues = models.ManyToManyField(Venue, through=Performance, editable=False)
+
     society = models.ForeignKey(
         Society, on_delete=models.SET_NULL, null=True, related_name="productions"
     )

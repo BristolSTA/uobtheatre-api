@@ -301,6 +301,21 @@ def test_production_validate():
         validator.assert_called_once()
 
 
+@pytest.mark.django_db
+def test_production_venues():
+    production = ProductionFactory()
+    venue_1 = VenueFactory()
+    venue_2 = VenueFactory()
+    VenueFactory()
+
+    PerformanceFactory(production=production, venue=venue_1)
+    PerformanceFactory(production=production, venue=venue_1)
+    PerformanceFactory(production=production, venue=venue_2)
+
+    assertQuerysetEqual(production.venues.all(), [venue_1, venue_1, venue_2])
+    assertQuerysetEqual(production.venues.distinct().all(), [venue_1, venue_2])
+
+
 ###
 # Performance
 ###
