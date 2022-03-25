@@ -44,6 +44,7 @@ setup-precommit:
 setup-devcontainer:
 	make setup-precommit
 	make migrate
+	pip install -r requirements/local.txt
 
 up: ## Run background
 	docker-compose up -d api postgres celery celery-beat redis

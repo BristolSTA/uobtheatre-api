@@ -573,6 +573,7 @@ def test_create_booking_not_bookable(gql_client):
     ]
 
 
+# pylint: disable=too-many-locals
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "current_tickets, planned_tickets, expected_tickets",
@@ -2155,6 +2156,7 @@ def test_pay_booking_fails_if_already_paid(gql_client):
     }
 
 
+# pylint: disable=too-many-arguments,too-many-locals,too-many-branches
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "performance_id, booking_obj, check_in_ticket_id_list, not_check_in_ticket_id_list, non_booking_ticket_id_list",

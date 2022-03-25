@@ -7,7 +7,7 @@ pre-commit >= 2.11.0
 # formatting
 black >= 21.10b0 # Code formatting
 isort >= 5.10.1 # Import sorting
-pylint >= 2.12.2 # Linting
+pylint >= 2.13.0 # Linting
 
 # mypy stuff
 mypy >= 0.910 # Type checking
