@@ -29,6 +29,7 @@ from uobtheatre.productions.test.factories import (
     create_production,
 )
 from uobtheatre.users.test.factories import UserFactory
+from uobtheatre.venues.test.factories import VenueFactory
 
 ###
 # Production Queries
@@ -768,6 +769,40 @@ def test_assignable_permissions(gql_client, perms, can_assign):
         "description": "Can add production",
         "userCanAssign": False,
     } in response["data"]["production"]["assignablePermissions"]
+
+
+@pytest.mark.django_db
+def test_production_venues(gql_client):
+    production = ProductionFactory()
+    venue_1 = VenueFactory(name="Venue 1")
+    venue_2 = VenueFactory(name="Venue 2")
+    VenueFactory(name="Venue 3")
+
+    PerformanceFactory(production=production, venue=venue_1)
+    PerformanceFactory(production=production, venue=venue_1)
+    PerformanceFactory(production=production, venue=venue_2)
+
+    query = """
+        query {
+            production(id: "%s") {
+                venues {
+                    name
+                }
+            }
+        }
+    """
+
+    response = gql_client.execute(
+        query
+        % to_global_id(
+            "ProductionNode",
+            production.id,
+        )
+    )
+
+    assert response["data"]["production"] == {
+        "venues": [{"name": "Venue 1"}, {"name": "Venue 2"}],
+    }
 
 
 ###

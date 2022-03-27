@@ -12,7 +12,7 @@ def create_short_uuid():
     return shortuuid.ShortUUID().random(length=12)
 
 
-IterableType = TypeVar("IterableType")
+IterableType = TypeVar("IterableType")  # pylint: disable=invalid-name
 
 
 def combinations(

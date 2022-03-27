@@ -369,7 +369,7 @@ def test_square_pos_cancel_failure(mock_square):
         (
             {
                 "id": "abc",
-                "status": "CANCELLED",
+                "status": "CANCELED",
                 "payment_ids": ["abc123"],
             },
             Transaction.Status.FAILED,
