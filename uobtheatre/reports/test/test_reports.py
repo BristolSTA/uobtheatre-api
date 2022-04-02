@@ -1,8 +1,8 @@
-from datetime import datetime
 from unittest.mock import patch
 
 import pytest
 from django.utils import timezone
+from graphql_relay import to_global_id
 
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import (
@@ -199,7 +199,8 @@ def test_dataset_class():
 
 def test_abstract_report():
     class SimpleReport(Report):
-        pass
+        def run(self):
+            pass
 
     report = SimpleReport()
     dataset = DataSet("My Dataset", ["1", "2"])
@@ -240,9 +241,12 @@ def test_period_totals_breakdown_report():
     # Generate report that covers this period
     with patch("uobtheatre.payments.models.TransactionQuerySet.sync") as mock_sync:
         report = PeriodTotalsBreakdown(
-            datetime.fromisoformat("2021-09-08T00:00:00+00:00"),
-            datetime.fromisoformat("2021-09-08T23:00:00+00:00"),
+            [
+                {"name": "start_time", "value": "2021-09-08T00:00:00+00:00"},
+                {"name": "end_time", "value": "2021-09-08T23:00:00+00:00"},
+            ]
         )
+        report.run()
 
         mock_sync.assert_called_once()
 
@@ -339,6 +343,7 @@ def test_outstanding_society_payments_report():
     # NB: As production 2 is not "closed", it shouldn't show in this report
     with patch("uobtheatre.payments.models.TransactionQuerySet.sync") as mock_sync:
         report = OutstandingSocietyPayments()
+        report.run()
 
     mock_sync.assert_called_once()
 
@@ -390,7 +395,7 @@ def test_outstanding_society_payments_report_production_no_society():
 
     with patch("uobtheatre.payments.models.TransactionQuerySet.sync") as mock_sync:
         with pytest.raises(GQLException) as exception:
-            OutstandingSocietyPayments()
+            OutstandingSocietyPayments().run()
         assert exception.value.message == "Production 1 has no society"
     mock_sync.aassert_not_called()
 
@@ -401,7 +406,10 @@ def test_performance_bookings_report():
 
     performance_1 = Performance.objects.first()
 
-    report = PerformanceBookings(performance_1)
+    report = PerformanceBookings(
+        [{"name": "id", "value": to_global_id("PerformanceNode", performance_1.pk)}]
+    )
+    report.run()
 
     assert len(report.datasets) == 1
 

@@ -1,6 +1,6 @@
+import abc
 from abc import ABC
 from dataclasses import dataclass, field
-from datetime import datetime
 from typing import Dict, List, Union
 
 from graphql_relay.node.node import from_global_id
@@ -54,9 +54,17 @@ class DataSet:
 class Report(ABC):
     """An abstract class for a generic report"""
 
-    def __init__(self):
+    def __init__(self, options: list = None):
         self.datasets: list(DataSet) = []
         self.meta: list(MetaItem) = []
+        self.options = options or []
+
+        self.validate_options(self.options)
+
+    @abc.abstractmethod
+    def run(self):
+        """Runs the report"""
+        raise NotImplementedError()
 
     def dataset_by_name(self, name: str) -> Union[DataSet, None]:
         return next(
@@ -70,17 +78,28 @@ class Report(ABC):
     def authorize_user(user: User, options: List):
         raise NotImplementedError()
 
-    @staticmethod
-    def validate_options(options: List):
+    @classmethod
+    def validate_options(cls, options: List):
         pass
 
+    def get_option(self, name, default=None):
+        return get_option(self.options, name, default)
 
-class PeriodTotalsBreakdown(Report):
+
+class TimeScopedReport(Report):
+    @classmethod
+    def validate_options(cls, options: List):
+        super().validate_options(options)
+        require_option(options, "start_time")
+        require_option(options, "end_time")
+
+
+class PeriodTotalsBreakdown(TimeScopedReport):
     """Generates a report on payments made via specified providers over a given time period"""
 
-    def __init__(self, start: datetime, end: datetime) -> None:
-        super().__init__()
-
+    def run(self):
+        start = self.get_option("start_time")
+        end = self.get_option("end_time")
         production_totals_set = DataSet(
             "Production Totals",
             ["Production ID", "Production Name", "Total Income (Pence)"],
@@ -192,8 +211,7 @@ class PeriodTotalsBreakdown(Report):
 class OutstandingSocietyPayments(Report):
     """Generates a report on outstanding balances to be paid to societies"""
 
-    def __init__(self) -> None:
-        super().__init__()
+    def run(self):
 
         productions_dataset = DataSet(
             "Productions",
@@ -289,8 +307,10 @@ class OutstandingSocietyPayments(Report):
 class PerformanceBookings(Report):
     """Generates a report with the bookings for a production"""
 
-    def __init__(self, performance: Performance) -> None:
-        super().__init__()
+    def run(self):
+        performance = Performance.objects.get(
+            pk=from_global_id(self.get_option("id"))[1]
+        )
         bookings_dataset = DataSet(
             "Bookings",
             ["ID", "Reference", "Name", "Email", "Tickets", "Total Paid (Pence)"],
@@ -330,8 +350,8 @@ class PerformanceBookings(Report):
         ):
             raise AuthorizationException()
 
-    @staticmethod
-    def validate_options(options: List):
+    @classmethod
+    def validate_options(cls, options: List):
         # Need a valid performance id
         require_option(options, "id")
         if not Performance.objects.filter(
