@@ -32,6 +32,19 @@ class ReportOption(graphene.InputObjectType):
     name = graphene.String(required=True)
     value = graphene.String(required=True)
 
+class DataSetNode(graphene.ObjectType):
+    name = graphene.String(required=True)
+    headings = graphene.List(graphene.String, required=True)
+    data = graphene.List(graphene.List(graphene.String), required=True)
+
+class MetaItemNode(graphene.ObjectType):
+    name = graphene.String(required=True)
+    value = graphene.String(required=True)
+
+class ReportNode(graphene.ObjectType):
+    datasets = graphene.List(DataSetNode)
+    meta = graphene.List(MetaItemNode)
+
 
 class GenerateReport(AuthRequiredMixin, SafeMutation):
     """Mutation to generate a report"""
@@ -43,6 +56,7 @@ class GenerateReport(AuthRequiredMixin, SafeMutation):
         options = graphene.List(ReportOption)
 
     download_uri = graphene.String()
+    report = graphene.Field(ReportNode)
 
     @classmethod
     def resolve_mutation(
@@ -89,13 +103,17 @@ class GenerateReport(AuthRequiredMixin, SafeMutation):
                 str(matching_report["uri"]),
                 kwargs={"start_time": start_time, "end_time": end_time},
             )
+            report = matching_report["cls"](start=start_time, end=end_time)
         except NoReverseMatch:
             download_uri = reverse(
                 str(matching_report["uri"]),
             )
+            report = matching_report["cls"]()
 
         return GenerateReport(
-            download_uri=settings.BASE_URL + download_uri + "?signature=" + signature
+            download_uri=settings.BASE_URL + download_uri + "?signature=" + signature,
+            report=report
+
         )
 
 

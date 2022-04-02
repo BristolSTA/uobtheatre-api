@@ -55,8 +55,8 @@ class Report(ABC):
     """An abstract class for a generic report"""
 
     def __init__(self):
-        self.datasets = []
-        self.meta = []
+        self.datasets: list(DataSet) = []
+        self.meta: list(MetaItem) = []
 
     def dataset_by_name(self, name: str) -> Union[DataSet, None]:
         return next(
