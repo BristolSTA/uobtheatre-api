@@ -9,6 +9,7 @@ If you have docker and docker-compose installed run:
 
 ```
 make setup
+Windows is stupid
 ```
 
 This will:
