@@ -183,7 +183,7 @@ type DiscountNode implements Node {
   id: ID!
   name: String
   percentage: Float!
-  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, hasBoxofficePermissions: Boolean, runOn: Date, orderBy: String): PerformanceNodeConnection!
+  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, stageClearanceGivenAt: DateTime, boxOfficeClearanceGivenAt: DateTime, id: ID, hasBoxofficePermissions: Boolean, runOn: Date, orderBy: String): PerformanceNodeConnection!
   seatGroup: SeatGroupNode
   requirements: [DiscountRequirementNode!]
 }
@@ -405,6 +405,8 @@ type PerformanceNode implements Node {
   disabled: Boolean!
   seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
   capacity: Int
+  stageClearanceGivenAt: DateTime
+  boxOfficeClearanceGivenAt: DateTime
   discounts(offset: Int, before: String, after: String, first: Int, last: Int, group: Boolean, id: ID): DiscountNodeConnection!
   bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, reference: String, user: ID, creator: ID, performance: ID, adminDiscountPercentage: Float, expiresAt: DateTime, id: ID, statusIn: [String], search: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection!
   capacityRemaining: Int
@@ -417,6 +419,8 @@ type PerformanceNode implements Node {
   isBookable: Boolean!
   ticketsBreakdown: PerformanceTicketsBreakdown!
   salesBreakdown: SalesBreakdownNode
+  StageClearanceGiven: Boolean!
+  boxOfficeClearanceGiven: Boolean!
 }
 
 type PerformanceNodeConnection {
@@ -533,7 +537,7 @@ type ProductionNode implements Node {
   cast: [CastMemberNode!]
   productionTeam: [ProductionTeamMemberNode!]
   crew: [CrewMemberNode!]
-  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, hasBoxofficePermissions: Boolean, runOn: Date, orderBy: String): PerformanceNodeConnection!
+  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, stageClearanceGivenAt: DateTime, boxOfficeClearanceGivenAt: DateTime, id: ID, hasBoxofficePermissions: Boolean, runOn: Date, orderBy: String): PerformanceNodeConnection!
   assignedUsers: [UserPermissionsNode]
   assignablePermissions: [PermissionNode]
   permissions: [String]
@@ -576,7 +580,7 @@ type Query {
   societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String, userHasPermission: String): SocietyNodeConnection
   society(slug: String!): SocietyNode
   productions(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, venues: [ID], society: ID, status: String, ageRating: Int, facebookEvent: String, warnings: [ID], slug: String, id: ID, userHasPermission: String, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, search: String, orderBy: String): ProductionNodeConnection
-  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, hasBoxofficePermissions: Boolean, runOn: Date, orderBy: String): PerformanceNodeConnection
+  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, stageClearanceGivenAt: DateTime, boxOfficeClearanceGivenAt: DateTime, id: ID, hasBoxofficePermissions: Boolean, runOn: Date, orderBy: String): PerformanceNodeConnection
   warnings(offset: Int, before: String, after: String, first: Int, last: Int, id: ID): WarningNodeConnection
   production(id: IdInputField, slug: String): ProductionNode
   performance(id: ID!): PerformanceNode
@@ -824,7 +828,7 @@ type VenueNode implements Node {
   publiclyListed: Boolean!
   slug: String!
   seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
-  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, hasBoxofficePermissions: Boolean, runOn: Date, orderBy: String): PerformanceNodeConnection!
+  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, stageClearanceGivenAt: DateTime, boxOfficeClearanceGivenAt: DateTime, id: ID, hasBoxofficePermissions: Boolean, runOn: Date, orderBy: String): PerformanceNodeConnection!
   productionSet(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, venues: [ID], society: ID, status: String, ageRating: Int, facebookEvent: String, warnings: [ID], slug: String, id: ID, userHasPermission: String, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, search: String, orderBy: String): ProductionNodeConnection!
   productions(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, venues: [ID], society: ID, status: String, ageRating: Int, facebookEvent: String, warnings: [ID], slug: String, id: ID, userHasPermission: String, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, search: String, orderBy: String): ProductionNodeConnection
 }
