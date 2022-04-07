@@ -1285,3 +1285,22 @@ def test_performances_booked_users():
         [booking_1.user, booking_2.user],
         ordered=False,
     )
+
+@pytest.mark.django_db
+def test_give_stage_clearence():
+    perfomance = PerformanceFactory()
+    # test if .give_stage_clearence() works
+    perfomance.give_stage_clearence()
+
+@pytest.mark.django_db
+def test_give_box_office_clearence():
+    PerformanceFactory()
+
+@pytest.mark.django_db
+def test_has_stage_clearence():
+    PerformanceFactory()
+
+
+@pytest.mark.django_db
+def test_has_box_office_clearence():
+    PerformanceFactory()

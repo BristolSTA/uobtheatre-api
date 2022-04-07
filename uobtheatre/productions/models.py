@@ -280,6 +280,9 @@ class Performance(
 
     capacity = models.IntegerField(null=True, blank=True)
 
+    stage_clearence = models.DateTimeField(null=True, blank=True)
+    box_office_clearence = models.DateTimeField(null=True, blank=True)
+
     def validate(self):
         return self.VALIDATOR.validate(self)
 
@@ -672,6 +675,32 @@ class Performance(
         if self.start is None:
             return f"Performance of {self.production.name}"
         return f"Performance of {self.production.name} at {self.start.strftime('%H:%M')} on {self.start.strftime('%d/%m/%Y')}"
+
+    @property
+    def has_stage_clearence(self) -> bool:
+        """
+        Checks if stage has given clearence to open doors
+        """
+        return self.stage_clearence is not None
+
+    @property
+    def has_box_office_clearence(self) -> bool:
+        """
+        Checks if box office has given clearence to start performance
+        """
+        return self.box_office_clearence is not None
+
+    def give_stage_clearence(self):
+        """
+        Gives stage clearence to open doors
+        """
+        self.stage_clearence = timezone.now()
+
+    def give_box_office_clearence(self):
+        """
+        Gives box office clearence to start performance
+        """
+        self.box_office_clearence = timezone.now()
 
     class Meta:
         ordering = ["id"]

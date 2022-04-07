@@ -1,3 +1,5 @@
+from asyncio.windows_events import NULL
+
 import factory
 from django.utils import timezone
 
@@ -28,7 +30,8 @@ class ProductionFactory(factory.django.DjangoModelFactory):
     featured_image = factory.SubFactory(ImageFactory)
     cover_image = factory.SubFactory(ImageFactory)
     status = Production.Status.PUBLISHED
-
+    stage_clearance = NULL
+    box_office_clearence = NULL
     class Meta:
         model = Production
 
