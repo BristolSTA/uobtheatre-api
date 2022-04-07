@@ -16,6 +16,7 @@ from guardian.shortcuts import get_objects_for_user
 from uobtheatre.images.models import Image
 from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Transaction
+from uobtheatre.productions.exceptions import ClearanceAlreadyGivenException
 from uobtheatre.productions.tasks import refund_performance
 from uobtheatre.societies.models import Society
 from uobtheatre.users.abilities import AbilitiesMixin
@@ -283,8 +284,8 @@ class Performance(
 
     capacity = models.IntegerField(null=True, blank=True)
 
-    stage_clearence = models.DateTimeField(null=True, blank=True)
-    box_office_clearence = models.DateTimeField(null=True, blank=True)
+    stage_clearance_given_at = models.DateTimeField(null=True, blank=True)
+    box_office_clearance_given_at = models.DateTimeField(null=True, blank=True)
 
     def validate(self):
         return self.VALIDATOR.validate(self)
@@ -679,31 +680,29 @@ class Performance(
             return f"Performance of {self.production.name}"
         return f"Performance of {self.production.name} at {self.start.strftime('%H:%M')} on {self.start.strftime('%d/%m/%Y')}"
 
-    @property
-    def has_stage_clearence(self) -> bool:
-        """
-        Checks if stage has given clearence to open doors
-        """
-        return self.stage_clearence is not None
+    def give_stage_clearance(self):
+        if self.stage_clearance_given:
+            raise ClearanceAlreadyGivenException("stage")
+
+        self.stage_clearance_given_at = timezone.now()
+        self.save()
+
+    def give_box_office_clearance(self):
+        if self.box_office_clearance_given:
+            raise ClearanceAlreadyGivenException("box office")
+
+        self.box_office_clearance_given_at = timezone.now()
+        self.save()
 
     @property
-    def has_box_office_clearence(self) -> bool:
-        """
-        Checks if box office has given clearence to start performance
-        """
-        return self.box_office_clearence is not None
+    def stage_clearance_given(self):
 
-    def give_stage_clearence(self):
-        """
-        Gives stage clearence to open doors
-        """
-        self.stage_clearence = timezone.now()
+        return self.stage_clearance_given_at is not None
 
-    def give_box_office_clearence(self):
-        """
-        Gives box office clearence to start performance
-        """
-        self.box_office_clearence = timezone.now()
+    @property
+    def box_office_clearance_given(self):
+
+        return self.box_office_clearance_given_at is not None
 
     class Meta:
         ordering = ["id"]

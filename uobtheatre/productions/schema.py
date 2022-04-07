@@ -320,6 +320,8 @@ class PerformanceNode(DjangoObjectType):
     is_bookable = graphene.Boolean(required=True)
     tickets_breakdown = graphene.Field(PerformanceTicketsBreakdown, required=True)
     sales_breakdown = graphene.Field(SalesBreakdownNode)
+    Stage_clearance_given = graphene.Boolean(required=True)
+    box_office_clearance_given = graphene.Boolean(required=True)
 
     def resolve_ticket_options(self, info):
         return self.performance_seat_groups.all()

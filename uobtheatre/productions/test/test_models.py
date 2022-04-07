@@ -27,6 +27,7 @@ from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.payments.transaction_providers import Card, Cash, SquareOnline
+from uobtheatre.productions.exceptions import ClearanceAlreadyGivenException
 from uobtheatre.productions.models import Performance, PerformanceSeatGroup, Production
 from uobtheatre.productions.test.factories import (
     AudienceWarningFactory,
@@ -1287,20 +1288,43 @@ def test_performances_booked_users():
     )
 
 @pytest.mark.django_db
-def test_give_stage_clearence():
-    perfomance = PerformanceFactory()
-    # test if .give_stage_clearence() works
-    perfomance.give_stage_clearence()
+def test_stage_clearance():
+    performance = PerformanceFactory()
+    assert performance.stage_clearance_given_at is None
+    assert performance.stage_clearance_given is False
 
-@pytest.mark.django_db
-def test_give_box_office_clearence():
-    PerformanceFactory()
-
-@pytest.mark.django_db
-def test_has_stage_clearence():
-    PerformanceFactory()
+    test_time = timezone.now()
+    with patch("uobtheatre.productions.models.timezone.now", return_value=test_time):
+        performance.give_stage_clearance()
+    assert performance.stage_clearance_given_at == test_time
+    assert performance.stage_clearance_given is True
 
 
 @pytest.mark.django_db
-def test_has_box_office_clearence():
-    PerformanceFactory()
+def test_stage_clearance_given_twice():
+    performance = PerformanceFactory()
+    performance.give_stage_clearance()
+    with pytest.raises(ClearanceAlreadyGivenException) as err:
+        performance.give_stage_clearance()
+    assert err.value.message == "Stage clearance has already been given for this performance"
+
+@pytest.mark.django_db
+def test_box_office_clearance():
+    performance = PerformanceFactory()
+    assert performance.box_office_clearance_given_at is None
+    assert performance.box_office_clearance_given is False
+
+    test_time = timezone.now()
+    with patch("uobtheatre.productions.models.timezone.now", return_value=test_time):
+        performance.give_box_office_clearance()
+    assert performance.box_office_clearance_given_at == test_time
+    assert performance.box_office_clearance_given is True
+
+
+@pytest.mark.django_db
+def test_box_office_clearance_given_twice():
+    performance = PerformanceFactory()
+    performance.give_box_office_clearance()
+    with pytest.raises(ClearanceAlreadyGivenException) as err:
+        performance.give_box_office_clearance()
+    assert err.value.message == "Box Office clearance has already been given for this performance"
