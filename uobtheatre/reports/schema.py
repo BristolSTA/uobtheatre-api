@@ -61,6 +61,11 @@ class GenerateReport(AuthRequiredMixin, SafeMutation):
     download_uri = graphene.String()
     report = graphene.Field(ReportNode)
 
+    def resolve_report(self, _):
+        print("HERE")
+        self.report.run()
+        return self.report
+
     @classmethod
     def resolve_mutation(
         cls,
@@ -115,7 +120,7 @@ class GenerateReport(AuthRequiredMixin, SafeMutation):
 
         return GenerateReport(
             download_uri=settings.BASE_URL + download_uri + "?signature=" + signature,
-            report=matching_report["cls"](options),
+            report=matching_report["cls"](options),  # type: ignore
         )
 
 
