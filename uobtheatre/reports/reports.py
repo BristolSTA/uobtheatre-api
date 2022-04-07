@@ -55,8 +55,8 @@ class Report(ABC):
     """An abstract class for a generic report"""
 
     def __init__(self, options: list = None):
-        self.datasets: list(DataSet) = []
-        self.meta: list(MetaItem) = []
+        self.datasets: list[DataSet] = []
+        self.meta: list[MetaItem] = []
         self.options = options or []
 
         self.validate_options(self.options)
