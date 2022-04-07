@@ -178,6 +178,8 @@ def generate_expires_at():
     return timezone.now() + timezone.timedelta(minutes=15)
 
 
+BookingManager = models.Manager.from_queryset(BookingQuerySet)
+
 # pylint: disable=too-many-public-methods
 class Booking(TimeStampedMixin, Payable):
     """A booking for a performance
@@ -188,7 +190,7 @@ class Booking(TimeStampedMixin, Payable):
         A user can only have 1 In Progress booking per performance.
     """
 
-    objects = BookingQuerySet.as_manager()
+    objects = BookingManager()
 
     class Meta:
         constraints = [
@@ -654,6 +656,9 @@ class TicketQuerySet(QuerySet):
         return self.filter(Q(booking__status="PAID"))
 
 
+TicketManager = models.Manager.from_queryset(TicketQuerySet)
+
+
 class Ticket(models.Model):
     """A booking of a single seat.
 
@@ -661,7 +666,7 @@ class Ticket(models.Model):
     defined by the Booking.
     """
 
-    objects = TicketQuerySet.as_manager()
+    objects = TicketManager()
 
     seat_group = models.ForeignKey(
         SeatGroup, on_delete=models.RESTRICT, related_name="tickets"
