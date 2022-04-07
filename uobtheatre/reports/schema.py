@@ -62,7 +62,6 @@ class GenerateReport(AuthRequiredMixin, SafeMutation):
     report = graphene.Field(ReportNode)
 
     def resolve_report(self, _):
-        print("HERE")
         self.report.run()
         return self.report
 
