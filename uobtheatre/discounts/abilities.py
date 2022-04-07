@@ -23,7 +23,7 @@ class ModifyConcessionType(Ability):
     @staticmethod
     def user_has_for(user: User, obj: ConcessionType) -> bool:
         discounts = Discount.objects.filter(
-            requirements__in=obj.discount_requirements.prefetch_related(
+            requirements__in=obj.discount_requirements.prefetch_related(  # type: ignore
                 "discount__performances__production"
             ).all()
         )
