@@ -159,23 +159,24 @@ def test_get_valid_discounts():
 def test_get_price():
     performance = PerformanceFactory()
     booking = BookingFactory(performance=performance)
+    assert booking.get_price() == 0
 
     # Set seat type price for performance
-    performance_seat_group = PerformanceSeatingFactory(performance=performance)
+    performance_seat_group = PerformanceSeatingFactory(performance=performance, price=500)
 
     # Create a seat booking
     TicketFactory(booking=booking, seat_group=performance_seat_group.seat_group)
 
-    assert booking.get_price() == performance_seat_group.price
+    assert booking.get_price() == 500
 
     TicketFactory(booking=booking, seat_group=performance_seat_group.seat_group)
-    assert booking.get_price() == performance_seat_group.price * 2
+    assert booking.get_price() == 1000
 
-    performance_seat_group_2 = PerformanceSeatingFactory(performance=performance)
+    performance_seat_group_2 = PerformanceSeatingFactory(performance=performance, price=100)
     TicketFactory(booking=booking, seat_group=performance_seat_group_2.seat_group)
     assert (
         booking.get_price()
-        == performance_seat_group.price * 2 + performance_seat_group_2.price
+        == 1100
     )
 
 
