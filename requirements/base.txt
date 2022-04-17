@@ -16,7 +16,7 @@ Pillow>=8.1.2
 django-cors-headers==3.11.0
 
 # Admin confirmation messages
-django-admin-confirm==0.2.4
+django-admin-confirm==0.2.5
 
 # TODO check if required
 django-configurations==2.3.2
