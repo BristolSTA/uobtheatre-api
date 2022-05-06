@@ -165,6 +165,16 @@ def delete_user_drafts(user, performance_id, booking_id=None):
     ).delete()
 
 
+def authorize_user_for_booking(info, booking):
+    if booking.user.id != info.context.user.id and not info.context.user.has_perm(
+        "productions.boxoffice", booking.performance.production
+    ):
+        raise AuthorizationException(
+            message="You do not have permission to access this booking",
+            field="booking_id",
+        )
+
+
 class CreateBooking(AuthRequiredMixin, SafeMutation):
     """Mutation to create a Booking
 
@@ -283,12 +293,7 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
         booking = Booking.objects.get(id=booking_id)
 
         # Can only edit this booking if belongs to the user, or is box office
-        if booking.user.id != info.context.user.id and not info.context.user.has_perm(
-            "productions.boxoffice", booking.performance.production
-        ):
-            raise AuthorizationException(
-                message="You do not have permission to access this booking.",
-            )
+        authorize_user_for_booking(info, booking)
 
         # Booking must be in progress to update
         if booking.status != Payable.Status.IN_PROGRESS:
@@ -376,14 +381,9 @@ class DeleteBooking(AuthRequiredMixin, SafeMutation):
         info,
         booking_id: int,
     ):
-        try:
-            booking = info.context.user.bookings.prefetch_related("transactions").get(
-                id=booking_id
-            )
-        except Booking.DoesNotExist as exc:
-            raise GQLException(
-                "A booking was not found for you with that ID", field="booking_id"
-            ) from exc
+        booking = Booking.objects.prefetch_related("transactions").get(id=booking_id)
+
+        authorize_user_for_booking(info, booking)
 
         # Status must be in progress
         if not booking.status == Payable.Status.IN_PROGRESS:
@@ -454,12 +454,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         booking = Booking.objects.get(id=booking_id)
 
         # Verify user can access booking
-        if booking.user.id != info.context.user.id and not info.context.user.has_perm(
-            "productions.boxoffice", booking.performance.production
-        ):
-            raise AuthorizationException(
-                message="You do not have permission to access this booking.",
-            )
+        authorize_user_for_booking(info, booking)
 
         # Booking must not be paid for already
         if not booking.status == Payable.Status.IN_PROGRESS:

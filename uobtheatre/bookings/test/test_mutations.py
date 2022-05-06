@@ -1159,7 +1159,7 @@ def test_update_booking_without_permission(gql_client):
                     id
                 }
                 errors {
-                  ... on NonFieldError {
+                  ... on FieldError {
                     message
                     code
                   }
@@ -1179,7 +1179,7 @@ def test_update_booking_without_permission(gql_client):
                 "errors": [
                     {
                         "code": "403",
-                        "message": "You do not have permission to access this booking.",
+                        "message": "You do not have permission to access this booking",
                     }
                 ],
             }
@@ -1294,27 +1294,42 @@ def test_update_paid_booking_fails(gql_client):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "status,num_transactions,error",
+    "status,num_transactions,correct_user,error",
     [
-        [Payable.Status.IN_PROGRESS, 0, None],
+        [Payable.Status.IN_PROGRESS, 0, True, None],
+        [
+            Payable.Status.IN_PROGRESS,
+            0,
+            False,
+            "You do not have permission to access this booking",
+        ],
         [
             Payable.Status.IN_PROGRESS,
             1,
+            True,
             "This booking cannot be deleted as it has transactions associated with it",
         ],
-        [Payable.Status.PAID, 0, "This booking is not in progress (Status: PAID)"],
+        [
+            Payable.Status.PAID,
+            0,
+            True,
+            "This booking is not in progress (Status: PAID)",
+        ],
         [
             Payable.Status.CANCELLED,
             0,
+            True,
             "This booking is not in progress (Status: CANCELLED)",
         ],
     ],
 )
-def test_delete_booking(gql_client, status, num_transactions, error):
-    booking = BookingFactory(status=status, user=gql_client.login().user)
+def test_delete_booking(gql_client, status, num_transactions, correct_user, error):
+    gql_client.login()
+    booking = BookingFactory(
+        status=status, user=(gql_client.user if correct_user else UserFactory())
+    )
     TicketFactory(booking=booking)
 
-    print(num_transactions)
     [TransactionFactory(pay_object=booking) for _ in range(num_transactions)]
 
     request = """
@@ -1607,8 +1622,7 @@ def test_pay_booking_mutation_unauthorized_user(gql_client):
         ) {
             success
             errors {
-              __typename
-              ... on NonFieldError {
+              ... on FieldError {
                 message
                 code
               }
@@ -1625,8 +1639,7 @@ def test_pay_booking_mutation_unauthorized_user(gql_client):
                 "success": False,
                 "errors": [
                     {
-                        "__typename": "NonFieldError",
-                        "message": "You do not have permission to access this booking.",
+                        "message": "You do not have permission to access this booking",
                         "code": "403",
                     }
                 ],
