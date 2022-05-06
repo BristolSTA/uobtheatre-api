@@ -357,6 +357,51 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
         return UpdateBooking(booking=booking)
 
 
+class DeleteBooking(AuthRequiredMixin, SafeMutation):
+    """Deletes a given booking.
+
+    Must be in-progress, with no associated transactions.
+
+    Args:
+        booking_id (str): Global id of the booking to delete
+    """
+
+    class Arguments:
+        booking_id = IdInputField()
+
+    @classmethod
+    def resolve_mutation(
+        cls,
+        _,
+        info,
+        booking_id: int,
+    ):
+        try:
+            booking = info.context.user.bookings.prefetch_related("transactions").get(
+                id=booking_id
+            )
+        except Booking.DoesNotExist as exc:
+            raise GQLException(
+                "A booking was not found for you with that ID", field="booking_id"
+            ) from exc
+
+        # Status must be in progress
+        if not booking.status == Payable.Status.IN_PROGRESS:
+            raise GQLException(
+                f"This booking is not in progress (Status: {booking.status})"
+            )
+
+        # Must have no transactions
+        if booking.transactions.count() > 0:
+            raise GQLException(
+                "This booking cannot be deleted as it has transactions associated with it"
+            )
+
+        booking.delete()
+
+        return DeleteBooking()
+
+
 class PayBooking(AuthRequiredMixin, SafeMutation):
     """Mutation to pay for a Booking.
 
@@ -654,8 +699,11 @@ class UnCheckInBooking(AuthRequiredMixin, SafeMutation):
 
 
 class Mutation(graphene.ObjectType):
+    """Mutations for bookings"""
+
     create_booking = CreateBooking.Field()
     update_booking = UpdateBooking.Field()
+    delete_booking = DeleteBooking.Field()
     pay_booking = PayBooking.Field()
     check_in_booking = CheckInBooking.Field()
     uncheck_in_booking = UnCheckInBooking.Field()

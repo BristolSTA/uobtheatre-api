@@ -20,6 +20,7 @@ from uobtheatre.bookings.test.factories import (
 from uobtheatre.discounts.test.factories import ConcessionTypeFactory
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
+from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.payments.transaction_providers import SquareOnline, SquarePOS
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.models import User
@@ -1289,6 +1290,57 @@ def test_update_paid_booking_fails(gql_client):
             }
         }
     }
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "status,num_transactions,error",
+    [
+        [Payable.Status.IN_PROGRESS, 0, None],
+        [
+            Payable.Status.IN_PROGRESS,
+            1,
+            "This booking cannot be deleted as it has transactions associated with it",
+        ],
+        [Payable.Status.PAID, 0, "This booking is not in progress (Status: PAID)"],
+        [
+            Payable.Status.CANCELLED,
+            0,
+            "This booking is not in progress (Status: CANCELLED)",
+        ],
+    ],
+)
+def test_delete_booking(gql_client, status, num_transactions, error):
+    booking = BookingFactory(status=status, user=gql_client.login().user)
+    TicketFactory(booking=booking)
+
+    print(num_transactions)
+    [TransactionFactory(pay_object=booking) for _ in range(num_transactions)]
+
+    request = """
+        mutation {
+            deleteBooking(bookingId: "%s") {
+                success
+                errors {
+                    ... on FieldError {
+                        message
+                    }
+                    ... on NonFieldError {
+                        message
+                    }
+                }
+            }
+        }
+    """
+
+    response = gql_client.execute(request % to_global_id("BookingNode", booking.id))
+    if not error:
+        assert response["data"]["deleteBooking"]["success"] is True
+        assert Booking.objects.filter(id=booking.id).exists() is False
+    else:
+        assert response["data"]["deleteBooking"]["success"] is False
+        assert response["data"]["deleteBooking"]["errors"][0]["message"] == error
+        assert Booking.objects.filter(id=booking.id).exists() is True
 
 
 @pytest.mark.django_db
