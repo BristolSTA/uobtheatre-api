@@ -5,7 +5,7 @@
 pre-commit >= 2.11.0
 
 # formatting
-black >= 21.10b0 # Code formatting
+black >= 22.3.0 # Code formatting
 isort >= 5.10.1 # Import sorting
 pylint >= 2.13.0 # Linting
 

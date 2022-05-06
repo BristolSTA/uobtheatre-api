@@ -101,7 +101,7 @@ def test_delete_concession_type_mutation(gql_client, with_permission):
     )
 
     with patch.object(
-        ModifyConcessionType, "user_has", return_value=with_permission
+        ModifyConcessionType, "user_has_for", return_value=with_permission
     ) as ability_mock:
         response = gql_client.login().execute(request)
 
