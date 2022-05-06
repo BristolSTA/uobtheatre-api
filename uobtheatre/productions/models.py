@@ -273,7 +273,7 @@ class Performance(
     doors_open = models.DateTimeField(null=True)
     start = models.DateTimeField(null=True)
     end = models.DateTimeField(null=True)
-    interval_length_minutes = models.IntegerField(null=True, blank=True)
+    interval_duration_mins = models.IntegerField(null=True, blank=True)
 
     description = models.TextField(null=True, blank=True)
     extra_information = models.TextField(null=True, blank=True)

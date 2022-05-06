@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddField(
             model_name='performance',
-            name='interval_length_minutes',
+            name='interval_duration_mins',
             field=models.IntegerField(null=True),
         ),
     ]
