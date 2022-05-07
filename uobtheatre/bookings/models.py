@@ -227,6 +227,8 @@ class Booking(TimeStampedMixin, Payable):
         default=0, validators=[MaxValueValidator(1), MinValueValidator(0)]
     )
 
+    assessibility_info = models.TextField(null=True, blank=True)
+
     expires_at = models.DateTimeField(default=generate_expires_at)
 
     @property
