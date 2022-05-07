@@ -33,6 +33,22 @@ class ReportOption(graphene.InputObjectType):
     value = graphene.String(required=True)
 
 
+class DataSetNode(graphene.ObjectType):
+    name = graphene.String(required=True)
+    headings = graphene.List(graphene.String, required=True)
+    data = graphene.List(graphene.List(graphene.String), required=True)
+
+
+class MetaItemNode(graphene.ObjectType):
+    name = graphene.String(required=True)
+    value = graphene.String(required=True)
+
+
+class ReportNode(graphene.ObjectType):
+    datasets = graphene.List(DataSetNode)
+    meta = graphene.List(MetaItemNode)
+
+
 class GenerateReport(AuthRequiredMixin, SafeMutation):
     """Mutation to generate a report"""
 
@@ -43,6 +59,11 @@ class GenerateReport(AuthRequiredMixin, SafeMutation):
         options = graphene.List(ReportOption)
 
     download_uri = graphene.String()
+    report = graphene.Field(ReportNode)
+
+    def resolve_report(self, _):
+        self.report.run()
+        return self.report
 
     @classmethod
     def resolve_mutation(
@@ -58,7 +79,7 @@ class GenerateReport(AuthRequiredMixin, SafeMutation):
             raise GQLException(
                 message="No report found matching '%s'" % name, field="name"
             )
-
+        options = options or []
         # If a date range is provided
         if end_time or start_time:
             # Validate both end and start are provided
@@ -75,6 +96,8 @@ class GenerateReport(AuthRequiredMixin, SafeMutation):
             # And that end time is after start time
             if end_time <= start_time:
                 raise GQLException(message="The end time must be after the start time")
+            options.append({"name": "start_time", "value": str(start_time)})
+            options.append({"name": "end_time", "value": str(end_time)})
 
         matching_report = available_reports[name]
 
@@ -95,7 +118,8 @@ class GenerateReport(AuthRequiredMixin, SafeMutation):
             )
 
         return GenerateReport(
-            download_uri=settings.BASE_URL + download_uri + "?signature=" + signature
+            download_uri=settings.BASE_URL + download_uri + "?signature=" + signature,
+            report=matching_report["cls"](options),  # type: ignore
         )
 
 
