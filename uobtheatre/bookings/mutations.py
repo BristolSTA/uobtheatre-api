@@ -3,6 +3,7 @@ from typing import List, Optional
 import graphene
 from graphene.types.scalars import Float
 
+from uobtheatre.bookings.abilities import ModifyBooking
 from uobtheatre.bookings.models import Booking, Ticket, max_tickets_per_booking
 from uobtheatre.bookings.schema import BookingNode
 from uobtheatre.discounts.models import ConcessionType
@@ -22,7 +23,11 @@ from uobtheatre.utils.exceptions import (
     GQLExceptions,
     SafeMutation,
 )
-from uobtheatre.utils.schema import AuthRequiredMixin, IdInputField
+from uobtheatre.utils.schema import (
+    AuthRequiredMixin,
+    IdInputField,
+    ModelDeletionMutation,
+)
 from uobtheatre.utils.validators import PercentageValidator
 from uobtheatre.venues.models import Seat, SeatGroup
 
@@ -362,7 +367,7 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
         return UpdateBooking(booking=booking)
 
 
-class DeleteBooking(AuthRequiredMixin, SafeMutation):
+class DeleteBooking(ModelDeletionMutation):
     """Deletes a given booking.
 
     Must be in-progress, with no associated transactions.
@@ -371,21 +376,9 @@ class DeleteBooking(AuthRequiredMixin, SafeMutation):
         booking_id (str): Global id of the booking to delete
     """
 
-    class Arguments:
-        booking_id = IdInputField()
-
     @classmethod
-    def resolve_mutation(
-        cls,
-        _,
-        info,
-        booking_id: int,
-    ):
-        booking = Booking.objects.prefetch_related("transactions").get(id=booking_id)
-
-        authorize_user_for_booking(info, booking)
-
-        # Status must be in progress
+    def authorize_request(cls, _, info, **inputs):
+        booking = cls.get_instance(inputs["id"])
         if not booking.status == Payable.Status.IN_PROGRESS:
             raise GQLException(
                 f"This booking is not in progress (Status: {booking.status})"
@@ -396,10 +389,11 @@ class DeleteBooking(AuthRequiredMixin, SafeMutation):
             raise GQLException(
                 "This booking cannot be deleted as it has transactions associated with it"
             )
+        return super().authorize_request(_, info, **inputs)
 
-        booking.delete()
-
-        return DeleteBooking()
+    class Meta:
+        ability = ModifyBooking
+        model = Booking
 
 
 class PayBooking(AuthRequiredMixin, SafeMutation):

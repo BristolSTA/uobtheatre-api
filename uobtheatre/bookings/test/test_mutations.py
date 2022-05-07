@@ -1301,7 +1301,7 @@ def test_update_paid_booking_fails(gql_client):
             Payable.Status.IN_PROGRESS,
             0,
             False,
-            "You do not have permission to access this booking",
+            "You cannot delete this instance",
         ],
         [
             Payable.Status.IN_PROGRESS,
@@ -1334,7 +1334,7 @@ def test_delete_booking(gql_client, status, num_transactions, correct_user, erro
 
     request = """
         mutation {
-            deleteBooking(bookingId: "%s") {
+            deleteBooking(id: "%s") {
                 success
                 errors {
                     ... on FieldError {
@@ -1349,6 +1349,7 @@ def test_delete_booking(gql_client, status, num_transactions, correct_user, erro
     """
 
     response = gql_client.execute(request % to_global_id("BookingNode", booking.id))
+    print(response)
     if not error:
         assert response["data"]["deleteBooking"]["success"] is True
         assert Booking.objects.filter(id=booking.id).exists() is False

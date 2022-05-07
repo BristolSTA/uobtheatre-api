@@ -324,7 +324,7 @@ class ModelDeletionMutation(AuthRequiredMixin, SafeMutation):
         """Authorize the request"""
         instance = cls.get_instance(inputs["id"])
         if cls._meta.ability:
-            if not cls._meta.ability.user_has(info.context.user, instance):
+            if not cls._meta.ability.user_has_for(info.context.user, instance):
                 raise AuthorizationException("You cannot delete this instance")
             return
 
