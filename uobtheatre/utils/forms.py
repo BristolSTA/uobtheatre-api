@@ -53,9 +53,8 @@ class SendEmailForm(forms.Form):
 class MutationForm(ModelForm):
     """The base form for mutation operations"""
 
-    def __init__(self, *args, user: User = None, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.user = user
 
         if len(self.data.keys()) == 0 or "id" in self.data:
             for (key, _) in list(self.fields.items()):

@@ -1,12 +1,9 @@
-from unittest.mock import patch
-
 import pytest
 from graphql_relay.node.node import to_global_id
 from guardian.shortcuts import assign_perm
 
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import BookingFactory, PerformanceSeatingFactory
-from uobtheatre.discounts.test.factories import ConcessionTypeFactory
 from uobtheatre.productions.models import Production
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.users.test.factories import UserFactory
@@ -32,7 +29,7 @@ def test_auth_required_mixin(gql_client):
     request_query = """
     mutation {
 	payBooking(
-            id: "%s"
+            bookingId: "%s"
             price: 102
             nonce: "cnon:card-nonce-ok"
         ) {
@@ -67,39 +64,30 @@ def test_auth_required_mixin(gql_client):
 @pytest.mark.django_db
 def test_id_input_field_parse_value(gql_client):
     performance = PerformanceFactory()
-    psg = PerformanceSeatingFactory(performance=performance)
-    concession = ConcessionTypeFactory()
-
-    with patch(
-        "uobtheatre.productions.abilities.BookForPerformance.user_has_for",
-        return_value=True,
-    ):
-        gql_client.login().execute(
-            """
-        mutation($id: ID!, $sgId: IdInputField!, $ctId: IdInputField!) {
-        booking(
-            input: {performance: $id, tickets: [{seatGroupId: $sgId, concessionTypeId: $ctId}]}
-        ) {
+    PerformanceSeatingFactory(performance=performance)
+    gql_client.login()
+    gql_client.execute(
+        """
+        mutation($id: IdInputField!) {
+          createBooking(
+           performanceId: $id
+          ) {
             booking {
-            id
+              id
             }
             success
             errors {
-            __typename
-            ... on NonFieldError {
+              __typename
+              ... on NonFieldError {
                 message
                 code
+              }
             }
-            }
-        }
+         }
         }
         """,
-            variable_values={
-                "id": to_global_id("PerformanceNode", performance.id),
-                "sgId": to_global_id("SeatGroup", psg.seat_group.id),
-                "ctId": to_global_id("ConcessionType", concession.id),
-            },
-        )
+        variable_values={"id": to_global_id("PerformanceNode", performance.id)},
+    )
 
     booking = Booking.objects.first()
     assert booking.performance == performance
