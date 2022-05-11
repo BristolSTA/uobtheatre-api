@@ -488,7 +488,9 @@ def test_misc_costs_value():
     booking = BookingFactory()
     psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
     TicketFactory(booking=booking, seat_group=psg.seat_group)
-    assert booking.misc_costs_value() == 320
+    print(f"Booking cost value: {booking.total}")
+    print(f"Booking cost value: {booking.total}")
+    assert booking.misc_costs_value == 320
 
 
 @pytest.mark.django_db
@@ -530,7 +532,7 @@ def test_total_with_admin_discount(
     booking = BookingFactory(admin_discount_percentage=admin_discount)
     psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
     ticket = TicketFactory(booking=booking, seat_group=psg.seat_group)
-    assert booking.misc_costs_value() == expected_misc_costs_value
+    assert booking.misc_costs_value == expected_misc_costs_value
     assert ticket.booking.total == expected_price
 
 
@@ -1246,3 +1248,8 @@ def test_transferable_performances():
     )
 
     assert exisiting_booking.transferable_performances == [performance_2]
+
+
+@pytest.mark.django_db
+def test_transfered_from():
+    BookingFactory()

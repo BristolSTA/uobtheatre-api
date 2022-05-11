@@ -249,7 +249,7 @@ TOTAL_PROVIDER_FEE = Coalesce(
     ),
     0,
 )
-NET_TOTAL = Sum("value")
+NET_TRASACTIONS = Sum("value")
 NET_CARD_TOTAL = Sum("value", filter=(~Q(provider_name=Cash.name)))
 TOTAL_PAYMENTS = Sum("value", filter=Q(type=Transaction.Type.PAYMENT))
 TOTAL_CARD_PAYMENTS = Sum(
@@ -263,7 +263,7 @@ APP_FEE = Coalesce(Sum("app_fee"), 0)
 
 SALE_BREAKDOWN_ANNOTATIONS: dict[str, Any] = {
     # Gross Income (payments - refunds)
-    "net_transactions": NET_TOTAL,
+    "net_transactions": NET_TRASACTIONS,
     "net_card_transactions": NET_CARD_TOTAL,
     # Total payments
     "total_payments": TOTAL_PAYMENTS,
@@ -276,5 +276,5 @@ SALE_BREAKDOWN_ANNOTATIONS: dict[str, Any] = {
     # Amount we take from net payment - provider cut
     "app_payment_value": APP_FEE - TOTAL_PROVIDER_FEE,
     "society_transfer_value": NET_CARD_TOTAL - APP_FEE,
-    "society_revenue": NET_TOTAL - APP_FEE,
+    "society_revenue": NET_TRASACTIONS - APP_FEE,
 }

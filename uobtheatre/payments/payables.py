@@ -1,4 +1,5 @@
 import abc
+from typing import Optional
 
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.mail import mail_admins
@@ -12,7 +13,7 @@ from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Transaction
 from uobtheatre.users.models import User
 from uobtheatre.utils.filters import filter_passes_on_model
-from uobtheatre.utils.models import AbstractModelMeta
+from uobtheatre.utils.models import AbstractModelMeta, BaseModel
 
 
 class PayableQuerySet(QuerySet):
@@ -33,7 +34,7 @@ class PayableQuerySet(QuerySet):
         ).filter(transaction_totals=0)
 
 
-class Payable(models.Model, metaclass=AbstractModelMeta):  # type: ignore
+class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
     """
     An model which can be paid for
     """

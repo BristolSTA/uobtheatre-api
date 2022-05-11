@@ -18,13 +18,13 @@ from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable, PayableQuerySet
 from uobtheatre.productions.exceptions import (
     CapacityException,
+    NotBookableException,
     UnassignedConcessionTypeException,
     UnassignedSeatGroupException,
-    NotBookableException,
 )
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.users.models import User
-from uobtheatre.utils.models import TimeStampedMixin, BaseModel
+from uobtheatre.utils.models import TimeStampedMixin
 from uobtheatre.utils.utils import combinations, create_short_uuid
 from uobtheatre.venues.models import Seat, SeatGroup
 
@@ -35,11 +35,8 @@ if TYPE_CHECKING:
 class MiscCostQuerySet(PayableQuerySet):
     """QuerySet for bookings"""
 
-    def value(self) -> int:
-        return sum(
-            misc_cost.get_value(self)
-            for misc_cost in MiscCost.objects.filter(type=MiscCost.BookingTransfer)
-        )
+    def value(self, booking: "Booking") -> int:
+        return sum(misc_cost.get_value(booking) for misc_cost in self)
 
 
 class MiscCost(models.Model):
@@ -55,9 +52,11 @@ class MiscCost(models.Model):
         Currently all misc costs are applied to all bookings.
     """
 
+    objects = MiscCostQuerySet.as_manager()
+
     class Type(models.TextChoices):
         Booking = "Booking", "Applied to booking purchase"
-        BookingTransfer = "Booking", "Applied to booking purchase"
+        BookingTransfer = "BookingTransfer", "Applied to a booking transfer"
 
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
@@ -244,6 +243,11 @@ class Booking(TimeStampedMixin, Payable):
     )
 
     expires_at = models.DateTimeField(default=generate_expires_at)
+
+    # Whether the booking has be transferred to
+    transfered_to = models.OneToOneField(
+        "Booking", on_delete=models.RESTRICT, null=True, related_name="transfered_from"
+    )
 
     @property
     def payment_reference_id(self):
@@ -465,7 +469,30 @@ class Booking(TimeStampedMixin, Payable):
         Returns:
             (int): The value in penies of MiscCosts applied to the Booking
         """
-        return MiscCost.objects.filter(type=MiscCost.Booking).value()
+        return MiscCost.objects.filter(type=MiscCost.Type.Booking).value(self)
+
+    @property
+    def transfered_from_bookings(self) -> list["Booking"]:
+        """
+        A booking can be transfered which creates a new booking and cancels the
+        existing one. If this booking has been created in a transfer, this
+        gives all bookings which this has been transfered from. Multiple are
+        possible as a booking which is created in a transfer can it self be
+        transfered.
+
+        Returns:
+            list[int]: All the bookings in this transfer chain
+        """
+        if self.transfered_from is None:
+            return []
+        return [self.transfered_from] + self.transfered_from.transfered_from_bookings()
+
+    @property
+    def transfer_reduction(self) -> int:
+        """
+        When transfering a booking, all previous booking payments (excluding
+        transfer fees) are excluded.
+        """
 
     @property
     def total(self) -> int:
@@ -480,7 +507,7 @@ class Booking(TimeStampedMixin, Payable):
         subtotal = self.subtotal
         if subtotal == 0:  # pylint: disable=comparison-with-callable
             return 0
-        return math.ceil(subtotal + self.misc_costs_value())
+        return math.ceil(subtotal + self.misc_costs_value)
 
     def get_ticket_diff(
         self, tickets: List["Ticket"]
@@ -603,9 +630,7 @@ class Booking(TimeStampedMixin, Payable):
                 eligible_performances.append(performance)
         return eligible_performances
 
-    def transfer(
-        self, performance: "Performance", payment_provider: "PaymentProvider"
-    ) -> "Booking":
+    def create_transfer(self, performance: "Performance") -> "Booking":
         """
         Transfer the booking to a different performance.
         """
@@ -617,16 +642,12 @@ class Booking(TimeStampedMixin, Payable):
         new_booking.performance = performance
         new_booking.save()
 
-        transfer = BookingTransfer(from_booking=self, to_booking=new_booking)
+        # TODO Copy across all tickets which can be copied
 
-        payment = payment_provider.pay(
-            transfer.total, transfer.misc_costs_value, transfer
-        )
-
-        if payment.status == Transaction.Status.COMPLETED:
-            transfer.complete()
-
-        return transfer
+        # TODO Do this later
+        # self.status = Payable.Status.CANCELLED
+        self.transfered_to = new_booking
+        self.save()
 
     @property
     def web_tickets_path(self):
@@ -725,45 +746,45 @@ class TicketQuerySet(QuerySet):
         return self.filter(Q(booking__status="PAID"))
 
 
-class BookingTransfer(TimeStampedMixin, Payable):
-    """
-    A transfer of a booking to a different performance.
-    """
-
-    from_booking = models.ForeignKey(
-        Booking,
-        on_delete=models.CASCADE,
-        related_name="transfers_to",
-        verbose_name="Booking",
-    )
-    to_booking = models.ForeignKey(
-        Booking,
-        on_delete=models.CASCADE,
-        related_name="transfers_from",
-        verbose_name="Booking",
-    )
-
-    @property
-    def misc_costs_value(self) -> int:
-        """The value of the misc costs applied in pence
-
-        Detetmine the value of the MiscCosts applied to this booking transfer.
-
-        Returns:
-            (int): The value in penies of MiscCosts applied to the Booking
-        """
-        return MiscCost.objects.filter(type=MiscCost.BookingTransfer).value()
-
-    @property
-    def total(self):
-        """The total cost of the transfere."""
-        return (
-            max(self.to_booking.total - self.from_booking.net_transactions(), 0)
-            + self.misc_costs_value
-        )
-
-    def __str__(self):
-        return f"Transfer from {self.from_booking} to {self.to_booking}"
+# class BookingTransfer(TimeStampedMixin, Payable):
+#     """
+#     A transfer of a booking to a different performance.
+#     """
+#
+#     from_booking = models.ForeignKey(
+#         Booking,
+#         on_delete=models.CASCADE,
+#         related_name="transfers_to",
+#         verbose_name="Booking",
+#     )
+#     to_booking = models.ForeignKey(
+#         Booking,
+#         on_delete=models.CASCADE,
+#         related_name="transfers_from",
+#         verbose_name="Booking",
+#     )
+#
+#     @property
+#     def misc_costs_value(self) -> int:
+#         """The value of the misc costs applied in pence
+#
+#         Detetmine the value of the MiscCosts applied to this booking transfer.
+#
+#         Returns:
+#             (int): The value in penies of MiscCosts applied to the Booking
+#         """
+#         return MiscCost.objects.filter(type=MiscCost.Type.BookingTransfer).value()
+#
+#     @property
+#     def total(self):
+#         """The total cost of the transfere."""
+#         return (
+#             max(self.to_booking.total - self.from_booking.net_transactions(), 0)
+#             + self.misc_costs_value
+#         )
+#
+#     def __str__(self):
+#         return f"Transfer from {self.from_booking} to {self.to_booking}"
 
 
 class Ticket(models.Model):

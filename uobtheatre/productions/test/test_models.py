@@ -1077,12 +1077,12 @@ def test_sales_breakdown_production():
         "provider_payment_value": 16,
         "society_revenue": 750,
         "society_transfer_value": 550,
-        "total_card_sales": 1600,
-        "total_sales": 1800,
+        "total_card_payments": 1600,
+        "total_payments": 1800,
         "total_refunds": -600,
         "total_card_refunds": -600,
-        "net_income": 1200,
-        "net_card_income": 1000,
+        "net_transactions": 1200,
+        "net_card_transactions": 1000,
     }
 
 
@@ -1128,12 +1128,12 @@ def test_sales_breakdown_performance():
         "provider_payment_value": 16,
         "society_revenue": 750,
         "society_transfer_value": 550,
-        "total_card_sales": 1000,
-        "total_sales": 1200,
+        "total_card_payments": 1000,
+        "total_payments": 1200,
         "total_refunds": 0,
         "total_card_refunds": 0,
-        "net_income": 1200,
-        "net_card_income": 1000,
+        "net_transactions": 1200,
+        "net_card_transactions": 1000,
     }
 
 
@@ -1149,12 +1149,12 @@ def test_sales_breakdown_with_blank_fees():
         "provider_payment_value": 0,
         "society_revenue": 200,
         "society_transfer_value": 200,
-        "total_card_sales": 200,
-        "total_sales": 200,
+        "total_card_payments": 200,
+        "total_payments": 200,
         "total_refunds": 0,
         "total_card_refunds": 0,
-        "net_income": 200,
-        "net_card_income": 200,
+        "net_transactions": 200,
+        "net_card_transactions": 200,
     }
 
 

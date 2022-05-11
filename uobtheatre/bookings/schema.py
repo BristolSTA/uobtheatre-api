@@ -70,7 +70,7 @@ class PriceBreakdownNode(DjangoObjectType):
         return self.subtotal
 
     def resolve_misc_costs_value(self, _):
-        return self.misc_costs_value()
+        return self.misc_costs_value
 
     def resolve_total_price(self, _):
         return self.total
