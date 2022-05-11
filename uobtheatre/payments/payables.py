@@ -109,16 +109,61 @@ class Payable(models.Model, metaclass=AbstractModelMeta):  # type: ignore
                 html_message=mail.to_html(),
             )
 
-    def complete(self, payment: Transaction = None):
-        """
-        Called once the pay object has been completly paid for. Payment passed is the finishing transaction
-        """
+    @property
+    @abc.abstractmethod
+    def total(self):
+        """The total amount required to pay for the payable"""
+        raise NotImplementedError
 
     @property
-    def total_sales(self) -> int:
-        """The amount paid by the user for this object."""
-        return self.transactions.annotate_sales_breakdown(["total_sales"])[  # type: ignore
-            "total_sales"
+    @abc.abstractmethod
+    def misc_costs_value(self):
+        """The total platoform fee for this payable"""
+        raise NotImplementedError
+
+    def pay(self, payment_method: "PaymentProvider") -> Optional["Transaction"]:
+        """
+        Pay for booking using provided payment method.
+
+        Args:
+            payment_method (PaymentMethod): The payment method used to pay for
+                the booking
+
+        Returns:
+            Payment: The payment created by the checkout (optional)
+        """
+        # Cancel and delete pending payments for this booking
+        for payment in self.transactions.filter(status=Transaction.Status.PENDING):
+            payment.cancel()
+
+        payment = payment_method.pay(self.total, self.misc_costs_value(), self)
+
+        # If a payment is created set the booking as paid
+        if payment.status == Transaction.Status.COMPLETED:
+            self.complete(payment)
+
+        return payment
+
+    def complete(self, payment: Transaction = None):
+        """
+        Called once the pay object has been completly paid for. Payment passed
+        is the finishing transaction
+        """
+        self.status = Payable.Status.PAID
+        self.save()
+
+    @property
+    def total_payments(self) -> int:
+        """The amount paid by the user for this object. (This does not include refunds)"""
+        return self.transactions.annotate_sales_breakdown(["total_payments"])[  # type: ignore
+            "total_payments"
+        ]
+
+    @property
+    def net_transactions(self) -> int:
+        """The net amount paid by the user for this object. (This includes refunds)"""
+        return self.transactions.annotate_sales_breakdown(["net_transactions"])[  # type: ignore
+            "net_transactions"
         ]
 
     @property

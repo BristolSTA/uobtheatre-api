@@ -11,3 +11,7 @@ class UnassignedConcessionTypeException(GQLException):
 
 class CapacityException(GQLException):
     """Raised when a request would cause a performance/seat gorup to go over capacity"""
+
+
+class NotBookableException(GQLException):
+    """Raised when a booking for a performance that is not bookable is requested"""

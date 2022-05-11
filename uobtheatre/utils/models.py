@@ -19,6 +19,11 @@ class BaseModel(models.Model):
     def qs(self):
         return self.__class__.objects.filter(pk=self.pk)
 
+    def clone(self):
+        model = self.objects.get(pk=self.pk)
+        model.pk = None
+        return model
+
     class Meta:
         abstract = True
 

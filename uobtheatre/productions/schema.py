@@ -152,12 +152,12 @@ class ProductionFilter(FilterSet, UserPermissionFilterMixin):
 
 
 class SalesBreakdownNode(graphene.ObjectType):
-    total_sales = graphene.Int(required=True)
-    total_card_sales = graphene.Int(required=True)
+    total_payments = graphene.Int(required=True)
+    total_card_payments = graphene.Int(required=True)
     total_refunds = graphene.Int(required=True)
     total_card_refunds = graphene.Int(required=True)
-    net_income = graphene.Int(required=True)
-    net_card_income = graphene.Int(required=True)
+    net_transactions = graphene.Int(required=True)
+    net_card_transactions = graphene.Int(required=True)
     provider_payment_value = graphene.Int(required=True)
     app_payment_value = graphene.Int(required=True)
     society_transfer_value = graphene.Int(required=True)

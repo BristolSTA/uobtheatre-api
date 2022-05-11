@@ -20,10 +20,11 @@ from uobtheatre.productions.exceptions import (
     CapacityException,
     UnassignedConcessionTypeException,
     UnassignedSeatGroupException,
+    NotBookableException,
 )
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.users.models import User
-from uobtheatre.utils.models import TimeStampedMixin
+from uobtheatre.utils.models import TimeStampedMixin, BaseModel
 from uobtheatre.utils.utils import combinations, create_short_uuid
 from uobtheatre.venues.models import Seat, SeatGroup
 
@@ -31,8 +32,18 @@ if TYPE_CHECKING:
     from uobtheatre.payments.transaction_providers import PaymentProvider
 
 
+class MiscCostQuerySet(PayableQuerySet):
+    """QuerySet for bookings"""
+
+    def value(self) -> int:
+        return sum(
+            misc_cost.get_value(self)
+            for misc_cost in MiscCost.objects.filter(type=MiscCost.BookingTransfer)
+        )
+
+
 class MiscCost(models.Model):
-    """Model for miscellaneous costs for shows
+    """Model efor miscellaneous costs for shows
 
     Additional costs are added to a booking's final total.
     For example: Booking fee/Theatre improvement levy.
@@ -44,12 +55,20 @@ class MiscCost(models.Model):
         Currently all misc costs are applied to all bookings.
     """
 
+    class Type(models.TextChoices):
+        Booking = "Booking", "Applied to booking purchase"
+        BookingTransfer = "Booking", "Applied to booking purchase"
+
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
     percentage = models.FloatField(
         null=True, blank=True, validators=[MaxValueValidator(1), MinValueValidator(0)]
     )
     value = models.FloatField(null=True, blank=True)
+    type = models.CharField(
+        max_length=24,
+        choices=Type.choices,
+    )
 
     def get_value(self, booking: "Booking") -> int:
         """Calculate the value of the misc cost on a booking.
@@ -435,6 +454,7 @@ class Booking(TimeStampedMixin, Payable):
         """
         return self.tickets_price() - self.subtotal
 
+    @property
     def misc_costs_value(self) -> int:
         """The value of the misc costs applied in pence
 
@@ -445,7 +465,7 @@ class Booking(TimeStampedMixin, Payable):
         Returns:
             (int): The value in penies of MiscCosts applied to the Booking
         """
-        return sum(misc_cost.get_value(self) for misc_cost in MiscCost.objects.all())
+        return MiscCost.objects.filter(type=MiscCost.Booking).value()
 
     @property
     def total(self) -> int:
@@ -532,7 +552,7 @@ class Booking(TimeStampedMixin, Payable):
         for payment in self.transactions.filter(status=Transaction.Status.PENDING):
             payment.cancel()
 
-        payment = payment_method.pay(self.total, self.misc_costs_value(), self)
+        payment = payment_method.pay(self.total, self.misc_costs_value, self)
 
         # If a payment is created set the booking as paid
         if payment.status == Transaction.Status.COMPLETED:
@@ -545,9 +565,32 @@ class Booking(TimeStampedMixin, Payable):
         Complete the booking (after it has been paid for) and send the
         confirmation email.
         """
-        self.status = Payable.Status.PAID
-        self.save()
+        super().complete()
         self.send_confirmation_email(payment)
+
+    def can_transfer_to(self, performance: "Performance", raises=False) -> bool:
+        """
+        Check if this booking can be transfered to the provided performance
+        """
+        # Check it is bookable
+        if not performance.is_bookable:
+            if raises:
+                raise NotBookableException
+            return False
+
+        # Check that the performance has the seat group & concession type with enough capacity
+        try:
+            performance.check_capacity(self.tickets.all())
+        except (
+            UnassignedSeatGroupException,
+            UnassignedConcessionTypeException,
+            CapacityException,
+        ) as exc:
+            if raises:
+                raise exc
+            return False
+
+        return True
 
     @property
     def transferable_performances(self):
@@ -556,23 +599,34 @@ class Booking(TimeStampedMixin, Payable):
         for performance in self.performance.production.performances.exclude(
             pk=self.performance.pk
         ).all():
-
-            # Check it is bookable
-            if not performance.is_bookable:
-                continue
-
-            # Check that the performance has the seat group & concession type with enough capacity
-            try:
-                performance.check_capacity(self.tickets.all())
-            except (
-                UnassignedSeatGroupException,
-                UnassignedConcessionTypeException,
-                CapacityException,
-            ):
-                continue
-
-            eligible_performances.append(performance)
+            if self.can_transfer_to(performance):
+                eligible_performances.append(performance)
         return eligible_performances
+
+    def transfer(
+        self, performance: "Performance", payment_provider: "PaymentProvider"
+    ) -> "Booking":
+        """
+        Transfer the booking to a different performance.
+        """
+        self.can_transfer_to(performance, raises=True)
+
+        # Create a booking transfer model
+        new_booking = self.clone()
+        new_booking.status = Payable.Status.IN_PROGRESS
+        new_booking.performance = performance
+        new_booking.save()
+
+        transfer = BookingTransfer(from_booking=self, to_booking=new_booking)
+
+        payment = payment_provider.pay(
+            transfer.total, transfer.misc_costs_value, transfer
+        )
+
+        if payment.status == Transaction.Status.COMPLETED:
+            transfer.complete()
+
+        return transfer
 
     @property
     def web_tickets_path(self):
@@ -669,6 +723,47 @@ class TicketQuerySet(QuerySet):
 
     def sold(self) -> QuerySet:
         return self.filter(Q(booking__status="PAID"))
+
+
+class BookingTransfer(TimeStampedMixin, Payable):
+    """
+    A transfer of a booking to a different performance.
+    """
+
+    from_booking = models.ForeignKey(
+        Booking,
+        on_delete=models.CASCADE,
+        related_name="transfers_to",
+        verbose_name="Booking",
+    )
+    to_booking = models.ForeignKey(
+        Booking,
+        on_delete=models.CASCADE,
+        related_name="transfers_from",
+        verbose_name="Booking",
+    )
+
+    @property
+    def misc_costs_value(self) -> int:
+        """The value of the misc costs applied in pence
+
+        Detetmine the value of the MiscCosts applied to this booking transfer.
+
+        Returns:
+            (int): The value in penies of MiscCosts applied to the Booking
+        """
+        return MiscCost.objects.filter(type=MiscCost.BookingTransfer).value()
+
+    @property
+    def total(self):
+        """The total cost of the transfere."""
+        return (
+            max(self.to_booking.total - self.from_booking.net_transactions(), 0)
+            + self.misc_costs_value
+        )
+
+    def __str__(self):
+        return f"Transfer from {self.from_booking} to {self.to_booking}"
 
 
 class Ticket(models.Model):

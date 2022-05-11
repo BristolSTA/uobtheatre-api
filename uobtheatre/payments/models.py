@@ -251,8 +251,8 @@ TOTAL_PROVIDER_FEE = Coalesce(
 )
 NET_TOTAL = Sum("value")
 NET_CARD_TOTAL = Sum("value", filter=(~Q(provider_name=Cash.name)))
-TOTAL_SALES = Sum("value", filter=Q(type=Transaction.Type.PAYMENT))
-TOTAL_CARD_SALES = Sum(
+TOTAL_PAYMENTS = Sum("value", filter=Q(type=Transaction.Type.PAYMENT))
+TOTAL_CARD_PAYMENTS = Sum(
     "value", filter=(~Q(provider_name=Cash.name) & Q(type=Transaction.Type.PAYMENT))
 )
 TOTAL_REFUNDS = Sum("value", filter=Q(type=Transaction.Type.REFUND))
@@ -262,12 +262,12 @@ TOTAL_CARD_REFUNDS = Sum(
 APP_FEE = Coalesce(Sum("app_fee"), 0)
 
 SALE_BREAKDOWN_ANNOTATIONS: dict[str, Any] = {
-    # Gross Income
-    "net_income": NET_TOTAL,
-    "net_card_income": NET_CARD_TOTAL,
-    # Total Purchases / Sales
-    "total_sales": TOTAL_SALES,
-    "total_card_sales": TOTAL_CARD_SALES,
+    # Gross Income (payments - refunds)
+    "net_transactions": NET_TOTAL,
+    "net_card_transactions": NET_CARD_TOTAL,
+    # Total payments
+    "total_payments": TOTAL_PAYMENTS,
+    "total_card_payments": TOTAL_CARD_PAYMENTS,
     # Total Refunds
     "total_refunds": TOTAL_REFUNDS,
     "total_card_refunds": TOTAL_CARD_REFUNDS,
