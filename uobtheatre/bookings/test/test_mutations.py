@@ -2226,7 +2226,11 @@ def test_paybooking_unsupported_payment_provider(info):
 
     with pytest.raises(GQLException) as exc:
         PayBooking.resolve_mutation(
-            None, info, booking.id, booking.total, payment_provider="NOT_A_THING"
+            None,
+            info,
+            id=booking.id,
+            price=booking.total,
+            payment_provider="NOT_A_THING",
         )
     assert exc.value.message == "Unsupported payment provider NOT_A_THING."
 
