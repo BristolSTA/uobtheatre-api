@@ -19,6 +19,22 @@ type ArchiveAccount {
   errors: [GQLErrorUnion]
 }
 
+input BookingMutationInput {
+  performance: ID
+  adminDiscountPercentage: Float
+  tickets: [TicketInputType]
+  userEmail: String
+  id: ID
+  clientMutationId: String
+}
+
+type BookingMutationPayload {
+  booking: BookingNode
+  errors: [GQLErrorUnion]
+  success: Boolean
+  clientMutationId: String
+}
+
 type BookingNode implements Node {
   id: ID!
   createdAt: DateTime!
@@ -93,17 +109,6 @@ type ConcessionTypeNode implements Node {
   name: String!
   description: String
   id: ID!
-}
-
-type CreateBooking {
-  success: Boolean
-  errors: [GQLErrorUnion]
-  booking: BookingNode
-}
-
-input CreateTicketInput {
-  seatGroupId: IdInputField!
-  concessionTypeId: IdInputField!
 }
 
 type CrewMemberNode implements Node {
@@ -311,12 +316,11 @@ type Mutation {
   setProductionStatus(message: String, productionId: IdInputField!, status: Status): SetProductionStatus
   cancelPayment(paymentId: IdInputField!): CancelPayment
   generateReport(endTime: DateTime, name: String!, options: [ReportOption], startTime: DateTime): GenerateReport
-  createBooking(adminDiscountPercentage: Float, performanceId: IdInputField, targetUserEmail: String, tickets: [CreateTicketInput]): CreateBooking
-  updateBooking(adminDiscountPercentage: Float, bookingId: IdInputField, targetUserEmail: String, tickets: [UpdateTicketInput]): UpdateBooking
-  deleteBooking(bookingId: IdInputField): DeleteBooking
-  payBooking(bookingId: IdInputField!, deviceId: String, idempotencyKey: String, nonce: String, paymentProvider: PaymentMethod, price: Int!, verifyToken: String): PayBooking
-  checkInBooking(bookingReference: String!, performanceId: IdInputField!, tickets: [TicketIDInput]!): CheckInBooking
-  uncheckInBooking(bookingReference: String!, performanceId: IdInputField!, tickets: [TicketIDInput]!): UnCheckInBooking
+  booking(input: BookingMutationInput!): BookingMutationPayload
+  deleteBooking(id: IdInputField!): DeleteBooking
+  payBooking(deviceId: String, id: IdInputField!, idempotencyKey: String, nonce: String, paymentProvider: PaymentMethod, price: Int!, verifyToken: String): PayBooking
+  checkInBooking(bookingReference: String!, performance: IdInputField!, tickets: [TicketIDInput]!): CheckInBooking
+  uncheckInBooking(bookingReference: String!, performance: IdInputField!, tickets: [TicketIDInput]!): UnCheckInBooking
 }
 
 interface Node {
@@ -731,6 +735,13 @@ input TicketIDInput {
   ticketId: IdInputField!
 }
 
+input TicketInputType {
+  seatGroupId: IdInputField!
+  concessionTypeId: IdInputField!
+  seatId: IdInputField
+  id: IdInputField
+}
+
 type TicketNode implements Node {
   id: ID!
   seatGroup: SeatGroupNode!
@@ -779,19 +790,6 @@ type UnCheckInBooking {
 type UpdateAccount {
   success: Boolean
   errors: [GQLErrorUnion]
-}
-
-type UpdateBooking {
-  success: Boolean
-  errors: [GQLErrorUnion]
-  booking: BookingNode
-}
-
-input UpdateTicketInput {
-  seatGroupId: IdInputField!
-  concessionTypeId: IdInputField!
-  seatId: IdInputField
-  id: IdInputField
 }
 
 type UserNode implements Node {
