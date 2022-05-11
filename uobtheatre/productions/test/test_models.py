@@ -266,7 +266,6 @@ def test_production_total_capacity():
     perf_2 = PerformanceFactory(production=perf_1.production, capacity=150)
     PerformanceSeatingFactory(performance=perf_1, capacity=1000)
     PerformanceSeatingFactory(performance=perf_2, capacity=140)
-    perf_1.production.refresh_from_db()
 
     assert perf_1.production.total_capacity == 240
 

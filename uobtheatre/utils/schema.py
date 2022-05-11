@@ -151,9 +151,7 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
 
     @classmethod
     def get_form_kwargs(cls, root, info, **inputs):
-        kwargs = super().get_form_kwargs(root, info, **inputs)
-        kwargs["user"] = info.context.user
-        return kwargs
+        return super().get_form_kwargs(root, info, **inputs)
 
     @classmethod
     # pylint: disable=protected-access
@@ -190,10 +188,6 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
             raise AuthorizationException(
                 "You cannot change this %s instance" % model_name.lower()
             )
-
-    @classmethod
-    def pre_save(cls, form, info):
-        """Callback method run just before the form instance is saved"""
 
     @classmethod
     def on_success(cls, info, response, is_creation):
@@ -239,11 +233,6 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
     def resolve_mutation(cls, root, info, **inputs):
         # pylint: disable=bad-super-call
         return super(DjangoModelFormMutation, cls).mutate(root, info, inputs)
-
-    @classmethod
-    def perform_mutate(cls, form, info):
-        cls.pre_save(form, info)
-        return super().perform_mutate(form, info)
 
     @classmethod
     def mutate_and_get_payload(cls, root, info, **inputs):
@@ -335,7 +324,7 @@ class ModelDeletionMutation(AuthRequiredMixin, SafeMutation):
         """Authorize the request"""
         instance = cls.get_instance(inputs["id"])
         if cls._meta.ability:
-            if not cls._meta.ability.user_has_for(info.context.user, instance):
+            if not cls._meta.ability.user_has(info.context.user, instance):
                 raise AuthorizationException("You cannot delete this instance")
             return
 
