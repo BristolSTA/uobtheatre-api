@@ -1073,6 +1073,7 @@ def test_sales_breakdown_production():
     )
 
     assert production.sales_breakdown() == {
+        "app_fee": 450,
         "app_payment_value": 434,
         "provider_payment_value": 16,
         "society_revenue": 750,
@@ -1124,6 +1125,7 @@ def test_sales_breakdown_performance():
     )
 
     assert performance.sales_breakdown() == {
+        "app_fee": 450,
         "app_payment_value": 434,
         "provider_payment_value": 16,
         "society_revenue": 750,
@@ -1145,6 +1147,7 @@ def test_sales_breakdown_with_blank_fees():
     TransactionFactory(pay_object=booking, value=200)
 
     assert performance.sales_breakdown() == {
+        "app_fee": 0,
         "app_payment_value": 0,
         "provider_payment_value": 0,
         "society_revenue": 200,

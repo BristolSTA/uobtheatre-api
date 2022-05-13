@@ -1252,4 +1252,13 @@ def test_transferable_performances():
 
 @pytest.mark.django_db
 def test_transfered_from():
-    BookingFactory()
+    booking_1 = BookingFactory()
+    booking_2 = BookingFactory(transfered_to=booking_1)
+    booking_3 = BookingFactory(transfered_to=booking_2)
+
+    booking_4 = BookingFactory()
+
+    assert booking_1.transfered_from_bookings == [booking_2, booking_3]
+    assert booking_2.transfered_from_bookings == [booking_3]
+    assert booking_3.transfered_from_bookings == []
+    assert booking_4.transfered_from_bookings == []

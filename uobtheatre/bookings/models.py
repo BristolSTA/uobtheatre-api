@@ -483,9 +483,9 @@ class Booking(TimeStampedMixin, Payable):
         Returns:
             list[int]: All the bookings in this transfer chain
         """
-        if self.transfered_from is None:
+        if not hasattr(self, "transfered_from"):
             return []
-        return [self.transfered_from] + self.transfered_from.transfered_from_bookings()
+        return [self.transfered_from] + self.transfered_from.transfered_from_bookings
 
     @property
     def transfer_reduction(self) -> int:
@@ -493,6 +493,12 @@ class Booking(TimeStampedMixin, Payable):
         When transfering a booking, all previous booking payments (excluding
         transfer fees) are excluded.
         """
+        transactions = Transaction.objects.filter(
+            pay_object__in=self.transfered_from_bookings
+        )
+        transactions.annotate_sales_breakdown(breakdowns=["net_transactions"])[
+            "net_transactions"
+        ]
 
     @property
     def total(self) -> int:
@@ -644,7 +650,7 @@ class Booking(TimeStampedMixin, Payable):
 
         # TODO Copy across all tickets which can be copied
 
-        # TODO Do this later
+        # TODO Do this later and CANCELLED cannot be refunded
         # self.status = Payable.Status.CANCELLED
         self.transfered_to = new_booking
         self.save()

@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Optional
+from enum import Enum
 
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -26,14 +27,19 @@ if TYPE_CHECKING:
 class TransactionQuerySet(QuerySet):
     """The query set for payments"""
 
-    def annotate_sales_breakdown(self, breakdowns: list[str] = None):
+    def annotate_sales_breakdown(
+        self, breakdowns: Optional[list["SalesBreakdown"]] = None
+    ):
         """Annotate sales breakdown onto payments"""
         annotations = {
-            k: Coalesce(v, 0)
-            for k, v in SALE_BREAKDOWN_ANNOTATIONS.items()
-            if breakdowns is None or k in breakdowns
+            breakdown.key: Coalesce(breakdown.value, 0)
+            for breakdown in SalesBreakdown
+            if breakdowns is None or breakdown in breakdowns
         }
         return self.aggregate(**annotations)
+
+    def get_sales_breakdown(self, breakdown: "SalesBreakdown"):
+        return self.annotate_sales_breakdown(breakdowns=[breakdown])[breakdown.key]
 
     def payments(self):
         return self.filter(type=Transaction.Type.PAYMENT)
@@ -243,38 +249,29 @@ class Transaction(TimeStampedMixin, models.Model):
         refund_provider.refund(self)
 
 
-TOTAL_PROVIDER_FEE = Coalesce(
-    Sum(
-        "provider_fee",
-    ),
-    0,
-)
-NET_TRASACTIONS = Sum("value")
-NET_CARD_TOTAL = Sum("value", filter=(~Q(provider_name=Cash.name)))
-TOTAL_PAYMENTS = Sum("value", filter=Q(type=Transaction.Type.PAYMENT))
-TOTAL_CARD_PAYMENTS = Sum(
-    "value", filter=(~Q(provider_name=Cash.name) & Q(type=Transaction.Type.PAYMENT))
-)
-TOTAL_REFUNDS = Sum("value", filter=Q(type=Transaction.Type.REFUND))
-TOTAL_CARD_REFUNDS = Sum(
-    "value", filter=(~Q(provider_name=Cash.name) & Q(type=Transaction.Type.REFUND))
-)
-APP_FEE = Coalesce(Sum("app_fee"), 0)
+class SalesBreakdown(Enum):
+    PROVIDER_PAYMENT_VALUE = Coalesce(
+        Sum(
+            "provider_fee",
+        ),
+        0,
+    )
+    NET_TRANSACTIONS = Sum("value")
+    NET_CARD_TRANSACTIONS = Sum("value", filter=(~Q(provider_name=Cash.name)))
+    TOTAL_PAYMENTS = Sum("value", filter=Q(type=Transaction.Type.PAYMENT))
+    TOTAL_CARD_PAYMENTS = Sum(
+        "value", filter=(~Q(provider_name=Cash.name) & Q(type=Transaction.Type.PAYMENT))
+    )
+    TOTAL_REFUNDS = Sum("value", filter=Q(type=Transaction.Type.REFUND))
+    TOTAL_CARD_REFUNDS = Sum(
+        "value", filter=(~Q(provider_name=Cash.name) & Q(type=Transaction.Type.REFUND))
+    )
+    APP_FEE = Coalesce(Sum("app_fee"), 0)
 
-SALE_BREAKDOWN_ANNOTATIONS: dict[str, Any] = {
-    # Gross Income (payments - refunds)
-    "net_transactions": NET_TRASACTIONS,
-    "net_card_transactions": NET_CARD_TOTAL,
-    # Total payments
-    "total_payments": TOTAL_PAYMENTS,
-    "total_card_payments": TOTAL_CARD_PAYMENTS,
-    # Total Refunds
-    "total_refunds": TOTAL_REFUNDS,
-    "total_card_refunds": TOTAL_CARD_REFUNDS,
-    # Gross Amount charged by the payment provider (square) for these payments
-    "provider_payment_value": TOTAL_PROVIDER_FEE,
-    # Amount we take from net payment - provider cut
-    "app_payment_value": APP_FEE - TOTAL_PROVIDER_FEE,
-    "society_transfer_value": NET_CARD_TOTAL - APP_FEE,
-    "society_revenue": NET_TRASACTIONS - APP_FEE,
-}
+    APP_PAYMENT_VALUE = APP_FEE - PROVIDER_PAYMENT_VALUE
+    SOCIETY_TRANSFER_VALUE = NET_CARD_TRANSACTIONS - APP_FEE
+    SOCIETY_REVENUE = NET_TRANSACTIONS - APP_FEE
+
+    @property
+    def key(self):
+        return self.name.lower()

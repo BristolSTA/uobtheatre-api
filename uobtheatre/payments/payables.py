@@ -10,7 +10,7 @@ from django.db.models.query import QuerySet
 
 from uobtheatre.payments.emails import payable_refund_initiated_email
 from uobtheatre.payments.exceptions import CantBeRefundedException
-from uobtheatre.payments.models import Transaction
+from uobtheatre.payments.models import SalesBreakdown, Transaction
 from uobtheatre.users.models import User
 from uobtheatre.utils.filters import filter_passes_on_model
 from uobtheatre.utils.models import AbstractModelMeta, BaseModel
@@ -156,44 +156,36 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
     @property
     def total_payments(self) -> int:
         """The amount paid by the user for this object. (This does not include refunds)"""
-        return self.transactions.annotate_sales_breakdown(["total_payments"])[  # type: ignore
-            "total_payments"
-        ]
+        return self.transactions.get_sales_breakdown(SalesBreakdown.TOTAL_PAYMENTS)
 
     @property
     def net_transactions(self) -> int:
         """The net amount paid by the user for this object. (This includes refunds)"""
-        return self.transactions.annotate_sales_breakdown(["net_transactions"])[  # type: ignore
-            "net_transactions"
-        ]
+        return self.transactions.get_sales_breakdown(SalesBreakdown.NET_TRANSACTIONS)
 
     @property
     def provider_payment_value(self) -> int:
         """The amount taken by the payment provider in paying for this object."""
-        return self.transactions.annotate_sales_breakdown(["provider_payment_value"])[  # type: ignore
-            "provider_payment_value"
-        ]
+        return self.transactions.get_sales_breakdown(
+            SalesBreakdown.PROVIDER_PAYMENT_VALUE
+        )
 
     @property
     def app_payment_value(self) -> int:
         """The amount taken by us in paying for this object."""
-        return self.transactions.annotate_sales_breakdown(["app_payment_value"])[  # type: ignore
-            "app_payment_value"
-        ]
+        return self.transactions.get_sales_breakdown(SalesBreakdown.APP_PAYMENT_VALUE)
 
     @property
     def society_revenue(self) -> int:
         """The revenue for the society for selling this object."""
-        return self.transactions.annotate_sales_breakdown(["society_revenue"])[  # type: ignore
-            "society_revenue"
-        ]
+        return self.transactions.get_sales_breakdown(SalesBreakdown.SOCIETY_REVENUE)
 
     @property
     def society_transfer_value(self) -> int:
         """The amount of money to transfere to the society for object."""
-        return self.transactions.annotate_sales_breakdown(["society_transfer_value"])[  # type: ignore
-            "society_transfer_value"
-        ]
+        return self.transactions.get_sales_breakdown(
+            SalesBreakdown.SOCIETY_TRANSFER_VALUE
+        )
 
     class Meta:
         abstract = True

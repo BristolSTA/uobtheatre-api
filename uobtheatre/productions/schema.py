@@ -159,6 +159,7 @@ class SalesBreakdownNode(graphene.ObjectType):
     net_transactions = graphene.Int(required=True)
     net_card_transactions = graphene.Int(required=True)
     provider_payment_value = graphene.Int(required=True)
+    app_fee = graphene.Int(required=True)
     app_payment_value = graphene.Int(required=True)
     society_transfer_value = graphene.Int(required=True)
     society_revenue = graphene.Int(required=True)
