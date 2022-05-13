@@ -1,5 +1,5 @@
-from typing import TYPE_CHECKING, Optional
 from enum import Enum
+from typing import TYPE_CHECKING, Optional
 
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
