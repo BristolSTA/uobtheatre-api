@@ -137,7 +137,7 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
         for payment in self.transactions.filter(status=Transaction.Status.PENDING):
             payment.cancel()
 
-        payment = payment_method.pay(self.total, self.misc_costs_value(), self)
+        payment = payment_method.pay(self.total, self.misc_costs_value, self)
 
         # If a payment is created set the booking as paid
         if payment.status == Transaction.Status.COMPLETED:

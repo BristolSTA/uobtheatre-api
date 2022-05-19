@@ -6,9 +6,10 @@ from django.db import models
 from guardian.shortcuts import assign_perm, get_objects_for_user
 
 from uobtheatre.users.abilities import AbilitiesMixin, OpenAdmin, OpenBoxoffice
+from uobtheatre.utils.models import BaseModel
 
 
-class User(AbilitiesMixin, AbstractUser):
+class User(AbilitiesMixin, AbstractUser, BaseModel):
     """The model for users.
 
     A User is someone that uses the app (including admins). A user is

@@ -9,12 +9,13 @@ from django.db.models import Case, F, FloatField, Q, Value, When
 from django.db.models.functions import Cast
 from django.db.models.query import QuerySet
 from django.utils import timezone
+from django.contrib.contenttypes.models import ContentType
 from django.utils.functional import cached_property
 from graphql_relay.node.node import to_global_id
 
 from uobtheatre.discounts.models import ConcessionType, DiscountCombination
 from uobtheatre.mail.composer import MailComposer
-from uobtheatre.payments.models import Transaction
+from uobtheatre.payments.models import Transaction, SalesBreakdown
 from uobtheatre.payments.payables import Payable, PayableQuerySet
 from uobtheatre.productions.exceptions import (
     CapacityException,
@@ -24,7 +25,7 @@ from uobtheatre.productions.exceptions import (
 )
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.users.models import User
-from uobtheatre.utils.models import TimeStampedMixin
+from uobtheatre.utils.models import TimeStampedMixin, BaseModel
 from uobtheatre.utils.utils import combinations, create_short_uuid
 from uobtheatre.venues.models import Seat, SeatGroup
 
@@ -494,11 +495,19 @@ class Booking(TimeStampedMixin, Payable):
         transfer fees) are excluded.
         """
         transactions = Transaction.objects.filter(
-            pay_object__in=self.transfered_from_bookings
+            pay_object_type=ContentType.objects.get_for_model(Booking),
+            pay_object_id__in=map(lambda m: m.id, self.transfered_from_bookings),
+            status=Transaction.Status.COMPLETED,
         )
-        transactions.annotate_sales_breakdown(breakdowns=["net_transactions"])[
-            "net_transactions"
-        ]
+        print(f"All transactions are {Transaction.objects.all()}")
+        print(f"The transactions are {transactions}")
+        print(
+            f"Booking ids are {list(map(lambda m: m.id, self.transfered_from_bookings))}"
+        )
+        print(f"Content type {ContentType.objects.get_for_model(Booking)}")
+        return transactions.get_sales_breakdown(
+            breakdown=SalesBreakdown.NET_TRANSACTIONS
+        )
 
     @property
     def total(self) -> int:
@@ -570,29 +579,6 @@ class Booking(TimeStampedMixin, Payable):
             (len(self.tickets.all()) + len(add_tickets) - len(delete_tickets)),
         )
 
-    def pay(self, payment_method: "PaymentProvider") -> Optional["Transaction"]:
-        """
-        Pay for booking using provided payment method.
-
-        Args:
-            payment_method (PaymentMethod): The payment method used to pay for
-                the booking
-
-        Returns:
-            Payment: The payment created by the checkout (optional)
-        """
-        # Cancel and delete pending payments for this booking
-        for payment in self.transactions.filter(status=Transaction.Status.PENDING):
-            payment.cancel()
-
-        payment = payment_method.pay(self.total, self.misc_costs_value, self)
-
-        # If a payment is created set the booking as paid
-        if payment.status == Transaction.Status.COMPLETED:
-            self.complete(payment)
-
-        return payment
-
     def complete(self, payment: Transaction = None):
         """
         Complete the booking (after it has been paid for) and send the
@@ -601,46 +587,58 @@ class Booking(TimeStampedMixin, Payable):
         super().complete()
         self.send_confirmation_email(payment)
 
-    def can_transfer_to(self, performance: "Performance", raises=False) -> bool:
-        """
-        Check if this booking can be transfered to the provided performance
-        """
-        # Check it is bookable
-        if not performance.is_bookable:
-            if raises:
-                raise NotBookableException
-            return False
+    #     def can_transfer_to(self, performance: "Performance", raises=False) -> bool:
+    #         """
+    #         Check if this booking can be transfered to the provided performance
+    #         """
+    #         # Check it is bookable
+    #         if not performance.is_bookable:
+    #             if raises:
+    #                 raise NotBookableException
+    #             return False
+    #
+    #         # Check that the performance has the seat group & concession type with enough capacity
+    #         try:
+    #             performance.check_capacity(self.tickets.all())
+    #         except (
+    #             UnassignedSeatGroupException,
+    #             UnassignedConcessionTypeException,
+    #             CapacityException,
+    #         ) as exc:
+    #             if raises:
+    #                 raise exc
+    #             return False
+    #
+    #         return True
+    #
+    #     @property
+    #     def transferable_performances(self):
+    #         """Gets the performances that this booking could be transfered to (without changes)"""
+    #         eligible_performances = []
+    #         for performance in self.performance.production.performances.exclude(
+    #             pk=self.performance.pk
+    #         ).all():
+    #             if self.can_transfer_to(performance):
+    #                 eligible_performances.append(performance)
+    #         return eligible_performances
 
-        # Check that the performance has the seat group & concession type with enough capacity
-        try:
-            performance.check_capacity(self.tickets.all())
-        except (
-            UnassignedSeatGroupException,
-            UnassignedConcessionTypeException,
-            CapacityException,
-        ) as exc:
-            if raises:
-                raise exc
-            return False
-
-        return True
-
-    @property
-    def transferable_performances(self):
-        """Gets the performances that this booking could be transfered to (without changes)"""
-        eligible_performances = []
-        for performance in self.performance.production.performances.exclude(
-            pk=self.performance.pk
-        ).all():
-            if self.can_transfer_to(performance):
-                eligible_performances.append(performance)
-        return eligible_performances
+    def clone(self):
+        clone = super().clone()
+        clone.reference = create_short_uuid()
+        return clone
 
     def create_transfer(self, performance: "Performance") -> "Booking":
         """
         Transfer the booking to a different performance.
+
+        A successful transfer creates a new booking which copies the attributes
+        from the original. The original is cancelled and the transfered to
+        attribute is assigned as the new booking.
         """
-        self.can_transfer_to(performance, raises=True)
+        if not performance.is_bookable:
+            raise NotBookableException
+
+        # TODO check sufficient capacity to transfere all tickets
 
         # Create a booking transfer model
         new_booking = self.clone()
@@ -648,7 +646,27 @@ class Booking(TimeStampedMixin, Payable):
         new_booking.performance = performance
         new_booking.save()
 
-        # TODO Copy across all tickets which can be copied
+        # Copy across all tickets which can be copied
+        for ticket in self.tickets.all():
+            # TODO maybe define can_transfer_to on ticket model
+            # If there is capcity for this ticket in the other performance then
+            # copy this ticket to the new booking
+            try:
+                performance.check_capacity(ticket.qs)
+
+                # Clone ticket to new booking
+                new_ticket = ticket.clone()
+                new_ticket.booking = new_booking
+                new_ticket.save()
+            except (
+                UnassignedSeatGroupException,
+                UnassignedConcessionTypeException,
+                CapacityException,
+            ) as exc:
+                print(
+                    f"Not copying accross ticket {ticket.seat_group} as {exc.__class__}"
+                )
+                pass
 
         # TODO Do this later and CANCELLED cannot be refunded
         # self.status = Payable.Status.CANCELLED
@@ -793,7 +811,7 @@ class TicketQuerySet(QuerySet):
 #         return f"Transfer from {self.from_booking} to {self.to_booking}"
 
 
-class Ticket(models.Model):
+class Ticket(BaseModel):
     """A booking of a single seat.
 
     A Ticket is the reservation of a seat for a performance. The performance is

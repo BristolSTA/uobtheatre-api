@@ -919,16 +919,7 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
         Returns:
             bool: If the booking can be booked.
         """
-        return (
-            len(
-                [
-                    performance
-                    for performance in self.performances.all()
-                    if performance.is_bookable
-                ]
-            )
-            > 0
-        )
+        return any(performance.is_bookable for performance in self.performances.all())
 
     def end_date(self):
         """When the last Performance of the Production ends.

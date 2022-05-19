@@ -1190,64 +1190,64 @@ def test_booking_display_name():
     )
 
 
-@pytest.mark.django_db
-def test_transferable_performances():
-    seat_group = SeatGroupFactory()
-    concession_type = ConcessionTypeFactory()
-
-    def setup_discount(performance):
-        discount = DiscountFactory()
-        discount.performances.set([performance])
-        DiscountRequirementFactory(concession_type=concession_type, discount=discount)
-
-    ## The current performance
-    performance_1 = PerformanceFactory(
-        end=datetime.datetime.now(tz=pytz.UTC) + datetime.timedelta(days=1)
-    )
-    setup_discount(performance_1)
-    PerformanceSeatingFactory(performance=performance_1, seat_group=seat_group)
-
-    ## Another performance with the same seat group
-    performance_2 = PerformanceFactory(
-        end=datetime.datetime.now(tz=pytz.UTC) + datetime.timedelta(days=1),
-        production=performance_1.production,
-    )
-    setup_discount(performance_2)
-    PerformanceSeatingFactory(performance=performance_2, seat_group=seat_group)
-
-    ## Performance without the seat group
-    performance_3 = PerformanceFactory(
-        end=datetime.datetime.now(tz=pytz.UTC) + datetime.timedelta(days=1),
-        production=performance_1.production,
-    )
-    setup_discount(performance_3)
-    PerformanceSeatingFactory(performance=performance_3)  # Note the lack of seat group
-
-    ## Performance with the seat group, but not bookable
-    performance_4 = PerformanceFactory(
-        end=datetime.datetime.now(tz=pytz.UTC) - datetime.timedelta(days=1),
-        production=performance_1.production,
-    )
-    setup_discount(performance_4)
-    PerformanceSeatingFactory(
-        performance=performance_4, seat_group=seat_group
-    )  # Note the lack of seat group
-
-    ## Performance with the seat group, but not concession_type
-    performance_5 = PerformanceFactory(
-        end=datetime.datetime.now(tz=pytz.UTC) - datetime.timedelta(days=1),
-        production=performance_1.production,
-    )
-    PerformanceSeatingFactory(performance=performance_5, seat_group=seat_group)
-
-    exisiting_booking = BookingFactory(performance=performance_1)
-    TicketFactory(
-        booking=exisiting_booking,
-        seat_group=seat_group,
-        concession_type=concession_type,
-    )
-
-    assert exisiting_booking.transferable_performances == [performance_2]
+# @pytest.mark.django_db
+# def test_transferable_performances():
+#     seat_group = SeatGroupFactory()
+#     concession_type = ConcessionTypeFactory()
+#
+#     def setup_discount(performance):
+#         discount = DiscountFactory()
+#         discount.performances.set([performance])
+#         DiscountRequirementFactory(concession_type=concession_type, discount=discount)
+#
+#     ## The current performance
+#     performance_1 = PerformanceFactory(
+#         end=datetime.datetime.now(tz=pytz.UTC) + datetime.timedelta(days=1)
+#     )
+#     setup_discount(performance_1)
+#     PerformanceSeatingFactory(performance=performance_1, seat_group=seat_group)
+#
+#     ## Another performance with the same seat group
+#     performance_2 = PerformanceFactory(
+#         end=datetime.datetime.now(tz=pytz.UTC) + datetime.timedelta(days=1),
+#         production=performance_1.production,
+#     )
+#     setup_discount(performance_2)
+#     PerformanceSeatingFactory(performance=performance_2, seat_group=seat_group)
+#
+#     ## Performance without the seat group
+#     performance_3 = PerformanceFactory(
+#         end=datetime.datetime.now(tz=pytz.UTC) + datetime.timedelta(days=1),
+#         production=performance_1.production,
+#     )
+#     setup_discount(performance_3)
+#     PerformanceSeatingFactory(performance=performance_3)  # Note the lack of seat group
+#
+#     ## Performance with the seat group, but not bookable
+#     performance_4 = PerformanceFactory(
+#         end=datetime.datetime.now(tz=pytz.UTC) - datetime.timedelta(days=1),
+#         production=performance_1.production,
+#     )
+#     setup_discount(performance_4)
+#     PerformanceSeatingFactory(
+#         performance=performance_4, seat_group=seat_group
+#     )  # Note the lack of seat group
+#
+#     ## Performance with the seat group, but not concession_type
+#     performance_5 = PerformanceFactory(
+#         end=datetime.datetime.now(tz=pytz.UTC) - datetime.timedelta(days=1),
+#         production=performance_1.production,
+#     )
+#     PerformanceSeatingFactory(performance=performance_5, seat_group=seat_group)
+#
+#     exisiting_booking = BookingFactory(performance=performance_1)
+#     TicketFactory(
+#         booking=exisiting_booking,
+#         seat_group=seat_group,
+#         concession_type=concession_type,
+#     )
+#
+#     assert exisiting_booking.transferable_performances == [performance_2]
 
 
 @pytest.mark.django_db
@@ -1262,3 +1262,149 @@ def test_transfered_from():
     assert booking_2.transfered_from_bookings == [booking_3]
     assert booking_3.transfered_from_bookings == []
     assert booking_4.transfered_from_bookings == []
+
+
+@pytest.mark.django_db
+def test_transfer_reduction():
+    booking = BookingFactory()
+
+    # Create some bookings which this booking is transfered from
+    transfered_from_bookings = [BookingFactory() for _ in range(3)]
+
+    with patch(
+        "uobtheatre.bookings.models.Booking.transfered_from_bookings",
+        new_callable=PropertyMock,
+    ) as mock:
+        mock.return_value = transfered_from_bookings
+        reduction_value = booking.transfer_reduction
+
+        # With no payments it should be 0
+        assert reduction_value == 0
+
+        # Add transactions to the bookings
+        TransactionFactory(
+            pay_object=transfered_from_bookings[0],
+            value=100,
+            app_fee=0,
+            provider_fee=0,
+            status=Transaction.Status.COMPLETED,
+            type=Transaction.Type.PAYMENT,
+        )
+        TransactionFactory(
+            pay_object=transfered_from_bookings[2],
+            value=150,
+            app_fee=10,
+            provider_fee=2,
+            status=Transaction.Status.COMPLETED,
+            type=Transaction.Type.PAYMENT,
+        )
+
+        # Add excluded transcation to ensure its not counted
+        TransactionFactory(
+            pay_object=transfered_from_bookings[2],
+            value=150,
+            app_fee=10,
+            provider_fee=2,
+            status=Transaction.Status.PENDING,
+            type=Transaction.Type.PAYMENT,
+        )
+
+        # Add a refund to ensure that is factored i
+        TransactionFactory(
+            pay_object=transfered_from_bookings[2],
+            value=-50,
+            app_fee=-10,
+            provider_fee=-2,
+            status=Transaction.Status.COMPLETED,
+            type=Transaction.Type.REFUND,
+        )
+
+        assert booking.transfered_from_bookings == transfered_from_bookings
+
+        reduction_value = booking.transfer_reduction
+        assert reduction_value == 200  # 100 + 150 - 50
+
+
+@pytest.mark.django_db
+def test_booking_clone():
+    # Create a booking
+    booking = BookingFactory()
+    assert Booking.objects.count() == 1
+
+    # Clone it
+    booking_clone = booking.clone()
+    assert Booking.objects.count() == 1
+
+    # Check a unique booking reference is assigned
+    assert booking_clone.reference is not None
+    assert booking_clone.reference != booking.reference
+
+
+@pytest.mark.django_db
+def test_create_transfer():
+    # Create two performances for the same production
+    performance_1 = PerformanceFactory(
+        end=datetime.datetime.now(tz=pytz.UTC) + datetime.timedelta(days=1)
+    )
+    performance_2 = PerformanceFactory(
+        end=datetime.datetime.now(tz=pytz.UTC) + datetime.timedelta(days=1),
+        production=performance_1.production,
+    )
+
+    concession_type = ConcessionTypeFactory()
+
+    discount = DiscountFactory()
+    discount.performances.set([performance_1, performance_2])
+    DiscountRequirementFactory(concession_type=concession_type, discount=discount)
+
+    # Create a seat group which is in both performances
+    seat_group_shared = SeatGroupFactory()
+    PerformanceSeatingFactory(performance=performance_1, seat_group=seat_group_shared)
+    PerformanceSeatingFactory(performance=performance_2, seat_group=seat_group_shared)
+
+    # Create a seat group with no capacity in the second performance
+    seat_group_shared_no_capacity = SeatGroupFactory()
+    PerformanceSeatingFactory(
+        performance=performance_1, seat_group=seat_group_shared_no_capacity
+    )
+    PerformanceSeatingFactory(
+        performance=performance_2, seat_group=seat_group_shared_no_capacity, capacity=0
+    )
+
+    # Create a seat group which is only in the first performance
+    seat_group = SeatGroupFactory()
+    PerformanceSeatingFactory(performance=performance_1, seat_group=seat_group)
+
+    # Create a booking for the first performance
+    booking = BookingFactory(performance=performance_1, status=Booking.Status.PAID)
+    # Add a ticket to the booking for each seat group
+    TicketFactory(
+        booking=booking, seat_group=seat_group, concession_type=concession_type
+    )
+    TicketFactory(
+        booking=booking, seat_group=seat_group_shared, concession_type=concession_type
+    )
+    TicketFactory(
+        booking=booking,
+        seat_group=seat_group_shared_no_capacity,
+        concession_type=concession_type,
+    )
+    # Create ticket in unassigned concession type, which should also not be copied
+    TicketFactory(
+        booking=booking,
+        seat_group=seat_group_shared,
+    )
+    assert Booking.objects.count() == 1
+
+    # Create transfer to other performance
+    booking.create_transfer(performance_2)
+
+    # Assert the new booking is created and in progress
+    assert Booking.objects.count() == 2
+    new_booking = Booking.objects.last()
+    assert new_booking.status == Booking.Status.IN_PROGRESS
+
+    # Assert the only ticket which is transfered is the one in both
+    # perofmrances with sufficient capacity
+    assert new_booking.tickets.count() == 1
+    assert new_booking.tickets.first().seat_group == seat_group_shared

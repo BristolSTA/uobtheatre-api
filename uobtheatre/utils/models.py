@@ -20,7 +20,7 @@ class BaseModel(models.Model):
         return self.__class__.objects.filter(pk=self.pk)
 
     def clone(self):
-        model = self.objects.get(pk=self.pk)
+        model = self.qs.get()
         model.pk = None
         return model
 
