@@ -2,6 +2,7 @@ import math
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 from urllib.parse import urlencode
 
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.aggregates import BoolAnd
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -9,13 +10,12 @@ from django.db.models import Case, F, FloatField, Q, Value, When
 from django.db.models.functions import Cast
 from django.db.models.query import QuerySet
 from django.utils import timezone
-from django.contrib.contenttypes.models import ContentType
 from django.utils.functional import cached_property
 from graphql_relay.node.node import to_global_id
 
 from uobtheatre.discounts.models import ConcessionType, DiscountCombination
 from uobtheatre.mail.composer import MailComposer
-from uobtheatre.payments.models import Transaction, SalesBreakdown
+from uobtheatre.payments.models import SalesBreakdown, Transaction
 from uobtheatre.payments.payables import Payable, PayableQuerySet
 from uobtheatre.productions.exceptions import (
     CapacityException,
@@ -25,12 +25,12 @@ from uobtheatre.productions.exceptions import (
 )
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.users.models import User
-from uobtheatre.utils.models import TimeStampedMixin, BaseModel
+from uobtheatre.utils.models import BaseModel, TimeStampedMixin
 from uobtheatre.utils.utils import combinations, create_short_uuid
 from uobtheatre.venues.models import Seat, SeatGroup
 
 if TYPE_CHECKING:
-    from uobtheatre.payments.transaction_providers import PaymentProvider
+    pass
 
 
 class MiscCostQuerySet(PayableQuerySet):
@@ -56,8 +56,8 @@ class MiscCost(models.Model):
     objects = MiscCostQuerySet.as_manager()
 
     class Type(models.TextChoices):
-        Booking = "Booking", "Applied to booking purchase"
-        BookingTransfer = "BookingTransfer", "Applied to a booking transfer"
+        BOOKING = "Booking", "Applied to booking purchase"
+        BOOKING_TRANSFER = "BookingTransfer", "Applied to a booking transfer"
 
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
@@ -247,7 +247,7 @@ class Booking(TimeStampedMixin, Payable):
 
     # Whether the booking has be transferred to
     transfered_to = models.OneToOneField(
-        "Booking", on_delete=models.RESTRICT, null=True, related_name="transfered_from"
+        "Booking", on_delete=models.RESTRICT, null=True, related_name="_transfered_from"
     )
 
     @property
@@ -470,7 +470,18 @@ class Booking(TimeStampedMixin, Payable):
         Returns:
             (int): The value in penies of MiscCosts applied to the Booking
         """
-        return MiscCost.objects.filter(type=MiscCost.Type.Booking).value(self)
+        misc_cost_types = [MiscCost.Type.BOOKING]
+        # If this booking is transfered from another then transfer misc costs
+        # should also be applied
+        if self.transfered_from:
+            misc_cost_types.append(MiscCost.Type.BOOKING_TRANSFER)
+        return MiscCost.objects.filter(type__in=misc_cost_types).value(self)
+
+    @property
+    def transfered_from(self) -> Optional["Booking"]:
+        if not hasattr(self, "_transfered_from"):
+            return None
+        return self._transfered_from
 
     @property
     def transfered_from_bookings(self) -> list["Booking"]:
@@ -484,7 +495,7 @@ class Booking(TimeStampedMixin, Payable):
         Returns:
             list[int]: All the bookings in this transfer chain
         """
-        if not hasattr(self, "transfered_from"):
+        if not self.transfered_from:
             return []
         return [self.transfered_from] + self.transfered_from.transfered_from_bookings
 
@@ -494,20 +505,18 @@ class Booking(TimeStampedMixin, Payable):
         When transfering a booking, all previous booking payments (excluding
         transfer fees) are excluded.
         """
+        print("Getting transfer_reduction")
         transactions = Transaction.objects.filter(
             pay_object_type=ContentType.objects.get_for_model(Booking),
             pay_object_id__in=map(lambda m: m.id, self.transfered_from_bookings),
             status=Transaction.Status.COMPLETED,
         )
-        print(f"All transactions are {Transaction.objects.all()}")
-        print(f"The transactions are {transactions}")
-        print(
-            f"Booking ids are {list(map(lambda m: m.id, self.transfered_from_bookings))}"
-        )
-        print(f"Content type {ContentType.objects.get_for_model(Booking)}")
-        return transactions.get_sales_breakdown(
+        print(f"There are {transactions.count()} transactions")
+        thing = transactions.get_sales_breakdown(
             breakdown=SalesBreakdown.NET_TRANSACTIONS
         )
+        print(f"Sales breakdown is {thing}")
+        return thing
 
     @property
     def total(self) -> int:
@@ -522,7 +531,9 @@ class Booking(TimeStampedMixin, Payable):
         subtotal = self.subtotal
         if subtotal == 0:  # pylint: disable=comparison-with-callable
             return 0
-        return math.ceil(subtotal + self.misc_costs_value)
+        return math.ceil(
+            max(subtotal - self.transfer_reduction, 0) + self.misc_costs_value
+        )
 
     def get_ticket_diff(
         self, tickets: List["Ticket"]
@@ -585,42 +596,13 @@ class Booking(TimeStampedMixin, Payable):
         confirmation email.
         """
         super().complete()
-        self.send_confirmation_email(payment)
 
-    #     def can_transfer_to(self, performance: "Performance", raises=False) -> bool:
-    #         """
-    #         Check if this booking can be transfered to the provided performance
-    #         """
-    #         # Check it is bookable
-    #         if not performance.is_bookable:
-    #             if raises:
-    #                 raise NotBookableException
-    #             return False
-    #
-    #         # Check that the performance has the seat group & concession type with enough capacity
-    #         try:
-    #             performance.check_capacity(self.tickets.all())
-    #         except (
-    #             UnassignedSeatGroupException,
-    #             UnassignedConcessionTypeException,
-    #             CapacityException,
-    #         ) as exc:
-    #             if raises:
-    #                 raise exc
-    #             return False
-    #
-    #         return True
-    #
-    #     @property
-    #     def transferable_performances(self):
-    #         """Gets the performances that this booking could be transfered to (without changes)"""
-    #         eligible_performances = []
-    #         for performance in self.performance.production.performances.exclude(
-    #             pk=self.performance.pk
-    #         ).all():
-    #             if self.can_transfer_to(performance):
-    #                 eligible_performances.append(performance)
-    #         return eligible_performances
+        # If the booking is transfered from another
+        if self.transfered_from:
+            self.transfered_from.status = Booking.Status.CANCELLED
+            self.transfered_from.save()
+
+        self.send_confirmation_email(payment)
 
     def clone(self):
         clone = super().clone()
@@ -666,7 +648,6 @@ class Booking(TimeStampedMixin, Payable):
                 print(
                     f"Not copying accross ticket {ticket.seat_group} as {exc.__class__}"
                 )
-                pass
 
         # TODO Do this later and CANCELLED cannot be refunded
         # self.status = Payable.Status.CANCELLED
@@ -691,9 +672,16 @@ class Booking(TimeStampedMixin, Payable):
         """
         composer = MailComposer()
 
-        composer.line(
-            "Your booking to %s has been confirmed!" % self.performance.production.name
-        )
+        if self.transfered_from:
+            composer.line(
+                "Your booking transfer to %s has been confirmed!"
+                % self.performance.production.name
+            )
+        else:
+            composer.line(
+                "Your booking to %s has been confirmed!"
+                % self.performance.production.name
+            )
 
         if self.performance.production.featured_image:
             composer.image(self.performance.production.featured_image.file.url)
@@ -730,7 +718,12 @@ class Booking(TimeStampedMixin, Payable):
             "If you have any accessability concerns, or otherwise need help, please contact <a href='mailto:support@uobtheatre.com'>support@uobtheatre.com</a>."
         )
 
-        composer.send("Your booking is confirmed!", self.user.email)
+        subject = (
+            "Booking transfer complete"
+            if self.transfered_from
+            else "Your booking is confirmed!"
+        )
+        composer.send(subject, self.user.email)
 
     @property
     def is_reservation_expired(self):

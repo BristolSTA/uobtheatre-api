@@ -39,7 +39,10 @@ class TransactionQuerySet(QuerySet):
         return self.aggregate(**annotations)
 
     def get_sales_breakdown(self, breakdown: "SalesBreakdown"):
-        return self.annotate_sales_breakdown(breakdowns=[breakdown])[breakdown.key]
+        # TODO Calling aggregate on an empty queryset gives None so the
+        # Coalesce is not applied this fix works here but still an
+        # issue/feature above
+        return self.annotate_sales_breakdown(breakdowns=[breakdown])[breakdown.key] or 0
 
     def payments(self):
         return self.filter(type=Transaction.Type.PAYMENT)

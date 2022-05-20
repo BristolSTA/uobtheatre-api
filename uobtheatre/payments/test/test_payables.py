@@ -74,8 +74,24 @@ def test_payable_total_payments():
 
     TransactionFactory(pay_object=booking, app_fee=100, value=200)
     TransactionFactory(pay_object=booking, app_fee=150, value=400)
+    TransactionFactory(
+        pay_object=booking, app_fee=150, value=300, type=Transaction.Type.REFUND
+    )
 
     assert booking.total_payments == 600
+
+
+@pytest.mark.django_db
+def test_payable_net_transactions():
+    booking = BookingFactory()
+
+    TransactionFactory(pay_object=booking, app_fee=100, value=200)
+    TransactionFactory(pay_object=booking, app_fee=150, value=400)
+    TransactionFactory(
+        pay_object=booking, app_fee=150, value=-300, type=Transaction.Type.REFUND
+    )
+
+    assert booking.net_transactions == 300
 
 
 @pytest.mark.django_db

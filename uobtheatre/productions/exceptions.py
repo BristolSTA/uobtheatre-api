@@ -16,5 +16,5 @@ class CapacityException(GQLException):
 class NotBookableException(GQLException):
     """Raised when a booking for a performance that is not bookable is requested"""
 
-    def __init__(self) -> None:
-        super().__init__(message="Performance not bookable")
+    def __init__(self, message="Performance not bookable") -> None:
+        super().__init__(message)

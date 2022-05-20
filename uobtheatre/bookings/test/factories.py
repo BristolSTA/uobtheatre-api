@@ -14,7 +14,7 @@ class PercentageMiscCostFactory(factory.django.DjangoModelFactory):
     name = factory.Faker("sentence")
     description = factory.Faker("sentence")
     percentage = factory.Faker("pyfloat", min_value=0, max_value=1)
-    type = MiscCost.Type.Booking
+    type = MiscCost.Type.BOOKING
 
     class Meta:
         model = MiscCost
@@ -24,7 +24,7 @@ class ValueMiscCostFactory(factory.django.DjangoModelFactory):
     name = factory.Faker("sentence")
     description = factory.Faker("sentence")
     value = factory.Faker("pyint")
-    type = MiscCost.Type.Booking
+    type = MiscCost.Type.BOOKING
 
     class Meta:
         model = MiscCost
