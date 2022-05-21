@@ -1,7 +1,7 @@
 import graphene
 from graphql_auth import mutations, schema
 from graphql_relay.node.node import to_global_id
-from guardian.shortcuts import get_perms
+
 from uobtheatre.users.models import User
 
 
@@ -27,6 +27,16 @@ class ExtendedUserNode(schema.UserNode):
 
     class Meta:
         model = User
+        fields = (
+            "id",
+            "email",
+            "first_name",
+            "last_name",
+            "date_joined",
+            "bookings",
+            "created_bookings",
+            "permissions",
+        )
 
 
 class AuthMutation(graphene.ObjectType):

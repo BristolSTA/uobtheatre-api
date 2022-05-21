@@ -27,7 +27,9 @@ from uobtheatre.utils.validators import (
             SimpleNamespace(field=None),
             "field",
             ValidationErrors(
-                exceptions=[ValidationError(attribute="field", message="Required")]
+                exceptions=[
+                    ValidationError(attribute="field", message="field is required")
+                ]
             ),
         ),
     ],
@@ -44,21 +46,25 @@ required_a_and_b_parameters = (
         (
             SimpleNamespace(a_field=None, b=1),
             ValidationErrors(
-                exceptions=[ValidationError(message="Required", attribute="a_field")]
+                exceptions=[
+                    ValidationError(message="a field is required", attribute="a_field")
+                ]
             ),
         ),
         (
             SimpleNamespace(a_field=None, b=1),
             ValidationErrors(
-                exceptions=[ValidationError(message="Required", attribute="a_field")]
+                exceptions=[
+                    ValidationError(message="a field is required", attribute="a_field")
+                ]
             ),
         ),
         (
             SimpleNamespace(a_field=None, b=None),
             ValidationErrors(
                 exceptions=[
-                    ValidationError(message="Required", attribute="a_field"),
-                    ValidationError(message="Required", attribute="b"),
+                    ValidationError(message="a field is required", attribute="a_field"),
+                    ValidationError(message="b is required", attribute="b"),
                 ]
             ),
         ),

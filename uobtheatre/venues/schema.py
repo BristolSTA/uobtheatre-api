@@ -1,12 +1,10 @@
 import graphene
 from graphene import relay
 from graphene_django import DjangoObjectType
-from graphene_django.fields import DjangoConnectionField
 from graphene_django.filter import DjangoFilterConnectionField
 
 from uobtheatre.addresses.schema import AddressNode  # noqa
 from uobtheatre.images.schema import ImageNode  # noqa
-from uobtheatre.productions.schema import ProductionNode
 from uobtheatre.venues.models import Seat, SeatGroup, Venue
 
 
@@ -25,10 +23,15 @@ class SeatNode(DjangoObjectType):
 
 
 class VenueNode(DjangoObjectType):
-    productions = DjangoConnectionField(ProductionNode)
 
-    def resolve_productions(self, info):
-        return self.get_productions()
+    productions = DjangoFilterConnectionField(
+        "uobtheatre.productions.schema.ProductionNode"
+    )
+
+    def resolve_productions(self, info, **kwargs):
+        from uobtheatre.productions.schema import ProductionFilter
+
+        return ProductionFilter(kwargs, self.get_productions()).qs
 
     class Meta:
         model = Venue

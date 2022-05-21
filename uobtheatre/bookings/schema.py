@@ -250,6 +250,9 @@ class BookingNode(GrapheneEnumMixin, DjangoObjectType):
         "uobtheatre.payments.schema.TransactionNode"
     )
     expired = graphene.Boolean(required=True)
+    total_payments = graphene.Int()
+    total_refunds = graphene.Int()
+    net_transactions = graphene.Int()
 
     def resolve_price_breakdown(self, _):
         return self

@@ -24,6 +24,11 @@ class BaseModel(models.Model):
         model.pk = None
         return model
 
+    @classmethod
+    @property
+    def content_type(cls):
+        return ContentType.objects.get_for_model(cls)
+
     class Meta:
         abstract = True
 

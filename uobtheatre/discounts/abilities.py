@@ -1,6 +1,6 @@
 from uobtheatre.discounts.models import ConcessionType, Discount
 from uobtheatre.productions.abilities import EditProduction
-from uobtheatre.productions.models import Production, Performance
+from uobtheatre.productions.models import Performance, Production
 from uobtheatre.users.abilities import Ability
 from uobtheatre.users.models import User
 
@@ -30,7 +30,7 @@ class ModifyConcessionType(Ability):
         performances = Performance.objects.filter(discounts__in=discounts)
         unique_productions_using_it = Production.objects.filter(
             performances__in=performances
-        )
+        ).distinct()
 
         if not unique_productions_using_it.count() == 1:
             return False

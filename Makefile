@@ -44,9 +44,10 @@ setup-precommit:
 setup-devcontainer:
 	make setup-precommit
 	make migrate
+	pip install -r requirements/local.txt
 
 up: ## Run background
-	docker-compose up -d api postgres
+	docker-compose up -d api postgres celery celery-beat redis
 
 up-v: ## Run verbose
 	docker-compose up
@@ -99,6 +100,9 @@ test: ## Run unit tests in docker container
 test-v: ## Run verbose unit tests in docker container, use test_path to specify a test file/directory, app to specify a module and test to specify specific tests to be run.
 	$(COMMAND_PREFIX) coverage run -m pytest -k "not system_test" -s -vv $(TEST_PATH) $(TEST)
 
+test-system: ## Run system tests in docker container
+	$(COMMAND_PREFIX) pytest --cov uobtheatre -m "system_test"
+
 coverage: ## Generate test coverage report
 	$(COMMAND_PREFIX) coverage run --source=uobtheatre -m pytest -m "not square_integration"
 	$(COMMAND_PREFIX) coverage html
@@ -150,7 +154,7 @@ pr: ## Runs everything required (that is not included in precommit) for a pr
 
 build:
 	python precommit_config_generator.py
-	docker-compose build api
+	docker-compose build api celery
 
 django-shell: ## Open django shell
 	$(COMMAND_PREFIX) python manage.py shell

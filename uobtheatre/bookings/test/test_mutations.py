@@ -299,7 +299,7 @@ def test_create_booking_with_too_many_tickets(gql_client, with_boxoffice_perms):
 
     gql_client.login()
     if with_boxoffice_perms:
-        assign_perm("boxoffice", gql_client.user, performance.production)
+        assign_perm("productions.boxoffice", gql_client.user, performance.production)
 
     response = gql_client.execute(request)
 
@@ -409,7 +409,9 @@ def test_create_booking_with_taget_user(gql_client):
         "PerformanceNode", psg.performance.id
     )
 
-    assign_perm("boxoffice", gql_client.login().user, psg.performance.production)
+    assign_perm(
+        "productions.boxoffice", gql_client.login().user, psg.performance.production
+    )
     response = gql_client.execute(request)
 
     assert response["data"]["createBooking"]["success"] is True
@@ -445,7 +447,9 @@ def test_create_booking_with_new_taget_user(gql_client):
         "PerformanceNode", psg.performance.id
     )
 
-    assign_perm("boxoffice", gql_client.login().user, psg.performance.production)
+    assign_perm(
+        "productions.boxoffice", gql_client.login().user, psg.performance.production
+    )
     response = gql_client.execute(request)
 
     assert response["data"]["createBooking"]["success"] is True
@@ -552,6 +556,33 @@ def test_create_booking_admin_discount(gql_client, discount, should_be_valid):
         )
 
 
+@pytest.mark.django_db
+def test_create_booking_not_bookable(gql_client):
+    performance = PerformanceFactory()
+    request = """
+        mutation {
+          createBooking(
+            performanceId: "%s"
+          ) {
+            errors {
+              ... on NonFieldError {
+                message
+              }
+            }
+         }
+        }
+    """ % (
+        to_global_id("PerformanceNode", performance.id),
+    )
+
+    response = gql_client.login().execute(request)
+
+    assert response["data"]["createBooking"]["errors"] == [
+        {"message": "This performance is not able to be booked at the moment"}
+    ]
+
+
+# pylint: disable=too-many-locals
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "current_tickets, planned_tickets, expected_tickets",
@@ -926,7 +957,7 @@ def test_update_booking_with_too_many_tickets(gql_client, with_boxoffice_perms):
     )
 
     if with_boxoffice_perms:
-        assign_perm("boxoffice", gql_client.user, performance.production)
+        assign_perm("productions.boxoffice", gql_client.user, performance.production)
 
     response = gql_client.execute(request)
 
@@ -1065,6 +1096,7 @@ def test_update_booking_admin_discount_without_perms(gql_client):
         "BookingNode", booking.id
     )
     gql_client.login(booking.user)
+
     response = gql_client.execute(request)
 
     assert response["data"]["updateBooking"]["success"] is False
@@ -1114,6 +1146,7 @@ def test_update_booking_admin_discount(gql_client, discount, should_be_valid):
     )
     gql_client.login(booking.user)
     assign_perm("change_production", gql_client.user, booking.performance.production)
+
     response = gql_client.execute(request)
 
     assert response["data"]["updateBooking"]["success"] is should_be_valid
@@ -1207,6 +1240,7 @@ def test_update_booking_capacity_error(gql_client):
         to_global_id("SeatGroupNode", seat_group.id),
         to_global_id("ConcessionTypeNode", concession_type.id),
     )
+
     response = gql_client.execute(request_query)
 
     assert response == {
@@ -1352,9 +1386,11 @@ def test_pay_booking_mutation_wrong_price(gql_client):
           }
         }
     """
+
     response = gql_client.execute(
         request_query % to_global_id("BookingNode", booking.id)
     )
+
     assert response == {
         "data": {
             "payBooking": {
@@ -1397,7 +1433,9 @@ def test_pay_booking_square_pos_no_device_id(gql_client):
     booking = BookingFactory(status=Payable.Status.IN_PROGRESS)
     add_ticket_to_booking(booking)
 
-    assign_perm("boxoffice", gql_client.user, booking.performance.production)
+    assign_perm(
+        "productions.boxoffice", gql_client.user, booking.performance.production
+    )
     response = gql_client.execute(
         request_query % to_global_id("BookingNode", booking.id)
     )
@@ -1496,9 +1534,11 @@ def test_pay_booking_mutation_unauthorized_provider(gql_client):
           }
         }
     """
+
     response = gql_client.execute(
         request_query % to_global_id("BookingNode", booking.id)
     )
+
     assert response == {
         "data": {
             "payBooking": {
@@ -1691,7 +1731,8 @@ def test_pay_booking_mutation_online_without_nonce(gql_client):
 
 
 @pytest.mark.django_db
-def test_pay_booking_success(mock_square, gql_client):
+@pytest.mark.parametrize("with_sca_token", [True, False])
+def test_pay_booking_success(mock_square, gql_client, with_sca_token):
     gql_client.login()
     booking = BookingFactory(status=Payable.Status.IN_PROGRESS, user=gql_client.user)
     add_ticket_to_booking(booking)
@@ -1704,6 +1745,7 @@ def test_pay_booking_success(mock_square, gql_client):
             price: 125
             nonce: "cnon:card-nonce-ok"
             idempotencyKey: "my_idempotency_key_string"
+            %s
         ) {
             success
             errors {
@@ -1759,9 +1801,12 @@ def test_pay_booking_success(mock_square, gql_client):
         success=True,
     ):
         response = gql_client.execute(
-            request_query % to_global_id("BookingNode", booking.id)
+            request_query
+            % (
+                to_global_id("BookingNode", booking.id),
+                'verifyToken: "verify_token"' if with_sca_token else "",
+            )
         )
-
     assert response == {
         "data": {
             "payBooking": {
@@ -1805,7 +1850,9 @@ def test_pay_booking_success_square_pos(mock_square, gql_client):
     booking = BookingFactory(status=Payable.Status.IN_PROGRESS)
     add_ticket_to_booking(booking)
     gql_client.login()
-    assign_perm("boxoffice", gql_client.user, booking.performance.production)
+    assign_perm(
+        "productions.boxoffice", gql_client.user, booking.performance.production
+    )
 
     request_query = """
     mutation {
@@ -1904,7 +1951,9 @@ def test_pay_booking_manual(gql_client, payment_method):
     booking = BookingFactory(status=Payable.Status.IN_PROGRESS)
     add_ticket_to_booking(booking)
     gql_client.login()
-    assign_perm("boxoffice", gql_client.user, booking.performance.production)
+    assign_perm(
+        "productions.boxoffice", gql_client.user, booking.performance.production
+    )
 
     request_query = """
     mutation {
@@ -2071,7 +2120,9 @@ def test_paybooking_unsupported_payment_provider(info):
     PerformanceSeatingFactory(
         performance=booking.performance, seat_group=ticket.seat_group
     )
-    assign_perm("boxoffice", info.context.user, booking.performance.production)
+    assign_perm(
+        "productions.boxoffice", info.context.user, booking.performance.production
+    )
 
     with pytest.raises(GQLException) as exc:
         PayBooking.resolve_mutation(
@@ -2119,6 +2170,7 @@ def test_pay_booking_fails_if_already_paid(gql_client):
     }
 
 
+# pylint: disable=too-many-arguments,too-many-locals,too-many-branches
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "performance_id, booking_obj, check_in_ticket_id_list, not_check_in_ticket_id_list, non_booking_ticket_id_list",
@@ -2168,7 +2220,7 @@ def test_check_in_booking(
         user=gql_client.user,
     )
 
-    assign_perm("boxoffice", gql_client.user, performance.production)
+    assign_perm("productions.boxoffice", gql_client.user, performance.production)
 
     # Expected to check in and pass
     check_in_tickets = []
@@ -2307,7 +2359,7 @@ def test_check_in_booking(
 def test_check_in_booking_fails_if_not_paid(gql_client, status):
     performance = PerformanceFactory()
     gql_client.login()
-    assign_perm("boxoffice", gql_client.user, performance.production)
+    assign_perm("productions.boxoffice", gql_client.user, performance.production)
 
     booking = BookingFactory(
         performance=performance, user=gql_client.user, status=status
@@ -2414,7 +2466,7 @@ def test_cannot_check_in_booking_without_boxoffice_perm(prefix, gql_client):
 def test_check_in_booking_fails_if_already_checked_in(gql_client):
     performance = PerformanceFactory()
     gql_client.login()
-    assign_perm("boxoffice", gql_client.user, performance.production)
+    assign_perm("productions.boxoffice", gql_client.user, performance.production)
 
     booking = BookingFactory(performance=performance, user=gql_client.user)
 
@@ -2468,7 +2520,7 @@ def test_check_in_booking_fails_if_already_checked_in(gql_client):
 def test_uncheck_in_booking(gql_client):
     performance = PerformanceFactory()
     gql_client.login()
-    assign_perm("boxoffice", gql_client.user, performance.production)
+    assign_perm("productions.boxoffice", gql_client.user, performance.production)
 
     booking = BookingFactory(performance=performance, user=gql_client.login().user)
 
@@ -2498,7 +2550,7 @@ def test_uncheck_in_booking(gql_client):
     """
 
     gql_client.login()
-    assign_perm("boxoffice", gql_client.user, performance.production)
+    assign_perm("productions.boxoffice", gql_client.user, performance.production)
     response = gql_client.execute(
         request_query
         % (
@@ -2543,8 +2595,8 @@ def test_uncheck_in_booking_incorrect_performance(gql_client):
     """
 
     gql_client.login()
-    assign_perm("boxoffice", gql_client.user, performance.production)
-    assign_perm("boxoffice", gql_client.user, wrong_performance.production)
+    assign_perm("productions.boxoffice", gql_client.user, performance.production)
+    assign_perm("productions.boxoffice", gql_client.user, wrong_performance.production)
 
     response = gql_client.execute(
         request_query
@@ -2580,7 +2632,7 @@ def test_uncheck_in_booking_incorrect_ticket(gql_client):
         user=gql_client.user,
     )
 
-    assign_perm("boxoffice", gql_client.user, performance.production)
+    assign_perm("productions.boxoffice", gql_client.user, performance.production)
 
     checked_in_ticket = TicketFactory(booking=incorrect_booking, checked_in=True)
 

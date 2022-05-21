@@ -115,7 +115,7 @@ class RequiredFieldValidator(AttributeValidator):
             return ValidationErrors(
                 exceptions=[
                     ValidationError(
-                        message="Required",
+                        message=f"{self.attribute.replace('_', ' ')} is required",
                         attribute=self.attribute,
                     )
                 ]

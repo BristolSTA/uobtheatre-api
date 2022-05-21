@@ -27,6 +27,7 @@ from uobtheatre.discounts.test.factories import (
 )
 from uobtheatre.images.test.factories import ImageFactory
 from uobtheatre.payments import transaction_providers
+from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.test.factories import TransactionFactory, mock_payment_method
@@ -870,7 +871,7 @@ def test_booking_pay_with_payment():
 
 
 @pytest.mark.django_db
-def test_booking_pay_deletes_pending_payments(mock_square):
+def test_booking_pay_deletes_pending_payments():
     """
     When we try to pay for a booking, pending payments that already exist for
     this booking should be deleted.
@@ -891,18 +892,13 @@ def test_booking_pay_deletes_pending_payments(mock_square):
         status=Transaction.Status.COMPLETED, pay_object=booking
     )
 
-    with mock_square(
-        SquarePOS.client.terminal, "cancel_terminal_checkout", success=True
-    ) as mock:
+    with patch("uobtheatre.payments.models.Transaction.cancel", autospec=True) as mock:
         booking.pay(payment_method)  # type: ignore
 
     assert booking.status == Payable.Status.PAID
 
-    # Assert pending payment cancelled with square
-    mock.assert_called_once_with(pending_payment.provider_transaction_id)
-
-    # And pending payment deleted
-    assert not Transaction.objects.filter(id=pending_payment.id).exists()
+    # Assert pending payment cancelled
+    mock.assert_called_once_with(pending_payment)
 
     # Assert completed payment is not cancelled
     assert Transaction.objects.filter(id=completed_payment.id).exists()
@@ -1029,6 +1025,11 @@ def test_booking_expiration():
     assert expired_booking.is_reservation_expired
 
     expired_booking.status = Payable.Status.PAID
+    expired_booking.save()
+    assert not expired_booking.is_reservation_expired
+
+    expired_booking.status = Payable.Status.CANCELLED
+    expired_booking.save()
     assert not expired_booking.is_reservation_expired
 
 
@@ -1055,7 +1056,16 @@ def test_booking_can_be_refunded(is_refunded, status, production_status, expecte
         booking = BookingFactory(
             performance=PerformanceFactory(production=production), status=status
         )
+        TransactionFactory(pay_object=booking)
         assert booking.can_be_refunded == expected
+
+        if expected:
+            assert booking.validate_cant_be_refunded() is None
+        else:
+            assert (
+                isinstance(booking.validate_cant_be_refunded(), CantBeRefundedException)
+                is True
+            )
 
 
 @pytest.mark.django_db

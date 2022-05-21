@@ -158,10 +158,12 @@ class ProductionMutation(SafeFormMutation, AuthRequiredMixin):
     def authorize_society_part(cls, root, info, **inputs):
         """Authorise the society parameter if passed"""
         new_society = cls.get_python_value(root, info, inputs, "society")
+        current_production = cls.get_object_instance(root, info, **inputs)
+        current_society = current_production.society if current_production else None
 
         has_perm_new_society = (
             info.context.user.has_perm("add_production", new_society)
-            if new_society
+            if new_society and not new_society == current_society
             else True
         )
         if not has_perm_new_society:

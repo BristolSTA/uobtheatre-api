@@ -4,7 +4,12 @@ from unittest.mock import MagicMock, PropertyMock, patch
 import pytest
 from pytest_django.asserts import assertQuerysetEqual
 
+from uobtheatre.payments.exceptions import (
+    CantBeCanceledException,
+    CantBeRefundedException,
+)
 from uobtheatre.payments.models import Transaction
+from uobtheatre.payments.tasks import refund_payment
 from uobtheatre.payments.test.factories import (
     TransactionFactory,
     mock_payment_method,
@@ -17,6 +22,7 @@ from uobtheatre.payments.transaction_providers import (
     SquareRefund,
 )
 from uobtheatre.utils.exceptions import PaymentException
+from uobtheatre.utils.test.factories import TaskResultFactory
 
 
 @pytest.mark.django_db
@@ -136,29 +142,25 @@ def test_update_payment_from_square_no_processing_fee(mock_square):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "provider, status, is_cancelled",
+    "status,fails",
     [
-        (SquarePOS.name, Transaction.Status.PENDING, True),
-        (SquareOnline.name, Transaction.Status.PENDING, False),
-        (SquarePOS.name, Transaction.Status.COMPLETED, False),
+        (Transaction.Status.COMPLETED, True),
+        (Transaction.Status.FAILED, True),
+        (Transaction.Status.PENDING, False),
     ],
 )
-def test_cancel(provider, status, is_cancelled, mock_square):
-    payment = TransactionFactory(provider_name=provider, status=status)
-    with mock_square(
-        SquarePOS.client.terminal, "cancel_terminal_checkout", success=True
-    ) as mock_cancel:
-        payment.cancel()
-
-        # If cancelled this should have been called
-        if is_cancelled:
-            mock_cancel.assert_called_once_with(payment.provider_transaction_id)
-        else:
-            mock_cancel.assert_not_called()
-
-    # If pending assert this payment is deleted
-    is_pending = status == Transaction.Status.PENDING
-    assert not Transaction.objects.filter(id=payment.id).exists() == is_pending
+def test_cancel(status, fails):
+    transaction = TransactionFactory(status=status)
+    if fails:
+        with pytest.raises(CantBeCanceledException):
+            transaction.cancel()
+        assert Transaction.objects.filter(pk=transaction.pk).exists()
+    else:
+        with patch(
+            "uobtheatre.payments.transaction_providers.SquareOnline.cancel"
+        ) as provider_mock:
+            transaction.cancel()
+        provider_mock.assert_called_once_with(transaction)
 
 
 @pytest.mark.parametrize(
@@ -191,7 +193,7 @@ def test_cant_be_refunded_when_not_completed(status):
     transaction = TransactionFactory(status=status)
 
     assert transaction.can_be_refunded() is False
-    with pytest.raises(PaymentException) as exception:
+    with pytest.raises(CantBeRefundedException) as exception:
         transaction.can_be_refunded(raises=True)
     assert (
         exception.value.message == f"A {status.label.lower()} payment can't be refunded"
@@ -225,7 +227,7 @@ def test_cant_be_refunded_when_invalid_refund_provider():
         payment_method.is_valid_refund_provider = MagicMock(return_value=False)
 
         transaction.can_be_refunded(refund_provider) is False
-        with pytest.raises(PaymentException) as exception:
+        with pytest.raises(CantBeRefundedException) as exception:
             transaction.can_be_refunded(refund_provider, raises=True)
         assert (
             exception.value.message
@@ -256,7 +258,7 @@ def test_cant_be_refunded_if_not_payment():
     )
 
     assert transaction.can_be_refunded() is False
-    with pytest.raises(PaymentException) as exception:
+    with pytest.raises(CantBeRefundedException) as exception:
         transaction.can_be_refunded(raises=True)
     assert exception.value.message == "A refund can't be refunded"
 
@@ -274,9 +276,17 @@ def test_cant_be_refunded_if_provider_not_refundable():
         ),
     ):
         assert transaction.can_be_refunded() is False
-        with pytest.raises(PaymentException) as exception:
+        with pytest.raises(CantBeRefundedException) as exception:
             transaction.can_be_refunded(raises=True)
         assert exception.value.message == "A SQUARE_ONLINE payment can't be refunded"
+
+
+@pytest.mark.django_db
+def test_async_refund():
+    transaction = TransactionFactory(id=45)
+    with patch.object(refund_payment, "delay") as delay_mock:
+        transaction.async_refund()
+        delay_mock.assert_called_once_with(45)
 
 
 @pytest.mark.django_db
@@ -354,7 +364,7 @@ def test_refund_payment_with_no_auto_refund_method():
             is_refundable=True, automatic_refund_provider=None
         )
 
-        with pytest.raises(PaymentException) as exc:
+        with pytest.raises(CantBeRefundedException) as exc:
             payment.refund()
 
         assert exc.value.message == "A abc payment cannot be automatically refunded"
@@ -374,3 +384,34 @@ def test_notify_user_refund_email(mailoutbox):
     transaction.notify_user()
     assert len(mailoutbox) == 1
     assert mailoutbox[0].subject == "Refund successfully processed"
+
+
+@pytest.mark.django_db
+def test_payment_associated_tasks():
+    transaction = TransactionFactory(
+        type=Transaction.Type.PAYMENT, status=Transaction.Status.COMPLETED
+    )
+    # Different transaction
+    other_transaction = TransactionFactory(
+        type=Transaction.Type.PAYMENT, status=Transaction.Status.COMPLETED
+    )
+
+    # A related task
+    related_task = TaskResultFactory(
+        task_name="uobtheatre.payments.tasks.refund_payment",
+        task_args=f'"({transaction.id},)"',
+    )
+
+    # Unrelated, different transaction
+    TaskResultFactory(
+        task_name="uobtheatre.payments.tasks.refund_payment",
+        task_args=f'"({other_transaction.id},)"',
+    )
+
+    # Unrelated, different task type
+    TaskResultFactory(
+        task_name="uobtheatre.payments.tasks.refund_production",
+        task_args=f'"({transaction.id},)"',
+    )
+
+    assert list(transaction.qs.associated_tasks()) == [related_task]

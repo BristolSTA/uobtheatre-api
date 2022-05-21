@@ -1,11 +1,10 @@
 # pylint: disable=too-many-public-methods,too-many-lines
 import datetime
 import math
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from autoslug import AutoSlugField
 from django.contrib.contenttypes.models import ContentType
-from django.core.mail import mail_admins
 from django.db import models
 from django.db.models import Max, Min, Sum
 from django.db.models.query import Q, QuerySet
@@ -13,17 +12,16 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django_tiptap.fields import TipTapTextField
 from guardian.shortcuts import get_objects_for_user
-from sentry_sdk import capture_exception
 
 from uobtheatre.images.models import Image
 from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Transaction
-from uobtheatre.payments.payables import Payable
 from uobtheatre.productions.exceptions import (
     CapacityException,
     UnassignedConcessionTypeException,
     UnassignedSeatGroupException,
 )
+from uobtheatre.productions.tasks import refund_performance
 from uobtheatre.societies.models import Society
 from uobtheatre.users.abilities import AbilitiesMixin
 from uobtheatre.users.models import User
@@ -224,6 +222,16 @@ class PerformanceQuerySet(QuerySet):
             pay_object_id__in=self.bookings().values_list("id", flat=True),
             pay_object_type=ContentType.objects.get_for_model(Booking),
         )
+
+    def booked_users(self):
+        """
+        Get all the users that have booked this performance.
+
+        This excludes any bookings that have been refunded.
+        """
+        return User.objects.filter(
+            bookings__in=self.bookings().refunded(bool_val=False)
+        ).distinct()
 
 
 class Performance(
@@ -669,59 +677,19 @@ class Performance(
         """Generates a breakdown of the sales of this performance"""
         return self.qs.transactions().annotate_sales_breakdown(breakdowns)
 
-    def refund_bookings(
-        self, authorizing_user: User, send_admin_email=True
-    ) -> Tuple[List, List, List]:
+    def refund_bookings(self, authorizing_user: User):
         """Refund the performance's bookings
 
         Args:
             authorizing_user (User): The user authorizing the refund
-            send_admin_email (bool, optional): Wether to authorize the refund. Defaults to True.
 
         Raises:
             CantBeRefundedException: Raised if the performance can't be refunded
-
-        Returns:
-            List[Booking]: List of refunded bookings
-            List[Booking]: List of failed bookings
-            List[Booking]: List of skipped bookings
         """
         if not self.disabled:
             raise CantBeRefundedException(f"{self} is not set to disabled")
 
-        refunded_bookings = []
-        failed_bookings = []
-        skipped_bookings = []
-        for booking in self.bookings.filter(status=Payable.Status.PAID):
-            if not booking.can_be_refunded:
-                skipped_bookings.append(booking)
-                continue
-
-            try:
-                booking.refund(
-                    authorizing_user=authorizing_user, send_admin_email=False
-                )
-                refunded_bookings.append(booking)
-            except Exception as exception:  # pylint: disable=broad-except
-                capture_exception(exception)
-                failed_bookings.append(booking)
-
-        if len(refunded_bookings) != 0 and send_admin_email:
-            from uobtheatre.productions.emails import performances_refunded_email
-
-            mail = performances_refunded_email(
-                authorizing_user,
-                [self],
-                refunded_bookings,
-                failed_bookings,
-                skipped_bookings,
-            )
-            mail_admins(
-                "Performance Refunds Initiated",
-                mail.to_plain_text(),
-                html_message=mail.to_html(),
-            )
-        return (refunded_bookings, failed_bookings, skipped_bookings)
+        refund_performance.delay(self.pk, authorizing_user.id)
 
     def __str__(self):
         if self.start is None:
@@ -805,6 +773,9 @@ class ProductionQuerySet(QuerySet):
         return self.performances().transactions()
 
 
+ProductionManager = models.Manager.from_queryset(ProductionQuerySet)
+
+
 class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseModel):
     """The model for a production.
 
@@ -812,7 +783,7 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
     performaces (these are like the nights).
     """
 
-    objects: models.Manager["Production"] = ProductionQuerySet.as_manager()
+    objects = ProductionManager()
     from uobtheatre.productions.abilities import EditProduction
 
     abilities = [EditProduction]
@@ -820,6 +791,8 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
     name = models.CharField(max_length=255)
     subtitle = models.CharField(max_length=255, null=True, blank=True)
     description = TipTapTextField(null=True)
+
+    venues = models.ManyToManyField(Venue, through=Performance, editable=False)
 
     society = models.ForeignKey(
         Society, on_delete=models.SET_NULL, null=True, related_name="productions"

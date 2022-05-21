@@ -29,6 +29,7 @@ from uobtheatre.productions.test.factories import (
     create_production,
 )
 from uobtheatre.users.test.factories import UserFactory
+from uobtheatre.venues.test.factories import VenueFactory
 
 ###
 # Production Queries
@@ -776,6 +777,40 @@ def test_assignable_permissions(gql_client, perms, can_assign):
     } in response["data"]["production"]["assignablePermissions"]
 
 
+@pytest.mark.django_db
+def test_production_venues(gql_client):
+    production = ProductionFactory()
+    venue_1 = VenueFactory(name="Venue 1")
+    venue_2 = VenueFactory(name="Venue 2")
+    VenueFactory(name="Venue 3")
+
+    PerformanceFactory(production=production, venue=venue_1)
+    PerformanceFactory(production=production, venue=venue_1)
+    PerformanceFactory(production=production, venue=venue_2)
+
+    query = """
+        query {
+            production(id: "%s") {
+                venues {
+                    name
+                }
+            }
+        }
+    """
+
+    response = gql_client.execute(
+        query
+        % to_global_id(
+            "ProductionNode",
+            production.id,
+        )
+    )
+
+    assert response["data"]["production"] == {
+        "venues": [{"name": "Venue 1"}, {"name": "Venue 2"}],
+    }
+
+
 ###
 # Performance Queries
 ###
@@ -960,7 +995,8 @@ def test_ticket_breakdown(gql_client):
 
 
 @pytest.mark.django_db
-def test_tickets_breakdown(gql_client):
+@pytest.mark.parametrize("with_perms", [True, False])
+def test_tickets_breakdown(gql_client, with_perms):
     performance = PerformanceFactory()
 
     # Create some seat groups for this performance
@@ -977,6 +1013,21 @@ def test_tickets_breakdown(gql_client):
     discount_2.performances.set([performance])
     discount_requirement_2 = DiscountRequirementFactory(discount=discount_2, number=1)
 
+    # Create booking
+
+    booking = BookingFactory(performance=performance)
+    [
+        TicketFactory(
+            booking=booking,
+            seat_group=performance_seat_group_1.seat_group,
+            concession_type=discount_requirement_1.concession_type,
+        )
+        for _ in range(10)
+    ]
+
+    if with_perms:
+        gql_client.login().user.assign_perm("view_production", performance.production)
+
     response = gql_client.execute(
         """
         {
@@ -984,6 +1035,7 @@ def test_tickets_breakdown(gql_client):
             edges {
               node {
               	ticketOptions {
+                  numberTicketsSold
                   capacityRemaining
                   seatGroup {
                     id
@@ -1002,6 +1054,7 @@ def test_tickets_breakdown(gql_client):
         }
         """
     )
+
     assert response == {
         "data": {
             "performances": {
@@ -1010,6 +1063,7 @@ def test_tickets_breakdown(gql_client):
                         "node": {
                             "ticketOptions": [
                                 {
+                                    "numberTicketsSold": None if not with_perms else 10,
                                     "capacityRemaining": performance.seat_group_capacity_remaining(
                                         performance_seat_group_1.seat_group
                                     ),
@@ -1059,6 +1113,7 @@ def test_tickets_breakdown(gql_client):
                                     },
                                 },
                                 {
+                                    "numberTicketsSold": None if not with_perms else 0,
                                     "capacityRemaining": performance.seat_group_capacity_remaining(
                                         performance_seat_group_2.seat_group
                                     ),

@@ -13,6 +13,7 @@ from uobtheatre.payments.transaction_providers import (
     SquareOnline,
     SquarePOS,
 )
+from uobtheatre.productions.abilities import BookForPerformance
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.users.models import User
 from uobtheatre.utils.exceptions import (
@@ -210,7 +211,7 @@ class CreateBooking(AuthRequiredMixin, SafeMutation):
             )
 
         # Check performance is bookable
-        if not performance.is_bookable:
+        if not BookForPerformance.user_has_for(info.context.user, performance):
             raise GQLException(
                 message="This performance is not able to be booked at the moment"
             )
@@ -281,7 +282,7 @@ class UpdateBooking(AuthRequiredMixin, SafeMutation):
 
         # Can only edit this booking if belongs to the user, or is box office
         if booking.user.id != info.context.user.id and not info.context.user.has_perm(
-            "boxoffice", booking.performance.production
+            "productions.boxoffice", booking.performance.production
         ):
             raise AuthorizationException(
                 message="You do not have permission to access this booking.",
@@ -384,6 +385,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         )
         device_id = graphene.String(required=False)
         idempotency_key = graphene.String(required=False)
+        verify_token = graphene.String(required=False)
 
     @classmethod
     def resolve_mutation(  # pylint: disable=too-many-arguments, too-many-branches
@@ -396,6 +398,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         payment_provider=SquareOnline.name,
         device_id=None,
         idempotency_key=None,
+        verify_token=None,
     ):
 
         # Get the performance and if it doesn't exist throw an error
@@ -403,7 +406,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
 
         # Verify user can access booking
         if booking.user.id != info.context.user.id and not info.context.user.has_perm(
-            "boxoffice", booking.performance.production
+            "productions.boxoffice", booking.performance.production
         ):
             raise AuthorizationException(
                 message="You do not have permission to access this booking.",
@@ -463,7 +466,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
                     field="nonce",
                     code="missing_required",
                 )
-            payment_method = SquareOnline(nonce, idempotency_key)
+            payment_method = SquareOnline(nonce, idempotency_key, verify_token)
         elif payment_provider == SquarePOS.name:
             if not device_id:
                 raise GQLException(

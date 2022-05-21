@@ -8,17 +8,22 @@ from django.db.models import Q, Sum
 from django.db.models.enums import TextChoices
 from django.db.models.functions import Coalesce
 from django.db.models.query import QuerySet
+from django_celery_results.models import TaskResult
 
 from uobtheatre.mail.composer import MailComposer
 from uobtheatre.payments import transaction_providers
+from uobtheatre.payments.exceptions import (
+    CantBeCanceledException,
+    CantBeRefundedException,
+)
+from uobtheatre.payments.tasks import refund_payment
 from uobtheatre.payments.transaction_providers import (
     Cash,
     PaymentProvider,
     RefundProvider,
     TransactionProvider,
 )
-from uobtheatre.utils.exceptions import PaymentException
-from uobtheatre.utils.models import TimeStampedMixin
+from uobtheatre.utils.models import BaseModel, TimeStampedMixin
 
 if TYPE_CHECKING:
     from uobtheatre.payments.payables import Payable
@@ -61,8 +66,19 @@ class TransactionQuerySet(QuerySet):
         for payment in self:
             payment.sync_transaction_with_provider()
 
+    def associated_tasks(self):
+        """
+        Return a queryset of tasks associated with these transactions
+        """
+        pks = self.values_list("pk", flat=True)
+        pks_regex = "|".join(map(str, pks))
+        return TaskResult.objects.filter(
+            task_name="uobtheatre.payments.tasks.refund_payment",
+            task_args__iregex=f"\(({pks_regex}),\)",  # pylint: disable=anomalous-backslash-in-string
+        )
 
-class Transaction(TimeStampedMixin, models.Model):
+
+class Transaction(TimeStampedMixin, BaseModel):
 
     """The model for a transaction.
 
@@ -89,9 +105,11 @@ class Transaction(TimeStampedMixin, models.Model):
             status_map = {
                 "APPROVED": cls.PENDING,
                 "PENDING": cls.PENDING,
+                "IN_PROGRESS": cls.PENDING,
+                "CANCEL_REQUESTED": cls.PENDING,
                 "COMPLETED": cls.COMPLETED,
                 "REJECTED": cls.FAILED,
-                "CANCELLED": cls.FAILED,
+                "CANCELED": cls.FAILED,
                 "FAILED": cls.FAILED,
             }
             return status_map[square_status]
@@ -197,31 +215,32 @@ class Transaction(TimeStampedMixin, models.Model):
     def cancel(self):
         """
         Cancel payment
-
-        This is currently only possible for SquarePOS payments that are
-        pending.
         """
-        if self.status == Transaction.Status.PENDING:
-            self.provider.cancel(self)
-            self.delete()
+        if self.status != self.Status.PENDING:
+            raise CantBeCanceledException(
+                f"A transaction of status {self.status} cannot be canceled"
+            )
+        self.provider.cancel(self)
 
     def can_be_refunded(self, refund_provider=None, raises=False):
         """If the payment can be refunded either automatically or manually"""
         if self.type != Transaction.Type.PAYMENT:
             if raises:
-                raise PaymentException(f"A {self.type.label.lower()} can't be refunded")
+                raise CantBeRefundedException(
+                    f"A {self.type.label.lower()} can't be refunded"
+                )
             return False
 
         if self.status != Transaction.Status.COMPLETED:
             if raises:
-                raise PaymentException(
+                raise CantBeRefundedException(
                     f"A {self.status.label.lower()} payment can't be refunded"
                 )
             return False
 
         if not self.provider.is_refundable:
             if raises:
-                raise PaymentException(
+                raise CantBeRefundedException(
                     f"A {self.provider_name} payment can't be refunded"
                 )
             return False
@@ -231,21 +250,40 @@ class Transaction(TimeStampedMixin, models.Model):
             refund_provider
         ):
             if raises:
-                raise PaymentException(
+                raise CantBeRefundedException(
                     f"Cannot use refund provider {refund_provider.name} with a {self.provider.name} payment"
                 )
             return False
 
         return True
 
+    def async_refund(self):
+        """
+        Create "refund_payment" task to refund the payment. The task queue the
+        refund method.
+        """
+        refund_payment.delay(self.pk)
+
     def refund(self, refund_provider: RefundProvider = None):
-        """Refund the payment"""
+        """
+        Refund the payment
+
+        Args:
+            refund_provider (RefundProvider): If a refund provider is provider,
+                that is used to refund the payment. Otherwise the
+                automatic_refund_provider of the payment transaction provider
+                is used.
+
+        Raises:
+            CantBeRefundedException: Raised if the payment cannot be refunded
+                for a known reason.
+        """
         self.can_be_refunded(refund_provider=refund_provider, raises=True)
 
         if refund_provider is None:
             # If no provider is provided, use the auto refund provider
             if not (refund_provider := self.provider.automatic_refund_provider):
-                raise PaymentException(
+                raise CantBeRefundedException(
                     f"A {self.provider_name} payment cannot be automatically refunded"
                 )
 
