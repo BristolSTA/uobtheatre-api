@@ -32,7 +32,12 @@ from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.test.factories import TransactionFactory, mock_payment_method
 from uobtheatre.payments.transaction_providers import SquarePOS
-from uobtheatre.productions.exceptions import NotBookableException
+from uobtheatre.productions.exceptions import (
+    BookingTransferPerformanceUnchangedException,
+    BookingTransferToDifferentProductionException,
+    CapacityException,
+    NotBookableException,
+)
 from uobtheatre.productions.models import Production
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.users.test.factories import UserFactory
@@ -1421,11 +1426,47 @@ def test_create_transfer():
 
 
 @pytest.mark.django_db
-def test_create_transfer_not_bookable():
+@pytest.mark.parametrize(
+    "booking_ticket_count, capacity_remaining, is_bookable, same_performance, same_production, exception",
+    [
+        # Success cases
+        (2, 3, True, False, True, None),
+        (2, 2, True, False, True, None),
+        # Failure cases
+        (3, 2, True, False, True, CapacityException),
+        (3, 2, False, False, True, NotBookableException),
+        (2, 3, True, True, True, BookingTransferPerformanceUnchangedException),
+        (2, 3, True, False, False, BookingTransferToDifferentProductionException),
+    ],
+)
+def test_check_transfer_performance(
+    booking_ticket_count,
+    capacity_remaining,
+    is_bookable,
+    same_performance,
+    same_production,
+    exception,
+):
+    # Create a booking with 3 tickets
     booking = BookingFactory()
-    performance = PerformanceFactory()
-    with pytest.raises(NotBookableException), patch(
+    [TicketFactory(booking=booking) for _ in range(booking_ticket_count)]
+
+    if same_performance:
+        performance = booking.performance
+    elif same_production:
+        performance = PerformanceFactory(production=booking.performance.production)
+    else:
+        performance = PerformanceFactory()
+
+    with patch(
+        "uobtheatre.productions.models.Performance.capacity_remaining",
+        new_callable=PropertyMock(return_value=capacity_remaining),
+    ), patch(
         "uobtheatre.productions.models.Performance.is_bookable",
-        new_callable=PropertyMock(return_value=False),
+        new_callable=PropertyMock(return_value=is_bookable),
     ):
-        booking.create_transfer(performance)
+        if exception:
+            with pytest.raises(exception):
+                booking.create_transfer(performance)
+        else:
+            booking.create_transfer(performance)

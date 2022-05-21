@@ -19,6 +19,8 @@ from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import SalesBreakdown, Transaction
 from uobtheatre.payments.payables import Payable, PayableQuerySet
 from uobtheatre.productions.exceptions import (
+    BookingTransferPerformanceUnchangedException,
+    BookingTransferToDifferentProductionException,
     CapacityException,
     NotBookableException,
     UnassignedConcessionTypeException,
@@ -615,7 +617,22 @@ class Booking(TimeStampedMixin, Payable):
         clone.reference = create_short_uuid()
         return clone
 
-    def create_transfer(self, performance: "Performance") -> "Booking":
+    def _check_transfer_performance(self, performance: "Performance"):
+        if self.performance == performance:
+            raise BookingTransferPerformanceUnchangedException
+
+        if self.performance.production != performance.production:
+            raise BookingTransferToDifferentProductionException
+
+        if not performance.is_bookable:
+            raise NotBookableException
+
+        if performance.capacity_remaining < self.tickets.count():
+            raise CapacityException(
+                f"There are only {performance.capacity_remaining} seats remaining for the selected performance"
+            )
+
+    def create_transfer(self, performance: "Performance"):
         """
         Transfer the booking to a different performance.
 
@@ -623,10 +640,7 @@ class Booking(TimeStampedMixin, Payable):
         from the original. The original is cancelled and the transfered to
         attribute is assigned as the new booking.
         """
-        if not performance.is_bookable:
-            raise NotBookableException
-
-        # TODO check sufficient capacity to transfere all tickets
+        self._check_transfer_performance(performance)
 
         # Create a booking transfer model
         new_booking = self.clone()
