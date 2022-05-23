@@ -9,7 +9,7 @@ from django_tiptap.fields import TipTapTextField
 
 from uobtheatre.addresses.models import Address
 from uobtheatre.images.models import Image
-from uobtheatre.utils.models import TimeStampedMixin
+from uobtheatre.utils.models import TimeStampedMixin, BaseModel
 
 
 class Seat(models.Model):
@@ -23,7 +23,7 @@ class Seat(models.Model):
     number = models.CharField(max_length=5, null=True, blank=True)
 
 
-class Venue(TimeStampedMixin, models.Model):
+class Venue(TimeStampedMixin, BaseModel):
     """The model for a venue
 
     A Venue is a place where Performances can take place.
@@ -54,7 +54,7 @@ class Venue(TimeStampedMixin, models.Model):
         ordering = ["id"]
 
 
-class SeatGroup(models.Model):
+class SeatGroup(BaseModel):
     """The model for a region of a Venue.
 
     A seat group is a region of a Venue, it can contains many seats or

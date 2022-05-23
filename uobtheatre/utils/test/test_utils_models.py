@@ -1,6 +1,7 @@
 import pytest
 
 from uobtheatre.bookings.models import Booking
+from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.payments.models import Transaction
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.societies.models import Society
@@ -36,3 +37,24 @@ def test_base_clone():
 
     # Assert pk is not
     assert user_2.pk is None
+
+
+@pytest.mark.parametrize(
+    "model_type, expected_name",
+    [
+        (Booking, "BookingNode"),
+        (Venue, "VenueNode"),
+        (Society, "SocietyNode"),
+        (Production, "ProductionNode"),
+        (Performance, "PerformanceNode"),
+        (Transaction, "TransactionNode"),
+    ],
+)
+def test_base_name(model_type, expected_name):
+    assert model_type._node_name == expected_name
+
+
+@pytest.mark.django_db
+def test_base_global_id():
+    booking = BookingFactory(pk=1)
+    assert booking.global_id == "Qm9va2luZ05vZGU6MQ=="

@@ -10,7 +10,10 @@ from django.db.models.query import QuerySet
 from django_celery_results.models import TaskResult
 
 from uobtheatre.payments.emails import payable_refund_initiated_email
-from uobtheatre.payments.exceptions import CantBeRefundedException
+from uobtheatre.payments.exceptions import (
+    CantBeRefundedException,
+    CantBePaidForException,
+)
 from uobtheatre.payments.models import SalesBreakdown, Transaction
 from uobtheatre.payments.tasks import refund_payable
 from uobtheatre.users.models import User
@@ -174,6 +177,11 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
         Returns:
             Payment: The payment created by the checkout (optional)
         """
+        if self.status != Payable.Status.IN_PROGRESS:
+            raise CantBePaidForException(
+                message=f"A payable with status {self.get_status_display()} cannot be paid for"
+            )
+
         # Cancel and delete pending payments for this booking
         for payment in self.transactions.filter(status=Transaction.Status.PENDING):
             payment.cancel()

@@ -16,6 +16,7 @@ from guardian.shortcuts import get_objects_for_user
 from uobtheatre.images.models import Image
 from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Transaction
+from uobtheatre.payments.payables import Payable
 from uobtheatre.productions.exceptions import (
     CapacityException,
     UnassignedConcessionTypeException,
@@ -698,6 +699,16 @@ class Performance(
 
     class Meta:
         ordering = ["id"]
+
+
+def delete_user_drafts(user, performance_id, booking_id=None):
+    """Remove's the users exisiting draft booking for the given performance"""
+    bookings = user.bookings
+    if booking_id:
+        bookings = bookings.exclude(id=booking_id)
+    bookings.filter(
+        status=Payable.Status.IN_PROGRESS, performance_id=performance_id
+    ).delete()
 
 
 class PerformanceSeatGroup(models.Model):

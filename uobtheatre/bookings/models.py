@@ -19,14 +19,20 @@ from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import SalesBreakdown, Transaction
 from uobtheatre.payments.payables import Payable, PayableQuerySet
 from uobtheatre.productions.exceptions import (
-    BookingTransferPerformanceUnchangedException,
-    BookingTransferToDifferentProductionException,
     CapacityException,
     NotBookableException,
     UnassignedConcessionTypeException,
     UnassignedSeatGroupException,
 )
-from uobtheatre.productions.models import Performance, Production
+from uobtheatre.bookings.exceptions import (
+    BookingTransferPerformanceUnchangedException,
+    BookingTransferToDifferentProductionException,
+    BookingTransferBookingNotPaidException,
+)
+from uobtheatre.payments.exceptions import (
+    CantBePaidForException,
+)
+from uobtheatre.productions.models import Performance, Production, delete_user_drafts
 from uobtheatre.users.models import User
 from uobtheatre.utils.filters import filter_passes_on_model
 from uobtheatre.utils.models import BaseModel, TimeStampedMixin
@@ -254,8 +260,8 @@ class Booking(TimeStampedMixin, Payable):
     expires_at = models.DateTimeField(default=generate_expires_at)
 
     # Whether the booking has be transferred to
-    transfered_to = models.OneToOneField(
-        "Booking", on_delete=models.RESTRICT, null=True, related_name="_transfered_from"
+    transfered_from = models.OneToOneField(
+        "Booking", on_delete=models.RESTRICT, null=True, related_name="_transfered_to"
     )
 
     @property
@@ -486,10 +492,10 @@ class Booking(TimeStampedMixin, Payable):
         return MiscCost.objects.filter(type__in=misc_cost_types).value(self)
 
     @property
-    def transfered_from(self) -> Optional["Booking"]:
-        if not hasattr(self, "_transfered_from"):
+    def transfered_to(self) -> Optional["Booking"]:
+        if not hasattr(self, "_transfered_to"):
             return None
-        return self._transfered_from
+        return self._transfered_to
 
     @property
     def transfered_from_bookings(self) -> list["Booking"]:
@@ -598,6 +604,18 @@ class Booking(TimeStampedMixin, Payable):
             (len(self.tickets.all()) + len(add_tickets) - len(delete_tickets)),
         )
 
+    def pay(self, payment_method: "PaymentProvider") -> Optional["Transaction"]:
+        if self.is_reservation_expired:
+            raise CantBePaidForException(
+                message="This booking has expired. Please create a new booking"
+            )
+
+        # If this is a transfer and the booking it is transfered from is not paid
+        if self.transfered_from and self.transfered_from.status != Booking.Status.PAID:
+            self.transfered_from._check_transfer_booking()
+
+        return super().pay(payment_method)
+
     def complete(self, payment: Transaction = None):
         """
         Complete the booking (after it has been paid for) and send the
@@ -632,7 +650,14 @@ class Booking(TimeStampedMixin, Payable):
                 f"There are only {performance.capacity_remaining} seats remaining for the selected performance"
             )
 
-    def create_transfer(self, performance: "Performance"):
+    def _check_transfer_booking(self):
+        # If the booking is already completed. Note this also convers if it has
+        # already been transfered as once a transfer in completed the original
+        # booking is cancelled.
+        if self.status != Booking.Status.PAID:
+            raise BookingTransferBookingNotPaidException(self.get_status_display())
+
+    def create_transfer(self, performance: "Performance") -> "Booking":
         """
         Transfer the booking to a different performance.
 
@@ -640,12 +665,21 @@ class Booking(TimeStampedMixin, Payable):
         from the original. The original is cancelled and the transfered to
         attribute is assigned as the new booking.
         """
+
+        # TODO this needs to be rechecked when the user pays (so they cant
+        # start a transfer, then cancel, then finish transfer)
+        self._check_transfer_booking()
         self._check_transfer_performance(performance)
+
+        # This will delete any exisiting IN_PROGRESS booking that the user has
+        # for this performance (this includes transfers)
+        delete_user_drafts(self.user, performance.id)
 
         # Create a booking transfer model
         new_booking = self.clone()
         new_booking.status = Payable.Status.IN_PROGRESS
         new_booking.performance = performance
+        new_booking.transfered_from = self
         new_booking.save()
 
         # Copy across all tickets which can be copied
@@ -669,10 +703,7 @@ class Booking(TimeStampedMixin, Payable):
                     f"Not copying accross ticket {ticket.seat_group} as {exc.__class__}"
                 )
 
-        # TODO Do this later and CANCELLED cannot be refunded
-        # self.status = Payable.Status.CANCELLED
-        self.transfered_to = new_booking
-        self.save()
+        return new_booking
 
     @property
     def web_tickets_path(self):

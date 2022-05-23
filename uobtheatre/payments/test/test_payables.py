@@ -5,14 +5,18 @@ from pytest_django.asserts import assertQuerysetEqual
 
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import BookingFactory
-from uobtheatre.payments.exceptions import CantBeRefundedException
+from uobtheatre.payments.exceptions import (
+    CantBeRefundedException,
+    CantBePaidForException,
+)
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.tasks import refund_payable
-from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.payments.transaction_providers import Card, Cash, SquareOnline
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.utils.test.factories import TaskResultFactory
+from uobtheatre.payments.test.factories import TransactionFactory, mock_payment_method
+from uobtheatre.payments.transaction_providers import SquarePOS
 
 
 @pytest.mark.django_db
@@ -388,3 +392,59 @@ def test_queryset_refunded():
         [payable2, payable3, payable4],
         ordered=False,
     )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "status, exception_message",
+    [
+        (Payable.Status.IN_PROGRESS, None),
+        (Payable.Status.PAID, "A payable with status Paid cannot be paid for"),
+    ],
+)
+def test_payable_pay_status(status, exception_message):
+    payment_method = mock_payment_method()
+    booking = BookingFactory(status=status)
+
+    if exception_message:
+        with pytest.raises(CantBePaidForException) as exc:
+            booking.pay(payment_method)
+        assert exc.value.message == exception_message
+        payment_method.pay.assert_not_called()
+    else:
+        booking.pay(payment_method)
+        payment_method.pay.assert_called_once()
+
+
+@pytest.mark.django_db
+def test_payable_pay_deletes_pending_payments():
+    """
+    When we try to pay for a booking, pending payments that already exist for
+    this booking should be deleted.
+    """
+
+    payment_method = mock_payment_method()
+    booking = BookingFactory(status=Payable.Status.IN_PROGRESS)
+
+    # Deleted
+    pending_payment = TransactionFactory(
+        status=Transaction.Status.PENDING,
+        pay_object=booking,
+        provider_name=SquarePOS.name,
+    )
+
+    # Not deleted
+    completed_payment = TransactionFactory(
+        status=Transaction.Status.COMPLETED, pay_object=booking
+    )
+
+    with patch("uobtheatre.payments.models.Transaction.cancel", autospec=True) as mock:
+        booking.pay(payment_method)  # type: ignore
+
+    assert booking.status == Payable.Status.PAID
+
+    # Assert pending payment cancelled
+    mock.assert_called_once_with(pending_payment)
+
+    # Assert completed payment is not cancelled
+    assert Transaction.objects.filter(id=completed_payment.id).exists()

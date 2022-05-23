@@ -33,16 +33,22 @@ from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.test.factories import TransactionFactory, mock_payment_method
 from uobtheatre.payments.transaction_providers import SquarePOS
 from uobtheatre.productions.exceptions import (
-    BookingTransferPerformanceUnchangedException,
-    BookingTransferToDifferentProductionException,
     CapacityException,
     NotBookableException,
+)
+from uobtheatre.bookings.exceptions import (
+    BookingTransferPerformanceUnchangedException,
+    BookingTransferToDifferentProductionException,
 )
 from uobtheatre.productions.models import Production
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.utils.test_utils import ticket_dict_list_dict_gen, ticket_list_dict_gen
 from uobtheatre.venues.test.factories import SeatFactory, SeatGroupFactory, VenueFactory
+from uobtheatre.payments.exceptions import (
+    CantBePaidForException,
+)
+from uobtheatre.bookings.exceptions import BookingTransferBookingNotPaidException
 
 
 @pytest.mark.django_db
@@ -507,8 +513,7 @@ def test_misc_costs_value_transfer():
     ValueMiscCostFactory(value=200)
     ValueMiscCostFactory(value=100, type=MiscCost.Type.BOOKING_TRANSFER)
 
-    booking = BookingFactory()
-    BookingFactory(transfered_to=booking)
+    booking = BookingFactory(transfered_from=BookingFactory())
     psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
     TicketFactory(booking=booking, seat_group=psg.seat_group)
 
@@ -564,8 +569,7 @@ def test_total_transfer():
     ValueMiscCostFactory(value=100, type=MiscCost.Type.BOOKING_TRANSFER)
 
     # Create a booking costing £12
-    booking = BookingFactory()
-    BookingFactory(transfered_to=booking)
+    booking = BookingFactory(transfered_from=BookingFactory())
     psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
     ticket = TicketFactory(booking=booking, seat_group=psg.seat_group)
     assert ticket.booking.total == 1500
@@ -876,37 +880,67 @@ def test_booking_pay_with_payment():
 
 
 @pytest.mark.django_db
-def test_booking_pay_deletes_pending_payments():
+@pytest.mark.parametrize(
+    "is_reservation_expired, transfered_from_booking_status, exception_type, exception_message",
+    [
+        (
+            False,
+            None,
+            None,
+            None,
+        ),
+        (
+            True,
+            None,
+            CantBePaidForException,
+            "This booking has expired. Please create a new booking",
+        ),
+        (
+            False,
+            Booking.Status.PAID,
+            None,
+            None,
+        ),
+        (
+            False,
+            Booking.Status.IN_PROGRESS,
+            BookingTransferBookingNotPaidException,
+            "A booking which is In Progress cannot be transfered",
+        ),
+    ],
+)
+def test_booking_pay(
+    is_reservation_expired,
+    transfered_from_booking_status,
+    exception_type,
+    exception_message,
+):
     """
-    When we try to pay for a booking, pending payments that already exist for
-    this booking should be deleted.
+    Raise exception when trying to pay for an expired booking.
     """
 
     payment_method = mock_payment_method()
-    booking = BookingFactory(status=Payable.Status.IN_PROGRESS)
 
-    # Deleted
-    pending_payment = TransactionFactory(
-        status=Transaction.Status.PENDING,
-        pay_object=booking,
-        provider_name=SquarePOS.name,
-    )
+    if transfered_from_booking_status:
+        booking = BookingFactory(
+            status=Payable.Status.IN_PROGRESS,
+            transfered_from=BookingFactory(status=transfered_from_booking_status),
+        )
+    else:
+        booking = BookingFactory(status=Payable.Status.IN_PROGRESS)
 
-    # Not deleted
-    completed_payment = TransactionFactory(
-        status=Transaction.Status.COMPLETED, pay_object=booking
-    )
-
-    with patch("uobtheatre.payments.models.Transaction.cancel", autospec=True) as mock:
-        booking.pay(payment_method)  # type: ignore
-
-    assert booking.status == Payable.Status.PAID
-
-    # Assert pending payment cancelled
-    mock.assert_called_once_with(pending_payment)
-
-    # Assert completed payment is not cancelled
-    assert Transaction.objects.filter(id=completed_payment.id).exists()
+    with patch(
+        "uobtheatre.bookings.models.Booking.is_reservation_expired",
+        new_callable=PropertyMock(return_value=is_reservation_expired),
+    ):
+        if exception_type:
+            with pytest.raises(exception_type) as exc:
+                booking.pay(payment_method)  # type: ignore
+            payment_method.pay.assert_not_called()
+            assert exc.value.message == exception_message
+        else:
+            booking.pay(payment_method)  # type: ignore
+            payment_method.pay.assert_called_once()
 
 
 @pytest.mark.django_db
@@ -1084,9 +1118,12 @@ def test_booking_can_be_refunded(is_refunded, status, production_status, expecte
     ],
 )
 def test_complete(with_payment, is_transfer):
-    booking = BookingFactory(status=Payable.Status.IN_PROGRESS)
     if is_transfer:
-        BookingFactory(transfered_to=booking)
+        booking = BookingFactory(
+            status=Payable.Status.IN_PROGRESS, transfered_from=BookingFactory()
+        )
+    else:
+        booking = BookingFactory(status=Payable.Status.IN_PROGRESS)
 
     with patch.object(booking, "send_confirmation_email") as mock_send_email:
         kwargs = {}
@@ -1144,10 +1181,9 @@ def test_send_confirmation_email(
         status=Payable.Status.IN_PROGRESS,
         reference="abc",
         performance=performance,
+        transfered_from=None if not is_transfer else BookingFactory(),
     )
     booking.user.status.verified = True
-    if is_transfer:
-        BookingFactory(transfered_to=booking)
 
     payment = (
         TransactionFactory(
@@ -1266,9 +1302,9 @@ def test_booking_display_name():
 
 @pytest.mark.django_db
 def test_transfered_from():
-    booking_1 = BookingFactory()
-    booking_2 = BookingFactory(transfered_to=booking_1)
-    booking_3 = BookingFactory(transfered_to=booking_2)
+    booking_3 = BookingFactory()
+    booking_2 = BookingFactory(transfered_from=booking_3)
+    booking_1 = BookingFactory(transfered_from=booking_2)
 
     booking_4 = BookingFactory()
 
@@ -1276,6 +1312,20 @@ def test_transfered_from():
     assert booking_2.transfered_from_bookings == [booking_3]
     assert booking_3.transfered_from_bookings == []
     assert booking_4.transfered_from_bookings == []
+
+
+@pytest.mark.django_db
+def test_transfered_to():
+    booking_3 = BookingFactory()
+    booking_2 = BookingFactory(transfered_from=booking_3)
+    booking_1 = BookingFactory(transfered_from=booking_2)
+
+    booking_4 = BookingFactory()
+
+    assert booking_1.transfered_to == None
+    assert booking_4.transfered_to == None
+    assert booking_2.transfered_to == booking_1
+    assert booking_3.transfered_to == booking_2
 
 
 @pytest.mark.django_db

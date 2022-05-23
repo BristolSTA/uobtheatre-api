@@ -14,7 +14,7 @@ from uobtheatre.payments.transaction_providers import (
     SquarePOS,
 )
 from uobtheatre.productions.abilities import BookForPerformance
-from uobtheatre.productions.models import Performance, Production
+from uobtheatre.productions.models import Performance, Production, delete_user_drafts
 from uobtheatre.users.models import User
 from uobtheatre.utils.exceptions import (
     AuthorizationException,
@@ -153,16 +153,6 @@ def parse_admin_discount_percentage(
     validator = PercentageValidator("admin_discount_percentage")
     validator(admin_discount_percentage)
     return admin_discount_percentage
-
-
-def delete_user_drafts(user, performance_id, booking_id=None):
-    """Remove's the users exisiting draft booking for the given performance"""
-    bookings = user.bookings
-    if booking_id:
-        bookings = bookings.exclude(id=booking_id)
-    bookings.filter(
-        status=Payable.Status.IN_PROGRESS, performance_id=performance_id
-    ).delete()
 
 
 class CreateBooking(AuthRequiredMixin, SafeMutation):
@@ -412,18 +402,6 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
                 message="You do not have permission to access this booking.",
             )
 
-        # Booking must not be paid for already
-        if not booking.status == Payable.Status.IN_PROGRESS:
-            raise GQLException(
-                message=f"This booking can't be paid for ({booking.get_status_display()})"
-            )
-
-        # Check if booking hasn't expired
-        if booking.is_reservation_expired:
-            raise GQLException(
-                message="This booking has expired. Please create a new booking."
-            )
-
         # Verify user can use payment provider
         if not (
             payment_provider == SquareOnline.name
@@ -649,9 +627,57 @@ class UnCheckInBooking(AuthRequiredMixin, SafeMutation):
         return UnCheckInBooking(booking=booking, performance=performance)
 
 
+class CreateBookingTransfer(AuthRequiredMixin, SafeMutation):
+    """Mutation to transfer a booking to a difference performance. This creates
+    an inprogress booking (transfer) which is linked to the orignal booking via
+    transfered_to.
+
+    Args:
+        booking_id (str): The gloabl id of the Booking to transfer.
+        performance_id (str): The gloabl id of the performance which the
+            Booking should be transfered to.
+
+    Returns:
+        booking (BookingNode): The Booking for the new performance.
+
+    Raises:
+        GQLException: If the Payment was unsucessful.
+    """
+
+    booking = graphene.Field(BookingNode)
+
+    class Arguments:
+        booking_id = IdInputField(required=True)
+        performance_id = IdInputField(required=True)
+
+    @classmethod
+    def resolve_mutation(  # pylint: disable=too-many-arguments, too-many-branches
+        cls,
+        _,
+        info,
+        booking_id,
+        performance_id,
+    ):
+        booking = Booking.objects.get(pk=booking_id)
+
+        # TODO Not boxoffice
+        if booking.user.id != info.context.user.id and not info.context.user.has_perm(
+            "productions.boxoffice", booking.performance.production
+        ):
+            raise AuthorizationException(
+                message="You do not have permission to access this booking.",
+            )
+
+        performance = Performance.objects.get(pk=performance_id)
+        new_booking = booking.create_transfer(performance)
+
+        return CreateBookingTransfer(booking=new_booking)
+
+
 class Mutation(graphene.ObjectType):
     create_booking = CreateBooking.Field()
     update_booking = UpdateBooking.Field()
     pay_booking = PayBooking.Field()
     check_in_booking = CheckInBooking.Field()
     uncheck_in_booking = UnCheckInBooking.Field()
+    create_booking_transfer = CreateBookingTransfer.Field()

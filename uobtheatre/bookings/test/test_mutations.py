@@ -7,6 +7,7 @@ import pytest
 from django.utils import timezone
 from graphql_relay.node.node import from_global_id, to_global_id
 from guardian.shortcuts import assign_perm
+from unittest.mock import patch, PropertyMock
 
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.mutations import PayBooking, parse_target_user_email
@@ -1598,49 +1599,6 @@ def test_pay_booking_mutation_unauthorized_user(gql_client):
 
 
 @pytest.mark.django_db
-def test_pay_booking_mutation_expired_booking(gql_client):
-    gql_client.login()
-    booking = BookingFactory(
-        status=Payable.Status.IN_PROGRESS,
-        user=gql_client.user,
-        expires_at=timezone.now() - timedelta(minutes=20),
-    )
-
-    request_query = """
-    mutation {
-	payBooking(
-            bookingId: "%s"
-            price: 0
-        ) {
-            success
-            errors {
-              __typename
-              ... on NonFieldError {
-                message
-              }
-            }
-          }
-        }
-    """
-    response = gql_client.execute(
-        request_query % to_global_id("BookingNode", booking.id)
-    )
-    assert response == {
-        "data": {
-            "payBooking": {
-                "success": False,
-                "errors": [
-                    {
-                        "__typename": "NonFieldError",
-                        "message": "This booking has expired. Please create a new booking.",
-                    }
-                ],
-            }
-        }
-    }
-
-
-@pytest.mark.django_db
 def test_pay_booking_mutation_online_without_idempotency_key(gql_client):
     gql_client.login()
     booking = BookingFactory(status=Payable.Status.IN_PROGRESS, user=gql_client.user)
@@ -2129,45 +2087,6 @@ def test_paybooking_unsupported_payment_provider(info):
             None, info, booking.id, booking.total, payment_provider="NOT_A_THING"
         )
     assert exc.value.message == "Unsupported payment provider NOT_A_THING."
-
-
-@pytest.mark.django_db
-def test_pay_booking_fails_if_already_paid(gql_client):
-
-    booking = BookingFactory(user=gql_client.login().user, status=Payable.Status.PAID)
-    request_query = """
-        mutation {
-            payBooking (
-                bookingId: "%s"
-                price: 0
-            ){
-                success
-                errors {
-                  __typename
-                  ... on NonFieldError {
-                    message
-                  }
-                }
-            }
-        }
-        """ % (
-        to_global_id("BookingNode", booking.id),
-    )
-    response = gql_client.execute(request_query)
-
-    assert response == {
-        "data": {
-            "payBooking": {
-                "success": False,
-                "errors": [
-                    {
-                        "__typename": "NonFieldError",
-                        "message": "This booking can't be paid for (Paid)",
-                    }
-                ],
-            }
-        }
-    }
 
 
 # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
@@ -2713,3 +2632,102 @@ def test_parse_target_user_email_without_target_email():
     creator = UserFactory(email="admin@email.com")
     user = parse_target_user_email(None, creator, PerformanceFactory())
     assert user.id == creator.id
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("booking_status", [Booking.Status.PAID])
+def test_create_transfer_booking(gql_client, booking_status):
+    gql_client.login()
+
+    booking = BookingFactory(status=booking_status, user=gql_client.user)
+    performance = PerformanceFactory(production=booking.performance.production)
+
+    request_query = """
+    mutation {
+        createBookingTransfer (
+            bookingId: "%s"
+            performanceId: "%s"
+        ) {
+            success
+            booking {
+                id
+            }
+            errors {
+              ... on NonFieldError {
+                message
+                code
+              }
+            }
+        }
+    }
+    """ % (
+        to_global_id("BookingNode", booking.id),
+        to_global_id("PerformanceNode", performance.id),
+    )
+
+    with patch(
+        "uobtheatre.productions.models.Performance.is_bookable",
+        new_callable=PropertyMock(return_value=True),
+    ):
+        response = gql_client.execute(request_query)
+
+    assert response == {
+        "data": {
+            "createBookingTransfer": {
+                "success": True,
+                "booking": {
+                    "id": to_global_id("BookingNode", booking.transfered_to.pk)
+                },
+                "errors": None,
+            }
+        }
+    }
+
+
+# TODO test actual perms
+@pytest.mark.django_db
+def test_create_transfer_booking_without_permissions(gql_client):
+    gql_client.login()
+    gql_client.user.is_superuser = False
+    gql_client.user.save()
+
+    # booking = BookingFactory(user=gql_client.user)
+    booking = BookingFactory()
+    performance = PerformanceFactory(production=booking.performance.production)
+
+    request_query = """
+        mutation {
+            createBookingTransfer(
+                bookingId: "%s"
+                performanceId: "%s"
+            ){
+                booking{
+                    id
+                }
+                errors {
+                  ... on NonFieldError {
+                    message
+                    code
+                  }
+                }
+            }
+        }
+        """ % (
+        to_global_id("BookingNode", booking.id),
+        to_global_id("PerformanceNode", performance.id),
+    )
+
+    response = gql_client.execute(request_query)
+    assert response == {
+        "data": {
+            "createBookingTransfer": {
+                "booking": None,
+                "errors": [
+                    {
+                        "code": "403",
+                        "message": "You do not have permission to access this booking.",
+                    }
+                ],
+            }
+        }
+    }
