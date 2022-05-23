@@ -666,8 +666,6 @@ class Booking(TimeStampedMixin, Payable):
         attribute is assigned as the new booking.
         """
 
-        # TODO this needs to be rechecked when the user pays (so they cant
-        # start a transfer, then cancel, then finish transfer)
         self._check_transfer_booking()
         self._check_transfer_performance(performance)
 
