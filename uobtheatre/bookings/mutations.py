@@ -61,12 +61,6 @@ class BookingMutation(SafeFormMutation, AuthRequiredMixin):
     @classmethod
     def authorize_update(cls, instance):
         """Authorize the update operation"""
-        # Booking must be in progress to update
-        if instance.status != Payable.Status.IN_PROGRESS:
-            raise GQLException(
-                message="This booking is not in progress, and so cannot be edited"
-            )
-
         # Booking must not be expired
         if instance.is_reservation_expired:
             raise GQLException(
@@ -194,17 +188,9 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         booking = Booking.objects.get(id=kwargs["id"])
 
         # Verify user can access booking
-
         if not ModifyBooking.user_has_for(info.context.user, booking):
             raise AuthorizationException(
-                message="You do not have permission to access this booking",
-                field="booking_id",
-            )
-
-        # Booking must not be paid for already
-        if not booking.status == Payable.Status.IN_PROGRESS:
-            raise GQLException(
-                message=f"This booking can't be paid for ({booking.get_status_display()})"
+                message="You do not have permission to modify this booking",
             )
 
         # Check if booking hasn't expired

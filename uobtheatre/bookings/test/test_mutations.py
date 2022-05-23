@@ -572,7 +572,7 @@ def test_create_booking_not_bookable(gql_client):
 @pytest.mark.django_db
 def test_create_booking_with_invalid_seat_group(gql_client):
     gql_client.login()
-    seat_group = SeatGroupFactory()
+    seat_group = SeatGroupFactory(name="Seat Group 1")
     real_seatgroup = SeatGroupFactory(name="My seat group")
     concession_type = ConcessionTypeFactory()
     booking = BookingFactory(user=gql_client.user)
@@ -619,7 +619,7 @@ def test_create_booking_with_invalid_seat_group(gql_client):
                 "errors": [
                     {
                         "__typename": "FieldError",
-                        "message": f"You cannot book a seat group that is not assigned to this performance, you have booked {seat_group} but the performance only has My seat group",
+                        "message": "You cannot book a seat group that is not assigned to this performance. You have booked Seat Group 1 but the performance only has My seat group",
                     }
                 ],
             }
@@ -1287,7 +1287,7 @@ def test_update_booking_without_permission(gql_client):
 @pytest.mark.django_db
 def test_update_booking_capacity_error(gql_client):
 
-    seat_group = SeatGroupFactory()
+    seat_group = SeatGroupFactory(name="Seat Group 1")
     concession_type = ConcessionTypeFactory()
     booking = BookingFactory(
         user=gql_client.login().user, status=Payable.Status.IN_PROGRESS
@@ -1336,7 +1336,7 @@ def test_update_booking_capacity_error(gql_client):
                 "errors": [
                     {
                         "__typename": "FieldError",
-                        "message": f"You cannot book a seat group that is not assigned to this performance, you have booked {seat_group} but the performance only has ",
+                        "message": "You cannot book a seat group that is not assigned to this performance. You have booked Seat Group 1 but the performance only has ",
                     }
                 ],
             }
@@ -1365,7 +1365,6 @@ def test_update_paid_booking_fails(gql_client):
             ){
                 success
                 errors {
-                  __typename
                   ... on NonFieldError {
                     message
                   }
@@ -1390,8 +1389,7 @@ def test_update_paid_booking_fails(gql_client):
                 "success": False,
                 "errors": [
                     {
-                        "__typename": "NonFieldError",
-                        "message": "This booking is not in progress, and so cannot be edited",
+                        "message": "You cannot change this booking instance",
                     }
                 ],
             }
@@ -1671,9 +1669,8 @@ def test_pay_booking_mutation_unauthorized_user(gql_client):
         ) {
             success
             errors {
-              ... on FieldError {
+              ... on NonFieldError {
                 message
-                code
               }
             }
           }
@@ -1688,8 +1685,7 @@ def test_pay_booking_mutation_unauthorized_user(gql_client):
                 "success": False,
                 "errors": [
                     {
-                        "message": "You do not have permission to access this booking",
-                        "code": "403",
+                        "message": "You do not have permission to modify this booking",
                     }
                 ],
             }
@@ -2247,7 +2243,6 @@ def test_pay_booking_fails_if_already_paid(gql_client):
             ){
                 success
                 errors {
-                  __typename
                   ... on NonFieldError {
                     message
                   }
@@ -2265,8 +2260,7 @@ def test_pay_booking_fails_if_already_paid(gql_client):
                 "success": False,
                 "errors": [
                     {
-                        "__typename": "NonFieldError",
-                        "message": "This booking can't be paid for (Paid)",
+                        "message": "You do not have permission to modify this booking",
                     }
                 ],
             }

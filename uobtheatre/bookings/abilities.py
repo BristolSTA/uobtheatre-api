@@ -1,11 +1,16 @@
+from uobtheatre.payments.payables import Payable
 from uobtheatre.users.abilities import Ability
 
 
 class ModifyBooking(Ability):
+    """Checks if the user has the ability to edit a booking (i.e. it's tickets or performance)"""
+
     name = "modify_booking"
 
     @classmethod
     def user_has_for(cls, user, obj) -> bool:
-        return obj.user.id == user.id or user.has_perm(
-            "productions.boxoffice", obj.performance.production
+        # Must be in progress, and the user must own the booking or be able to box office for the performance of the booking
+        return obj.status == Payable.Status.IN_PROGRESS and (
+            obj.user.id == user.id
+            or user.has_perm("productions.boxoffice", obj.performance.production)
         )

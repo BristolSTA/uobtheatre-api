@@ -6,6 +6,7 @@ from uobtheatre.bookings.models import Booking, Ticket, max_tickets_per_booking
 from uobtheatre.discounts.models import ConcessionType
 from uobtheatre.payments.payables import Payable
 from uobtheatre.users.models import User
+from uobtheatre.utils.exceptions import GQLException
 from uobtheatre.utils.forms import MutationForm
 from uobtheatre.utils.schema import IdInputField
 from uobtheatre.venues.models import Seat, SeatGroup
@@ -41,11 +42,11 @@ class TicketInputType(graphene.InputObjectType):
         )
 
 
-class TicketInputField(Field):
+class TicketListInputField(Field):
     pass
 
 
-@convert_form_field.register(TicketInputField)
+@convert_form_field.register(TicketListInputField)
 def convert_form_field_to_string(field):
     return graphene.List(
         TicketInputType, description=field.help_text, required=field.required
@@ -55,71 +56,78 @@ def convert_form_field_to_string(field):
 class BookingForm(MutationForm):
     """Form for creating/updating a booking"""
 
-    tickets = TicketInputField(required=False)
+    tickets = TicketListInputField(required=False)
     user_email = CharField(required=False)
 
     def clean(self):
-        """Validate form data on clean"""
+        """Validate and clean form data"""
         cleaned_data = super().clean()
-        ## Various fields
+
         if not self.instance.creator_id:
+            # If the instance has no creater, the current user is the creator
             self.instance.creator = self.user
 
-        if cleaned_data.get("user_email"):
-            target_user, _ = User.objects.get_or_create(
-                email=cleaned_data.get("user_email"),
+        # We only update the booking's user if an email has be explicitly provided, or no user is currently assigned to it
+        if user_email := cleaned_data.get("user_email"):
+            # If a user is supplied to assign the booking to, create or retrieve that user
+            self.instance.user, _ = User.objects.get_or_create(
+                email=user_email,
                 defaults={"first_name": "Anonymous", "last_name": "User"},
             )
-        else:
-            target_user = self.user
-
-        if cleaned_data.get("user_email") or not self.instance.user_id:
-            self.instance.user = target_user
+        elif not self.instance.id:
+            # If no exisiting user on booking, set it to be the creator (current user)
+            self.instance.user = self.user
 
         ## Check tickets
         if cleaned_data.get("tickets") is not None:
-            ticket_objects = list(
-                map(lambda ticket: ticket.to_ticket(), cleaned_data.get("tickets"))
+            self._clean_tickets(cleaned_data)
+
+    def _clean_tickets(self, cleaned_data):
+        """Cleans and validates the supplied ticket data"""
+        (
+            self.cleaned_data["add_tickets"],
+            self.cleaned_data["delete_tickets"],
+            total_number_of_tickets,
+        ) = self.instance.get_ticket_diff(
+            map(lambda ticket: ticket.to_ticket(), cleaned_data.get("tickets"))
+        )
+
+        if (
+            total_number_of_tickets > max_tickets_per_booking()
+            and not self.user.has_perm(
+                "boxoffice", cleaned_data.get("performance").production
+            )
+        ):
+            raise ValidationError(
+                {
+                    "tickets": f"You may only book a maximum of {max_tickets_per_booking()} tickets"
+                }
             )
 
-            (
-                add_tickets,
-                delete_tickets,
-                total_number_of_tickets,
-            ) = self.instance.get_ticket_diff(ticket_objects)
-
-            self.cleaned_data["add_tickets"] = add_tickets
-            self.cleaned_data["delete_tickets"] = delete_tickets
-
-            if (
-                total_number_of_tickets > max_tickets_per_booking()
-                and not self.user.has_perm(
-                    "boxoffice", cleaned_data.get("performance").production
-                )
-            ):
-                raise ValidationError(
-                    {
-                        "tickets": "You may only book a maximum of %s tickets"
-                        % max_tickets_per_booking()
-                    }
-                )
-
-            # Check the capacity of the show and its seat_groups
-            err = cleaned_data.get("performance").check_capacity(ticket_objects)
-            if err:
-                raise ValidationError({"tickets": err})
+        # Check the capacity of the performance and its seat_groups
+        try:
+            cleaned_data.get("performance").validate_tickets(
+                self.cleaned_data["add_tickets"], self.cleaned_data["delete_tickets"]
+            )
+        except GQLException as err:
+            raise ValidationError({"tickets": err.message}) from err
 
     def save(self, *args, **kwargs):
-        """Overrides the default form save to setup users (from provided emails)"""
-        if not self.instance.id or self.cleaned_data["user_email"]:
-            # Delete existing draft bookings
+        """Overrides the default form save to enforce 1 in-progress booking per performance per user"""
+
+        # If creating a new model, or the target user has been changed, delete existing draft bookings
+        if self.is_creation or self.cleaned_data["user_email"]:
             bookings = self.instance.user.bookings
-            if self.instance.id:
+
+            # Exclude this booking if it has been created already
+            if not self.is_creation:
                 bookings = bookings.exclude(id=self.instance.id)
+
             bookings.filter(
                 status=Payable.Status.IN_PROGRESS,
                 performance_id=self.instance.performance.id,
             ).delete()
+
         return super().save(*args, **kwargs)
 
     def _save_m2m(self):

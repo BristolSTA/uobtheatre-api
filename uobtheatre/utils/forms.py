@@ -85,5 +85,9 @@ class MutationForm(ModelForm):
             except ValidationError as error:
                 self.add_error(name, error)
 
+    @property
+    def is_creation(self):
+        return not bool(self.instance.pk)
+
     class Meta:
         abstract = True
