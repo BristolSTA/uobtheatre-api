@@ -78,6 +78,9 @@ class TransactionQuerySet(QuerySet):
         )
 
 
+TransactionManager = models.Manager.from_queryset(TransactionQuerySet)
+
+
 class Transaction(TimeStampedMixin, BaseModel):
 
     """The model for a transaction.
@@ -114,7 +117,7 @@ class Transaction(TimeStampedMixin, BaseModel):
             }
             return status_map[square_status]
 
-    objects = TransactionQuerySet.as_manager()
+    objects = TransactionManager()
 
     # List of models which can be paid for
     payables = models.Q(app_label="bookings", model="booking")
@@ -291,6 +294,14 @@ class Transaction(TimeStampedMixin, BaseModel):
 
 
 class SalesBreakdown(Enum):
+    """
+    Enum for each sales breakdown which can be optained from a transaction
+    queryset
+
+    Each enum varainet is assigned to the expression used to calculate its
+    value.
+    """
+
     PROVIDER_PAYMENT_VALUE = Coalesce(
         Sum(
             "provider_fee",

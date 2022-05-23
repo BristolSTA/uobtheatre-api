@@ -49,6 +49,7 @@ class PerformanceForm(MutationForm):
             "doors_open",
             "start",
             "end",
+            "interval_duration_mins",
             "description",
             "disabled",
             "capacity",

@@ -11,6 +11,11 @@ from django.utils import timezone
 from graphql_relay.node.node import to_global_id
 
 from uobtheatre.addresses.test.factories import AddressFactory
+from uobtheatre.bookings.exceptions import (
+    BookingTransferBookingNotPaidException,
+    BookingTransferPerformanceUnchangedException,
+    BookingTransferToDifferentProductionException,
+)
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
@@ -27,28 +32,19 @@ from uobtheatre.discounts.test.factories import (
 )
 from uobtheatre.images.test.factories import ImageFactory
 from uobtheatre.payments import transaction_providers
-from uobtheatre.payments.exceptions import CantBeRefundedException
+from uobtheatre.payments.exceptions import (
+    CantBePaidForException,
+    CantBeRefundedException,
+)
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.test.factories import TransactionFactory, mock_payment_method
-from uobtheatre.payments.transaction_providers import SquarePOS
-from uobtheatre.productions.exceptions import (
-    CapacityException,
-    NotBookableException,
-)
-from uobtheatre.bookings.exceptions import (
-    BookingTransferPerformanceUnchangedException,
-    BookingTransferToDifferentProductionException,
-)
+from uobtheatre.productions.exceptions import CapacityException, NotBookableException
 from uobtheatre.productions.models import Production
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.utils.test_utils import ticket_dict_list_dict_gen, ticket_list_dict_gen
 from uobtheatre.venues.test.factories import SeatFactory, SeatGroupFactory, VenueFactory
-from uobtheatre.payments.exceptions import (
-    CantBePaidForException,
-)
-from uobtheatre.bookings.exceptions import BookingTransferBookingNotPaidException
 
 
 @pytest.mark.django_db
@@ -171,24 +167,26 @@ def test_get_valid_discounts():
 def test_get_price():
     performance = PerformanceFactory()
     booking = BookingFactory(performance=performance)
+    assert booking.get_price() == 0
 
     # Set seat type price for performance
-    performance_seat_group = PerformanceSeatingFactory(performance=performance)
+    performance_seat_group = PerformanceSeatingFactory(
+        performance=performance, price=500
+    )
 
     # Create a seat booking
     TicketFactory(booking=booking, seat_group=performance_seat_group.seat_group)
 
-    assert booking.get_price() == performance_seat_group.price
+    assert booking.get_price() == 500
 
     TicketFactory(booking=booking, seat_group=performance_seat_group.seat_group)
-    assert booking.get_price() == performance_seat_group.price * 2
+    assert booking.get_price() == 1000
 
-    performance_seat_group_2 = PerformanceSeatingFactory(performance=performance)
-    TicketFactory(booking=booking, seat_group=performance_seat_group_2.seat_group)
-    assert (
-        booking.get_price()
-        == performance_seat_group.price * 2 + performance_seat_group_2.price
+    performance_seat_group_2 = PerformanceSeatingFactory(
+        performance=performance, price=100
     )
+    TicketFactory(booking=booking, seat_group=performance_seat_group_2.seat_group)
+    assert booking.get_price() == 1100
 
 
 @pytest.mark.django_db
@@ -1322,8 +1320,8 @@ def test_transfered_to():
 
     booking_4 = BookingFactory()
 
-    assert booking_1.transfered_to == None
-    assert booking_4.transfered_to == None
+    assert booking_1.transfered_to is None
+    assert booking_4.transfered_to is None
     assert booking_2.transfered_to == booking_1
     assert booking_3.transfered_to == booking_2
 
@@ -1488,7 +1486,7 @@ def test_create_transfer():
         (2, 3, True, True, True, BookingTransferPerformanceUnchangedException),
         (2, 3, True, False, False, BookingTransferToDifferentProductionException),
     ],
-)
+)  # pylint: disable=too-many-arguments
 def test_check_transfer_performance(
     booking_ticket_count,
     capacity_remaining,

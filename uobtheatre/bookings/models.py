@@ -13,9 +13,17 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from graphql_relay.node.node import to_global_id
 
+from uobtheatre.bookings.exceptions import (
+    BookingTransferBookingNotPaidException,
+    BookingTransferPerformanceUnchangedException,
+    BookingTransferToDifferentProductionException,
+)
 from uobtheatre.discounts.models import ConcessionType, DiscountCombination
 from uobtheatre.mail.composer import MailComposer
-from uobtheatre.payments.exceptions import CantBeRefundedException
+from uobtheatre.payments.exceptions import (
+    CantBePaidForException,
+    CantBeRefundedException,
+)
 from uobtheatre.payments.models import SalesBreakdown, Transaction
 from uobtheatre.payments.payables import Payable, PayableQuerySet
 from uobtheatre.productions.exceptions import (
@@ -23,14 +31,6 @@ from uobtheatre.productions.exceptions import (
     NotBookableException,
     UnassignedConcessionTypeException,
     UnassignedSeatGroupException,
-)
-from uobtheatre.bookings.exceptions import (
-    BookingTransferPerformanceUnchangedException,
-    BookingTransferToDifferentProductionException,
-    BookingTransferBookingNotPaidException,
-)
-from uobtheatre.payments.exceptions import (
-    CantBePaidForException,
 )
 from uobtheatre.productions.models import Performance, Production, delete_user_drafts
 from uobtheatre.users.models import User
@@ -40,7 +40,7 @@ from uobtheatre.utils.utils import combinations, create_short_uuid
 from uobtheatre.venues.models import Seat, SeatGroup
 
 if TYPE_CHECKING:
-    pass
+    from uobtheatre.payments.transaction_providers import PaymentProvider
 
 
 class MiscCostQuerySet(PayableQuerySet):
@@ -48,6 +48,9 @@ class MiscCostQuerySet(PayableQuerySet):
 
     def value(self, booking: "Booking") -> int:
         return sum(misc_cost.get_value(booking) for misc_cost in self)
+
+
+MiscCostManager = models.Manager.from_queryset(MiscCostQuerySet)
 
 
 class MiscCost(models.Model):
@@ -63,7 +66,7 @@ class MiscCost(models.Model):
         Currently all misc costs are applied to all bookings.
     """
 
-    objects = MiscCostQuerySet.as_manager()
+    objects = MiscCostManager()
 
     class Type(models.TextChoices):
         BOOKING = "Booking", "Applied to booking purchase"
@@ -210,6 +213,8 @@ def generate_expires_at():
     return timezone.now() + timezone.timedelta(minutes=15)
 
 
+BookingManager = models.Manager.from_queryset(BookingQuerySet)
+
 # pylint: disable=too-many-public-methods
 class Booking(TimeStampedMixin, Payable):
     """A booking for a performance
@@ -220,7 +225,7 @@ class Booking(TimeStampedMixin, Payable):
         A user can only have 1 In Progress booking per performance.
     """
 
-    objects = BookingQuerySet.as_manager()
+    objects = BookingManager()
 
     class Meta:
         constraints = [
@@ -612,7 +617,7 @@ class Booking(TimeStampedMixin, Payable):
 
         # If this is a transfer and the booking it is transfered from is not paid
         if self.transfered_from and self.transfered_from.status != Booking.Status.PAID:
-            self.transfered_from._check_transfer_booking()
+            self.transfered_from._check_transfer_booking()  # pylint: disable=protected-access
 
         return super().pay(payment_method)
 
@@ -636,6 +641,10 @@ class Booking(TimeStampedMixin, Payable):
         return clone
 
     def _check_transfer_performance(self, performance: "Performance"):
+        """
+        Check that the performance can facilitate the transfer of this booking
+        to it
+        """
         if self.performance == performance:
             raise BookingTransferPerformanceUnchangedException
 
@@ -819,45 +828,7 @@ class TicketQuerySet(QuerySet):
         return self.filter(Q(booking__status="PAID"))
 
 
-# class BookingTransfer(TimeStampedMixin, Payable):
-#     """
-#     A transfer of a booking to a different performance.
-#     """
-#
-#     from_booking = models.ForeignKey(
-#         Booking,
-#         on_delete=models.CASCADE,
-#         related_name="transfers_to",
-#         verbose_name="Booking",
-#     )
-#     to_booking = models.ForeignKey(
-#         Booking,
-#         on_delete=models.CASCADE,
-#         related_name="transfers_from",
-#         verbose_name="Booking",
-#     )
-#
-#     @property
-#     def misc_costs_value(self) -> int:
-#         """The value of the misc costs applied in pence
-#
-#         Detetmine the value of the MiscCosts applied to this booking transfer.
-#
-#         Returns:
-#             (int): The value in penies of MiscCosts applied to the Booking
-#         """
-#         return MiscCost.objects.filter(type=MiscCost.Type.BookingTransfer).value()
-#
-#     @property
-#     def total(self):
-#         """The total cost of the transfere."""
-#         return (
-#             max(self.to_booking.total - self.from_booking.net_transactions(), 0)
-#             + self.misc_costs_value
-#         )
-#
-#     def __str__(self):
-#         return f"Transfer from {self.from_booking} to {self.to_booking}"
+TicketManager = models.Manager.from_queryset(TicketQuerySet)
 
 
 class Ticket(BaseModel):
@@ -867,7 +838,7 @@ class Ticket(BaseModel):
     defined by the Booking.
     """
 
-    objects = TicketQuerySet.as_manager()
+    objects = TicketManager()
 
     seat_group = models.ForeignKey(
         SeatGroup, on_delete=models.RESTRICT, related_name="tickets"

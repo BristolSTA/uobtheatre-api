@@ -1,5 +1,5 @@
 import abc
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.mail import mail_admins
@@ -11,14 +11,17 @@ from django_celery_results.models import TaskResult
 
 from uobtheatre.payments.emails import payable_refund_initiated_email
 from uobtheatre.payments.exceptions import (
-    CantBeRefundedException,
     CantBePaidForException,
+    CantBeRefundedException,
 )
 from uobtheatre.payments.models import SalesBreakdown, Transaction
 from uobtheatre.payments.tasks import refund_payable
 from uobtheatre.users.models import User
 from uobtheatre.utils.filters import filter_passes_on_model
 from uobtheatre.utils.models import AbstractModelMeta, BaseModel
+
+if TYPE_CHECKING:
+    from uobtheatre.payments.transaction_providers import PaymentProvider
 
 
 class PayableQuerySet(QuerySet):
@@ -176,6 +179,10 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
 
         Returns:
             Payment: The payment created by the checkout (optional)
+
+        Raises:
+            CantBePaidForException: If the status of the booking is not
+                IN_PROGRESS
         """
         if self.status != Payable.Status.IN_PROGRESS:
             raise CantBePaidForException(
@@ -194,7 +201,7 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
 
         return payment
 
-    def complete(self, payment: Transaction = None):
+    def complete(self, payment: Transaction = None):  # pylint: disable=unused-argument
         """
         Called once the pay object has been completly paid for. Payment passed
         is the finishing transaction
