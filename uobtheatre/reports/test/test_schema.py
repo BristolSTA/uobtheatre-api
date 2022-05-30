@@ -7,26 +7,32 @@ from uobtheatre.productions.test.factories import PerformanceFactory
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "report_name, expected_uri",
+    "report_name, expected_uri, dataset_names",
     [
         (
             "PeriodTotals",
             "https://api.example.com/reports/period_totals/2020-01-01%2000:00:00/2021-01-01%2000:00:00",
+            ["Provider Totals", "Production Totals", "Payments"],
         ),
         (
             "OutstandingPayments",
             "https://api.example.com/reports/outstanding_society_payments",
+            ["Societies", "Productions"],
         ),
     ],
 )
 def test_can_generate_report_link_for_finance_reports(
-    gql_client, report_name, expected_uri
+    gql_client, report_name, expected_uri, dataset_names
 ):
     request = """
         mutation{
             generateReport(name: "%s", startTime: "2020-01-01T00:00:00", endTime:"2021-01-01T00:00:00") {
                 downloadUri
-
+                report {
+                    datasets {
+                        name
+                    }
+                }
             }
         }
     """
@@ -36,6 +42,10 @@ def test_can_generate_report_link_for_finance_reports(
     split_url = response["data"]["generateReport"]["downloadUri"].split("?")
     assert split_url[0] == expected_uri
     assert split_url[1] is not None
+
+    assert response["data"]["generateReport"]["report"]["datasets"] == [
+        {"name": name} for name in dataset_names
+    ]
 
 
 @pytest.mark.django_db

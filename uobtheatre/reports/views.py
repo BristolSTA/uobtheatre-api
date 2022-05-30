@@ -1,8 +1,6 @@
 from django.http.response import HttpResponse
 from django.utils.decorators import decorator_from_middleware_with_args
-from graphql_relay.node.node import from_global_id
 
-from uobtheatre.productions.models import Performance
 from uobtheatre.reports.exceptions import InvalidReportSignature
 from uobtheatre.reports.utils import ExcelReport, validate_report_download_signature
 from uobtheatre.users.models import User
@@ -57,8 +55,16 @@ def period_totals(request, start_time, end_time):
 
     # Generate report
     report = reports.PeriodTotalsBreakdown(
-        start_time,
-        end_time,
+        [
+            {
+                "name": "start_time",
+                "value": start_time,
+            },
+            {
+                "name": "end_time",
+                "value": end_time,
+            },
+        ]
     )
 
     excel = ExcelReport(
@@ -113,10 +119,7 @@ def performance_bookings(request):
     """
 
     # Generate report
-    performance = Performance.objects.get(
-        pk=from_global_id(reports.get_option(request.report_options, "id"))[1]
-    )
-    report = reports.PerformanceBookings(performance=performance)
+    report = reports.PerformanceBookings(request.report_options)
 
     excel = ExcelReport(
         "Performance Bookings",
