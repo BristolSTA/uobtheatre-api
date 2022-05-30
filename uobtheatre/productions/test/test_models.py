@@ -93,7 +93,7 @@ def test_production_duration():
     )
     performance_short = PerformanceFactory(start=start, end=end, production=production)
 
-    assert production.duration() == performance_short.duration()
+    assert production.duration == performance_short.duration
 
 
 @pytest.mark.django_db
@@ -101,7 +101,7 @@ def test_production_duration_with_no_performances():
 
     # Create production with no performances
     production = ProductionFactory()
-    assert production.duration() is None
+    assert production.duration is None
 
 
 @pytest.mark.django_db
@@ -343,7 +343,7 @@ def test_performance_duration():
     )
     performance = PerformanceFactory(start=start, end=end)
 
-    assert performance.duration().total_seconds() == 34304461.0
+    assert performance.duration.total_seconds() == 34304461.0
 
 
 @pytest.mark.django_db

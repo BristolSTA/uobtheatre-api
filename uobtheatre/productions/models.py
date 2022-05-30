@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from autoslug import AutoSlugField
 from django.contrib.contenttypes.models import ContentType
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Max, Min, Sum
 from django.db.models.query import Q, QuerySet
@@ -273,7 +274,9 @@ class Performance(
     doors_open = models.DateTimeField(null=True)
     start = models.DateTimeField(null=True)
     end = models.DateTimeField(null=True)
-    interval_duration_mins = models.IntegerField(null=True, blank=True)
+    interval_duration_mins = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1), MaxValueValidator(120)]
+    )
 
     description = models.TextField(null=True, blank=True)
     extra_information = models.TextField(null=True, blank=True)
@@ -467,14 +470,17 @@ class Performance(
         """
         return self.unchecked_in_tickets.count()
 
-    def duration(self):
+    @property
+    def duration(self) -> Optional[datetime.timedelta]:
         """The performances duration.
 
         Duration is measured from start time to end time.
 
         Returns:
-            datetime: Performance duration.
+            timedelta: Timedelta between start and end of performance.
         """
+        if not self.start or not self.end:
+            return None
         return self.end - self.start
 
     @cached_property
@@ -924,6 +930,7 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
             default=None,
         )
 
+    @property
     def duration(self) -> Optional[datetime.timedelta]:
         """The duration of the shortest show as a datetime object.
 
@@ -933,7 +940,7 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
         performances = self.performances.all()
         if not performances:
             return None
-        return min(performance.duration() for performance in performances)
+        return min(performance.duration for performance in performances)
 
     @property
     def total_capacity(self) -> int:

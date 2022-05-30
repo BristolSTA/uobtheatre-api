@@ -29,8 +29,9 @@ class PerformanceForm(MutationForm):
         """Validate form data on clean"""
         cleaned_data = super().clean()
         doors_open = cleaned_data.get("doors_open")
-        start = cleaned_data.get("start")
-        end = cleaned_data.get("end")
+        start = cleaned_data.get("start") or self.instance.start
+        end = cleaned_data.get("end") or self.instance.end
+        interval_duration_mins = cleaned_data.get("interval_duration_mins")
 
         if (doors_open and start) and (doors_open >= start):
             raise ValidationError(
@@ -40,6 +41,16 @@ class PerformanceForm(MutationForm):
         if (start and end) and (start >= end):
             raise ValidationError(
                 {"start": "The start time must be before the end time"}
+            )
+
+        if (
+            interval_duration_mins
+            and interval_duration_mins >= (end - start).total_seconds() / 60
+        ):
+            raise ValidationError(
+                {
+                    "interval_duration_mins": "The length of the interval must be less than the length of the performance"
+                }
             )
 
     class Meta:

@@ -812,7 +812,14 @@ def test_production_venues(gql_client):
 
 @pytest.mark.django_db
 def test_performance_schema(gql_client):
-    performances = [PerformanceFactory() for _ in range(1)]
+    performances = [
+        PerformanceFactory(
+            doors_open=datetime.datetime(2020, 1, 1, 0, 0, 0),
+            start=datetime.datetime(2020, 1, 1, 1, 0, 0),
+            end=datetime.datetime(2020, 1, 2, 1, 0, 0),
+        )
+        for _ in range(1)
+    ]
 
     response = gql_client.execute(
         """
@@ -865,9 +872,9 @@ def test_performance_schema(gql_client):
                         "node": {
                             "createdAt": performance.created_at.isoformat(),
                             "updatedAt": performance.updated_at.isoformat(),
-                            "capacity": performance.capacity,
+                            "capacity": None,
                             "description": performance.description,
-                            "disabled": performance.disabled,
+                            "disabled": False,
                             "discounts": {
                                 "edges": [
                                     {
@@ -876,9 +883,9 @@ def test_performance_schema(gql_client):
                                     for discount in performance.discounts.all()
                                 ]
                             },
-                            "doorsOpen": performance.doors_open.isoformat(),
-                            "durationMins": performance.duration().seconds // 60,
-                            "end": performance.end.isoformat(),
+                            "doorsOpen": "2020-01-01T00:00:00+00:00",
+                            "durationMins": 24 * 60,  # 1 day
+                            "end": "2020-01-02T01:00:00+00:00",
                             "extraInformation": performance.extra_information,
                             "id": to_global_id("PerformanceNode", performance.id),
                             "isOnline": False,
@@ -888,7 +895,7 @@ def test_performance_schema(gql_client):
                                     "ProductionNode", performance.production.id
                                 )
                             },
-                            "start": performance.start.isoformat(),
+                            "start": "2020-01-01T01:00:00+00:00",
                             "capacityRemaining": performance.capacity_remaining,
                             "venue": {
                                 "id": to_global_id("VenueNode", performance.venue.id)
