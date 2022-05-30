@@ -120,7 +120,7 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
 
     @classmethod
     def is_creation(cls, **inputs):
-        return "id" not in inputs
+        return not inputs.get("id")
 
     @classmethod
     def mutate(cls, root, info, **inputs):
@@ -128,7 +128,7 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
         input_items = inputs["input"]
 
         # If an ID is passed as top level input, convert from global to local
-        if "id" in input_items:
+        if input_items.get("id"):
             input_items["id"] = from_global_id(input_items["id"])[1]
 
         # Iterate over all the fields in the form
