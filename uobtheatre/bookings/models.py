@@ -54,7 +54,7 @@ MiscCostManager = models.Manager.from_queryset(MiscCostQuerySet)
 
 
 class MiscCost(models.Model):
-    """Model efor miscellaneous costs for shows
+    """Model for miscellaneous costs for shows
 
     Additional costs are added to a booking's final total.
     For example: Booking fee/Theatre improvement levy.
