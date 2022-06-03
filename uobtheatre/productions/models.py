@@ -229,6 +229,9 @@ class PerformanceQuerySet(QuerySet):
         ).distinct()
 
 
+PerformanceManager = models.Manager.from_queryset(PerformanceQuerySet)
+
+
 class Performance(
     TimeStampedMixin, BaseModel
 ):  # pylint: disable=too-many-public-methods
@@ -252,7 +255,7 @@ class Performance(
         & RelatedObjectsValidator(attribute="discounts", min_number=1)
     )
 
-    objects = PerformanceQuerySet.as_manager()
+    objects = PerformanceManager()
 
     production = models.ForeignKey(
         "productions.Production",
@@ -270,6 +273,7 @@ class Performance(
     doors_open = models.DateTimeField(null=True)
     start = models.DateTimeField(null=True)
     end = models.DateTimeField(null=True)
+    interval_duration_mins = models.IntegerField(null=True, blank=True)
 
     description = models.TextField(null=True, blank=True)
     extra_information = models.TextField(null=True, blank=True)
@@ -750,6 +754,9 @@ class ProductionQuerySet(QuerySet):
         return self.performances().transactions()
 
 
+ProductionManager = models.Manager.from_queryset(ProductionQuerySet)
+
+
 class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseModel):
     """The model for a production.
 
@@ -757,7 +764,7 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
     performaces (these are like the nights).
     """
 
-    objects: models.Manager["Production"] = ProductionQuerySet.as_manager()
+    objects = ProductionManager()
     from uobtheatre.productions.abilities import EditProduction
 
     abilities = [EditProduction]

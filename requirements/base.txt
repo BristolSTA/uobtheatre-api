@@ -13,10 +13,10 @@ django-filter==21.1
 Pillow>=8.1.2
 
 # Cors
-django-cors-headers==3.11.0
+django-cors-headers==3.12.0
 
 # Admin confirmation messages
-django-admin-confirm==0.2.4
+django-admin-confirm==0.2.5
 
 # TODO check if required
 django-configurations==2.3.2
@@ -36,7 +36,7 @@ psycopg2==2.9.3  # https://github.com/psycopg/psycopg2
 
 #=== Django core ===#
 
-django==3.2.12
+django==3.2.13
 
 #=== Django Extras ===#
 
@@ -63,17 +63,17 @@ squareup>=9.0.0.20210226
 
 #=== Logging ===#
 
-sentry-sdk==1.5.6
-whitenoise==6.0.0  # https://github.com/evansd/whitenoise
+sentry-sdk==1.5.12
+whitenoise==6.1.0  # https://github.com/evansd/whitenoise
 
 #=== Email ===#
-django-anymail[amazon_ses]==8.5  # https://github.com/anymail/django-anymail
+django-anymail[amazon_ses]==8.6  # https://github.com/anymail/django-anymail
 django-inlinecss==0.3.0
 
 #=== Timezones ===#
-timezonefinder==5.2.0
-pytz==2021.3
+timezonefinder==6.0.0
+pytz==2022.1
 
 #=== Task Queue ===#
 django-celery-results==2.2.0
-redis==4.1.4
+redis==4.3.1
