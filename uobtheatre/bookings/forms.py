@@ -107,12 +107,11 @@ class BookingForm(MutationForm):
             map(lambda ticket: ticket.to_ticket(), cleaned_data.get("tickets"))
         )
 
-        if (
-            max_tickets := self._max_tickets_per_booking(
-                self.user, cleaned_data.get("performance")
-            )
-            and total_number_of_tickets > max_tickets
-        ):
+        max_tickets = self._max_tickets_per_booking(
+            self.user, cleaned_data.get("performance")
+        )
+
+        if max_tickets and total_number_of_tickets > max_tickets:
             raise ValidationError(
                 {"tickets": f"You may only book a maximum of {max_tickets} tickets"}
             )

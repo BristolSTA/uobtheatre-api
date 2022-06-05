@@ -945,17 +945,14 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
     def total_capacity(self) -> int:
         """The total number of tickets which can be sold across all performances"""
         return sum(
-            [performance.total_capacity for performance in self.performances.all()]
+            performance.total_capacity for performance in self.performances.all()
         )
 
     @property
     def total_tickets_sold(self) -> int:
         """The total number of tickets sold across all performances"""
         return sum(
-            [
-                performance.total_tickets_sold()
-                for performance in self.performances.all()
-            ]
+            performance.total_tickets_sold() for performance in self.performances.all()
         )
 
     def sales_breakdown(self, breakdowns: list[str] = None):
