@@ -1,8 +1,10 @@
+from typing import Optional
+
 import graphene
 from django.forms import CharField, Field, ValidationError
 from graphene_django.forms.converter import convert_form_field
 
-from uobtheatre.bookings.models import Booking, Ticket, max_tickets_per_booking
+from uobtheatre.bookings.models import Booking, Ticket
 from uobtheatre.discounts.models import ConcessionType
 from uobtheatre.payments.payables import Payable
 from uobtheatre.users.models import User
@@ -82,6 +84,19 @@ class BookingForm(MutationForm):
         if cleaned_data.get("tickets") is not None:
             self._clean_tickets(cleaned_data)
 
+    @staticmethod
+    def _max_tickets_per_booking(user, performance) -> Optional[int]:
+        """
+        Work out the maximum number of tickets the user is able to have in a booking for the given performance
+
+        Returns the number of tickets, or None if they have no limit
+        """
+        max_tickets: Optional[int] = 10
+        if user.has_perm("boxoffice", performance.production):
+            max_tickets = None
+
+        return max_tickets
+
     def _clean_tickets(self, cleaned_data):
         """Cleans and validates the supplied ticket data"""
         (
@@ -93,15 +108,13 @@ class BookingForm(MutationForm):
         )
 
         if (
-            total_number_of_tickets > max_tickets_per_booking()
-            and not self.user.has_perm(
-                "boxoffice", cleaned_data.get("performance").production
+            max_tickets := self._max_tickets_per_booking(
+                self.user, cleaned_data.get("performance")
             )
+            and total_number_of_tickets > max_tickets
         ):
             raise ValidationError(
-                {
-                    "tickets": f"You may only book a maximum of {max_tickets_per_booking()} tickets"
-                }
+                {"tickets": f"You may only book a maximum of {max_tickets} tickets"}
             )
 
         # Check the capacity of the performance and its seat_groups
