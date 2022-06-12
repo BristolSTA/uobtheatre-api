@@ -29,8 +29,8 @@ from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.payments.transaction_providers import Card, Cash, SquareOnline
 from uobtheatre.productions.models import Performance, PerformanceSeatGroup, Production
 from uobtheatre.productions.test.factories import (
-    AudienceWarningFactory,
     CastMemberFactory,
+    ContentWarningFactory,
     CrewMemberFactory,
     CrewRoleFactory,
     PerformanceFactory,
@@ -163,7 +163,7 @@ def test_price_with_concession():
 
 @pytest.mark.django_db
 def test_str_warning():
-    warning = AudienceWarningFactory()
+    warning = ContentWarningFactory()
     assert str(warning) == warning.description
 
 

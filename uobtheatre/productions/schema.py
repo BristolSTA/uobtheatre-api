@@ -7,8 +7,8 @@ from graphene_django.filter import DjangoFilterConnectionField
 
 from uobtheatre.discounts.schema import ConcessionTypeNode
 from uobtheatre.productions.models import (
-    AudienceWarning,
     CastMember,
+    ContentWarning,
     CrewMember,
     CrewRole,
     Performance,
@@ -55,7 +55,7 @@ class CrewMemberNode(DjangoObjectType):
 
 class WarningNode(DjangoObjectType):
     class Meta:
-        model = AudienceWarning
+        model = ContentWarning
         fields = ("description",)
         filter_fields = ("id",)
         interfaces = (relay.Node,)

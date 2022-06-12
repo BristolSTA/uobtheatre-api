@@ -1,146 +1,148 @@
 [
-    {
-        "model": "productions.audiencewarning",
-        "pk": 1,
-        "fields": {
-          "description": "Strobe"
-        }
-    },
-    {
-        "model": "productions.audiencewarning",
-        "pk": 2,
-        "fields": {
-          "description": "Pyro"
-        }
-    },
-
-    {
-        "model": "productions.production",
-        "pk": 1,
-        "fields": {
-          "created_at": "2020-11-11T12:04:32+0000",
-          "updated_at": "2020-11-11T12:24:32+0000",
-          "name": "Example show",
-          "subtitle": "This is an example show",
-          "description": "The description of the example show",
-          "society": 1,
-          "warnings": [1],
-          "slug": "example-show"
-        }
-    },
-    {
-        "model": "productions.production",
-        "pk": 2,
-        "fields": {
-          "created_at": "2020-11-11T12:04:32+0000",
-          "updated_at": "2020-11-11T12:24:32+0000",
-          "name": "Example show 2",
-          "subtitle": "This is an example show",
-          "description": "The description of the example show",
-          "society": 1,
-          "warnings": [1],
-          "slug": "example-show-2"
-        }
-    },
-
-    {
-        "model": "productions.performance",
-        "pk": 1,
-        "fields": {
-          "created_at": "2020-11-11T12:04:32+0000",
-          "updated_at": "2020-11-11T12:24:32+0000",
-          "production": 1,
-          "venue": 1,
-          "doors_open": "2020-11-11T12:04:32+0000",
-          "start": "2020-11-11T12:24:32+0000",
-          "end": "2020-11-11T14:24:32+0000",
-          "disabled": true
-        }
-    },
-    {
-        "model": "productions.performance",
-        "pk": 2,
-        "fields": {
-          "created_at": "2020-11-11T12:04:32+0000",
-          "updated_at": "2020-11-11T12:24:32+0000",
-          "production": 1,
-          "venue": 1,
-          "doors_open": "2020-11-12T12:04:32+0000",
-          "start": "2020-11-12T12:24:32+0000",
-          "end": "2020-11-12T14:24:32+0000",
-          "disabled": false
-        }
-    },
-    {
-        "model": "productions.performance",
-        "pk": 3,
-        "fields": {
-          "created_at": "2020-11-11T12:04:32+0000",
-          "updated_at": "2020-11-11T12:24:32+0000",
-          "production": 1,
-          "venue": 2,
-          "doors_open": "2020-11-13T12:04:32+0000",
-          "start": "2020-11-13T12:24:32+0000",
-          "end": "2020-11-13T14:22:32+0000",
-          "disabled": false
-        }
-    },
-    {
-        "model": "productions.performance",
-        "pk": 4,
-        "fields": {
-          "created_at": "2020-11-11T12:04:32+0000",
-          "updated_at": "2020-11-11T12:24:32+0000",
-          "production": 2,
-          "venue": 1,
-          "doors_open": "2020-11-11T12:04:32+0000",
-          "start": "2020-12-11T12:24:32+0000",
-          "end": "2020-12-11T14:24:32+0000",
-          "disabled": true
-        }
-    },
-    {
-        "model": "productions.crewrole",
-        "pk": 1,
-        "fields": {
-          "name": "CLX"
-        }
-    },
-    {
-        "model": "productions.crewmember",
-        "pk": 1,
-        "fields": {
-          "name": "Alex",
-          "role": 1,
-          "production": 1
-        }
-    },
-    {
-      "model": "productions.productionteammember",
-      "pk": 1,
-      "fields": {
-        "name": "James",
-        "role": "director",
-        "production": 1
-      }
-  },
-    {
-        "model": "productions.castmember",
-        "pk": 1,
-        "fields": {
-          "name": "Tom",
-          "role": "Peter pan",
-          "production": 1
-        }
-    },
-    {
-        "model": "productions.performanceseatgroup",
-        "pk": 1,
-        "fields": {
-          "seat_group": 1,
-          "performance": 1,
-          "price": 1000,
-          "capacity": 100
-        }
+  {
+    "model": "productions.ContentWarning",
+    "pk": 1,
+    "fields": {
+      "description": "Strobe"
     }
+  },
+  {
+    "model": "productions.ContentWarning",
+    "pk": 2,
+    "fields": {
+      "description": "Pyro"
+    }
+  },
+  {
+    "model": "productions.production",
+    "pk": 1,
+    "fields": {
+      "created_at": "2020-11-11T12:04:32+0000",
+      "updated_at": "2020-11-11T12:24:32+0000",
+      "name": "Example show",
+      "subtitle": "This is an example show",
+      "description": "The description of the example show",
+      "society": 1,
+      "warnings": [
+        1
+      ],
+      "slug": "example-show"
+    }
+  },
+  {
+    "model": "productions.production",
+    "pk": 2,
+    "fields": {
+      "created_at": "2020-11-11T12:04:32+0000",
+      "updated_at": "2020-11-11T12:24:32+0000",
+      "name": "Example show 2",
+      "subtitle": "This is an example show",
+      "description": "The description of the example show",
+      "society": 1,
+      "warnings": [
+        1
+      ],
+      "slug": "example-show-2"
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 1,
+    "fields": {
+      "created_at": "2020-11-11T12:04:32+0000",
+      "updated_at": "2020-11-11T12:24:32+0000",
+      "production": 1,
+      "venue": 1,
+      "doors_open": "2020-11-11T12:04:32+0000",
+      "start": "2020-11-11T12:24:32+0000",
+      "end": "2020-11-11T14:24:32+0000",
+      "disabled": true
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 2,
+    "fields": {
+      "created_at": "2020-11-11T12:04:32+0000",
+      "updated_at": "2020-11-11T12:24:32+0000",
+      "production": 1,
+      "venue": 1,
+      "doors_open": "2020-11-12T12:04:32+0000",
+      "start": "2020-11-12T12:24:32+0000",
+      "end": "2020-11-12T14:24:32+0000",
+      "disabled": false
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 3,
+    "fields": {
+      "created_at": "2020-11-11T12:04:32+0000",
+      "updated_at": "2020-11-11T12:24:32+0000",
+      "production": 1,
+      "venue": 2,
+      "doors_open": "2020-11-13T12:04:32+0000",
+      "start": "2020-11-13T12:24:32+0000",
+      "end": "2020-11-13T14:22:32+0000",
+      "disabled": false
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 4,
+    "fields": {
+      "created_at": "2020-11-11T12:04:32+0000",
+      "updated_at": "2020-11-11T12:24:32+0000",
+      "production": 2,
+      "venue": 1,
+      "doors_open": "2020-11-11T12:04:32+0000",
+      "start": "2020-12-11T12:24:32+0000",
+      "end": "2020-12-11T14:24:32+0000",
+      "disabled": true
+    }
+  },
+  {
+    "model": "productions.crewrole",
+    "pk": 1,
+    "fields": {
+      "name": "CLX"
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 1,
+    "fields": {
+      "name": "Alex",
+      "role": 1,
+      "production": 1
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 1,
+    "fields": {
+      "name": "James",
+      "role": "director",
+      "production": 1
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 1,
+    "fields": {
+      "name": "Tom",
+      "role": "Peter pan",
+      "production": 1
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 1,
+    "fields": {
+      "seat_group": 1,
+      "performance": 1,
+      "price": 1000,
+      "capacity": 100
+    }
+  }
 ]

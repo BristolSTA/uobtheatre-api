@@ -3,8 +3,8 @@ from django.utils import timezone
 
 from uobtheatre.images.test.factories import ImageFactory
 from uobtheatre.productions.models import (
-    AudienceWarning,
     CastMember,
+    ContentWarning,
     CrewMember,
     CrewRole,
     Performance,
@@ -85,11 +85,11 @@ class CastMemberFactory(factory.django.DjangoModelFactory):
         model = CastMember
 
 
-class AudienceWarningFactory(factory.django.DjangoModelFactory):
+class ContentWarningFactory(factory.django.DjangoModelFactory):
     description = factory.Faker("sentence", nb_words=3)
 
     class Meta:
-        model = AudienceWarning
+        model = ContentWarning
 
 
 def create_production(start, end, production_id=None):

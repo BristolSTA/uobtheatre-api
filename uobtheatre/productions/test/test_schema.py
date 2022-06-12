@@ -20,8 +20,8 @@ from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.productions.test.factories import (
-    AudienceWarningFactory,
     CastMemberFactory,
+    ContentWarningFactory,
     CrewMemberFactory,
     PerformanceFactory,
     ProductionFactory,
@@ -42,8 +42,8 @@ def test_productions_schema(gql_client):
     production = ProductionFactory()
     performances = [PerformanceFactory(production=production) for i in range(2)]
 
-    warnings = [AudienceWarningFactory() for i in range(3)]
-    production.warnings.set(warnings)
+    warnings = [ContentWarningFactory() for i in range(3)]
+    production.content_warnings.set(warnings)
 
     cast = [CastMemberFactory(production=production) for i in range(10)]
     crew = [CrewMemberFactory(production=production) for i in range(10)]
@@ -1333,9 +1333,9 @@ def test_performance_has_permission(gql_client):
 
 @pytest.mark.django_db
 def test_warnings(gql_client):
-    AudienceWarningFactory(description="Beware of the children")
-    AudienceWarningFactory(description="Pyrotechnics go bang")
-    AudienceWarningFactory(description="Strobe do be flickering")
+    ContentWarningFactory(description="Beware of the children")
+    ContentWarningFactory(description="Pyrotechnics go bang")
+    ContentWarningFactory(description="Strobe do be flickering")
 
     request = """
         query {
