@@ -6,6 +6,7 @@ import pytest
 from django.utils import timezone
 from graphql_relay.node.node import from_global_id, to_global_id
 from guardian.shortcuts import assign_perm
+import pytz
 
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
@@ -814,9 +815,9 @@ def test_production_venues(gql_client):
 def test_performance_schema(gql_client):
     performances = [
         PerformanceFactory(
-            doors_open=datetime.datetime(2020, 1, 1, 0, 0, 0),
-            start=datetime.datetime(2020, 1, 1, 1, 0, 0),
-            end=datetime.datetime(2020, 1, 2, 1, 0, 0),
+            doors_open=datetime.datetime(2020, 1, 1, 0, 0, 0, tzinfo=pytz.UTC),
+            start=datetime.datetime(2020, 1, 1, 1, 0, 0, tzinfo=pytz.UTC),
+            end=datetime.datetime(2020, 1, 2, 1, 0, 0, tzinfo=pytz.UTC),
         )
         for _ in range(1)
     ]
