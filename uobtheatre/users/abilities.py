@@ -65,6 +65,12 @@ class Ability(abc.ABC):
         return cls.user_has(user)
 
 
+class AllwaysPasses(Ability):
+    @classmethod
+    def user_has(cls, user) -> bool:
+        return True
+
+
 class OpenBoxoffice(Ability):
     """Whether the user has permission to open the boxoffice."""
 
