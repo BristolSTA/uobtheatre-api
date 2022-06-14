@@ -16,6 +16,10 @@ from guardian.shortcuts import get_objects_for_user
 from uobtheatre.images.models import Image
 from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Transaction
+from uobtheatre.productions.exceptions import (
+    InvalidSeatGroupException,
+    NotEnoughCapacityException,
+)
 from uobtheatre.productions.tasks import refund_performance
 from uobtheatre.societies.models import Society
 from uobtheatre.users.abilities import AbilitiesMixin
@@ -570,8 +574,8 @@ class Performance(
             or (self.end and self.end < timezone.now())
         )
 
-    def check_capacity(self, tickets, deleted_tickets=None) -> Optional[str]:
-        """Check the capacity with ticket changes.
+    def validate_tickets(self, tickets, deleted_tickets=None):
+        """Validates a set of tickets to be added to the performance.
 
         Used to check if an update to the Performances Tickets is possible with
         the Performance's (and its SeatGroups) capacity.
@@ -587,9 +591,9 @@ class Performance(
                 be deleted.
                 (default: [])
 
-        Returns:
-            str, Optional: The reason why the new capacity (after ticket
-                update) is not valid. If update is valid None is returned.
+        Raises:
+            InvalidSeatGroupException: A supplied ticket has a seat group that is not compatiable with the performance
+            NotEnoughCapacityException: The supplied tickets would cause a breach of available capacity
         """
 
         if deleted_tickets is None:
@@ -598,7 +602,7 @@ class Performance(
         # Get the number of each seat group
         seat_group_counts: Dict[SeatGroup, int] = {}
         for ticket in tickets:
-            # If a SeatGroup with this id does not exist an error will the thrown
+            # If a SeatGroup with this id does not exist an error will be thrown
             seat_group = ticket.seat_group
             seat_group_count = seat_group_counts.get(seat_group)
             seat_group_counts[seat_group] = (seat_group_count or 0) + 1
@@ -628,7 +632,9 @@ class Performance(
             performance_seat_groups_str = ", ".join(
                 [seat_group.name for seat_group in self.seat_groups.all()]
             )
-            return f"You cannot book a seat group that is not assigned to this performance, you have booked {seat_groups_not_in_performance_str} but the performance only has {performance_seat_groups_str}"
+            raise InvalidSeatGroupException(
+                f"You cannot book a seat group that is not assigned to this performance. You have booked {seat_groups_not_in_performance_str} but the performance only has {performance_seat_groups_str}"
+            )
 
         # Check that each seat group has enough capacity
         for seat_group, number_booked in seat_group_counts.items():
@@ -636,9 +642,9 @@ class Performance(
                 seat_group=seat_group
             )
             if seat_group_remaining_capacity < number_booked:
-                return f"There are only {seat_group_remaining_capacity} seats reamining in {seat_group} but you have booked {number_booked}. Please updated your seat selections and try again."
-
-        return None
+                raise NotEnoughCapacityException(
+                    f"There are only {seat_group_remaining_capacity} seats reamining in {seat_group} but you have booked {number_booked}. Please updated your seat selections and try again."
+                )
 
     def has_boxoffice_permission(self, user: "User") -> bool:
         """
@@ -939,17 +945,14 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
     def total_capacity(self) -> int:
         """The total number of tickets which can be sold across all performances"""
         return sum(
-            [performance.total_capacity for performance in self.performances.all()]
+            performance.total_capacity for performance in self.performances.all()
         )
 
     @property
     def total_tickets_sold(self) -> int:
         """The total number of tickets sold across all performances"""
         return sum(
-            [
-                performance.total_tickets_sold()
-                for performance in self.performances.all()
-            ]
+            performance.total_tickets_sold() for performance in self.performances.all()
         )
 
     def sales_breakdown(self, breakdowns: list[str] = None):
