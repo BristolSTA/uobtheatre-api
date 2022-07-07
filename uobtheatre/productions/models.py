@@ -854,6 +854,8 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
     age_rating = models.SmallIntegerField(null=True, blank=True)
     facebook_event = models.CharField(max_length=255, null=True, blank=True)
 
+    support_email = models.EmailField()
+
     content_warnings = models.ManyToManyField(
         ContentWarning, blank=True, through=ProductionContentWarning
     )
