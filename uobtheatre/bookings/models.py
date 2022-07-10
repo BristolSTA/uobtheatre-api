@@ -26,12 +26,11 @@ from uobtheatre.payments.exceptions import (
 )
 from uobtheatre.payments.models import SalesBreakdown, Transaction
 from uobtheatre.payments.payables import Payable, PayableQuerySet
+from uobtheatre.payments.transferables import Transferable
 from uobtheatre.productions.exceptions import (
     CapacityException,
     NotBookableException,
-    UnassignedConcessionTypeException,
-    UnassignedSeatGroupException,
-)
+
 from uobtheatre.productions.models import Performance, Production, delete_user_drafts
 from uobtheatre.users.models import User
 from uobtheatre.utils.filters import filter_passes_on_model
@@ -41,6 +40,7 @@ from uobtheatre.venues.models import Seat, SeatGroup
 
 if TYPE_CHECKING:
     from uobtheatre.payments.transaction_providers import PaymentProvider
+    from uobtheatre.payments.payables import Payable, UnassignedConcessionTypeException, UnassignedSeatGroupException
 
 
 class MiscCostQuerySet(PayableQuerySet):
@@ -216,7 +216,7 @@ def generate_expires_at():
 BookingManager = models.Manager.from_queryset(BookingQuerySet)
 
 # pylint: disable=too-many-public-methods
-class Booking(TimeStampedMixin, Payable):
+class Booking(TimeStampedMixin, Transferable):
     """A booking for a performance
 
     A booking holds a collection of tickets for a given performance.
@@ -263,11 +263,6 @@ class Booking(TimeStampedMixin, Payable):
     )
 
     expires_at = models.DateTimeField(default=generate_expires_at)
-
-    # Whether the booking has be transferred to
-    transfered_from = models.OneToOneField(
-        "Booking", on_delete=models.RESTRICT, null=True, related_name="_transfered_to"
-    )
 
     @property
     def payment_reference_id(self):
@@ -495,47 +490,6 @@ class Booking(TimeStampedMixin, Payable):
         if self.transfered_from:
             misc_cost_types.append(MiscCost.Type.BOOKING_TRANSFER)
         return MiscCost.objects.filter(type__in=misc_cost_types).value(self)
-
-    @property
-    def transfered_to(self) -> Optional["Booking"]:
-        if not hasattr(self, "_transfered_to"):
-            return None
-        return self._transfered_to
-
-    @property
-    def transfered_from_bookings(self) -> list["Booking"]:
-        """
-        A booking can be transfered which creates a new booking and cancels the
-        existing one. If this booking has been created in a transfer, this
-        gives all bookings which this has been transfered from. Multiple are
-        possible as a booking which is created in a transfer can it self be
-        transfered.
-
-        Returns:
-            list[int]: All the bookings in this transfer chain
-        """
-        if not self.transfered_from:
-            return []
-        return [self.transfered_from] + self.transfered_from.transfered_from_bookings
-
-    @property
-    def transfer_reduction(self) -> int:
-        """
-        When transfering a booking, all previous booking payments (excluding
-        transfer fees) are excluded.
-        """
-        print("Getting transfer_reduction")
-        transactions = Transaction.objects.filter(
-            pay_object_type=ContentType.objects.get_for_model(Booking),
-            pay_object_id__in=map(lambda m: m.id, self.transfered_from_bookings),
-            status=Transaction.Status.COMPLETED,
-        )
-        print(f"There are {transactions.count()} transactions")
-        thing = transactions.get_sales_breakdown(
-            breakdown=SalesBreakdown.NET_TRANSACTIONS
-        )
-        print(f"Sales breakdown is {thing}")
-        return thing
 
     @property
     def total(self) -> int:

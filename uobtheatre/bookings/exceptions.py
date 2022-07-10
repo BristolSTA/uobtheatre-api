@@ -1,9 +1,6 @@
 from typing import TYPE_CHECKING
 from uobtheatre.utils.exceptions import GQLException
 
-if TYPE_CHECKING:
-    from uobtheatre.payments.payables import Payable
-
 
 class BookingTransferPerformanceUnchangedException(GQLException):
     """Raised when a booking for a performance that is not bookable is requested"""
