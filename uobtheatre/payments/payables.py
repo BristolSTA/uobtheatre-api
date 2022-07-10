@@ -166,7 +166,7 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
     @property
     @abc.abstractmethod
     def misc_costs_value(self):
-        """The total platoform fee for this payable"""
+        """The total platform fee, in pence, for this payable"""
         raise NotImplementedError
 
     def pay(self, payment_method: "PaymentProvider") -> Optional["Transaction"]:
