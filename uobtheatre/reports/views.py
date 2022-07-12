@@ -28,7 +28,7 @@ class ValidSignatureMiddleware:
                 status=403,
             )
 
-    def process_view(self, request, _, __, ___):
+    def process_view(self, request, _, __, ___):  # pylint: disable=no-self-use
         """Before view render hook"""
         request.signature_object = validate_report_download_signature(
             request.GET.get("signature")
@@ -68,6 +68,7 @@ def period_totals(request, start_time, end_time):
     )
 
     excel = ExcelReport(
+        report,
         "Period Totals Report",
         [
             "This report provides summaries and totals of payments taken and recorded.",
@@ -83,7 +84,7 @@ def period_totals(request, start_time, end_time):
         request.user,
     )
 
-    return excel.datasets_to_response(report.datasets)
+    return excel.get_response()
 
 
 @valid_signature("OutstandingPayments")
@@ -92,6 +93,7 @@ def outstanding_society_payments(request):
     report = reports.OutstandingSocietyPayments()
 
     excel = ExcelReport(
+        report,
         "Outstanding Society Payments",
         [
             "This report details the production income at the time the report is generated.",
@@ -104,7 +106,7 @@ def outstanding_society_payments(request):
         request.user,
     )
 
-    return excel.datasets_to_response(report.datasets)
+    return excel.get_response()
 
 
 @valid_signature("PerformanceBookings")
@@ -122,6 +124,7 @@ def performance_bookings(request):
     report = reports.PerformanceBookings(request.report_options)
 
     excel = ExcelReport(
+        report,
         "Performance Bookings",
         [
             "This report provides details of the bookings for the specified performance",
@@ -130,4 +133,4 @@ def performance_bookings(request):
         request.user,
     )
 
-    return excel.datasets_to_response(report.datasets)
+    return excel.get_response()
