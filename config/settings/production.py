@@ -61,7 +61,7 @@ AWS_HEADERS = {
     "Cache-Control": "max-age=86400, s-maxage=86400, must-revalidate",
 }
 
-# Cloudwath logging
+# Cloudwatch logging
 logger_boto3_session = Session(
     aws_access_key_id=AWS_ACCESS_KEY_ID,
     aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
