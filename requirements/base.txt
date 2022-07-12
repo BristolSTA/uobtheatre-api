@@ -13,7 +13,7 @@ django-filter==21.1
 Pillow>=8.1.2
 
 # Cors
-django-cors-headers==3.12.0
+django-cors-headers==3.13.0
 
 # Admin confirmation messages
 django-admin-confirm==0.2.5
@@ -22,7 +22,7 @@ django-admin-confirm==0.2.5
 django-configurations==2.3.2
 
 # Django config
-django-environ==0.8.1  # https://github.com/joke2k/django-environ
+django-environ==0.9.0  # https://github.com/joke2k/django-environ
 
 # Spreadsheet generation
 xlsxwriter==3.0.3
@@ -76,4 +76,4 @@ pytz==2022.1
 
 #=== Task Queue ===#
 django-celery-results==2.2.0
-redis==4.3.1
+redis==4.3.4
