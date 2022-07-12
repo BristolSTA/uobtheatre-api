@@ -7,7 +7,7 @@ django-autoslug==1.9.8
 shortuuid>=1.0.1
 
 # Filtering
-django-filter==21.1
+django-filter==22.1
 
 # Something to do with images
 Pillow>=8.1.2
