@@ -11,7 +11,7 @@ from uobtheatre.productions.test.factories import PerformanceFactory
     [
         (
             "PeriodTotals",
-            "https://api.example.com/reports/period_totals/2020-01-01%2000:00:00/2021-01-01%2000:00:00",
+            "https://api.example.com/reports/period_totals/2020-01-01%2000:00:00+00:00/2021-01-01%2000:00:00+00:00",
             ["Provider Totals", "Production Totals", "Payments"],
         ),
         (
@@ -26,7 +26,7 @@ def test_can_generate_report_link_for_finance_reports(
 ):
     request = """
         mutation{
-            generateReport(name: "%s", startTime: "2020-01-01T00:00:00", endTime:"2021-01-01T00:00:00") {
+            generateReport(name: "%s", startTime: "2020-01-01T00:00:00+00:00", endTime:"2021-01-01T00:00:00+00:00") {
                 downloadUri
                 report {
                     datasets {
