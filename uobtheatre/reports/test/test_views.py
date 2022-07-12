@@ -40,7 +40,7 @@ class PeriodTotalsTests(TestCase):
     @pytest.mark.django_db
     def test_can_access(self):
         with patch.object(ExcelReport, "get_response", return_value=HttpResponse()):
-            with patch.object(PeriodTotalsBreakdown, "run") as mockRun:
+            with patch.object(PeriodTotalsBreakdown, "run") as mock_run:
                 response = self.client.get(
                     reverse(
                         "period_totals",
@@ -52,7 +52,7 @@ class PeriodTotalsTests(TestCase):
                     + "?signature=%s"
                     % generate_report_download_signature(UserFactory(), "PeriodTotals")
                 )
-            assert mockRun.called
+            assert mock_run.called
         self.assertEqual(response.status_code, 200)
 
     def test_requires_signature(self):
@@ -69,7 +69,7 @@ class SocietyOutstandingPaymentsTests(TestCase):
     @pytest.mark.django_db
     def test_can_access(self):
         with patch.object(ExcelReport, "get_response", return_value=HttpResponse()):
-            with patch.object(OutstandingSocietyPayments, "run") as mockRun:
+            with patch.object(OutstandingSocietyPayments, "run") as mock_run:
                 response = self.client.get(
                     reverse(
                         "outstanding_society_payments",
@@ -79,7 +79,7 @@ class SocietyOutstandingPaymentsTests(TestCase):
                         UserFactory(), "OutstandingPayments"
                     )
                 )
-                assert mockRun.called
+                assert mock_run.called
         self.assertEqual(response.status_code, 200)
 
     def test_requires_signature(self):
@@ -95,7 +95,7 @@ class PerformanceBookingsTests(TestCase):
     @pytest.mark.django_db
     def test_can_access(self):
         with patch.object(ExcelReport, "get_response", return_value=HttpResponse()):
-            with patch.object(PerformanceBookings, "run") as mockRun:
+            with patch.object(PerformanceBookings, "run") as mock_run:
                 response = self.client.get(
                     reverse(
                         "performance_bookings",
@@ -114,7 +114,7 @@ class PerformanceBookingsTests(TestCase):
                         ],
                     )
                 )
-            assert mockRun.called
+            assert mock_run.called
         self.assertEqual(response.status_code, 200)
 
     def test_requires_signature(self):
