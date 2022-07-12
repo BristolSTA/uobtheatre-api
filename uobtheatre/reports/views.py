@@ -28,7 +28,8 @@ class ValidSignatureMiddleware:
                 status=403,
             )
 
-    def process_view(self, request, _, __, ___):  # pylint: disable=no-self-use
+    @classmethod
+    def process_view(cls, request, _, __, ___):
         """Before view render hook"""
         request.signature_object = validate_report_download_signature(
             request.GET.get("signature")
