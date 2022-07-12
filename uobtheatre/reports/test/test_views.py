@@ -10,6 +10,11 @@ from django.urls import reverse
 from graphql_relay.node.node import to_global_id
 
 from uobtheatre.productions.test.factories import PerformanceFactory
+from uobtheatre.reports.reports import (
+    OutstandingSocietyPayments,
+    PerformanceBookings,
+    PeriodTotalsBreakdown,
+)
 from uobtheatre.reports.utils import ExcelReport, generate_report_download_signature
 from uobtheatre.reports.views import ValidSignatureMiddleware
 from uobtheatre.users.test.factories import UserFactory
@@ -34,20 +39,20 @@ def test_validate_signature_middleware_invalid_reportname():
 class PeriodTotalsTests(TestCase):
     @pytest.mark.django_db
     def test_can_access(self):
-        with patch.object(
-            ExcelReport, "datasets_to_response", return_value=HttpResponse()
-        ):
-            response = self.client.get(
-                reverse(
-                    "period_totals",
-                    args=(
-                        datetime.now(tz=pytz.UTC) - timedelta(weeks=100),
-                        datetime.now(tz=pytz.UTC),
-                    ),
+        with patch.object(ExcelReport, "get_response", return_value=HttpResponse()):
+            with patch.object(PeriodTotalsBreakdown, "run") as mock_run:
+                response = self.client.get(
+                    reverse(
+                        "period_totals",
+                        args=(
+                            datetime.now(tz=pytz.UTC) - timedelta(weeks=100),
+                            datetime.now(tz=pytz.UTC),
+                        ),
+                    )
+                    + "?signature=%s"
+                    % generate_report_download_signature(UserFactory(), "PeriodTotals")
                 )
-                + "?signature=%s"
-                % generate_report_download_signature(UserFactory(), "PeriodTotals")
-            )
+            assert mock_run.called
         self.assertEqual(response.status_code, 200)
 
     def test_requires_signature(self):
@@ -63,18 +68,18 @@ class PeriodTotalsTests(TestCase):
 class SocietyOutstandingPaymentsTests(TestCase):
     @pytest.mark.django_db
     def test_can_access(self):
-        with patch.object(
-            ExcelReport, "datasets_to_response", return_value=HttpResponse()
-        ):
-            response = self.client.get(
-                reverse(
-                    "outstanding_society_payments",
+        with patch.object(ExcelReport, "get_response", return_value=HttpResponse()):
+            with patch.object(OutstandingSocietyPayments, "run") as mock_run:
+                response = self.client.get(
+                    reverse(
+                        "outstanding_society_payments",
+                    )
+                    + "?signature=%s"
+                    % generate_report_download_signature(
+                        UserFactory(), "OutstandingPayments"
+                    )
                 )
-                + "?signature=%s"
-                % generate_report_download_signature(
-                    UserFactory(), "OutstandingPayments"
-                )
-            )
+                assert mock_run.called
         self.assertEqual(response.status_code, 200)
 
     def test_requires_signature(self):
@@ -89,27 +94,27 @@ class SocietyOutstandingPaymentsTests(TestCase):
 class PerformanceBookingsTests(TestCase):
     @pytest.mark.django_db
     def test_can_access(self):
-        with patch.object(
-            ExcelReport, "datasets_to_response", return_value=HttpResponse()
-        ):
-            response = self.client.get(
-                reverse(
-                    "performance_bookings",
+        with patch.object(ExcelReport, "get_response", return_value=HttpResponse()):
+            with patch.object(PerformanceBookings, "run") as mock_run:
+                response = self.client.get(
+                    reverse(
+                        "performance_bookings",
+                    )
+                    + "?signature=%s"
+                    % generate_report_download_signature(
+                        UserFactory(),
+                        "PerformanceBookings",
+                        [
+                            {
+                                "name": "id",
+                                "value": to_global_id(
+                                    "PerformanceNode", PerformanceFactory().id
+                                ),
+                            }
+                        ],
+                    )
                 )
-                + "?signature=%s"
-                % generate_report_download_signature(
-                    UserFactory(),
-                    "PerformanceBookings",
-                    [
-                        {
-                            "name": "id",
-                            "value": to_global_id(
-                                "PerformanceNode", PerformanceFactory().id
-                            ),
-                        }
-                    ],
-                )
-            )
+            assert mock_run.called
         self.assertEqual(response.status_code, 200)
 
     def test_requires_signature(self):
