@@ -53,8 +53,9 @@ class SendEmailForm(forms.Form):
 class MutationForm(ModelForm):
     """The base form for mutation operations"""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user: User = None, **kwargs):
         super().__init__(*args, **kwargs)
+        self.user = user
 
         if len(self.data.keys()) == 0 or "id" in self.data:
             for (key, _) in list(self.fields.items()):
@@ -83,6 +84,10 @@ class MutationForm(ModelForm):
                     self.cleaned_data[name] = value
             except ValidationError as error:
                 self.add_error(name, error)
+
+    @property
+    def is_creation(self):
+        return not bool(self.instance.pk)
 
     class Meta:
         abstract = True

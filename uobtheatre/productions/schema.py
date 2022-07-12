@@ -337,7 +337,7 @@ class PerformanceNode(DjangoObjectType):
         return False
 
     def resolve_duration_mins(self, info):
-        return self.duration().seconds // 60
+        return self.duration.total_seconds() // 60
 
     def resolve_sold_out(self, info):
         return self.is_sold_out
