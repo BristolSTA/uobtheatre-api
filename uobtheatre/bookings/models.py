@@ -2,7 +2,6 @@ import math
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 from urllib.parse import urlencode
 
-from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.aggregates import BoolAnd
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
@@ -24,13 +23,15 @@ from uobtheatre.payments.exceptions import (
     CantBePaidForException,
     CantBeRefundedException,
 )
-from uobtheatre.payments.models import SalesBreakdown, Transaction
+from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable, PayableQuerySet
 from uobtheatre.payments.transferables import Transferable
 from uobtheatre.productions.exceptions import (
     CapacityException,
     NotBookableException,
-
+    UnassignedConcessionTypeException,
+    UnassignedSeatGroupException,
+)
 from uobtheatre.productions.models import Performance, Production, delete_user_drafts
 from uobtheatre.users.models import User
 from uobtheatre.utils.filters import filter_passes_on_model
@@ -40,14 +41,22 @@ from uobtheatre.venues.models import Seat, SeatGroup
 
 if TYPE_CHECKING:
     from uobtheatre.payments.transaction_providers import PaymentProvider
-    from uobtheatre.payments.payables import Payable, UnassignedConcessionTypeException, UnassignedSeatGroupException
 
 
 class MiscCostQuerySet(PayableQuerySet):
     """QuerySet for bookings"""
 
-    def value(self, booking: "Booking") -> int:
-        return sum(misc_cost.get_value(booking) for misc_cost in self)
+    def value(self, payable: "Payable") -> int:
+        """Compute numerical value of selected misc costs on a given payable
+
+        Args:
+            payable (Payable): The payable to calculate the value of the misc
+                costs on.
+
+        Returns:
+            int: The value of the misc costs in pence
+        """
+        return sum(misc_cost.get_value(payable) for misc_cost in self)
 
 
 MiscCostManager = models.Manager.from_queryset(MiscCostQuerySet)
@@ -83,7 +92,7 @@ class MiscCost(models.Model):
         choices=Type.choices,
     )
 
-    def get_value(self, booking: "Booking") -> int:
+    def get_value(self, payable: "Payable") -> int:
         """Calculate the value of the misc cost on a booking.
 
         Calculate the value of the misc cost given a booking. The value is
@@ -96,16 +105,16 @@ class MiscCost(models.Model):
         This will return 0 if the booking is complimentary (subtotal = 0).
 
         Args:
-            booking (Booking): The booking on which the misc cost is being
+            payable (Payable): The payable on which the misc cost is being
                 applied.
 
         Returns:
             int: The value in pennies of the misc cost on this booking.
         """
         if self.percentage is not None:
-            return math.ceil(booking.subtotal * self.percentage)
+            return math.ceil(payable.subtotal * self.percentage)
 
-        if booking.subtotal == 0:
+        if payable.subtotal == 0:
             return 0
         return self.value  # type: ignore
 
@@ -417,6 +426,7 @@ class Booking(TimeStampedMixin, Transferable):
         """
         return self.get_best_discount_combination_with_price()[0]
 
+    # pylint: disable=invalid-overridden-method
     @cached_property
     def subtotal(self) -> int:
         """Price of the booking with discounts applied.
@@ -490,23 +500,6 @@ class Booking(TimeStampedMixin, Transferable):
         if self.transfered_from:
             misc_cost_types.append(MiscCost.Type.BOOKING_TRANSFER)
         return MiscCost.objects.filter(type__in=misc_cost_types).value(self)
-
-    @property
-    def total(self) -> int:
-        """The total cost of the Booking.
-
-        The final price of the booking with all dicounts and misc costs
-        applied. This is the price the User will be charged.
-
-        Returns:
-            (int): total price of the booking in penies
-        """
-        subtotal = self.subtotal
-        if subtotal == 0:  # pylint: disable=comparison-with-callable
-            return 0
-        return math.ceil(
-            max(subtotal - self.transfer_reduction, 0) + self.misc_costs_value
-        )
 
     def get_ticket_diff(
         self, tickets: List["Ticket"]
@@ -622,11 +615,14 @@ class Booking(TimeStampedMixin, Transferable):
 
     def create_transfer(self, performance: "Performance") -> "Booking":
         """
-        Transfer the booking to a different performance.
+        Create an in progress booking to transfer the booking to a different
+        performance.
 
-        A successful transfer creates a new booking which copies the attributes
-        from the original. The original is cancelled and the transfered to
-        attribute is assigned as the new booking.
+        This a new booking which copies the attributes from the original and
+        with the transfered to attribute assigned as the new booking.
+
+        Once the new booking is completed, the original booking will be
+        cancelled.
         """
 
         self._check_transfer_booking()

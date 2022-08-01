@@ -159,5 +159,8 @@ build:
 django-shell: ## Open django shell
 	$(COMMAND_PREFIX) python manage.py shell
 
+api-shell: ## Open django shell
+	docker-compose exec api /bin/bash
+
 flush:
 	$(COMMAND_PREFIX) python manage.py flush

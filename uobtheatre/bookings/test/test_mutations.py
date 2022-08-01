@@ -2,12 +2,12 @@
 
 
 from datetime import timedelta
+from unittest.mock import PropertyMock, patch
 
 import pytest
 from django.utils import timezone
 from graphql_relay.node.node import from_global_id, to_global_id
 from guardian.shortcuts import assign_perm
-from unittest.mock import patch, PropertyMock
 
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.mutations import PayBooking, parse_target_user_email
@@ -1252,7 +1252,7 @@ def test_update_booking_capacity_error(gql_client):
                 "errors": [
                     {
                         "__typename": "NonFieldError",
-                        "message": f"{seat_group} are not assigned to this performance",
+                        "message": f"{seat_group} are not assigned to the performance {booking.performance}",
                     }
                 ],
             }
@@ -1356,7 +1356,7 @@ def test_booking_with_invalid_seat_group(gql_client):
                 "errors": [
                     {
                         "__typename": "NonFieldError",
-                        "message": f"{seat_group} are not assigned to this performance",
+                        "message": f"{seat_group} are not assigned to the performance {booking.performance}",
                     }
                 ],
             }

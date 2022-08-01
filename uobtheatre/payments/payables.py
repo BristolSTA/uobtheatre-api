@@ -1,4 +1,5 @@
 import abc
+import math
 from typing import TYPE_CHECKING, Optional
 
 from django.contrib.contenttypes.fields import GenericRelation
@@ -50,6 +51,7 @@ class PayableQuerySet(QuerySet):
         return qs.exclude(filter_query)
 
 
+# pylint: disable=too-many-public-methods
 class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
     """
     An model which can be paid for
@@ -158,9 +160,32 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
             )
 
     @property
+    def total(self) -> int:
+        """The total cost of the payable.
+
+        The final price of the payable with all dicounts and misc costs
+        applied. This is the price the User will be charged.
+
+        Returns:
+            (int): total price of the payable in penies
+        """
+        subtotal = self.subtotal
+        if subtotal == 0:  # pylint: disable=comparison-with-callable
+            return 0
+        return math.ceil(subtotal + self.misc_costs_value)
+
+    @property
     @abc.abstractmethod
-    def total(self):
-        """The total amount required to pay for the payable"""
+    def subtotal(self):
+        """Price of the payable with discounts applied.
+
+        Returns the subtotal of the payable. This is the total value including
+        single and group discounts before any misc costs are applied. If an
+        admin discount is also applied this will be added here.
+
+        Returns:
+            int: price of the payable with discounts applied in penies
+        """
         raise NotImplementedError
 
     @property
@@ -211,7 +236,9 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
 
     @property
     def total_payments(self) -> int:
-        """The amount paid by the user for this object. (This does not include refunds)"""
+        """The positive amounts paid by the user for this object.
+        i.e: This does not include refunds
+        """
         return self.transactions.get_sales_breakdown(SalesBreakdown.TOTAL_PAYMENTS)
 
     @property

@@ -6,17 +6,21 @@ from pytest_django.asserts import assertQuerysetEqual
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.payments.exceptions import (
-    CantBeRefundedException,
     CantBePaidForException,
+    CantBeRefundedException,
 )
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.tasks import refund_payable
-from uobtheatre.payments.transaction_providers import Card, Cash, SquareOnline
+from uobtheatre.payments.test.factories import TransactionFactory, mock_payment_method
+from uobtheatre.payments.transaction_providers import (
+    Card,
+    Cash,
+    SquareOnline,
+    SquarePOS,
+)
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.utils.test.factories import TaskResultFactory
-from uobtheatre.payments.test.factories import TransactionFactory, mock_payment_method
-from uobtheatre.payments.transaction_providers import SquarePOS
 
 
 @pytest.mark.django_db
@@ -448,3 +452,31 @@ def test_payable_pay_deletes_pending_payments():
 
     # Assert completed payment is not cancelled
     assert Transaction.objects.filter(id=completed_payment.id).exists()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "misc_cost_value, subtotal, expected_total", [(3, 10, 13), (0, 0, 0), (10, 0, 0)]
+)
+def test_payable_total(misc_cost_value, subtotal, expected_total):
+    # pylint: disable=missing-class-docstring, invalid-overridden-method
+    class MockPayable(Payable):
+        def display_name(self):
+            raise NotImplementedError
+
+        def user(self):
+            raise NotImplementedError
+
+        def payment_reference_id(self):
+            raise NotImplementedError
+
+        @property
+        def subtotal(self):
+            return subtotal
+
+        @property
+        def misc_costs_value(self):
+            return misc_cost_value
+
+    payable = MockPayable()
+    assert payable.total == expected_total

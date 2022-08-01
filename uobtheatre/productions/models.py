@@ -30,7 +30,6 @@ from uobtheatre.utils.models import BaseModel, PermissionableModel, TimeStampedM
 from uobtheatre.utils.validators import (
     RelatedObjectsValidator,
     RequiredFieldsValidator,
-    ValidationError,
     ValidationErrors,
 )
 from uobtheatre.venues.models import SeatGroup, Venue
@@ -634,7 +633,7 @@ class Performance(
             )
 
             raise UnassignedSeatGroupException(
-                f"{seat_groups_not_in_performance_str} are not assigned to this performance"
+                f"{seat_groups_not_in_performance_str} are not assigned to the performance {self}"
             )
 
         # Check each concession type is in the performance
@@ -651,7 +650,7 @@ class Performance(
             )
 
             raise UnassignedConcessionTypeException(
-                f"{concession_types_not_in_performance} are not assigned to this performance"
+                f"{concession_types_not_in_performance} are not assigned to the performance {self}"
             )
 
         # Check that each seat group has enough capacity
@@ -705,8 +704,16 @@ class Performance(
         ordering = ["id"]
 
 
-def delete_user_drafts(user, performance_id, booking_id=None):
-    """Remove's the users exisiting draft booking for the given performance"""
+def delete_user_drafts(user: User, performance_id: int, booking_id=None):
+    """Remove the users existing draft booking(s) for a given performance
+
+    Args:
+        user (User): The user to delete drafts for
+        performance_id (int): The id of the performance to delete bookings for
+        booking_id (str): An id of a booking which should be excluded from
+            deletion (Optional).
+    """
+
     bookings = user.bookings
     if booking_id:
         bookings = bookings.exclude(id=booking_id)

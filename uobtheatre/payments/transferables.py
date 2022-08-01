@@ -1,14 +1,15 @@
+import math
 from typing import Optional
 
-from django.db import models
 from django.contrib.contenttypes.models import ContentType
+from django.db import models
 
-from uobtheatre.utils.models import AbstractModelMeta
+from uobtheatre.payments.models import SalesBreakdown, Transaction
 from uobtheatre.payments.payables import Payable
-from uobtheatre.payments.models import Transaction, SalesBreakdown
 
 
-class Transferable(Payable, metaclass=AbstractModelMeta):  # type: ignore
+# pylint: disable=abstract-method
+class Transferable(Payable):
     """
     A transferable is a payable which can be transfered. A transfer is a
     to/from another transferable of the same type. For bookings this enables bookings to be updated (chnaged perfomrance)
@@ -21,6 +22,13 @@ class Transferable(Payable, metaclass=AbstractModelMeta):  # type: ignore
 
     @property
     def transfered_to(self) -> Optional["Transferable"]:
+        """The transfered which this has been transfred to.
+
+        If this has not be transfered None will be returned.
+
+        Note: _transfered_to cannot be used directly as if this booking has not
+        been transfered an error is raised.
+        """
         if not hasattr(self, "_transfered_to"):
             return None
         return self._transfered_to
@@ -39,7 +47,7 @@ class Transferable(Payable, metaclass=AbstractModelMeta):  # type: ignore
         """
         if not self.transfered_from:
             return []
-        return [self.transfered_from] + self.transfered_from.transfered_from_bookings
+        return [self.transfered_from] + self.transfered_from.transfered_from_chain
 
     @property
     def transfer_reduction(self) -> int:
@@ -54,6 +62,26 @@ class Transferable(Payable, metaclass=AbstractModelMeta):  # type: ignore
         )
         return transactions.get_sales_breakdown(
             breakdown=SalesBreakdown.NET_TRANSACTIONS
+        )
+
+    @property
+    def total(self) -> int:
+        """The total cost of a transferable.
+
+        The final price of the transferable with all dicounts and misc costs
+        applied. This is the price the User will be charged.
+
+        This overrides the default payable implementation to include the
+        transfer reduction.
+
+        Returns:
+            (int): total price of the transferable in penies
+        """
+        subtotal = self.subtotal
+        if subtotal == 0:  # pylint: disable=comparison-with-callable
+            return 0
+        return math.ceil(
+            max(subtotal - self.transfer_reduction, 0) + self.misc_costs_value
         )
 
     class Meta:
