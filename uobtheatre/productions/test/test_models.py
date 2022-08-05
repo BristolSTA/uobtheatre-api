@@ -28,9 +28,8 @@ from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.payments.transaction_providers import Card, Cash, SquareOnline
 from uobtheatre.productions.exceptions import (
-    CapacityException,
-    UnassignedConcessionTypeException,
-    UnassignedSeatGroupException,
+    InvalidSeatGroupException,
+    NotEnoughCapacityException,
 )
 from uobtheatre.productions.models import Performance, PerformanceSeatGroup, Production
 from uobtheatre.productions.test.factories import (
@@ -98,7 +97,7 @@ def test_production_duration():
     )
     performance_short = PerformanceFactory(start=start, end=end, production=production)
 
-    assert production.duration() == performance_short.duration()
+    assert production.duration == performance_short.duration
 
 
 @pytest.mark.django_db
@@ -106,7 +105,7 @@ def test_production_duration_with_no_performances():
 
     # Create production with no performances
     production = ProductionFactory()
-    assert production.duration() is None
+    assert production.duration is None
 
 
 @pytest.mark.django_db
@@ -271,6 +270,7 @@ def test_production_total_capacity():
     perf_2 = PerformanceFactory(production=perf_1.production, capacity=150)
     PerformanceSeatingFactory(performance=perf_1, capacity=1000)
     PerformanceSeatingFactory(performance=perf_2, capacity=140)
+    perf_1.production.refresh_from_db()
 
     assert perf_1.production.total_capacity == 240
 
@@ -327,28 +327,52 @@ def test_production_venues():
 
 
 @pytest.mark.django_db
-def test_performance_duration():
-    start = timezone.datetime(
-        day=2,
-        month=3,
-        year=2020,
-        hour=12,
-        minute=0,
-        second=10,
-        tzinfo=timezone.get_current_timezone(),
-    )
-    end = timezone.datetime(
-        day=3,
-        month=4,
-        year=2021,
-        hour=13,
-        minute=1,
-        second=11,
-        tzinfo=timezone.get_current_timezone(),
-    )
+@pytest.mark.parametrize(
+    "start,end,expected_seconds",
+    [
+        [
+            timezone.datetime(
+                day=2,
+                month=3,
+                year=2020,
+                hour=12,
+                minute=0,
+                second=10,
+                tzinfo=timezone.get_current_timezone(),
+            ),
+            timezone.datetime(
+                day=3,
+                month=4,
+                year=2021,
+                hour=13,
+                minute=1,
+                second=11,
+                tzinfo=timezone.get_current_timezone(),
+            ),
+            34304461.0,
+        ],
+        [
+            None,
+            timezone.datetime(
+                day=3,
+                month=4,
+                year=2021,
+                hour=13,
+                minute=1,
+                second=11,
+                tzinfo=timezone.get_current_timezone(),
+            ),
+            None,
+        ],
+    ],
+)
+def test_performance_duration(start, end, expected_seconds):
     performance = PerformanceFactory(start=start, end=end)
 
-    assert performance.duration().total_seconds() == 34304461.0
+    if expected_seconds:
+        assert performance.duration.total_seconds() == expected_seconds
+    else:
+        assert performance.duration is None
 
 
 @pytest.mark.django_db
@@ -784,7 +808,7 @@ def test_performance_min_price():
         ),
     ],
 )
-def test_performance_check_capacity(seat_groups, performance_capacity, is_valid):
+def test_performance_validate_tickets(seat_groups, performance_capacity, is_valid):
     performance = PerformanceFactory(capacity=performance_capacity)
     requirement = DiscountRequirementFactory()
     requirement.discount.performances.set([performance])
@@ -829,47 +853,40 @@ def test_performance_check_capacity(seat_groups, performance_capacity, is_valid)
             ]
         )
 
-    # If valid this should be none if not it should return something
-    if is_valid:
-        performance.check_capacity(tickets_to_book, deleted_tickets=tickets_to_delete)
-    else:
-        with pytest.raises(CapacityException):
-            performance.check_capacity(
+    if not is_valid:
+        with pytest.raises(NotEnoughCapacityException):
+            performance.validate_tickets(
                 tickets_to_book, deleted_tickets=tickets_to_delete
             )
+    else:
+        performance.validate_tickets(tickets_to_book, deleted_tickets=tickets_to_delete)
 
 
 @pytest.mark.django_db
-def test_performance_check_capacity_seat_group_not_in_performance():
-    seat_group = SeatGroupFactory()
+def test_performance_validate_tickets_seat_group_not_in_performance():
+    seat_group = SeatGroupFactory(name="Seat Group 1")
 
     # Set up some seat groups for a performance
-    psg = PerformanceSeatingFactory(capacity=100)
-    PerformanceSeatingFactory(capacity=100, performance=psg.performance)
+    psg = PerformanceSeatingFactory(
+        capacity=100, seat_group=SeatGroupFactory(name="Seat Group 2")
+    )
+    PerformanceSeatingFactory(
+        capacity=100,
+        performance=psg.performance,
+        seat_group=SeatGroupFactory(name="Seat Group 3"),
+    )
     booking = BookingFactory(performance=psg.performance)
 
     # But then try and book a seat group that is not assigned to the performance
     tickets = [Ticket(seat_group=seat_group, booking=booking)]
 
-    with pytest.raises(UnassignedSeatGroupException) as exception:
-        psg.performance.check_capacity(tickets=tickets)
-        assert (
-            exception.value.message
-            == f"{seat_group} are not assigned to this performance"
-        )
+    with pytest.raises(InvalidSeatGroupException) as err:
+        psg.performance.validate_tickets(tickets=tickets)
 
-
-@pytest.mark.django_db
-def test_performance_check_capacity_concession_type_not_in_performance():
-    psg = PerformanceSeatingFactory(capacity=100)
-
-    # But then try and book a concession type that is not assigned to the performance
-    tickets = [
-        Ticket(seat_group=psg.seat_group, concession_type=ConcessionTypeFactory())
-    ]
-
-    with pytest.raises(UnassignedConcessionTypeException):
-        psg.performance.check_capacity(tickets=tickets)
+    assert (
+        err.value.message
+        == "You cannot book a seat group that is not assigned to this performance. You have booked Seat Group 1 but the performance only has Seat Group 2, Seat Group 3"
+    )
 
 
 @pytest.mark.django_db

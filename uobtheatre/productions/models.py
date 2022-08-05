@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from autoslug import AutoSlugField
 from django.contrib.contenttypes.models import ContentType
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Max, Min, Sum
 from django.db.models.query import Q, QuerySet
@@ -18,9 +19,9 @@ from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
 from uobtheatre.productions.exceptions import (
-    CapacityException,
-    UnassignedConcessionTypeException,
-    UnassignedSeatGroupException,
+    InvalidConcessionTypeException,
+    InvalidSeatGroupException,
+    NotEnoughCapacityException,
 )
 from uobtheatre.productions.tasks import refund_performance
 from uobtheatre.societies.models import Society
@@ -30,12 +31,30 @@ from uobtheatre.utils.models import BaseModel, PermissionableModel, TimeStampedM
 from uobtheatre.utils.validators import (
     RelatedObjectsValidator,
     RequiredFieldsValidator,
+    ValidationError,
     ValidationErrors,
 )
 from uobtheatre.venues.models import SeatGroup, Venue
 
 if TYPE_CHECKING:
     from uobtheatre.bookings.models import ConcessionType, Ticket
+
+
+def delete_user_drafts(user: User, performance_id: int, booking_id=None):
+    """Remove the users existing draft booking(s) for a given performance
+    Args:
+        user (User): The user to delete drafts for
+        performance_id (int): The id of the performance to delete bookings for
+        booking_id (str): An id of a booking which should be excluded from
+            deletion (Optional).
+    """
+
+    bookings = user.bookings
+    if booking_id:
+        bookings = bookings.exclude(id=booking_id)
+    bookings.filter(
+        status=Payable.Status.IN_PROGRESS, performance_id=performance_id
+    ).delete()
 
 
 class CrewRole(models.Model):
@@ -278,7 +297,9 @@ class Performance(
     doors_open = models.DateTimeField(null=True)
     start = models.DateTimeField(null=True)
     end = models.DateTimeField(null=True)
-    interval_duration_mins = models.IntegerField(null=True, blank=True)
+    interval_duration_mins = models.IntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1), MaxValueValidator(120)]
+    )
 
     description = models.TextField(null=True, blank=True)
     extra_information = models.TextField(null=True, blank=True)
@@ -472,14 +493,17 @@ class Performance(
         """
         return self.unchecked_in_tickets.count()
 
-    def duration(self):
+    @property
+    def duration(self) -> Optional[datetime.timedelta]:
         """The performances duration.
 
         Duration is measured from start time to end time.
 
         Returns:
-            datetime: Performance duration.
+            timedelta: Timedelta between start and end of performance.
         """
+        if not self.start or not self.end:
+            return None
         return self.end - self.start
 
     @cached_property
@@ -575,8 +599,8 @@ class Performance(
             or (self.end and self.end < timezone.now())
         )
 
-    def check_capacity(self, tickets, deleted_tickets=None):
-        """Check the capacity with ticket changes.
+    def validate_tickets(self, tickets, deleted_tickets=None):
+        """Validates a set of tickets to be added to the performance.
 
         Used to check if an update to the Performances Tickets is possible with
         the Performance's (and its SeatGroups) capacity.
@@ -593,10 +617,8 @@ class Performance(
                 (default: [])
 
         Raises:
-            UnassignedSeatGroupException: If one or more tickets contain a seat group not assigned to the performance
-            UnassignedConcessionTypeException: If one or more tickets contain a concession type not assigned to the performance
-            CapacityException: If the requested tickets would result in the performance exceeding capacity
-
+            InvalidSeatGroupException: A supplied ticket has a seat group that is not compatiable with the performance
+            NotEnoughCapacityException: The supplied tickets would cause a breach of available capacity
         """
 
         if deleted_tickets is None:
@@ -605,6 +627,7 @@ class Performance(
         # Get the number of each seat group
         seat_group_counts: Dict[SeatGroup, int] = {}
         for ticket in tickets:
+            # If a SeatGroup with this id does not exist an error will be thrown
             seat_group = ticket.seat_group
             seat_group_count = seat_group_counts.get(seat_group)
             seat_group_counts[seat_group] = (seat_group_count or 0) + 1
@@ -631,10 +654,22 @@ class Performance(
             seat_groups_not_in_performance_str = ", ".join(
                 seat_groups_not_in_performance
             )
-
-            raise UnassignedSeatGroupException(
-                f"{seat_groups_not_in_performance_str} are not assigned to the performance {self}"
+            performance_seat_groups_str = ", ".join(
+                [seat_group.name for seat_group in self.seat_groups.all()]
             )
+            raise InvalidSeatGroupException(
+                f"You cannot book a seat group that is not assigned to this performance. You have booked {seat_groups_not_in_performance_str} but the performance only has {performance_seat_groups_str}"
+            )
+
+        # Check that each seat group has enough capacity
+        for seat_group, number_booked in seat_group_counts.items():
+            seat_group_remaining_capacity = self.seat_group_capacity_remaining(
+                seat_group=seat_group
+            )
+            if seat_group_remaining_capacity < number_booked:
+                raise NotEnoughCapacityException(
+                    f"There are only {seat_group_remaining_capacity} seats reamining in {seat_group} but you have booked {number_booked}. Please updated your seat selections and try again."
+                )
 
         # Check each concession type is in the performance
         concession_types = {ticket.concession_type for ticket in tickets}
@@ -645,23 +680,9 @@ class Performance(
         ]
 
         if len(concession_types_not_in_performance) != 0:
-            concession_types_not_in_performance = ", ".join(
-                concession_types_not_in_performance
+            raise InvalidConcessionTypeException(
+                f"{' '.join(concession_types_not_in_performance)} are not assigned to the performance {self}"
             )
-
-            raise UnassignedConcessionTypeException(
-                f"{concession_types_not_in_performance} are not assigned to the performance {self}"
-            )
-
-        # Check that each seat group has enough capacity
-        for seat_group, number_booked in seat_group_counts.items():
-            seat_group_remaining_capacity = self.seat_group_capacity_remaining(
-                seat_group=seat_group
-            )
-            if seat_group_remaining_capacity < number_booked:
-                raise CapacityException(
-                    f"There are only {seat_group_remaining_capacity} seats reamining in {seat_group} but you have booked {number_booked}."
-                )
 
     def has_boxoffice_permission(self, user: "User") -> bool:
         """
@@ -702,24 +723,6 @@ class Performance(
 
     class Meta:
         ordering = ["id"]
-
-
-def delete_user_drafts(user: User, performance_id: int, booking_id=None):
-    """Remove the users existing draft booking(s) for a given performance
-
-    Args:
-        user (User): The user to delete drafts for
-        performance_id (int): The id of the performance to delete bookings for
-        booking_id (str): An id of a booking which should be excluded from
-            deletion (Optional).
-    """
-
-    bookings = user.bookings
-    if booking_id:
-        bookings = bookings.exclude(id=booking_id)
-    bookings.filter(
-        status=Payable.Status.IN_PROGRESS, performance_id=performance_id
-    ).delete()
 
 
 class PerformanceSeatGroup(models.Model):
@@ -956,6 +959,7 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
             default=None,
         )
 
+    @property
     def duration(self) -> Optional[datetime.timedelta]:
         """The duration of the shortest show as a datetime object.
 
@@ -965,23 +969,20 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
         performances = self.performances.all()
         if not performances:
             return None
-        return min(performance.duration() for performance in performances)
+        return min(performance.duration for performance in performances)
 
     @property
     def total_capacity(self) -> int:
         """The total number of tickets which can be sold across all performances"""
         return sum(
-            [performance.total_capacity for performance in self.performances.all()]
+            performance.total_capacity for performance in self.performances.all()
         )
 
     @property
     def total_tickets_sold(self) -> int:
         """The total number of tickets sold across all performances"""
         return sum(
-            [
-                performance.total_tickets_sold()
-                for performance in self.performances.all()
-            ]
+            performance.total_tickets_sold() for performance in self.performances.all()
         )
 
     def sales_breakdown(self, breakdowns: list[str] = None):

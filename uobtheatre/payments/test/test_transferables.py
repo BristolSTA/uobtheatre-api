@@ -22,7 +22,10 @@ from uobtheatre.discounts.test.factories import (
 )
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.test.factories import TransactionFactory
-from uobtheatre.productions.exceptions import CapacityException, NotBookableException
+from uobtheatre.productions.exceptions import (
+    NotEnoughCapacityException,
+    NotBookableException,
+)
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory
 
@@ -195,7 +198,7 @@ def test_create_transfer():
         (2, 3, True, False, True, None),
         (2, 2, True, False, True, None),
         # Failure cases
-        (3, 2, True, False, True, CapacityException),
+        (3, 2, True, False, True, NotEnoughCapacityException),
         (3, 2, False, False, True, NotBookableException),
         (2, 3, True, True, True, BookingTransferPerformanceUnchangedException),
         (2, 3, True, False, False, BookingTransferToDifferentProductionException),

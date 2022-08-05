@@ -679,9 +679,9 @@ def test_bookings_qs(gql_client):
     gql_client.user.save()
 
     response = gql_client.execute(request)
-    assert [node["node"]["id"] for node in response["data"]["bookings"]["edges"]] == [
+    assert {node["node"]["id"] for node in response["data"]["bookings"]["edges"]} == {
         to_global_id("BookingNode", booking_id) for booking_id in [1, 2, 3]
-    ]
+    }
 
 
 @pytest.mark.django_db

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytest
 
@@ -43,3 +43,53 @@ def test_performance_form_clean_timings(door, start, end, error):
     )
 
     assert form.errors == error
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "interval_length, performance_duration, error_message",
+    [
+        [None, 60, None],
+        [10, 60, None],
+        [59, 60, None],
+        [
+            60,
+            60,
+            "The length of the interval must be less than the length of the performance",
+        ],
+        [
+            61,
+            60,
+            "The length of the interval must be less than the length of the performance",
+        ],
+        [
+            121,
+            240,
+            "Ensure this value is less than or equal to 120.",
+        ],
+        [
+            0,
+            240,
+            "Ensure this value is greater than or equal to 1.",
+        ],
+    ],
+)
+def test_performance_interval_length(
+    interval_length, performance_duration, error_message
+):
+    form = PerformanceForm(
+        data={
+            "start": datetime(2020, 1, 2, 0, 0, 0).isoformat(),
+            "end": (
+                datetime(2020, 1, 2, 0, 0, 0) + timedelta(minutes=performance_duration)
+            ).isoformat(),
+            "interval_duration_mins": interval_length,
+            "doors_open": datetime(2020, 1, 1, 0, 0, 0).isoformat(),
+            "venue": VenueFactory().id,
+            "production": ProductionFactory().id,
+        }
+    )
+    if error_message:
+        assert form.errors == {"interval_duration_mins": [error_message]}
+    else:
+        assert form.errors == {}

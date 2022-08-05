@@ -1,5 +1,5 @@
 import math
-from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Union
 from urllib.parse import urlencode
 
 from django.contrib.postgres.aggregates import BoolAnd
@@ -27,10 +27,10 @@ from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable, PayableQuerySet
 from uobtheatre.payments.transferables import Transferable
 from uobtheatre.productions.exceptions import (
-    CapacityException,
+    InvalidConcessionTypeException,
+    InvalidSeatGroupException,
+    NotEnoughCapacityException,
     NotBookableException,
-    UnassignedConcessionTypeException,
-    UnassignedSeatGroupException,
 )
 from uobtheatre.productions.models import Performance, Production, delete_user_drafts
 from uobtheatre.users.models import User
@@ -502,7 +502,7 @@ class Booking(TimeStampedMixin, Transferable):
         return MiscCost.objects.filter(type__in=misc_cost_types).value(self)
 
     def get_ticket_diff(
-        self, tickets: List["Ticket"]
+        self, tickets: Union[List["Ticket"], Iterable["Ticket"]]
     ) -> Tuple[List["Ticket"], List["Ticket"], int]:
         """Difference between Booking Tickets and list of Tickets
 
@@ -602,7 +602,7 @@ class Booking(TimeStampedMixin, Transferable):
             raise NotBookableException
 
         if performance.capacity_remaining < self.tickets.count():
-            raise CapacityException(
+            raise NotEnoughCapacityException(
                 f"There are only {performance.capacity_remaining} seats remaining for the selected performance"
             )
 
@@ -645,16 +645,16 @@ class Booking(TimeStampedMixin, Transferable):
             # If there is capcity for this ticket in the other performance then
             # copy this ticket to the new booking
             try:
-                performance.check_capacity(ticket.qs)
+                performance.validate_tickets(ticket.qs)
 
                 # Clone ticket to new booking
                 new_ticket = ticket.clone()
                 new_ticket.booking = new_booking
                 new_ticket.save()
             except (
-                UnassignedSeatGroupException,
-                UnassignedConcessionTypeException,
-                CapacityException,
+                NotEnoughCapacityException,
+                InvalidSeatGroupException,
+                InvalidConcessionTypeException,
             ) as exc:
                 print(
                     f"Not copying accross ticket {ticket.seat_group} as {exc.__class__}"
@@ -857,8 +857,3 @@ class Ticket(BaseModel):
 
     def __str__(self):
         return "%s | %s" % (self.seat_group.name, self.concession_type.name)
-
-
-def max_tickets_per_booking() -> int:
-    """Get the maximum number of a tickets a "normal" user can have per booking"""
-    return 10
