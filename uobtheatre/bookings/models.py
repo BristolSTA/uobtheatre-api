@@ -29,10 +29,10 @@ from uobtheatre.payments.transferables import Transferable
 from uobtheatre.productions.exceptions import (
     InvalidConcessionTypeException,
     InvalidSeatGroupException,
-    NotEnoughCapacityException,
     NotBookableException,
+    NotEnoughCapacityException,
 )
-from uobtheatre.productions.models import Performance, Production, delete_user_drafts
+from uobtheatre.productions.models import Performance, Production
 from uobtheatre.users.models import User
 from uobtheatre.utils.filters import filter_passes_on_model
 from uobtheatre.utils.models import BaseModel, TimeStampedMixin
@@ -630,7 +630,9 @@ class Booking(TimeStampedMixin, Transferable):
 
         # This will delete any exisiting IN_PROGRESS booking that the user has
         # for this performance (this includes transfers)
-        delete_user_drafts(self.user, performance.id)
+        self.user.bookings.filter(
+            status=Payable.Status.IN_PROGRESS, performance_id=performance.id
+        ).delete()
 
         # Create a booking transfer model
         new_booking = self.clone()

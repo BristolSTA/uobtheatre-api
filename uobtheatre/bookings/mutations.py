@@ -12,8 +12,7 @@ from uobtheatre.payments.transaction_providers import (
     SquarePOS,
 )
 from uobtheatre.productions.abilities import BookForPerformance
-from uobtheatre.productions.models import Performance, Production, delete_user_drafts
-from uobtheatre.users.models import User
+from uobtheatre.productions.models import Performance
 from uobtheatre.users.abilities import AllwaysPasses
 from uobtheatre.utils.exceptions import (
     AuthorizationException,

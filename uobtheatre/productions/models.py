@@ -17,7 +17,6 @@ from guardian.shortcuts import get_objects_for_user
 from uobtheatre.images.models import Image
 from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Transaction
-from uobtheatre.payments.payables import Payable
 from uobtheatre.productions.exceptions import (
     InvalidConcessionTypeException,
     InvalidSeatGroupException,
@@ -38,23 +37,6 @@ from uobtheatre.venues.models import SeatGroup, Venue
 
 if TYPE_CHECKING:
     from uobtheatre.bookings.models import ConcessionType, Ticket
-
-
-def delete_user_drafts(user: User, performance_id: int, booking_id=None):
-    """Remove the users existing draft booking(s) for a given performance
-    Args:
-        user (User): The user to delete drafts for
-        performance_id (int): The id of the performance to delete bookings for
-        booking_id (str): An id of a booking which should be excluded from
-            deletion (Optional).
-    """
-
-    bookings = user.bookings
-    if booking_id:
-        bookings = bookings.exclude(id=booking_id)
-    bookings.filter(
-        status=Payable.Status.IN_PROGRESS, performance_id=performance_id
-    ).delete()
 
 
 class CrewRole(models.Model):
@@ -617,8 +599,12 @@ class Performance(
                 (default: [])
 
         Raises:
-            InvalidSeatGroupException: A supplied ticket has a seat group that is not compatiable with the performance
-            NotEnoughCapacityException: The supplied tickets would cause a breach of available capacity
+            InvalidSeatGroupException: A supplied ticket has a seat group that
+                is not compatiable with the performance
+            InvalidConcessionTypeException: A supplied ticket has a concession
+                that is not compatiable with the performance
+            NotEnoughCapacityException: The supplied tickets would cause a
+                breach of available capacity
         """
 
         if deleted_tickets is None:
