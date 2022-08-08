@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.CreateModel(  # TODO: Won't preserve exisiting relations!
+        migrations.CreateModel(
             name="ProductionContentWarning",
             fields=[
                 (
