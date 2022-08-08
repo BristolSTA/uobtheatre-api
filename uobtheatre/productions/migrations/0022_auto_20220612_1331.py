@@ -40,7 +40,15 @@ class Migration(migrations.Migration):
                 ),
             ],
         ),
-        migrations.AlterField(
+        migrations.RemoveField(
+            model_name="production",
+            name="warnings",
+            field=models.ManyToManyField(
+                blank=True,
+                to="productions.ContentWarning",
+            ),
+        ),
+        migrations.AddField(
             model_name="production",
             name="warnings",
             field=models.ManyToManyField(

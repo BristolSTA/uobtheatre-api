@@ -78,7 +78,13 @@ class ContentWarning(models.Model):
 
 
 class ProductionContentWarning(models.Model):
-    production = models.ForeignKey("productions.production", on_delete=models.CASCADE)
+    """Intermediate model between productions and warnings"""
+
+    production = models.ForeignKey(
+        "productions.production",
+        on_delete=models.CASCADE,
+        related_name="warnings_pivot",
+    )
     warning = models.ForeignKey(ContentWarning, on_delete=models.CASCADE)
     information = models.TextField(null=True)
 

@@ -14,6 +14,7 @@ from uobtheatre.productions.models import (
     Performance,
     PerformanceSeatGroup,
     Production,
+    ProductionContentWarning,
     ProductionTeamMember,
 )
 from uobtheatre.users.abilities import PermissionsMixin
@@ -53,10 +54,16 @@ class CrewMemberNode(DjangoObjectType):
         interfaces = (relay.Node,)
 
 
+class ProductionContentWarningNode(DjangoObjectType):
+    class Meta:
+        model = ProductionContentWarning
+        interfaces = (relay.Node,)
+
+
 class WarningNode(DjangoObjectType):
     class Meta:
         model = ContentWarning
-        fields = ("description",)
+        fields = ("short_description", "long_description")
         filter_fields = ("id",)
         interfaces = (relay.Node,)
 
@@ -122,13 +129,16 @@ class ProductionFilter(FilterSet, UserPermissionFilterMixin):
 
     search = django_filters.CharFilter(method="search_productions", label="Search")
 
-    def start_filter(self, query_set, value, date=None):
+    @classmethod
+    def start_filter(cls, query_set, value, date=None):
         return query_set.annotate_start().filter(**{value: date})
 
-    def end_filter(self, query_set, value, date=None):
+    @classmethod
+    def end_filter(cls, query_set, value, date=None):
         return query_set.annotate_end().filter(**{value: date})
 
-    def search_productions(self, queryset, _, value):
+    @classmethod
+    def search_productions(cls, queryset, _, value):
         """
         Given a query string, searches through the productions using the name of the production
 
@@ -167,7 +177,7 @@ class SalesBreakdownNode(graphene.ObjectType):
 class ProductionNode(
     PermissionsMixin, GrapheneEnumMixin, AssignedUsersMixin, DjangoObjectType
 ):
-    warnings = DjangoListField(WarningNode)
+    content_warnings = DjangoListField(ProductionContentWarningNode)
     crew = DjangoListField(CrewMemberNode)
     cast = DjangoListField(CastMemberNode)
     production_team = DjangoListField(ProductionTeamMemberNode)
@@ -209,6 +219,9 @@ class ProductionNode(
 
     def resolve_total_tickets_sold(self, info):
         return self.total_tickets_sold
+
+    def resolve_content_warnings(self, info):
+        return self.warnings_pivot.all()
 
     @classmethod
     def get_queryset(cls, queryset, info):
@@ -297,7 +310,8 @@ class PerformanceFilter(FilterSet):
             self.request.user, has_permission=has_permission
         )
 
-    def run_on_filter(self, query_set, _, date=None):
+    @classmethod
+    def run_on_filter(cls, query_set, _, date=None):
         return query_set.running_on(date)
 
 
@@ -330,10 +344,12 @@ class PerformanceNode(DjangoObjectType):
     def resolve_min_seat_price(self, info):
         return self.min_seat_price()
 
-    def resolve_is_inperson(self, info):
+    @classmethod
+    def resolve_is_inperson(cls, info):
         return True
 
-    def resolve_is_online(self, info):
+    @classmethod
+    def resolve_is_online(cls, info):
         return False
 
     def resolve_duration_mins(self, info):
@@ -389,7 +405,8 @@ class Query(graphene.ObjectType):
     )
     performance = relay.Node.Field(PerformanceNode)
 
-    def resolve_production(self, info, **args):  # pylint: disable=redefined-builtin
+    @classmethod
+    def resolve_production(cls, info, **args):  # pylint: disable=redefined-builtin
         if all(arg is None for arg in args.values()):
             return None
         try:
