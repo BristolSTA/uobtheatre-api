@@ -25,6 +25,7 @@ from uobtheatre.payments.exceptions import (
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable, PayableQuerySet
 from uobtheatre.payments.transferables import Transferable
+from uobtheatre.productions.abilities import BookForPerformance
 from uobtheatre.productions.exceptions import (
     InvalidConcessionTypeException,
     InvalidSeatGroupException,
@@ -602,12 +603,9 @@ class Booking(TimeStampedMixin, Transferable):
         if self.performance.production != performance.production:
             raise BookingTransferToDifferentProductionException
 
-        if not performance.is_bookable:
-            raise NotBookableException
-
-        if performance.capacity_remaining < self.tickets.count():
-            raise NotEnoughCapacityException(
-                f"There are only {performance.capacity_remaining} seats remaining for the selected performance"
+        if not BookForPerformance.user_has_for(self.user, performance):
+            raise NotBookableException(
+                message="The transfer target performance is not able to be booked at the moment"
             )
 
     def create_transfer(self, performance: "Performance") -> "Booking":

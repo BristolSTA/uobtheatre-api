@@ -197,8 +197,9 @@ def test_create_transfer():
         # Success cases
         (2, 3, True, False, True, None),
         (2, 2, True, False, True, None),
+        # Doesnt raise for insufficient capacity
+        (3, 2, True, False, True, None),
         # Failure cases
-        (3, 2, True, False, True, NotEnoughCapacityException),
         (3, 2, False, False, True, NotBookableException),
         (2, 3, True, True, True, BookingTransferPerformanceUnchangedException),
         (2, 3, True, False, False, BookingTransferToDifferentProductionException),
