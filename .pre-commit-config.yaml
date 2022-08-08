@@ -50,39 +50,39 @@ repos:
   - additional_dependencies:
     - django-autoslug==1.9.8
     - shortuuid>=1.0.1
-    - django-filter==21.1
+    - django-filter==22.1
     - Pillow>=8.1.2
-    - django-cors-headers==3.12.0
+    - django-cors-headers==3.13.0
     - django-admin-confirm==0.2.5
     - django-configurations==2.3.2
-    - django-environ==0.8.1
+    - django-environ==0.9.0
     - xlsxwriter==3.0.3
     - html2text==2020.1.16
-    - django==3.2.13
+    - django==3.2.14
     - django-guardian==2.4.0
     - django_tiptap==0.0.10
     - djangorestframework==3.13.1
-    - django-nonrelated-inlines==0.1.1
+    - django-nonrelated-inlines==0.2
     - graphene==2.1.9
     - graphene-django==2.15.0
     - django-graphql-auth==0.3.16
     - django-graphql-jwt==0.3.0
     - PyJWT==1.7.0
     - squareup>=9.0.0.20210226
-    - sentry-sdk==1.5.12
-    - whitenoise==6.1.0
+    - sentry-sdk==1.7.0
+    - whitenoise==6.2.0
     - django-anymail[amazon_ses]==8.6
     - django-inlinecss==0.3.0
-    - timezonefinder==6.0.0
+    - timezonefinder==6.0.2
     - pytz==2022.1
     - django-celery-results==2.2.0
-    - redis==4.3.1
+    - redis==4.3.4
     - pre-commit >= 2.11.0
     - black >= 22.3.0
     - isort >= 5.10.1
-    - pylint >= 2.13.0
+    - pylint >= 2.14.0
     - django-stubs >= 1.10.1
-    - types-python-dateutil==2.8.16
+    - types-python-dateutil==2.8.18
     - pytest >= 6.2.2
     - pytest-sugar >= 0.9.4
     - pytest-cov >= 2.11.1
@@ -90,7 +90,7 @@ repos:
     - pytest-factoryboy >= 2.1.0
     - coveralls >= 3.0.1
     - factory-boy==3.2.1
-    - faker==13.11.1; python_version >= '3.6'
+    - faker==13.15.0; python_version >= '3.6'
     - jedi==0.18.1; python_version >= '3.6'
     - psycopg2-binary
     id: mypy

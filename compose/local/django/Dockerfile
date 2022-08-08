@@ -13,7 +13,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   # dependencies for building Python packages
   build-essential \
   # psycopg2 dependencies
-  libpq-dev
+  libpq-dev gcc
 
 # Requirements are installed here to ensure they will be cached.
 COPY ./requirements .
@@ -63,8 +63,6 @@ RUN chmod +x /entrypoint
 COPY ./compose/local/django/start /start
 RUN sed -i 's/\r$//g' /start
 RUN chmod +x /start
-
-
 
 # copy application code to WORKDIR
 COPY . ${APP_HOME}
