@@ -1,5 +1,5 @@
 import math
-from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Union
 from urllib.parse import urlencode
 
 from django.contrib.postgres.aggregates import BoolAnd
@@ -466,7 +466,7 @@ class Booking(TimeStampedMixin, Payable):
         return math.ceil(subtotal + self.misc_costs_value())
 
     def get_ticket_diff(
-        self, tickets: List["Ticket"]
+        self, tickets: Union[List["Ticket"], Iterable["Ticket"]]
     ) -> Tuple[List["Ticket"], List["Ticket"], int]:
         """Difference between Booking Tickets and list of Tickets
 
@@ -735,8 +735,3 @@ class Ticket(models.Model):
 
     def __str__(self):
         return "%s | %s" % (self.seat_group.name, self.concession_type.name)
-
-
-def max_tickets_per_booking() -> int:
-    """Get the maximum number of a tickets a "normal" user can have per booking"""
-    return 10
