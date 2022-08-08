@@ -120,6 +120,12 @@ isort: ## Run isort to sort imports
 pylint: ## Run pylint to check uobtheatre code
 	$(COMMAND_PREFIX) pylint uobtheatre
 
+lint:
+	make isort
+	make black
+	make pylint
+	make mypy
+
 pipenv-install: ## Setup pipenv locally
 	$(COMMAND_PREFIX) cd /tmp; pipenv lock --requirements > requirements.txt; pip install -r /tmp/requirements.txt
 

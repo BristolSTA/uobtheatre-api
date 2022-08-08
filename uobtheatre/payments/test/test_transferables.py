@@ -23,8 +23,8 @@ from uobtheatre.discounts.test.factories import (
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.productions.exceptions import (
-    NotEnoughCapacityException,
     NotBookableException,
+    NotEnoughCapacityException,
 )
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory
@@ -203,8 +203,8 @@ def test_create_transfer():
         (2, 3, True, True, True, BookingTransferPerformanceUnchangedException),
         (2, 3, True, False, False, BookingTransferToDifferentProductionException),
     ],
-)  # pylint: disable=too-many-arguments
-def test_check_transfer_performance(
+)
+def test_check_transfer_performance(  # pylint: disable=too-many-arguments
     booking_ticket_count,
     capacity_remaining,
     is_bookable,

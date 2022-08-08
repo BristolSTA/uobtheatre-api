@@ -1,8 +1,9 @@
 from typing import TYPE_CHECKING
+
 from uobtheatre.utils.exceptions import GQLException
 
 if TYPE_CHECKING:
-    from uobtheatre.payments.payables import Payable
+    pass
 
 
 class CantBeRefundedException(GQLException):
@@ -18,3 +19,8 @@ class CantBeCanceledException(GQLException):
 class CantBePaidForException(GQLException):
     def __init__(self, message="This payable cannot be paid for") -> None:
         super().__init__(message)
+
+
+class TransferUnpaidPayableException(GQLException):
+    def __init__(self, status_display: str) -> None:
+        super().__init__(f"A payable which is {status_display} cannot be transfered")

@@ -13,7 +13,6 @@ from django.utils.functional import cached_property
 from graphql_relay.node.node import to_global_id
 
 from uobtheatre.bookings.exceptions import (
-    BookingTransferBookingNotPaidException,
     BookingTransferPerformanceUnchangedException,
     BookingTransferToDifferentProductionException,
 )
@@ -234,7 +233,7 @@ class Booking(TimeStampedMixin, Transferable):
         A user can only have 1 In Progress booking per performance.
     """
 
-    objects = BookingManager()
+    objects = BookingManager()  # type: ignore
 
     class Meta:
         constraints = [
@@ -428,7 +427,7 @@ class Booking(TimeStampedMixin, Transferable):
 
     # pylint: disable=invalid-overridden-method
     @cached_property
-    def subtotal(self) -> int:
+    def subtotal(self) -> int:  # type: ignore
         """Price of the booking with discounts applied.
 
         Returns the subtotal of the booking. This is the total value including
@@ -484,6 +483,16 @@ class Booking(TimeStampedMixin, Transferable):
         return self.tickets_price() - self.subtotal
 
     @property
+    def misc_cost_types(self) -> List[MiscCost.Type]:
+        misc_cost_types = [MiscCost.Type.BOOKING]
+        # If this booking is transfered from another then transfer misc costs
+        # should also be applied
+        if self.transfered_from:
+            misc_cost_types.append(MiscCost.Type.BOOKING_TRANSFER)
+
+        return misc_cost_types
+
+    @property
     def misc_costs_value(self) -> int:
         """The value of the misc costs applied in pence
 
@@ -494,12 +503,7 @@ class Booking(TimeStampedMixin, Transferable):
         Returns:
             (int): The value in penies of MiscCosts applied to the Booking
         """
-        misc_cost_types = [MiscCost.Type.BOOKING]
-        # If this booking is transfered from another then transfer misc costs
-        # should also be applied
-        if self.transfered_from:
-            misc_cost_types.append(MiscCost.Type.BOOKING_TRANSFER)
-        return MiscCost.objects.filter(type__in=misc_cost_types).value(self)
+        return MiscCost.objects.filter(type__in=self.misc_cost_types).value(self)
 
     def get_ticket_diff(
         self, tickets: Union[List["Ticket"], Iterable["Ticket"]]
@@ -564,7 +568,7 @@ class Booking(TimeStampedMixin, Transferable):
 
         # If this is a transfer and the booking it is transfered from is not paid
         if self.transfered_from and self.transfered_from.status != Booking.Status.PAID:
-            self.transfered_from._check_transfer_booking()  # pylint: disable=protected-access
+            self.transfered_from.check_can_be_transfered()  # pylint: disable=protected-access
 
         return super().pay(payment_method)
 
@@ -606,26 +610,21 @@ class Booking(TimeStampedMixin, Transferable):
                 f"There are only {performance.capacity_remaining} seats remaining for the selected performance"
             )
 
-    def _check_transfer_booking(self):
-        # If the booking is already completed. Note this also convers if it has
-        # already been transfered as once a transfer in completed the original
-        # booking is cancelled.
-        if self.status != Booking.Status.PAID:
-            raise BookingTransferBookingNotPaidException(self.get_status_display())
-
     def create_transfer(self, performance: "Performance") -> "Booking":
         """
         Create an in progress booking to transfer the booking to a different
         performance.
 
-        This a new booking which copies the attributes from the original and
-        with the transfered to attribute assigned as the new booking.
+        This is a new booking which copies the attributes from the original and
+        with the transfered_from attribute equal to the new booking. This new
+        booking will be IN_PROGRESS and the transfere will not be completed
+        until the new booking is COMPLETE.
 
-        Once the new booking is completed, the original booking will be
+        Once the new booking is COMPLETE, the original booking will be
         cancelled.
         """
 
-        self._check_transfer_booking()
+        super().check_can_be_transfered()
         self._check_transfer_performance(performance)
 
         # This will delete any exisiting IN_PROGRESS booking that the user has
@@ -634,16 +633,15 @@ class Booking(TimeStampedMixin, Transferable):
             status=Payable.Status.IN_PROGRESS, performance_id=performance.id
         ).delete()
 
-        # Create a booking transfer model
+        # Create the new booking to transfer to
         new_booking = self.clone()
         new_booking.status = Payable.Status.IN_PROGRESS
         new_booking.performance = performance
         new_booking.transfered_from = self
         new_booking.save()
 
-        # Copy across all tickets which can be copied
+        # Copy across all tickets which can be copied one by one
         for ticket in self.tickets.all():
-            # TODO maybe define can_transfer_to on ticket model
             # If there is capcity for this ticket in the other performance then
             # copy this ticket to the new booking
             try:

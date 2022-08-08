@@ -1,6 +1,6 @@
 import abc
 import math
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.mail import mail_admins
@@ -22,6 +22,7 @@ from uobtheatre.utils.filters import filter_passes_on_model
 from uobtheatre.utils.models import AbstractModelMeta, BaseModel
 
 if TYPE_CHECKING:
+    from uobtheatre.bookings.models import MiscCost
     from uobtheatre.payments.transaction_providers import PaymentProvider
 
 
@@ -51,6 +52,8 @@ class PayableQuerySet(QuerySet):
         return qs.exclude(filter_query)
 
 
+PayableManager = models.Manager.from_queryset(PayableQuerySet)
+
 # pylint: disable=too-many-public-methods
 class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
     """
@@ -74,7 +77,7 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
         default=Status.IN_PROGRESS,
     )
 
-    objects = PayableQuerySet.as_manager()
+    objects = PayableManager()
 
     @property
     @abc.abstractmethod
@@ -161,7 +164,7 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
 
     @property
     def total(self) -> int:
-        """The total cost of the payable.
+        """The total cost of the payable in pence.
 
         The final price of the payable with all dicounts and misc costs
         applied. This is the price the User will be charged.
@@ -186,6 +189,12 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
         Returns:
             int: price of the payable with discounts applied in penies
         """
+        raise NotImplementedError
+
+    @property
+    @abc.abstractmethod
+    def misc_cost_types(self) -> List["MiscCost.Type"]:
+        """Returns the misc cost type which apply to this object"""
         raise NotImplementedError
 
     @property
@@ -237,7 +246,9 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
     @property
     def total_payments(self) -> int:
         """The positive amounts paid by the user for this object.
-        i.e: This does not include refunds
+
+        - This does not include refunds.
+        - This does include the square fee.
         """
         return self.transactions.get_sales_breakdown(SalesBreakdown.TOTAL_PAYMENTS)
 
@@ -248,7 +259,9 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
 
     @property
     def total_refunds(self) -> int:
-        """The amount paid by the user for this object."""
+        """The negative amounts paid by the user for this object. (i.e. money
+        paid back to the user in the form of a refund)
+        """
         return self.transactions.get_sales_breakdown(SalesBreakdown.TOTAL_REFUNDS)
 
     @property
@@ -270,7 +283,7 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
 
     @property
     def society_transfer_value(self) -> int:
-        """The amount of money to transfere to the society for object."""
+        """The amount of money to transfer to the society for object."""
         return self.transactions.get_sales_breakdown(
             SalesBreakdown.SOCIETY_TRANSFER_VALUE
         )

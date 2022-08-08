@@ -1,4 +1,3 @@
-from typing import TYPE_CHECKING
 from uobtheatre.utils.exceptions import GQLException
 
 
@@ -16,8 +15,3 @@ class BookingTransferToDifferentProductionException(GQLException):
         super().__init__(
             "A booking can only be transfered to a performance of the same production"
         )
-
-
-class BookingTransferBookingNotPaidException(GQLException):
-    def __init__(self, status_display: str) -> None:
-        super().__init__(f"A booking which is {status_display} cannot be transfered")

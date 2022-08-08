@@ -7,8 +7,8 @@ from typing import Dict
 
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
-from graphql_relay.node.node import to_global_id
 from django.db import models
+from graphql_relay.node.node import to_global_id
 
 
 class BaseModel(models.Model):

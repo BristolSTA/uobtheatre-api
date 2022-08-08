@@ -44,7 +44,7 @@ class TransactionQuerySet(QuerySet):
         return self.aggregate(**annotations)
 
     def get_sales_breakdown(self, breakdown: "SalesBreakdown"):
-        # TODO Calling aggregate on an empty queryset gives None so the
+        # NOTE: Calling aggregate on an empty queryset gives None so the
         # Coalesce is not applied this fix works here but still an
         # issue/feature above
         return self.annotate_sales_breakdown(breakdowns=[breakdown])[breakdown.key] or 0
@@ -296,10 +296,12 @@ class Transaction(TimeStampedMixin, BaseModel):
 class SalesBreakdown(Enum):
     """
     Enum for each sales breakdown which can be optained from a transaction
-    queryset
+    queryset.
 
-    Each enum varainet is assigned to the expression used to calculate its
+    Each enum variant is assigned to the expression used to calculate its
     value.
+
+    For documentation of each value see the payables model.
     """
 
     PROVIDER_PAYMENT_VALUE = Coalesce(

@@ -1,12 +1,16 @@
 import math
-from typing import Optional
+from abc import abstractmethod
+from typing import TYPE_CHECKING, Optional
 
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
+from uobtheatre.payments.exceptions import TransferUnpaidPayableException
 from uobtheatre.payments.models import SalesBreakdown, Transaction
 from uobtheatre.payments.payables import Payable
 
+if TYPE_CHECKING:
+    pass
 
 # pylint: disable=abstract-method
 class Transferable(Payable):
@@ -20,6 +24,11 @@ class Transferable(Payable):
         "self", on_delete=models.RESTRICT, null=True, related_name="_transfered_to"
     )
 
+    def check_can_be_transfered(self):
+        """Checks if it is possible to transfer this object in its current state"""
+        if self.status != Payable.Status.PAID:
+            raise TransferUnpaidPayableException(self.get_status_display())
+
     @property
     def transfered_to(self) -> Optional["Transferable"]:
         """The transfered which this has been transfred to.
@@ -31,7 +40,7 @@ class Transferable(Payable):
         """
         if not hasattr(self, "_transfered_to"):
             return None
-        return self._transfered_to
+        return self._transfered_to  # type: ignore
 
     @property
     def transfered_from_chain(self) -> list["Transferable"]:
@@ -57,7 +66,7 @@ class Transferable(Payable):
         """
         transactions = Transaction.objects.filter(
             pay_object_type=ContentType.objects.get_for_model(self.__class__),
-            pay_object_id__in=map(lambda m: m.id, self.transfered_from_chain),
+            pay_object_id__in=map(lambda m: m.pk, self.transfered_from_chain),
             status=Transaction.Status.COMPLETED,
         )
         return transactions.get_sales_breakdown(

@@ -12,7 +12,6 @@ from graphql_relay.node.node import to_global_id
 
 from uobtheatre.addresses.test.factories import AddressFactory
 from uobtheatre.bookings.exceptions import (
-    BookingTransferBookingNotPaidException,
     BookingTransferPerformanceUnchangedException,
     BookingTransferToDifferentProductionException,
 )
@@ -35,6 +34,7 @@ from uobtheatre.payments import transaction_providers
 from uobtheatre.payments.exceptions import (
     CantBePaidForException,
     CantBeRefundedException,
+    TransferUnpaidPayableException,
 )
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.test.factories import TransactionFactory, mock_payment_method
@@ -900,8 +900,8 @@ def test_booking_pay_with_payment():
         (
             False,
             Booking.Status.IN_PROGRESS,
-            BookingTransferBookingNotPaidException,
-            "A booking which is In Progress cannot be transfered",
+            TransferUnpaidPayableException,
+            "A payable which is In Progress cannot be transfered",
         ),
     ],
 )
@@ -1309,3 +1309,20 @@ def test_booking_clone():
     # Check a unique booking reference is assigned
     assert booking_clone.reference is not None
     assert booking_clone.reference != booking.reference
+
+
+@pytest.mark.django_db
+def test_misc_cost_types_not_transfer():
+    # Create a booking
+    booking = BookingFactory()
+    assert booking.misc_cost_types == [MiscCost.Type.BOOKING]
+
+
+@pytest.mark.django_db
+def test_misc_cost_types_transfer():
+    # Create a booking
+    booking = BookingFactory(transfered_from=BookingFactory())
+    assert booking.misc_cost_types == [
+        MiscCost.Type.BOOKING,
+        MiscCost.Type.BOOKING_TRANSFER,
+    ]

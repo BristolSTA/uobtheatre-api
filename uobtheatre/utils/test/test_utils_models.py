@@ -5,9 +5,9 @@ from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.payments.models import Transaction
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.societies.models import Society
-from uobtheatre.venues.models import Venue
-from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.users.models import User
+from uobtheatre.users.test.factories import UserFactory
+from uobtheatre.venues.models import Venue
 
 
 @pytest.mark.django_db
@@ -51,7 +51,7 @@ def test_base_clone():
     ],
 )
 def test_base_name(model_type, expected_name):
-    assert model_type._node_name == expected_name
+    assert model_type._node_name == expected_name  # pylint: disable=protected-access
 
 
 @pytest.mark.django_db

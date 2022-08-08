@@ -9,7 +9,7 @@ from django_tiptap.fields import TipTapTextField
 
 from uobtheatre.addresses.models import Address
 from uobtheatre.images.models import Image
-from uobtheatre.utils.models import TimeStampedMixin, BaseModel
+from uobtheatre.utils.models import BaseModel, TimeStampedMixin
 
 
 class Seat(models.Model):

@@ -3,10 +3,10 @@ import datetime
 import math
 
 import pytest
+import pytz
 from django.utils import timezone
 from graphql_relay.node.node import from_global_id, to_global_id
 from guardian.shortcuts import assign_perm
-import pytz
 
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
