@@ -168,7 +168,7 @@ def test_price_with_concession():
 @pytest.mark.django_db
 def test_str_warning():
     warning = ContentWarningFactory()
-    assert str(warning) == warning.description
+    assert str(warning) == warning.short_description
 
 
 @pytest.mark.django_db

@@ -40,8 +40,8 @@ class ProductionForm(MutationForm):
     def clean(self):
         """Validate form data on clean"""
         cleaned_data = super().clean()
-
-        for warning in cleaned_data.get("warnings", []):
+        warnings = cleaned_data.get("warnings", []) or []
+        for warning in warnings:
             if not ContentWarning.objects.filter(pk=warning.id).exists():
                 raise ValidationError(
                     {"warnings": f"A warning with ID {warning.id} does not exist"}
@@ -53,7 +53,8 @@ class ProductionForm(MutationForm):
         if not self.cleaned_data.get("warnings") is None:
             ProductionContentWarning.objects.filter(production=self.instance).delete()
 
-        for warning in self.cleaned_data.get("warnings", []):
+        warnings = self.cleaned_data.get("warnings", []) or []
+        for warning in warnings:
             ProductionContentWarning.objects.create(
                 production=self.instance,
                 warning_id=warning.id,

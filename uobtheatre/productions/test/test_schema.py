@@ -3,10 +3,10 @@ import datetime
 import math
 
 import pytest
+import pytz
 from django.utils import timezone
 from graphql_relay.node.node import from_global_id, to_global_id
 from guardian.shortcuts import assign_perm
-import pytz
 
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
@@ -121,9 +121,12 @@ def test_productions_schema(gql_client):
                     id
                   }
                 }
-                warnings {
-                  id
-                  description
+                contentWarnings {
+                    information
+                    warning {
+                        id
+                        shortDescription
+                    }
                 }
               }
             }
@@ -232,10 +235,13 @@ def test_productions_schema(gql_client):
                                 }
                                 for production_team_member in production_team
                             ],
-                            "warnings": [
+                            "contentWarnings": [
                                 {
-                                    "id": to_global_id("WarningNode", warning.id),
-                                    "description": warning.description,
+                                    "information": None,
+                                    "warning": {
+                                        "id": to_global_id("WarningNode", warning.id),
+                                        "shortDescription": warning.short_description,
+                                    },
                                 }
                                 for warning in warnings
                             ],
@@ -1341,16 +1347,16 @@ def test_performance_has_permission(gql_client):
 
 @pytest.mark.django_db
 def test_warnings(gql_client):
-    ContentWarningFactory(description="Beware of the children")
-    ContentWarningFactory(description="Pyrotechnics go bang")
-    ContentWarningFactory(description="Strobe do be flickering")
+    ContentWarningFactory(short_description="Beware of the children")
+    ContentWarningFactory(short_description="Pyrotechnics go bang")
+    ContentWarningFactory(short_description="Strobe do be flickering")
 
     request = """
         query {
             warnings{
                 edges {
                     node {
-                        description
+                        shortDescription
                     }
                 }
             }
@@ -1359,7 +1365,7 @@ def test_warnings(gql_client):
 
     response = gql_client.execute(request)
     assert response["data"]["warnings"]["edges"] == [
-        {"node": {"description": "Beware of the children"}},
-        {"node": {"description": "Pyrotechnics go bang"}},
-        {"node": {"description": "Strobe do be flickering"}},
+        {"node": {"shortDescription": "Beware of the children"}},
+        {"node": {"shortDescription": "Pyrotechnics go bang"}},
+        {"node": {"shortDescription": "Strobe do be flickering"}},
     ]

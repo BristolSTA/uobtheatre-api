@@ -86,7 +86,8 @@ class CastMemberFactory(factory.django.DjangoModelFactory):
 
 
 class ContentWarningFactory(factory.django.DjangoModelFactory):
-    description = factory.Faker("sentence", nb_words=3)
+    short_description = factory.Faker("sentence", nb_words=3)
+    long_description = factory.Faker("sentence", nb_words=5)
 
     class Meta:
         model = ContentWarning
