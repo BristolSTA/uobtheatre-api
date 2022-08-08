@@ -79,7 +79,7 @@ def test_id_input_field_parse_value(gql_client):
         "uobtheatre.productions.abilities.BookForPerformance.user_has_for",
         return_value=True,
     ):
-        response = gql_client.login().execute(
+        gql_client.login().execute(
             """
             mutation($id: ID!, $sgId: IdInputField!, $ctId: IdInputField!) {
                 booking(
@@ -91,15 +91,10 @@ def test_id_input_field_parse_value(gql_client):
                     success
                     errors {
                     __typename
-                    ... on NonFieldError {
-                        message
-                        code
-                    }
-                    ... on FieldError {
-                        message
-                        code
-                        field
-                    }
+                        ... on NonFieldError {
+                            message
+                            code
+                        }
                     }
                 }
             }
@@ -110,7 +105,6 @@ def test_id_input_field_parse_value(gql_client):
                 "ctId": to_global_id("ConcessionType", concession.id),
             },
         )
-    print(response)
 
     booking = Booking.objects.first()
     assert booking.performance == performance

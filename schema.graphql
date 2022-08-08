@@ -1,0 +1,894 @@
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+type AddressNode implements Node {
+  buildingName: String
+  buildingNumber: String
+  street: String!
+  city: String!
+  postcode: String!
+  latitude: Float
+  longitude: Float
+  id: ID!
+}
+
+type ArchiveAccount {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+input BookingMutationInput {
+  performance: ID
+  adminDiscountPercentage: Float
+  tickets: [TicketInputType]
+  userEmail: String
+  id: ID
+  clientMutationId: String
+}
+
+type BookingMutationPayload {
+  booking: BookingNode
+  errors: [GQLErrorUnion]
+  success: Boolean
+  clientMutationId: String
+}
+
+type BookingNode implements Node {
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  status: EnumNode
+  reference: String!
+  user: UserNode
+  creator: ExtendedUserNode!
+  performance: PerformanceNode!
+  adminDiscountPercentage: Float!
+  expiresAt: DateTime!
+  tickets: [TicketNode!]
+  priceBreakdown: PriceBreakdownNode
+  transactions(offset: Int, before: String, after: String, first: Int, last: Int, type: String, provider: String, createdAt: DateTime, id: ID): TransactionNodeConnection
+  expired: Boolean!
+  totalSales: Int
+  totalRefunds: Int
+  netIncome: Int
+}
+
+type BookingNodeConnection {
+  pageInfo: PageInfo!
+  edges: [BookingNodeEdge]!
+}
+
+type BookingNodeEdge {
+  node: BookingNode
+  cursor: String!
+}
+
+type CancelPayment {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type CastMemberNode implements Node {
+  id: ID!
+  name: String!
+  profilePicture: ImageNode
+  role: String
+  production: ProductionNode!
+}
+
+type CheckInBooking {
+  success: Boolean
+  errors: [GQLErrorUnion]
+  performance: PerformanceNode
+  booking: BookingNode
+}
+
+type ConcessionTypeBookingType {
+  concessionType: ConcessionTypeNode
+  price: Int
+  pricePounds: String
+}
+
+input ConcessionTypeMutationInput {
+  name: String
+  description: String
+  id: ID
+  clientMutationId: String
+}
+
+type ConcessionTypeMutationPayload {
+  concessionType: ConcessionTypeNode
+  errors: [GQLErrorUnion]
+  success: Boolean
+  clientMutationId: String
+}
+
+type ConcessionTypeNode implements Node {
+  name: String!
+  description: String
+  id: ID!
+}
+
+type CrewMemberNode implements Node {
+  id: ID!
+  name: String!
+  role: CrewRoleNode
+  production: ProductionNode!
+}
+
+type CrewMemberNodeConnection {
+  pageInfo: PageInfo!
+  edges: [CrewMemberNodeEdge]!
+}
+
+type CrewMemberNodeEdge {
+  node: CrewMemberNode
+  cursor: String!
+}
+
+type CrewRoleNode implements Node {
+  id: ID!
+  name: String!
+  department: EnumNode
+  crewMembers(offset: Int, before: String, after: String, first: Int, last: Int): CrewMemberNodeConnection!
+}
+
+type DataSetNode {
+  name: String!
+  headings: [String]!
+  data: [[String]]!
+}
+
+scalar Date
+
+scalar DateTime
+
+type DeleteAccount {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type DeleteBooking {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type DeleteConcessionTypeMutation {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type DeleteDiscountMutation {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type DeleteDiscountRequirementMutation {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type DeletePerformanceMutation {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type DeletePerformanceSeatGroupMutation {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+input DiscountMutationInput {
+  percentage: Float
+  performances: [ID]
+  seatGroup: ID
+  id: ID
+  clientMutationId: String
+}
+
+type DiscountMutationPayload {
+  discount: DiscountNode
+  errors: [GQLErrorUnion]
+  success: Boolean
+  clientMutationId: String
+}
+
+type DiscountNode implements Node {
+  id: ID!
+  name: String
+  percentage: Float!
+  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, intervalDurationMins: Int, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, hasBoxofficePermissions: Boolean, runOn: Date, orderBy: String): PerformanceNodeConnection!
+  seatGroup: SeatGroupNode
+  requirements: [DiscountRequirementNode!]
+}
+
+type DiscountNodeConnection {
+  pageInfo: PageInfo!
+  edges: [DiscountNodeEdge]!
+}
+
+type DiscountNodeEdge {
+  node: DiscountNode
+  cursor: String!
+}
+
+input DiscountRequirementMutationInput {
+  number: Int
+  discount: ID
+  concessionType: ID
+  id: ID
+  clientMutationId: String
+}
+
+type DiscountRequirementMutationPayload {
+  discountRequirement: DiscountRequirementNode
+  errors: [GQLErrorUnion]
+  success: Boolean
+  clientMutationId: String
+}
+
+type DiscountRequirementNode implements Node {
+  id: ID!
+  number: Int!
+  discount: DiscountNode!
+  concessionType: ConcessionTypeNode!
+}
+
+type EnumNode {
+  value: String
+  description: String
+}
+
+type ExtendedUserNode {
+  firstName: String!
+  lastName: String!
+  dateJoined: DateTime!
+  id: String
+  email: String!
+  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, reference: String, user: ID, creator: ID, performance: ID, adminDiscountPercentage: Float, expiresAt: DateTime, id: ID, statusIn: [String], search: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection!
+  createdBookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, reference: String, user: ID, creator: ID, performance: ID, adminDiscountPercentage: Float, expiresAt: DateTime, id: ID, statusIn: [String], search: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection!
+  pk: Int
+  archived: Boolean
+  verified: Boolean
+  secondaryEmail: String
+  permissions: [String]
+}
+
+type FieldError {
+  message: String
+  field: String
+  code: String
+}
+
+union GQLErrorUnion = FieldError | NonFieldError
+
+type GenerateReport {
+  success: Boolean
+  errors: [GQLErrorUnion]
+  downloadUri: String
+  report: ReportNode
+}
+
+scalar GenericScalar
+
+scalar IdInputField
+
+type ImageNode implements Node {
+  id: ID!
+  altText: String
+  url: String
+}
+
+type MetaItemNode {
+  name: String!
+  value: String!
+}
+
+type MiscCostNode implements Node {
+  id: ID!
+  name: String!
+  description: String
+  percentage: Float
+  value: Float
+}
+
+type Mutation {
+  concessionType(input: ConcessionTypeMutationInput!): ConcessionTypeMutationPayload
+  deleteConcessionType(id: IdInputField!): DeleteConcessionTypeMutation
+  discount(input: DiscountMutationInput!): DiscountMutationPayload
+  deleteDiscount(id: IdInputField!): DeleteDiscountMutation
+  discountRequirement(input: DiscountRequirementMutationInput!): DiscountRequirementMutationPayload
+  deleteDiscountRequirement(id: IdInputField!): DeleteDiscountRequirementMutation
+  register(email: String!, firstName: String!, lastName: String!, password1: String!, password2: String!): Register
+  verifyAccount(token: String!): VerifyAccount
+  resendActivationEmail(email: String!): ResendActivationEmail
+  sendPasswordResetEmail(email: String!): SendPasswordResetEmail
+  passwordReset(token: String!, newPassword1: String!, newPassword2: String!): PasswordReset
+  passwordSet(token: String!, newPassword1: String!, newPassword2: String!): PasswordSet
+  passwordChange(oldPassword: String!, newPassword1: String!, newPassword2: String!): PasswordChange
+  updateAccount(firstName: String, lastName: String): UpdateAccount
+  archiveAccount(password: String!): ArchiveAccount
+  deleteAccount(password: String!): DeleteAccount
+  sendSecondaryEmailActivation(email: String!, password: String!): SendSecondaryEmailActivation
+  verifySecondaryEmail(token: String!): VerifySecondaryEmail
+  swapEmails(password: String!): SwapEmails
+  removeSecondaryEmail(password: String!): RemoveSecondaryEmail
+  login(password: String!, email: String): ObtainJSONWebToken
+  verifyToken(token: String!): VerifyToken
+  refreshToken(refreshToken: String!): RefreshToken
+  revokeToken(refreshToken: String!): RevokeToken
+  production(input: ProductionMutationInput!): ProductionMutationPayload
+  productionPermissions(id: IdInputField!, permissions: [String]!, userEmail: String!): ProductionPermissionsMutation
+  performance(input: PerformanceMutationInput!): PerformanceMutationPayload
+  deletePerformance(id: IdInputField!): DeletePerformanceMutation
+  performanceSeatGroup(input: PerformanceSeatGroupMutationInput!): PerformanceSeatGroupMutationPayload
+  deletePerformanceSeatGroup(id: IdInputField!): DeletePerformanceSeatGroupMutation
+  setProductionStatus(message: String, productionId: IdInputField!, status: Status): SetProductionStatus
+  cancelPayment(paymentId: IdInputField!): CancelPayment
+  generateReport(endTime: DateTime, name: String!, options: [ReportOption], startTime: DateTime): GenerateReport
+  booking(input: BookingMutationInput!): BookingMutationPayload
+  deleteBooking(id: IdInputField!): DeleteBooking
+  payBooking(deviceId: String, id: IdInputField!, idempotencyKey: String, nonce: String, paymentProvider: PaymentMethod, price: Int!, verifyToken: String): PayBooking
+  checkInBooking(bookingReference: String!, performance: IdInputField!, tickets: [TicketIDInput]!): CheckInBooking
+  uncheckInBooking(bookingReference: String!, performance: IdInputField!, tickets: [TicketIDInput]!): UnCheckInBooking
+}
+
+interface Node {
+  id: ID!
+}
+
+type NonFieldError {
+  message: String
+  code: String
+}
+
+type ObtainJSONWebToken {
+  token: String
+  success: Boolean
+  errors: [GQLErrorUnion]
+  user: UserNode
+  unarchiving: Boolean
+  refreshToken: String
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+type PasswordChange {
+  success: Boolean
+  errors: [GQLErrorUnion]
+  refreshToken: String
+  token: String
+}
+
+type PasswordReset {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type PasswordSet {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type PayBooking {
+  success: Boolean
+  errors: [GQLErrorUnion]
+  booking: BookingNode
+  payment: TransactionNode
+}
+
+union PayObjectUnion = BookingNode
+
+enum PaymentMethod {
+  CASH
+  CARD
+  SQUARE_POS
+  SQUARE_ONLINE
+}
+
+input PerformanceMutationInput {
+  venue: ID
+  doorsOpen: DateTime
+  start: DateTime
+  end: DateTime
+  intervalDurationMins: Int
+  description: String
+  disabled: Boolean
+  capacity: Int
+  production: ID
+  id: ID
+  clientMutationId: String
+}
+
+type PerformanceMutationPayload {
+  performance: PerformanceNode
+  errors: [GQLErrorUnion]
+  success: Boolean
+  clientMutationId: String
+}
+
+type PerformanceNode implements Node {
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  production: ProductionNode!
+  venue: VenueNode
+  doorsOpen: DateTime
+  start: DateTime
+  end: DateTime
+  intervalDurationMins: Int
+  description: String
+  extraInformation: String
+  disabled: Boolean!
+  seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
+  capacity: Int
+  discounts(offset: Int, before: String, after: String, first: Int, last: Int, group: Boolean, id: ID): DiscountNodeConnection!
+  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, reference: String, user: ID, creator: ID, performance: ID, adminDiscountPercentage: Float, expiresAt: DateTime, id: ID, statusIn: [String], search: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection!
+  capacityRemaining: Int
+  ticketOptions: [PerformanceSeatGroupNode]
+  minSeatPrice: Int
+  durationMins: Int
+  isInperson: Boolean!
+  isOnline: Boolean!
+  soldOut: Boolean!
+  isBookable: Boolean!
+  ticketsBreakdown: PerformanceTicketsBreakdown!
+  salesBreakdown: SalesBreakdownNode
+}
+
+type PerformanceNodeConnection {
+  pageInfo: PageInfo!
+  edges: [PerformanceNodeEdge]!
+}
+
+type PerformanceNodeEdge {
+  node: PerformanceNode
+  cursor: String!
+}
+
+input PerformanceSeatGroupMutationInput {
+  seatGroup: ID
+  performance: ID
+  price: Int
+  capacity: Int
+  id: ID
+  clientMutationId: String
+}
+
+type PerformanceSeatGroupMutationPayload {
+  performanceSeatGroup: PerformanceSeatGroupNode
+  errors: [GQLErrorUnion]
+  success: Boolean
+  clientMutationId: String
+}
+
+type PerformanceSeatGroupNode implements Node {
+  seatGroup: SeatGroupNode!
+  performance: PerformanceNode!
+  price: Int!
+  capacity: Int!
+  id: ID!
+  capacityRemaining: Int
+  numberTicketsSold: Int
+  concessionTypes: [ConcessionTypeBookingType]
+}
+
+type PerformanceTicketsBreakdown {
+  totalCapacity: Int!
+  totalTicketsSold: Int!
+  totalTicketsCheckedIn: Int!
+  totalTicketsToCheckIn: Int!
+  totalTicketsAvailable: Int!
+}
+
+type PermissionNode {
+  name: String
+  description: String
+  userCanAssign: Boolean
+}
+
+type PriceBreakdownNode implements Node {
+  id: ID!
+  tickets: [PriceBreakdownTicketNode]
+  ticketsPrice: Int!
+  discountsValue: Int!
+  miscCosts: [MiscCostNode]
+  subtotalPrice: Int!
+  miscCostsValue: Int!
+  totalPrice: Int!
+  ticketsDiscountedPrice: Int!
+}
+
+type PriceBreakdownTicketNode {
+  ticketPrice: Int!
+  number: Int!
+  seatGroup: SeatGroupNode
+  concessionType: ConcessionTypeNode
+  totalPrice: Int!
+}
+
+input ProductionMutationInput {
+  name: String
+  slug: String
+  subtitle: String
+  society: ID
+  description: String
+  coverImage: ID
+  posterImage: ID
+  featuredImage: ID
+  ageRating: Int
+  facebookEvent: String
+  warnings: [ID]
+  id: ID
+  clientMutationId: String
+}
+
+type ProductionMutationPayload {
+  production: ProductionNode
+  errors: [GQLErrorUnion]
+  success: Boolean
+  clientMutationId: String
+}
+
+type ProductionNode implements Node {
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  name: String!
+  subtitle: String
+  description: String
+  venues: [VenueNode!]
+  society: SocietyNode
+  coverImage: ImageNode
+  posterImage: ImageNode
+  featuredImage: ImageNode
+  status: EnumNode
+  ageRating: Int
+  facebookEvent: String
+  warnings: [WarningNode!]
+  slug: String!
+  cast: [CastMemberNode!]
+  productionTeam: [ProductionTeamMemberNode!]
+  crew: [CrewMemberNode!]
+  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, intervalDurationMins: Int, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, hasBoxofficePermissions: Boolean, runOn: Date, orderBy: String): PerformanceNodeConnection!
+  assignedUsers: [UserPermissionsNode]
+  assignablePermissions: [PermissionNode]
+  permissions: [String]
+  start: DateTime
+  end: DateTime
+  isBookable: Boolean!
+  minSeatPrice: Int
+  salesBreakdown: SalesBreakdownNode
+  totalCapacity: Int!
+  totalTicketsSold: Int!
+}
+
+type ProductionNodeConnection {
+  pageInfo: PageInfo!
+  edges: [ProductionNodeEdge]!
+}
+
+type ProductionNodeEdge {
+  node: ProductionNode
+  cursor: String!
+}
+
+type ProductionPermissionsMutation {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type ProductionTeamMemberNode implements Node {
+  id: ID!
+  name: String!
+  role: String
+  production: ProductionNode!
+}
+
+type Query {
+  images: [ImageNode]
+  paymentDevices(paymentProvider: PaymentMethod, paired: Boolean): [SquarePaymentDevice]
+  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, reference: String, user: ID, creator: ID, performance: ID, adminDiscountPercentage: Float, expiresAt: DateTime, id: ID, statusIn: [String], search: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection
+  me: ExtendedUserNode
+  societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String, userHasPermission: String): SocietyNodeConnection
+  society(slug: String!): SocietyNode
+  productions(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, venues: [ID], society: ID, status: String, ageRating: Int, facebookEvent: String, warnings: [ID], slug: String, id: ID, userHasPermission: String, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, search: String, orderBy: String): ProductionNodeConnection
+  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, intervalDurationMins: Int, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, hasBoxofficePermissions: Boolean, runOn: Date, orderBy: String): PerformanceNodeConnection
+  warnings(offset: Int, before: String, after: String, first: Int, last: Int, id: ID): WarningNodeConnection
+  production(id: IdInputField, slug: String): ProductionNode
+  performance(id: ID!): PerformanceNode
+  venues(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String): VenueNodeConnection
+  venue(slug: String!): VenueNode
+}
+
+type RefreshToken {
+  token: String
+  payload: GenericScalar
+  success: Boolean
+  errors: [GQLErrorUnion]
+  refreshToken: String
+}
+
+type Register {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type RemoveSecondaryEmail {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type ReportNode {
+  datasets: [DataSetNode]
+  meta: [MetaItemNode]
+}
+
+input ReportOption {
+  name: String!
+  value: String!
+}
+
+type ResendActivationEmail {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type RevokeToken {
+  revoked: Int
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type SalesBreakdownNode {
+  totalSales: Int!
+  totalCardSales: Int!
+  totalRefunds: Int!
+  totalCardRefunds: Int!
+  netIncome: Int!
+  netCardIncome: Int!
+  providerPaymentValue: Int!
+  appPaymentValue: Int!
+  societyTransferValue: Int!
+  societyRevenue: Int!
+}
+
+type SeatGroupNode implements Node {
+  name: String!
+  description: String
+  venue: VenueNode!
+  capacity: Int
+  isInternal: Boolean!
+  id: ID!
+}
+
+type SeatGroupNodeConnection {
+  pageInfo: PageInfo!
+  edges: [SeatGroupNodeEdge]!
+}
+
+type SeatGroupNodeEdge {
+  node: SeatGroupNode
+  cursor: String!
+}
+
+type SeatNode implements Node {
+  row: String
+  number: String
+  id: ID!
+}
+
+type SendPasswordResetEmail {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type SendSecondaryEmailActivation {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type SetProductionStatus {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type SocietyNode implements Node {
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  name: String!
+  slug: String!
+  description: String!
+  logo: ImageNode!
+  banner: ImageNode!
+  website: String
+  contact: String
+  members: [ExtendedUserNode!]!
+  productions(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, venues: [ID], society: ID, status: String, ageRating: Int, facebookEvent: String, warnings: [ID], slug: String, id: ID, userHasPermission: String, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, search: String, orderBy: String): ProductionNodeConnection!
+  permissions: [String]
+}
+
+type SocietyNodeConnection {
+  pageInfo: PageInfo!
+  edges: [SocietyNodeEdge]!
+}
+
+type SocietyNodeEdge {
+  node: SocietyNode
+  cursor: String!
+}
+
+type SquarePaymentDevice {
+  id: String
+  name: String
+  code: String
+  deviceId: String
+  locationId: String
+  productType: String
+  status: String
+}
+
+enum Status {
+  DRAFT
+  PENDING
+  APPROVED
+  PUBLISHED
+  CLOSED
+  COMPLETE
+}
+
+type SwapEmails {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+input TicketIDInput {
+  ticketId: IdInputField!
+}
+
+input TicketInputType {
+  seatGroupId: IdInputField!
+  concessionTypeId: IdInputField!
+  seatId: IdInputField
+  id: IdInputField
+}
+
+type TicketNode implements Node {
+  id: ID!
+  seatGroup: SeatGroupNode!
+  booking: BookingNode!
+  concessionType: ConcessionTypeNode!
+  seat: SeatNode
+  checkedIn: Boolean!
+}
+
+type TransactionNode implements Node {
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  type: EnumNode
+  status: EnumNode
+  providerTransactionId: String
+  value: Int!
+  currency: String!
+  cardBrand: String
+  last4: String
+  providerFee: Int
+  appFee: Int
+  url: String
+  payObject: PayObjectUnion
+  provider: EnumNode
+  providerName: EnumNode
+}
+
+type TransactionNodeConnection {
+  pageInfo: PageInfo!
+  edges: [TransactionNodeEdge]!
+}
+
+type TransactionNodeEdge {
+  node: TransactionNode
+  cursor: String!
+}
+
+type UnCheckInBooking {
+  success: Boolean
+  errors: [GQLErrorUnion]
+  performance: PerformanceNode
+  booking: BookingNode
+}
+
+type UpdateAccount {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type UserNode implements Node {
+  lastLogin: DateTime
+  isSuperuser: Boolean!
+  firstName: String!
+  lastName: String!
+  isStaff: Boolean!
+  isActive: Boolean!
+  dateJoined: DateTime!
+  id: ID!
+  email: String!
+  societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String, userHasPermission: String): SocietyNodeConnection!
+  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, reference: String, user: ID, creator: ID, performance: ID, adminDiscountPercentage: Float, expiresAt: DateTime, id: ID, statusIn: [String], search: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection!
+  createdBookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, reference: String, user: ID, creator: ID, performance: ID, adminDiscountPercentage: Float, expiresAt: DateTime, id: ID, statusIn: [String], search: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection!
+  pk: Int
+  archived: Boolean
+  verified: Boolean
+  secondaryEmail: String
+}
+
+type UserPermissionsNode {
+  user: ExtendedUserNode
+  assignedPermissions: [String]
+}
+
+type VenueNode implements Node {
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  name: String!
+  internalCapacity: Int!
+  description: String
+  address: AddressNode!
+  image: ImageNode!
+  publiclyListed: Boolean!
+  slug: String!
+  seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
+  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, intervalDurationMins: Int, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, hasBoxofficePermissions: Boolean, runOn: Date, orderBy: String): PerformanceNodeConnection!
+  productionSet(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, venues: [ID], society: ID, status: String, ageRating: Int, facebookEvent: String, warnings: [ID], slug: String, id: ID, userHasPermission: String, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, search: String, orderBy: String): ProductionNodeConnection!
+  productions(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, venues: [ID], society: ID, status: String, ageRating: Int, facebookEvent: String, warnings: [ID], slug: String, id: ID, userHasPermission: String, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, search: String, orderBy: String): ProductionNodeConnection
+}
+
+type VenueNodeConnection {
+  pageInfo: PageInfo!
+  edges: [VenueNodeEdge]!
+}
+
+type VenueNodeEdge {
+  node: VenueNode
+  cursor: String!
+}
+
+type VerifyAccount {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type VerifySecondaryEmail {
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type VerifyToken {
+  payload: GenericScalar
+  success: Boolean
+  errors: [GQLErrorUnion]
+}
+
+type WarningNode implements Node {
+  description: String!
+  id: ID!
+}
+
+type WarningNodeConnection {
+  pageInfo: PageInfo!
+  edges: [WarningNodeEdge]!
+}
+
+type WarningNodeEdge {
+  node: WarningNode
+  cursor: String!
+}
