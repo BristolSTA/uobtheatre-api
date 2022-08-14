@@ -35,25 +35,27 @@ def convert_form_field_to_string(field):
 class ProductionForm(MutationForm):
     """Form for productions"""
 
-    warnings = ProductionWarningListField(required=False)
+    contentWarnings = ProductionWarningListField(required=False)
 
     def clean(self):
         """Validate form data on clean"""
         cleaned_data = super().clean()
-        warnings = cleaned_data.get("warnings", []) or []
+        warnings = cleaned_data.get("contentWarnings", []) or []
         for warning in warnings:
             if not ContentWarning.objects.filter(pk=warning["id"]).exists():
                 raise ValidationError(
-                    {"warnings": f"A warning with ID {warning['id']} does not exist"}
+                    {
+                        "contentWarnings": f"A warning with ID {warning['id']} does not exist"
+                    }
                 )
 
     def _save_m2m(self):
         """Save the many-to-many relations"""
         super()._save_m2m()
-        if not self.cleaned_data.get("warnings") is None:
+        if not self.cleaned_data.get("contentWarnings") is None:
             ProductionContentWarning.objects.filter(production=self.instance).delete()
 
-        warnings = self.cleaned_data.get("warnings", []) or []
+        warnings = self.cleaned_data.get("contentWarnings", []) or []
         for warning in warnings:
             ProductionContentWarning.objects.create(
                 production=self.instance,

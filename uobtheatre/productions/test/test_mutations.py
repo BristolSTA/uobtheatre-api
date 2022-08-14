@@ -206,7 +206,7 @@ def test_production_mutation_warnings(gql_client):
           production(
             input: {
                 id: "%s"
-                warnings: [
+                contentWarnings: [
                     {id: "%s", information: "Some more information about upsetting scenes"}
                     {id: "%s"}
                 ]

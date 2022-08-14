@@ -12,13 +12,13 @@ def test_production_form_invalid_warning_id():
     production = ProductionFactory()
     form = ProductionForm(
         data={
-            "warnings": [{"id": "1234"}],
+            "contentWarnings": [{"id": "1234"}],
             "production": production.id,
         },
         instance=production,
     )
 
-    assert form.errors == {"warnings": ["A warning with ID 1234 does not exist"]}
+    assert form.errors == {"contentWarnings": ["A warning with ID 1234 does not exist"]}
 
 
 @pytest.mark.django_db
