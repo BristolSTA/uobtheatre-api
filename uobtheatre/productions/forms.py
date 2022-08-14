@@ -42,9 +42,9 @@ class ProductionForm(MutationForm):
         cleaned_data = super().clean()
         warnings = cleaned_data.get("warnings", []) or []
         for warning in warnings:
-            if not ContentWarning.objects.filter(pk=warning.id).exists():
+            if not ContentWarning.objects.filter(pk=warning["id"]).exists():
                 raise ValidationError(
-                    {"warnings": f"A warning with ID {warning.id} does not exist"}
+                    {"warnings": f"A warning with ID {warning['id']} does not exist"}
                 )
 
     def _save_m2m(self):

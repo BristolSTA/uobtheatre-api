@@ -344,11 +344,9 @@ class PerformanceNode(DjangoObjectType):
     def resolve_min_seat_price(self, info):
         return self.min_seat_price()
 
-    # pylint: disable=no-self-use
     def resolve_is_inperson(self, info):
         return True
 
-    # pylint: disable=no-self-use
     def resolve_is_online(self, info):
         return False
 
@@ -405,7 +403,6 @@ class Query(graphene.ObjectType):
     )
     performance = relay.Node.Field(PerformanceNode)
 
-    # pylint: disable=no-self-use
     def resolve_production(self, info, **args):  # pylint: disable=redefined-builtin
         if all(arg is None for arg in args.values()):
             return None

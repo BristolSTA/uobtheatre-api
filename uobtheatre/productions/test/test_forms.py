@@ -2,9 +2,23 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from uobtheatre.productions.forms import PerformanceForm
+from uobtheatre.productions.forms import PerformanceForm, ProductionForm
 from uobtheatre.productions.test.factories import ProductionFactory
 from uobtheatre.venues.test.factories import VenueFactory
+
+
+@pytest.mark.django_db
+def test_production_form_invalid_warning_id():
+    production = ProductionFactory()
+    form = ProductionForm(
+        data={
+            "warnings": [{"id": "1234"}],
+            "production": production.id,
+        },
+        instance=production,
+    )
+
+    assert form.errors == {"warnings": ["A warning with ID 1234 does not exist"]}
 
 
 @pytest.mark.django_db
