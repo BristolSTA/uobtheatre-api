@@ -275,6 +275,7 @@ class BookingNode(GrapheneEnumMixin, DjangoObjectType):
     class Meta:
         model = Booking
         filterset_class = BookingFilter
+        exclude = ("_transfered_to",)
         interfaces = (relay.Node,)
 
 
