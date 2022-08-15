@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, Optional
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
-from uobtheatre.payments.exceptions import TransferUnpaidPayableException
 from uobtheatre.payments.models import SalesBreakdown, Transaction
 from uobtheatre.payments.payables import Payable
 
@@ -23,11 +22,6 @@ class Transferable(Payable):
     transfered_from = models.OneToOneField(
         "self", on_delete=models.RESTRICT, null=True, related_name="_transfered_to"
     )
-
-    def check_can_be_transfered(self):
-        """Checks if it is possible to transfer this object in its current state"""
-        if self.status != Payable.Status.PAID:
-            raise TransferUnpaidPayableException(self.get_status_display())
 
     @property
     def transfered_to(self) -> Optional["Transferable"]:
