@@ -47,7 +47,6 @@ type BookingNode implements Node {
   performance: PerformanceNode!
   adminDiscountPercentage: Float!
   expiresAt: DateTime!
-  TransferedTo: BookingNode
   tickets: [TicketNode!]
   priceBreakdown: PriceBreakdownNode
   transactions(offset: Int, before: String, after: String, first: Int, last: Int, type: String, provider: String, createdAt: DateTime, id: ID): TransactionNodeConnection
