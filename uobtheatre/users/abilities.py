@@ -52,7 +52,7 @@ class Ability(abc.ABC):
         return False
 
     @classmethod
-    def user_has_for(cls, user, obj) -> bool:  # pylint: disable=unused-argument
+    def user_has_for(cls, user, *objs) -> bool:  # pylint: disable=unused-argument
         """Returns whether the user has the ability for a specific object
 
         Args:

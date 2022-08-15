@@ -21,6 +21,7 @@ from uobtheatre.mail.composer import MailComposer
 from uobtheatre.payments.exceptions import (
     CantBePaidForException,
     CantBeRefundedException,
+    TransferCheckedInTicketsException,
 )
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable, PayableQuerySet
@@ -592,22 +593,6 @@ class Booking(TimeStampedMixin, Transferable):
         clone.reference = create_short_uuid()
         return clone
 
-    def _check_transfer_performance(self, performance: "Performance"):
-        """
-        Check that the performance can facilitate the transfer of this booking
-        to it
-        """
-        if self.performance == performance:
-            raise BookingTransferPerformanceUnchangedException
-
-        if self.performance.production != performance.production:
-            raise BookingTransferToDifferentProductionException
-
-        if not BookForPerformance.user_has_for(self.user, performance):
-            raise NotBookableException(
-                message="The transfer target performance is not able to be booked at the moment"
-            )
-
     def create_transfer(self, performance: "Performance") -> "Booking":
         """
         Create an in progress booking to transfer the booking to a different
@@ -621,9 +606,6 @@ class Booking(TimeStampedMixin, Transferable):
         Once the new booking is COMPLETE, the original booking will be
         cancelled.
         """
-
-        super().check_can_be_transfered()
-        self._check_transfer_performance(performance)
 
         # This will delete any exisiting IN_PROGRESS booking that the user has
         # for this performance (this includes transfers)

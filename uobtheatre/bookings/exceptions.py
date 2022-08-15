@@ -15,3 +15,7 @@ class BookingTransferToDifferentProductionException(GQLException):
         super().__init__(
             "A booking can only be transfered to a performance of the same production"
         )
+
+class BookingTransferCheckedInTicketsException(GQLException):
+    def __init__(self) -> None:
+        super().__init__(f"Cannot transfer a booking with checked in tickets")
