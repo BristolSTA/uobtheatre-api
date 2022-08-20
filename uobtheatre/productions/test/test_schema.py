@@ -43,7 +43,11 @@ def test_productions_schema(gql_client):
     production = ProductionFactory()
     performances = [PerformanceFactory(production=production) for i in range(2)]
 
-    warnings = [ContentWarningFactory() for i in range(3)]
+    warnings = [
+        ContentWarningFactory(short_description="A"),
+        ContentWarningFactory(short_description="B"),
+        ContentWarningFactory(short_description="C"),
+    ]
     production.content_warnings.set(warnings)
 
     cast = [CastMemberFactory(production=production) for i in range(10)]

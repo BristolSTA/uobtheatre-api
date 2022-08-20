@@ -221,7 +221,7 @@ class ProductionNode(
         return self.total_tickets_sold
 
     def resolve_content_warnings(self, info):
-        return self.warnings_pivot.all()
+        return self.warnings_pivot.order_by("warning__short_description").all()
 
     @classmethod
     def get_queryset(cls, queryset, info):
