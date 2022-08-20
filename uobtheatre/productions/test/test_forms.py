@@ -1,9 +1,14 @@
 from datetime import datetime, timedelta
 
 import pytest
+from pytest_django.asserts import assertQuerysetEqual
 
 from uobtheatre.productions.forms import PerformanceForm, ProductionForm
-from uobtheatre.productions.test.factories import ProductionFactory
+from uobtheatre.productions.models import ProductionContentWarning
+from uobtheatre.productions.test.factories import (
+    ContentWarningFactory,
+    ProductionFactory,
+)
 from uobtheatre.venues.test.factories import VenueFactory
 
 
@@ -19,6 +24,46 @@ def test_production_form_invalid_warning_id():
     )
 
     assert form.errors == {"contentWarnings": ["A warning with ID 1234 does not exist"]}
+
+
+@pytest.mark.django_db
+def test_production_form_empty_warnings_list():
+    production = ProductionFactory()
+    warning = ContentWarningFactory()
+    ProductionContentWarning.objects.create(warning=warning, production=production)
+
+    assertQuerysetEqual(production.content_warnings.all(), [warning])
+
+    form = ProductionForm(
+        data={
+            "contentWarnings": [],
+            "production": production.id,
+        },
+        instance=production,
+    )
+
+    form.save()
+    assertQuerysetEqual(production.content_warnings.all(), [])
+
+
+@pytest.mark.django_db
+def test_production_form_null_warnings():
+    production = ProductionFactory()
+    warning = ContentWarningFactory()
+    ProductionContentWarning.objects.create(warning=warning, production=production)
+
+    assertQuerysetEqual(production.content_warnings.all(), [warning])
+
+    form = ProductionForm(
+        data={
+            "contentWarnings": None,
+            "production": production.id,
+        },
+        instance=production,
+    )
+
+    form.save()
+    assertQuerysetEqual(production.content_warnings.all(), [warning])
 
 
 @pytest.mark.django_db

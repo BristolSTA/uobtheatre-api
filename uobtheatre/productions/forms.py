@@ -40,7 +40,8 @@ class ProductionForm(MutationForm):
     def clean(self):
         """Validate form data on clean"""
         cleaned_data = super().clean()
-        warnings = cleaned_data.get("contentWarnings", []) or []
+        warnings = cleaned_data.get("contentWarnings") or []
+
         for warning in warnings:
             if not ContentWarning.objects.filter(pk=warning["id"]).exists():
                 raise ValidationError(
@@ -52,16 +53,16 @@ class ProductionForm(MutationForm):
     def _save_m2m(self):
         """Save the many-to-many relations"""
         super()._save_m2m()
-        if not self.cleaned_data.get("contentWarnings") is None:
+
+        if (warnings := self.cleaned_data.get("contentWarnings")) is not None:
             ProductionContentWarning.objects.filter(production=self.instance).delete()
 
-        warnings = self.cleaned_data.get("contentWarnings", []) or []
-        for warning in warnings:
-            ProductionContentWarning.objects.create(
-                production=self.instance,
-                warning_id=warning.id,
-                information=warning.information,
-            )
+            for warning in warnings:
+                ProductionContentWarning.objects.create(
+                    production=self.instance,
+                    warning_id=warning.id,
+                    information=warning.information,
+                )
 
     class Meta:
         model = Production
