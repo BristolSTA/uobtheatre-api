@@ -291,9 +291,17 @@ class Transfer(TimeStampedMixin, BaseModel):
         INTERNAL = "INTERNAL", "Internal"
         BACS = "BACS", "BACS"
 
-    subject = models.Q(
-        app_label="societies", model="society"
-    )  # Who the transfer was to
+    subject = GenericForeignKey("pay_object_type", "pay_object_id")  # type: ignore
+
+    subject_type = models.ForeignKey(
+        ContentType,
+        on_delete=models.CASCADE,
+        limit_choices_to=models.Q(app_label="societies", model="society"),
+    )
+    subject_id = models.PositiveIntegerField()
+
+    subject = GenericForeignKey("subject_type", "subject_id")  # type: ignore
+
     value = models.PositiveIntegerField()  # The amount transfered
     user = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True
@@ -303,6 +311,9 @@ class Transfer(TimeStampedMixin, BaseModel):
         choices=Method.choices,
     )
     reason = models.TextField(null=True)  # Optional reason for transfer
+
+    class Meta:
+        permissions = (("create_transfer", "Create a transfer entry"),)
 
 
 TOTAL_PROVIDER_FEE = Coalesce(

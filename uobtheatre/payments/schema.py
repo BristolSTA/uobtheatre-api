@@ -4,7 +4,7 @@ from graphene import relay
 from graphene_django import DjangoObjectType
 
 from uobtheatre.bookings.schema import BookingNode
-from uobtheatre.payments.models import Transaction
+from uobtheatre.payments.models import Transaction, Transfer
 from uobtheatre.payments.transaction_providers import (
     PaymentProvider,
     SquarePOS,
@@ -69,6 +69,11 @@ class TransactionNode(GrapheneEnumMixin, DjangoObjectType):
         exclude = ("pay_object_id", "pay_object_type", "provider_name")
 
 
+class TransferNode(DjangoObjectType):
+    class Meta:
+        model = Transfer
+
+
 class Query(graphene.ObjectType):
     """
     Base query for payments
@@ -82,7 +87,7 @@ class Query(graphene.ObjectType):
 
     def resolve_payment_devices(
         self, info, payment_provider: str = None, paired: bool = None
-    ):
+    ):  # pylint: disable=no-self-use
         """
         Returns square payment devices.
 
