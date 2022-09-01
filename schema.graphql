@@ -327,6 +327,7 @@ type Mutation {
   deletePerformanceSeatGroup(id: IdInputField!): DeletePerformanceSeatGroupMutation
   setProductionStatus(message: String, productionId: IdInputField!, status: Status): SetProductionStatus
   cancelPayment(paymentId: IdInputField!): CancelPayment
+  recordTransfer(method: TransferMethodEnum, subjectId: IdInputField!, subjectType: SubjectType, value: Int): RecordTransfer
   generateReport(endTime: DateTime, name: String!, options: [ReportOption], startTime: DateTime): GenerateReport
   booking(input: BookingMutationInput!): BookingMutationPayload
   deleteBooking(id: IdInputField!): DeleteBooking
@@ -632,6 +633,12 @@ type Query {
   venue(slug: String!): VenueNode
 }
 
+type RecordTransfer {
+  success: Boolean
+  errors: [GQLErrorUnion]
+  transfer: TransferNode
+}
+
 type RefreshToken {
   token: String
   payload: GenericScalar
@@ -769,6 +776,10 @@ enum Status {
   COMPLETE
 }
 
+enum SubjectType {
+  SOCIETY
+}
+
 type SwapEmails {
   success: Boolean
   errors: [GQLErrorUnion]
@@ -823,6 +834,27 @@ type TransactionNodeEdge {
   cursor: String!
 }
 
+enum TransferMethod {
+  INTERNAL
+  BACS
+}
+
+enum TransferMethodEnum {
+  INTERNAL
+  BACS
+}
+
+type TransferNode {
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  subjectId: Int!
+  value: Int!
+  user: ExtendedUserNode
+  method: TransferMethod!
+  reason: String
+}
+
 type UnCheckInBooking {
   success: Boolean
   errors: [GQLErrorUnion]
@@ -845,6 +877,7 @@ type UserNode implements Node {
   dateJoined: DateTime!
   id: ID!
   email: String!
+  transferSet: [TransferNode!]!
   societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String, userHasPermission: String): SocietyNodeConnection!
   bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, reference: String, user: ID, creator: ID, performance: ID, adminDiscountPercentage: Float, expiresAt: DateTime, id: ID, statusIn: [String], search: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection!
   createdBookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, reference: String, user: ID, creator: ID, performance: ID, adminDiscountPercentage: Float, expiresAt: DateTime, id: ID, statusIn: [String], search: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection!
