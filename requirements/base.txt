@@ -7,13 +7,13 @@ django-autoslug==1.9.8
 shortuuid>=1.0.1
 
 # Filtering
-django-filter==21.1
+django-filter==22.1
 
 # Something to do with images
 Pillow>=8.1.2
 
 # Cors
-django-cors-headers==3.12.0
+django-cors-headers==3.13.0
 
 # Admin confirmation messages
 django-admin-confirm==0.2.5
@@ -22,7 +22,7 @@ django-admin-confirm==0.2.5
 django-configurations==2.3.2
 
 # Django config
-django-environ==0.8.1  # https://github.com/joke2k/django-environ
+django-environ==0.9.0  # https://github.com/joke2k/django-environ
 
 # Spreadsheet generation
 xlsxwriter==3.0.3
@@ -36,14 +36,14 @@ psycopg2==2.9.3  # https://github.com/psycopg/psycopg2
 
 #=== Django core ===#
 
-django==3.2.13
+django==3.2.15
 
 #=== Django Extras ===#
 
 django-guardian==2.4.0  # https://github.com/django-guardian/django-guardian
 django_tiptap==0.0.10  # https://github.com/django-tiptap/django_tiptap
 djangorestframework==3.13.1  # https://www.django-rest-framework.org
-django-nonrelated-inlines==0.1.1
+django-nonrelated-inlines==0.2
 
 #=== GQL core ===#
 
@@ -63,17 +63,17 @@ squareup>=9.0.0.20210226
 
 #=== Logging ===#
 
-sentry-sdk==1.5.12
-whitenoise==6.1.0  # https://github.com/evansd/whitenoise
+sentry-sdk==1.9.6
+whitenoise==6.2.0  # https://github.com/evansd/whitenoise
 
 #=== Email ===#
 django-anymail[amazon_ses]==8.6  # https://github.com/anymail/django-anymail
 django-inlinecss==0.3.0
 
 #=== Timezones ===#
-timezonefinder==6.0.0
-pytz==2022.1
+timezonefinder==6.1.1
+pytz==2022.2.1
 
 #=== Task Queue ===#
 django-celery-results==2.2.0
-redis==4.3.1
+redis==4.3.4

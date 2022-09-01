@@ -120,7 +120,7 @@ class PeriodTotalsBreakdown(TimeScopedReport):
 
         self.meta.append(MetaItem("No. of Payments", str(len(payments))))
         self.meta.append(
-            MetaItem("Total Income", str(sum([payment.value for payment in payments])))
+            MetaItem("Total Income", str(sum(payment.value for payment in payments)))
         )
 
         for payment in payments:
@@ -291,7 +291,7 @@ class OutstandingSocietyPayments(Report):
         self.meta.append(
             MetaItem(
                 "Total Outstanding",
-                str(sum([row[2] for row in societies_dataset.data])),
+                str(sum(row[2] for row in societies_dataset.data)),
             )
         )
 
