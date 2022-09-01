@@ -327,7 +327,7 @@ type Mutation {
   deletePerformanceSeatGroup(id: IdInputField!): DeletePerformanceSeatGroupMutation
   setProductionStatus(message: String, productionId: IdInputField!, status: Status): SetProductionStatus
   cancelPayment(paymentId: IdInputField!): CancelPayment
-  recordTransfer(method: TransferMethodEnum, subjectId: IdInputField!, subjectType: SubjectType, value: Int): RecordTransfer
+  recordTransfer(method: TransferMethodEnum, subjectId: IdInputField!, value: Int): RecordTransfer
   generateReport(endTime: DateTime, name: String!, options: [ReportOption], startTime: DateTime): GenerateReport
   booking(input: BookingMutationInput!): BookingMutationPayload
   deleteBooking(id: IdInputField!): DeleteBooking
@@ -774,10 +774,6 @@ enum Status {
   PUBLISHED
   CLOSED
   COMPLETE
-}
-
-enum SubjectType {
-  SOCIETY
 }
 
 type SwapEmails {
