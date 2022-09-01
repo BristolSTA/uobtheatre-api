@@ -278,21 +278,21 @@
     }
   },
   {
-    "model": "productions.audiencewarning",
+    "model": "productions.ContentWarning",
     "pk": 1,
     "fields": {
       "description": "Strobe"
     }
   },
   {
-    "model": "productions.audiencewarning",
+    "model": "productions.ContentWarning",
     "pk": 2,
     "fields": {
       "description": "Nudity"
     }
   },
   {
-    "model": "productions.audiencewarning",
+    "model": "productions.ContentWarning",
     "pk": 3,
     "fields": {
       "description": "Pyro"

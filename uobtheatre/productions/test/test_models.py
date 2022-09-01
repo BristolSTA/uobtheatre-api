@@ -33,8 +33,8 @@ from uobtheatre.productions.exceptions import (
 )
 from uobtheatre.productions.models import Performance, PerformanceSeatGroup, Production
 from uobtheatre.productions.test.factories import (
-    AudienceWarningFactory,
     CastMemberFactory,
+    ContentWarningFactory,
     CrewMemberFactory,
     CrewRoleFactory,
     PerformanceFactory,
@@ -167,8 +167,8 @@ def test_price_with_concession():
 
 @pytest.mark.django_db
 def test_str_warning():
-    warning = AudienceWarningFactory()
-    assert str(warning) == warning.description
+    warning = ContentWarningFactory()
+    assert str(warning) == warning.short_description
 
 
 @pytest.mark.django_db

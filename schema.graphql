@@ -528,6 +528,23 @@ type PriceBreakdownTicketNode {
   totalPrice: Int!
 }
 
+type ProductionContentWarningNode implements Node {
+  id: ID!
+  production: ProductionNode!
+  warning: WarningNode!
+  information: String
+}
+
+type ProductionContentWarningNodeConnection {
+  pageInfo: PageInfo!
+  edges: [ProductionContentWarningNodeEdge]!
+}
+
+type ProductionContentWarningNodeEdge {
+  node: ProductionContentWarningNode
+  cursor: String!
+}
+
 input ProductionMutationInput {
   name: String
   slug: String
@@ -539,7 +556,7 @@ input ProductionMutationInput {
   featuredImage: ID
   ageRating: Int
   facebookEvent: String
-  warnings: [ID]
+  contentWarnings: [ProductionWarning]
   id: ID
   clientMutationId: String
 }
@@ -566,8 +583,10 @@ type ProductionNode implements Node {
   status: EnumNode
   ageRating: Int
   facebookEvent: String
-  warnings: [WarningNode!]
+  supportEmail: String!
+  contentWarnings: [ProductionContentWarningNode!]
   slug: String!
+  warningsPivot(offset: Int, before: String, after: String, first: Int, last: Int): ProductionContentWarningNodeConnection!
   cast: [CastMemberNode!]
   productionTeam: [ProductionTeamMemberNode!]
   crew: [CrewMemberNode!]
@@ -606,6 +625,11 @@ type ProductionTeamMemberNode implements Node {
   production: ProductionNode!
 }
 
+input ProductionWarning {
+  information: String
+  id: IdInputField!
+}
+
 type Query {
   images: [ImageNode]
   paymentDevices(paymentProvider: PaymentMethod, paired: Boolean): [SquarePaymentDevice]
@@ -613,7 +637,7 @@ type Query {
   me: ExtendedUserNode
   societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String, userHasPermission: String): SocietyNodeConnection
   society(slug: String!): SocietyNode
-  productions(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, venues: [ID], society: ID, status: String, ageRating: Int, facebookEvent: String, warnings: [ID], slug: String, id: ID, userHasPermission: String, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, search: String, orderBy: String): ProductionNodeConnection
+  productions(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, venues: [ID], society: ID, status: String, ageRating: Int, facebookEvent: String, supportEmail: String, contentWarnings: [ID], slug: String, id: ID, userHasPermission: String, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, search: String, orderBy: String): ProductionNodeConnection
   performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, intervalDurationMins: Int, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, hasBoxofficePermissions: Boolean, runOn: Date, orderBy: String): PerformanceNodeConnection
   warnings(offset: Int, before: String, after: String, first: Int, last: Int, id: ID): WarningNodeConnection
   production(id: IdInputField, slug: String): ProductionNode
@@ -727,7 +751,7 @@ type SocietyNode implements Node {
   website: String
   contact: String
   members: [ExtendedUserNode!]!
-  productions(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, venues: [ID], society: ID, status: String, ageRating: Int, facebookEvent: String, warnings: [ID], slug: String, id: ID, userHasPermission: String, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, search: String, orderBy: String): ProductionNodeConnection!
+  productions(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, venues: [ID], society: ID, status: String, ageRating: Int, facebookEvent: String, supportEmail: String, contentWarnings: [ID], slug: String, id: ID, userHasPermission: String, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, search: String, orderBy: String): ProductionNodeConnection!
   permissions: [String]
 }
 
@@ -863,8 +887,8 @@ type VenueNode implements Node {
   slug: String!
   seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
   performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, intervalDurationMins: Int, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, hasBoxofficePermissions: Boolean, runOn: Date, orderBy: String): PerformanceNodeConnection!
-  productionSet(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, venues: [ID], society: ID, status: String, ageRating: Int, facebookEvent: String, warnings: [ID], slug: String, id: ID, userHasPermission: String, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, search: String, orderBy: String): ProductionNodeConnection!
-  productions(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, venues: [ID], society: ID, status: String, ageRating: Int, facebookEvent: String, warnings: [ID], slug: String, id: ID, userHasPermission: String, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, search: String, orderBy: String): ProductionNodeConnection
+  productionSet(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, venues: [ID], society: ID, status: String, ageRating: Int, facebookEvent: String, supportEmail: String, contentWarnings: [ID], slug: String, id: ID, userHasPermission: String, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, search: String, orderBy: String): ProductionNodeConnection!
+  productions(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, venues: [ID], society: ID, status: String, ageRating: Int, facebookEvent: String, supportEmail: String, contentWarnings: [ID], slug: String, id: ID, userHasPermission: String, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, search: String, orderBy: String): ProductionNodeConnection
 }
 
 type VenueNodeConnection {
@@ -894,7 +918,8 @@ type VerifyToken {
 }
 
 type WarningNode implements Node {
-  description: String!
+  shortDescription: String!
+  longDescription: String
   id: ID!
 }
 
