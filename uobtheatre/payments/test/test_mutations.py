@@ -131,7 +131,7 @@ def test_record_transfer(gql_client):
     response = gql_client.execute(
         """
         mutation {
-            recordTransfer(subjectId: "%s", subjectType: SOCIETY, value: 1050, method: INTERNAL) {
+            recordTransfer(subjectId: "%s", value: 1050, method: INTERNAL) {
                 success
             }
         }
@@ -151,7 +151,7 @@ def test_record_transfer_fails_without_permission(gql_client):
     response = gql_client.execute(
         """
         mutation {
-            recordTransfer(subjectId: "%s", subjectType: SOCIETY, value: 1050, method: INTERNAL) {
+            recordTransfer(subjectId: "%s", value: 1050, method: INTERNAL) {
                 success
                 errors {
                     ... on FieldError {
@@ -181,7 +181,7 @@ def test_record_transfer_fails_with_invalid_society(gql_client):
     response = gql_client.execute(
         """
         mutation {
-            recordTransfer(subjectId: "%s", subjectType: SOCIETY, value: 1050, method: INTERNAL) {
+            recordTransfer(subjectId: "%s", value: 1050, method: INTERNAL) {
                 success
                 errors {
                     ... on FieldError {

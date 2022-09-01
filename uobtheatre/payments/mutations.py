@@ -9,7 +9,6 @@ from uobtheatre.utils.exceptions import (
 from uobtheatre.utils.schema import AuthRequiredMixin, IdInputField
 
 from ..societies.models import Society
-from ..utils.validators import ValidationError
 from .schema import TransferNode
 
 
@@ -52,9 +51,6 @@ class RecordTransfer(AuthRequiredMixin, SafeMutation):
 
     class Arguments:
         subject_id = IdInputField(required=True)
-        subject_type = graphene.Argument(
-            graphene.Enum("SubjectType", [("SOCIETY", "SOCIETY")])
-        )
         value = graphene.Int()
         method = graphene.Argument(
             graphene.Enum("TransferMethodEnum", Transfer.Method.choices)
@@ -66,15 +62,9 @@ class RecordTransfer(AuthRequiredMixin, SafeMutation):
             raise AuthorizationException
 
     @classmethod
-    def resolve_mutation(cls, _, info, subject_id, subject_type, value, method):
+    def resolve_mutation(cls, _, info, subject_id, value, method):
         # Find the subject
-        subject = None
-
-        if subject_type == "SOCIETY":
-            subject = Society.objects.get(pk=subject_id)
-
-        if not subject:
-            raise ValidationError(f"A subject with ID {subject_id} was not found")
+        subject = Society.objects.get(pk=subject_id)
 
         # Create the transfer
         transfer = Transfer.objects.create(
