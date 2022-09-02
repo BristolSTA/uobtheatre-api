@@ -314,10 +314,16 @@
       "age_rating": null,
       "facebook_event": null,
       "slug": "legally-ginger",
-      "status": "PUBLISHED",
-      "warnings": [
-        2
-      ]
+      "status": "PUBLISHED"
+    }
+  },
+  {
+    "model": "productions.productioncontentwarning",
+    "pk": 1,
+    "fields": {
+      "production": 1,
+      "warning": 2,
+      "information": "Additional warning info"
     }
   },
   {
@@ -336,8 +342,7 @@
       "age_rating": 18,
       "facebook_event": null,
       "slug": "rocky-horror",
-      "status": "PUBLISHED",
-      "warnings": []
+      "status": "PUBLISHED"
     }
   },
   {
@@ -356,10 +361,15 @@
       "age_rating": 16,
       "facebook_event": "https://facebook.com/bosw",
       "slug": "bosw-2021",
-      "status": "PUBLISHED",
-      "warnings": [
-        3
-      ]
+      "status": "PUBLISHED"
+    }
+  },
+  {
+    "model": "productions.productioncontentwarning",
+    "pk": 2,
+    "fields": {
+      "production": 1,
+      "warning": 3
     }
   },
   {
@@ -378,8 +388,7 @@
       "age_rating": null,
       "facebook_event": "https://facebook.com/trash",
       "slug": "trash",
-      "status": "PUBLISHED",
-      "warnings": []
+      "status": "PUBLISHED"
     }
   },
   {
@@ -398,8 +407,7 @@
       "age_rating": null,
       "facebook_event": null,
       "slug": "anoldshow",
-      "status": "COMPLETE",
-      "warnings": []
+      "status": "COMPLETE"
     }
   },
   {
@@ -418,8 +426,7 @@
       "age_rating": null,
       "facebook_event": null,
       "slug": "draft-production",
-      "status": "DRAFT",
-      "warnings": []
+      "status": "DRAFT"
     }
   },
   {
@@ -514,9 +521,9 @@
       "updated_at": "2021-07-28T11:45:55.736Z",
       "production": 1,
       "venue": 1,
-      "doors_open": "2021-12-01T18:00:00Z",
-      "start": "2021-12-01T18:30:00Z",
-      "end": "2021-12-01T22:00:00Z",
+      "doors_open": "2023-12-01T18:00:00Z",
+      "start": "2023-12-01T18:30:00Z",
+      "end": "2023-12-01T22:00:00Z",
       "description": "",
       "extra_information": "",
       "disabled": false,
@@ -531,9 +538,9 @@
       "updated_at": "2021-07-28T09:36:39.061Z",
       "production": 1,
       "venue": 1,
-      "doors_open": "2021-12-02T18:00:00Z",
-      "start": "2021-12-02T18:30:00Z",
-      "end": "2021-12-02T22:00:00Z",
+      "doors_open": "2023-12-02T18:00:00Z",
+      "start": "2023-12-02T18:30:00Z",
+      "end": "2023-12-02T22:00:00Z",
       "description": "",
       "extra_information": "",
       "disabled": false,
@@ -548,9 +555,9 @@
       "updated_at": "2021-07-28T09:36:39.061Z",
       "production": 1,
       "venue": 1,
-      "doors_open": "2021-12-03T18:00:00Z",
-      "start": "2021-12-03T18:30:00Z",
-      "end": "2021-12-03T22:00:00Z",
+      "doors_open": "2023-12-03T18:00:00Z",
+      "start": "2023-12-03T18:30:00Z",
+      "end": "2023-12-03T22:00:00Z",
       "description": "",
       "extra_information": "",
       "disabled": false,
@@ -565,9 +572,9 @@
       "updated_at": "2021-07-28T10:05:45.252Z",
       "production": 2,
       "venue": 2,
-      "doors_open": "2021-12-02T17:00:00Z",
-      "start": "2021-12-02T17:30:00Z",
-      "end": "2021-12-02T21:00:00Z",
+      "doors_open": "2023-12-02T17:00:00Z",
+      "start": "2023-12-02T17:30:00Z",
+      "end": "2023-12-02T21:00:00Z",
       "description": "",
       "extra_information": "",
       "disabled": false,
@@ -582,9 +589,9 @@
       "updated_at": "2021-07-28T12:29:29.328Z",
       "production": 3,
       "venue": 3,
-      "doors_open": "2021-12-02T18:00:00Z",
-      "start": "2021-12-02T18:30:00Z",
-      "end": "2021-12-02T22:00:00Z",
+      "doors_open": "2023-12-02T18:00:00Z",
+      "start": "2023-12-02T18:30:00Z",
+      "end": "2023-12-02T22:00:00Z",
       "description": "",
       "extra_information": "",
       "disabled": false,
@@ -599,9 +606,9 @@
       "updated_at": "2021-07-28T10:06:20.597Z",
       "production": 2,
       "venue": 2,
-      "doors_open": "2021-12-03T17:00:00Z",
-      "start": "2021-12-03T17:30:00Z",
-      "end": "2021-12-03T21:00:00Z",
+      "doors_open": "2023-12-03T17:00:00Z",
+      "start": "2023-12-03T17:30:00Z",
+      "end": "2023-12-03T21:00:00Z",
       "description": "",
       "extra_information": "",
       "disabled": false,
@@ -616,9 +623,9 @@
       "updated_at": "2021-07-28T11:39:53.847Z",
       "production": 4,
       "venue": 1,
-      "doors_open": "2021-12-04T18:00:00Z",
-      "start": "2021-12-04T19:00:00Z",
-      "end": "2021-12-04T22:00:00Z",
+      "doors_open": "2023-12-04T18:00:00Z",
+      "start": "2023-12-04T19:00:00Z",
+      "end": "2023-12-04T22:00:00Z",
       "description": "",
       "extra_information": "",
       "disabled": true,
@@ -633,9 +640,9 @@
       "updated_at": "2021-07-28T11:40:29.685Z",
       "production": 4,
       "venue": 1,
-      "doors_open": "2021-12-03T12:00:00Z",
-      "start": "2021-12-03T13:00:00Z",
-      "end": "2021-12-03T15:00:00Z",
+      "doors_open": "2023-12-03T12:00:00Z",
+      "start": "2023-12-03T13:00:00Z",
+      "end": "2023-12-03T15:00:00Z",
       "description": "Matinee",
       "extra_information": "",
       "disabled": false,
@@ -650,9 +657,9 @@
       "updated_at": "2021-07-28T13:47:46.524Z",
       "production": 5,
       "venue": 1,
-      "doors_open": "2021-07-01T18:00:00Z",
-      "start": "2021-07-01T18:03:00Z",
-      "end": "2021-07-01T19:00:00Z",
+      "doors_open": "2023-07-01T18:00:00Z",
+      "start": "2023-07-01T18:03:00Z",
+      "end": "2023-07-01T19:00:00Z",
       "description": "",
       "extra_information": "",
       "disabled": false,
