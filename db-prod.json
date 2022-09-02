@@ -462,42 +462,42 @@
     "model": "productions.ContentWarning",
     "pk": 1,
     "fields": {
-      "description": "Strobe"
+      "short_description": "Strobe"
     }
   },
   {
     "model": "productions.ContentWarning",
     "pk": 2,
     "fields": {
-      "description": "Nudity"
+      "short_description": "Nudity"
     }
   },
   {
     "model": "productions.ContentWarning",
     "pk": 3,
     "fields": {
-      "description": "Pyro"
+      "short_description": "Pyro"
     }
   },
   {
     "model": "productions.ContentWarning",
     "pk": 4,
     "fields": {
-      "description": "Strong language"
+      "short_description": "Strong language"
     }
   },
   {
     "model": "productions.ContentWarning",
     "pk": 5,
     "fields": {
-      "description": "Sex refrences"
+      "short_description": "Sex refrences"
     }
   },
   {
     "model": "productions.ContentWarning",
     "pk": 6,
     "fields": {
-      "description": "It is illegal to use recording equipment during this performance"
+      "short_description": "It is illegal to use recording equipment during this performance"
     }
   },
   {

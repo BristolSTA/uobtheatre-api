@@ -281,21 +281,21 @@
     "model": "productions.ContentWarning",
     "pk": 1,
     "fields": {
-      "description": "Strobe"
+      "short_description": "Strobe"
     }
   },
   {
     "model": "productions.ContentWarning",
     "pk": 2,
     "fields": {
-      "description": "Nudity"
+      "short_description": "Nudity"
     }
   },
   {
     "model": "productions.ContentWarning",
     "pk": 3,
     "fields": {
-      "description": "Pyro"
+      "short_description": "Pyro"
     }
   },
   {
