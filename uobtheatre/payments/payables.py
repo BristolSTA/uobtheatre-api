@@ -77,6 +77,7 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
         default=Status.IN_PROGRESS,
     )
 
+    # TODO add this in
     # user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bookings")
 
     objects = PayableManager()
@@ -240,6 +241,8 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
         self.status = Payable.Status.PAID
         self.save()
 
+    # TODO We should expose this as a sales breakdown object and move the
+    # documentation back to the sales breakdown definition
     @property
     def total_payments(self) -> int:
         """The positive amounts paid by the user for this object.
