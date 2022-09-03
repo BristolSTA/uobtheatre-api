@@ -983,8 +983,12 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
         )
 
     @property
-    def excerpt(self) -> str:
-        return self.excerpt_text or truncatewords(strip_tags(self.description), 20)
+    def excerpt(self) -> Optional[str]:
+        return (
+            self.excerpt_text or truncatewords(strip_tags(self.description), 20)
+            if self.description
+            else None
+        )
 
     def sales_breakdown(self, breakdowns: list[str] = None):
         """Generates a breakdown of the sales of this production"""

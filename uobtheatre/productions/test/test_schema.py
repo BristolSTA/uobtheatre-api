@@ -90,6 +90,7 @@ def test_productions_schema(gql_client):
                 }
                 start
                 end
+                excerpt
                 minSeatPrice
                 cast {
                   id
@@ -176,6 +177,7 @@ def test_productions_schema(gql_client):
                             },
                             "start": production.start_date().isoformat(),
                             "end": production.end_date().isoformat(),
+                            "excerpt": production.excerpt,
                             "minSeatPrice": production.min_seat_price(),
                             "cast": [
                                 {
