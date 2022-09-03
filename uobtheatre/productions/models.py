@@ -9,8 +9,10 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Max, Min, Sum
 from django.db.models.query import Q, QuerySet
+from django.template.defaultfilters import truncatewords
 from django.utils import timezone
 from django.utils.functional import cached_property
+from django.utils.html import strip_tags
 from django_tiptap.fields import TipTapTextField
 from guardian.shortcuts import get_objects_for_user
 
@@ -797,6 +799,7 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
     name = models.CharField(max_length=255)
     subtitle = models.CharField(max_length=255, null=True, blank=True)
     description = TipTapTextField(null=True)
+    excerpt_text = models.CharField(max_length=255, null=True, blank=True)
 
     venues = models.ManyToManyField(Venue, through=Performance, editable=False)
 
@@ -978,6 +981,10 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
         return sum(
             performance.total_tickets_sold() for performance in self.performances.all()
         )
+
+    @property
+    def excerpt(self) -> str:
+        return self.excerpt_text or truncatewords(strip_tags(self.description), 20)
 
     def sales_breakdown(self, breakdowns: list[str] = None):
         """Generates a breakdown of the sales of this production"""
