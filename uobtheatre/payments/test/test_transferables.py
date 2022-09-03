@@ -1,15 +1,12 @@
 # pylint: disable=too-many-lines
-import datetime
 from unittest.mock import PropertyMock, patch
 
 import pytest
-import pytz
 
 from uobtheatre.bookings.exceptions import (
     BookingTransferPerformanceUnchangedException,
     BookingTransferToDifferentProductionException,
 )
-from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
     PerformanceSeatingFactory,
@@ -22,12 +19,11 @@ from uobtheatre.discounts.test.factories import (
 )
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.test.factories import TransactionFactory
+from uobtheatre.payments.transferables import Transferable
 from uobtheatre.productions.exceptions import (
     NotBookableException,
     NotEnoughCapacityException,
 )
-from uobtheatre.productions.test.factories import PerformanceFactory
-from uobtheatre.venues.test.factories import SeatGroupFactory
 
 
 @pytest.mark.django_db
@@ -120,119 +116,15 @@ def test_transfer_reduction():
         assert reduction_value == 200  # 100 + 150 - 50
 
 
-@pytest.mark.django_db
-def test_create_transfer():
-    # Create two performances for the same production
-    performance_1 = PerformanceFactory(
-        end=datetime.datetime.now(tz=pytz.UTC) + datetime.timedelta(days=1)
-    )
-    performance_2 = PerformanceFactory(
-        end=datetime.datetime.now(tz=pytz.UTC) + datetime.timedelta(days=1),
-        production=performance_1.production,
-    )
+def test_transferable_total():
+    # pylint: disable=missing-class-docstring
+    class MockTransferable(Transferable):
+        display_name = "MockTransferable"
+        subtotal = 50
+        transfer_reduction = 20
+        misc_costs_value = 10
+        misc_cost_types = []
+        payment_reference_id = None
 
-    concession_type = ConcessionTypeFactory()
-
-    discount = DiscountFactory()
-    discount.performances.set([performance_1, performance_2])
-    DiscountRequirementFactory(concession_type=concession_type, discount=discount)
-
-    # Create a seat group which is in both performances
-    seat_group_shared = SeatGroupFactory()
-    PerformanceSeatingFactory(performance=performance_1, seat_group=seat_group_shared)
-    PerformanceSeatingFactory(performance=performance_2, seat_group=seat_group_shared)
-
-    # Create a seat group with no capacity in the second performance
-    seat_group_shared_no_capacity = SeatGroupFactory()
-    PerformanceSeatingFactory(
-        performance=performance_1, seat_group=seat_group_shared_no_capacity
-    )
-    PerformanceSeatingFactory(
-        performance=performance_2, seat_group=seat_group_shared_no_capacity, capacity=0
-    )
-
-    # Create a seat group which is only in the first performance
-    seat_group = SeatGroupFactory()
-    PerformanceSeatingFactory(performance=performance_1, seat_group=seat_group)
-
-    # Create a booking for the first performance
-    booking = BookingFactory(performance=performance_1, status=Booking.Status.PAID)
-    # Add a ticket to the booking for each seat group
-    TicketFactory(
-        booking=booking, seat_group=seat_group, concession_type=concession_type
-    )
-    TicketFactory(
-        booking=booking, seat_group=seat_group_shared, concession_type=concession_type
-    )
-    TicketFactory(
-        booking=booking,
-        seat_group=seat_group_shared_no_capacity,
-        concession_type=concession_type,
-    )
-    # Create ticket in unassigned concession type, which should also not be copied
-    TicketFactory(
-        booking=booking,
-        seat_group=seat_group_shared,
-    )
-    assert Booking.objects.count() == 1
-
-    # Create transfer to other performance
-    booking.create_transfer(performance_2)
-
-    # Assert the new booking is created and in progress
-    assert Booking.objects.count() == 2
-    new_booking = Booking.objects.last()
-    assert new_booking.status == Booking.Status.IN_PROGRESS
-
-    # Assert the only ticket which is transfered is the one in both
-    # perofmrances with sufficient capacity
-    assert new_booking.tickets.count() == 1
-    assert new_booking.tickets.first().seat_group == seat_group_shared
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    "booking_ticket_count, capacity_remaining, is_bookable, same_performance, same_production, exception",
-    [
-        # Success cases
-        (2, 3, True, False, True, None),
-        (2, 2, True, False, True, None),
-        # Doesnt raise for insufficient capacity
-        (3, 2, True, False, True, None),
-        # Failure cases
-        (3, 2, False, False, True, NotBookableException),
-        (2, 3, True, True, True, BookingTransferPerformanceUnchangedException),
-        (2, 3, True, False, False, BookingTransferToDifferentProductionException),
-    ],
-)
-def test_check_transfer_performance(  # pylint: disable=too-many-arguments
-    booking_ticket_count,
-    capacity_remaining,
-    is_bookable,
-    same_performance,
-    same_production,
-    exception,
-):
-    # Create a booking with 3 tickets
-    booking = BookingFactory()
-    [TicketFactory(booking=booking) for _ in range(booking_ticket_count)]
-
-    if same_performance:
-        performance = booking.performance
-    elif same_production:
-        performance = PerformanceFactory(production=booking.performance.production)
-    else:
-        performance = PerformanceFactory()
-
-    with patch(
-        "uobtheatre.productions.models.Performance.capacity_remaining",
-        new_callable=PropertyMock(return_value=capacity_remaining),
-    ), patch(
-        "uobtheatre.productions.models.Performance.is_bookable",
-        new_callable=PropertyMock(return_value=is_bookable),
-    ):
-        if exception:
-            with pytest.raises(exception):
-                booking.create_transfer(performance)
-        else:
-            booking.create_transfer(performance)
+    transferable = MockTransferable()
+    assert transferable.total == 40

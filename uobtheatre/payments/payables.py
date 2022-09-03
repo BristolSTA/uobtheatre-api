@@ -77,17 +77,14 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
         default=Status.IN_PROGRESS,
     )
 
+    # user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bookings")
+
     objects = PayableManager()
 
     @property
     @abc.abstractmethod
     def display_name(self):
         """Return a publically displayable name that represents this payable"""
-
-    @property
-    @abc.abstractmethod
-    def user(self):
-        raise NotImplementedError
 
     @property
     @abc.abstractmethod

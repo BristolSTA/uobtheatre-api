@@ -1,11 +1,13 @@
 import graphene
 
 from uobtheatre.bookings.abilities import ModifyBooking
-from uobtheatre.bookings.exceptions import BookingTransferCheckedInTicketsException, BookingTransferToDifferentProductionException
+from uobtheatre.bookings.exceptions import (
+    BookingTransferCheckedInTicketsException,
+    BookingTransferToDifferentProductionException,
+)
 from uobtheatre.bookings.forms import BookingForm
 from uobtheatre.bookings.models import Booking, Ticket
 from uobtheatre.bookings.schema import BookingNode
-from uobtheatre.payments.exceptions import TransferUnpaidPayableException
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.transaction_providers import (
     Card,
@@ -451,44 +453,22 @@ class CreateBookingTransfer(AuthRequiredMixin, SafeMutation):
         performance_id = IdInputField(required=True)
 
     @classmethod
-    def resolve_mutation(  # pylint: disable=too-many-arguments, too-many-branches
+    def resolve_mutation(  # pylint: disable=too-many-branches
         cls,
         _,
         info,
         booking_id,
         performance_id,
     ):
-        booking = Booking.objects.get(pk=booking_id)
-
-        if booking.user.id != info.context.user.id:
-
-            raise AuthorizationException(
-                message="You do not have permission to access this booking.",
-            )
-
-        # If the booking is not paid it cannot be transfered
-        if booking.status != Payable.Status.PAID:
-            raise TransferUnpaidPayableException(booking.status)
-
-        # If any of the bookings tickets are checked in then this booking
-        # cannot be transfered
-        if booking.tickets.filter(checked_in=True).exists():
-            return BookingTransferCheckedInTicketsException
-
+        booking = Booking.objects.get(pk=booking_id, user=info.context.user.id)
         performance = Performance.objects.get(pk=performance_id)
-        # Cannot transfer to the same performance
-        if booking.performance == performance:
-            raise BookingTransferToDifferentProductionException 
-        
-        # Cannot transfer to a differnet production 
-        if booking.performance.production != performance.production:
-            raise BookingTransferToDifferentProductionException
-        
+
         if not BookForPerformance.user_has_for(info.context.user, performance):
-            raise NotBookableException(
-                message="The transfer target performance is not able to be booked at the moment"
+            raise AuthorizationException(
+                "You do not have permission to create a booking for this performance"
             )
 
+        booking.check_can_transfer_to(performance)
         new_booking = booking.create_transfer(performance)
         return CreateBookingTransfer(booking=new_booking)
 

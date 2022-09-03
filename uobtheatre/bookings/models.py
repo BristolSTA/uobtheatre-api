@@ -13,6 +13,7 @@ from django.utils.functional import cached_property
 from graphql_relay.node.node import to_global_id
 
 from uobtheatre.bookings.exceptions import (
+    BookingTransferCheckedInTicketsException,
     BookingTransferPerformanceUnchangedException,
     BookingTransferToDifferentProductionException,
 )
@@ -21,12 +22,11 @@ from uobtheatre.mail.composer import MailComposer
 from uobtheatre.payments.exceptions import (
     CantBePaidForException,
     CantBeRefundedException,
-    TransferCheckedInTicketsException,
+    TransferUnpaidPayableException,
 )
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable, PayableQuerySet
 from uobtheatre.payments.transferables import Transferable
-from uobtheatre.productions.abilities import BookForPerformance
 from uobtheatre.productions.exceptions import (
     InvalidConcessionTypeException,
     InvalidSeatGroupException,
@@ -250,8 +250,6 @@ class Booking(TimeStampedMixin, Transferable):
         default=create_short_uuid, editable=False, max_length=12, unique=True
     )
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bookings")
-
     # Stores who created the booking
     # For regular bookings this will be the user
     # For boxoffice bookings it will be the logged in boxoffice user
@@ -265,6 +263,9 @@ class Booking(TimeStampedMixin, Transferable):
         on_delete=models.RESTRICT,
         related_name="bookings",
     )
+
+    # TODO Can this be moved to payable?
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bookings")
 
     # An additional discount that can be applied to the booking by an admin
     # To create a concession ticket a 100% discount can be applied.
@@ -569,8 +570,10 @@ class Booking(TimeStampedMixin, Transferable):
             )
 
         # If this is a transfer and the booking it is transfered from is not paid
-        if self.transfered_from and self.transfered_from.status != Booking.Status.PAID:
-            self.transfered_from.check_can_be_transfered()  # pylint: disable=protected-access
+        if self.transfered_from:
+            self.transfered_from.check_can_transfer_to(
+                self.performance
+            )  # pylint: disable=protected-access
 
         return super().pay(payment_method)
 
@@ -593,6 +596,32 @@ class Booking(TimeStampedMixin, Transferable):
         clone.reference = create_short_uuid()
         return clone
 
+    def check_can_transfer_to(self, performance: "Performance") -> None:
+        """Check if a booking can be transfered to the provided performance.
+
+        If not an error is raised. Note this function must be called both
+        before a transfer booking is created and before a transfer booking is
+        paid for (as between creating and paying for a transfer thing could
+        change e.g. the original booking could be used or refunded)
+        """
+
+        # If the booking is not paid it cannot be transfered
+        if self.status != Payable.Status.PAID:
+            raise TransferUnpaidPayableException(self.get_status_display())
+
+        # If any of the bookings tickets are checked in then this booking
+        # cannot be transfered
+        if self.tickets.filter(checked_in=True).exists():
+            raise BookingTransferCheckedInTicketsException()
+
+        # Cannot transfer to the same performance
+        if self.performance == performance:
+            raise BookingTransferPerformanceUnchangedException
+
+        # Cannot transfer to a differnet production
+        if self.performance.production != performance.production:
+            raise BookingTransferToDifferentProductionException
+
     def create_transfer(self, performance: "Performance") -> "Booking":
         """
         Create an in progress booking to transfer the booking to a different
@@ -606,6 +635,8 @@ class Booking(TimeStampedMixin, Transferable):
         Once the new booking is COMPLETE, the original booking will be
         cancelled.
         """
+
+        self.check_can_transfer_to(performance)
 
         # This will delete any exisiting IN_PROGRESS booking that the user has
         # for this performance (this includes transfers)

@@ -24,7 +24,3 @@ class CantBePaidForException(GQLException):
 class TransferUnpaidPayableException(GQLException):
     def __init__(self, status_display: str) -> None:
         super().__init__(f"A payable which is {status_display} cannot be transfered")
-
-class TransferCheckedInTicketsException(GQLException):
-    def __init__(self) -> None:
-        super().__init__(f"Cannot transfer a booking with checked in tickets")

@@ -2,7 +2,7 @@
 
 
 from datetime import timedelta
-from unittest.mock import PropertyMock, patch
+from unittest.mock import patch
 
 import pytest
 from django.utils import timezone
@@ -2829,8 +2829,8 @@ def test_create_transfer_booking(gql_client, booking_status):
     )
 
     with patch(
-        "uobtheatre.productions.models.Performance.is_bookable",
-        new_callable=PropertyMock(return_value=True),
+        "uobtheatre.productions.abilities.BookForPerformance.user_has_for",
+        return_value=True,
     ):
         response = gql_client.execute(request_query)
 
@@ -2847,7 +2847,6 @@ def test_create_transfer_booking(gql_client, booking_status):
     }
 
 
-# TODO test actual perms
 @pytest.mark.django_db
 def test_create_transfer_booking_without_permissions(gql_client):
     gql_client.login()
@@ -2855,6 +2854,58 @@ def test_create_transfer_booking_without_permissions(gql_client):
     gql_client.user.save()
 
     # booking = BookingFactory(user=gql_client.user)
+    booking = BookingFactory(user=gql_client.user)
+    performance = PerformanceFactory(production=booking.performance.production)
+
+    request_query = """
+        mutation {
+            createBookingTransfer(
+                bookingId: "%s"
+                performanceId: "%s"
+            ){
+                booking{
+                    id
+                }
+                errors {
+                  ... on NonFieldError {
+                    message
+                    code
+                  }
+                }
+            }
+        }
+        """ % (
+        to_global_id("BookingNode", booking.id),
+        to_global_id("PerformanceNode", performance.id),
+    )
+
+    with patch(
+        "uobtheatre.productions.abilities.BookForPerformance.user_has_for",
+        return_value=False,
+    ):
+        response = gql_client.execute(request_query)
+
+    assert response == {
+        "data": {
+            "createBookingTransfer": {
+                "booking": None,
+                "errors": [
+                    {
+                        "code": "403",
+                        "message": "You do not have permission to create a booking for this performance",
+                    }
+                ],
+            }
+        }
+    }
+
+
+@pytest.mark.django_db
+def test_create_transfer_booking_with_different_user(gql_client):
+    gql_client.login()
+    gql_client.user.is_superuser = False
+    gql_client.user.save()
+
     booking = BookingFactory()
     performance = PerformanceFactory(production=booking.performance.production)
 
@@ -2887,8 +2938,8 @@ def test_create_transfer_booking_without_permissions(gql_client):
                 "booking": None,
                 "errors": [
                     {
-                        "code": "403",
-                        "message": "You do not have permission to access this booking.",
+                        "code": "404",
+                        "message": "Object not found",
                     }
                 ],
             }
