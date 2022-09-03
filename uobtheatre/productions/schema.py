@@ -231,6 +231,7 @@ class ProductionNode(
         model = Production
         filterset_class = ProductionFilter
         interfaces = (relay.Node,)
+        exclude = ("warnings_pivot",)
 
 
 class ConcessionTypeBookingType(graphene.ObjectType):
