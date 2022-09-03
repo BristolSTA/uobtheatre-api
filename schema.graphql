@@ -530,11 +530,6 @@ type PriceBreakdownTicketNode {
   totalPrice: Int!
 }
 
-input ProductionContentWarningInput {
-  information: String
-  id: IdInputField!
-}
-
 type ProductionContentWarningNode implements Node {
   id: ID!
   production: ProductionNode!
@@ -564,7 +559,7 @@ input ProductionMutationInput {
   ageRating: Int
   facebookEvent: String
   supportEmail: String
-  contentWarnings: [ProductionContentWarningInput]
+  contentWarnings: [ProductionWarning]
   id: ID
   clientMutationId: String
 }
@@ -631,6 +626,11 @@ type ProductionTeamMemberNode implements Node {
   name: String!
   role: String
   production: ProductionNode!
+}
+
+input ProductionWarning {
+  information: String
+  id: IdInputField!
 }
 
 type Query {
