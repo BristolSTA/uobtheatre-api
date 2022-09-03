@@ -14,7 +14,7 @@ from uobtheatre.utils.forms import MutationForm
 from uobtheatre.utils.schema import IdInputField
 
 
-class ProductionContentWarningInput(graphene.InputObjectType):
+class ProductionWarning(graphene.InputObjectType):
     """Input for creating Tickets with mutations."""
 
     information = graphene.String()
@@ -28,7 +28,7 @@ class ProductionWarningListField(Field):
 @convert_form_field.register(ProductionWarningListField)
 def convert_form_field_to_string(field):
     return graphene.List(
-        ProductionContentWarningInput,
+        ProductionWarning,
         description=field.help_text,
         required=field.required,
     )
@@ -63,7 +63,7 @@ class ProductionForm(MutationForm):
                 [
                     ProductionContentWarning(
                         production=self.instance,
-                        warning=warning,
+                        warning_id=warning.id,
                         information=warning.information,
                     )
                     for warning in warnings

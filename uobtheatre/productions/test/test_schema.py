@@ -138,7 +138,6 @@ def test_productions_schema(gql_client):
         }
         """
     )
-
     assert response == {
         "data": {
             "productions": {

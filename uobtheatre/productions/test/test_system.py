@@ -38,6 +38,7 @@ def test_total_production_creation_workflow(gql_client):
                 posterImage: "%s"
                 society: "%s"
                 description: "My great show!"
+                supportEmail: "my@email.com"
              }
           ) {
             success
