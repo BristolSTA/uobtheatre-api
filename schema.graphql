@@ -537,16 +537,6 @@ type ProductionContentWarningNode implements Node {
   information: String
 }
 
-type ProductionContentWarningNodeConnection {
-  pageInfo: PageInfo!
-  edges: [ProductionContentWarningNodeEdge]!
-}
-
-type ProductionContentWarningNodeEdge {
-  node: ProductionContentWarningNode
-  cursor: String!
-}
-
 input ProductionMutationInput {
   name: String
   slug: String
@@ -589,7 +579,6 @@ type ProductionNode implements Node {
   supportEmail: String!
   contentWarnings: [ProductionContentWarningNode!]
   slug: String!
-  warningsPivot(offset: Int, before: String, after: String, first: Int, last: Int): ProductionContentWarningNodeConnection!
   cast: [CastMemberNode!]
   productionTeam: [ProductionTeamMemberNode!]
   crew: [CrewMemberNode!]
