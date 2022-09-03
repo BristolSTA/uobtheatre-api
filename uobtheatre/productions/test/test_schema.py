@@ -243,7 +243,9 @@ def test_productions_schema(gql_client):
                                 {
                                     "information": None,
                                     "warning": {
-                                        "id": to_global_id("ContentWarningNode", warning.id),
+                                        "id": to_global_id(
+                                            "ContentWarningNode", warning.id
+                                        ),
                                         "shortDescription": warning.short_description,
                                     },
                                 }
