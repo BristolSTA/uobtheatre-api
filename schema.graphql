@@ -542,6 +542,7 @@ input ProductionMutationInput {
   featuredImage: ID
   ageRating: Int
   facebookEvent: String
+  supportEmail: String
   contentWarnings: [ProductionWarning]
   id: ID
   clientMutationId: String
