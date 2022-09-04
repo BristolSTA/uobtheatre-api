@@ -1,6 +1,6 @@
 import os
 from datetime import timedelta
-from distutils.util import strtobool
+from distutils.util import strtobool  # pylint: disable=deprecated-module
 from os.path import join
 from typing import List
 
