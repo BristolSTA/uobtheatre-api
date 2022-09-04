@@ -754,6 +754,8 @@ type SetProductionStatus {
 }
 
 type SocietyNode implements Node {
+  createdAt: DateTime!
+  updatedAt: DateTime!
   name: String!
   slug: String!
   description: String!
