@@ -7,6 +7,7 @@ from uobtheatre.productions.forms import PerformanceForm, ProductionForm
 from uobtheatre.productions.models import ProductionContentWarning
 from uobtheatre.productions.test.factories import (
     ContentWarningFactory,
+    ProductionContentWarningFactory,
     ProductionFactory,
 )
 from uobtheatre.venues.test.factories import VenueFactory
@@ -48,22 +49,20 @@ def test_production_form_empty_warnings_list():
 
 @pytest.mark.django_db
 def test_production_form_null_warnings():
-    production = ProductionFactory()
-    warning = ContentWarningFactory()
-    ProductionContentWarning.objects.create(warning=warning, production=production)
+    pivot = ProductionContentWarningFactory()
 
-    assertQuerysetEqual(production.content_warnings.all(), [warning])
+    assertQuerysetEqual(pivot.production.content_warnings.all(), [pivot.warning])
 
     form = ProductionForm(
         data={
             "contentWarnings": None,
-            "production": production.id,
+            "production": pivot.production.id,
         },
-        instance=production,
+        instance=pivot.production,
     )
 
     form.save()
-    assertQuerysetEqual(production.content_warnings.all(), [warning])
+    assertQuerysetEqual(pivot.production.content_warnings.all(), [pivot.warning])
 
 
 @pytest.mark.django_db

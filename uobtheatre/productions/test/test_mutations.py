@@ -48,6 +48,7 @@ def test_production_mutation_create(gql_client, with_permission):
                 featuredImage: "%s"
                 posterImage: "%s"
                 description: "My great show!"
+                contactEmail: "support@example.org"
              }
           ) {
             success
