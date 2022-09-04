@@ -22,8 +22,8 @@ class SocietyNode(PermissionsMixin, DjangoObjectType):
         interfaces = (relay.Node,)
         filterset_class = SocietyFilterSet
         fields = (
-            "createdAt",
-            "updatedAt",
+            "created_at",
+            "updated_at",
             "name",
             "slug",
             "description",
