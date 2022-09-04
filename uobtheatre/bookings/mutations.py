@@ -169,7 +169,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         price = graphene.Int(required=True)
         nonce = graphene.String(required=False)
         payment_provider = graphene.Argument(
-            "uobtheatre.payments.schema.PaymentMethodsEnum"
+            "uobtheatre.payments.schema.PaymentProviderEnum"
         )
         device_id = graphene.String(required=False)
         idempotency_key = graphene.String(required=False)
@@ -432,7 +432,7 @@ class UnCheckInBooking(AuthRequiredMixin, SafeMutation):
 class CreateBookingTransfer(AuthRequiredMixin, SafeMutation):
     """Mutation to transfer a booking to a difference performance. This creates
     an inprogress booking (transfer) which is linked to the orignal booking via
-    transfered_to.
+    transferred_to.
 
     Args:
         booking_id (str): The gloabl id of the Booking to transfer.

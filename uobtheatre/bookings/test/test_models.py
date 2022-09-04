@@ -1418,7 +1418,7 @@ def test_check_can_transfer_to_fails_if_booking_has_checked_in_tickets():
 
 
 @pytest.mark.django_db
-def test_check_can_transfer_to_fails_if_booking_transfered_to_same_performance():
+def test_check_can_transfer_to_fails_if_booking_transferred_to_same_performance():
     # Create a booking with 3 tickets
     booking = BookingFactory(status=Booking.Status.PAID)
     add_ticket_to_booking(booking, checked_in=False)
@@ -1428,7 +1428,7 @@ def test_check_can_transfer_to_fails_if_booking_transfered_to_same_performance()
 
 
 @pytest.mark.django_db
-def test_check_can_transfer_to_fails_if_booking_transfered_to_different_production():
+def test_check_can_transfer_to_fails_if_booking_transferred_to_different_production():
     # Create a booking with 3 tickets
     booking = BookingFactory(status=Booking.Status.PAID)
     add_ticket_to_booking(booking, checked_in=False)

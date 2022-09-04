@@ -41,17 +41,17 @@ def test_transfered_from_chain():
 
 
 @pytest.mark.django_db
-def test_transfered_to():
+def test_transferred_to():
     booking_3 = BookingFactory()
     booking_2 = BookingFactory(transfered_from=booking_3)
     booking_1 = BookingFactory(transfered_from=booking_2)
 
     booking_4 = BookingFactory()
 
-    assert booking_1.transfered_to is None
-    assert booking_4.transfered_to is None
-    assert booking_2.transfered_to == booking_1
-    assert booking_3.transfered_to == booking_2
+    assert booking_1.transferred_to is None
+    assert booking_4.transferred_to is None
+    assert booking_2.transferred_to == booking_1
+    assert booking_3.transferred_to == booking_2
 
 
 @pytest.mark.django_db

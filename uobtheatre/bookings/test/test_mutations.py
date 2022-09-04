@@ -1867,9 +1867,7 @@ def test_pay_booking_success(mock_square, gql_client, with_sca_token):
             }
 
             booking {
-              status {
-                value
-              }
+              status
               transactions {
                 edges {
                   node {
@@ -1882,9 +1880,7 @@ def test_pay_booking_success(mock_square, gql_client, with_sca_token):
             payment {
               last4
               cardBrand
-              providerName {
-                value
-              }
+              providerName
               currency
               value
               providerFee
@@ -1925,9 +1921,7 @@ def test_pay_booking_success(mock_square, gql_client, with_sca_token):
         "data": {
             "payBooking": {
                 "booking": {
-                    "status": {
-                        "value": "PAID",
-                    },
+                    "status": "PAID",
                     "transactions": {
                         "edges": [
                             {
@@ -1944,9 +1938,7 @@ def test_pay_booking_success(mock_square, gql_client, with_sca_token):
                 "payment": {
                     "last4": "1111",
                     "cardBrand": "VISA",
-                    "providerName": {
-                        "value": "SQUARE_ONLINE",
-                    },
+                    "providerName": "SQUARE_ONLINE",
                     "currency": "GBP",
                     "value": 0,
                     "providerFee": None,
@@ -1983,9 +1975,7 @@ def test_pay_booking_success_square_pos(mock_square, gql_client):
             }
 
             booking {
-              status {
-                value
-              }
+              status
               transactions {
                 edges {
                   node {
@@ -1996,9 +1986,7 @@ def test_pay_booking_success_square_pos(mock_square, gql_client):
             }
 
             payment {
-              providerName {
-                value
-              }
+              providerName
             }
           }
         }
@@ -2031,14 +2019,14 @@ def test_pay_booking_success_square_pos(mock_square, gql_client):
             request_query % to_global_id("BookingNode", booking.id)
         )
 
+    print(f"{response=}")
+
     payment = Transaction.objects.first()
     assert response == {
         "data": {
             "payBooking": {
                 "booking": {
-                    "status": {
-                        "value": "IN_PROGRESS",
-                    },
+                    "status": "IN_PROGRESS",
                     "transactions": {
                         "edges": [
                             {
@@ -2050,7 +2038,7 @@ def test_pay_booking_success_square_pos(mock_square, gql_client):
                     },
                 },
                 "payment": {
-                    "providerName": {"value": "SQUARE_POS"},
+                    "providerName": "SQUARE_POS",
                 },
                 "success": True,
                 "errors": None,
@@ -2086,9 +2074,7 @@ def test_pay_booking_manual(gql_client, payment_method):
             }
 
             booking {
-              status {
-                value
-              }
+              status
               transactions {
                 edges {
                   node {
@@ -2101,9 +2087,7 @@ def test_pay_booking_manual(gql_client, payment_method):
             payment {
               last4
               cardBrand
-              providerName {
-                value
-              }
+              providerName
               currency
               value
             }
@@ -2119,9 +2103,7 @@ def test_pay_booking_manual(gql_client, payment_method):
         "data": {
             "payBooking": {
                 "booking": {
-                    "status": {
-                        "value": "PAID",
-                    },
+                    "status": "PAID",
                     "transactions": {
                         "edges": [
                             {
@@ -2138,9 +2120,7 @@ def test_pay_booking_manual(gql_client, payment_method):
                 "payment": {
                     "last4": None,
                     "cardBrand": None,
-                    "providerName": {
-                        "value": payment_method,
-                    },
+                    "providerName": payment_method,
                     "currency": "GBP",
                     "value": 100,
                 },
@@ -2839,7 +2819,7 @@ def test_create_transfer_booking(gql_client, booking_status):
             "createBookingTransfer": {
                 "success": True,
                 "booking": {
-                    "id": to_global_id("BookingNode", booking.transfered_to.pk)
+                    "id": to_global_id("BookingNode", booking.transferred_to.pk)
                 },
                 "errors": None,
             }

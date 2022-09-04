@@ -1,5 +1,4 @@
 import math
-from abc import abstractmethod
 from typing import TYPE_CHECKING, Optional
 
 from django.contrib.contenttypes.models import ContentType
@@ -20,21 +19,21 @@ class Transferable(Payable):
 
     # Whether the booking has be transferred to
     transfered_from = models.OneToOneField(
-        "self", on_delete=models.RESTRICT, null=True, related_name="_transfered_to"
+        "self", on_delete=models.RESTRICT, null=True, related_name="_transferred_to"
     )
 
     @property
-    def transfered_to(self) -> Optional["Transferable"]:
+    def transferred_to(self) -> Optional["Transferable"]:
         """The transfered which this has been transfred to.
 
         If this has not be transfered None will be returned.
 
-        Note: _transfered_to cannot be used directly as if this booking has not
+        Note: _transferred_to cannot be used directly as if this booking has not
         been transfered an error is raised.
         """
-        if not hasattr(self, "_transfered_to"):
+        if not hasattr(self, "_transferred_to"):
             return None
-        return self._transfered_to  # type: ignore
+        return self._transferred_to  # type: ignore
 
     @property
     def transfered_from_chain(self) -> list["Transferable"]:

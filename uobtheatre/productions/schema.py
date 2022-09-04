@@ -22,7 +22,6 @@ from uobtheatre.utils.filters import FilterSet
 from uobtheatre.utils.schema import (
     AssignedUsersMixin,
     DjangoObjectType,
-    GrapheneEnumMixin,
     IdInputField,
     UserPermissionFilterMixin,
 )
@@ -30,7 +29,7 @@ from uobtheatre.utils.schema import (
 ProductionStatusSchema = graphene.Enum.from_enum(Production.Status)
 
 
-class CrewRoleNode(GrapheneEnumMixin, DjangoObjectType):
+class CrewRoleNode(DjangoObjectType):
     class Meta:
         model = CrewRole
         interfaces = (relay.Node,)
@@ -175,9 +174,7 @@ class SalesBreakdownNode(graphene.ObjectType):
     society_revenue = graphene.Int(required=True)
 
 
-class ProductionNode(
-    PermissionsMixin, GrapheneEnumMixin, AssignedUsersMixin, DjangoObjectType
-):
+class ProductionNode(PermissionsMixin, AssignedUsersMixin, DjangoObjectType):
     content_warnings = DjangoListField(ProductionContentWarningNode)
     crew = DjangoListField(CrewMemberNode)
     cast = DjangoListField(CastMemberNode)

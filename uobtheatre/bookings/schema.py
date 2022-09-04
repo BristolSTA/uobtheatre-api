@@ -11,7 +11,6 @@ from graphql_auth.schema import UserNode
 
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
 from uobtheatre.productions.models import Performance
-from uobtheatre.utils.enums import GrapheneEnumMixin
 from uobtheatre.utils.filters import FilterSet
 
 
@@ -242,7 +241,7 @@ class BookingFilter(FilterSet):
     order_by = BookingByMethodOrderingFilter()
 
 
-class BookingNode(GrapheneEnumMixin, DjangoObjectType):
+class BookingNode(DjangoObjectType):
     price_breakdown = graphene.Field(PriceBreakdownNode)
     tickets = DjangoListField(TicketNode)
     user = graphene.Field(UserNode)
@@ -253,6 +252,11 @@ class BookingNode(GrapheneEnumMixin, DjangoObjectType):
     total_payments = graphene.Int()
     total_refunds = graphene.Int()
     net_transactions = graphene.Int()
+    transferred_to = graphene.Field(lambda: BookingNode)
+
+    # @property
+    # def transferred_to(self):
+    #     return graphene.Field(BookingNode)
 
     def resolve_price_breakdown(self, _):
         return self
@@ -275,7 +279,7 @@ class BookingNode(GrapheneEnumMixin, DjangoObjectType):
     class Meta:
         model = Booking
         filterset_class = BookingFilter
-        exclude = ("_transfered_to",)
+        exclude = ("_transferred_to",)
         interfaces = (relay.Node,)
 
 
