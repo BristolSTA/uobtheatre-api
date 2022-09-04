@@ -2,7 +2,7 @@ import pytest
 from graphql_relay.node.node import to_global_id
 
 from uobtheatre.bookings.test.factories import BookingFactory
-from uobtheatre.payments.models import Transaction, Transfer
+from uobtheatre.payments.models import FinancialTransfer, Transaction
 from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.payments.transaction_providers import SquarePOS
 
@@ -126,20 +126,20 @@ def test_record_transfer(gql_client):
     gql_client.login().user.assign_perm("payments.create_transfer")
 
     society = SocietyFactory()
-    assert Transfer.objects.count() == 0
+    assert FinancialTransfer.objects.count() == 0
 
     response = gql_client.execute(
         """
         mutation {
-            recordTransfer(subjectId: "%s", value: 1050, method: INTERNAL) {
+            recordFinancialTransfer(societyId: "%s", value: 1050, method: INTERNAL) {
                 success
             }
         }
         """
         % to_global_id("SocietyNode", society.id)
     )
-    assert response["data"]["recordTransfer"]["success"] is True
-    assert Transfer.objects.count() == 1
+    assert response["data"]["recordFinancialTransfer"]["success"] is True
+    assert FinancialTransfer.objects.count() == 1
 
 
 @pytest.mark.django_db
@@ -151,7 +151,7 @@ def test_record_transfer_fails_without_permission(gql_client):
     response = gql_client.execute(
         """
         mutation {
-            recordTransfer(subjectId: "%s", value: 1050, method: INTERNAL) {
+            recordFinancialTransfer(societyId: "%s", value: 1050, method: INTERNAL) {
                 success
                 errors {
                     ... on FieldError {
@@ -166,12 +166,12 @@ def test_record_transfer_fails_without_permission(gql_client):
         """
         % to_global_id("SocietyNode", society.id)
     )
-    assert response["data"]["recordTransfer"]["success"] is False
+    assert response["data"]["recordFinancialTransfer"]["success"] is False
     assert (
-        response["data"]["recordTransfer"]["errors"][0]["message"]
+        response["data"]["recordFinancialTransfer"]["errors"][0]["message"]
         == "You are not authorized to perform this action"
     )
-    assert Transfer.objects.count() == 0
+    assert FinancialTransfer.objects.count() == 0
 
 
 @pytest.mark.django_db
@@ -181,7 +181,7 @@ def test_record_transfer_fails_with_invalid_society(gql_client):
     response = gql_client.execute(
         """
         mutation {
-            recordTransfer(subjectId: "%s", value: 1050, method: INTERNAL) {
+            recordFinancialTransfer(societyId: "%s", value: 1050, method: INTERNAL) {
                 success
                 errors {
                     ... on FieldError {
@@ -196,8 +196,9 @@ def test_record_transfer_fails_with_invalid_society(gql_client):
         """
         % to_global_id("SocietyNode", "1")
     )
-    assert response["data"]["recordTransfer"]["success"] is False
+    assert response["data"]["recordFinancialTransfer"]["success"] is False
     assert (
-        response["data"]["recordTransfer"]["errors"][0]["message"] == "Object not found"
+        response["data"]["recordFinancialTransfer"]["errors"][0]["message"]
+        == "Object not found"
     )
-    assert Transfer.objects.count() == 0
+    assert FinancialTransfer.objects.count() == 0

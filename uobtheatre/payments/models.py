@@ -22,6 +22,7 @@ from uobtheatre.payments.transaction_providers import (
     RefundProvider,
     TransactionProvider,
 )
+from uobtheatre.societies.models import Society
 from uobtheatre.users.models import User
 from uobtheatre.utils.models import BaseModel, TimeStampedMixin
 
@@ -282,7 +283,7 @@ class Transaction(TimeStampedMixin, BaseModel):
         refund_provider.refund(self)
 
 
-class Transfer(TimeStampedMixin, BaseModel):
+class FinancialTransfer(TimeStampedMixin, BaseModel):
     """Model for representing the movemement of funds at the business level"""
 
     class Method(models.TextChoices):
@@ -291,16 +292,9 @@ class Transfer(TimeStampedMixin, BaseModel):
         INTERNAL = "INTERNAL", "Internal"
         BACS = "BACS", "BACS"
 
-    subject = GenericForeignKey("pay_object_type", "pay_object_id")  # type: ignore
-
-    subject_type = models.ForeignKey(
-        ContentType,
-        on_delete=models.CASCADE,
-        limit_choices_to=models.Q(app_label="societies", model="society"),
-    )
-    subject_id = models.PositiveIntegerField()
-
-    subject = GenericForeignKey("subject_type", "subject_id")  # type: ignore
+    society = models.ForeignKey(
+        Society, on_delete=models.SET_NULL, null=True
+    )  # The society being paid to
 
     value = models.PositiveIntegerField()  # The amount transfered
     user = models.ForeignKey(

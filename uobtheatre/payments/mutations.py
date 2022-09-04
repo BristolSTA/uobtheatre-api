@@ -1,6 +1,6 @@
 import graphene
 
-from uobtheatre.payments.models import Transaction, Transfer
+from uobtheatre.payments.models import FinancialTransfer, Transaction
 from uobtheatre.utils.exceptions import (
     AuthorizationException,
     GQLException,
@@ -9,7 +9,7 @@ from uobtheatre.utils.exceptions import (
 from uobtheatre.utils.schema import AuthRequiredMixin, IdInputField
 
 from ..societies.models import Society
-from .schema import TransferNode
+from .schema import FinancialTransferNode
 
 
 class CancelPayment(AuthRequiredMixin, SafeMutation):
@@ -44,16 +44,16 @@ class CancelPayment(AuthRequiredMixin, SafeMutation):
         return CancelPayment()
 
 
-class RecordTransfer(AuthRequiredMixin, SafeMutation):
-    """Record a transfer of funds from the site operator to a subject (society)"""
+class RecordFinancialTransfer(AuthRequiredMixin, SafeMutation):
+    """Record a transfer of funds from the site operator to a society"""
 
-    transfer = graphene.Field(TransferNode)
+    transfer = graphene.Field(FinancialTransferNode)
 
     class Arguments:
-        subject_id = IdInputField(required=True)
+        society_id = IdInputField(required=True)
         value = graphene.Int()
         method = graphene.Argument(
-            graphene.Enum("TransferMethodEnum", Transfer.Method.choices)
+            graphene.Enum("TransferMethodEnum", FinancialTransfer.Method.choices)
         )
 
     @classmethod
@@ -62,17 +62,17 @@ class RecordTransfer(AuthRequiredMixin, SafeMutation):
             raise AuthorizationException
 
     @classmethod
-    def resolve_mutation(cls, _, info, subject_id, value, method):
+    def resolve_mutation(cls, _, info, society_id, value, method):
         # Find the subject
-        subject = Society.objects.get(pk=subject_id)
+        society = Society.objects.get(pk=society_id)
 
         # Create the transfer
-        transfer = Transfer.objects.create(
-            value=value, method=method, subject=subject, user=info.context.user
+        transfer = FinancialTransfer.objects.create(
+            value=value, method=method, society=society, user=info.context.user
         )
-        return RecordTransfer(transfer=transfer)
+        return RecordFinancialTransfer(transfer=transfer)
 
 
 class Mutation(graphene.ObjectType):
     cancel_payment = CancelPayment.Field()
-    record_transfer = RecordTransfer.Field()
+    record_financial_transfer = RecordFinancialTransfer.Field()

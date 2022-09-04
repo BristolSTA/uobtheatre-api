@@ -4,7 +4,7 @@ from graphene import relay
 from graphene_django import DjangoObjectType
 
 from uobtheatre.bookings.schema import BookingNode
-from uobtheatre.payments.models import Transaction, Transfer
+from uobtheatre.payments.models import FinancialTransfer, Transaction
 from uobtheatre.payments.transaction_providers import (
     PaymentProvider,
     SquarePOS,
@@ -69,9 +69,9 @@ class TransactionNode(GrapheneEnumMixin, DjangoObjectType):
         exclude = ("pay_object_id", "pay_object_type", "provider_name")
 
 
-class TransferNode(DjangoObjectType):
+class FinancialTransferNode(DjangoObjectType):
     class Meta:
-        model = Transfer
+        model = FinancialTransfer
 
 
 class Query(graphene.ObjectType):
