@@ -576,7 +576,7 @@ type ProductionNode implements Node {
   status: EnumNode
   ageRating: Int
   facebookEvent: String
-  contactEmail: String!
+  contactEmail: String
   contentWarnings: [ProductionContentWarningNode!]
   slug: String!
   cast: [CastMemberNode!]
