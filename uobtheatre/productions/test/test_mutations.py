@@ -139,7 +139,6 @@ def test_production_mutation_create_with_missing_info(gql_client):
     assert response["data"]["production"]["errors"] == [
         {"message": "This field is required.", "field": "society"},
         {"message": "This field is required.", "field": "description"},
-        {"message": "This field is required.", "field": "contactEmail"},
     ]
 
 
