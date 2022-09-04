@@ -110,7 +110,7 @@ jobs:
 
     # Check migrations have been made
     - name: Ensure migrations have been generated
-      run: python manage.py makemigrations --check --dry-run
+      run: python manage.py makemigrations --check
 
   schema:
     runs-on: ubuntu-latest
