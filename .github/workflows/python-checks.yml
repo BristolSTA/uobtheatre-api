@@ -108,6 +108,10 @@ jobs:
       run: |
         mypy uobtheatre
 
+    # Check migrations have been made
+    - name: Ensure migrations have been generated
+      run: python manage.py makemigrations --check --dry-run
+
   schema:
     runs-on: ubuntu-latest
     steps:
