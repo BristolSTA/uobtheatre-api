@@ -87,7 +87,7 @@ class Query(graphene.ObjectType):
 
     def resolve_payment_devices(
         self, info, payment_provider: str = None, paired: bool = None
-    ):  # pylint: disable=no-self-use
+    ):
         """
         Returns square payment devices.
 
