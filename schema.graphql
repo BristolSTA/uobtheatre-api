@@ -754,9 +754,6 @@ type SetProductionStatus {
 }
 
 type SocietyNode implements Node {
-  id: ID!
-  createdAt: DateTime!
-  updatedAt: DateTime!
   name: String!
   slug: String!
   description: String!
@@ -765,8 +762,8 @@ type SocietyNode implements Node {
   website: String
   contact: String
   members: [ExtendedUserNode!]!
-  financialtransferSet: [FinancialTransferNode!]!
   productions(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, venues: [ID], society: ID, status: String, ageRating: Int, facebookEvent: String, contactEmail: String, contentWarnings: [ID], slug: String, id: ID, userHasPermission: String, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, search: String, orderBy: String): ProductionNodeConnection!
+  id: ID!
   permissions: [String]
 }
 
@@ -881,7 +878,6 @@ type UserNode implements Node {
   id: ID!
   email: String!
   societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String, userHasPermission: String): SocietyNodeConnection!
-  financialtransferSet: [FinancialTransferNode!]!
   bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, reference: String, user: ID, creator: ID, performance: ID, adminDiscountPercentage: Float, expiresAt: DateTime, id: ID, statusIn: [String], search: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection!
   createdBookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, reference: String, user: ID, creator: ID, performance: ID, adminDiscountPercentage: Float, expiresAt: DateTime, id: ID, statusIn: [String], search: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection!
   pk: Int
