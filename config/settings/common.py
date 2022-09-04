@@ -261,7 +261,7 @@ LOGGING = {
 AUTH_USER_MODEL = "users.User"
 GRAPHQL_AUTH = {
     "LOGIN_ALLOWED_FIELDS": ["email"],
-    "USER_NODE_EXCLUDE_FIELDS": ["password"],
+    "USER_NODE_EXCLUDE_FIELDS": ["password", "financialtransfer_set"],
     "USER_NODE_FILTER_FIELDS": {
         "email": ["exact", "icontains", "istartswith"],
         "is_active": ["exact"],
