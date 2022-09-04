@@ -28,7 +28,9 @@ class ProductionWarningListField(Field):
 @convert_form_field.register(ProductionWarningListField)
 def convert_form_field_to_string(field):
     return graphene.List(
-        ProductionWarning, description=field.help_text, required=field.required
+        ProductionWarning,
+        description=field.help_text,
+        required=field.required,
     )
 
 
@@ -57,12 +59,16 @@ class ProductionForm(MutationForm):
         if (warnings := self.cleaned_data.get("contentWarnings")) is not None:
             ProductionContentWarning.objects.filter(production=self.instance).delete()
 
-            for warning in warnings:
-                ProductionContentWarning.objects.create(
-                    production=self.instance,
-                    warning_id=warning.id,
-                    information=warning.information,
-                )
+            ProductionContentWarning.objects.bulk_create(
+                [
+                    ProductionContentWarning(
+                        production=self.instance,
+                        warning_id=warning.id,
+                        information=warning.information,
+                    )
+                    for warning in warnings
+                ]
+            )
 
     class Meta:
         model = Production
@@ -77,6 +83,7 @@ class ProductionForm(MutationForm):
             "featured_image",
             "age_rating",
             "facebook_event",
+            "contact_email",
         )
 
 
