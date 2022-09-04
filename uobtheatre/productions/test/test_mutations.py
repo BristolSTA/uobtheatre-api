@@ -48,7 +48,7 @@ def test_production_mutation_create(gql_client, with_permission):
                 featuredImage: "%s"
                 posterImage: "%s"
                 description: "My great show!"
-                supportEmail: "support@example.org"
+                contactEmail: "support@example.org"
              }
           ) {
             success
@@ -139,7 +139,7 @@ def test_production_mutation_create_with_missing_info(gql_client):
     assert response["data"]["production"]["errors"] == [
         {"message": "This field is required.", "field": "society"},
         {"message": "This field is required.", "field": "description"},
-        {"message": "This field is required.", "field": "supportEmail"},
+        {"message": "This field is required.", "field": "contactEmail"},
     ]
 
 

@@ -28,7 +28,7 @@ class ProductionFactory(factory.django.DjangoModelFactory):
     poster_image = factory.SubFactory(ImageFactory)
     featured_image = factory.SubFactory(ImageFactory)
     cover_image = factory.SubFactory(ImageFactory)
-    support_email = factory.Faker("email")
+    contact_email = factory.Faker("email")
     status = Production.Status.PUBLISHED
 
     class Meta:
