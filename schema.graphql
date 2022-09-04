@@ -278,6 +278,22 @@ type FieldError {
   code: String
 }
 
+enum FinancialTransferMethod {
+  INTERNAL
+  BACS
+}
+
+type FinancialTransferNode {
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  society: SocietyNode
+  value: Int!
+  user: ExtendedUserNode
+  method: FinancialTransferMethod!
+  reason: String
+}
+
 union GQLErrorUnion = FieldError | NonFieldError
 
 type GenerateReport {
@@ -343,6 +359,7 @@ type Mutation {
   deletePerformanceSeatGroup(id: IdInputField!): DeletePerformanceSeatGroupMutation
   setProductionStatus(message: String, productionId: IdInputField!, status: Status): SetProductionStatus
   cancelPayment(paymentId: IdInputField!): CancelPayment
+  recordFinancialTransfer(method: TransferMethodEnum, societyId: IdInputField!, value: Int): RecordFinancialTransfer
   generateReport(endTime: DateTime, name: String!, options: [ReportOption], startTime: DateTime): GenerateReport
   booking(input: BookingMutationInput!): BookingMutationPayload
   deleteBooking(id: IdInputField!): DeleteBooking
@@ -638,6 +655,12 @@ type Query {
   venue(slug: String!): VenueNode
 }
 
+type RecordFinancialTransfer {
+  success: Boolean
+  errors: [GQLErrorUnion]
+  transfer: FinancialTransferNode
+}
+
 type RefreshToken {
   token: String
   payload: GenericScalar
@@ -731,7 +754,6 @@ type SetProductionStatus {
 }
 
 type SocietyNode implements Node {
-  id: ID!
   createdAt: DateTime!
   updatedAt: DateTime!
   name: String!
@@ -743,6 +765,7 @@ type SocietyNode implements Node {
   contact: String
   members: [ExtendedUserNode!]!
   productions(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, venues: [ID], society: ID, status: String, ageRating: Int, facebookEvent: String, contactEmail: String, contentWarnings: [ID], slug: String, id: ID, userHasPermission: String, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, search: String, orderBy: String): ProductionNodeConnection!
+  id: ID!
   permissions: [String]
 }
 
@@ -827,6 +850,11 @@ type TransactionNodeConnection {
 type TransactionNodeEdge {
   node: TransactionNode
   cursor: String!
+}
+
+enum TransferMethodEnum {
+  INTERNAL
+  BACS
 }
 
 type UnCheckInBooking {
