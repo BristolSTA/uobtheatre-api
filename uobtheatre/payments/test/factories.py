@@ -1,3 +1,4 @@
+from typing import Optional
 from unittest.mock import MagicMock
 
 import factory
@@ -5,6 +6,7 @@ import factory
 from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.payments import transaction_providers
 from uobtheatre.payments.models import Transaction
+from uobtheatre.payments.transferables import Transferable
 
 
 class TransactionFactory(factory.django.DjangoModelFactory):
@@ -99,3 +101,27 @@ def mock_refund_method(name="refund_method"):
             return name
 
     return MockRefundMethod()
+
+
+def mock_transferable(
+    subtotal=50, misc_costs_value=10, transferred_from: Optional[Transferable] = None
+) -> Transferable:
+    """
+    Create a mock transferable object with fixed subtotal and misc_costs_value
+    values. The transferable can also assign arbitrarily nested transferables.
+    """
+
+    subtotal_ = subtotal
+    misc_costs_value_ = misc_costs_value
+    transferred_from_ = transferred_from
+
+    # pylint: disable=missing-class-docstring
+    class MockTransferable(Transferable):
+        display_name = "MockTransferable"
+        subtotal = subtotal_
+        misc_costs_value = misc_costs_value_
+        payment_reference_id = None
+        misc_cost_types = []  # type: ignore
+        transfered_from = transferred_from_  # type: ignore
+
+    return MockTransferable()

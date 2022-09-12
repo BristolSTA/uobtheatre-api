@@ -497,25 +497,13 @@ def test_misc_costs_value():
 
     # This misc cost should not be included as the booking is not transfered
     # from another
-    ValueMiscCostFactory(value=200, type=MiscCost.Type.BOOKING_TRANSFER)
+    ValueMiscCostFactory(value=200, type="other_type")
 
     # Create a booking costing £12
     booking = BookingFactory()
     psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
     TicketFactory(booking=booking, seat_group=psg.seat_group)
     assert booking.misc_costs_value == 320
-
-
-@pytest.mark.django_db
-def test_misc_costs_value_transfer():
-    ValueMiscCostFactory(value=200)
-    ValueMiscCostFactory(value=100, type=MiscCost.Type.BOOKING_TRANSFER)
-
-    booking = BookingFactory(transfered_from=BookingFactory())
-    psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
-    TicketFactory(booking=booking, seat_group=psg.seat_group)
-
-    assert booking.misc_costs_value == 300
 
 
 @pytest.mark.django_db
@@ -562,15 +550,75 @@ def test_total_with_admin_discount(
 
 
 @pytest.mark.django_db
-def test_total_transfer():
-    ValueMiscCostFactory(value=200)
-    ValueMiscCostFactory(value=100, type=MiscCost.Type.BOOKING_TRANSFER)
+@pytest.mark.parametrize(
+    "booking_data, misc_costs, expected_total",
+    [
+        pytest.param(
+            {"tickets": [100, 200, 300]},
+            [{"type": ValueMiscCostFactory, "args": {"value": 200}}],
+            800,
+            id="calculates correct value",
+        ),
+        pytest.param(
+            {"tickets": [100, 200, 300], "transferred_from": {"tickets": [100, 200]}},
+            [{"type": ValueMiscCostFactory, "args": {"value": 200}}],
+            500,
+            id="calculates correct value with smaller transferred_from",
+        ),
+        pytest.param(
+            {
+                "tickets": [100, 200, 300],
+                "transferred_from": {"tickets": [100, 200, 300, 400]},
+            },
+            [{"type": ValueMiscCostFactory, "args": {"value": 200}}],
+            200,
+            id="calculates correct value with larger transferred_from",
+        ),
+        pytest.param(
+            {
+                "tickets": [100, 200, 300],
+                "admin_discount_percentage": 1,
+                "transferred_from": {"tickets": [100, 200, 300, 400]},
+            },
+            [{"type": ValueMiscCostFactory, "args": {"value": 200}}],
+            0,
+            id="calculates correct value with transferred_from and admin discount",
+        ),
+        pytest.param(
+            {
+                "tickets": [100, 200, 300],
+                "transferred_from": {
+                    "tickets": [100, 200, 300, 400],
+                    "admin_discount_percentage": 1,
+                },
+            },
+            [{"type": ValueMiscCostFactory, "args": {"value": 200}}],
+            1000,
+            id="calculates correct value with transferred_from on original booking",
+        ),
+    ],
+)
+def test_booking_total(booking_data, misc_costs, expected_total):
+    # Create misc costs
+    for misc_cost in misc_costs:
+        misc_cost["type"](**misc_cost["args"])
 
-    # Create a booking costing £12
-    booking = BookingFactory(transfered_from=BookingFactory())
-    psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
-    ticket = TicketFactory(booking=booking, seat_group=psg.seat_group)
-    assert ticket.booking.total == 1500
+    # Create tickets
+    def create_booking(booking_data: dict) -> Booking:
+        transferred_from = booking_data.pop("transferred_from", None)
+        tickets = booking_data.pop("tickets", [])
+        booking = BookingFactory(
+            **booking_data,
+            transfered_from=create_booking(transferred_from)
+            if transferred_from
+            else None,
+        )
+        for ticket in tickets:
+            add_ticket_to_booking(booking, ticket_price=ticket)
+        return booking
+
+    booking = create_booking(booking_data)
+    assert booking.total == expected_total
 
 
 @pytest.mark.django_db
@@ -1320,7 +1368,6 @@ def test_misc_cost_types_transfer():
     booking = BookingFactory(transfered_from=BookingFactory())
     assert booking.misc_cost_types == [
         MiscCost.Type.BOOKING,
-        MiscCost.Type.BOOKING_TRANSFER,
     ]
 
 
@@ -1382,6 +1429,7 @@ def test_create_transfer():
 
     # Create transfer to other performance
     booking.create_transfer(performance_2)
+    assert booking.admin_discount_percentage == 0
 
     # Assert the new booking is created and in progress
     assert Booking.objects.count() == 2

@@ -678,7 +678,7 @@ class Performance(
             if concession_type not in self.single_discounts_map.keys()
         ]
 
-        if len(concession_types_not_in_performance) != 0:
+        if concession_types_not_in_performance:
             raise InvalidConcessionTypeException(
                 f"{' '.join(concession_types_not_in_performance)} are not assigned to the performance {self}"
             )

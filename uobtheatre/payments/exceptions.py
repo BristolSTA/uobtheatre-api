@@ -1,9 +1,4 @@
-from typing import TYPE_CHECKING
-
 from uobtheatre.utils.exceptions import GQLException
-
-if TYPE_CHECKING:
-    pass
 
 
 class CantBeRefundedException(GQLException):

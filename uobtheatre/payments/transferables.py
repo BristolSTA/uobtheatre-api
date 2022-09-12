@@ -1,10 +1,7 @@
-import math
 from typing import TYPE_CHECKING, Optional
 
-from django.contrib.contenttypes.models import ContentType
 from django.db import models
 
-from uobtheatre.payments.models import SalesBreakdown, Transaction
 from uobtheatre.payments.payables import Payable
 
 if TYPE_CHECKING:
@@ -36,35 +33,12 @@ class Transferable(Payable):
         return self._transferred_to  # type: ignore
 
     @property
-    def transfered_from_chain(self) -> list["Transferable"]:
-        """
-        A booking can be transfered which creates a new booking and cancels the
-        existing one. If this booking has been created in a transfer, this
-        gives all bookings which this has been transfered from. Multiple are
-        possible as a booking which is created in a transfer can it self be
-        transfered.
-
-        Returns:
-            list[int]: All the bookings in this transfer chain
-        """
-        if not self.transfered_from:
-            return []
-        return [self.transfered_from] + self.transfered_from.transfered_from_chain
+    def transfer_fee(self) -> int:
+        return 200
 
     @property
-    def transfer_reduction(self) -> int:
-        """
-        When transfering a payable, all previous payments (excluding
-        transfer fees) are excluded.
-        """
-        transactions = Transaction.objects.filter(
-            pay_object_type=ContentType.objects.get_for_model(self.__class__),
-            pay_object_id__in=map(lambda m: m.pk, self.transfered_from_chain),
-            status=Transaction.Status.COMPLETED,
-        )
-        return transactions.get_sales_breakdown(
-            breakdown=SalesBreakdown.NET_TRANSACTIONS
-        )
+    def pre_transfer_total(self) -> int:
+        return super().total
 
     @property
     def total(self) -> int:
@@ -76,14 +50,22 @@ class Transferable(Payable):
         This overrides the default payable implementation to include the
         transfer reduction.
 
+        When transfering a payable, all previous payments (excluding
+        transfer fees) are provided as a discount to the new payable.
+
         Returns:
             (int): total price of the transferable in penies
         """
         subtotal = self.subtotal
         if subtotal == 0:  # pylint: disable=comparison-with-callable
             return 0
-        return math.ceil(
-            max(subtotal - self.transfer_reduction, 0) + self.misc_costs_value
+
+        if not self.transfered_from:
+            return self.pre_transfer_total
+
+        return (
+            max(self.pre_transfer_total - self.transfered_from.pre_transfer_total, 0)
+            + self.transfer_fee
         )
 
     class Meta:

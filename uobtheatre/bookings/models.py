@@ -80,7 +80,6 @@ class MiscCost(models.Model):
 
     class Type(models.TextChoices):
         BOOKING = "Booking", "Applied to booking purchase"
-        BOOKING_TRANSFER = "BookingTransfer", "Applied to a booking transfer"
 
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
@@ -490,9 +489,6 @@ class Booking(TimeStampedMixin, Transferable):
         misc_cost_types = [MiscCost.Type.BOOKING]
         # If this booking is transfered from another then transfer misc costs
         # should also be applied
-        if self.transfered_from:
-            misc_cost_types.append(MiscCost.Type.BOOKING_TRANSFER)
-
         return misc_cost_types
 
     @property
@@ -649,6 +645,7 @@ class Booking(TimeStampedMixin, Transferable):
         new_booking.status = Payable.Status.IN_PROGRESS
         new_booking.performance = performance
         new_booking.transfered_from = self
+        new_booking.admin_discount_percentage = 0
         new_booking.save()
 
         # Copy across all tickets which can be copied one by one

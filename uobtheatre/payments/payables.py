@@ -170,10 +170,7 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
         Returns:
             (int): total price of the payable in penies
         """
-        subtotal = self.subtotal
-        if subtotal == 0:  # pylint: disable=comparison-with-callable
-            return 0
-        return math.ceil(subtotal + self.misc_costs_value)
+        return math.ceil(self.subtotal + self.misc_costs_value) if self.subtotal else 0
 
     @property
     @abc.abstractmethod
