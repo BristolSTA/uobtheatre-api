@@ -62,7 +62,8 @@ class GenerateReport(AuthRequiredMixin, SafeMutation):
     report = graphene.Field(ReportNode)
 
     def resolve_report(self, _):
-        self.report.run()
+        if self.report:
+            self.report.run()
         return self.report
 
     @classmethod
@@ -100,7 +101,6 @@ class GenerateReport(AuthRequiredMixin, SafeMutation):
             options.append({"name": "end_time", "value": str(end_time)})
 
         matching_report = available_reports[name]
-
         # Validate and authorize
         matching_report["cls"].validate_options(options)  # type: ignore
         matching_report["cls"].authorize_user(info.context.user, options)  # type: ignore
