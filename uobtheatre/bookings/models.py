@@ -646,6 +646,7 @@ class Booking(TimeStampedMixin, Transferable):
         new_booking.performance = performance
         new_booking.transfered_from = self
         new_booking.admin_discount_percentage = 0
+        new_booking.expires_at = generate_expires_at()
         new_booking.save()
 
         # Copy across all tickets which can be copied one by one
