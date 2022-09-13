@@ -193,7 +193,7 @@ class ProductionNode(
     total_capacity = graphene.Int(required=True)
     total_tickets_sold = graphene.Int(required=True)
 
-    excerpt = graphene.String()
+    shortdescription = graphene.String()
 
     def resolve_venues(self, info):
         return self.venues.distinct()
@@ -225,8 +225,8 @@ class ProductionNode(
     def resolve_content_warnings(self, info):
         return self.warnings_pivot.order_by("warning__short_description").all()
 
-    def resolve_excerpt(self, info):
-        return self.excerpt
+    def resolve_shortdescription(self, info):
+        return self.shortdescription
 
     @classmethod
     def get_queryset(cls, queryset, info):

@@ -28,7 +28,7 @@ class ProductionFactory(factory.django.DjangoModelFactory):
     featured_image = factory.SubFactory(ImageFactory)
     cover_image = factory.SubFactory(ImageFactory)
     status = Production.Status.PUBLISHED
-    excerpt_text = factory.Faker("sentence", nb_words=15)
+    short_description = factory.Faker("sentence", nb_words=15)
 
     class Meta:
         model = Production

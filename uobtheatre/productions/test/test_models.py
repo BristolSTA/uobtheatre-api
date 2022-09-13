@@ -323,7 +323,7 @@ def test_production_venues():
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "excerpt_text,description,expected",
+    "short_description,description,expected",
     [
         [
             "the end of the world as we know it",
@@ -346,9 +346,11 @@ def test_production_venues():
         [None, None, None],
     ],
 )
-def test_production_excerpt(excerpt_text, description, expected):
-    production = ProductionFactory(excerpt_text=excerpt_text, description=description)
-    assert production.excerpt == expected
+def test_production_shortdescription(short_description, description, expected):
+    production = ProductionFactory(
+        short_description=short_description, description=description
+    )
+    assert production.shortdescription == expected
 
 
 ###
