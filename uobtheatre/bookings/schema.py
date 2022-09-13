@@ -254,10 +254,6 @@ class BookingNode(DjangoObjectType):
     net_transactions = graphene.Int()
     transferred_to = graphene.Field(lambda: BookingNode)
 
-    # @property
-    # def transferred_to(self):
-    #     return graphene.Field(BookingNode)
-
     def resolve_price_breakdown(self, _):
         return self
 

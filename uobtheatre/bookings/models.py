@@ -26,7 +26,7 @@ from uobtheatre.payments.exceptions import (
 )
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable, PayableQuerySet
-from uobtheatre.payments.transferables import Transferable
+from uobtheatre.payments.transferables import Transferable, TransferableQuerySet
 from uobtheatre.productions.exceptions import (
     InvalidConcessionTypeException,
     InvalidSeatGroupException,
@@ -136,7 +136,7 @@ class MiscCost(models.Model):
         ]
 
 
-class BookingQuerySet(PayableQuerySet):
+class BookingQuerySet(TransferableQuerySet):
     """QuerySet for bookings"""
 
     def annotate_checked_in(self) -> QuerySet:
@@ -234,7 +234,7 @@ class Booking(TimeStampedMixin, Transferable):
         A user can only have 1 In Progress booking per performance.
     """
 
-    objects = BookingManager()  # type: ignore
+    objects = BookingManager()  # type: ignore[assignment]
 
     class Meta:
         constraints = [
@@ -641,13 +641,7 @@ class Booking(TimeStampedMixin, Transferable):
         ).delete()
 
         # Create the new booking to transfer to
-        new_booking = self.clone()
-        new_booking.status = Payable.Status.IN_PROGRESS
-        new_booking.performance = performance
-        new_booking.transfered_from = self
-        new_booking.admin_discount_percentage = 0
-        new_booking.expires_at = generate_expires_at()
-        new_booking.save()
+        new_booking = Booking.objects.create(user=self.user, creator=self.user, transfered_from=self, performance_id=performance.id)  # type: ignore
 
         # Copy across all tickets which can be copied one by one
         for ticket in self.tickets.all():

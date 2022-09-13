@@ -1,11 +1,15 @@
-from typing import TYPE_CHECKING, Optional
+from typing import Optional
 
 from django.db import models
 
-from uobtheatre.payments.payables import Payable
+from uobtheatre.payments.payables import Payable, PayableQuerySet
 
-if TYPE_CHECKING:
+
+class TransferableQuerySet(PayableQuerySet):
     pass
+
+
+TransferableManager = models.Manager.from_queryset(TransferableQuerySet)
 
 # pylint: disable=abstract-method
 class Transferable(Payable):
@@ -13,6 +17,8 @@ class Transferable(Payable):
     A transferable is a payable which can be transfered. A transfer is a
     to/from another transferable of the same type. For bookings this enables bookings to be updated (chnaged perfomrance)
     """
+
+    objects = TransferableManager()  # type: ignore
 
     # Whether the booking has be transferred to
     transfered_from = models.OneToOneField(

@@ -295,6 +295,7 @@ class Transaction(TimeStampedMixin, BaseModel):
         refund_provider.refund(self)
 
 
+# TODO This should be moved into its own package
 class FinancialTransfer(TimeStampedMixin, BaseModel):
     """Model for representing the movemement of funds at the business level"""
 

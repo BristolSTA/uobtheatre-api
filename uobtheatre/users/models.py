@@ -1,5 +1,5 @@
 import uuid
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 from django.contrib.auth.models import AbstractUser, Permission
 from django.db import models
@@ -7,6 +7,9 @@ from guardian.shortcuts import assign_perm, get_objects_for_user
 
 from uobtheatre.users.abilities import AbilitiesMixin, OpenAdmin, OpenBoxoffice
 from uobtheatre.utils.models import BaseModel
+
+if TYPE_CHECKING:
+    pass
 
 
 class User(AbilitiesMixin, AbstractUser, BaseModel):

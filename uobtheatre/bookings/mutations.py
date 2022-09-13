@@ -468,7 +468,6 @@ class CreateBookingTransfer(AuthRequiredMixin, SafeMutation):
                 "You do not have permission to create a booking for this performance"
             )
 
-        booking.check_can_transfer_to(performance)
         new_booking = booking.create_transfer(performance)
         return CreateBookingTransfer(booking=new_booking)
 
