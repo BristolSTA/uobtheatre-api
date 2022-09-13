@@ -59,7 +59,7 @@ class ProductionContentWarningNode(DjangoObjectType):
         interfaces = (relay.Node,)
 
 
-class WarningNode(DjangoObjectType):
+class ContentWarningNode(DjangoObjectType):
     class Meta:
         model = ContentWarning
         fields = ("short_description", "long_description")
@@ -229,6 +229,7 @@ class ProductionNode(PermissionsMixin, AssignedUsersMixin, DjangoObjectType):
         model = Production
         filterset_class = ProductionFilter
         interfaces = (relay.Node,)
+        exclude = ("warnings_pivot",)
 
 
 class ConcessionTypeBookingType(graphene.ObjectType):
@@ -394,7 +395,7 @@ class Query(graphene.ObjectType):
 
     productions = DjangoFilterConnectionField(ProductionNode)
     performances = DjangoFilterConnectionField(PerformanceNode)
-    warnings = DjangoFilterConnectionField(WarningNode)
+    warnings = DjangoFilterConnectionField(ContentWarningNode)
 
     production = graphene.Field(
         ProductionNode, id=IdInputField(), slug=graphene.String()

@@ -6,19 +6,19 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('productions', '0022_auto_20220612_1331'),
+        ("productions", "0022_auto_20220612_1331"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='production',
-            name='support_email',
-            field=models.EmailField(default='support@uobtheatre.com', max_length=254),
+            model_name="production",
+            name="support_email",
+            field=models.EmailField(default="support@uobtheatre.com", max_length=254),
             preserve_default=False,
         ),
         migrations.AlterField(
-            model_name='performance',
-            name='interval_duration_mins',
+            model_name="performance",
+            name="interval_duration_mins",
             field=models.IntegerField(blank=True, null=True),
         ),
     ]

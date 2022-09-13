@@ -10,6 +10,7 @@ from uobtheatre.productions.models import (
     Performance,
     PerformanceSeatGroup,
     Production,
+    ProductionContentWarning,
     ProductionTeamMember,
     Society,
     Venue,
@@ -27,6 +28,7 @@ class ProductionFactory(factory.django.DjangoModelFactory):
     poster_image = factory.SubFactory(ImageFactory)
     featured_image = factory.SubFactory(ImageFactory)
     cover_image = factory.SubFactory(ImageFactory)
+    contact_email = factory.Faker("email")
     status = Production.Status.PUBLISHED
 
     class Meta:
@@ -91,6 +93,14 @@ class ContentWarningFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = ContentWarning
+
+
+class ProductionContentWarningFactory(factory.django.DjangoModelFactory):
+    production = factory.SubFactory(ProductionFactory)
+    warning = factory.SubFactory(ContentWarningFactory)
+
+    class Meta:
+        model = ProductionContentWarning
 
 
 def create_production(start, end, production_id=None):

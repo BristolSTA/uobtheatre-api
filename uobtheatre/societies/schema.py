@@ -21,6 +21,20 @@ class SocietyNode(PermissionsMixin, DjangoObjectType):
         model = Society
         interfaces = (relay.Node,)
         filterset_class = SocietyFilterSet
+        fields = (
+            "created_at",
+            "updated_at",
+            "name",
+            "slug",
+            "description",
+            "logo",
+            "banner",
+            "website",
+            "contact",
+            "members",
+            "productions",
+            "permissions",
+        )
 
 
 class Query(graphene.ObjectType):
