@@ -836,6 +836,7 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
             "society",
             "poster_image",
             "featured_image",
+            "contact_email",
         ]
     ) & RelatedObjectsValidator(
         attribute="performances", validator=Performance.VALIDATOR, min_number=1
@@ -875,7 +876,7 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
     age_rating = models.SmallIntegerField(null=True, blank=True)
     facebook_event = models.CharField(max_length=255, null=True, blank=True)
 
-    support_email = models.EmailField()
+    contact_email = models.EmailField(null=True, blank=True)
 
     content_warnings = models.ManyToManyField(
         ContentWarning, blank=True, through=ProductionContentWarning

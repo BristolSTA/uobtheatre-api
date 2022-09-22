@@ -4,7 +4,6 @@ from unittest.mock import patch
 import pytest
 from django.template.loader import get_template
 
-import uobtheatre.mail.test.fixtures as fixtures
 from uobtheatre.mail.composer import (
     Action,
     Heading,
@@ -16,6 +15,7 @@ from uobtheatre.mail.composer import (
     Panel,
     Rule,
 )
+from uobtheatre.mail.test import fixtures
 from uobtheatre.users.test.factories import UserFactory
 
 test_mail = (
@@ -126,7 +126,7 @@ def test_panel_item():
 def test_append():
     line = Line("Test")
     composer = MailComposer()
-    assert composer.items == []
+    assert not composer.items
     composer.append(line)
     assert composer.items == [line]
 
@@ -138,7 +138,7 @@ def test_greeting(with_user, expected):
     user = UserFactory(first_name="Test")
     user.status.verified = True
 
-    assert composer.items == []
+    assert not composer.items
     composer.greeting(user if with_user else None)
     assert isinstance(composer.items[0], Heading) is True
     assert composer.items[0].text == expected

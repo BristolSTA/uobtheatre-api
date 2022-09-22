@@ -162,7 +162,9 @@ def test_get_price():
     assert booking.get_price() == 0
 
     # Set seat type price for performance
-    performance_seat_group = PerformanceSeatingFactory(performance=performance, price=500)
+    performance_seat_group = PerformanceSeatingFactory(
+        performance=performance, price=500
+    )
 
     # Create a seat booking
     TicketFactory(booking=booking, seat_group=performance_seat_group.seat_group)
@@ -172,12 +174,11 @@ def test_get_price():
     TicketFactory(booking=booking, seat_group=performance_seat_group.seat_group)
     assert booking.get_price() == 1000
 
-    performance_seat_group_2 = PerformanceSeatingFactory(performance=performance, price=100)
-    TicketFactory(booking=booking, seat_group=performance_seat_group_2.seat_group)
-    assert (
-        booking.get_price()
-        == 1100
+    performance_seat_group_2 = PerformanceSeatingFactory(
+        performance=performance, price=100
     )
+    TicketFactory(booking=booking, seat_group=performance_seat_group_2.seat_group)
+    assert booking.get_price() == 1100
 
 
 @pytest.mark.django_db
