@@ -3,13 +3,14 @@ from django.utils import timezone
 
 from uobtheatre.images.test.factories import ImageFactory
 from uobtheatre.productions.models import (
-    AudienceWarning,
     CastMember,
+    ContentWarning,
     CrewMember,
     CrewRole,
     Performance,
     PerformanceSeatGroup,
     Production,
+    ProductionContentWarning,
     ProductionTeamMember,
     Society,
     Venue,
@@ -27,6 +28,7 @@ class ProductionFactory(factory.django.DjangoModelFactory):
     poster_image = factory.SubFactory(ImageFactory)
     featured_image = factory.SubFactory(ImageFactory)
     cover_image = factory.SubFactory(ImageFactory)
+    contact_email = factory.Faker("email")
     status = Production.Status.PUBLISHED
 
     class Meta:
@@ -85,11 +87,20 @@ class CastMemberFactory(factory.django.DjangoModelFactory):
         model = CastMember
 
 
-class AudienceWarningFactory(factory.django.DjangoModelFactory):
-    description = factory.Faker("sentence", nb_words=3)
+class ContentWarningFactory(factory.django.DjangoModelFactory):
+    short_description = factory.Faker("sentence", nb_words=3)
+    long_description = factory.Faker("sentence", nb_words=5)
 
     class Meta:
-        model = AudienceWarning
+        model = ContentWarning
+
+
+class ProductionContentWarningFactory(factory.django.DjangoModelFactory):
+    production = factory.SubFactory(ProductionFactory)
+    warning = factory.SubFactory(ContentWarningFactory)
+
+    class Meta:
+        model = ProductionContentWarning
 
 
 def create_production(start, end, production_id=None):

@@ -111,6 +111,22 @@ type ConcessionTypeNode implements Node {
   id: ID!
 }
 
+type ContentWarningNode implements Node {
+  shortDescription: String!
+  longDescription: String
+  id: ID!
+}
+
+type ContentWarningNodeConnection {
+  pageInfo: PageInfo!
+  edges: [ContentWarningNodeEdge]!
+}
+
+type ContentWarningNodeEdge {
+  node: ContentWarningNode
+  cursor: String!
+}
+
 type CrewMemberNode implements Node {
   id: ID!
   name: String!
@@ -262,6 +278,22 @@ type FieldError {
   code: String
 }
 
+enum FinancialTransferMethod {
+  INTERNAL
+  BACS
+}
+
+type FinancialTransferNode {
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  society: SocietyNode
+  value: Int!
+  user: ExtendedUserNode
+  method: FinancialTransferMethod!
+  reason: String
+}
+
 union GQLErrorUnion = FieldError | NonFieldError
 
 type GenerateReport {
@@ -327,6 +359,7 @@ type Mutation {
   deletePerformanceSeatGroup(id: IdInputField!): DeletePerformanceSeatGroupMutation
   setProductionStatus(message: String, productionId: IdInputField!, status: Status): SetProductionStatus
   cancelPayment(paymentId: IdInputField!): CancelPayment
+  recordFinancialTransfer(method: TransferMethodEnum, societyId: IdInputField!, value: Int): RecordFinancialTransfer
   generateReport(endTime: DateTime, name: String!, options: [ReportOption], startTime: DateTime): GenerateReport
   booking(input: BookingMutationInput!): BookingMutationPayload
   deleteBooking(id: IdInputField!): DeleteBooking
@@ -514,6 +547,13 @@ type PriceBreakdownTicketNode {
   totalPrice: Int!
 }
 
+type ProductionContentWarningNode implements Node {
+  id: ID!
+  production: ProductionNode!
+  warning: ContentWarningNode!
+  information: String
+}
+
 input ProductionMutationInput {
   name: String
   slug: String
@@ -525,7 +565,8 @@ input ProductionMutationInput {
   featuredImage: ID
   ageRating: Int
   facebookEvent: String
-  warnings: [ID]
+  contactEmail: String
+  contentWarnings: [ProductionWarning]
   id: ID
   clientMutationId: String
 }
@@ -552,7 +593,8 @@ type ProductionNode implements Node {
   status: EnumNode
   ageRating: Int
   facebookEvent: String
-  warnings: [WarningNode!]
+  contactEmail: String
+  contentWarnings: [ProductionContentWarningNode!]
   slug: String!
   cast: [CastMemberNode!]
   productionTeam: [ProductionTeamMemberNode!]
@@ -592,6 +634,11 @@ type ProductionTeamMemberNode implements Node {
   production: ProductionNode!
 }
 
+input ProductionWarning {
+  information: String
+  id: IdInputField!
+}
+
 type Query {
   images: [ImageNode]
   paymentDevices(paymentProvider: PaymentMethod, paired: Boolean): [SquarePaymentDevice]
@@ -599,13 +646,19 @@ type Query {
   me: ExtendedUserNode
   societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String, userHasPermission: String): SocietyNodeConnection
   society(slug: String!): SocietyNode
-  productions(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, venues: [ID], society: ID, status: String, ageRating: Int, facebookEvent: String, warnings: [ID], slug: String, id: ID, userHasPermission: String, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, search: String, orderBy: String): ProductionNodeConnection
+  productions(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, venues: [ID], society: ID, status: String, ageRating: Int, facebookEvent: String, contactEmail: String, contentWarnings: [ID], slug: String, id: ID, userHasPermission: String, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, search: String, orderBy: String): ProductionNodeConnection
   performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, intervalDurationMins: Int, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, hasBoxofficePermissions: Boolean, runOn: Date, orderBy: String): PerformanceNodeConnection
-  warnings(offset: Int, before: String, after: String, first: Int, last: Int, id: ID): WarningNodeConnection
+  warnings(offset: Int, before: String, after: String, first: Int, last: Int, id: ID): ContentWarningNodeConnection
   production(id: IdInputField, slug: String): ProductionNode
   performance(id: ID!): PerformanceNode
   venues(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String): VenueNodeConnection
   venue(slug: String!): VenueNode
+}
+
+type RecordFinancialTransfer {
+  success: Boolean
+  errors: [GQLErrorUnion]
+  transfer: FinancialTransferNode
 }
 
 type RefreshToken {
@@ -701,7 +754,6 @@ type SetProductionStatus {
 }
 
 type SocietyNode implements Node {
-  id: ID!
   createdAt: DateTime!
   updatedAt: DateTime!
   name: String!
@@ -712,7 +764,8 @@ type SocietyNode implements Node {
   website: String
   contact: String
   members: [ExtendedUserNode!]!
-  productions(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, venues: [ID], society: ID, status: String, ageRating: Int, facebookEvent: String, warnings: [ID], slug: String, id: ID, userHasPermission: String, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, search: String, orderBy: String): ProductionNodeConnection!
+  productions(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, venues: [ID], society: ID, status: String, ageRating: Int, facebookEvent: String, contactEmail: String, contentWarnings: [ID], slug: String, id: ID, userHasPermission: String, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, search: String, orderBy: String): ProductionNodeConnection!
+  id: ID!
   permissions: [String]
 }
 
@@ -799,6 +852,11 @@ type TransactionNodeEdge {
   cursor: String!
 }
 
+enum TransferMethodEnum {
+  INTERNAL
+  BACS
+}
+
 type UnCheckInBooking {
   success: Boolean
   errors: [GQLErrorUnion]
@@ -848,8 +906,8 @@ type VenueNode implements Node {
   slug: String!
   seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
   performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, intervalDurationMins: Int, description: String, extraInformation: String, disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, hasBoxofficePermissions: Boolean, runOn: Date, orderBy: String): PerformanceNodeConnection!
-  productionSet(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, venues: [ID], society: ID, status: String, ageRating: Int, facebookEvent: String, warnings: [ID], slug: String, id: ID, userHasPermission: String, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, search: String, orderBy: String): ProductionNodeConnection!
-  productions(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, venues: [ID], society: ID, status: String, ageRating: Int, facebookEvent: String, warnings: [ID], slug: String, id: ID, userHasPermission: String, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, search: String, orderBy: String): ProductionNodeConnection
+  productionSet(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, venues: [ID], society: ID, status: String, ageRating: Int, facebookEvent: String, contactEmail: String, contentWarnings: [ID], slug: String, id: ID, userHasPermission: String, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, search: String, orderBy: String): ProductionNodeConnection!
+  productions(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, venues: [ID], society: ID, status: String, ageRating: Int, facebookEvent: String, contactEmail: String, contentWarnings: [ID], slug: String, id: ID, userHasPermission: String, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, search: String, orderBy: String): ProductionNodeConnection
 }
 
 type VenueNodeConnection {
@@ -876,19 +934,4 @@ type VerifyToken {
   payload: GenericScalar
   success: Boolean
   errors: [GQLErrorUnion]
-}
-
-type WarningNode implements Node {
-  description: String!
-  id: ID!
-}
-
-type WarningNodeConnection {
-  pageInfo: PageInfo!
-  edges: [WarningNodeEdge]!
-}
-
-type WarningNodeEdge {
-  node: WarningNode
-  cursor: String!
 }

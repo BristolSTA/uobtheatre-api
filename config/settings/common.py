@@ -1,6 +1,6 @@
 import os
 from datetime import timedelta
-from distutils.util import strtobool
+from distutils.util import strtobool  #TODO: Replace with supported version # pylint: disable=deprecated-module,fixme
 from os.path import join
 from typing import List
 
@@ -261,7 +261,7 @@ LOGGING = {
 AUTH_USER_MODEL = "users.User"
 GRAPHQL_AUTH = {
     "LOGIN_ALLOWED_FIELDS": ["email"],
-    "USER_NODE_EXCLUDE_FIELDS": ["password"],
+    "USER_NODE_EXCLUDE_FIELDS": ["password", "financialtransfer_set"],
     "USER_NODE_FILTER_FIELDS": {
         "email": ["exact", "icontains", "istartswith"],
         "is_active": ["exact"],

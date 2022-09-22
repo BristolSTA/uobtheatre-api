@@ -63,17 +63,30 @@ class CrewRole(models.Model):
         return str(self.name)
 
 
-class AudienceWarning(models.Model):
+class ContentWarning(models.Model):
     """A warning about a Production.
 
     In many cases Productions have speciifc warnings which they wish to inform
     the audience about before they purchase tickets.
     """
 
-    description = models.CharField(max_length=255)
+    short_description = models.CharField(max_length=255)
+    long_description = models.TextField(null=True)
 
     def __str__(self):
-        return str(self.description)
+        return str(self.short_description)
+
+
+class ProductionContentWarning(models.Model):
+    """Intermediate model between productions and warnings"""
+
+    production = models.ForeignKey(
+        "productions.production",
+        on_delete=models.CASCADE,
+        related_name="warnings_pivot",
+    )
+    warning = models.ForeignKey(ContentWarning, on_delete=models.CASCADE)
+    information = models.TextField(null=True)
 
 
 class CastMember(models.Model):
@@ -820,6 +833,7 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
             "society",
             "poster_image",
             "featured_image",
+            "contact_email",
         ]
     ) & RelatedObjectsValidator(
         attribute="performances", validator=Performance.VALIDATOR, min_number=1
@@ -859,7 +873,11 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
     age_rating = models.SmallIntegerField(null=True, blank=True)
     facebook_event = models.CharField(max_length=255, null=True, blank=True)
 
-    warnings = models.ManyToManyField(AudienceWarning, blank=True)
+    contact_email = models.EmailField(null=True, blank=True)
+
+    content_warnings = models.ManyToManyField(
+        ContentWarning, blank=True, through=ProductionContentWarning
+    )
 
     slug = AutoSlugField(populate_from="name", unique=True, blank=True, editable=True)
 

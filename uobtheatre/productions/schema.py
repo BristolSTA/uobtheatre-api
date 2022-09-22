@@ -7,13 +7,14 @@ from graphene_django.filter import DjangoFilterConnectionField
 
 from uobtheatre.discounts.schema import ConcessionTypeNode
 from uobtheatre.productions.models import (
-    AudienceWarning,
     CastMember,
+    ContentWarning,
     CrewMember,
     CrewRole,
     Performance,
     PerformanceSeatGroup,
     Production,
+    ProductionContentWarning,
     ProductionTeamMember,
 )
 from uobtheatre.users.abilities import PermissionsMixin
@@ -53,10 +54,16 @@ class CrewMemberNode(DjangoObjectType):
         interfaces = (relay.Node,)
 
 
-class WarningNode(DjangoObjectType):
+class ProductionContentWarningNode(DjangoObjectType):
     class Meta:
-        model = AudienceWarning
-        fields = ("description",)
+        model = ProductionContentWarning
+        interfaces = (relay.Node,)
+
+
+class ContentWarningNode(DjangoObjectType):
+    class Meta:
+        model = ContentWarning
+        fields = ("short_description", "long_description")
         filter_fields = ("id",)
         interfaces = (relay.Node,)
 
@@ -122,13 +129,16 @@ class ProductionFilter(FilterSet, UserPermissionFilterMixin):
 
     search = django_filters.CharFilter(method="search_productions", label="Search")
 
-    def start_filter(self, query_set, value, date=None):
+    @classmethod
+    def start_filter(cls, query_set, value, date=None):
         return query_set.annotate_start().filter(**{value: date})
 
-    def end_filter(self, query_set, value, date=None):
+    @classmethod
+    def end_filter(cls, query_set, value, date=None):
         return query_set.annotate_end().filter(**{value: date})
 
-    def search_productions(self, queryset, _, value):
+    @classmethod
+    def search_productions(cls, queryset, _, value):
         """
         Given a query string, searches through the productions using the name of the production
 
@@ -167,7 +177,7 @@ class SalesBreakdownNode(graphene.ObjectType):
 class ProductionNode(
     PermissionsMixin, GrapheneEnumMixin, AssignedUsersMixin, DjangoObjectType
 ):
-    warnings = DjangoListField(WarningNode)
+    content_warnings = DjangoListField(ProductionContentWarningNode)
     crew = DjangoListField(CrewMemberNode)
     cast = DjangoListField(CastMemberNode)
     production_team = DjangoListField(ProductionTeamMemberNode)
@@ -210,6 +220,9 @@ class ProductionNode(
     def resolve_total_tickets_sold(self, info):
         return self.total_tickets_sold
 
+    def resolve_content_warnings(self, info):
+        return self.warnings_pivot.order_by("warning__short_description").all()
+
     @classmethod
     def get_queryset(cls, queryset, info):
         return queryset.user_can_see(info.context.user)
@@ -218,6 +231,7 @@ class ProductionNode(
         model = Production
         filterset_class = ProductionFilter
         interfaces = (relay.Node,)
+        exclude = ("warnings_pivot",)
 
 
 class ConcessionTypeBookingType(graphene.ObjectType):
@@ -297,7 +311,8 @@ class PerformanceFilter(FilterSet):
             self.request.user, has_permission=has_permission
         )
 
-    def run_on_filter(self, query_set, _, date=None):
+    @classmethod
+    def run_on_filter(cls, query_set, _, date=None):
         return query_set.running_on(date)
 
 
@@ -382,7 +397,7 @@ class Query(graphene.ObjectType):
 
     productions = DjangoFilterConnectionField(ProductionNode)
     performances = DjangoFilterConnectionField(PerformanceNode)
-    warnings = DjangoFilterConnectionField(WarningNode)
+    warnings = DjangoFilterConnectionField(ContentWarningNode)
 
     production = graphene.Field(
         ProductionNode, id=IdInputField(), slug=graphene.String()

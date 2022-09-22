@@ -1,10 +1,75 @@
+import graphene
 from django.core.exceptions import ValidationError
+from django.forms import Field
+from graphene_django.forms.converter import convert_form_field
 
-from uobtheatre.productions.models import Performance, PerformanceSeatGroup, Production
+from uobtheatre.productions.models import (
+    ContentWarning,
+    Performance,
+    PerformanceSeatGroup,
+    Production,
+    ProductionContentWarning,
+)
 from uobtheatre.utils.forms import MutationForm
+from uobtheatre.utils.schema import IdInputField
+
+
+class ProductionWarning(graphene.InputObjectType):
+    """Input for creating Tickets with mutations."""
+
+    information = graphene.String()
+    id = IdInputField(required=True)
+
+
+class ProductionWarningListField(Field):
+    pass
+
+
+@convert_form_field.register(ProductionWarningListField)
+def convert_form_field_to_string(field):
+    return graphene.List(
+        ProductionWarning,
+        description=field.help_text,
+        required=field.required,
+    )
 
 
 class ProductionForm(MutationForm):
+    """Form for productions"""
+
+    contentWarnings = ProductionWarningListField(required=False)
+
+    def clean(self):
+        """Validate form data on clean"""
+        cleaned_data = super().clean()
+        warnings = cleaned_data.get("contentWarnings") or []
+
+        for warning in warnings:
+            if not ContentWarning.objects.filter(pk=warning["id"]).exists():
+                raise ValidationError(
+                    {
+                        "contentWarnings": f"A warning with ID {warning['id']} does not exist"
+                    }
+                )
+
+    def _save_m2m(self):
+        """Save the many-to-many relations"""
+        super()._save_m2m()
+
+        if (warnings := self.cleaned_data.get("contentWarnings")) is not None:
+            ProductionContentWarning.objects.filter(production=self.instance).delete()
+
+            ProductionContentWarning.objects.bulk_create(
+                [
+                    ProductionContentWarning(
+                        production=self.instance,
+                        warning_id=warning.id,
+                        information=warning.information,
+                    )
+                    for warning in warnings
+                ]
+            )
+
     class Meta:
         model = Production
         fields = (
@@ -18,7 +83,7 @@ class ProductionForm(MutationForm):
             "featured_image",
             "age_rating",
             "facebook_event",
-            "warnings",
+            "contact_email",
         )
 
 
