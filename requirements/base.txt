@@ -55,7 +55,7 @@ graphene-django==2.15.0
 django-graphql-auth==0.3.16
 # These are apparently a package deal atm so we need both
 django-graphql-jwt==0.3.0
-PyJWT==1.7.0
+PyJWT==2.5.0
 
 #=== Payments ===#
 
@@ -63,7 +63,7 @@ squareup>=9.0.0.20210226
 
 #=== Logging ===#
 
-sentry-sdk==1.9.7
+sentry-sdk==1.9.8
 whitenoise==6.2.0  # https://github.com/evansd/whitenoise
 
 #=== Email ===#
@@ -71,7 +71,7 @@ django-anymail[amazon_ses]==8.6  # https://github.com/anymail/django-anymail
 django-inlinecss==0.3.0
 
 #=== Timezones ===#
-timezonefinder==6.1.1
+timezonefinder==6.1.2
 pytz==2022.2.1
 
 #=== Task Queue ===#
