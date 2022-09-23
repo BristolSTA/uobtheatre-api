@@ -1,6 +1,8 @@
 import os
 from datetime import timedelta
-from distutils.util import strtobool  #TODO: Replace with supported version # pylint: disable=deprecated-module,fixme
+from distutils.util import (  # TODO: Replace with supported version # pylint: disable=deprecated-module,fixme
+    strtobool,
+)
 from os.path import join
 from typing import List
 
@@ -53,6 +55,7 @@ INSTALLED_APPS = (
     "uobtheatre.images",
     "uobtheatre.reports",
     "uobtheatre.mail",
+    "uobtheatre.finance",
     "uobtheatre",
     "admin_confirm",
 )

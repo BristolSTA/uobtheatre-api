@@ -71,7 +71,7 @@ class ContentWarning(models.Model):
     """
 
     short_description = models.CharField(max_length=255)
-    long_description = models.TextField(null=True)
+    long_description = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return str(self.short_description)
@@ -796,7 +796,7 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
 
     name = models.CharField(max_length=255)
     subtitle = models.CharField(max_length=255, null=True, blank=True)
-    description = TipTapTextField(null=True)
+    description = TipTapTextField(null=True, blank=True)
 
     venues = models.ManyToManyField(Venue, through=Performance, editable=False)
 
