@@ -6,7 +6,8 @@ from uobtheatre.societies.test.factories import SocietyFactory
 
 
 @pytest.mark.django_db
-def test_record_transfer(gql_client):
+@pytest.mark.parametrize("reason", [None, "My reason"])
+def test_record_transfer(gql_client, reason):
     gql_client.login().user.assign_perm("finance.create_transfer")
 
     society = SocietyFactory()
@@ -15,15 +16,20 @@ def test_record_transfer(gql_client):
     response = gql_client.execute(
         """
         mutation {
-            recordFinancialTransfer(societyId: "%s", value: 1050, method: INTERNAL) {
+            recordFinancialTransfer(societyId: "%s", value: 1050, method: INTERNAL %s) {
                 success
             }
         }
         """
-        % to_global_id("SocietyNode", society.id)
+        % (
+            to_global_id("SocietyNode", society.id),
+            "" if not reason else f'reason: "{reason}"',
+        )
     )
+
     assert response["data"]["recordFinancialTransfer"]["success"] is True
     assert FinancialTransfer.objects.count() == 1
+    assert FinancialTransfer.objects.first().reason == reason
 
 
 @pytest.mark.django_db

@@ -19,10 +19,12 @@ class RecordFinancialTransfer(AuthRequiredMixin, SafeMutation):
 
     class Arguments:
         society_id = IdInputField(required=True)
-        value = graphene.Int()
+        value = graphene.Int(required=True)
         method = graphene.Argument(
-            graphene.Enum("TransferMethodEnum", FinancialTransfer.Method.choices)
+            graphene.Enum("TransferMethodEnum", FinancialTransfer.Method.choices),
+            required=True,
         )
+        reason = graphene.String(required=False)
 
     @classmethod
     def authorize_request(cls, root, info, **inputs):
@@ -30,13 +32,17 @@ class RecordFinancialTransfer(AuthRequiredMixin, SafeMutation):
             raise AuthorizationException
 
     @classmethod
-    def resolve_mutation(cls, _, info, society_id, value, method):
+    def resolve_mutation(cls, _, info, society_id, value, method, reason=None):
         # Find the subject
         society = Society.objects.get(pk=society_id)
 
         # Create the transfer
         transfer = FinancialTransfer.objects.create(
-            value=value, method=method, society=society, user=info.context.user
+            value=value,
+            method=method,
+            society=society,
+            user=info.context.user,
+            reason=reason,
         )
         return RecordFinancialTransfer(transfer=transfer)
 
