@@ -327,7 +327,7 @@ type MiscCostNode implements Node {
 }
 
 type Mutation {
-  recordFinancialTransfer(method: TransferMethodEnum, societyId: IdInputField!, value: Int): RecordFinancialTransfer
+  recordFinancialTransfer(method: TransferMethodEnum!, reason: String, societyId: IdInputField!, value: Int!): RecordFinancialTransfer
   concessionType(input: ConcessionTypeMutationInput!): ConcessionTypeMutationPayload
   deleteConcessionType(id: IdInputField!): DeleteConcessionTypeMutation
   discount(input: DiscountMutationInput!): DiscountMutationPayload
