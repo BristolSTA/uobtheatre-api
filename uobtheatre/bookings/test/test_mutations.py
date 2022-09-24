@@ -2511,12 +2511,7 @@ def test_check_in_booking_fails_if_not_paid(gql_client, status):
 
 @pytest.mark.django_db
 def test_check_in_booking_fails_if_doors_not_open(gql_client):
-    print("timeNow", timezone.now())
-    
-
     performance = PerformanceFactory(doors_open=timezone.now() + timedelta(minutes=8))
-    print("doorsOpen",performance.doors_open)
-    print(timezone.now() < performance.doors_open)
     gql_client.login()
     assign_perm("productions.boxoffice", gql_client.user, performance.production)
 

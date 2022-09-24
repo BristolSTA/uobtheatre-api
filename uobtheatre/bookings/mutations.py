@@ -1,5 +1,4 @@
 import graphene
-import datetime
 from django.utils import timezone
 
 from uobtheatre.bookings.abilities import ModifyBooking
