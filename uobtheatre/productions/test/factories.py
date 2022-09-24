@@ -38,9 +38,9 @@ class ProductionFactory(factory.django.DjangoModelFactory):
 class PerformanceFactory(factory.django.DjangoModelFactory):
 
     doors_open = factory.Faker(
-        "future_datetime", tzinfo=timezone.get_current_timezone()
+        "past_datetime", tzinfo=timezone.get_current_timezone()
     )
-    start = factory.Faker("future_datetime", tzinfo=timezone.get_current_timezone())
+    start = factory.Faker("past_datetime", tzinfo=timezone.get_current_timezone())
     end = factory.Faker("future_datetime", tzinfo=timezone.get_current_timezone())
     extra_information = factory.Faker("sentence")
     description = factory.Faker("sentence")

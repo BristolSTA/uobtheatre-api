@@ -2509,6 +2509,61 @@ def test_check_in_booking_fails_if_not_paid(gql_client, status):
         }
     }
 
+@pytest.mark.django_db
+def test_check_in_booking_fails_if_doors_not_open(gql_client):
+    print("timeNow", timezone.now())
+    
+
+    performance = PerformanceFactory(doors_open=timezone.now() + timedelta(minutes=8))
+    print("doorsOpen",performance.doors_open)
+    print(timezone.now() < performance.doors_open)
+    gql_client.login()
+    assign_perm("productions.boxoffice", gql_client.user, performance.production)
+
+    booking = BookingFactory(performance=performance, user=gql_client.user)
+
+    checked_in_ticket = TicketFactory(booking=booking, checked_in=True)
+
+    request_query = """
+    mutation {
+    checkInBooking(
+            bookingReference: "%s"
+            performance: "%s"
+            tickets: [
+                { ticketId: "%s"}
+            ]
+        ) {
+            success
+            errors {
+            __typename
+            ... on NonFieldError {
+                message
+            }
+            }
+        }
+    }
+    """
+    response = gql_client.execute(
+        request_query
+        % (
+            booking.reference,
+            to_global_id("PerformanceNode", performance.id),
+            to_global_id("TicketNode", checked_in_ticket.id),
+        )
+    )
+    assert response == {
+        "data": {
+            "checkInBooking": {
+                "success": False,
+                "errors": [
+                    {
+                        "__typename": "NonFieldError",
+                        "message": "This booking cannot be checked in as doors have not opened for the performance.",
+                    }
+                ],
+            }
+        }
+    }
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("prefix", ["check", "uncheck"])

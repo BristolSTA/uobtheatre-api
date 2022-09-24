@@ -1,4 +1,6 @@
 import graphene
+import datetime
+from django.utils import timezone
 
 from uobtheatre.bookings.abilities import ModifyBooking
 from uobtheatre.bookings.forms import BookingForm
@@ -317,6 +319,11 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
             raise GQLException(
                 field="booking_reference",
                 message=f"This booking has not been paid for (Status: {booking.get_status_display()})",
+            )
+
+        if timezone.now() < performance.doors_open:
+            raise GQLException(
+                message="This booking cannot be checked in as doors have not opened for the performance.",
             )
 
         ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))
