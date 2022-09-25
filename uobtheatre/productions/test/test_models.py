@@ -678,14 +678,13 @@ def test_performance_str(name, start, string):
 
 
 @pytest.mark.django_db
-def test_performance_min_price():
+def test_performance_min_price_free_performance():
 
     performance = PerformanceFactory()
-    PerformanceSeatingFactory(performance=performance, price=30)
-    PerformanceSeatingFactory(performance=performance, price=10)
+    PerformanceSeatingFactory(performance=performance, price=0)
     PerformanceSeatingFactory(performance=performance, price=20)
 
-    assert performance.min_seat_price() == 10
+    assert performance.min_seat_price() == 0
 
 
 @pytest.mark.django_db
