@@ -689,6 +689,28 @@ def test_performance_min_price():
 
 
 @pytest.mark.django_db
+def test_performance_min_price_with_single_discounts():
+    performance = PerformanceFactory()
+    PerformanceSeatingFactory(performance=performance, price=30)
+    PerformanceSeatingFactory(performance=performance, price=10)
+
+    adult = ConcessionTypeFactory(name="adult")
+    child = ConcessionTypeFactory(name="child")
+
+    null_discount = DiscountFactory(percentage=0, name="adult")
+    DiscountRequirementFactory(discount=null_discount, number=1, concession_type=adult)
+
+    single_discount = DiscountFactory(percentage=0.27, name="child")
+    DiscountRequirementFactory(
+        discount=single_discount, number=1, concession_type=child
+    )
+    null_discount.performances.set([performance])
+    single_discount.performances.set([performance])
+
+    assert performance.min_seat_price() == math.ceil((1 - 0.27) * 10)
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     "seat_groups, performance_capacity, is_valid",
     [

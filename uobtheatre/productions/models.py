@@ -1,6 +1,7 @@
 # pylint: disable=too-many-public-methods,too-many-lines
 import datetime
 import math
+from itertools import product
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from autoslug import AutoSlugField
@@ -572,9 +573,22 @@ class Performance(
         """The cheapest seat in the Performance
 
         Returns:
-            int: The price of the cheapest seat in the performance.
+            int: The price of the cheapest seat in the performance
+            (includes discounted seat options).
         """
-        return self.performance_seat_groups.aggregate(Min("price"))["price__min"]
+        return min(
+            [
+                math.ceil(discount_multiplier * psg_price)
+                for discount_multiplier, psg_price in product(
+                    [1 - discount for discount in self.single_discounts_map.values()]
+                    if len(self.single_discounts_map.values()) > 0
+                    else [1],
+                    [psg.price for psg in self.performance_seat_groups.all()]
+                    if len(self.performance_seat_groups.all()) > 0
+                    else [1],
+                )
+            ]
+        )
 
     @property
     def is_sold_out(self) -> bool:
