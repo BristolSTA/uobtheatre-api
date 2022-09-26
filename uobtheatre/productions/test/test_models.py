@@ -431,7 +431,7 @@ def test_performance_checked_in_tickets():
 
     # 2 tickets in the performance
     TicketFactory(booking=booking)
-    ticket = TicketFactory(booking=booking, checked_in=True)
+    ticket = TicketFactory(booking=booking, checked_in_at=timezone.now())
 
     # Ticket in an in progress booking - shouldn't be included
     in_progress_booking = BookingFactory(
@@ -449,7 +449,7 @@ def test_performance_unchecked_in_tickets():
 
     # 2 tickets in the performance
     ticket = TicketFactory(booking=booking)
-    TicketFactory(booking=booking, checked_in=True)
+    TicketFactory(booking=booking, checked_in_at=timezone.now())
 
     # Ticket in an in progress booking - shouldn't be included
     in_progress_booking = BookingFactory(
@@ -528,7 +528,7 @@ def test_performance_total_tickets_checked_in():
 
     # 2 tickets in the performance
     TicketFactory(booking=booking)
-    TicketFactory(booking=booking, checked_in=True)
+    TicketFactory(booking=booking, checked_in_at=timezone.now())
 
     assert booking.performance.total_tickets_checked_in == 1
     assert booking.performance.total_tickets_unchecked_in == 1

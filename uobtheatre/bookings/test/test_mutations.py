@@ -2463,7 +2463,7 @@ def test_check_in_booking_fails_if_not_paid(gql_client, status):
         performance=performance, user=gql_client.user, status=status
     )
 
-    checked_in_ticket = TicketFactory(booking=booking, checked_in=True)
+    checked_in_ticket = TicketFactory(booking=booking, checked_in_at=timezone.now())
 
     request_query = """
     mutation {
@@ -2568,7 +2568,7 @@ def test_check_in_booking_fails_if_already_checked_in(gql_client):
 
     booking = BookingFactory(performance=performance, user=gql_client.user)
 
-    checked_in_ticket = TicketFactory(booking=booking, checked_in=True)
+    checked_in_ticket = TicketFactory(booking=booking, checked_in_at=timezone.now())
 
     request_query = """
     mutation {
@@ -2622,8 +2622,8 @@ def test_uncheck_in_booking(gql_client):
 
     booking = BookingFactory(performance=performance, user=gql_client.login().user)
 
-    checked_in_ticket = TicketFactory(booking=booking, checked_in=True)
-    unchecked_in_ticket = TicketFactory(booking=booking, checked_in=False)
+    checked_in_ticket = TicketFactory(booking=booking, checked_in_at=timezone.now())
+    unchecked_in_ticket = TicketFactory(booking=booking, checked_in_at=timezone.now())
 
     request_query = """
     mutation {
@@ -2667,7 +2667,7 @@ def test_uncheck_in_booking_incorrect_performance(gql_client):
     wrong_performance = PerformanceFactory()
     booking = BookingFactory(performance=performance, user=gql_client.login().user)
 
-    checked_in_ticket = TicketFactory(booking=booking, checked_in=True)
+    checked_in_ticket = TicketFactory(booking=booking, checked_in_at=timezone.now())
 
     request_query = """
     mutation {
@@ -2732,7 +2732,9 @@ def test_uncheck_in_booking_incorrect_ticket(gql_client):
 
     assign_perm("productions.boxoffice", gql_client.user, performance.production)
 
-    checked_in_ticket = TicketFactory(booking=incorrect_booking, checked_in=True)
+    checked_in_ticket = TicketFactory(
+        booking=incorrect_booking, checked_in_at=timezone.now()
+    )
 
     request_query = """
     mutation {

@@ -877,37 +877,48 @@ def test_booking_pay_deletes_pending_payments():
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "initial_state, final_state",
-    [(True, True), (False, True)],
+    "initial_check_time, initial_check_state, final_check_state",
+    [
+        (None, False, True),
+        ("2000-01-01T00:00:00+00:00", True, True),
+    ],
 )
-def test_ticket_check_in(initial_state, final_state):
+def test_ticket_check_in(
+    gql_client, initial_check_time, initial_check_state, final_check_state
+):
     """
     Test ticket check in method
     """
+    gql_client.login()
 
-    ticket = TicketFactory(checked_in=initial_state)
+    ticket = TicketFactory(checked_in_at=initial_check_time)
 
-    assert ticket.checked_in == initial_state
-    ticket.check_in()
-    assert ticket.checked_in == final_state
+    assert ticket.checked_in == initial_check_state
+
+    ticket.check_in(user=gql_client.user)
+    assert ticket.checked_in == final_check_state
+    assert ticket.checked_in_at is not None or not "2000-01-01T00:00:00+00:00"
+    assert ticket.checked_in_by == gql_client.user
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "initial_state, final_state",
-    [(True, False), (False, False)],
+    "initial_check_time, initial_check_state, final_check_state",
+    [("2000-01-01T00:00:00+00:00", True, False), (None, False, False)],
 )
-def test_ticket_uncheck_in(initial_state, final_state):
+def test_ticket_uncheck_in(initial_check_time, initial_check_state, final_check_state):
     """
     Test ticket check in method
     """
 
-    ticket = TicketFactory(checked_in=initial_state)
+    ticket = TicketFactory(checked_in_at=initial_check_time)
 
-    assert ticket.checked_in == initial_state
+    assert ticket.checked_in == initial_check_state
     ticket.uncheck_in()
-    assert ticket.checked_in == final_state
-    assert Ticket.objects.first().checked_in == final_state
+
+    assert ticket.checked_in == final_check_state
+    assert Ticket.objects.first().checked_in_at is None
+    assert ticket.checked_in_by is None
 
 
 @pytest.mark.django_db
@@ -926,13 +937,13 @@ def test_filter_order_by_checked_in():
 
     # Some checked in
     booking_some = BookingFactory()
-    TicketFactory(booking=booking_some, checked_in=True)
+    TicketFactory(booking=booking_some, checked_in_at=timezone.now())
     TicketFactory(booking=booking_some)
 
     # All checked in
     booking_all = BookingFactory()
-    TicketFactory(booking=booking_all, checked_in=True)
-    TicketFactory(booking=booking_all, checked_in=True)
+    TicketFactory(booking=booking_all, checked_in_at=timezone.now())
+    TicketFactory(booking=booking_all, checked_in_at=timezone.now())
 
     assert {
         (booking.reference, booking.proportion)

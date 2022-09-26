@@ -347,7 +347,7 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
             )
 
         for ticket in ticket_objects:
-            ticket.check_in()
+            ticket.check_in(info.context.user)
 
         return CheckInBooking(booking=booking, performance=performance)
 

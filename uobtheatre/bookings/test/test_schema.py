@@ -27,6 +27,96 @@ from uobtheatre.venues.test.factories import SeatGroupFactory
 
 
 @pytest.mark.django_db
+def test_tickets_schema(gql_client):
+
+    booking = BookingFactory()
+    tickets = [TicketFactory(booking=booking) for _ in range(1)]
+
+    request_query = """
+        {
+          me {
+            bookings {
+              edges {
+                node {
+                  tickets {
+                    id
+                    checkedIn
+                    checkedInAt
+                    checkedInBy {
+                      id
+                    }
+                    seatGroup {
+                      id
+                    }
+                    booking {
+                      id
+                    }
+                    concessionType {
+                      id
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        """
+    client = gql_client
+
+    # When there is no user expect no bookings
+    client.logout()
+    response = client.execute(request_query)
+    assert response == {"data": {"me": None}}
+
+    # When we are logged in expect only the user's bookings
+    client.user = booking.user
+    response = client.execute(request_query)
+    assert response == {
+        "data": {
+            "me": {
+                "bookings": {
+                    "edges": [
+                        {
+                            "node": {
+                                "tickets": [
+                                    {
+                                        "id": to_global_id("TicketNode", ticket.id),
+                                        "checkedIn": ticket.checked_in,
+                                        "checkedInAt": ticket.checked_in_at,
+                                        "checkedInBy": {
+                                            "id": to_global_id(
+                                                "UserNode", ticket.checked_in_by.id
+                                            )
+                                        },
+                                        "seatGroup": {
+                                            "id": to_global_id(
+                                                "SeatGroupNode", ticket.seat_group.id
+                                            )
+                                        },
+                                        "booking": {
+                                            "id": to_global_id(
+                                                "BookingNode", ticket.booking.id
+                                            )
+                                        },
+                                        "concessionType": {
+                                            "id": to_global_id(
+                                                "ConcessionTypeNode",
+                                                ticket.concession_type.id,
+                                            )
+                                        },
+                                    }
+                                    for ticket in tickets
+                                ],
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    }
+
+
+@pytest.mark.django_db
 def test_bookings_schema(gql_client):
 
     booking = BookingFactory(status=Payable.Status.IN_PROGRESS)
@@ -697,13 +787,13 @@ def test_booking_filter_checked_in(gql_client):
 
     # Some checked in
     booking_some = BookingFactory(user=gql_client.user)
-    TicketFactory(booking=booking_some, checked_in=True)
+    TicketFactory(booking=booking_some, checked_in_at=timezone.now())
     TicketFactory(booking=booking_some)
 
     # All checked in
     booking_all = BookingFactory(user=gql_client.user)
-    TicketFactory(booking=booking_all, checked_in=True)
-    TicketFactory(booking=booking_all, checked_in=True)
+    TicketFactory(booking=booking_all, checked_in_at=timezone.now())
+    TicketFactory(booking=booking_all, checked_in_at=timezone.now())
 
     true_expected_set = {booking_all.reference}
     false_expected_set = {booking_none.reference, booking_some.reference}
@@ -800,13 +890,13 @@ def test_booking_order_checked_in(gql_client):
 
     # Some checked in
     booking_some = BookingFactory(user=gql_client.user)
-    TicketFactory(booking=booking_some, checked_in=True)
+    TicketFactory(booking=booking_some, checked_in_at=timezone.now())
     TicketFactory(booking=booking_some)
 
     # All checked in
     booking_all = BookingFactory(user=gql_client.user)
-    TicketFactory(booking=booking_all, checked_in=True)
-    TicketFactory(booking=booking_all, checked_in=True)
+    TicketFactory(booking=booking_all, checked_in_at=timezone.now())
+    TicketFactory(booking=booking_all, checked_in_at=timezone.now())
 
     desc_expected_list = [
         booking_all.reference,
