@@ -880,7 +880,7 @@ def test_booking_pay_deletes_pending_payments():
     "initial_check_time, initial_check_state, final_check_state",
     [
         (None, False, True),
-        ("2000-01-01T00:00:00+00:00", True, True),
+        (datetime.datetime.fromisoformat("2000-01-01T00:00:00+00:00"), True, True),
     ],
 )
 def test_ticket_check_in(
@@ -889,28 +889,33 @@ def test_ticket_check_in(
     """
     Test ticket check in method
     """
-    gql_client.login()
+    mock_ticket_check_in_time = datetime.datetime(2020, 1, 2, 23, 45)
+    with patch.object(timezone, "now", return_value=mock_ticket_check_in_time) as _:
 
-    ticket = TicketFactory(checked_in_at=initial_check_time)
+        gql_client.login()
 
-    assert ticket.checked_in == initial_check_state
+        ticket = TicketFactory(checked_in_at=initial_check_time)
 
-    ticket.check_in(user=gql_client.user)
-    assert ticket.checked_in == final_check_state
-    assert ticket.checked_in_at is not None or not "2000-01-01T00:00:00+00:00"
-    assert ticket.checked_in_by == gql_client.user
+        assert ticket.checked_in == initial_check_state
+
+        ticket.check_in(user=gql_client.user)
+        assert ticket.checked_in == final_check_state
+        assert ticket.checked_in_at == mock_ticket_check_in_time
+        assert ticket.checked_in_by == gql_client.user
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "initial_check_time, initial_check_state, final_check_state",
-    [("2000-01-01T00:00:00+00:00", True, False), (None, False, False)],
+    [
+        (datetime.datetime.fromisoformat("2000-01-01T00:00:00+00:00"), True, False),
+        (None, False, False),
+    ],
 )
 def test_ticket_uncheck_in(initial_check_time, initial_check_state, final_check_state):
     """
     Test ticket check in method
     """
-
     ticket = TicketFactory(checked_in_at=initial_check_time)
 
     assert ticket.checked_in == initial_check_state

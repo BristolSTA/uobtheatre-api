@@ -24,9 +24,6 @@ class MiscCostNode(DjangoObjectType):
 class TicketNode(DjangoObjectType):
     checked_in = graphene.Boolean()
 
-    def resolve_checked_in(self, _):
-        return self.checked_in
-
     @classmethod
     def get_queryset(cls, queryset, info):
         """Get the queryset for a group of ticket nodes"""

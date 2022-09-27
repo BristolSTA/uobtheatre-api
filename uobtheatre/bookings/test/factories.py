@@ -58,7 +58,6 @@ class TicketFactory(factory.django.DjangoModelFactory):
         "uobtheatre.discounts.test.factories.ConcessionTypeFactory"
     )
 
-    # checked_in_at = factory.Faker("future_datetime", tzinfo=timezone.get_current_timezone())
     checked_in_by = factory.SubFactory(UserFactory)
 
     class Meta:
