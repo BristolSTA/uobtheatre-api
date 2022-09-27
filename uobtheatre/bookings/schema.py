@@ -24,6 +24,14 @@ class MiscCostNode(DjangoObjectType):
 class TicketNode(DjangoObjectType):
     checked_in = graphene.Boolean()
 
+    def resolve_checked_in_by(self, info):
+        if not info.context.user.has_perm(
+            "productions.boxoffice",
+            self.booking.performance.production,
+        ):
+            return None
+        return self.checked_in_by
+
     @classmethod
     def get_queryset(cls, queryset, info):
         """Get the queryset for a group of ticket nodes"""

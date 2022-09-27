@@ -30,30 +30,37 @@ from uobtheatre.venues.test.factories import SeatGroupFactory
 @pytest.mark.django_db
 def test_tickets_schema(gql_client):
 
+    gql_client.login().user
     booking = BookingFactory()
     tickets = [TicketFactory(booking=booking) for _ in range(1)]
+    for ticket in tickets:
+        ticket.check_in(user=UserFactory())
 
     request_query = """
         {
-          me {
-            bookings {
-              edges {
-                node {
-                  tickets {
-                    id
-                    checkedIn
-                    checkedInAt
-                    checkedInBy {
-                      id
-                    }
-                    seatGroup {
-                      id
-                    }
-                    booking {
-                      id
-                    }
-                    concessionType {
-                      id
+          performances {
+            edges {
+              node {
+                bookings {
+                  edges {
+                    node {
+                      tickets {
+                        id
+                        checkedIn
+                        checkedInAt
+                        checkedInBy {
+                          id
+                        }
+                        seatGroup {
+                          id
+                        }
+                        booking {
+                          id
+                        }
+                        concessionType {
+                          id
+                        }
+                      }
                     }
                   }
                 }
@@ -62,59 +69,121 @@ def test_tickets_schema(gql_client):
           }
         }
         """
-    client = gql_client
 
-    # When there is no user expect no bookings
-    client.logout()
-    response = client.execute(request_query)
-    assert response == {"data": {"me": None}}
+    assign_perm(
+        "productions.boxoffice", gql_client.user, booking.performance.production
+    )
 
-    # When we are logged in expect only the user's bookings
-    client.user = booking.user
-    response = client.execute(request_query)
+    response = gql_client.execute(request_query)
     assert response == {
         "data": {
-            "me": {
-                "bookings": {
-                    "edges": [
-                        {
-                            "node": {
-                                "tickets": [
+            "performances": {
+                "edges": [
+                    {
+                        "node": {
+                            "bookings": {
+                                "edges": [
                                     {
-                                        "id": to_global_id("TicketNode", ticket.id),
-                                        "checkedIn": ticket.checked_in,
-                                        "checkedInAt": ticket.checked_in_at,
-                                        "checkedInBy": {
-                                            "id": to_global_id(
-                                                "UserNode", ticket.checked_in_by.id
-                                            )
-                                        },
-                                        "seatGroup": {
-                                            "id": to_global_id(
-                                                "SeatGroupNode", ticket.seat_group.id
-                                            )
-                                        },
-                                        "booking": {
-                                            "id": to_global_id(
-                                                "BookingNode", ticket.booking.id
-                                            )
-                                        },
-                                        "concessionType": {
-                                            "id": to_global_id(
-                                                "ConcessionTypeNode",
-                                                ticket.concession_type.id,
-                                            )
-                                        },
+                                        "node": {
+                                            "tickets": [
+                                                {
+                                                    "id": to_global_id(
+                                                        "TicketNode", ticket.id
+                                                    ),
+                                                    "checkedIn": ticket.checked_in,
+                                                    "checkedInAt": ticket.checked_in_at.isoformat(),
+                                                    "checkedInBy": {
+                                                        "id": to_global_id(
+                                                            "UserNode",
+                                                            ticket.checked_in_by.id,
+                                                        )
+                                                    },
+                                                    "seatGroup": {
+                                                        "id": to_global_id(
+                                                            "SeatGroupNode",
+                                                            ticket.seat_group.id,
+                                                        )
+                                                    },
+                                                    "booking": {
+                                                        "id": to_global_id(
+                                                            "BookingNode",
+                                                            ticket.booking.id,
+                                                        )
+                                                    },
+                                                    "concessionType": {
+                                                        "id": to_global_id(
+                                                            "ConcessionTypeNode",
+                                                            ticket.concession_type.id,
+                                                        )
+                                                    },
+                                                }
+                                                for ticket in tickets
+                                            ],
+                                        }
                                     }
-                                    for ticket in tickets
-                                ],
+                                ]
                             }
                         }
-                    ]
-                }
+                    }
+                ]
             }
         }
     }
+
+    # When there is no user expect no bookings
+    gql_client.logout()
+    response = gql_client.execute(request_query)
+    assert (
+        response["data"]["performances"]["edges"][0]["node"]["bookings"]["edges"] == []
+    )
+
+
+@pytest.mark.django_db
+def test_ticket_checked_in_by_perm(gql_client):
+
+    user = gql_client.login().user
+    booking = BookingFactory(user=user)
+    tickets = [TicketFactory(booking=booking) for _ in range(1)]
+
+    check_in_user = UserFactory()
+    for ticket in tickets:
+        ticket.check_in(user=check_in_user)
+
+    request = """
+      {
+        performances {
+          edges {
+            node {
+              bookings {
+                edges {
+                  node {
+                    tickets {
+                      checkedInBy {
+                        id
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      """
+    response = gql_client.execute(request)
+    assert (
+        response["data"]["performances"]["edges"][0]["node"]["bookings"]["edges"][0][
+            "node"
+        ]["tickets"][0]["checkedInBy"]
+        is None
+    )
+
+    assign_perm("productions.boxoffice", user, booking.performance.production)
+
+    response = gql_client.execute(request)
+    assert response["data"]["performances"]["edges"][0]["node"]["bookings"]["edges"][0][
+        "node"
+    ]["tickets"][0]["checkedInBy"] == {"id": to_global_id("UserNode", check_in_user.id)}
 
 
 @pytest.mark.django_db
