@@ -351,6 +351,7 @@ enum MiscCostType {
 }
 
 type Mutation {
+  recordFinancialTransfer(method: TransferMethodEnum!, reason: String, societyId: IdInputField!, value: Int!): RecordFinancialTransfer
   concessionType(input: ConcessionTypeMutationInput!): ConcessionTypeMutationPayload
   deleteConcessionType(id: IdInputField!): DeleteConcessionTypeMutation
   discount(input: DiscountMutationInput!): DiscountMutationPayload
@@ -383,7 +384,6 @@ type Mutation {
   deletePerformanceSeatGroup(id: IdInputField!): DeletePerformanceSeatGroupMutation
   setProductionStatus(message: String, productionId: IdInputField!, status: Status): SetProductionStatus
   cancelPayment(paymentId: IdInputField!): CancelPayment
-  recordFinancialTransfer(method: TransferMethodEnum, societyId: IdInputField!, value: Int): RecordFinancialTransfer
   generateReport(endTime: DateTime, name: String!, options: [ReportOption], startTime: DateTime): GenerateReport
   booking(input: BookingMutationInput!): BookingMutationPayload
   deleteBooking(id: IdInputField!): DeleteBooking
