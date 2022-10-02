@@ -35,6 +35,7 @@ from uobtheatre.payments.transaction_providers import SquarePOS
 from uobtheatre.productions.models import Production
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.users.test.factories import UserFactory
+from uobtheatre.utils.exceptions import GQLException
 from uobtheatre.utils.test_utils import ticket_dict_list_dict_gen, ticket_list_dict_gen
 from uobtheatre.venues.test.factories import SeatFactory, SeatGroupFactory, VenueFactory
 
@@ -877,13 +878,13 @@ def test_booking_pay_deletes_pending_payments():
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "init_is_checked_in, initial_check_state, final_check_state",
+    "init_is_checked_in, initial_check_state, fails",
     [
-        (False, False, True),
+        (False, False, False),
         (True, True, True),
     ],
 )
-def test_ticket_check_in(init_is_checked_in, initial_check_state, final_check_state):
+def test_ticket_check_in(init_is_checked_in, initial_check_state, fails):
     """
     Test ticket check in method
     """
@@ -892,36 +893,52 @@ def test_ticket_check_in(init_is_checked_in, initial_check_state, final_check_st
 
         user = UserFactory()
 
-        ticket = TicketFactory(create_checked_in=init_is_checked_in)
+        ticket = TicketFactory(set_checked_in=init_is_checked_in)
 
         assert ticket.checked_in == initial_check_state
 
-        ticket.check_in(user=user)
-        assert ticket.checked_in == final_check_state
-        assert ticket.checked_in_at == mock_ticket_check_in_time
-        assert ticket.checked_in_by == user
+        if fails:
+            with pytest.raises(GQLException) as exception:
+                ticket.check_in(user=user)
+            assert (
+                exception.value.message
+                == f"Ticket of id {ticket.id} is already checked-in."
+            )
+        else:
+            ticket.check_in(user=user)
+            assert ticket.checked_in
+            assert ticket.checked_in_at == mock_ticket_check_in_time
+            assert ticket.checked_in_by == user
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "init_is_checked_in, initial_check_state, final_check_state",
+    "init_is_checked_in, initial_check_state, fails",
     [
         (True, True, False),
-        (False, False, False),
+        (False, False, True),
     ],
 )
-def test_ticket_uncheck_in(init_is_checked_in, initial_check_state, final_check_state):
+def test_ticket_uncheck_in(init_is_checked_in, initial_check_state, fails):
     """
     Test ticket check in method
     """
-    ticket = TicketFactory(create_checked_in=init_is_checked_in)
+    ticket = TicketFactory(set_checked_in=init_is_checked_in)
 
     assert ticket.checked_in == initial_check_state
-    ticket.uncheck_in()
 
-    assert ticket.checked_in == final_check_state
-    assert Ticket.objects.first().checked_in_at is None
-    assert ticket.checked_in_by is None
+    if fails:
+        with pytest.raises(GQLException) as exception:
+            ticket.uncheck_in()
+        assert (
+            exception.value.message
+            == f"Ticket of id {ticket.id} cannot be un-checked in as it is not checked-in."
+        )
+    else:
+        ticket.uncheck_in()
+        assert not ticket.checked_in
+        assert Ticket.objects.first().checked_in_at is None
+        assert ticket.checked_in_by is None
 
 
 @pytest.mark.django_db
@@ -940,13 +957,13 @@ def test_filter_order_by_checked_in():
 
     # Some checked in
     booking_some = BookingFactory()
-    TicketFactory(booking=booking_some, create_checked_in=True)
+    TicketFactory(booking=booking_some, set_checked_in=True)
     TicketFactory(booking=booking_some)
 
     # All checked in
     booking_all = BookingFactory()
-    TicketFactory(booking=booking_all, create_checked_in=True)
-    TicketFactory(booking=booking_all, create_checked_in=True)
+    TicketFactory(booking=booking_all, set_checked_in=True)
+    TicketFactory(booking=booking_all, set_checked_in=True)
 
     assert {
         (booking.reference, booking.proportion)

@@ -66,7 +66,7 @@ class TicketFactory(factory.django.DjangoModelFactory):
         model = Ticket
 
     class Params:
-        create_checked_in = factory.Trait(
+        set_checked_in = factory.Trait(
             checked_in_by=factory.SubFactory(UserFactory),
             checked_in_at=timezone.now(),
         )

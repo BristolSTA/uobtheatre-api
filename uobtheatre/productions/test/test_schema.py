@@ -972,12 +972,12 @@ def test_ticket_breakdown(gql_client):
     TicketFactory(
         booking=booking,
         seat_group=performance_seat_group.seat_group,
-        create_checked_in=True,
+        set_checked_in=True,
     )
     TicketFactory(
         booking=booking,
         seat_group=performance_seat_group.seat_group,
-        create_checked_in=False,
+        set_checked_in=False,
     )
 
     response = gql_client.execute(

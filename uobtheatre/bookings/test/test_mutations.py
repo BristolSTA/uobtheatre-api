@@ -2464,7 +2464,7 @@ def test_check_in_booking_fails_if_not_paid(gql_client, status):
         performance=performance, user=gql_client.user, status=status
     )
 
-    checked_in_ticket = TicketFactory(booking=booking, create_checked_in=True)
+    checked_in_ticket = TicketFactory(booking=booking, set_checked_in=True)
 
     request_query = """
     mutation {
@@ -2569,7 +2569,7 @@ def test_check_in_booking_fails_if_already_checked_in(gql_client):
 
     booking = BookingFactory(performance=performance, user=gql_client.user)
 
-    checked_in_ticket = TicketFactory(booking=booking, create_checked_in=True)
+    checked_in_ticket = TicketFactory(booking=booking, set_checked_in=True)
 
     request_query = """
     mutation {
@@ -2619,12 +2619,12 @@ def test_check_in_booking_fails_if_already_checked_in(gql_client):
 def test_uncheck_in_booking(gql_client):
     performance = PerformanceFactory()
     gql_client.login()
-    assign_perm("productions.boxoffice", gql_client.user, performance.production)
 
     booking = BookingFactory(performance=performance, user=gql_client.login().user)
 
-    checked_in_ticket = TicketFactory(booking=booking, create_checked_in=True)
-    unchecked_in_ticket = TicketFactory(booking=booking, create_checked_in=False)
+    checked_in_ticket = TicketFactory(booking=booking, set_checked_in=True)
+    unchecked_in_ticket1 = TicketFactory(booking=booking, set_checked_in=False)
+    unchecked_in_ticket2 = TicketFactory(booking=booking, set_checked_in=False)
 
     request_query = """
     mutation {
@@ -2648,15 +2648,32 @@ def test_uncheck_in_booking(gql_client):
     }
     """
 
-    gql_client.login()
     assign_perm("productions.boxoffice", gql_client.user, performance.production)
+
+    response = gql_client.execute(
+        request_query
+        % (
+            booking.reference,
+            to_global_id("PerformanceNode", performance.id),
+            to_global_id("TicketNode", unchecked_in_ticket1.id),
+            to_global_id("TicketNode", unchecked_in_ticket2.id),
+        )
+    )
+    assert response["data"]["uncheckInBooking"]["errors"] == [
+        {
+            "__typename": "NonFieldError",
+            "message": "The booking has no checked-in tickets.",
+            "code": "400",
+        }
+    ]
+
     response = gql_client.execute(
         request_query
         % (
             booking.reference,
             to_global_id("PerformanceNode", performance.id),
             to_global_id("TicketNode", checked_in_ticket.id),
-            to_global_id("TicketNode", unchecked_in_ticket.id),
+            to_global_id("TicketNode", unchecked_in_ticket1.id),
         )
     )
     assert response == {"data": {"uncheckInBooking": {"success": True, "errors": None}}}
@@ -2668,7 +2685,7 @@ def test_uncheck_in_booking_incorrect_performance(gql_client):
     wrong_performance = PerformanceFactory()
     booking = BookingFactory(performance=performance, user=gql_client.login().user)
 
-    checked_in_ticket = TicketFactory(booking=booking, create_checked_in=True)
+    checked_in_ticket = TicketFactory(booking=booking, set_checked_in=True)
 
     request_query = """
     mutation {
@@ -2733,7 +2750,7 @@ def test_uncheck_in_booking_incorrect_ticket(gql_client):
 
     assign_perm("productions.boxoffice", gql_client.user, performance.production)
 
-    checked_in_ticket = TicketFactory(booking=incorrect_booking, create_checked_in=True)
+    checked_in_ticket = TicketFactory(booking=incorrect_booking, set_checked_in=True)
 
     request_query = """
     mutation {

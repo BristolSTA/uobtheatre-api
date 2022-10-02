@@ -200,6 +200,11 @@ class AuthException(GQLException):
         super().__init__(message, code=401)
 
 
+class BadRequestException(GQLException):
+    def __init__(self, message="Bad Request", field=None):
+        super().__init__(message, code=400, field=field)
+
+
 class AuthorizationException(GQLException):
     def __init__(
         self, message="You are not authorized to perform this action", field=None

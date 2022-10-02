@@ -19,6 +19,7 @@ from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable, PayableQuerySet
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.users.models import User
+from uobtheatre.utils.exceptions import GQLException
 from uobtheatre.utils.filters import filter_passes_on_model
 from uobtheatre.utils.models import TimeStampedMixin
 from uobtheatre.utils.utils import combinations, create_short_uuid
@@ -741,6 +742,11 @@ class Ticket(models.Model):
         """
         Check a ticket in
         """
+        if self.checked_in_at:
+            raise GQLException(
+                message=f"Ticket of id {self.id} is already checked-in.",
+            )
+
         self.checked_in_at = timezone.now()
         self.checked_in_by = user
         self.save()
@@ -749,6 +755,11 @@ class Ticket(models.Model):
         """
         Un-Check a ticket in
         """
+        if not self.checked_in_at:
+            raise GQLException(
+                message=f"Ticket of id {self.id} cannot be un-checked in as it is not checked-in.",
+            )
+
         self.checked_in_at = None
         self.checked_in_by = None
         self.save()
