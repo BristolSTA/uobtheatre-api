@@ -18,4 +18,4 @@ class BookingTransferToDifferentProductionException(GQLException):
 
 class BookingTransferCheckedInTicketsException(GQLException):
     def __init__(self) -> None:
-        super().__init__(f"Cannot transfer a booking with checked in tickets")
+        super().__init__("Cannot transfer a booking with checked in tickets")
