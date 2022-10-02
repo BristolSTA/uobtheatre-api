@@ -528,7 +528,7 @@ def test_performance_total_tickets_checked_in():
 
     # 2 tickets in the performance
     TicketFactory(booking=booking)
-    TicketFactory(booking=booking, checked_in=True)
+    TicketFactory(booking=booking, create_checked_in=True)
 
     assert booking.performance.total_tickets_checked_in == 1
     assert booking.performance.total_tickets_unchecked_in == 1
