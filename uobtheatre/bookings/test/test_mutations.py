@@ -2624,7 +2624,7 @@ def test_uncheck_in_booking(gql_client):
     booking = BookingFactory(performance=performance, user=gql_client.login().user)
 
     checked_in_ticket = TicketFactory(booking=booking, create_checked_in=True)
-    unchecked_in_ticket = TicketFactory(booking=booking, create_checked_in=True)
+    unchecked_in_ticket = TicketFactory(booking=booking, create_checked_in=False)
 
     request_query = """
     mutation {
