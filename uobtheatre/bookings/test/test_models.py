@@ -877,46 +877,44 @@ def test_booking_pay_deletes_pending_payments():
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "initial_check_time, initial_check_state, final_check_state",
+    "init_is_checked_in, initial_check_state, final_check_state",
     [
-        (None, False, True),
-        (datetime.datetime.fromisoformat("2000-01-01T00:00:00+00:00"), True, True),
+        (False, False, True),
+        (True, True, True),
     ],
 )
-def test_ticket_check_in(
-    gql_client, initial_check_time, initial_check_state, final_check_state
-):
+def test_ticket_check_in(init_is_checked_in, initial_check_state, final_check_state):
     """
     Test ticket check in method
     """
     mock_ticket_check_in_time = datetime.datetime(2020, 1, 2, 23, 45)
     with patch.object(timezone, "now", return_value=mock_ticket_check_in_time) as _:
 
-        gql_client.login()
+        user = UserFactory()
 
-        ticket = TicketFactory(checked_in_at=initial_check_time)
+        ticket = TicketFactory(create_checked_in=init_is_checked_in)
 
         assert ticket.checked_in == initial_check_state
 
-        ticket.check_in(user=gql_client.user)
+        ticket.check_in(user=user)
         assert ticket.checked_in == final_check_state
         assert ticket.checked_in_at == mock_ticket_check_in_time
-        assert ticket.checked_in_by == gql_client.user
+        assert ticket.checked_in_by == user
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "initial_check_time, initial_check_state, final_check_state",
+    "init_is_checked_in, initial_check_state, final_check_state",
     [
-        (datetime.datetime.fromisoformat("2000-01-01T00:00:00+00:00"), True, False),
-        (None, False, False),
+        (True, True, False),
+        (False, False, False),
     ],
 )
-def test_ticket_uncheck_in(initial_check_time, initial_check_state, final_check_state):
+def test_ticket_uncheck_in(init_is_checked_in, initial_check_state, final_check_state):
     """
     Test ticket check in method
     """
-    ticket = TicketFactory(checked_in_at=initial_check_time)
+    ticket = TicketFactory(create_checked_in=init_is_checked_in)
 
     assert ticket.checked_in == initial_check_state
     ticket.uncheck_in()
@@ -942,13 +940,13 @@ def test_filter_order_by_checked_in():
 
     # Some checked in
     booking_some = BookingFactory()
-    TicketFactory(booking=booking_some, checked_in_at=timezone.now())
+    TicketFactory(booking=booking_some, create_checked_in=True)
     TicketFactory(booking=booking_some)
 
     # All checked in
     booking_all = BookingFactory()
-    TicketFactory(booking=booking_all, checked_in_at=timezone.now())
-    TicketFactory(booking=booking_all, checked_in_at=timezone.now())
+    TicketFactory(booking=booking_all, create_checked_in=True)
+    TicketFactory(booking=booking_all, create_checked_in=True)
 
     assert {
         (booking.reference, booking.proportion)

@@ -2409,6 +2409,7 @@ def test_check_in_booking(
         for ticket in check_in_tickets:
             ticket.refresh_from_db()
             assert ticket.checked_in
+            assert ticket.checked_in_by == gql_client.user
     elif booking_obj.get("performance_id") == performance_id:
         # The instance where there are tickets that don't belong to the booking
         assert len(response["data"]["checkInBooking"]["errors"]) == len(
@@ -2463,7 +2464,7 @@ def test_check_in_booking_fails_if_not_paid(gql_client, status):
         performance=performance, user=gql_client.user, status=status
     )
 
-    checked_in_ticket = TicketFactory(booking=booking, checked_in_at=timezone.now())
+    checked_in_ticket = TicketFactory(booking=booking, create_checked_in=True)
 
     request_query = """
     mutation {
@@ -2568,7 +2569,7 @@ def test_check_in_booking_fails_if_already_checked_in(gql_client):
 
     booking = BookingFactory(performance=performance, user=gql_client.user)
 
-    checked_in_ticket = TicketFactory(booking=booking, checked_in_at=timezone.now())
+    checked_in_ticket = TicketFactory(booking=booking, create_checked_in=True)
 
     request_query = """
     mutation {
@@ -2622,8 +2623,8 @@ def test_uncheck_in_booking(gql_client):
 
     booking = BookingFactory(performance=performance, user=gql_client.login().user)
 
-    checked_in_ticket = TicketFactory(booking=booking, checked_in_at=timezone.now())
-    unchecked_in_ticket = TicketFactory(booking=booking, checked_in_at=timezone.now())
+    checked_in_ticket = TicketFactory(booking=booking, create_checked_in=True)
+    unchecked_in_ticket = TicketFactory(booking=booking, create_checked_in=True)
 
     request_query = """
     mutation {
@@ -2667,7 +2668,7 @@ def test_uncheck_in_booking_incorrect_performance(gql_client):
     wrong_performance = PerformanceFactory()
     booking = BookingFactory(performance=performance, user=gql_client.login().user)
 
-    checked_in_ticket = TicketFactory(booking=booking, checked_in_at=timezone.now())
+    checked_in_ticket = TicketFactory(booking=booking, create_checked_in=True)
 
     request_query = """
     mutation {
@@ -2732,9 +2733,7 @@ def test_uncheck_in_booking_incorrect_ticket(gql_client):
 
     assign_perm("productions.boxoffice", gql_client.user, performance.production)
 
-    checked_in_ticket = TicketFactory(
-        booking=incorrect_booking, checked_in_at=timezone.now()
-    )
+    checked_in_ticket = TicketFactory(booking=incorrect_booking, create_checked_in=True)
 
     request_query = """
     mutation {

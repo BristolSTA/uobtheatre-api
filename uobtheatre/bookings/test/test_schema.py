@@ -857,13 +857,13 @@ def test_booking_filter_checked_in(gql_client):
 
     # Some checked in
     booking_some = BookingFactory(user=gql_client.user)
-    TicketFactory(booking=booking_some, checked_in_at=timezone.now())
+    TicketFactory(booking=booking_some, create_checked_in=True)
     TicketFactory(booking=booking_some)
 
     # All checked in
     booking_all = BookingFactory(user=gql_client.user)
-    TicketFactory(booking=booking_all, checked_in_at=timezone.now())
-    TicketFactory(booking=booking_all, checked_in_at=timezone.now())
+    TicketFactory(booking=booking_all, create_checked_in=True)
+    TicketFactory(booking=booking_all, create_checked_in=True)
 
     true_expected_set = {booking_all.reference}
     false_expected_set = {booking_none.reference, booking_some.reference}
@@ -960,13 +960,13 @@ def test_booking_order_checked_in(gql_client):
 
     # Some checked in
     booking_some = BookingFactory(user=gql_client.user)
-    TicketFactory(booking=booking_some, checked_in_at=timezone.now())
+    TicketFactory(booking=booking_some, create_checked_in=True)
     TicketFactory(booking=booking_some)
 
     # All checked in
     booking_all = BookingFactory(user=gql_client.user)
-    TicketFactory(booking=booking_all, checked_in_at=timezone.now())
-    TicketFactory(booking=booking_all, checked_in_at=timezone.now())
+    TicketFactory(booking=booking_all, create_checked_in=True)
+    TicketFactory(booking=booking_all, create_checked_in=True)
 
     desc_expected_list = [
         booking_all.reference,
