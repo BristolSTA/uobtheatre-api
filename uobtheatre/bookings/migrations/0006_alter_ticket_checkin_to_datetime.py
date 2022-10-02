@@ -38,7 +38,7 @@ class Migration(migrations.Migration):
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.RESTRICT,
-                related_name="tickets_checked",
+                related_name="tickets_checked_in_by_user",
                 to=settings.AUTH_USER_MODEL,
             ),
         ),
