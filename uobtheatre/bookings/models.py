@@ -687,7 +687,7 @@ class Ticket(models.Model):
     checked_in_by = models.ForeignKey(
         User,
         on_delete=models.RESTRICT,
-        related_name="tickets_checked",
+        related_name="tickets_checked_in_by_me",
         null=True,
         blank=True,
     )
