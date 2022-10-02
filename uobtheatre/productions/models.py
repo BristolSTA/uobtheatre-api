@@ -572,9 +572,18 @@ class Performance(
         """The cheapest seat in the Performance
 
         Returns:
-            int: The price of the cheapest seat in the performance.
+            int: The price of the cheapest seat in the performance
+            (includes discounted seat options).
         """
-        return self.performance_seat_groups.aggregate(Min("price"))["price__min"]
+        max_discount_percentage = max(self.single_discounts_map.values(), default=0)
+
+        if (
+            min_seat_price := self.performance_seat_groups.aggregate(Min("price"))[
+                "price__min"
+            ]
+        ) is not None:
+            return math.ceil((1 - max_discount_percentage) * min_seat_price)
+        return None
 
     @property
     def is_sold_out(self) -> bool:
