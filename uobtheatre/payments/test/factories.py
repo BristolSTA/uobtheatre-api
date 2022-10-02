@@ -122,6 +122,6 @@ def mock_transferable(
         misc_costs_value = misc_costs_value_
         payment_reference_id = None
         misc_cost_types = []  # type: ignore
-        transfered_from = transferred_from_  # type: ignore
+        transferred_from = transferred_from_  # type: ignore
 
     return MockTransferable()

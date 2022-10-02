@@ -10,8 +10,8 @@ from uobtheatre.payments.transferables import Transferable
 @pytest.mark.django_db
 def test_transferred_to():
     booking_3 = BookingFactory()
-    booking_2 = BookingFactory(transfered_from=booking_3)
-    booking_1 = BookingFactory(transfered_from=booking_2)
+    booking_2 = BookingFactory(transferred_from=booking_3)
+    booking_1 = BookingFactory(transferred_from=booking_2)
 
     booking_4 = BookingFactory()
 

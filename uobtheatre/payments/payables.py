@@ -169,11 +169,12 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
         Returns:
             (int): total price of the payable in penies
         """
+        # If the subtotal is 0 then do not apply the misc costs
         return math.ceil(self.subtotal + self.misc_costs_value) if self.subtotal else 0
 
     @property
     @abc.abstractmethod
-    def subtotal(self):
+    def subtotal(self) -> int:
         """Price of the payable with discounts applied.
 
         Returns the subtotal of the payable. This is the total value including

@@ -437,7 +437,7 @@ class CreateBookingTransfer(AuthRequiredMixin, SafeMutation):
     Args:
         booking_id (str): The gloabl id of the Booking to transfer.
         performance_id (str): The gloabl id of the performance which the
-            Booking should be transfered to.
+            Booking should be transferred to.
 
     Returns:
         booking (BookingNode): The Booking for the new performance.

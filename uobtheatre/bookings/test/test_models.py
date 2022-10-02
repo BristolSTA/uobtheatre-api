@@ -495,7 +495,7 @@ def test_misc_costs_value():
     ValueMiscCostFactory(value=200)
     PercentageMiscCostFactory(percentage=0.1)
 
-    # This misc cost should not be included as the booking is not transfered
+    # This misc cost should not be included as the booking is not transferred
     # from another
     ValueMiscCostFactory(value=200, type="other_type")
 
@@ -609,7 +609,7 @@ def test_booking_total(booking_data, misc_costs, expected_total):
         tickets = booking_data.pop("tickets", [])
         booking = BookingFactory(
             **booking_data,
-            transfered_from=create_booking(transferred_from)
+            transferred_from=create_booking(transferred_from)
             if transferred_from
             else None,
         )
@@ -962,7 +962,7 @@ def test_booking_pay_expired_booking():
 @pytest.mark.django_db
 def test_booking_pay_with_transfer():
     booking = BookingFactory(
-        transfered_from=BookingFactory(),
+        transferred_from=BookingFactory(),
         status=Booking.Status.IN_PROGRESS,
     )
     payment_method = mock_payment_method()
@@ -978,7 +978,7 @@ def test_booking_pay_with_transfer():
         booking.pay(payment_method)
 
     mock_check_can_transfer_to.assert_called_once_with(
-        booking.transfered_from, booking.performance
+        booking.transferred_from, booking.performance
     )
     payment_method.pay.assert_called_once()
 
@@ -1160,7 +1160,7 @@ def test_booking_can_be_refunded(is_refunded, status, production_status, expecte
 def test_complete(with_payment, is_transfer):
     if is_transfer:
         booking = BookingFactory(
-            status=Payable.Status.IN_PROGRESS, transfered_from=BookingFactory()
+            status=Payable.Status.IN_PROGRESS, transferred_from=BookingFactory()
         )
     else:
         booking = BookingFactory(status=Payable.Status.IN_PROGRESS)
@@ -1176,7 +1176,7 @@ def test_complete(with_payment, is_transfer):
     assert booking.status == Payable.Status.PAID
 
     if is_transfer:
-        assert booking.transfered_from.status == Booking.Status.CANCELLED
+        assert booking.transferred_from.status == Booking.Status.CANCELLED
 
 
 @pytest.mark.django_db
@@ -1221,7 +1221,7 @@ def test_send_confirmation_email(
         status=Payable.Status.IN_PROGRESS,
         reference="abc",
         performance=performance,
-        transfered_from=None if not is_transfer else BookingFactory(),
+        transferred_from=None if not is_transfer else BookingFactory(),
     )
     booking.user.status.verified = True
 
@@ -1365,7 +1365,7 @@ def test_misc_cost_types_not_transfer():
 @pytest.mark.django_db
 def test_misc_cost_types_transfer():
     # Create a booking
-    booking = BookingFactory(transfered_from=BookingFactory())
+    booking = BookingFactory(transferred_from=BookingFactory())
     assert booking.misc_cost_types == [
         MiscCost.Type.BOOKING,
     ]
@@ -1436,7 +1436,7 @@ def test_create_transfer():
     new_booking = Booking.objects.last()
     assert new_booking.status == Booking.Status.IN_PROGRESS
 
-    # Assert the only ticket which is transfered is the one in both
+    # Assert the only ticket which is transferred is the one in both
     # performances with sufficient capacity
     assert new_booking.tickets.count() == 1
     assert new_booking.tickets.first().seat_group == seat_group_shared

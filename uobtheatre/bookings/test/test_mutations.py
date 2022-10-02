@@ -2833,7 +2833,6 @@ def test_create_transfer_booking_without_permissions(gql_client):
     gql_client.user.is_superuser = False
     gql_client.user.save()
 
-    # booking = BookingFactory(user=gql_client.user)
     booking = BookingFactory(user=gql_client.user)
     performance = PerformanceFactory(production=booking.performance.production)
 

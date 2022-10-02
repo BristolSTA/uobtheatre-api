@@ -484,7 +484,7 @@ class Booking(TimeStampedMixin, Transferable):
     @property
     def misc_cost_types(self) -> List[MiscCost.Type]:
         misc_cost_types = [MiscCost.Type.BOOKING]
-        # If this booking is transfered from another then transfer misc costs
+        # If this booking is transferred from another then transfer misc costs
         # should also be applied
         return misc_cost_types
 
@@ -562,11 +562,11 @@ class Booking(TimeStampedMixin, Transferable):
                 message="This booking has expired. Please create a new booking"
             )
 
-        # If this is a transfer and the booking it is transfered from is not paid
-        if self.transfered_from:
-            self.transfered_from.check_can_transfer_to(
+        # If this is a transfer and the booking it is transferred from is not paid
+        if self.transferred_from:
+            self.transferred_from.check_can_transfer_to(
                 self.performance
-            )  # pylint: disable=protected-access
+            )
 
         return super().pay(payment_method)
 
@@ -577,10 +577,10 @@ class Booking(TimeStampedMixin, Transferable):
         """
         super().complete()
 
-        # If the booking is transfered from another
-        if self.transfered_from:
-            self.transfered_from.status = Booking.Status.CANCELLED
-            self.transfered_from.save()
+        # If the booking is transferred from another
+        if self.transferred_from:
+            self.transferred_from.status = Booking.Status.CANCELLED
+            self.transferred_from.save()
 
         self.send_confirmation_email(payment)
 
@@ -590,7 +590,7 @@ class Booking(TimeStampedMixin, Transferable):
         return clone
 
     def check_can_transfer_to(self, performance: "Performance") -> None:
-        """Check if a booking can be transfered to the provided performance.
+        """Check if a booking can be transferred to the provided performance.
 
         If not an error is raised. Note this function must be called both
         before a transfer booking is created and before a transfer booking is
@@ -598,12 +598,12 @@ class Booking(TimeStampedMixin, Transferable):
         change e.g. the original booking could be used or refunded)
         """
 
-        # If the booking is not paid it cannot be transfered
+        # If the booking is not paid it cannot be transferred
         if self.status != Payable.Status.PAID:
             raise TransferUnpaidPayableException(self.get_status_display())
 
         # If any of the bookings tickets are checked in then this booking
-        # cannot be transfered
+        # cannot be transferred
         if self.tickets.filter(checked_in=True).exists():
             raise BookingTransferCheckedInTicketsException()
 
@@ -621,7 +621,7 @@ class Booking(TimeStampedMixin, Transferable):
         performance.
 
         This is a new booking which copies the attributes from the original and
-        with the transfered_from attribute equal to the new booking. This new
+        with the transferred_from attribute equal to the new booking. This new
         booking will be IN_PROGRESS and the transfere will not be completed
         until the new booking is COMPLETE.
 
@@ -638,7 +638,7 @@ class Booking(TimeStampedMixin, Transferable):
         ).delete()
 
         # Create the new booking to transfer to
-        new_booking = Booking.objects.create(user=self.user, creator=self.user, transfered_from=self, performance_id=performance.id)  # type: ignore
+        new_booking = Booking.objects.create(user=self.user, creator=self.user, transferred_from=self, performance_id=performance.id)
 
         # Copy across all tickets which can be copied one by one
         for ticket in self.tickets.all():
@@ -680,7 +680,7 @@ class Booking(TimeStampedMixin, Transferable):
         """
         composer = MailComposer()
 
-        if self.transfered_from:
+        if self.transferred_from:
             composer.line(
                 "Your booking transfer to %s has been confirmed!"
                 % self.performance.production.name
@@ -728,7 +728,7 @@ class Booking(TimeStampedMixin, Transferable):
 
         subject = (
             "Booking transfer complete"
-            if self.transfered_from
+            if self.transferred_from
             else "Your booking is confirmed!"
         )
         composer.send(subject, self.user.email)

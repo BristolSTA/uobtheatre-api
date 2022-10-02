@@ -14,25 +14,25 @@ TransferableManager = models.Manager.from_queryset(TransferableQuerySet)
 # pylint: disable=abstract-method
 class Transferable(Payable):
     """
-    A transferable is a payable which can be transfered. A transfer is a
+    A transferable is a payable which can be transferred. A transfer is a
     to/from another transferable of the same type. For bookings this enables bookings to be updated (chnaged perfomrance)
     """
 
     objects = TransferableManager()  # type: ignore
 
     # Whether the booking has be transferred to
-    transfered_from = models.OneToOneField(
+    transferred_from = models.OneToOneField(
         "self", on_delete=models.RESTRICT, null=True, related_name="_transferred_to"
     )
 
     @property
     def transferred_to(self) -> Optional["Transferable"]:
-        """The transfered which this has been transfred to.
+        """The transferred which this has been transfred to.
 
-        If this has not be transfered None will be returned.
+        If this has not be transferred None will be returned.
 
         Note: _transferred_to cannot be used directly as if this booking has not
-        been transfered an error is raised.
+        been transferred an error is raised.
         """
         if not hasattr(self, "_transferred_to"):
             return None
@@ -66,11 +66,11 @@ class Transferable(Payable):
         if subtotal == 0:  # pylint: disable=comparison-with-callable
             return 0
 
-        if not self.transfered_from:
+        if not self.transferred_from:
             return self.pre_transfer_total
 
         return (
-            max(self.pre_transfer_total - self.transfered_from.pre_transfer_total, 0)
+            max(self.pre_transfer_total - self.transferred_from.pre_transfer_total, 0)
             + self.transfer_fee
         )
 

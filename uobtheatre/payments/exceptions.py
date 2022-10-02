@@ -18,4 +18,4 @@ class CantBePaidForException(GQLException):
 
 class TransferUnpaidPayableException(GQLException):
     def __init__(self, status_display: str) -> None:
-        super().__init__(f"A payable which is {status_display} cannot be transfered")
+        super().__init__(f"A payable which is {status_display} cannot be transferred")
