@@ -706,7 +706,7 @@ def test_performance_min_price_with_single_discounts():
     null_discount.performances.set([performance])
     single_discount.performances.set([performance])
 
-    assert performance.min_seat_price() == math.ceil((1 - 0.27) * 10)
+    assert performance.min_seat_price() == 8
 
 
 @pytest.mark.django_db
