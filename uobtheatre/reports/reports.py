@@ -334,7 +334,7 @@ class PerformanceBookings(Report):
                     str(booking.user),
                     booking.user.email,
                     "\r\n".join([str(ticket) for ticket in booking.tickets.all()]),
-                    str(booking.total_payments),
+                    str(booking.sales_breakdown.total_payments),
                 ]
             )
 

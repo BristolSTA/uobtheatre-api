@@ -54,9 +54,11 @@ def test_bookings_schema(gql_client):
                   user {
                     id
                   }
-                  totalPayments
-                  totalRefunds
-                  netTransactions
+                  salesBreakdown {
+                    totalPayments
+                    totalRefunds
+                    netTransactions
+                  }
                 }
               }
             }
@@ -97,9 +99,11 @@ def test_bookings_schema(gql_client):
                                 "user": {
                                     "id": to_global_id("UserNode", booking.user.id)
                                 },
-                                "totalPayments": booking.total_payments,
-                                "totalRefunds": booking.total_refunds,
-                                "netTransactions": booking.net_transactions,
+                                "salesBreakdown": {
+                                    "totalPayments": booking.sales_breakdown.total_payments,
+                                    "totalRefunds": booking.sales_breakdown.total_refunds,
+                                    "netTransactions": booking.sales_breakdown.net_transactions,
+                                },
                             }
                         }
                     ]

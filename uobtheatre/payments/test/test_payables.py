@@ -56,7 +56,7 @@ def test_payable_provider_payment_value():
     TransactionFactory(pay_object=booking, provider_fee=20)
     TransactionFactory(pay_object=booking, provider_fee=10)
 
-    assert booking.provider_payment_value == 30
+    assert booking.sales_breakdown.provider_payment_value == 30
 
 
 @pytest.mark.django_db
@@ -66,7 +66,7 @@ def test_payable_app_payment_value():
     TransactionFactory(pay_object=booking, provider_fee=20, app_fee=100)
     TransactionFactory(pay_object=booking, provider_fee=10, app_fee=150)
 
-    assert booking.app_payment_value == 220
+    assert booking.sales_breakdown.app_payment_value == 220
 
 
 @pytest.mark.django_db
@@ -76,7 +76,7 @@ def test_payable_society_payment_value():
     TransactionFactory(pay_object=booking, app_fee=100, value=200)
     TransactionFactory(pay_object=booking, app_fee=150, value=400)
 
-    assert booking.society_revenue == 350
+    assert booking.sales_breakdown.society_revenue == 350
 
 
 @pytest.mark.django_db
@@ -89,7 +89,7 @@ def test_payable_total_payments():
         pay_object=booking, app_fee=150, value=300, type=Transaction.Type.REFUND
     )
 
-    assert booking.total_payments == 600
+    assert booking.sales_breakdown.total_payments == 600
 
 
 @pytest.mark.django_db
@@ -102,7 +102,7 @@ def test_payable_net_transactions():
         pay_object=booking, app_fee=150, value=-300, type=Transaction.Type.REFUND
     )
 
-    assert booking.net_transactions == 300
+    assert booking.sales_breakdown.net_transactions == 300
 
 
 @pytest.mark.django_db
@@ -119,7 +119,7 @@ def test_society_transfer_value():
         pay_object=booking, app_fee=150, value=400, provider_name=SquareOnline.name
     )
 
-    assert booking.society_transfer_value == 550
+    assert booking.sales_breakdown.society_transfer_value == 550
 
 
 @pytest.mark.django_db

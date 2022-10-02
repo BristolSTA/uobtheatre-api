@@ -263,9 +263,6 @@ class Booking(TimeStampedMixin, Transferable):
         related_name="bookings",
     )
 
-    # TODO Can this be moved to payable?
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bookings")
-
     # An additional discount that can be applied to the booking by an admin
     # To create a concession ticket a 100% discount can be applied.
     admin_discount_percentage = models.FloatField(

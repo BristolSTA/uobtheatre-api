@@ -11,6 +11,7 @@ from graphql_auth.schema import UserNode
 
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
 from uobtheatre.productions.models import Performance
+from uobtheatre.productions.schema import SalesBreakdownNode
 from uobtheatre.utils.filters import FilterSet
 
 
@@ -249,9 +250,7 @@ class BookingNode(DjangoObjectType):
         "uobtheatre.payments.schema.TransactionNode"
     )
     expired = graphene.Boolean(required=True)
-    total_payments = graphene.Int()
-    total_refunds = graphene.Int()
-    net_transactions = graphene.Int()
+    sales_breakdown = graphene.Field(SalesBreakdownNode)
     transferred_to = graphene.Field(lambda: BookingNode)
 
     def resolve_price_breakdown(self, _):

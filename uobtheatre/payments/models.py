@@ -35,17 +35,17 @@ class TransactionQuerySet(QuerySet):
     """The query set for payments"""
 
     def annotate_sales_breakdown(
-        self, breakdowns: Optional[list["SalesBreakdown"]] = None
+        self, breakdowns: Optional[list["SalesBreakdown.Enums"]] = None
     ):
         """Annotate sales breakdown onto payments"""
         annotations = {
             breakdown.key: Coalesce(breakdown.value, 0)
-            for breakdown in SalesBreakdown
+            for breakdown in SalesBreakdown.Enums
             if breakdowns is None or breakdown in breakdowns
         }
         return self.aggregate(**annotations)
 
-    def get_sales_breakdown(self, breakdown: "SalesBreakdown"):
+    def get_sales_breakdown(self, breakdown: "SalesBreakdown.Enums"):
         # NOTE: Calling aggregate on an empty queryset gives None so the
         # Coalesce is not applied this fix works here but still an
         # issue/feature above
@@ -295,7 +295,6 @@ class Transaction(TimeStampedMixin, BaseModel):
         refund_provider.refund(self)
 
 
-# TODO This should be moved into its own package
 class FinancialTransfer(TimeStampedMixin, BaseModel):
     """Model for representing the movemement of funds at the business level"""
 
@@ -323,39 +322,92 @@ class FinancialTransfer(TimeStampedMixin, BaseModel):
         permissions = (("create_transfer", "Create a transfer entry"),)
 
 
-class SalesBreakdown(Enum):
+class SalesBreakdown:
     """
-    Enum for each sales breakdown which can be optained from a transaction
-    queryset.
-
-    Each enum variant is assigned to the expression used to calculate its
-    value.
-
-    For documentation of each value see the payables model.
+    Class representing the sales breakdown for a given transaction query set
     """
 
-    PROVIDER_PAYMENT_VALUE = Coalesce(
-        Sum(
-            "provider_fee",
-        ),
-        0,
-    )
-    NET_TRANSACTIONS = Sum("value")
-    NET_CARD_TRANSACTIONS = Sum("value", filter=(~Q(provider_name=Cash.name)))
-    TOTAL_PAYMENTS = Sum("value", filter=Q(type=Transaction.Type.PAYMENT))
-    TOTAL_CARD_PAYMENTS = Sum(
-        "value", filter=(~Q(provider_name=Cash.name) & Q(type=Transaction.Type.PAYMENT))
-    )
-    TOTAL_REFUNDS = Sum("value", filter=Q(type=Transaction.Type.REFUND))
-    TOTAL_CARD_REFUNDS = Sum(
-        "value", filter=(~Q(provider_name=Cash.name) & Q(type=Transaction.Type.REFUND))
-    )
-    APP_FEE = Coalesce(Sum("app_fee"), 0)
+    class Enums(Enum):
+        """
+        The available breakdowns.
 
-    APP_PAYMENT_VALUE = APP_FEE - PROVIDER_PAYMENT_VALUE
-    SOCIETY_TRANSFER_VALUE = NET_CARD_TRANSACTIONS - APP_FEE
-    SOCIETY_REVENUE = NET_TRANSACTIONS - APP_FEE
+        Each enum variant is assigned to the expression used to calculate its
+        value.
+        """
+
+        PROVIDER_PAYMENT_VALUE = Coalesce(
+            Sum(
+                "provider_fee",
+            ),
+            0,
+        )
+        NET_TRANSACTIONS = Sum("value")
+        NET_CARD_TRANSACTIONS = Sum("value", filter=(~Q(provider_name=Cash.name)))
+        TOTAL_PAYMENTS = Sum("value", filter=Q(type=Transaction.Type.PAYMENT))
+        TOTAL_CARD_PAYMENTS = Sum(
+            "value",
+            filter=(~Q(provider_name=Cash.name) & Q(type=Transaction.Type.PAYMENT)),
+        )
+        TOTAL_REFUNDS = Sum("value", filter=Q(type=Transaction.Type.REFUND))
+        TOTAL_CARD_REFUNDS = Sum(
+            "value",
+            filter=(~Q(provider_name=Cash.name) & Q(type=Transaction.Type.REFUND)),
+        )
+        APP_FEE = Coalesce(Sum("app_fee"), 0)
+
+        APP_PAYMENT_VALUE = APP_FEE - PROVIDER_PAYMENT_VALUE
+        SOCIETY_TRANSFER_VALUE = NET_CARD_TRANSACTIONS - APP_FEE
+        SOCIETY_REVENUE = NET_TRANSACTIONS - APP_FEE
+
+        @property
+        def key(self):
+            return self.name.lower()
+
+    def __init__(self, transaction_qs: TransactionQuerySet) -> None:
+        super().__init__()
+        self.transaction_qs = transaction_qs
 
     @property
-    def key(self):
-        return self.name.lower()
+    def total_payments(self) -> int:
+        """The positive amounts paid by the user for this object.
+
+        - This does not include refunds.
+        - This does include the square fee.
+        """
+        return self.transaction_qs.get_sales_breakdown(self.Enums.TOTAL_PAYMENTS)
+
+    @property
+    def net_transactions(self) -> int:
+        """The net amount paid by the user for this object. (This includes refunds)"""
+        return self.transaction_qs.get_sales_breakdown(self.Enums.NET_TRANSACTIONS)
+
+    @property
+    def total_refunds(self) -> int:
+        """The negative amounts paid by the user for this object. (i.e. money
+        paid back to the user in the form of a refund)
+        """
+        return self.transaction_qs.get_sales_breakdown(self.Enums.TOTAL_REFUNDS)
+
+    @property
+    def provider_payment_value(self) -> int:
+        """The amount taken by the payment provider in paying for this object."""
+        return self.transaction_qs.get_sales_breakdown(
+            self.Enums.PROVIDER_PAYMENT_VALUE
+        )
+
+    @property
+    def app_payment_value(self) -> int:
+        """The amount taken by us in paying for this object."""
+        return self.transaction_qs.get_sales_breakdown(self.Enums.APP_PAYMENT_VALUE)
+
+    @property
+    def society_revenue(self) -> int:
+        """The revenue for the society for selling this object."""
+        return self.transaction_qs.get_sales_breakdown(self.Enums.SOCIETY_REVENUE)
+
+    @property
+    def society_transfer_value(self) -> int:
+        """The amount of money to transfer to the society for object."""
+        return self.transaction_qs.get_sales_breakdown(
+            self.Enums.SOCIETY_TRANSFER_VALUE
+        )

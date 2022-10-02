@@ -77,8 +77,7 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
         default=Status.IN_PROGRESS,
     )
 
-    # TODO add this in
-    # user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bookings")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bookings")
 
     objects = PayableManager()
 
@@ -238,52 +237,9 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
         self.status = Payable.Status.PAID
         self.save()
 
-    # TODO We should expose this as a sales breakdown object and move the
-    # documentation back to the sales breakdown definition
     @property
-    def total_payments(self) -> int:
-        """The positive amounts paid by the user for this object.
-
-        - This does not include refunds.
-        - This does include the square fee.
-        """
-        return self.transactions.get_sales_breakdown(SalesBreakdown.TOTAL_PAYMENTS)
-
-    @property
-    def net_transactions(self) -> int:
-        """The net amount paid by the user for this object. (This includes refunds)"""
-        return self.transactions.get_sales_breakdown(SalesBreakdown.NET_TRANSACTIONS)
-
-    @property
-    def total_refunds(self) -> int:
-        """The negative amounts paid by the user for this object. (i.e. money
-        paid back to the user in the form of a refund)
-        """
-        return self.transactions.get_sales_breakdown(SalesBreakdown.TOTAL_REFUNDS)
-
-    @property
-    def provider_payment_value(self) -> int:
-        """The amount taken by the payment provider in paying for this object."""
-        return self.transactions.get_sales_breakdown(
-            SalesBreakdown.PROVIDER_PAYMENT_VALUE
-        )
-
-    @property
-    def app_payment_value(self) -> int:
-        """The amount taken by us in paying for this object."""
-        return self.transactions.get_sales_breakdown(SalesBreakdown.APP_PAYMENT_VALUE)
-
-    @property
-    def society_revenue(self) -> int:
-        """The revenue for the society for selling this object."""
-        return self.transactions.get_sales_breakdown(SalesBreakdown.SOCIETY_REVENUE)
-
-    @property
-    def society_transfer_value(self) -> int:
-        """The amount of money to transfer to the society for object."""
-        return self.transactions.get_sales_breakdown(
-            SalesBreakdown.SOCIETY_TRANSFER_VALUE
-        )
+    def sales_breakdown(self) -> SalesBreakdown:
+        return SalesBreakdown(self.transactions)
 
     @property
     def associated_tasks(self):
