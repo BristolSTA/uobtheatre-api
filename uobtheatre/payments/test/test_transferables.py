@@ -38,7 +38,7 @@ def test_transferred_to():
                 "misc_costs_value": 100,
                 "transferred_from": {"subtotal": 200, "misc_costs_value": 50},
             },
-            850,
+            850,  # New Booking Value: 900. Old Booking Value: 250. To Pay = 900 - 250 + 200 (Transfer Fee) = 850
             id="calculates correct value",
         ),
         pytest.param(
@@ -47,7 +47,7 @@ def test_transferred_to():
                 "misc_costs_value": 100,
                 "transferred_from": {"subtotal": 1000, "misc_costs_value": 50},
             },
-            200,
+            200,  # New Booking Value: 900. Old Booking Value: 1050. To Pay = max(0, -150) + 200 (Transfer Fee) = 200
             id="calculates correct value when original booking is larger than new booking",
         ),
         pytest.param(
@@ -56,7 +56,7 @@ def test_transferred_to():
                 "misc_costs_value": 10,
                 "transferred_from": {"subtotal": 20, "misc_costs_value": 10},
             },
-            230,
+            230,  # New Booking Value: 60. Old Booking Value: 30. To Pay = 30 + 200 (Transfer Fee) = 230
             id="calculates correct value with small totals",
         ),
         pytest.param(
@@ -78,7 +78,7 @@ def test_transferred_to():
                     "transferred_from": {"subtotal": 1000, "misc_costs_value": 100},
                 },
             },
-            200,
+            200,  # New Booking Value: 1100. Old Booking Value: 2200. To Pay = max(0, -1100) + 200 (Transfer Fee) = 200
             id="calculates correct value with nested transfers when inital transferred_from is larger than the new booking",
         ),
         pytest.param(
@@ -91,7 +91,7 @@ def test_transferred_to():
                     "transferred_from": {"subtotal": 1000, "misc_costs_value": 100},
                 },
             },
-            1300,
+            1300,  # New Booking Value: 2200. Old Booking Value: 1100. To Pay = 2200 - 1100 + 200 (Transfer Fee) = 1300
             id="calculates correct value with nested transfers when inital transferred_from is smaller than the new booking",
         ),
     ],
