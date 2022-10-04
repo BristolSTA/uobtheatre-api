@@ -1,6 +1,6 @@
 import graphene
 
-from uobtheatre.bookings.abilities import ModifyBooking
+from uobtheatre.bookings.abilities import ModifyBooking, TransferBooking
 from uobtheatre.bookings.exceptions import (
     BookingTransferCheckedInTicketsException,
     BookingTransferToDifferentProductionException,
@@ -460,7 +460,6 @@ class CreateBookingTransfer(AuthRequiredMixin, SafeMutation):
         booking_id,
         performance_id,
     ):
-        booking = Booking.objects.get(pk=booking_id, user=info.context.user.id)
         performance = Performance.objects.get(pk=performance_id)
 
         if not BookForPerformance.user_has_for(info.context.user, performance):
@@ -468,7 +467,14 @@ class CreateBookingTransfer(AuthRequiredMixin, SafeMutation):
                 "You do not have permission to create a booking for this performance"
             )
 
-        new_booking = booking.create_transfer(performance)
+        booking = Booking.objects.get(pk=booking_id)
+
+        if not TransferBooking.user_has_for(info.context.user, booking):
+            raise AuthorizationException(
+                "You do not have permission to transfer this booking"
+            )
+
+        new_booking = booking.create_transfer(performance, creator=info.context.user)
         return CreateBookingTransfer(booking=new_booking)
 
 

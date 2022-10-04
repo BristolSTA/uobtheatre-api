@@ -2782,7 +2782,7 @@ def test_uncheck_in_booking_incorrect_ticket(gql_client):
 def test_create_transfer_booking(gql_client, booking_status):
     gql_client.login()
 
-    booking = BookingFactory(status=booking_status, user=gql_client.user)
+    booking = BookingFactory(status=booking_status)
     performance = PerformanceFactory(production=booking.performance.production)
 
     request_query = """
@@ -2811,6 +2811,9 @@ def test_create_transfer_booking(gql_client, booking_status):
     with patch(
         "uobtheatre.productions.abilities.BookForPerformance.user_has_for",
         return_value=True,
+    ), patch(
+        "uobtheatre.bookings.abilities.TransferBooking.user_has_for",
+        return_value=True,
     ):
         response = gql_client.execute(request_query)
 
@@ -2826,9 +2829,12 @@ def test_create_transfer_booking(gql_client, booking_status):
         }
     }
 
+    assert booking.transferred_to.creator == gql_client.user
+    assert booking.transferred_to.user == booking.user
+
 
 @pytest.mark.django_db
-def test_create_transfer_booking_without_permissions(gql_client):
+def test_create_transfer_booking_without_permission_to_book_performance(gql_client):
     gql_client.login()
     gql_client.user.is_superuser = False
     gql_client.user.save()
@@ -2880,12 +2886,12 @@ def test_create_transfer_booking_without_permissions(gql_client):
 
 
 @pytest.mark.django_db
-def test_create_transfer_booking_with_different_user(gql_client):
+def test_create_transfer_booking_without_permission_to_transfer(gql_client):
     gql_client.login()
     gql_client.user.is_superuser = False
     gql_client.user.save()
 
-    booking = BookingFactory()
+    booking = BookingFactory(user=gql_client.user)
     performance = PerformanceFactory(production=booking.performance.production)
 
     request_query = """
@@ -2910,15 +2916,23 @@ def test_create_transfer_booking_with_different_user(gql_client):
         to_global_id("PerformanceNode", performance.id),
     )
 
-    response = gql_client.execute(request_query)
+    with patch(
+        "uobtheatre.productions.abilities.BookForPerformance.user_has_for",
+        return_value=True,
+    ), patch(
+        "uobtheatre.bookings.abilities.TransferBooking.user_has_for",
+        return_value=False,
+    ):
+        response = gql_client.execute(request_query)
+
     assert response == {
         "data": {
             "createBookingTransfer": {
                 "booking": None,
                 "errors": [
                     {
-                        "code": "404",
-                        "message": "Object not found",
+                        "code": "403",
+                        "message": "You do not have permission to transfer this booking",
                     }
                 ],
             }

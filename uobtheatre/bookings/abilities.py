@@ -14,3 +14,17 @@ class ModifyBooking(Ability):
             obj.user.id == user.id
             or user.has_perm("productions.boxoffice", obj.performance.production)
         )
+
+
+class TransferBooking(Ability):
+    """Checks if the user has the ability to transfer a booking"""
+
+    name = "transfer_booking"
+
+    @classmethod
+    def user_has_for(cls, user, obj) -> bool:
+        # Must be in paid, and the user must own the booking or be able to box office for the performance of the booking
+        return obj.status == Payable.Status.PAID and (
+            obj.user.id == user.id
+            or user.has_perm("productions.boxoffice", obj.performance.production)
+        )

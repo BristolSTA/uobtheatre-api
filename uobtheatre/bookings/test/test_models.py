@@ -1428,13 +1428,14 @@ def test_create_transfer():
     assert Booking.objects.count() == 1
 
     # Create transfer to other performance
-    booking.create_transfer(performance_2)
+    booking.create_transfer(performance_2, creator_user := UserFactory())
     assert booking.admin_discount_percentage == 0
 
     # Assert the new booking is created and in progress
     assert Booking.objects.count() == 2
     new_booking = Booking.objects.last()
     assert new_booking.status == Booking.Status.IN_PROGRESS
+    assert new_booking.creator == creator_user
 
     # Assert the only ticket which is transferred is the one in both
     # performances with sufficient capacity

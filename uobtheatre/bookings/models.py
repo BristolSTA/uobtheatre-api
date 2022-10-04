@@ -234,7 +234,7 @@ class Booking(TimeStampedMixin, Transferable):
         A user can only have 1 In Progress booking per performance.
     """
 
-    objects = BookingManager()  # type: ignore[assignment]
+    objects: models.Manager = BookingManager()  # type: ignore[assignment]
 
     class Meta:
         constraints = [
@@ -564,9 +564,7 @@ class Booking(TimeStampedMixin, Transferable):
 
         # If this is a transfer and the booking it is transferred from is not paid
         if self.transferred_from:
-            self.transferred_from.check_can_transfer_to(
-                self.performance
-            )
+            self.transferred_from.check_can_transfer_to(self.performance)
 
         return super().pay(payment_method)
 
@@ -615,7 +613,7 @@ class Booking(TimeStampedMixin, Transferable):
         if self.performance.production != performance.production:
             raise BookingTransferToDifferentProductionException
 
-    def create_transfer(self, performance: "Performance") -> "Booking":
+    def create_transfer(self, performance: "Performance", creator: "User") -> "Booking":
         """
         Create an in progress booking to transfer the booking to a different
         performance.
@@ -638,7 +636,12 @@ class Booking(TimeStampedMixin, Transferable):
         ).delete()
 
         # Create the new booking to transfer to
-        new_booking = Booking.objects.create(user=self.user, creator=self.user, transferred_from=self, performance_id=performance.id)
+        new_booking = Booking.objects.create(
+            user=self.user,
+            creator=creator,
+            transferred_from=self,
+            performance_id=performance.id,
+        )
 
         # Copy across all tickets which can be copied one by one
         for ticket in self.tickets.all():
