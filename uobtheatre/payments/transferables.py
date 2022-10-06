@@ -4,6 +4,8 @@ from django.db import models
 
 from uobtheatre.payments.payables import Payable, PayableQuerySet
 
+TRANSFER_FEE = 100
+
 
 class TransferableQuerySet(PayableQuerySet):
     pass
@@ -39,8 +41,8 @@ class Transferable(Payable):
         return self._transferred_to  # type: ignore
 
     @property
-    def transfer_fee(self) -> int:
-        return 200
+    def transfer_fee(self) -> Optional[int]:
+        return TRANSFER_FEE if self.transferred_from else None
 
     @property
     def pre_transfer_total(self) -> int:
@@ -69,10 +71,9 @@ class Transferable(Payable):
         if not self.transferred_from:
             return self.pre_transfer_total
 
-        return (
-            max(self.pre_transfer_total - self.transferred_from.pre_transfer_total, 0)
-            + self.transfer_fee
-        )
+        return max(
+            self.pre_transfer_total - self.transferred_from.pre_transfer_total, 0
+        ) + (self.transfer_fee or 0)
 
     class Meta:
         abstract = True

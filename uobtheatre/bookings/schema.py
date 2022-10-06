@@ -55,6 +55,7 @@ class PriceBreakdownNode(DjangoObjectType):
     tickets_price = graphene.Int(required=True)
     discounts_value = graphene.Int(required=True)
     misc_costs = graphene.List(MiscCostNode)
+    transfer_fee = graphene.Int()
     subtotal_price = graphene.Int(required=True)
     misc_costs_value = graphene.Int(required=True)
     total_price = graphene.Int(required=True)
@@ -68,9 +69,6 @@ class PriceBreakdownNode(DjangoObjectType):
 
     def resolve_subtotal_price(self, _):
         return self.subtotal
-
-    def resolve_misc_costs_value(self, _):
-        return self.misc_costs_value
 
     def resolve_total_price(self, _):
         return self.total
