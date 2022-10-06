@@ -556,6 +556,7 @@ type PriceBreakdownNode implements Node {
   ticketsPrice: Int!
   discountsValue: Int!
   miscCosts: [MiscCostNode]
+  transferFee: Int
   subtotalPrice: Int!
   miscCostsValue: Int!
   totalPrice: Int!
