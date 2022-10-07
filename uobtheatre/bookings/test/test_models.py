@@ -10,7 +10,6 @@ from django.db.utils import IntegrityError
 from django.utils import timezone
 from graphql_relay.node.node import to_global_id
 
-from uobtheatre.addresses.test.factories import AddressFactory
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
@@ -25,8 +24,6 @@ from uobtheatre.discounts.test.factories import (
     DiscountFactory,
     DiscountRequirementFactory,
 )
-from uobtheatre.images.test.factories import ImageFactory
-from uobtheatre.payments import transaction_providers
 from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
@@ -1040,134 +1037,33 @@ def test_booking_can_be_refunded(is_refunded, status, production_status, expecte
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("with_payment", [False, True])
-def test_complete(with_payment):
-    booking = BookingFactory(status=Payable.Status.IN_PROGRESS)
-    with patch.object(booking, "send_confirmation_email") as mock_send_email:
+@pytest.mark.parametrize(
+    "with_payment,with_accessibility",
+    [(False, False), (True, False), (False, True), (True, True)],
+)
+def test_complete(with_payment, with_accessibility):
+    booking = BookingFactory(
+        status=Payable.Status.IN_PROGRESS,
+        accessibility_info=("Something" if with_accessibility else None),
+    )
+    with patch(
+        "uobtheatre.bookings.emails.send_booking_confirmation_email"
+    ) as mock_send_email, patch(
+        "uobtheatre.bookings.emails.send_booking_with_accessibility_info_email"
+    ) as mock_send_accessibility_email:
         kwargs = {}
         if with_payment:
             kwargs["payment"] = TransactionFactory()
         booking.complete(**kwargs)
         mock_send_email.assert_called_once()
 
+        if with_accessibility:
+            mock_send_accessibility_email.assert_called_once()
+        else:
+            mock_send_accessibility_email.assert_not_called()
+
     booking.refresh_from_db()
     assert booking.status == Payable.Status.PAID
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    "with_payment, provider_transaction_id, with_image",
-    [(True, "SQUARE_PAYMENT_ID", True), (True, None, False), (False, None, True)],
-)
-def test_send_confirmation_email(
-    mailoutbox, with_payment, provider_transaction_id, with_image
-):
-    image = ImageFactory() if with_image else None
-    production = ProductionFactory(name="Legally Ginger", featured_image=image)
-    venue = VenueFactory(address=AddressFactory(latitude=51.4, longitude=-2.61))
-    performance = PerformanceFactory(
-        venue=venue,
-        doors_open=datetime.datetime(
-            day=4,
-            month=11,
-            year=2021,
-            hour=18,
-            minute=15,
-            tzinfo=timezone.get_current_timezone(),
-        ),
-        start=datetime.datetime(
-            day=4,
-            month=11,
-            year=2021,
-            hour=19,
-            minute=15,
-            tzinfo=timezone.get_current_timezone(),
-        ),
-        production=production,
-    )
-    booking = BookingFactory(
-        status=Payable.Status.IN_PROGRESS,
-        reference="abc",
-        performance=performance,
-    )
-    booking.user.status.verified = True
-
-    payment = (
-        TransactionFactory(
-            pay_object=booking,
-            value=1000,
-            provider_name=transaction_providers.SquareOnline.name,
-            provider_transaction_id=provider_transaction_id,
-        )
-        if with_payment
-        else None
-    )
-
-    booking.send_confirmation_email(payment)
-
-    assert len(mailoutbox) == 1
-    email = mailoutbox[0]
-    assert email.subject == "Your booking is confirmed!"
-    assert "View Booking (https://example.com/user/booking/abc" in email.body
-    assert (
-        "View Tickets (https://example.com%s" % booking.web_tickets_path in email.body
-    )
-    assert "Legally Ginger" in email.body
-    assert "opens at 04 November 2021 18:15 GMT for a 19:15 GMT start" in email.body
-    if with_payment:
-        assert "Payment Information" in email.body
-        assert "10.00 GBP" in email.body
-        assert (
-            "(Square online card payment - ID SQUARE_PAYMENT_ID)"
-            if provider_transaction_id
-            else "(Square online card payment)" in email.body
-        )
-    else:
-        assert "Payment Information" not in email.body
-
-
-@pytest.mark.django_db
-def test_send_confirmation_email_for_anonymous(mailoutbox):
-    production = ProductionFactory(name="Legally Ginger")
-    venue = VenueFactory(address=AddressFactory(latitude=51.4, longitude=-2.61))
-    performance = PerformanceFactory(
-        doors_open=datetime.datetime(
-            day=20,
-            month=10,
-            year=2021,
-            hour=18,
-            minute=15,
-            tzinfo=timezone.get_current_timezone(),
-        ),
-        start=datetime.datetime(
-            day=20,
-            month=10,
-            year=2021,
-            hour=19,
-            minute=15,
-            tzinfo=timezone.get_current_timezone(),
-        ),
-        production=production,
-        venue=venue,
-    )
-    booking = BookingFactory(
-        status=Payable.Status.IN_PROGRESS,
-        reference="abc",
-        performance=performance,
-    )
-
-    booking.send_confirmation_email()
-
-    assert len(mailoutbox) == 1
-    email = mailoutbox[0]
-    assert email.subject == "Your booking is confirmed!"
-    assert "View Booking (https://example.com/user/booking/abc" not in email.body
-    assert (
-        "View Tickets (https://example.com%s" % booking.web_tickets_path in email.body
-    )
-    assert "Legally Ginger" in email.body
-    assert "opens at 20 October 2021 19:15 BST for a 20:15 BST start" in email.body
-    assert "reference (abc)" in email.body
 
 
 @pytest.mark.django_db
