@@ -7,8 +7,8 @@ from guardian.admin import GuardedModelAdmin
 
 from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.productions.models import (
-    AudienceWarning,
     CastMember,
+    ContentWarning,
     CrewMember,
     CrewRole,
     Performance,
@@ -112,7 +112,7 @@ class PerformanceAdmin(DangerousAdminConfirmMixin, ModelAdmin):
 
 
 admin.site.register(Production, ProductionAdmin)
-admin.site.register(AudienceWarning)
+admin.site.register(ContentWarning)
 admin.site.register(CrewMember)
 admin.site.register(CastMember)
 admin.site.register(CrewRole)

@@ -33,7 +33,9 @@ def get_requirements_from_requirements_file(requirements_file: str):
     Get the requirements from the requirements file
     """
     requirements = []
-    with open(f"{REQUIREMENTS_DIRECTORY}/{requirements_file}") as req_file:
+    with open(
+        f"{REQUIREMENTS_DIRECTORY}/{requirements_file}", encoding="utf8"
+    ) as req_file:
         for line in req_file.readlines():
             line = line.strip()
             if line.startswith("-r"):
@@ -53,7 +55,7 @@ def write_requirements_to_precommit_config(
     Write the requirements to the precommit config file
     """
     print(requirements)
-    with open(precommit_config_file, "r") as config_file:
+    with open(precommit_config_file, "r", encoding="utf8") as config_file:
         config = yaml.safe_load(config_file)
 
     repos = config["repos"]
@@ -65,7 +67,7 @@ def write_requirements_to_precommit_config(
 
     mypy_repo["hooks"][0]["additional_dependencies"] = requirements
 
-    with open(precommit_config_file, "w") as config_file:
+    with open(precommit_config_file, "w", encoding="utf8") as config_file:
         yaml.dump(config, config_file)
 
 

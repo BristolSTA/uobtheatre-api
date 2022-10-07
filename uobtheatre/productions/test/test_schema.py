@@ -3,6 +3,7 @@ import datetime
 import math
 
 import pytest
+import pytz
 from django.utils import timezone
 from graphql_relay.node.node import from_global_id, to_global_id
 from guardian.shortcuts import assign_perm
@@ -20,8 +21,8 @@ from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.productions.test.factories import (
-    AudienceWarningFactory,
     CastMemberFactory,
+    ContentWarningFactory,
     CrewMemberFactory,
     PerformanceFactory,
     ProductionFactory,
@@ -42,8 +43,12 @@ def test_productions_schema(gql_client):
     production = ProductionFactory()
     performances = [PerformanceFactory(production=production) for i in range(2)]
 
-    warnings = [AudienceWarningFactory() for i in range(3)]
-    production.warnings.set(warnings)
+    warnings = [
+        ContentWarningFactory(short_description="A"),
+        ContentWarningFactory(short_description="B"),
+        ContentWarningFactory(short_description="C"),
+    ]
+    production.content_warnings.set(warnings)
 
     cast = [CastMemberFactory(production=production) for i in range(10)]
     crew = [CrewMemberFactory(production=production) for i in range(10)]
@@ -120,9 +125,12 @@ def test_productions_schema(gql_client):
                     id
                   }
                 }
-                warnings {
-                  id
-                  description
+                contentWarnings {
+                    information
+                    warning {
+                        id
+                        shortDescription
+                    }
                 }
               }
             }
@@ -130,7 +138,6 @@ def test_productions_schema(gql_client):
         }
         """
     )
-
     assert response == {
         "data": {
             "productions": {
@@ -231,10 +238,15 @@ def test_productions_schema(gql_client):
                                 }
                                 for production_team_member in production_team
                             ],
-                            "warnings": [
+                            "contentWarnings": [
                                 {
-                                    "id": to_global_id("WarningNode", warning.id),
-                                    "description": warning.description,
+                                    "information": None,
+                                    "warning": {
+                                        "id": to_global_id(
+                                            "ContentWarningNode", warning.id
+                                        ),
+                                        "shortDescription": warning.short_description,
+                                    },
                                 }
                                 for warning in warnings
                             ],
@@ -812,7 +824,14 @@ def test_production_venues(gql_client):
 
 @pytest.mark.django_db
 def test_performance_schema(gql_client):
-    performances = [PerformanceFactory() for _ in range(1)]
+    performances = [
+        PerformanceFactory(
+            doors_open=datetime.datetime(2020, 1, 1, 0, 0, 0, tzinfo=pytz.UTC),
+            start=datetime.datetime(2020, 1, 1, 1, 0, 0, tzinfo=pytz.UTC),
+            end=datetime.datetime(2020, 1, 2, 1, 0, 0, tzinfo=pytz.UTC),
+        )
+        for _ in range(1)
+    ]
 
     response = gql_client.execute(
         """
@@ -865,9 +884,9 @@ def test_performance_schema(gql_client):
                         "node": {
                             "createdAt": performance.created_at.isoformat(),
                             "updatedAt": performance.updated_at.isoformat(),
-                            "capacity": performance.capacity,
+                            "capacity": None,
                             "description": performance.description,
-                            "disabled": performance.disabled,
+                            "disabled": False,
                             "discounts": {
                                 "edges": [
                                     {
@@ -876,9 +895,9 @@ def test_performance_schema(gql_client):
                                     for discount in performance.discounts.all()
                                 ]
                             },
-                            "doorsOpen": performance.doors_open.isoformat(),
-                            "durationMins": performance.duration().seconds // 60,
-                            "end": performance.end.isoformat(),
+                            "doorsOpen": "2020-01-01T00:00:00+00:00",
+                            "durationMins": 24 * 60,  # 1 day
+                            "end": "2020-01-02T01:00:00+00:00",
                             "extraInformation": performance.extra_information,
                             "id": to_global_id("PerformanceNode", performance.id),
                             "isOnline": False,
@@ -888,7 +907,7 @@ def test_performance_schema(gql_client):
                                     "ProductionNode", performance.production.id
                                 )
                             },
-                            "start": performance.start.isoformat(),
+                            "start": "2020-01-01T01:00:00+00:00",
                             "capacityRemaining": performance.capacity_remaining,
                             "venue": {
                                 "id": to_global_id("VenueNode", performance.venue.id)
@@ -1333,16 +1352,16 @@ def test_performance_has_permission(gql_client):
 
 @pytest.mark.django_db
 def test_warnings(gql_client):
-    AudienceWarningFactory(description="Beware of the children")
-    AudienceWarningFactory(description="Pyrotechnics go bang")
-    AudienceWarningFactory(description="Strobe do be flickering")
+    ContentWarningFactory(short_description="Beware of the children")
+    ContentWarningFactory(short_description="Pyrotechnics go bang")
+    ContentWarningFactory(short_description="Strobe do be flickering")
 
     request = """
         query {
             warnings{
                 edges {
                     node {
-                        description
+                        shortDescription
                     }
                 }
             }
@@ -1351,7 +1370,7 @@ def test_warnings(gql_client):
 
     response = gql_client.execute(request)
     assert response["data"]["warnings"]["edges"] == [
-        {"node": {"description": "Beware of the children"}},
-        {"node": {"description": "Pyrotechnics go bang"}},
-        {"node": {"description": "Strobe do be flickering"}},
+        {"node": {"shortDescription": "Beware of the children"}},
+        {"node": {"shortDescription": "Pyrotechnics go bang"}},
+        {"node": {"shortDescription": "Strobe do be flickering"}},
     ]

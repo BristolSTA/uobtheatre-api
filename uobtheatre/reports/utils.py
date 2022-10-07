@@ -18,8 +18,9 @@ signer = TimestampSigner()
 class ExcelReport:  # pragma: no cover
     """Generates an Excel xlxs spreadsheet"""
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
+        report: reports.Report,
         name: str = None,
         descriptions: List = None,
         meta: List = None,
@@ -29,6 +30,10 @@ class ExcelReport:  # pragma: no cover
         self.name = name
         self.output_buffer = io.BytesIO()
         self.row_tracker = 1  # Track the row we are currently at
+
+        self.report = report
+        if not self.report.datasets:
+            self.report.run()
 
         # Setup Workbook and Sheet
         self.workbook = xlsxwriter.Workbook(self.output_buffer)
@@ -147,9 +152,9 @@ class ExcelReport:  # pragma: no cover
     def set_col_width(self, *args):
         self.worksheet.set_column(*args)
 
-    def datasets_to_response(self, datasets):
+    def get_response(self):
         """Converts a list of datasets into a standard XLSX file and returns a Http response to download the result"""
-        for dataset in datasets:
+        for dataset in self.report.datasets:
             self.write_dataset(dataset, (self.row_tracker, 0))
             self.increment_row_tracker()
 

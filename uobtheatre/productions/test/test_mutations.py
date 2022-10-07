@@ -10,9 +10,18 @@ from guardian.shortcuts import assign_perm
 from uobtheatre.bookings.test.factories import BookingFactory, PerformanceSeatingFactory
 from uobtheatre.images.test.factories import ImageFactory
 from uobtheatre.productions.abilities import EditProduction
-from uobtheatre.productions.models import Performance, PerformanceSeatGroup, Production
+from uobtheatre.productions.models import (
+    Performance,
+    PerformanceSeatGroup,
+    Production,
+    ProductionContentWarning,
+)
 from uobtheatre.productions.mutations import SetProductionStatus
-from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
+from uobtheatre.productions.test.factories import (
+    ContentWarningFactory,
+    PerformanceFactory,
+    ProductionFactory,
+)
 from uobtheatre.societies.test.factories import SocietyFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.utils.exceptions import AuthorizationException
@@ -39,6 +48,7 @@ def test_production_mutation_create(gql_client, with_permission):
                 featuredImage: "%s"
                 posterImage: "%s"
                 description: "My great show!"
+                contactEmail: "support@example.org"
              }
           ) {
             success
@@ -128,7 +138,6 @@ def test_production_mutation_create_with_missing_info(gql_client):
     assert response["data"]["production"]["success"] is False
     assert response["data"]["production"]["errors"] == [
         {"message": "This field is required.", "field": "society"},
-        {"message": "This field is required.", "field": "description"},
     ]
 
 
@@ -175,6 +184,73 @@ def test_production_mutation_create_update(gql_client):
         "name": "My New Name",
         "subtitle": "My subtitle",
     }
+
+
+@pytest.mark.django_db
+def test_production_mutation_warnings(gql_client):
+    production = ProductionFactory(status=Production.Status.DRAFT)
+    ProductionContentWarning.objects.create(
+        production=production, warning=ContentWarningFactory()
+    )
+
+    warning1 = ContentWarningFactory(
+        short_description="Contains upsetting scenes",
+        long_description="Themes of X Y and Z",
+    )
+    warning2 = ContentWarningFactory(
+        short_description="Contains strobe lighting", long_description=None
+    )
+
+    request = """
+        mutation {
+          production(
+            input: {
+                id: "%s"
+                contentWarnings: [
+                    {id: "%s", information: "Some more information about upsetting scenes"}
+                    {id: "%s"}
+                ]
+             }
+          ) {
+            success
+            production {
+                contentWarnings {
+                    information
+                    warning {
+                        shortDescription
+                        longDescription
+                    }
+                }
+            }
+         }
+        }
+    """ % (
+        to_global_id("ProductionNode", production.id),
+        to_global_id("ContentWarningNode", warning1.id),
+        to_global_id("ContentWarningNode", warning2.id),
+    )
+
+    gql_client.login()
+    assign_perm("change_production", gql_client.user, production)
+
+    response = gql_client.execute(request)
+
+    assert response["data"]["production"]["success"] is True
+    assert len(response["data"]["production"]["production"]["contentWarnings"]) == 2
+    assert {
+        "information": None,
+        "warning": {
+            "shortDescription": "Contains strobe lighting",
+            "longDescription": None,
+        },
+    } in response["data"]["production"]["production"]["contentWarnings"]
+    assert {
+        "information": "Some more information about upsetting scenes",
+        "warning": {
+            "shortDescription": "Contains upsetting scenes",
+            "longDescription": "Themes of X Y and Z",
+        },
+    } in response["data"]["production"]["production"]["contentWarnings"]
 
 
 @pytest.mark.django_db

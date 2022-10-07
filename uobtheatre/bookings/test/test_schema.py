@@ -32,7 +32,7 @@ def test_bookings_schema(gql_client):
     booking = BookingFactory(status=Payable.Status.IN_PROGRESS)
     # Create a booking that is not owned by the same user
     BookingFactory(status=Payable.Status.IN_PROGRESS)
-    tickets = [TicketFactory(booking=booking) for _ in range(10)]
+    tickets = [TicketFactory(booking=booking) for _ in range(1)]
 
     request_query = """
         {
@@ -679,9 +679,9 @@ def test_bookings_qs(gql_client):
     gql_client.user.save()
 
     response = gql_client.execute(request)
-    assert [node["node"]["id"] for node in response["data"]["bookings"]["edges"]] == [
+    assert {node["node"]["id"] for node in response["data"]["bookings"]["edges"]} == {
         to_global_id("BookingNode", booking_id) for booking_id in [1, 2, 3]
-    ]
+    }
 
 
 @pytest.mark.django_db
