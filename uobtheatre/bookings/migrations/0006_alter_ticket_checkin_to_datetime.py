@@ -29,7 +29,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="ticket",
             name="checked_in_at",
-            field=models.DateTimeField(blank=True, default=None, null=True),
+            field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AddField(
             model_name="ticket",

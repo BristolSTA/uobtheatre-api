@@ -877,68 +877,59 @@ def test_booking_pay_deletes_pending_payments():
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "init_is_checked_in, initial_check_state, fails",
-    [
-        (False, False, False),
-        (True, True, True),
-    ],
-)
-def test_ticket_check_in(init_is_checked_in, initial_check_state, fails):
+def test_ticket_check_in():
     """
     Test ticket check in method
     """
     mock_ticket_check_in_time = datetime.datetime(2020, 1, 2, 23, 45)
     with patch.object(timezone, "now", return_value=mock_ticket_check_in_time) as _:
-
         user = UserFactory()
 
-        ticket = TicketFactory(set_checked_in=init_is_checked_in)
+        # an unchecked in ticket should check in as normal
+        ticket_unchecked = TicketFactory(set_checked_in=False)
+        assert not ticket_unchecked.checked_in
 
-        assert ticket.checked_in == initial_check_state
+        ticket_unchecked.check_in(user=user)
+        assert ticket_unchecked.checked_in
+        assert ticket_unchecked.checked_in_at == mock_ticket_check_in_time
+        assert ticket_unchecked.checked_in_by == user
 
-        if fails:
-            with pytest.raises(GQLException) as exception:
-                ticket.check_in(user=user)
-            assert (
-                exception.value.message
-                == f"Ticket of id {ticket.id} is already checked-in."
-            )
-        else:
-            ticket.check_in(user=user)
-            assert ticket.checked_in
-            assert ticket.checked_in_at == mock_ticket_check_in_time
-            assert ticket.checked_in_by == user
+        # an checked in ticket should error at check in
+        ticket_checked = TicketFactory(set_checked_in=True)
+        assert ticket_checked.checked_in
+
+        with pytest.raises(GQLException) as exception:
+            ticket_checked.check_in(user=user)
+        assert (
+            exception.value.message
+            == f"Ticket of id {ticket_checked.id} is already checked-in."
+        )
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize(
-    "init_is_checked_in, initial_check_state, fails",
-    [
-        (True, True, False),
-        (False, False, True),
-    ],
-)
-def test_ticket_uncheck_in(init_is_checked_in, initial_check_state, fails):
+def test_ticket_uncheck_in():
     """
-    Test ticket check in method
+    Test ticket uncheck in method
     """
-    ticket = TicketFactory(set_checked_in=init_is_checked_in)
+    # an unchecked in ticket should error at uncheck in
+    ticket_unchecked = TicketFactory(set_checked_in=False)
+    assert not ticket_unchecked.checked_in
 
-    assert ticket.checked_in == initial_check_state
+    with pytest.raises(GQLException) as exception:
+        ticket_unchecked.uncheck_in()
+    assert (
+        exception.value.message
+        == f"Ticket of id {ticket_unchecked.id} cannot be un-checked in as it is not checked-in."
+    )
 
-    if fails:
-        with pytest.raises(GQLException) as exception:
-            ticket.uncheck_in()
-        assert (
-            exception.value.message
-            == f"Ticket of id {ticket.id} cannot be un-checked in as it is not checked-in."
-        )
-    else:
-        ticket.uncheck_in()
-        assert not ticket.checked_in
-        assert Ticket.objects.first().checked_in_at is None
-        assert ticket.checked_in_by is None
+    # a checked in ticket should uncheck as normal
+    ticket_checked = TicketFactory(set_checked_in=True)
+    assert ticket_checked.checked_in
+
+    ticket_checked.uncheck_in()
+    assert not ticket_checked.checked_in
+    assert Ticket.objects.first().checked_in_at is None
+    assert ticket_checked.checked_in_by is None
 
 
 @pytest.mark.django_db

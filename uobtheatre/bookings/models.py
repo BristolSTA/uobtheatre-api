@@ -684,7 +684,7 @@ class Ticket(models.Model):
     )
     seat = models.ForeignKey(Seat, on_delete=models.RESTRICT, null=True, blank=True)
 
-    checked_in_at = models.DateTimeField(null=True, blank=True, default=None)
+    checked_in_at = models.DateTimeField(null=True, blank=True)
     checked_in_by = models.ForeignKey(
         User,
         on_delete=models.RESTRICT,
