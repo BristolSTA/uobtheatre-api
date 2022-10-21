@@ -1,10 +1,6 @@
 import graphene
 
 from uobtheatre.bookings.abilities import ModifyBooking
-from uobtheatre.bookings.exceptions import (
-    BookingTransferCheckedInTicketsException,
-    BookingTransferToDifferentProductionException,
-)
 from uobtheatre.bookings.forms import BookingForm
 from uobtheatre.bookings.models import Booking, Ticket
 from uobtheatre.bookings.schema import BookingNode

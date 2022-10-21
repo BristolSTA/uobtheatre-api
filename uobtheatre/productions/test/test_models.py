@@ -28,6 +28,7 @@ from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.payments.transaction_providers import Card, Cash, SquareOnline
 from uobtheatre.productions.exceptions import (
+    InvalidConcessionTypeException,
     InvalidSeatGroupException,
     NotEnoughCapacityException,
 )
@@ -896,10 +897,20 @@ def test_performance_validate_tickets_seat_group_not_in_performance():
         performance=psg.performance,
         seat_group=SeatGroupFactory(name="Seat Group 3"),
     )
+
+    requirement = DiscountRequirementFactory()
+
+    requirement.discount.performances.set([psg.performance])
     booking = BookingFactory(performance=psg.performance)
 
     # But then try and book a seat group that is not assigned to the performance
-    tickets = [Ticket(seat_group=seat_group, booking=booking)]
+    tickets = [
+        Ticket(
+            seat_group=seat_group,
+            booking=booking,
+            concession_type=requirement.concession_type,
+        )
+    ]
 
     with pytest.raises(InvalidSeatGroupException) as err:
         psg.performance.validate_tickets(tickets=tickets)
@@ -907,6 +918,34 @@ def test_performance_validate_tickets_seat_group_not_in_performance():
     assert (
         err.value.message
         == "You cannot book a seat group that is not assigned to this performance. You have booked Seat Group 1 but the performance only has Seat Group 2, Seat Group 3"
+    )
+
+
+@pytest.mark.django_db
+def test_performance_validate_tickets_concession_type_not_in_performance():
+    # Create a concession type not assigned to the performance
+    concession_type = ConcessionTypeFactory(name="Test concession type")
+
+    # Set up some seat groups for a performance
+    psg = PerformanceSeatingFactory(
+        capacity=100, seat_group=SeatGroupFactory(name="Seat Group 2")
+    )
+
+    booking = BookingFactory(performance=psg.performance)
+
+    # But then try and book a seat group that is not assigned to the performance
+    tickets = [
+        Ticket(
+            seat_group=psg.seat_group, booking=booking, concession_type=concession_type
+        )
+    ]
+
+    with pytest.raises(InvalidConcessionTypeException) as err:
+        psg.performance.validate_tickets(tickets=tickets)
+
+    assert (
+        err.value.message
+        == f"Test concession type are not assigned to the performance {psg.performance}"
     )
 
 

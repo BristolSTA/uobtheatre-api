@@ -470,9 +470,6 @@ def test_payable_total(misc_cost_value, subtotal, expected_total):
         def payment_reference_id(self):
             raise NotImplementedError
 
-        def misc_cost_types(self):
-            raise NotImplementedError
-
         @property
         def subtotal(self):
             return subtotal

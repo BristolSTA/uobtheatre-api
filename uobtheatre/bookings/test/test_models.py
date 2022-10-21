@@ -11,11 +11,6 @@ from django.utils import timezone
 from graphql_relay.node.node import to_global_id
 
 from uobtheatre.addresses.test.factories import AddressFactory
-from uobtheatre.bookings.exceptions import (
-    BookingTransferCheckedInTicketsException,
-    BookingTransferPerformanceUnchangedException,
-    BookingTransferToDifferentProductionException,
-)
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
@@ -23,7 +18,6 @@ from uobtheatre.bookings.test.factories import (
     PerformanceSeatingFactory,
     TicketFactory,
     ValueMiscCostFactory,
-    add_ticket_to_booking,
 )
 from uobtheatre.discounts.models import DiscountCombination
 from uobtheatre.discounts.test.factories import (
@@ -36,7 +30,6 @@ from uobtheatre.payments import transaction_providers
 from uobtheatre.payments.exceptions import (
     CantBePaidForException,
     CantBeRefundedException,
-    TransferUnpaidPayableException,
 )
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.test.factories import TransactionFactory, mock_payment_method
@@ -494,10 +487,6 @@ def test_percentage_misc_cost_value():
 def test_misc_costs_value():
     ValueMiscCostFactory(value=200)
     PercentageMiscCostFactory(percentage=0.1)
-
-    # This misc cost should not be included as the booking is not transferred
-    # from another
-    ValueMiscCostFactory(value=200, type="other_type")
 
     # Create a booking costing £12
     booking = BookingFactory()
@@ -1239,10 +1228,3 @@ def test_booking_clone():
     # Check a unique booking reference is assigned
     assert booking_clone.reference is not None
     assert booking_clone.reference != booking.reference
-
-
-@pytest.mark.django_db
-def test_misc_cost_types():
-    # Create a booking
-    booking = BookingFactory()
-    assert booking.misc_cost_types == [MiscCost.Type.BOOKING]

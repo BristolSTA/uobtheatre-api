@@ -1,6 +1,6 @@
 import abc
 import math
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Optional
 
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.mail import mail_admins
@@ -22,7 +22,6 @@ from uobtheatre.utils.filters import filter_passes_on_model
 from uobtheatre.utils.models import AbstractModelMeta, BaseModel
 
 if TYPE_CHECKING:
-    from uobtheatre.bookings.models import MiscCost
     from uobtheatre.payments.transaction_providers import PaymentProvider
 
 
@@ -184,12 +183,6 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
         Returns:
             int: price of the payable with discounts applied in penies
         """
-        raise NotImplementedError
-
-    @property
-    @abc.abstractmethod
-    def misc_cost_types(self) -> List["MiscCost.Type"]:
-        """Returns the misc cost type which apply to this object"""
         raise NotImplementedError
 
     @property

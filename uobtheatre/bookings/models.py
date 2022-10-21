@@ -12,26 +12,14 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from graphql_relay.node.node import to_global_id
 
-from uobtheatre.bookings.exceptions import (
-    BookingTransferCheckedInTicketsException,
-    BookingTransferPerformanceUnchangedException,
-    BookingTransferToDifferentProductionException,
-)
 from uobtheatre.discounts.models import ConcessionType, DiscountCombination
 from uobtheatre.mail.composer import MailComposer
 from uobtheatre.payments.exceptions import (
     CantBePaidForException,
     CantBeRefundedException,
-    TransferUnpaidPayableException,
 )
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable, PayableQuerySet
-from uobtheatre.productions.exceptions import (
-    InvalidConcessionTypeException,
-    InvalidSeatGroupException,
-    NotBookableException,
-    NotEnoughCapacityException,
-)
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.users.models import User
 from uobtheatre.utils.filters import filter_passes_on_model
@@ -76,20 +64,12 @@ class MiscCost(models.Model):
     """
 
     objects = MiscCostManager()
-
-    class Type(models.TextChoices):
-        BOOKING = "Booking", "Applied to booking purchase"
-
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
     percentage = models.FloatField(
         null=True, blank=True, validators=[MaxValueValidator(1), MinValueValidator(0)]
     )
     value = models.FloatField(null=True, blank=True)
-    type = models.CharField(
-        max_length=24,
-        choices=Type.choices,
-    )
 
     def get_value(self, payable: "Payable") -> int:
         """Calculate the value of the misc cost on a booking.
@@ -481,10 +461,6 @@ class Booking(TimeStampedMixin, Payable):
         return self.tickets_price() - self.subtotal
 
     @property
-    def misc_cost_types(self) -> List[MiscCost.Type]:
-        return [MiscCost.Type.BOOKING]
-
-    @property
     def misc_costs_value(self) -> int:
         """The value of the misc costs applied in pence
 
@@ -495,7 +471,7 @@ class Booking(TimeStampedMixin, Payable):
         Returns:
             (int): The value in penies of MiscCosts applied to the Booking
         """
-        return MiscCost.objects.filter(type__in=self.misc_cost_types).value(self)
+        return MiscCost.objects.all().value(self)
 
     def get_ticket_diff(
         self, tickets: Union[List["Ticket"], Iterable["Ticket"]]
