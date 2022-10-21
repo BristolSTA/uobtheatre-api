@@ -28,7 +28,7 @@ class FinancialTransfer(TimeStampedMixin, BaseModel):
         Society, on_delete=models.SET_NULL, null=True
     )  # The society being paid to
 
-    value = models.PositiveIntegerField()  # The amount transfered
+    value = models.PositiveIntegerField()  # The amount transferred
     user = models.ForeignKey(
         User, on_delete=models.SET_NULL, null=True
     )  # The user who recorded the transfer

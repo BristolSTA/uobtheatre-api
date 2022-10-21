@@ -9,6 +9,7 @@ from uobtheatre.bookings.test.factories import (
     ValueMiscCostFactory,
 )
 from uobtheatre.payments.models import Transaction
+from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.transaction_providers import SquareOnline
 
 pytestmark = pytest.mark.system_test
@@ -19,7 +20,7 @@ pytestmark = pytest.mark.system_test
 def test_create_and_refund_booking(square_client):
     # Create a booking with a seat costing 1200 and a misc cost of 100
     ValueMiscCostFactory(value=100)
-    booking = BookingFactory()
+    booking = BookingFactory(status=Payable.Status.IN_PROGRESS)
     psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
     TicketFactory(booking=booking, seat_group=psg.seat_group)
 

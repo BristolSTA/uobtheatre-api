@@ -24,11 +24,12 @@ from uobtheatre.discounts.test.factories import (
     DiscountFactory,
     DiscountRequirementFactory,
 )
-from uobtheatre.payments.exceptions import CantBeRefundedException
-from uobtheatre.payments.models import Transaction
+from uobtheatre.payments.exceptions import (
+    CantBePaidForException,
+    CantBeRefundedException,
+)
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.test.factories import TransactionFactory, mock_payment_method
-from uobtheatre.payments.transaction_providers import SquarePOS
 from uobtheatre.productions.models import Production
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.users.test.factories import UserFactory
@@ -489,7 +490,7 @@ def test_misc_costs_value():
     booking = BookingFactory()
     psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
     TicketFactory(booking=booking, seat_group=psg.seat_group)
-    assert booking.misc_costs_value() == 320
+    assert booking.misc_costs_value == 320
 
 
 @pytest.mark.django_db
@@ -531,7 +532,7 @@ def test_total_with_admin_discount(
     booking = BookingFactory(admin_discount_percentage=admin_discount)
     psg = PerformanceSeatingFactory(performance=booking.performance, price=1200)
     ticket = TicketFactory(booking=booking, seat_group=psg.seat_group)
-    assert booking.misc_costs_value() == expected_misc_costs_value
+    assert booking.misc_costs_value == expected_misc_costs_value
     assert ticket.booking.total == expected_price
 
 
@@ -840,37 +841,37 @@ def test_booking_pay_with_payment():
 
 
 @pytest.mark.django_db
-def test_booking_pay_deletes_pending_payments():
+def test_booking_pay():
     """
-    When we try to pay for a booking, pending payments that already exist for
-    this booking should be deleted.
+    Raise exception when trying to pay for an expired booking.
     """
 
     payment_method = mock_payment_method()
     booking = BookingFactory(status=Payable.Status.IN_PROGRESS)
 
-    # Deleted
-    pending_payment = TransactionFactory(
-        status=Transaction.Status.PENDING,
-        pay_object=booking,
-        provider_name=SquarePOS.name,
-    )
-
-    # Not deleted
-    completed_payment = TransactionFactory(
-        status=Transaction.Status.COMPLETED, pay_object=booking
-    )
-
-    with patch("uobtheatre.payments.models.Transaction.cancel", autospec=True) as mock:
+    with patch(
+        "uobtheatre.bookings.models.Booking.is_reservation_expired",
+        new_callable=PropertyMock(return_value=False),
+    ):
         booking.pay(payment_method)  # type: ignore
+    payment_method.pay.assert_called_once()
 
-    assert booking.status == Payable.Status.PAID
 
-    # Assert pending payment cancelled
-    mock.assert_called_once_with(pending_payment)
+@pytest.mark.django_db
+def test_booking_pay_expired_booking():
+    payment_method = mock_payment_method()
+    booking = BookingFactory(status=Payable.Status.IN_PROGRESS)
 
-    # Assert completed payment is not cancelled
-    assert Transaction.objects.filter(id=completed_payment.id).exists()
+    with patch(
+        "uobtheatre.bookings.models.Booking.is_reservation_expired",
+        new_callable=PropertyMock(return_value=True),
+    ), pytest.raises(
+        CantBePaidForException,
+        match="This booking has expired. Please create a new booking",
+    ):
+        booking.pay(payment_method)
+
+    payment_method.pay.assert_not_called()
 
 
 @pytest.mark.django_db
@@ -1116,3 +1117,18 @@ def test_booking_display_name():
         booking.display_name
         == "Booking Ref. abcd for performance of my production at 10:00 on 14/01/2022"
     )
+
+
+@pytest.mark.django_db
+def test_booking_clone():
+    # Create a booking
+    booking = BookingFactory()
+    assert Booking.objects.count() == 1
+
+    # Clone it
+    booking_clone = booking.clone()
+    assert Booking.objects.count() == 1
+
+    # Check a unique booking reference is assigned
+    assert booking_clone.reference is not None
+    assert booking_clone.reference != booking.reference

@@ -210,16 +210,15 @@ def test_bookings_schema(gql_client):
                   performance {
                     id
                   }
-                  status {
-                    value
-                    description
-                  }
+                  status
                   user {
                     id
                   }
-                  totalSales
-                  totalRefunds
-                  netIncome
+                  salesBreakdown {
+                    totalPayments
+                    totalRefunds
+                    netTransactions
+                  }
                 }
               }
             }
@@ -256,16 +255,15 @@ def test_bookings_schema(gql_client):
                                         "PerformanceNode", booking.performance.id
                                     )
                                 },
-                                "status": {
-                                    "value": "IN_PROGRESS",
-                                    "description": "In Progress",
-                                },
+                                "status": "IN_PROGRESS",
                                 "user": {
                                     "id": to_global_id("UserNode", booking.user.id)
                                 },
-                                "totalSales": booking.total_sales,
-                                "totalRefunds": booking.total_refunds,
-                                "netIncome": booking.net_income,
+                                "salesBreakdown": {
+                                    "totalPayments": booking.sales_breakdown.total_payments,
+                                    "totalRefunds": booking.sales_breakdown.total_refunds,
+                                    "netTransactions": booking.sales_breakdown.net_transactions,
+                                },
                             }
                         }
                     ]
@@ -459,7 +457,7 @@ def test_bookings_price_break_down(gql_client):  # pylint: disable=too-many-loca
         "ticketsPrice": booking.tickets_price(),
         "discountsValue": booking.discount_value(),
         "subtotalPrice": booking.subtotal,
-        "miscCostsValue": int(booking.misc_costs_value()),
+        "miscCostsValue": int(booking.misc_costs_value),
         "totalPrice": booking.total,
         "ticketsDiscountedPrice": booking.subtotal,
     }

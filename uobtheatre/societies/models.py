@@ -3,10 +3,10 @@ from django.db import models
 from django_tiptap.fields import TipTapTextField
 
 from uobtheatre.images.models import Image
-from uobtheatre.utils.models import TimeStampedMixin
+from uobtheatre.utils.models import BaseModel, TimeStampedMixin
 
 
-class Society(TimeStampedMixin, models.Model):
+class Society(BaseModel, TimeStampedMixin):
     """Model for a group which puts on Productions."""
 
     name = models.CharField(max_length=255)

@@ -21,7 +21,6 @@ from guardian.shortcuts import (
 from uobtheatre.users.abilities import Ability
 from uobtheatre.users.models import User
 from uobtheatre.users.schema import ExtendedUserNode
-from uobtheatre.utils.enums import GrapheneEnumMixin
 from uobtheatre.utils.exceptions import (
     AuthException,
     AuthorizationException,
@@ -36,7 +35,7 @@ from uobtheatre.utils.exceptions import (
 from uobtheatre.utils.models import PermissionableModel
 
 
-class CustomDjangoObjectType(GrapheneEnumMixin, DjangoObjectType):
+class CustomDjangoObjectType(DjangoObjectType):
     class Meta:
         abstract = True
 

@@ -12,6 +12,7 @@ from uobtheatre.payments.transaction_providers import (
     SquarePOS,
 )
 from uobtheatre.productions.abilities import BookForPerformance
+from uobtheatre.productions.exceptions import NotBookableException
 from uobtheatre.productions.models import Performance
 from uobtheatre.users.abilities import AllwaysPasses
 from uobtheatre.utils.exceptions import (
@@ -87,7 +88,7 @@ class BookingMutation(SafeFormMutation, AuthRequiredMixin):
         """Authorize the performance given"""
         # Check performance is bookable
         if not BookForPerformance.user_has_for(info.context.user, target_performance):
-            raise GQLException(
+            raise NotBookableException(
                 message="This performance is not able to be booked at the moment"
             )
 
@@ -165,7 +166,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         price = graphene.Int(required=True)
         nonce = graphene.String(required=False)
         payment_provider = graphene.Argument(
-            "uobtheatre.payments.schema.PaymentMethodsEnum"
+            "uobtheatre.payments.schema.PaymentProviderEnum"
         )
         device_id = graphene.String(required=False)
         idempotency_key = graphene.String(required=False)

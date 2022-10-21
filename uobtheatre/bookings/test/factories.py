@@ -72,11 +72,13 @@ class TicketFactory(factory.django.DjangoModelFactory):
         )
 
 
-def add_ticket_to_booking(booking):
+def add_ticket_to_booking(booking, *, ticket_price=100, checked_in=False):
     """Adds a ticket of price 100 to the booking"""
-    ticket = TicketFactory(booking=booking)
+    ticket = TicketFactory(booking=booking, set_checked_in=checked_in)
     PerformanceSeatingFactory(
-        performance=booking.performance, seat_group=ticket.seat_group, price=100
+        performance=booking.performance,
+        seat_group=ticket.seat_group,
+        price=ticket_price,
     )
     discount = DiscountFactory(percentage=0)
     discount.performances.set([booking.performance])

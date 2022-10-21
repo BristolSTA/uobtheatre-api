@@ -10,8 +10,8 @@ from graphene_django.filter import DjangoFilterConnectionField
 
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
 from uobtheatre.productions.models import Performance
+from uobtheatre.productions.schema import SalesBreakdownNode
 from uobtheatre.users.schema import ExtendedUserNode
-from uobtheatre.utils.enums import GrapheneEnumMixin
 from uobtheatre.utils.filters import FilterSet
 
 
@@ -78,9 +78,6 @@ class PriceBreakdownNode(DjangoObjectType):
 
     def resolve_subtotal_price(self, _):
         return self.subtotal
-
-    def resolve_misc_costs_value(self, _):
-        return self.misc_costs_value()
 
     def resolve_total_price(self, _):
         return self.total
@@ -252,7 +249,7 @@ class BookingFilter(FilterSet):
     order_by = BookingByMethodOrderingFilter()
 
 
-class BookingNode(GrapheneEnumMixin, DjangoObjectType):
+class BookingNode(DjangoObjectType):
     price_breakdown = graphene.Field(PriceBreakdownNode)
     tickets = DjangoListField(TicketNode)
     user = graphene.Field(ExtendedUserNode)
@@ -260,9 +257,7 @@ class BookingNode(GrapheneEnumMixin, DjangoObjectType):
         "uobtheatre.payments.schema.TransactionNode"
     )
     expired = graphene.Boolean(required=True)
-    total_sales = graphene.Int()
-    total_refunds = graphene.Int()
-    net_income = graphene.Int()
+    sales_breakdown = graphene.Field(SalesBreakdownNode)
 
     def resolve_price_breakdown(self, _):
         return self

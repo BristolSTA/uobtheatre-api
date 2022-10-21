@@ -28,6 +28,7 @@ from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.payments.transaction_providers import Card, Cash, SquareOnline
 from uobtheatre.productions.exceptions import (
+    InvalidConcessionTypeException,
     InvalidSeatGroupException,
     NotEnoughCapacityException,
 )
@@ -831,6 +832,9 @@ def test_performance_min_price_with_single_discounts():
 )
 def test_performance_validate_tickets(seat_groups, performance_capacity, is_valid):
     performance = PerformanceFactory(capacity=performance_capacity)
+    requirement = DiscountRequirementFactory()
+    requirement.discount.performances.set([performance])
+
     tickets_to_book = []
     tickets_to_delete = []
 
@@ -856,7 +860,10 @@ def test_performance_validate_tickets(seat_groups, performance_capacity, is_vali
         # Create the ticket which are being checked
         tickets_to_book.extend(
             [
-                Ticket(seat_group=performance_seat_group.seat_group)
+                Ticket(
+                    seat_group=performance_seat_group.seat_group,
+                    concession_type=requirement.concession_type,
+                )
                 for i in range(seat_group["number_of_tickets"])
             ]
         )
@@ -890,10 +897,20 @@ def test_performance_validate_tickets_seat_group_not_in_performance():
         performance=psg.performance,
         seat_group=SeatGroupFactory(name="Seat Group 3"),
     )
+
+    requirement = DiscountRequirementFactory()
+
+    requirement.discount.performances.set([psg.performance])
     booking = BookingFactory(performance=psg.performance)
 
     # But then try and book a seat group that is not assigned to the performance
-    tickets = [Ticket(seat_group=seat_group, booking=booking)]
+    tickets = [
+        Ticket(
+            seat_group=seat_group,
+            booking=booking,
+            concession_type=requirement.concession_type,
+        )
+    ]
 
     with pytest.raises(InvalidSeatGroupException) as err:
         psg.performance.validate_tickets(tickets=tickets)
@@ -901,6 +918,34 @@ def test_performance_validate_tickets_seat_group_not_in_performance():
     assert (
         err.value.message
         == "You cannot book a seat group that is not assigned to this performance. You have booked Seat Group 1 but the performance only has Seat Group 2, Seat Group 3"
+    )
+
+
+@pytest.mark.django_db
+def test_performance_validate_tickets_concession_type_not_in_performance():
+    # Create a concession type not assigned to the performance
+    concession_type = ConcessionTypeFactory(name="Test concession type")
+
+    # Set up some seat groups for a performance
+    psg = PerformanceSeatingFactory(
+        capacity=100, seat_group=SeatGroupFactory(name="Seat Group 2")
+    )
+
+    booking = BookingFactory(performance=psg.performance)
+
+    # But then try and book a seat group that is not assigned to the performance
+    tickets = [
+        Ticket(
+            seat_group=psg.seat_group, booking=booking, concession_type=concession_type
+        )
+    ]
+
+    with pytest.raises(InvalidConcessionTypeException) as err:
+        psg.performance.validate_tickets(tickets=tickets)
+
+    assert (
+        err.value.message
+        == f"Test concession type are not assigned to the performance {psg.performance}"
     )
 
 
@@ -1120,16 +1165,17 @@ def test_sales_breakdown_production():
     )
 
     assert production.sales_breakdown() == {
+        "app_fee": 450,
         "app_payment_value": 434,
         "provider_payment_value": 16,
         "society_revenue": 750,
         "society_transfer_value": 550,
-        "total_card_sales": 1600,
-        "total_sales": 1800,
+        "total_card_payments": 1600,
+        "total_payments": 1800,
         "total_refunds": -600,
         "total_card_refunds": -600,
-        "net_income": 1200,
-        "net_card_income": 1000,
+        "net_transactions": 1200,
+        "net_card_transactions": 1000,
     }
 
 
@@ -1171,16 +1217,17 @@ def test_sales_breakdown_performance():
     )
 
     assert performance.sales_breakdown() == {
+        "app_fee": 450,
         "app_payment_value": 434,
         "provider_payment_value": 16,
         "society_revenue": 750,
         "society_transfer_value": 550,
-        "total_card_sales": 1000,
-        "total_sales": 1200,
+        "total_card_payments": 1000,
+        "total_payments": 1200,
         "total_refunds": 0,
         "total_card_refunds": 0,
-        "net_income": 1200,
-        "net_card_income": 1000,
+        "net_transactions": 1200,
+        "net_card_transactions": 1000,
     }
 
 
@@ -1192,16 +1239,17 @@ def test_sales_breakdown_with_blank_fees():
     TransactionFactory(pay_object=booking, value=200)
 
     assert performance.sales_breakdown() == {
+        "app_fee": 0,
         "app_payment_value": 0,
         "provider_payment_value": 0,
         "society_revenue": 200,
         "society_transfer_value": 200,
-        "total_card_sales": 200,
-        "total_sales": 200,
+        "total_card_payments": 200,
+        "total_payments": 200,
         "total_refunds": 0,
         "total_card_refunds": 0,
-        "net_income": 200,
-        "net_card_income": 200,
+        "net_transactions": 200,
+        "net_card_transactions": 200,
     }
 
 

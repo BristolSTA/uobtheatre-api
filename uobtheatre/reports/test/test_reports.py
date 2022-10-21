@@ -134,7 +134,7 @@ def create_fixtures():
         value=booking_1.total,
         provider_name=transaction_providers.SquarePOS.name,
         provider_transaction_id="square_id",
-        app_fee=booking_1.misc_costs_value(),
+        app_fee=booking_1.misc_costs_value,
         provider_fee=10,
     )
     payment_1.created_at = "2021-09-08T00:00:01-00:00"
@@ -144,7 +144,7 @@ def create_fixtures():
         pay_object=booking_2,
         value=booking_2.total,
         provider_name=transaction_providers.Cash.name,
-        app_fee=booking_2.misc_costs_value(),
+        app_fee=booking_2.misc_costs_value,
     )
     payment_2.created_at = "2021-09-05T12:00:01-00:00"
     payment_2.save()

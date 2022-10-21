@@ -1,9 +1,13 @@
 import abc
+from typing import TYPE_CHECKING, Any
 
 import graphene
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from guardian.shortcuts import get_perms
+
+if TYPE_CHECKING:
+    from uobtheatre.users.models import User
 
 
 class AbilitiesMixin:
@@ -41,7 +45,7 @@ class Ability(abc.ABC):
         raise NotImplementedError
 
     @classmethod
-    def user_has(cls, user) -> bool:  # pylint: disable=unused-argument
+    def user_has(cls, user: "User") -> bool:  # pylint: disable=unused-argument
         """Returns whether the user has the ability for any / at all
 
         Args:
@@ -53,7 +57,8 @@ class Ability(abc.ABC):
         return False
 
     @classmethod
-    def user_has_for(cls, user, obj) -> bool:  # pylint: disable=unused-argument
+    # pylint: disable=unused-argument
+    def user_has_for(cls, user: "User", obj: Any) -> bool:
         """Returns whether the user has the ability for a specific object
 
         Args:

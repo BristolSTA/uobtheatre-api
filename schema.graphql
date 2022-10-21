@@ -40,9 +40,9 @@ type BookingNode implements Node {
   id: ID!
   createdAt: DateTime!
   updatedAt: DateTime!
-  status: EnumNode
-  reference: String!
+  status: BookingStatus!
   user: ExtendedUserNode
+  reference: String!
   creator: ExtendedUserNode!
   performance: PerformanceNode!
   adminDiscountPercentage: Float!
@@ -52,9 +52,7 @@ type BookingNode implements Node {
   priceBreakdown: PriceBreakdownNode
   transactions(offset: Int, before: String, after: String, first: Int, last: Int, type: String, provider: String, createdAt: DateTime, id: ID): TransactionNodeConnection
   expired: Boolean!
-  totalSales: Int
-  totalRefunds: Int
-  netIncome: Int
+  salesBreakdown: SalesBreakdownNode
 }
 
 type BookingNodeConnection {
@@ -65,6 +63,12 @@ type BookingNodeConnection {
 type BookingNodeEdge {
   node: BookingNode
   cursor: String!
+}
+
+enum BookingStatus {
+  IN_PROGRESS
+  CANCELLED
+  PAID
 }
 
 type CancelPayment {
@@ -146,10 +150,20 @@ type CrewMemberNodeEdge {
   cursor: String!
 }
 
+enum CrewRoleDepartment {
+  LIGHTING
+  SOUND
+  AV
+  STAGE_MANAGEMENT
+  PRYO
+  SET
+  MISC
+}
+
 type CrewRoleNode implements Node {
   id: ID!
   name: String!
-  department: EnumNode
+  department: CrewRoleDepartment!
   crewMembers(offset: Int, before: String, after: String, first: Int, last: Int): CrewMemberNodeConnection!
 }
 
@@ -254,19 +268,14 @@ type DiscountRequirementNode implements Node {
   concessionType: ConcessionTypeNode!
 }
 
-type EnumNode {
-  value: String
-  description: String
-}
-
 type ExtendedUserNode {
   firstName: String!
   lastName: String!
   dateJoined: DateTime!
   id: String
   email: String!
-  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, reference: String, user: ID, creator: ID, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection!
-  createdBookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, reference: String, user: ID, creator: ID, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection!
+  createdBookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, user: ID, reference: String, creator: ID, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection!
+  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, user: ID, reference: String, creator: ID, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection!
   pk: Int
   archived: Boolean
   verified: Boolean
@@ -365,7 +374,7 @@ type Mutation {
   generateReport(endTime: DateTime, name: String!, options: [ReportOption], startTime: DateTime): GenerateReport
   booking(input: BookingMutationInput!): BookingMutationPayload
   deleteBooking(id: IdInputField!): DeleteBooking
-  payBooking(deviceId: String, id: IdInputField!, idempotencyKey: String, nonce: String, paymentProvider: PaymentMethod, price: Int!, verifyToken: String): PayBooking
+  payBooking(deviceId: String, id: IdInputField!, idempotencyKey: String, nonce: String, paymentProvider: PaymentProvider, price: Int!, verifyToken: String): PayBooking
   checkInBooking(bookingReference: String!, performance: IdInputField!, tickets: [TicketIDInput]!): CheckInBooking
   uncheckInBooking(bookingReference: String!, performance: IdInputField!, tickets: [TicketIDInput]!): UnCheckInBooking
 }
@@ -421,7 +430,7 @@ type PayBooking {
 
 union PayObjectUnion = BookingNode
 
-enum PaymentMethod {
+enum PaymentProvider {
   CASH
   CARD
   SQUARE_POS
@@ -465,7 +474,7 @@ type PerformanceNode implements Node {
   seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
   capacity: Int
   discounts(offset: Int, before: String, after: String, first: Int, last: Int, group: Boolean, id: ID): DiscountNodeConnection!
-  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, reference: String, user: ID, creator: ID, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection!
+  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, user: ID, reference: String, creator: ID, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection!
   capacityRemaining: Int
   ticketOptions: [PerformanceSeatGroupNode]
   minSeatPrice: Int
@@ -592,7 +601,7 @@ type ProductionNode implements Node {
   coverImage: ImageNode
   posterImage: ImageNode
   featuredImage: ImageNode
-  status: EnumNode
+  status: ProductionStatus!
   ageRating: Int
   facebookEvent: String
   contactEmail: String
@@ -629,6 +638,15 @@ type ProductionPermissionsMutation {
   errors: [GQLErrorUnion]
 }
 
+enum ProductionStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  PUBLISHED
+  CLOSED
+  COMPLETE
+}
+
 type ProductionTeamMemberNode implements Node {
   id: ID!
   name: String!
@@ -643,8 +661,8 @@ input ProductionWarning {
 
 type Query {
   images: [ImageNode]
-  paymentDevices(paymentProvider: PaymentMethod, paired: Boolean): [SquarePaymentDevice]
-  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, reference: String, user: ID, creator: ID, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection
+  paymentDevices(paymentProvider: PaymentProvider, paired: Boolean): [SquarePaymentDevice]
+  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, user: ID, reference: String, creator: ID, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection
   me: ExtendedUserNode
   societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String, userHasPermission: String): SocietyNodeConnection
   society(slug: String!): SocietyNode
@@ -703,13 +721,14 @@ type RevokeToken {
 }
 
 type SalesBreakdownNode {
-  totalSales: Int!
-  totalCardSales: Int!
+  totalPayments: Int!
+  totalCardPayments: Int!
   totalRefunds: Int!
   totalCardRefunds: Int!
-  netIncome: Int!
-  netCardIncome: Int!
+  netTransactions: Int!
+  netCardTransactions: Int!
   providerPaymentValue: Int!
+  appFee: Int!
   appPaymentValue: Int!
   societyTransferValue: Int!
   societyRevenue: Int!
@@ -841,9 +860,10 @@ type TransactionNode implements Node {
   id: ID!
   createdAt: DateTime!
   updatedAt: DateTime!
-  type: EnumNode
-  status: EnumNode
+  type: TransactionType!
+  status: TransactionStatus!
   providerTransactionId: String
+  providerName: TransactionProviderName!
   value: Int!
   currency: String!
   cardBrand: String
@@ -852,8 +872,6 @@ type TransactionNode implements Node {
   appFee: Int
   url: String
   payObject: PayObjectUnion
-  provider: EnumNode
-  providerName: EnumNode
 }
 
 type TransactionNodeConnection {
@@ -864,6 +882,26 @@ type TransactionNodeConnection {
 type TransactionNodeEdge {
   node: TransactionNode
   cursor: String!
+}
+
+enum TransactionProviderName {
+  CASH
+  CARD
+  SQUARE_POS
+  SQUARE_ONLINE
+  MANUAL_CARD_REFUND
+  SQUARE_REFUND
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum TransactionType {
+  PAYMENT
+  REFUND
 }
 
 enum TransferMethodEnum {
@@ -894,8 +932,8 @@ type UserNode implements Node {
   id: ID!
   email: String!
   societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String, userHasPermission: String): SocietyNodeConnection!
-  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, reference: String, user: ID, creator: ID, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection!
-  createdBookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, reference: String, user: ID, creator: ID, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection!
+  createdBookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, user: ID, reference: String, creator: ID, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection!
+  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, user: ID, reference: String, creator: ID, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection!
   ticketsCheckedInByUser(offset: Int, before: String, after: String, first: Int, last: Int): TicketNodeConnection!
   pk: Int
   archived: Boolean

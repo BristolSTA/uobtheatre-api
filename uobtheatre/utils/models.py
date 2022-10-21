@@ -8,6 +8,7 @@ from typing import Dict
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from graphql_relay.node.node import to_global_id
 
 
 class BaseModel(models.Model):
@@ -19,10 +20,24 @@ class BaseModel(models.Model):
     def qs(self):
         return self.__class__.objects.filter(pk=self.pk)
 
+    def clone(self):
+        model = self.qs.get()
+        model.pk = None
+        return model
+
     @classmethod
     @property
     def content_type(cls):
         return ContentType.objects.get_for_model(cls)
+
+    @classmethod
+    @property
+    def _node_name(cls):
+        return f"{cls.__name__}Node"
+
+    @property
+    def global_id(self):
+        return to_global_id(self._node_name, self.pk)
 
     class Meta:
         abstract = True

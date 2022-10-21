@@ -18,6 +18,7 @@ from uobtheatre.images.models import Image
 from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Transaction
 from uobtheatre.productions.exceptions import (
+    InvalidConcessionTypeException,
     InvalidSeatGroupException,
     NotEnoughCapacityException,
 )
@@ -620,8 +621,12 @@ class Performance(
                 (default: [])
 
         Raises:
-            InvalidSeatGroupException: A supplied ticket has a seat group that is not compatiable with the performance
-            NotEnoughCapacityException: The supplied tickets would cause a breach of available capacity
+            InvalidSeatGroupException: A supplied ticket has a seat group that
+                is not compatiable with the performance
+            InvalidConcessionTypeException: A supplied ticket has a concession
+                that is not compatiable with the performance
+            NotEnoughCapacityException: The supplied tickets would cause a
+                breach of available capacity
         """
 
         if deleted_tickets is None:
@@ -673,6 +678,19 @@ class Performance(
                 raise NotEnoughCapacityException(
                     f"There are only {seat_group_remaining_capacity} seats reamining in {seat_group} but you have booked {number_booked}. Please updated your seat selections and try again."
                 )
+
+        # Check each concession type is in the performance
+        concession_types = {ticket.concession_type for ticket in tickets}
+        concession_types_not_in_performance: List[str] = [
+            concession_type.name
+            for concession_type in concession_types  # pylint: disable=consider-iterating-dictionary
+            if concession_type not in self.single_discounts_map.keys()
+        ]
+
+        if concession_types_not_in_performance:
+            raise InvalidConcessionTypeException(
+                f"{' '.join(concession_types_not_in_performance)} are not assigned to the performance {self}"
+            )
 
     def has_boxoffice_permission(self, user: "User") -> bool:
         """
@@ -912,16 +930,7 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
         Returns:
             bool: If the booking can be booked.
         """
-        return (
-            len(
-                [
-                    performance
-                    for performance in self.performances.all()
-                    if performance.is_bookable
-                ]
-            )
-            > 0
-        )
+        return any(performance.is_bookable for performance in self.performances.all())
 
     def end_date(self):
         """When the last Performance of the Production ends.
