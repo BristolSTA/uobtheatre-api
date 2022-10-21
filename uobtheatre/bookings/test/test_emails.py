@@ -131,7 +131,7 @@ def test_send_confirmation_email_for_anonymous(mailoutbox):
 
 
 @pytest.mark.django_db
-def test_send_accessibility_email(mailoutbox):
+def test_send_booking_accessibility_info_email(mailoutbox):
     booking = BookingFactory(
         accessibility_info="Some details about accessibility concerns"
     )
