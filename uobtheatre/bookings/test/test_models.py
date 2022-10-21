@@ -882,36 +882,45 @@ def test_ticket_check_in():
     Test ticket check in method
     """
     mock_ticket_check_in_time = datetime.datetime(2020, 1, 2, 23, 45)
+    user = UserFactory()
+
+    ticket_unchecked = TicketFactory(set_checked_in=False)
+    assert not ticket_unchecked.checked_in
+
     with patch.object(timezone, "now", return_value=mock_ticket_check_in_time) as _:
-        user = UserFactory()
-
-        # an unchecked in ticket should check in as normal
-        ticket_unchecked = TicketFactory(set_checked_in=False)
-        assert not ticket_unchecked.checked_in
-
         ticket_unchecked.check_in(user=user)
-        assert ticket_unchecked.checked_in
-        assert ticket_unchecked.checked_in_at == mock_ticket_check_in_time
-        assert ticket_unchecked.checked_in_by == user
 
-        # an checked in ticket should error at check in
-        ticket_checked = TicketFactory(set_checked_in=True)
-        assert ticket_checked.checked_in
+    assert ticket_unchecked.checked_in
+    assert ticket_unchecked.checked_in_at == mock_ticket_check_in_time
+    assert ticket_unchecked.checked_in_by == user
 
-        with pytest.raises(GQLException) as exception:
-            ticket_checked.check_in(user=user)
-        assert (
-            exception.value.message
-            == f"Ticket of id {ticket_checked.id} is already checked-in."
-        )
+
+@pytest.mark.django_db
+def test_ticket_check_in_fails_if_ticket_already_checked_in():
+    ticket_checked = TicketFactory(set_checked_in=True)
+    assert ticket_checked.checked_in
+
+    with pytest.raises(GQLException) as exception:
+        ticket_checked.check_in(user=UserFactory())
+    assert (
+        exception.value.message
+        == f"Ticket of id {ticket_checked.id} is already checked-in."
+    )
 
 
 @pytest.mark.django_db
 def test_ticket_uncheck_in():
-    """
-    Test ticket uncheck in method
-    """
-    # an unchecked in ticket should error at uncheck in
+    ticket_checked = TicketFactory(set_checked_in=True)
+    assert ticket_checked.checked_in
+
+    ticket_checked.uncheck_in()
+    assert not ticket_checked.checked_in
+    assert Ticket.objects.first().checked_in_at is None
+    assert ticket_checked.checked_in_by is None
+
+
+@pytest.mark.django_db
+def test_ticket_uncheck_in_fails_if_ticket_not_checked_in():
     ticket_unchecked = TicketFactory(set_checked_in=False)
     assert not ticket_unchecked.checked_in
 
@@ -921,15 +930,6 @@ def test_ticket_uncheck_in():
         exception.value.message
         == f"Ticket of id {ticket_unchecked.id} cannot be un-checked in as it is not checked-in."
     )
-
-    # a checked in ticket should uncheck as normal
-    ticket_checked = TicketFactory(set_checked_in=True)
-    assert ticket_checked.checked_in
-
-    ticket_checked.uncheck_in()
-    assert not ticket_checked.checked_in
-    assert Ticket.objects.first().checked_in_at is None
-    assert ticket_checked.checked_in_by is None
 
 
 @pytest.mark.django_db
