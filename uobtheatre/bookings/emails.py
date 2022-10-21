@@ -56,7 +56,7 @@ def send_booking_confirmation_email(booking: "Booking", payment: Transaction = N
     composer.send("Your booking is confirmed!", booking.user.email)
 
 
-def send_booking_with_accessibility_info_email(
+def send_booking_accessibility_info_email(
     booking: "Booking",
 ):
     """Sends an email to the production contact email, and to those with view sales and bookings permissions for a production, notifying them of a booking that has been amde with accessibility information"""
@@ -67,12 +67,19 @@ def send_booking_with_accessibility_info_email(
         .values_list("email", flat=True)
     )
 
-    for email in emails_to_notify:
-        MailComposer().greeting().line(
+    mail = (
+        MailComposer()
+        .greeting()
+        .line(
             f"A booking has been created for {booking.performance} with the following accessibility information:"
-        ).line(f"'{booking.accessibility_info}'").action(
+        )
+        .line(f"'{booking.accessibility_info}'")
+        .action(
             f"/administration/productions/{booking.performance.production.slug}/bookings/{booking.reference}",
             "View Booking Details",
-        ).send(
+        )
+    )
+    for email in emails_to_notify:
+        mail.send(
             f"Accessibility alert for {booking.performance.production.name}", email
         )

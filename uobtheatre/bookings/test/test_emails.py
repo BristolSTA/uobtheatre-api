@@ -144,7 +144,7 @@ def test_send_accessibility_email(mailoutbox):
     booking.performance.production.contact_email = "production@example.org"
     booking.performance.production.save()
 
-    booking_emails.send_booking_with_accessibility_info_email(booking)
+    booking_emails.send_booking_accessibility_info_email(booking)
 
     assert len(mailoutbox) == 2
     assert mailoutbox[0].to == ["production@example.org"]

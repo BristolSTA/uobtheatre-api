@@ -557,7 +557,7 @@ class Booking(TimeStampedMixin, Payable):
         self.save()
         booking_emails.send_booking_confirmation_email(self, payment)
         if self.accessibility_info:
-            booking_emails.send_booking_with_accessibility_info_email(self)
+            booking_emails.send_booking_accessibility_info_email(self)
 
     @property
     def web_tickets_path(self):

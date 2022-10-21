@@ -1071,7 +1071,7 @@ def test_complete(with_payment, with_accessibility):
     with patch(
         "uobtheatre.bookings.emails.send_booking_confirmation_email"
     ) as mock_send_email, patch(
-        "uobtheatre.bookings.emails.send_booking_with_accessibility_info_email"
+        "uobtheatre.bookings.emails.send_booking_accessibility_info_email"
     ) as mock_send_accessibility_email:
         kwargs = {}
         if with_payment:
