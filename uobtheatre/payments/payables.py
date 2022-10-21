@@ -193,17 +193,17 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
 
     def pay(self, payment_method: "PaymentProvider") -> Optional["Transaction"]:
         """
-        Pay for booking using provided payment method.
+        Pay for payable using provided payment method.
 
         Args:
             payment_method (PaymentMethod): The payment method used to pay for
-                the booking
+                the payable
 
         Returns:
             Payment: The payment created by the checkout (optional)
 
         Raises:
-            CantBePaidForException: If the status of the booking is not
+            CantBePaidForException: If the status of the payable is not
                 IN_PROGRESS
         """
         if self.status != Payable.Status.IN_PROGRESS:

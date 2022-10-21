@@ -403,9 +403,9 @@ class Booking(TimeStampedMixin, Payable):
         """
         return self.get_best_discount_combination_with_price()[0]
 
-    # pylint: disable=invalid-overridden-method
     @cached_property
-    def subtotal(self) -> int:  # type: ignore
+    # pylint: disable=invalid-overridden-method
+    def subtotal(self) -> int:
         """Price of the booking with discounts applied.
 
         Returns the subtotal of the booking. This is the total value including
@@ -606,8 +606,7 @@ class Booking(TimeStampedMixin, Payable):
             "If you have any accessability concerns, or otherwise need help, please contact <a href='mailto:support@uobtheatre.com'>support@uobtheatre.com</a>."
         )
 
-        subject = "Your booking is confirmed!"
-        composer.send(subject, self.user.email)
+        composer.send("Your booking is confirmed!", self.user.email)
 
     @property
     def is_reservation_expired(self):

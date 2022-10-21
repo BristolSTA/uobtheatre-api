@@ -843,7 +843,7 @@ def test_booking_pay_with_payment():
 
 
 @pytest.mark.django_db
-def test_booking_pay_without_transfer():
+def test_booking_pay():
     """
     Raise exception when trying to pay for an expired booking.
     """

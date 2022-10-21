@@ -608,7 +608,6 @@ def test_production_and_performance_sales_breakdowns(gql_client):
     response = gql_client.execute(
         request % to_global_id("ProductionNode", performance.production.id)
     )
-    print(f"{response=}")
     assert response["data"]["productions"]["edges"][0]["node"]["salesBreakdown"] is None
     assert (
         response["data"]["productions"]["edges"][0]["node"]["performances"]["edges"][0][

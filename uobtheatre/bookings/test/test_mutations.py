@@ -292,7 +292,6 @@ def test_create_booking_with_too_many_tickets(gql_client, with_boxoffice_perms):
     assert response["data"]["booking"]["success"] is with_boxoffice_perms
 
     if not with_boxoffice_perms:
-        print(response)
         assert (
             response["data"]["booking"]["errors"][0]["message"]
             == "You may only book a maximum of 10 tickets"
@@ -2019,8 +2018,6 @@ def test_pay_booking_success_square_pos(mock_square, gql_client):
         response = gql_client.execute(
             request_query % to_global_id("BookingNode", booking.id)
         )
-
-    print(f"{response=}")
 
     payment = Transaction.objects.first()
     assert response == {
