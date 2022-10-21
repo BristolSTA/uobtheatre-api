@@ -325,7 +325,7 @@ class Performance(
         Returns:
             queryset(Tickets): all tickets for this performance which have been checked in.
         """
-        return self.tickets.sold().filter(checked_in=True)  # type: ignore
+        return self.tickets.sold().filter(checked_in_at__isnull=False)  # type: ignore
 
     @property
     def unchecked_in_tickets(self) -> QuerySet["Ticket"]:
@@ -334,7 +334,7 @@ class Performance(
         Returns:
             queryset(Tickets): all tickets for this performance which have not been checked in.
         """
-        return self.tickets.sold().filter(checked_in=False)  # type: ignore
+        return self.tickets.sold().filter(checked_in_at__isnull=True)  # type: ignore
 
     @property
     def has_group_discounts(self) -> bool:

@@ -7,10 +7,10 @@ from django_filters import OrderingFilter
 from graphene import relay
 from graphene_django import DjangoListField, DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
-from graphql_auth.schema import UserNode
 
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
 from uobtheatre.productions.models import Performance
+from uobtheatre.users.schema import ExtendedUserNode
 from uobtheatre.utils.enums import GrapheneEnumMixin
 from uobtheatre.utils.filters import FilterSet
 
@@ -22,6 +22,16 @@ class MiscCostNode(DjangoObjectType):
 
 
 class TicketNode(DjangoObjectType):
+    checked_in = graphene.Boolean()
+
+    def resolve_checked_in_by(self, info):
+        if not info.context.user.has_perm(
+            "productions.boxoffice",
+            self.booking.performance.production,
+        ):
+            return None
+        return self.checked_in_by
+
     @classmethod
     def get_queryset(cls, queryset, info):
         """Get the queryset for a group of ticket nodes"""
@@ -245,7 +255,7 @@ class BookingFilter(FilterSet):
 class BookingNode(GrapheneEnumMixin, DjangoObjectType):
     price_breakdown = graphene.Field(PriceBreakdownNode)
     tickets = DjangoListField(TicketNode)
-    user = graphene.Field(UserNode)
+    user = graphene.Field(ExtendedUserNode)
     transactions = DjangoFilterConnectionField(
         "uobtheatre.payments.schema.TransactionNode"
     )
