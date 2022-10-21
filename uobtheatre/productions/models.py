@@ -71,7 +71,7 @@ class ContentWarning(models.Model):
     """
 
     short_description = models.CharField(max_length=255)
-    long_description = models.TextField(null=True)
+    long_description = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return str(self.short_description)
@@ -572,9 +572,18 @@ class Performance(
         """The cheapest seat in the Performance
 
         Returns:
-            int: The price of the cheapest seat in the performance.
+            int: The price of the cheapest seat in the performance
+            (includes discounted seat options).
         """
-        return self.performance_seat_groups.aggregate(Min("price"))["price__min"]
+        max_discount_percentage = max(self.single_discounts_map.values(), default=0)
+
+        if (
+            min_seat_price := self.performance_seat_groups.aggregate(Min("price"))[
+                "price__min"
+            ]
+        ) is not None:
+            return math.ceil((1 - max_discount_percentage) * min_seat_price)
+        return None
 
     @property
     def is_sold_out(self) -> bool:
@@ -796,7 +805,7 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
 
     name = models.CharField(max_length=255)
     subtitle = models.CharField(max_length=255, null=True, blank=True)
-    description = TipTapTextField(null=True)
+    description = TipTapTextField(null=True, blank=True)
 
     venues = models.ManyToManyField(Venue, through=Performance, editable=False)
 
