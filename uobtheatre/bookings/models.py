@@ -19,6 +19,7 @@ from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable, PayableQuerySet
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.users.models import User
+from uobtheatre.utils.exceptions import GQLException
 from uobtheatre.utils.filters import filter_passes_on_model
 from uobtheatre.utils.models import TimeStampedMixin
 from uobtheatre.utils.utils import combinations, create_short_uuid
@@ -96,12 +97,14 @@ class BookingQuerySet(PayableQuerySet):
     """QuerySet for bookings"""
 
     def annotate_checked_in(self) -> QuerySet:
-        return self.annotate(checked_in=BoolAnd("tickets__checked_in"))
+        return self.annotate(
+            checked_in=BoolAnd(Q(tickets__checked_in_at__isnull=False))
+        )
 
     def annotate_checked_in_count(self) -> QuerySet:
         return self.annotate(count=models.Count("tickets")).annotate(
             checked_in_count=models.Count(
-                Case(When(tickets__checked_in=True, then=Value(1)))
+                Case(When(tickets__checked_in_at__isnull=False, then=Value(1)))
             )
         )
 
@@ -638,7 +641,14 @@ class Ticket(models.Model):
     )
     seat = models.ForeignKey(Seat, on_delete=models.RESTRICT, null=True, blank=True)
 
-    checked_in = models.BooleanField(default=False)
+    checked_in_at = models.DateTimeField(null=True, blank=True)
+    checked_in_by = models.ForeignKey(
+        User,
+        on_delete=models.RESTRICT,
+        related_name="tickets_checked_in_by_user",
+        null=True,
+        blank=True,
+    )
 
     def discounted_price(self, single_discounts_map=None) -> int:
         """Ticket price with single discounts
@@ -676,18 +686,39 @@ class Ticket(models.Model):
             seat_group=self.seat_group
         ).price
 
-    def check_in(self):
+    @property
+    def checked_in(self) -> bool:
+        """Boolean property for if a ticket is checked in.
+
+        Returns:
+            bool: Whether the ticket is checked in.
+        """
+        return self.checked_in_at is not None
+
+    def check_in(self, user: User):
         """
         Check a ticket in
         """
-        self.checked_in = True
+        if self.checked_in_at:
+            raise GQLException(
+                message=f"Ticket of id {self.id} is already checked-in.",
+            )
+
+        self.checked_in_at = timezone.now()
+        self.checked_in_by = user
         self.save()
 
     def uncheck_in(self):
         """
         Un-Check a ticket in
         """
-        self.checked_in = False
+        if not self.checked_in_at:
+            raise GQLException(
+                message=f"Ticket of id {self.id} cannot be un-checked in as it is not checked-in.",
+            )
+
+        self.checked_in_at = None
+        self.checked_in_by = None
         self.save()
 
     def __str__(self):
