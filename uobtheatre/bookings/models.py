@@ -410,7 +410,7 @@ class Booking(TimeStampedMixin, Payable):
 
     @cached_property
     # pylint: disable=invalid-overridden-method
-    def subtotal(self) -> int:
+    def subtotal(self) -> int:  # type: ignore
         """Price of the booking with discounts applied.
 
         Returns the subtotal of the booking. This is the total value including
