@@ -26,7 +26,6 @@ from uobtheatre.payments.exceptions import (
 )
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable, PayableQuerySet
-from uobtheatre.payments.transferables import Transferable, TransferableQuerySet
 from uobtheatre.productions.exceptions import (
     InvalidConcessionTypeException,
     InvalidSeatGroupException,
@@ -136,7 +135,7 @@ class MiscCost(models.Model):
         ]
 
 
-class BookingQuerySet(TransferableQuerySet):
+class BookingQuerySet(PayableQuerySet):
     """QuerySet for bookings"""
 
     def annotate_checked_in(self) -> QuerySet:
@@ -225,7 +224,7 @@ def generate_expires_at():
 BookingManager = models.Manager.from_queryset(BookingQuerySet)
 
 # pylint: disable=too-many-public-methods
-class Booking(TimeStampedMixin, Transferable):
+class Booking(TimeStampedMixin, Payable):
     """A booking for a performance
 
     A booking holds a collection of tickets for a given performance.
@@ -483,10 +482,7 @@ class Booking(TimeStampedMixin, Transferable):
 
     @property
     def misc_cost_types(self) -> List[MiscCost.Type]:
-        misc_cost_types = [MiscCost.Type.BOOKING]
-        # If this booking is transferred from another then transfer misc costs
-        # should also be applied
-        return misc_cost_types
+        return [MiscCost.Type.BOOKING]
 
     @property
     def misc_costs_value(self) -> int:
@@ -562,10 +558,6 @@ class Booking(TimeStampedMixin, Transferable):
                 message="This booking has expired. Please create a new booking"
             )
 
-        # If this is a transfer and the booking it is transferred from is not paid
-        if self.transferred_from:
-            self.transferred_from.check_can_transfer_to(self.performance)
-
         return super().pay(payment_method)
 
     def complete(self, payment: Transaction = None):
@@ -574,96 +566,12 @@ class Booking(TimeStampedMixin, Transferable):
         confirmation email.
         """
         super().complete()
-
-        # If the booking is transferred from another
-        if self.transferred_from:
-            self.transferred_from.status = Booking.Status.CANCELLED
-            self.transferred_from.save()
-
         self.send_confirmation_email(payment)
 
     def clone(self):
         clone = super().clone()
         clone.reference = create_short_uuid()
         return clone
-
-    def check_can_transfer_to(self, performance: "Performance") -> None:
-        """Check if a booking can be transferred to the provided performance.
-
-        If not an error is raised. Note this function must be called both
-        before a transfer booking is created and before a transfer booking is
-        paid for (as between creating and paying for a transfer thing could
-        change e.g. the original booking could be used or refunded)
-        """
-
-        # If the booking is not paid it cannot be transferred
-        if self.status != Payable.Status.PAID:
-            raise TransferUnpaidPayableException(self.get_status_display())
-
-        # If any of the bookings tickets are checked in then this booking
-        # cannot be transferred
-        if self.tickets.filter(checked_in=True).exists():
-            raise BookingTransferCheckedInTicketsException()
-
-        # Cannot transfer to the same performance
-        if self.performance == performance:
-            raise BookingTransferPerformanceUnchangedException
-
-        # Cannot transfer to a differnet production
-        if self.performance.production != performance.production:
-            raise BookingTransferToDifferentProductionException
-
-    def create_transfer(self, performance: "Performance", creator: "User") -> "Booking":
-        """
-        Create an in progress booking to transfer the booking to a different
-        performance.
-
-        This is a new booking which copies the attributes from the original and
-        with the transferred_from attribute equal to the new booking. This new
-        booking will be IN_PROGRESS and the transfere will not be completed
-        until the new booking is COMPLETE.
-
-        Once the new booking is COMPLETE, the original booking will be
-        cancelled.
-        """
-
-        self.check_can_transfer_to(performance)
-
-        # This will delete any exisiting IN_PROGRESS booking that the user has
-        # for this performance (this includes transfers)
-        self.user.bookings.filter(
-            status=Payable.Status.IN_PROGRESS, performance_id=performance.id
-        ).delete()
-
-        # Create the new booking to transfer to
-        new_booking = Booking.objects.create(
-            user=self.user,
-            creator=creator,
-            transferred_from=self,
-            performance_id=performance.id,
-        )
-
-        # Copy across all tickets which can be copied one by one
-        for ticket in self.tickets.all():
-            # If there is capcity for this ticket in the other performance then
-            # copy this ticket to the new booking
-            try:
-                performance.validate_tickets(ticket.qs)
-
-                # Clone ticket to new booking
-                new_ticket = ticket.clone()
-                new_ticket.booking = new_booking
-                new_ticket.save()
-            except (
-                NotEnoughCapacityException,
-                InvalidSeatGroupException,
-                InvalidConcessionTypeException,
-            ) as exc:
-                print(
-                    f"Not copying accross ticket {ticket.seat_group} as {exc.__class__}"
-                )
-
-        return new_booking
 
     @property
     def web_tickets_path(self):
@@ -683,16 +591,9 @@ class Booking(TimeStampedMixin, Transferable):
         """
         composer = MailComposer()
 
-        if self.transferred_from:
-            composer.line(
-                "Your booking transfer to %s has been confirmed!"
-                % self.performance.production.name
-            )
-        else:
-            composer.line(
-                "Your booking to %s has been confirmed!"
-                % self.performance.production.name
-            )
+        composer.line(
+            "Your booking to %s has been confirmed!" % self.performance.production.name
+        )
 
         if self.performance.production.featured_image:
             composer.image(self.performance.production.featured_image.file.url)
@@ -729,11 +630,7 @@ class Booking(TimeStampedMixin, Transferable):
             "If you have any accessability concerns, or otherwise need help, please contact <a href='mailto:support@uobtheatre.com'>support@uobtheatre.com</a>."
         )
 
-        subject = (
-            "Booking transfer complete"
-            if self.transferred_from
-            else "Your booking is confirmed!"
-        )
+        subject = "Your booking is confirmed!"
         composer.send(subject, self.user.email)
 
     @property

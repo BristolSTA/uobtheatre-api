@@ -1,6 +1,6 @@
 import graphene
 
-from uobtheatre.bookings.abilities import ModifyBooking, TransferBooking
+from uobtheatre.bookings.abilities import ModifyBooking
 from uobtheatre.bookings.exceptions import (
     BookingTransferCheckedInTicketsException,
     BookingTransferToDifferentProductionException,
@@ -429,55 +429,6 @@ class UnCheckInBooking(AuthRequiredMixin, SafeMutation):
         return UnCheckInBooking(booking=booking, performance=performance)
 
 
-class CreateBookingTransfer(AuthRequiredMixin, SafeMutation):
-    """Mutation to transfer a booking to a difference performance. This creates
-    an inprogress booking (transfer) which is linked to the orignal booking via
-    transferred_to.
-
-    Args:
-        booking_id (str): The gloabl id of the Booking to transfer.
-        performance_id (str): The gloabl id of the performance which the
-            Booking should be transferred to.
-
-    Returns:
-        booking (BookingNode): The Booking for the new performance.
-
-    Raises:
-        GQLException: If the Payment was unsucessful.
-    """
-
-    booking = graphene.Field(BookingNode)
-
-    class Arguments:
-        booking_id = IdInputField(required=True)
-        performance_id = IdInputField(required=True)
-
-    @classmethod
-    def resolve_mutation(  # pylint: disable=too-many-branches
-        cls,
-        _,
-        info,
-        booking_id,
-        performance_id,
-    ):
-        performance = Performance.objects.get(pk=performance_id)
-
-        if not BookForPerformance.user_has_for(info.context.user, performance):
-            raise AuthorizationException(
-                "You do not have permission to create a booking for this performance"
-            )
-
-        booking = Booking.objects.get(pk=booking_id)
-
-        if not TransferBooking.user_has_for(info.context.user, booking):
-            raise AuthorizationException(
-                "You do not have permission to transfer this booking"
-            )
-
-        new_booking = booking.create_transfer(performance, creator=info.context.user)
-        return CreateBookingTransfer(booking=new_booking)
-
-
 class Mutation(graphene.ObjectType):
     """Mutations for bookings"""
 
@@ -486,4 +437,3 @@ class Mutation(graphene.ObjectType):
     pay_booking = PayBooking.Field()
     check_in_booking = CheckInBooking.Field()
     uncheck_in_booking = UnCheckInBooking.Field()
-    create_booking_transfer = CreateBookingTransfer.Field()

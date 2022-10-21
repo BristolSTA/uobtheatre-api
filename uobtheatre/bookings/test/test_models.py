@@ -888,30 +888,6 @@ def test_booking_pay_expired_booking():
 
 
 @pytest.mark.django_db
-def test_booking_pay_with_transfer():
-    booking = BookingFactory(
-        transferred_from=BookingFactory(),
-        status=Booking.Status.IN_PROGRESS,
-    )
-    payment_method = mock_payment_method()
-
-    with patch(
-        "uobtheatre.bookings.models.Booking.is_reservation_expired",
-        new_callable=PropertyMock(return_value=False),
-    ), patch(
-        "uobtheatre.bookings.models.Booking.check_can_transfer_to",
-        return_value=True,
-        autospec=True,
-    ) as mock_check_can_transfer_to:
-        booking.pay(payment_method)
-
-    mock_check_can_transfer_to.assert_called_once_with(
-        booking.transferred_from, booking.performance
-    )
-    payment_method.pay.assert_called_once()
-
-
-@pytest.mark.django_db
 @pytest.mark.parametrize(
     "initial_state, final_state",
     [(True, True), (False, True)],
@@ -1077,21 +1053,11 @@ def test_booking_can_be_refunded(is_refunded, status, production_status, expecte
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "with_payment, is_transfer",
-    [
-        (False, False),
-        (True, False),
-        (True, True),
-        (False, True),
-    ],
+    "with_payment",
+    [False, True],
 )
-def test_complete(with_payment, is_transfer):
-    if is_transfer:
-        booking = BookingFactory(
-            status=Payable.Status.IN_PROGRESS, transferred_from=BookingFactory()
-        )
-    else:
-        booking = BookingFactory(status=Payable.Status.IN_PROGRESS)
+def test_complete(with_payment):
+    booking = BookingFactory(status=Payable.Status.IN_PROGRESS)
 
     with patch.object(booking, "send_confirmation_email") as mock_send_email:
         kwargs = {}
@@ -1103,24 +1069,21 @@ def test_complete(with_payment, is_transfer):
     booking.refresh_from_db()
     assert booking.status == Payable.Status.PAID
 
-    if is_transfer:
-        assert booking.transferred_from.status == Booking.Status.CANCELLED
-
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "with_payment, provider_transaction_id, with_image, is_transfer",
+    "with_payment, provider_transaction_id, with_image",
     [
-        (True, "SQUARE_PAYMENT_ID", True, False),
-        (True, None, False, False),
-        (False, None, True, False),
-        (True, "SQUARE_PAYMENT_ID", True, True),
-        (True, None, False, True),
-        (False, None, True, True),
+        (True, "SQUARE_PAYMENT_ID", True),
+        (True, None, False),
+        (False, None, True),
+        (True, "SQUARE_PAYMENT_ID", True),
+        (True, None, False),
+        (False, None, True),
     ],
 )
 def test_send_confirmation_email(
-    mailoutbox, with_payment, provider_transaction_id, with_image, is_transfer
+    mailoutbox, with_payment, provider_transaction_id, with_image
 ):
     image = ImageFactory() if with_image else None
     production = ProductionFactory(name="Legally Ginger", featured_image=image)
@@ -1149,7 +1112,6 @@ def test_send_confirmation_email(
         status=Payable.Status.IN_PROGRESS,
         reference="abc",
         performance=performance,
-        transferred_from=None if not is_transfer else BookingFactory(),
     )
     booking.user.status.verified = True
 
@@ -1169,12 +1131,8 @@ def test_send_confirmation_email(
     assert len(mailoutbox) == 1
     email = mailoutbox[0]
 
-    if is_transfer:
-        assert email.subject == "Booking transfer complete"
-        assert "Your booking transfer to" in email.body
-    else:
-        assert email.subject == "Your booking is confirmed!"
-        assert "Your booking to" in email.body
+    assert email.subject == "Your booking is confirmed!"
+    assert "Your booking to" in email.body
 
     assert "View Booking (https://example.com/user/booking/abc" in email.body
     assert (
@@ -1284,166 +1242,7 @@ def test_booking_clone():
 
 
 @pytest.mark.django_db
-def test_misc_cost_types_not_transfer():
+def test_misc_cost_types():
     # Create a booking
     booking = BookingFactory()
     assert booking.misc_cost_types == [MiscCost.Type.BOOKING]
-
-
-@pytest.mark.django_db
-def test_misc_cost_types_transfer():
-    # Create a booking
-    booking = BookingFactory(transferred_from=BookingFactory())
-    assert booking.misc_cost_types == [
-        MiscCost.Type.BOOKING,
-    ]
-
-
-@pytest.mark.django_db
-def test_create_transfer():
-    # Create two performances for the same production
-    performance_1 = PerformanceFactory(
-        end=datetime.datetime.now(tz=pytz.UTC) + datetime.timedelta(days=1)
-    )
-    performance_2 = PerformanceFactory(
-        end=datetime.datetime.now(tz=pytz.UTC) + datetime.timedelta(days=1),
-        production=performance_1.production,
-    )
-
-    concession_type = ConcessionTypeFactory()
-
-    discount = DiscountFactory()
-    discount.performances.set([performance_1, performance_2])
-    DiscountRequirementFactory(concession_type=concession_type, discount=discount)
-
-    # Create a seat group which is in both performances
-    seat_group_shared = SeatGroupFactory()
-    PerformanceSeatingFactory(performance=performance_1, seat_group=seat_group_shared)
-    PerformanceSeatingFactory(performance=performance_2, seat_group=seat_group_shared)
-
-    # Create a seat group with no capacity in the second performance
-    seat_group_shared_no_capacity = SeatGroupFactory()
-    PerformanceSeatingFactory(
-        performance=performance_1, seat_group=seat_group_shared_no_capacity
-    )
-    PerformanceSeatingFactory(
-        performance=performance_2, seat_group=seat_group_shared_no_capacity, capacity=0
-    )
-
-    # Create a seat group which is only in the first performance
-    seat_group = SeatGroupFactory()
-    PerformanceSeatingFactory(performance=performance_1, seat_group=seat_group)
-
-    # Create a booking for the first performance
-    booking = BookingFactory(performance=performance_1, status=Booking.Status.PAID)
-    # Add a ticket to the booking for each seat group
-    TicketFactory(
-        booking=booking, seat_group=seat_group, concession_type=concession_type
-    )
-    TicketFactory(
-        booking=booking, seat_group=seat_group_shared, concession_type=concession_type
-    )
-    TicketFactory(
-        booking=booking,
-        seat_group=seat_group_shared_no_capacity,
-        concession_type=concession_type,
-    )
-    # Create ticket in unassigned concession type, which should also not be copied
-    TicketFactory(
-        booking=booking,
-        seat_group=seat_group_shared,
-    )
-    assert Booking.objects.count() == 1
-
-    # Create transfer to other performance
-    booking.create_transfer(performance_2, creator_user := UserFactory())
-    assert booking.admin_discount_percentage == 0
-
-    # Assert the new booking is created and in progress
-    assert Booking.objects.count() == 2
-    new_booking = Booking.objects.last()
-    assert new_booking.status == Booking.Status.IN_PROGRESS
-    assert new_booking.creator == creator_user
-
-    # Assert the only ticket which is transferred is the one in both
-    # performances with sufficient capacity
-    assert new_booking.tickets.count() == 1
-    assert new_booking.tickets.first().seat_group == seat_group_shared
-
-
-@pytest.mark.django_db
-def test_check_can_transfer_to_fails_if_booking_not_paid():
-    # Create a booking with 3 tickets
-    booking = BookingFactory(status=Booking.Status.IN_PROGRESS)
-    add_ticket_to_booking(booking, checked_in=False)
-    performance = PerformanceFactory(production=booking.performance.production)
-
-    with pytest.raises(TransferUnpaidPayableException):
-        booking.check_can_transfer_to(performance)
-
-
-@pytest.mark.django_db
-def test_check_can_transfer_to_fails_if_booking_has_checked_in_tickets():
-    # Create a booking with 3 tickets
-    booking = BookingFactory(status=Booking.Status.PAID)
-    add_ticket_to_booking(booking, checked_in=True)
-    add_ticket_to_booking(booking, checked_in=False)
-    performance = PerformanceFactory(production=booking.performance.production)
-
-    with pytest.raises(BookingTransferCheckedInTicketsException):
-        booking.check_can_transfer_to(performance)
-
-
-@pytest.mark.django_db
-def test_check_can_transfer_to_fails_if_booking_transferred_to_same_performance():
-    # Create a booking with 3 tickets
-    booking = BookingFactory(status=Booking.Status.PAID)
-    add_ticket_to_booking(booking, checked_in=False)
-
-    with pytest.raises(BookingTransferPerformanceUnchangedException):
-        booking.check_can_transfer_to(booking.performance)
-
-
-@pytest.mark.django_db
-def test_check_can_transfer_to_fails_if_booking_transferred_to_different_production():
-    # Create a booking with 3 tickets
-    booking = BookingFactory(status=Booking.Status.PAID)
-    add_ticket_to_booking(booking, checked_in=False)
-    # Create a performance for a different production
-    performance = PerformanceFactory()
-
-    with pytest.raises(BookingTransferToDifferentProductionException):
-        booking.check_can_transfer_to(performance)
-
-
-@pytest.mark.django_db
-def test_check_can_transfer_to_does_not_raise_if_valid():
-    # Create a booking with 3 tickets
-    booking = BookingFactory(status=Booking.Status.PAID)
-    add_ticket_to_booking(booking, checked_in=False)
-    performance = PerformanceFactory(production=booking.performance.production)
-
-    booking.check_can_transfer_to(performance)
-
-
-#     [TicketFactory(booking=booking) for _ in range(booking_ticket_count)]
-#
-#     if same_performance:
-#         performance = booking.performance
-#     elif same_production:
-#         performance = PerformanceFactory(production=booking.performance.production)
-#     else:
-#         performance = PerformanceFactory()
-#
-#     with patch(
-#         "uobtheatre.productions.models.Performance.capacity_remaining",
-#         new_callable=PropertyMock(return_value=capacity_remaining),
-#     ), patch(
-#         "uobtheatre.productions.models.Performance.is_bookable",
-#         new_callable=PropertyMock(return_value=is_bookable),
-#     ):
-#         if exception:
-#             with pytest.raises(exception):
-#                 booking.check_can_transfer_to(performance)
-#         else:
-#             booking.check_can_transfer_to(performance)

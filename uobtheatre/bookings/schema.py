@@ -55,7 +55,6 @@ class PriceBreakdownNode(DjangoObjectType):
     tickets_price = graphene.Int(required=True)
     discounts_value = graphene.Int(required=True)
     misc_costs = graphene.List(MiscCostNode)
-    transfer_fee = graphene.Int()
     subtotal_price = graphene.Int(required=True)
     misc_costs_value = graphene.Int(required=True)
     total_price = graphene.Int(required=True)
@@ -249,7 +248,6 @@ class BookingNode(DjangoObjectType):
     )
     expired = graphene.Boolean(required=True)
     sales_breakdown = graphene.Field(SalesBreakdownNode)
-    transferred_to = graphene.Field(lambda: BookingNode)
 
     def resolve_price_breakdown(self, _):
         return self
@@ -272,7 +270,6 @@ class BookingNode(DjangoObjectType):
     class Meta:
         model = Booking
         filterset_class = BookingFilter
-        exclude = ("_transferred_to",)
         interfaces = (relay.Node,)
 
 

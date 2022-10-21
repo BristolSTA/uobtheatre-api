@@ -926,37 +926,3 @@ def test_ticket_node_queryset_with_anonymous_user(info, logged_in, expected_incl
 
     qs = TicketNode.get_queryset(Ticket.objects, info)
     assert list(qs.all()) == ([ticket] if expected_includes else [])
-
-
-@pytest.mark.django_db
-@pytest.mark.parametrize("transferred_from", ((True), (False)))
-def test_booking_transfer_fee(gql_client, transferred_from):
-    booking = BookingFactory(
-        transferred_from=(BookingFactory() if transferred_from else None)
-    )
-
-    request = """
-    {
-      bookings(id: "%s") {
-        edges {
-          node {
-            priceBreakdown {
-              transferFee
-            }
-          }
-        }
-      }
-    }
-    """
-
-    response = gql_client.login_as_super_user().execute(request % booking.global_id)
-
-    assert response == {
-        "data": {
-            "bookings": {
-                "edges": [
-                    {"node": {"priceBreakdown": {"transferFee": booking.transfer_fee}}}
-                ]
-            }
-        }
-    }
