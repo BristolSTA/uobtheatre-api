@@ -969,10 +969,14 @@ def test_ticket_breakdown(gql_client):
 
     # Create two tickets
     TicketFactory(
-        booking=booking, seat_group=performance_seat_group.seat_group, checked_in=True
+        booking=booking,
+        seat_group=performance_seat_group.seat_group,
+        set_checked_in=True,
     )
     TicketFactory(
-        booking=booking, seat_group=performance_seat_group.seat_group, checked_in=False
+        booking=booking,
+        seat_group=performance_seat_group.seat_group,
+        set_checked_in=False,
     )
 
     response = gql_client.execute(

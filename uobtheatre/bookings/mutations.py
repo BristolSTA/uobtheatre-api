@@ -17,6 +17,7 @@ from uobtheatre.productions.models import Performance
 from uobtheatre.users.abilities import AllwaysPasses
 from uobtheatre.utils.exceptions import (
     AuthorizationException,
+    BadRequestException,
     GQLException,
     GQLExceptions,
     SafeMutation,
@@ -348,7 +349,7 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
             )
 
         for ticket in ticket_objects:
-            ticket.check_in()
+            ticket.check_in(info.context.user)
 
         return CheckInBooking(booking=booking, performance=performance)
 
@@ -419,7 +420,14 @@ class UnCheckInBooking(AuthRequiredMixin, SafeMutation):
                 ]
             )
 
-        for ticket in ticket_objects:
+        tickets_checked_in = [ticket for ticket in ticket_objects if ticket.checked_in]
+
+        if not tickets_checked_in:
+            raise BadRequestException(
+                message="The booking has no checked-in tickets.",
+            )
+
+        for ticket in tickets_checked_in:
             ticket.uncheck_in()
 
         return UnCheckInBooking(booking=booking, performance=performance)

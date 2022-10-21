@@ -12,8 +12,8 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from graphql_relay.node.node import to_global_id
 
+import uobtheatre.bookings.emails as booking_emails
 from uobtheatre.discounts.models import ConcessionType, DiscountCombination
-from uobtheatre.mail.composer import MailComposer
 from uobtheatre.payments.exceptions import (
     CantBePaidForException,
     CantBeRefundedException,
@@ -22,6 +22,7 @@ from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable, PayableQuerySet
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.users.models import User
+from uobtheatre.utils.exceptions import GQLException
 from uobtheatre.utils.filters import filter_passes_on_model
 from uobtheatre.utils.models import BaseModel, TimeStampedMixin
 from uobtheatre.utils.utils import combinations, create_short_uuid
@@ -119,12 +120,14 @@ class BookingQuerySet(PayableQuerySet):
     """QuerySet for bookings"""
 
     def annotate_checked_in(self) -> QuerySet:
-        return self.annotate(checked_in=BoolAnd("tickets__checked_in"))
+        return self.annotate(
+            checked_in=BoolAnd(Q(tickets__checked_in_at__isnull=False))
+        )
 
     def annotate_checked_in_count(self) -> QuerySet:
         return self.annotate(count=models.Count("tickets")).annotate(
             checked_in_count=models.Count(
-                Case(When(tickets__checked_in=True, then=Value(1)))
+                Case(When(tickets__checked_in_at__isnull=False, then=Value(1)))
             )
         )
 
@@ -247,6 +250,8 @@ class Booking(TimeStampedMixin, Payable):
     admin_discount_percentage = models.FloatField(
         default=0, validators=[MaxValueValidator(1), MinValueValidator(0)]
     )
+
+    accessibility_info = models.TextField(null=True, blank=True)
 
     expires_at = models.DateTimeField(default=generate_expires_at)
 
@@ -542,7 +547,10 @@ class Booking(TimeStampedMixin, Payable):
         confirmation email.
         """
         super().complete()
-        self.send_confirmation_email(payment)
+
+        booking_emails.send_booking_confirmation_email(self, payment)
+        if self.accessibility_info:
+            booking_emails.send_booking_accessibility_info_email(self)
 
     def clone(self):
         clone = super().clone()
@@ -560,53 +568,6 @@ class Booking(TimeStampedMixin, Payable):
             ],
         }
         return f"/user/booking/{self.reference}/tickets?" + urlencode(params, True)
-
-    def send_confirmation_email(self, payment: Transaction = None):
-        """
-        Send email confirmation which includes a link to the booking.
-        """
-        composer = MailComposer()
-
-        composer.line(
-            "Your booking to %s has been confirmed!" % self.performance.production.name
-        )
-
-        if self.performance.production.featured_image:
-            composer.image(self.performance.production.featured_image.file.url)
-
-        composer.line(
-            (
-                "This event opens at %s for a %s start. Please bring your tickets (printed or on your phone) or your booking reference (<strong>%s</strong>)."
-                if self.user.status.verified  # type: ignore
-                else "This event opens at %s for a %s start. Please bring your booking reference (<strong>%s</strong>)."
-            )
-            % (
-                self.performance.doors_open.astimezone(  # type: ignore
-                    self.performance.venue.address.timezone  # type: ignore
-                ).strftime("%d %B %Y %H:%M %Z"),
-                self.performance.start.astimezone(  # type: ignore
-                    self.performance.venue.address.timezone  # type: ignore
-                ).strftime("%H:%M %Z"),
-                self.reference,
-            )
-        )
-
-        composer.action(self.web_tickets_path, "View Tickets")
-
-        if self.user.status.verified:  # type: ignore
-            composer.action("/user/booking/%s" % self.reference, "View Booking")
-
-        # If this booking includes a payment, we will include details of this payment as a reciept
-        if payment:
-            composer.heading("Payment Information").line(
-                f"{payment.value_currency} paid ({payment.provider.description}{' - ID ' + payment.provider_transaction_id if payment.provider_transaction_id else '' })"
-            )
-
-        composer.line(
-            "If you have any accessability concerns, or otherwise need help, please contact <a href='mailto:support@uobtheatre.com'>support@uobtheatre.com</a>."
-        )
-
-        composer.send("Your booking is confirmed!", self.user.email)
 
     @property
     def is_reservation_expired(self):
@@ -678,7 +639,14 @@ class Ticket(BaseModel):
     )
     seat = models.ForeignKey(Seat, on_delete=models.RESTRICT, null=True, blank=True)
 
-    checked_in = models.BooleanField(default=False)
+    checked_in_at = models.DateTimeField(null=True, blank=True)
+    checked_in_by = models.ForeignKey(
+        User,
+        on_delete=models.RESTRICT,
+        related_name="tickets_checked_in_by_user",
+        null=True,
+        blank=True,
+    )
 
     def discounted_price(self, single_discounts_map=None) -> int:
         """Ticket price with single discounts
@@ -716,18 +684,39 @@ class Ticket(BaseModel):
             seat_group=self.seat_group
         ).price
 
-    def check_in(self):
+    @property
+    def checked_in(self) -> bool:
+        """Boolean property for if a ticket is checked in.
+
+        Returns:
+            bool: Whether the ticket is checked in.
+        """
+        return self.checked_in_at is not None
+
+    def check_in(self, user: User):
         """
         Check a ticket in
         """
-        self.checked_in = True
+        if self.checked_in_at:
+            raise GQLException(
+                message=f"Ticket of id {self.id} is already checked-in.",
+            )
+
+        self.checked_in_at = timezone.now()
+        self.checked_in_by = user
         self.save()
 
     def uncheck_in(self):
         """
         Un-Check a ticket in
         """
-        self.checked_in = False
+        if not self.checked_in_at:
+            raise GQLException(
+                message=f"Ticket of id {self.id} cannot be un-checked in as it is not checked-in.",
+            )
+
+        self.checked_in_at = None
+        self.checked_in_by = None
         self.save()
 
     def __str__(self):

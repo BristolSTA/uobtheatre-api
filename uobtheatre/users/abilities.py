@@ -2,6 +2,7 @@ import abc
 from typing import TYPE_CHECKING, Any
 
 import graphene
+from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from guardian.shortcuts import get_perms
 
@@ -122,9 +123,17 @@ class PermissionsMixin:
     def resolve_permissions(self, info):
         global_perms = [
             perm.codename
-            for perm in info.context.user.user_permissions.filter(
-                content_type=ContentType.objects.get_for_model(self)
-            ).all()
+            for perm in list(
+                info.context.user.user_permissions.filter(
+                    content_type=ContentType.objects.get_for_model(self)
+                ).all()
+            )
+            + list(
+                Permission.objects.filter(
+                    group__id__in=info.context.user.groups.values_list("id", flat=True),
+                    content_type=ContentType.objects.get_for_model(self),
+                ).all()
+            )
         ]
         if hasattr(self, "get_perms"):
             return self.get_perms(info.context.user, self) + global_perms
