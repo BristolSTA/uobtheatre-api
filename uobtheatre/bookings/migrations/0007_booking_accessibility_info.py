@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('bookings', '0006_alter_ticket_checkin_to_datetime'),
+        ("bookings", "0006_alter_ticket_checkin_to_datetime"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='booking',
-            name='accessibility_info',
+            model_name="booking",
+            name="accessibility_info",
             field=models.TextField(blank=True, null=True),
         ),
     ]
