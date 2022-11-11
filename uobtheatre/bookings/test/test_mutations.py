@@ -18,7 +18,10 @@ from uobtheatre.bookings.test.factories import (
     ValueMiscCostFactory,
     add_ticket_to_booking,
 )
-from uobtheatre.discounts.test.factories import ConcessionTypeFactory
+from uobtheatre.discounts.test.factories import (
+    ConcessionTypeFactory,
+    DiscountRequirementFactory,
+)
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.test.factories import TransactionFactory
@@ -144,7 +147,10 @@ def test_create_booking_mutation(
     PerformanceSeatingFactory(
         performance=performance, seat_group=seat_group, capacity=seat_group_capacity
     )
-    ConcessionTypeFactory(id=1)
+    requirement = DiscountRequirementFactory(
+        concession_type=ConcessionTypeFactory(id=1)
+    )
+    requirement.discount.performances.set([performance])
     request = """
         mutation {
           booking(
@@ -237,7 +243,10 @@ def test_create_booking_with_too_many_tickets(gql_client, with_boxoffice_perms):
     PerformanceSeatingFactory(
         performance=performance, seat_group=seat_group, capacity=100
     )
-    concession_type = ConcessionTypeFactory()
+    requirement = DiscountRequirementFactory(
+        concession_type=ConcessionTypeFactory(id=2)
+    )
+    requirement.discount.performances.set([performance])
 
     request = """
         mutation {{
@@ -271,7 +280,7 @@ def test_create_booking_with_too_many_tickets(gql_client, with_boxoffice_perms):
     """.format(
         to_global_id("PerformanceNode", performance.id),
         to_global_id("SeatGroupNode", seat_group.id),
-        to_global_id("ConcessionType", concession_type.id),
+        to_global_id("ConcessionType", 2),
     )
 
     gql_client.login()
@@ -283,7 +292,6 @@ def test_create_booking_with_too_many_tickets(gql_client, with_boxoffice_perms):
     assert response["data"]["booking"]["success"] is with_boxoffice_perms
 
     if not with_boxoffice_perms:
-        print(response)
         assert (
             response["data"]["booking"]["errors"][0]["message"]
             == "You may only book a maximum of 10 tickets"
@@ -532,6 +540,7 @@ def test_create_booking_admin_discount(gql_client, discount, should_be_valid):
     assert response["data"]["booking"]["success"] is should_be_valid
 
     if not should_be_valid:
+        assert len(response["data"]["booking"]["errors"]) == 1
         assert (
             response["data"]["booking"]["errors"][0]["field"]
             == "adminDiscountPercentage"
@@ -822,11 +831,18 @@ def test_update_booking(current_tickets, planned_tickets, expected_tickets, gql_
 
     seat_group_1 = SeatGroupFactory(id=1)
     seat_group_2 = SeatGroupFactory(id=2)
-    ConcessionTypeFactory(id=1)
-    ConcessionTypeFactory(id=2)
+    performance = PerformanceFactory()
+    requirement_1 = DiscountRequirementFactory(
+        concession_type=ConcessionTypeFactory(id=1)
+    )
+    requirement_1.discount.performances.set([performance])
+    requirement_2 = DiscountRequirementFactory(
+        concession_type=ConcessionTypeFactory(id=2)
+    )
+    requirement_2.discount.performances.set([performance])
+
     SeatFactory(id=1)
     SeatFactory(id=2)
-    performance = PerformanceFactory()
     PerformanceSeatingFactory(performance=performance, seat_group=seat_group_1)
     PerformanceSeatingFactory(performance=performance, seat_group=seat_group_2)
 
@@ -957,7 +973,9 @@ def test_update_booking_with_too_many_tickets(gql_client, with_boxoffice_perms):
     PerformanceSeatingFactory(
         performance=performance, seat_group=seat_group, capacity=100
     )
-    concession_type = ConcessionTypeFactory()
+    requirement = DiscountRequirementFactory()
+    requirement.discount.performances.set([performance])
+    concession_type = requirement.concession_type
     TicketFactory(
         booking=booking, seat_group=seat_group, concession_type=concession_type
     )  # 3 exisiting tickets
@@ -1849,9 +1867,7 @@ def test_pay_booking_success(mock_square, gql_client, with_sca_token):
             }
 
             booking {
-              status {
-                value
-              }
+              status
               transactions {
                 edges {
                   node {
@@ -1864,9 +1880,7 @@ def test_pay_booking_success(mock_square, gql_client, with_sca_token):
             payment {
               last4
               cardBrand
-              providerName {
-                value
-              }
+              providerName
               currency
               value
               providerFee
@@ -1907,9 +1921,7 @@ def test_pay_booking_success(mock_square, gql_client, with_sca_token):
         "data": {
             "payBooking": {
                 "booking": {
-                    "status": {
-                        "value": "PAID",
-                    },
+                    "status": "PAID",
                     "transactions": {
                         "edges": [
                             {
@@ -1926,9 +1938,7 @@ def test_pay_booking_success(mock_square, gql_client, with_sca_token):
                 "payment": {
                     "last4": "1111",
                     "cardBrand": "VISA",
-                    "providerName": {
-                        "value": "SQUARE_ONLINE",
-                    },
+                    "providerName": "SQUARE_ONLINE",
                     "currency": "GBP",
                     "value": 0,
                     "providerFee": None,
@@ -1965,9 +1975,7 @@ def test_pay_booking_success_square_pos(mock_square, gql_client):
             }
 
             booking {
-              status {
-                value
-              }
+              status
               transactions {
                 edges {
                   node {
@@ -1978,9 +1986,7 @@ def test_pay_booking_success_square_pos(mock_square, gql_client):
             }
 
             payment {
-              providerName {
-                value
-              }
+              providerName
             }
           }
         }
@@ -2018,9 +2024,7 @@ def test_pay_booking_success_square_pos(mock_square, gql_client):
         "data": {
             "payBooking": {
                 "booking": {
-                    "status": {
-                        "value": "IN_PROGRESS",
-                    },
+                    "status": "IN_PROGRESS",
                     "transactions": {
                         "edges": [
                             {
@@ -2032,7 +2036,7 @@ def test_pay_booking_success_square_pos(mock_square, gql_client):
                     },
                 },
                 "payment": {
-                    "providerName": {"value": "SQUARE_POS"},
+                    "providerName": "SQUARE_POS",
                 },
                 "success": True,
                 "errors": None,
@@ -2068,9 +2072,7 @@ def test_pay_booking_manual(gql_client, payment_method):
             }
 
             booking {
-              status {
-                value
-              }
+              status
               transactions {
                 edges {
                   node {
@@ -2083,9 +2085,7 @@ def test_pay_booking_manual(gql_client, payment_method):
             payment {
               last4
               cardBrand
-              providerName {
-                value
-              }
+              providerName
               currency
               value
             }
@@ -2101,9 +2101,7 @@ def test_pay_booking_manual(gql_client, payment_method):
         "data": {
             "payBooking": {
                 "booking": {
-                    "status": {
-                        "value": "PAID",
-                    },
+                    "status": "PAID",
                     "transactions": {
                         "edges": [
                             {
@@ -2120,9 +2118,7 @@ def test_pay_booking_manual(gql_client, payment_method):
                 "payment": {
                     "last4": None,
                     "cardBrand": None,
-                    "providerName": {
-                        "value": payment_method,
-                    },
+                    "providerName": payment_method,
                     "currency": "GBP",
                     "value": 100,
                 },
@@ -2409,6 +2405,7 @@ def test_check_in_booking(
         for ticket in check_in_tickets:
             ticket.refresh_from_db()
             assert ticket.checked_in
+            assert ticket.checked_in_by == gql_client.user
     elif booking_obj.get("performance_id") == performance_id:
         # The instance where there are tickets that don't belong to the booking
         assert len(response["data"]["checkInBooking"]["errors"]) == len(
@@ -2463,7 +2460,7 @@ def test_check_in_booking_fails_if_not_paid(gql_client, status):
         performance=performance, user=gql_client.user, status=status
     )
 
-    checked_in_ticket = TicketFactory(booking=booking, checked_in=True)
+    checked_in_ticket = TicketFactory(booking=booking, set_checked_in=True)
 
     request_query = """
     mutation {
@@ -2568,7 +2565,7 @@ def test_check_in_booking_fails_if_already_checked_in(gql_client):
 
     booking = BookingFactory(performance=performance, user=gql_client.user)
 
-    checked_in_ticket = TicketFactory(booking=booking, checked_in=True)
+    checked_in_ticket = TicketFactory(booking=booking, set_checked_in=True)
 
     request_query = """
     mutation {
@@ -2618,12 +2615,12 @@ def test_check_in_booking_fails_if_already_checked_in(gql_client):
 def test_uncheck_in_booking(gql_client):
     performance = PerformanceFactory()
     gql_client.login()
-    assign_perm("productions.boxoffice", gql_client.user, performance.production)
 
     booking = BookingFactory(performance=performance, user=gql_client.login().user)
 
-    checked_in_ticket = TicketFactory(booking=booking, checked_in=True)
-    unchecked_in_ticket = TicketFactory(booking=booking, checked_in=False)
+    checked_in_ticket = TicketFactory(booking=booking, set_checked_in=True)
+    unchecked_in_ticket1 = TicketFactory(booking=booking, set_checked_in=False)
+    unchecked_in_ticket2 = TicketFactory(booking=booking, set_checked_in=False)
 
     request_query = """
     mutation {
@@ -2647,15 +2644,32 @@ def test_uncheck_in_booking(gql_client):
     }
     """
 
-    gql_client.login()
     assign_perm("productions.boxoffice", gql_client.user, performance.production)
+
+    response = gql_client.execute(
+        request_query
+        % (
+            booking.reference,
+            to_global_id("PerformanceNode", performance.id),
+            to_global_id("TicketNode", unchecked_in_ticket1.id),
+            to_global_id("TicketNode", unchecked_in_ticket2.id),
+        )
+    )
+    assert response["data"]["uncheckInBooking"]["errors"] == [
+        {
+            "__typename": "NonFieldError",
+            "message": "The booking has no checked-in tickets.",
+            "code": "400",
+        }
+    ]
+
     response = gql_client.execute(
         request_query
         % (
             booking.reference,
             to_global_id("PerformanceNode", performance.id),
             to_global_id("TicketNode", checked_in_ticket.id),
-            to_global_id("TicketNode", unchecked_in_ticket.id),
+            to_global_id("TicketNode", unchecked_in_ticket1.id),
         )
     )
     assert response == {"data": {"uncheckInBooking": {"success": True, "errors": None}}}
@@ -2667,7 +2681,7 @@ def test_uncheck_in_booking_incorrect_performance(gql_client):
     wrong_performance = PerformanceFactory()
     booking = BookingFactory(performance=performance, user=gql_client.login().user)
 
-    checked_in_ticket = TicketFactory(booking=booking, checked_in=True)
+    checked_in_ticket = TicketFactory(booking=booking, set_checked_in=True)
 
     request_query = """
     mutation {
@@ -2732,7 +2746,7 @@ def test_uncheck_in_booking_incorrect_ticket(gql_client):
 
     assign_perm("productions.boxoffice", gql_client.user, performance.production)
 
-    checked_in_ticket = TicketFactory(booking=incorrect_booking, checked_in=True)
+    checked_in_ticket = TicketFactory(booking=incorrect_booking, set_checked_in=True)
 
     request_query = """
     mutation {

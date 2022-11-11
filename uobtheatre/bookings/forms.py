@@ -154,7 +154,4 @@ class BookingForm(MutationForm):
 
     class Meta:
         model = Booking
-        fields = (
-            "performance",
-            "admin_discount_percentage",
-        )
+        fields = ("performance", "admin_discount_percentage", "accessibility_info")

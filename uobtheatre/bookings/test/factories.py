@@ -1,4 +1,5 @@
 import factory
+from django.utils import timezone
 
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
 from uobtheatre.discounts.models import DiscountRequirement
@@ -58,15 +59,26 @@ class TicketFactory(factory.django.DjangoModelFactory):
         "uobtheatre.discounts.test.factories.ConcessionTypeFactory"
     )
 
+    checked_in_by = None
+    checked_in_at = None
+
     class Meta:
         model = Ticket
 
+    class Params:
+        set_checked_in = factory.Trait(
+            checked_in_by=factory.SubFactory(UserFactory),
+            checked_in_at=timezone.now(),
+        )
 
-def add_ticket_to_booking(booking):
+
+def add_ticket_to_booking(booking, *, ticket_price=100, checked_in=False):
     """Adds a ticket of price 100 to the booking"""
-    ticket = TicketFactory(booking=booking)
+    ticket = TicketFactory(booking=booking, set_checked_in=checked_in)
     PerformanceSeatingFactory(
-        performance=booking.performance, seat_group=ticket.seat_group, price=100
+        performance=booking.performance,
+        seat_group=ticket.seat_group,
+        price=ticket_price,
     )
     discount = DiscountFactory(percentage=0)
     discount.performances.set([booking.performance])
