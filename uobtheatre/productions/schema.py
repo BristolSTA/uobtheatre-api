@@ -22,7 +22,6 @@ from uobtheatre.utils.filters import FilterSet
 from uobtheatre.utils.schema import (
     AssignedUsersMixin,
     DjangoObjectType,
-    GrapheneEnumMixin,
     IdInputField,
     UserPermissionFilterMixin,
 )
@@ -30,7 +29,7 @@ from uobtheatre.utils.schema import (
 ProductionStatusSchema = graphene.Enum.from_enum(Production.Status)
 
 
-class CrewRoleNode(GrapheneEnumMixin, DjangoObjectType):
+class CrewRoleNode(DjangoObjectType):
     class Meta:
         model = CrewRole
         interfaces = (relay.Node,)
@@ -162,21 +161,20 @@ class ProductionFilter(FilterSet, UserPermissionFilterMixin):
 
 
 class SalesBreakdownNode(graphene.ObjectType):
-    total_sales = graphene.Int(required=True)
-    total_card_sales = graphene.Int(required=True)
+    total_payments = graphene.Int(required=True)
+    total_card_payments = graphene.Int(required=True)
     total_refunds = graphene.Int(required=True)
     total_card_refunds = graphene.Int(required=True)
-    net_income = graphene.Int(required=True)
-    net_card_income = graphene.Int(required=True)
+    net_transactions = graphene.Int(required=True)
+    net_card_transactions = graphene.Int(required=True)
     provider_payment_value = graphene.Int(required=True)
+    app_fee = graphene.Int(required=True)
     app_payment_value = graphene.Int(required=True)
     society_transfer_value = graphene.Int(required=True)
     society_revenue = graphene.Int(required=True)
 
 
-class ProductionNode(
-    PermissionsMixin, GrapheneEnumMixin, AssignedUsersMixin, DjangoObjectType
-):
+class ProductionNode(PermissionsMixin, AssignedUsersMixin, DjangoObjectType):
     content_warnings = DjangoListField(ProductionContentWarningNode)
     crew = DjangoListField(CrewMemberNode)
     cast = DjangoListField(CastMemberNode)

@@ -100,7 +100,7 @@ def outstanding_society_payments(request):
             "This report details the production income at the time the report is generated.",
             "Once the payment has been made, this MUST be recorded on the system in order to remove the balance.",
             "If the balance for a certain production shows negative, this is because this society owes the STA money. Please do not action negative balances.",
-            "The balance that should be transfered to a production's society is indicated in the 'Society Payment Due' column.",
+            "The balance that should be transferred to a production's society is indicated in the 'Society Payment Due' column.",
             "All currency is PENCE (i.e. 100 = £1.00)",
         ],
         report.get_meta_array(),

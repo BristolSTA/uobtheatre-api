@@ -112,10 +112,7 @@ def test_productions_schema(gql_client):
                   role {
                     id
                     name
-                    department {
-                      value
-                      description
-                    }
+                    department
                   }
                 }
                 productionTeam {
@@ -214,12 +211,9 @@ def test_productions_schema(gql_client):
                                             "CrewRoleNode", crew_member.role.id
                                         ),
                                         "name": crew_member.role.name,
-                                        "department": {
-                                            "value": str(
-                                                crew_member.role.department
-                                            ).upper(),
-                                            "description": crew_member.role.get_department_display(),
-                                        },
+                                        "department": str(
+                                            crew_member.role.department
+                                        ).upper(),
                                     },
                                 }
                                 for crew_member in crew
@@ -583,8 +577,8 @@ def test_production_and_performance_sales_breakdowns(gql_client):
             edges {
                 node {
                     salesBreakdown {
-                        totalSales
-                        totalCardSales
+                        totalPayments
+                        totalCardPayments
                         providerPaymentValue
                         appPaymentValue
                         societyTransferValue
@@ -594,8 +588,8 @@ def test_production_and_performance_sales_breakdowns(gql_client):
                         edges {
                             node {
                                 salesBreakdown {
-                                    totalSales
-                                    totalCardSales
+                                    totalPayments
+                                    totalCardPayments
                                     providerPaymentValue
                                     appPaymentValue
                                     societyTransferValue
@@ -634,8 +628,8 @@ def test_production_and_performance_sales_breakdowns(gql_client):
         "providerPaymentValue": 0,
         "societyRevenue": 100,
         "societyTransferValue": 100,
-        "totalCardSales": 100,
-        "totalSales": 100,
+        "totalCardPayments": 100,
+        "totalPayments": 100,
     }
     assert response["data"]["productions"]["edges"][0]["node"]["performances"]["edges"][
         0
@@ -644,16 +638,21 @@ def test_production_and_performance_sales_breakdowns(gql_client):
         "providerPaymentValue": 0,
         "societyRevenue": 100,
         "societyTransferValue": 100,
-        "totalCardSales": 100,
-        "totalSales": 100,
+        "totalCardPayments": 100,
+        "totalPayments": 100,
     }
 
 
 @pytest.mark.django_db
 def test_production_totals(gql_client):
+    # Create 2 performances for the same production
     perf_1 = PerformanceFactory(capacity=100)
     perf_2 = PerformanceFactory(production=perf_1.production, capacity=150)
+
+    # Create 1 seat group for the first performance with 1000 seats
     PerformanceSeatingFactory(performance=perf_1, capacity=1000)
+
+    # Create 1 seat group for the second performance with 140 seats
     PerformanceSeatingFactory(performance=perf_2, capacity=140)
 
     booking_1 = BookingFactory(performance=perf_1)
@@ -972,10 +971,14 @@ def test_ticket_breakdown(gql_client):
 
     # Create two tickets
     TicketFactory(
-        booking=booking, seat_group=performance_seat_group.seat_group, checked_in=True
+        booking=booking,
+        seat_group=performance_seat_group.seat_group,
+        set_checked_in=True,
     )
     TicketFactory(
-        booking=booking, seat_group=performance_seat_group.seat_group, checked_in=False
+        booking=booking,
+        seat_group=performance_seat_group.seat_group,
+        set_checked_in=False,
     )
 
     response = gql_client.execute(

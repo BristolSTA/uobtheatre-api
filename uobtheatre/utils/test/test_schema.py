@@ -6,7 +6,10 @@ from guardian.shortcuts import assign_perm
 
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import BookingFactory, PerformanceSeatingFactory
-from uobtheatre.discounts.test.factories import ConcessionTypeFactory
+from uobtheatre.discounts.test.factories import (
+    ConcessionTypeFactory,
+    DiscountRequirementFactory,
+)
 from uobtheatre.productions.models import Production
 from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
 from uobtheatre.users.test.factories import UserFactory
@@ -69,6 +72,8 @@ def test_id_input_field_parse_value(gql_client):
     performance = PerformanceFactory()
     psg = PerformanceSeatingFactory(performance=performance)
     concession = ConcessionTypeFactory()
+    requirement = DiscountRequirementFactory(concession_type=concession)
+    requirement.discount.performances.set([performance])
 
     with patch(
         "uobtheatre.productions.abilities.BookForPerformance.user_has_for",
@@ -76,24 +81,24 @@ def test_id_input_field_parse_value(gql_client):
     ):
         gql_client.login().execute(
             """
-        mutation($id: ID!, $sgId: IdInputField!, $ctId: IdInputField!) {
-        booking(
-            input: {performance: $id, tickets: [{seatGroupId: $sgId, concessionTypeId: $ctId}]}
-        ) {
-            booking {
-            id
+            mutation($id: ID!, $sgId: IdInputField!, $ctId: IdInputField!) {
+                booking(
+                    input: {performance: $id, tickets: [{seatGroupId: $sgId, concessionTypeId: $ctId}]}
+                ) {
+                    booking {
+                    id
+                    }
+                    success
+                    errors {
+                    __typename
+                        ... on NonFieldError {
+                            message
+                            code
+                        }
+                    }
+                }
             }
-            success
-            errors {
-            __typename
-            ... on NonFieldError {
-                message
-                code
-            }
-            }
-        }
-        }
-        """,
+            """,
             variable_values={
                 "id": to_global_id("PerformanceNode", performance.id),
                 "sgId": to_global_id("SeatGroup", psg.seat_group.id),

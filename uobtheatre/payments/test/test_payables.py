@@ -5,12 +5,20 @@ from pytest_django.asserts import assertQuerysetEqual
 
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import BookingFactory
-from uobtheatre.payments.exceptions import CantBeRefundedException
+from uobtheatre.payments.exceptions import (
+    CantBePaidForException,
+    CantBeRefundedException,
+)
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.tasks import refund_payable
-from uobtheatre.payments.test.factories import TransactionFactory
-from uobtheatre.payments.transaction_providers import Card, Cash, SquareOnline
+from uobtheatre.payments.test.factories import TransactionFactory, mock_payment_method
+from uobtheatre.payments.transaction_providers import (
+    Card,
+    Cash,
+    SquareOnline,
+    SquarePOS,
+)
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.utils.test.factories import TaskResultFactory
 
@@ -48,7 +56,7 @@ def test_payable_provider_payment_value():
     TransactionFactory(pay_object=booking, provider_fee=20)
     TransactionFactory(pay_object=booking, provider_fee=10)
 
-    assert booking.provider_payment_value == 30
+    assert booking.sales_breakdown.provider_payment_value == 30
 
 
 @pytest.mark.django_db
@@ -58,7 +66,7 @@ def test_payable_app_payment_value():
     TransactionFactory(pay_object=booking, provider_fee=20, app_fee=100)
     TransactionFactory(pay_object=booking, provider_fee=10, app_fee=150)
 
-    assert booking.app_payment_value == 220
+    assert booking.sales_breakdown.app_payment_value == 220
 
 
 @pytest.mark.django_db
@@ -68,17 +76,33 @@ def test_payable_society_payment_value():
     TransactionFactory(pay_object=booking, app_fee=100, value=200)
     TransactionFactory(pay_object=booking, app_fee=150, value=400)
 
-    assert booking.society_revenue == 350
+    assert booking.sales_breakdown.society_revenue == 350
 
 
 @pytest.mark.django_db
-def test_payable_total_sales():
+def test_payable_total_payments():
     booking = BookingFactory()
 
     TransactionFactory(pay_object=booking, app_fee=100, value=200)
     TransactionFactory(pay_object=booking, app_fee=150, value=400)
+    TransactionFactory(
+        pay_object=booking, app_fee=150, value=300, type=Transaction.Type.REFUND
+    )
 
-    assert booking.total_sales == 600
+    assert booking.sales_breakdown.total_payments == 600
+
+
+@pytest.mark.django_db
+def test_payable_net_transactions():
+    booking = BookingFactory()
+
+    TransactionFactory(pay_object=booking, app_fee=100, value=200)
+    TransactionFactory(pay_object=booking, app_fee=150, value=400)
+    TransactionFactory(
+        pay_object=booking, app_fee=150, value=-300, type=Transaction.Type.REFUND
+    )
+
+    assert booking.sales_breakdown.net_transactions == 300
 
 
 @pytest.mark.django_db
@@ -95,7 +119,7 @@ def test_society_transfer_value():
         pay_object=booking, app_fee=150, value=400, provider_name=SquareOnline.name
     )
 
-    assert booking.society_transfer_value == 550
+    assert booking.sales_breakdown.society_transfer_value == 550
 
 
 @pytest.mark.django_db
@@ -372,3 +396,87 @@ def test_queryset_refunded():
         [payable2, payable3, payable4],
         ordered=False,
     )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "status, exception_message",
+    [
+        (Payable.Status.IN_PROGRESS, None),
+        (Payable.Status.PAID, "A payable with status Paid cannot be paid for"),
+    ],
+)
+def test_payable_pay_status(status, exception_message):
+    payment_method = mock_payment_method()
+    booking = BookingFactory(status=status)
+
+    if exception_message:
+        with pytest.raises(CantBePaidForException) as exc:
+            booking.pay(payment_method)
+        assert exc.value.message == exception_message
+        payment_method.pay.assert_not_called()
+    else:
+        booking.pay(payment_method)
+        payment_method.pay.assert_called_once()
+
+
+@pytest.mark.django_db
+def test_payable_pay_deletes_pending_payments():
+    """
+    When we try to pay for a booking, pending payments that already exist for
+    this booking should be deleted.
+    """
+
+    payment_method = mock_payment_method()
+    booking = BookingFactory(status=Payable.Status.IN_PROGRESS)
+
+    # Deleted
+    pending_payment = TransactionFactory(
+        status=Transaction.Status.PENDING,
+        pay_object=booking,
+        provider_name=SquarePOS.name,
+    )
+
+    # Not deleted
+    completed_payment = TransactionFactory(
+        status=Transaction.Status.COMPLETED, pay_object=booking
+    )
+
+    with patch("uobtheatre.payments.models.Transaction.cancel", autospec=True) as mock:
+        booking.pay(payment_method)  # type: ignore
+
+    assert booking.status == Payable.Status.PAID
+
+    # Assert pending payment cancelled
+    mock.assert_called_once_with(pending_payment)
+
+    # Assert completed payment is not cancelled
+    assert Transaction.objects.filter(id=completed_payment.id).exists()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "misc_cost_value, subtotal, expected_total", [(3, 10, 13), (0, 0, 0), (10, 0, 0)]
+)
+def test_payable_total(misc_cost_value, subtotal, expected_total):
+    # pylint: disable=missing-class-docstring, invalid-overridden-method
+    class MockPayable(Payable):
+        def display_name(self):
+            raise NotImplementedError
+
+        def user(self):
+            raise NotImplementedError
+
+        def payment_reference_id(self):
+            raise NotImplementedError
+
+        @property
+        def subtotal(self):
+            return subtotal
+
+        @property
+        def misc_costs_value(self):
+            return misc_cost_value
+
+    payable = MockPayable()
+    assert payable.total == expected_total

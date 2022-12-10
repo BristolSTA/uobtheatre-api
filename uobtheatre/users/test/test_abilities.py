@@ -13,7 +13,7 @@ from uobtheatre.users.abilities import (
     OpenBoxoffice,
     PermissionsMixin,
 )
-from uobtheatre.users.test.factories import UserFactory
+from uobtheatre.users.test.factories import GroupFactory, UserFactory
 
 
 @pytest.mark.django_db
@@ -115,3 +115,25 @@ def test_permissions_mixin_resolve_permissions_without_get_perms(info):
     ):
         schema.resolve_permissions(info)
         mock_get_perms.assert_called_once_with(info.context.user, schema)
+
+
+@pytest.mark.django_db
+def test_permissions_mixin_resolve_permissions_with_groups(info):
+    class TestModelSchema(PermissionsMixin):
+        pass
+
+    model = ProductionFactory()
+    group = GroupFactory()
+    info.context.user.groups.add(group)
+    assign_perm("productions.view_production", group)
+    info.context.user.assign_perm("productions.approve_production")
+    info.context.user.assign_perm("productions.boxoffice", model)
+
+    result = TestModelSchema.resolve_permissions(model, info)
+    assert set(result) == set(
+        [
+            "view_production",
+            "approve_production",
+            "boxoffice",
+        ]
+    )

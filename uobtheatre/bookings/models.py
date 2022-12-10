@@ -12,20 +12,43 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from graphql_relay.node.node import to_global_id
 
+import uobtheatre.bookings.emails as booking_emails
 from uobtheatre.discounts.models import ConcessionType, DiscountCombination
-from uobtheatre.mail.composer import MailComposer
-from uobtheatre.payments.exceptions import CantBeRefundedException
+from uobtheatre.payments.exceptions import (
+    CantBePaidForException,
+    CantBeRefundedException,
+)
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable, PayableQuerySet
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.users.models import User
+from uobtheatre.utils.exceptions import GQLException
 from uobtheatre.utils.filters import filter_passes_on_model
-from uobtheatre.utils.models import TimeStampedMixin
+from uobtheatre.utils.models import BaseModel, TimeStampedMixin
 from uobtheatre.utils.utils import combinations, create_short_uuid
 from uobtheatre.venues.models import Seat, SeatGroup
 
 if TYPE_CHECKING:
     from uobtheatre.payments.transaction_providers import PaymentProvider
+
+
+class MiscCostQuerySet(PayableQuerySet):
+    """QuerySet for bookings"""
+
+    def value(self, payable: "Payable") -> int:
+        """Compute numerical value of selected misc costs on a given payable
+
+        Args:
+            payable (Payable): The payable to calculate the value of the misc
+                costs on.
+
+        Returns:
+            int: The value of the misc costs in pence
+        """
+        return sum(misc_cost.get_value(payable) for misc_cost in self)
+
+
+MiscCostManager = models.Manager.from_queryset(MiscCostQuerySet)
 
 
 class MiscCost(models.Model):
@@ -41,6 +64,7 @@ class MiscCost(models.Model):
         Currently all misc costs are applied to all bookings.
     """
 
+    objects = MiscCostManager()
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
     percentage = models.FloatField(
@@ -48,7 +72,7 @@ class MiscCost(models.Model):
     )
     value = models.FloatField(null=True, blank=True)
 
-    def get_value(self, booking: "Booking") -> int:
+    def get_value(self, payable: "Payable") -> int:
         """Calculate the value of the misc cost on a booking.
 
         Calculate the value of the misc cost given a booking. The value is
@@ -61,16 +85,16 @@ class MiscCost(models.Model):
         This will return 0 if the booking is complimentary (subtotal = 0).
 
         Args:
-            booking (Booking): The booking on which the misc cost is being
+            payable (Payable): The payable on which the misc cost is being
                 applied.
 
         Returns:
             int: The value in pennies of the misc cost on this booking.
         """
         if self.percentage is not None:
-            return math.ceil(booking.subtotal * self.percentage)
+            return math.ceil(payable.subtotal * self.percentage)
 
-        if booking.subtotal == 0:
+        if payable.subtotal == 0:
             return 0
         return self.value  # type: ignore
 
@@ -96,12 +120,14 @@ class BookingQuerySet(PayableQuerySet):
     """QuerySet for bookings"""
 
     def annotate_checked_in(self) -> QuerySet:
-        return self.annotate(checked_in=BoolAnd("tickets__checked_in"))
+        return self.annotate(
+            checked_in=BoolAnd(Q(tickets__checked_in_at__isnull=False))
+        )
 
     def annotate_checked_in_count(self) -> QuerySet:
         return self.annotate(count=models.Count("tickets")).annotate(
             checked_in_count=models.Count(
-                Case(When(tickets__checked_in=True, then=Value(1)))
+                Case(When(tickets__checked_in_at__isnull=False, then=Value(1)))
             )
         )
 
@@ -190,7 +216,7 @@ class Booking(TimeStampedMixin, Payable):
         A user can only have 1 In Progress booking per performance.
     """
 
-    objects = BookingManager()
+    objects: models.Manager = BookingManager()  # type: ignore[assignment]
 
     class Meta:
         constraints = [
@@ -204,8 +230,6 @@ class Booking(TimeStampedMixin, Payable):
     reference = models.CharField(
         default=create_short_uuid, editable=False, max_length=12, unique=True
     )
-
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bookings")
 
     # Stores who created the booking
     # For regular bookings this will be the user
@@ -226,6 +250,8 @@ class Booking(TimeStampedMixin, Payable):
     admin_discount_percentage = models.FloatField(
         default=0, validators=[MaxValueValidator(1), MinValueValidator(0)]
     )
+
+    accessibility_info = models.TextField(null=True, blank=True)
 
     expires_at = models.DateTimeField(default=generate_expires_at)
 
@@ -383,7 +409,8 @@ class Booking(TimeStampedMixin, Payable):
         return self.get_best_discount_combination_with_price()[0]
 
     @cached_property
-    def subtotal(self) -> int:
+    # pylint: disable=invalid-overridden-method
+    def subtotal(self) -> int:  # type: ignore
         """Price of the booking with discounts applied.
 
         Returns the subtotal of the booking. This is the total value including
@@ -438,6 +465,7 @@ class Booking(TimeStampedMixin, Payable):
         """
         return self.tickets_price() - self.subtotal
 
+    @property
     def misc_costs_value(self) -> int:
         """The value of the misc costs applied in pence
 
@@ -448,22 +476,7 @@ class Booking(TimeStampedMixin, Payable):
         Returns:
             (int): The value in penies of MiscCosts applied to the Booking
         """
-        return sum(misc_cost.get_value(self) for misc_cost in MiscCost.objects.all())
-
-    @property
-    def total(self) -> int:
-        """The total cost of the Booking.
-
-        The final price of the booking with all dicounts and misc costs
-        applied. This is the price the User will be charged.
-
-        Returns:
-            (int): total price of the booking in penies
-        """
-        subtotal = self.subtotal
-        if subtotal == 0:  # pylint: disable=comparison-with-callable
-            return 0
-        return math.ceil(subtotal + self.misc_costs_value())
+        return MiscCost.objects.all().value(self)
 
     def get_ticket_diff(
         self, tickets: Union[List["Ticket"], Iterable["Ticket"]]
@@ -521,36 +534,28 @@ class Booking(TimeStampedMixin, Payable):
         )
 
     def pay(self, payment_method: "PaymentProvider") -> Optional["Transaction"]:
-        """
-        Pay for booking using provided payment method.
+        if self.is_reservation_expired:
+            raise CantBePaidForException(
+                message="This booking has expired. Please create a new booking"
+            )
 
-        Args:
-            payment_method (PaymentMethod): The payment method used to pay for
-                the booking
-
-        Returns:
-            Payment: The payment created by the checkout (optional)
-        """
-        # Cancel and delete pending payments for this booking
-        for payment in self.transactions.filter(status=Transaction.Status.PENDING):
-            payment.cancel()
-
-        payment = payment_method.pay(self.total, self.misc_costs_value(), self)
-
-        # If a payment is created set the booking as paid
-        if payment.status == Transaction.Status.COMPLETED:
-            self.complete(payment)
-
-        return payment
+        return super().pay(payment_method)
 
     def complete(self, payment: Transaction = None):
         """
         Complete the booking (after it has been paid for) and send the
         confirmation email.
         """
-        self.status = Payable.Status.PAID
-        self.save()
-        self.send_confirmation_email(payment)
+        super().complete()
+
+        booking_emails.send_booking_confirmation_email(self, payment)
+        if self.accessibility_info:
+            booking_emails.send_booking_accessibility_info_email(self)
+
+    def clone(self):
+        clone = super().clone()
+        clone.reference = create_short_uuid()
+        return clone
 
     @property
     def web_tickets_path(self):
@@ -563,53 +568,6 @@ class Booking(TimeStampedMixin, Payable):
             ],
         }
         return f"/user/booking/{self.reference}/tickets?" + urlencode(params, True)
-
-    def send_confirmation_email(self, payment: Transaction = None):
-        """
-        Send email confirmation which includes a link to the booking.
-        """
-        composer = MailComposer()
-
-        composer.line(
-            "Your booking to %s has been confirmed!" % self.performance.production.name
-        )
-
-        if self.performance.production.featured_image:
-            composer.image(self.performance.production.featured_image.file.url)
-
-        composer.line(
-            (
-                "This event opens at %s for a %s start. Please bring your tickets (printed or on your phone) or your booking reference (<strong>%s</strong>)."
-                if self.user.status.verified  # type: ignore
-                else "This event opens at %s for a %s start. Please bring your booking reference (<strong>%s</strong>)."
-            )
-            % (
-                self.performance.doors_open.astimezone(  # type: ignore
-                    self.performance.venue.address.timezone  # type: ignore
-                ).strftime("%d %B %Y %H:%M %Z"),
-                self.performance.start.astimezone(  # type: ignore
-                    self.performance.venue.address.timezone  # type: ignore
-                ).strftime("%H:%M %Z"),
-                self.reference,
-            )
-        )
-
-        composer.action(self.web_tickets_path, "View Tickets")
-
-        if self.user.status.verified:  # type: ignore
-            composer.action("/user/booking/%s" % self.reference, "View Booking")
-
-        # If this booking includes a payment, we will include details of this payment as a reciept
-        if payment:
-            composer.heading("Payment Information").line(
-                f"{payment.value_currency} paid ({payment.provider.description}{' - ID ' + payment.provider_transaction_id if payment.provider_transaction_id else '' })"
-            )
-
-        composer.line(
-            "If you have any accessability concerns, or otherwise need help, please contact <a href='mailto:support@uobtheatre.com'>support@uobtheatre.com</a>."
-        )
-
-        composer.send("Your booking is confirmed!", self.user.email)
 
     @property
     def is_reservation_expired(self):
@@ -659,7 +617,7 @@ class TicketQuerySet(QuerySet):
 TicketManager = models.Manager.from_queryset(TicketQuerySet)
 
 
-class Ticket(models.Model):
+class Ticket(BaseModel):
     """A booking of a single seat.
 
     A Ticket is the reservation of a seat for a performance. The performance is
@@ -681,7 +639,14 @@ class Ticket(models.Model):
     )
     seat = models.ForeignKey(Seat, on_delete=models.RESTRICT, null=True, blank=True)
 
-    checked_in = models.BooleanField(default=False)
+    checked_in_at = models.DateTimeField(null=True, blank=True)
+    checked_in_by = models.ForeignKey(
+        User,
+        on_delete=models.RESTRICT,
+        related_name="tickets_checked_in_by_user",
+        null=True,
+        blank=True,
+    )
 
     def discounted_price(self, single_discounts_map=None) -> int:
         """Ticket price with single discounts
@@ -719,18 +684,39 @@ class Ticket(models.Model):
             seat_group=self.seat_group
         ).price
 
-    def check_in(self):
+    @property
+    def checked_in(self) -> bool:
+        """Boolean property for if a ticket is checked in.
+
+        Returns:
+            bool: Whether the ticket is checked in.
+        """
+        return self.checked_in_at is not None
+
+    def check_in(self, user: User):
         """
         Check a ticket in
         """
-        self.checked_in = True
+        if self.checked_in_at:
+            raise GQLException(
+                message=f"Ticket of id {self.id} is already checked-in.",
+            )
+
+        self.checked_in_at = timezone.now()
+        self.checked_in_by = user
         self.save()
 
     def uncheck_in(self):
         """
         Un-Check a ticket in
         """
-        self.checked_in = False
+        if not self.checked_in_at:
+            raise GQLException(
+                message=f"Ticket of id {self.id} cannot be un-checked in as it is not checked-in.",
+            )
+
+        self.checked_in_at = None
+        self.checked_in_by = None
         self.save()
 
     def __str__(self):

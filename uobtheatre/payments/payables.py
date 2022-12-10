@@ -1,5 +1,6 @@
 import abc
-from typing import Optional
+import math
+from typing import TYPE_CHECKING, Optional
 
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.mail import mail_admins
@@ -10,12 +11,18 @@ from django.db.models.query import QuerySet
 from django_celery_results.models import TaskResult
 
 from uobtheatre.payments.emails import payable_refund_initiated_email
-from uobtheatre.payments.exceptions import CantBeRefundedException
-from uobtheatre.payments.models import Transaction
+from uobtheatre.payments.exceptions import (
+    CantBePaidForException,
+    CantBeRefundedException,
+)
+from uobtheatre.payments.models import SalesBreakdown, Transaction
 from uobtheatre.payments.tasks import refund_payable
 from uobtheatre.users.models import User
 from uobtheatre.utils.filters import filter_passes_on_model
 from uobtheatre.utils.models import AbstractModelMeta, BaseModel
+
+if TYPE_CHECKING:
+    from uobtheatre.payments.transaction_providers import PaymentProvider
 
 
 class PayableQuerySet(QuerySet):
@@ -44,6 +51,9 @@ class PayableQuerySet(QuerySet):
         return qs.exclude(filter_query)
 
 
+PayableManager = models.Manager.from_queryset(PayableQuerySet)
+
+# pylint: disable=too-many-public-methods
 class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
     """
     An model which can be paid for
@@ -66,17 +76,14 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
         default=Status.IN_PROGRESS,
     )
 
-    objects = PayableQuerySet.as_manager()
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bookings")
+
+    objects = PayableManager()
 
     @property
     @abc.abstractmethod
     def display_name(self):
         """Return a publically displayable name that represents this payable"""
-
-    @property
-    @abc.abstractmethod
-    def user(self):
-        raise NotImplementedError
 
     @property
     @abc.abstractmethod
@@ -151,59 +158,82 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
                 html_message=mail.to_html(),
             )
 
-    def complete(self, payment: Transaction = None):
+    @property
+    def total(self) -> int:
+        """The total cost of the payable in pence.
+
+        The final price of the payable with all dicounts and misc costs
+        applied. This is the price the User will be charged.
+
+        Returns:
+            (int): total price of the payable in penies
         """
-        Called once the pay object has been completly paid for. Payment passed is the finishing transaction
+        # If the subtotal is 0 then do not apply the misc costs
+        return math.ceil(self.subtotal + self.misc_costs_value) if self.subtotal else 0
+
+    @property
+    @abc.abstractmethod
+    def subtotal(self) -> int:
+        """Price of the payable with discounts applied.
+
+        Returns the subtotal of the payable. This is the total value including
+        single and group discounts before any misc costs are applied. If an
+        admin discount is also applied this will be added here.
+
+        Returns:
+            int: price of the payable with discounts applied in penies
         """
+        raise NotImplementedError
 
     @property
-    def total_sales(self) -> int:
-        """The amount paid by the user for this object."""
-        return self.transactions.annotate_sales_breakdown(["total_sales"])[  # type: ignore
-            "total_sales"
-        ]
+    @abc.abstractmethod
+    def misc_costs_value(self):
+        """The total platform fee, in pence, for this payable"""
+        raise NotImplementedError
+
+    def pay(self, payment_method: "PaymentProvider") -> Optional["Transaction"]:
+        """
+        Pay for payable using provided payment method.
+
+        Args:
+            payment_method (PaymentMethod): The payment method used to pay for
+                the payable
+
+        Returns:
+            Payment: The payment created by the checkout (optional)
+
+        Raises:
+            CantBePaidForException: If the status of the payable is not
+                IN_PROGRESS
+        """
+        if self.status != Payable.Status.IN_PROGRESS:
+            raise CantBePaidForException(
+                message=f"A payable with status {self.get_status_display()} cannot be paid for"
+            )
+
+        # Cancel and delete pending payments for this booking
+        for payment in self.transactions.filter(status=Transaction.Status.PENDING):
+            payment.cancel()
+
+        payment = payment_method.pay(self.total, self.misc_costs_value, self)
+
+        # If a payment is created set the booking as paid
+        if payment.status == Transaction.Status.COMPLETED:
+            self.complete(payment)
+
+        return payment
+
+    def complete(self, payment: Transaction = None):  # pylint: disable=unused-argument
+        """
+        Called once the pay object has been completly paid for. Payment passed
+        is the finishing transaction
+        """
+        self.status = Payable.Status.PAID
+        self.save()
 
     @property
-    def total_refunds(self) -> int:
-        """The amount paid by the user for this object."""
-        return self.transactions.annotate_sales_breakdown(["total_refunds"])[  # type: ignore
-            "total_refunds"
-        ]
-
-    @property
-    def net_income(self) -> int:
-        """The amount paid by the user for this object."""
-        return self.transactions.annotate_sales_breakdown(["net_income"])[  # type: ignore
-            "net_income"
-        ]
-
-    @property
-    def provider_payment_value(self) -> int:
-        """The amount taken by the payment provider in paying for this object."""
-        return self.transactions.annotate_sales_breakdown(["provider_payment_value"])[  # type: ignore
-            "provider_payment_value"
-        ]
-
-    @property
-    def app_payment_value(self) -> int:
-        """The amount taken by us in paying for this object."""
-        return self.transactions.annotate_sales_breakdown(["app_payment_value"])[  # type: ignore
-            "app_payment_value"
-        ]
-
-    @property
-    def society_revenue(self) -> int:
-        """The revenue for the society for selling this object."""
-        return self.transactions.annotate_sales_breakdown(["society_revenue"])[  # type: ignore
-            "society_revenue"
-        ]
-
-    @property
-    def society_transfer_value(self) -> int:
-        """The amount of money to transfere to the society for object."""
-        return self.transactions.annotate_sales_breakdown(["society_transfer_value"])[  # type: ignore
-            "society_transfer_value"
-        ]
+    def sales_breakdown(self) -> SalesBreakdown:
+        return SalesBreakdown(self.transactions)
 
     @property
     def associated_tasks(self):

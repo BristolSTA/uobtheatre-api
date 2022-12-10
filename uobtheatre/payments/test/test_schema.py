@@ -26,14 +26,8 @@ def test_payment_schema(gql_client):
                         id
                         createdAt
                         updatedAt
-                        type {
-                          value
-                          description
-                        }
-                        provider {
-                          value
-                          description
-                        }
+                        type
+                        providerName
                         providerTransactionId
                         value
                         currency
@@ -43,10 +37,7 @@ def test_payment_schema(gql_client):
                         payObject {
                           ... on BookingNode {
                             id
-                            status {
-                              value
-                              description
-                            }
+                            status
                           }
                         }
                       }
@@ -76,16 +67,10 @@ def test_payment_schema(gql_client):
                                                 ),
                                                 "createdAt": payment.created_at.isoformat(),
                                                 "updatedAt": payment.updated_at.isoformat(),
-                                                "type": {
-                                                    "value": str(payment.type).upper(),
-                                                    "description": payment.get_type_display(),
-                                                },
-                                                "provider": {
-                                                    "value": str(
-                                                        payment.provider_name
-                                                    ).upper(),
-                                                    "description": payment.get_provider_name_display(),
-                                                },
+                                                "type": str(payment.type).upper(),
+                                                "providerName": str(
+                                                    payment.provider_name
+                                                ).upper(),
                                                 "providerTransactionId": payment.provider_transaction_id,
                                                 "value": payment.value,
                                                 "currency": payment.currency,
@@ -97,12 +82,9 @@ def test_payment_schema(gql_client):
                                                         "BookingNode",
                                                         payment.pay_object.id,
                                                     ),
-                                                    "status": {
-                                                        "value": str(
-                                                            payment.pay_object.status
-                                                        ),
-                                                        "description": payment.pay_object.get_status_display(),
-                                                    },
+                                                    "status": str(
+                                                        payment.pay_object.status
+                                                    ).upper(),
                                                 },
                                             }
                                         }

@@ -20,6 +20,7 @@ from uobtheatre.images.models import Image
 from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Transaction
 from uobtheatre.productions.exceptions import (
+    InvalidConcessionTypeException,
     InvalidSeatGroupException,
     NotEnoughCapacityException,
 )
@@ -73,7 +74,7 @@ class ContentWarning(models.Model):
     """
 
     short_description = models.CharField(max_length=255)
-    long_description = models.TextField(null=True)
+    long_description = models.TextField(null=True, blank=True)
 
     def __str__(self):
         return str(self.short_description)
@@ -327,7 +328,7 @@ class Performance(
         Returns:
             queryset(Tickets): all tickets for this performance which have been checked in.
         """
-        return self.tickets.sold().filter(checked_in=True)  # type: ignore
+        return self.tickets.sold().filter(checked_in_at__isnull=False)  # type: ignore
 
     @property
     def unchecked_in_tickets(self) -> QuerySet["Ticket"]:
@@ -336,7 +337,7 @@ class Performance(
         Returns:
             queryset(Tickets): all tickets for this performance which have not been checked in.
         """
-        return self.tickets.sold().filter(checked_in=False)  # type: ignore
+        return self.tickets.sold().filter(checked_in_at__isnull=True)  # type: ignore
 
     @property
     def has_group_discounts(self) -> bool:
@@ -574,9 +575,18 @@ class Performance(
         """The cheapest seat in the Performance
 
         Returns:
-            int: The price of the cheapest seat in the performance.
+            int: The price of the cheapest seat in the performance
+            (includes discounted seat options).
         """
-        return self.performance_seat_groups.aggregate(Min("price"))["price__min"]
+        max_discount_percentage = max(self.single_discounts_map.values(), default=0)
+
+        if (
+            min_seat_price := self.performance_seat_groups.aggregate(Min("price"))[
+                "price__min"
+            ]
+        ) is not None:
+            return math.ceil((1 - max_discount_percentage) * min_seat_price)
+        return None
 
     @property
     def is_sold_out(self) -> bool:
@@ -613,8 +623,12 @@ class Performance(
                 (default: [])
 
         Raises:
-            InvalidSeatGroupException: A supplied ticket has a seat group that is not compatiable with the performance
-            NotEnoughCapacityException: The supplied tickets would cause a breach of available capacity
+            InvalidSeatGroupException: A supplied ticket has a seat group that
+                is not compatiable with the performance
+            InvalidConcessionTypeException: A supplied ticket has a concession
+                that is not compatiable with the performance
+            NotEnoughCapacityException: The supplied tickets would cause a
+                breach of available capacity
         """
 
         if deleted_tickets is None:
@@ -666,6 +680,19 @@ class Performance(
                 raise NotEnoughCapacityException(
                     f"There are only {seat_group_remaining_capacity} seats reamining in {seat_group} but you have booked {number_booked}. Please updated your seat selections and try again."
                 )
+
+        # Check each concession type is in the performance
+        concession_types = {ticket.concession_type for ticket in tickets}
+        concession_types_not_in_performance: List[str] = [
+            concession_type.name
+            for concession_type in concession_types  # pylint: disable=consider-iterating-dictionary
+            if concession_type not in self.single_discounts_map.keys()
+        ]
+
+        if concession_types_not_in_performance:
+            raise InvalidConcessionTypeException(
+                f"{' '.join(concession_types_not_in_performance)} are not assigned to the performance {self}"
+            )
 
     def has_boxoffice_permission(self, user: "User") -> bool:
         """
@@ -798,7 +825,8 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
 
     name = models.CharField(max_length=255)
     subtitle = models.CharField(max_length=255, null=True, blank=True)
-    description = TipTapTextField(null=True)
+
+    description = TipTapTextField(null=True, blank=True)
     short_description = models.CharField(max_length=255, null=True, blank=True)
 
     venues = models.ManyToManyField(Venue, through=Performance, editable=False)
@@ -906,16 +934,7 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
         Returns:
             bool: If the booking can be booked.
         """
-        return (
-            len(
-                [
-                    performance
-                    for performance in self.performances.all()
-                    if performance.is_bookable
-                ]
-            )
-            > 0
-        )
+        return any(performance.is_bookable for performance in self.performances.all())
 
     def end_date(self):
         """When the last Performance of the Production ends.

@@ -4,17 +4,16 @@ from graphene import relay
 from graphene_django import DjangoObjectType
 
 from uobtheatre.bookings.schema import BookingNode
-from uobtheatre.payments.models import FinancialTransfer, Transaction
+from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.transaction_providers import (
     PaymentProvider,
     SquarePOS,
     TransactionProvider,
 )
 from uobtheatre.users.abilities import OpenBoxoffice
-from uobtheatre.utils.enums import EnumNode, GrapheneEnumMixin
 from uobtheatre.utils.filters import FilterSet
 
-PaymentMethodsEnum = graphene.Enum("PaymentMethod", PaymentProvider.choices)
+PaymentProviderEnum = graphene.Enum("PaymentProvider", PaymentProvider.choices)
 
 
 class TransactionFilter(FilterSet):
@@ -51,13 +50,9 @@ class SquarePaymentDevice(graphene.ObjectType):
     status = graphene.String()
 
 
-class TransactionNode(GrapheneEnumMixin, DjangoObjectType):
+class TransactionNode(DjangoObjectType):
     url = graphene.String(required=False)
     pay_object = PayObjectUnion()
-    provider = graphene.Field(EnumNode)
-
-    def resolve_provider(self, info):
-        return GrapheneEnumMixin._generate_enum_resolver("provider_name")(self, info)
 
     def resolve_url(self, info):
         return self.url()
@@ -66,12 +61,7 @@ class TransactionNode(GrapheneEnumMixin, DjangoObjectType):
         model = Transaction
         interfaces = (relay.Node,)
         filterset_class = TransactionFilter
-        exclude = ("pay_object_id", "pay_object_type", "provider_name")
-
-
-class FinancialTransferNode(DjangoObjectType):
-    class Meta:
-        model = FinancialTransfer
+        exclude = ("pay_object_id", "pay_object_type")
 
 
 class Query(graphene.ObjectType):
@@ -81,7 +71,7 @@ class Query(graphene.ObjectType):
 
     payment_devices = graphene.List(
         SquarePaymentDevice,
-        payment_provider=graphene.Argument(PaymentMethodsEnum),
+        payment_provider=graphene.Argument(PaymentProviderEnum),
         paired=graphene.Boolean(),
     )
 

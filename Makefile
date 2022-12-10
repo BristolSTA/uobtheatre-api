@@ -120,6 +120,12 @@ isort: ## Run isort to sort imports
 pylint: ## Run pylint to check uobtheatre code
 	$(COMMAND_PREFIX) pylint uobtheatre
 
+lint:
+	make isort
+	make black
+	make pylint
+	make mypy
+
 pipenv-install: ## Setup pipenv locally
 	$(COMMAND_PREFIX) cd /tmp; pipenv lock --requirements > requirements.txt; pip install -r /tmp/requirements.txt
 
@@ -158,6 +164,9 @@ build:
 
 django-shell: ## Open django shell
 	$(COMMAND_PREFIX) python manage.py shell
+
+api-shell: ## Open django shell
+	docker-compose exec api /bin/bash
 
 flush:
 	$(COMMAND_PREFIX) python manage.py flush

@@ -1,8 +1,13 @@
 import abc
+from typing import TYPE_CHECKING, Any
 
 import graphene
+from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from guardian.shortcuts import get_perms
+
+if TYPE_CHECKING:
+    from uobtheatre.users.models import User
 
 
 class AbilitiesMixin:
@@ -40,7 +45,7 @@ class Ability(abc.ABC):
         raise NotImplementedError
 
     @classmethod
-    def user_has(cls, user) -> bool:  # pylint: disable=unused-argument
+    def user_has(cls, user: "User") -> bool:  # pylint: disable=unused-argument
         """Returns whether the user has the ability for any / at all
 
         Args:
@@ -52,7 +57,8 @@ class Ability(abc.ABC):
         return False
 
     @classmethod
-    def user_has_for(cls, user, obj) -> bool:  # pylint: disable=unused-argument
+    # pylint: disable=unused-argument
+    def user_has_for(cls, user: "User", obj: Any) -> bool:
         """Returns whether the user has the ability for a specific object
 
         Args:
@@ -117,9 +123,17 @@ class PermissionsMixin:
     def resolve_permissions(self, info):
         global_perms = [
             perm.codename
-            for perm in info.context.user.user_permissions.filter(
-                content_type=ContentType.objects.get_for_model(self)
-            ).all()
+            for perm in list(
+                info.context.user.user_permissions.filter(
+                    content_type=ContentType.objects.get_for_model(self)
+                ).all()
+            )
+            + list(
+                Permission.objects.filter(
+                    group__id__in=info.context.user.groups.values_list("id", flat=True),
+                    content_type=ContentType.objects.get_for_model(self),
+                ).all()
+            )
         ]
         if hasattr(self, "get_perms"):
             return self.get_perms(info.context.user, self) + global_perms
