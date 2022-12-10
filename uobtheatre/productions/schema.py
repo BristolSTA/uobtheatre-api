@@ -225,9 +225,6 @@ class ProductionNode(
     def resolve_content_warnings(self, info):
         return self.warnings_pivot.order_by("warning__short_description").all()
 
-    def resolve_shortdescription(self, info):
-        return self.shortdescription
-
     @classmethod
     def get_queryset(cls, queryset, info):
         return queryset.user_can_see(info.context.user)
