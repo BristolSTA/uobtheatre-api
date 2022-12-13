@@ -162,7 +162,7 @@ class Transaction(TimeStampedMixin, BaseModel):
     # Amount charged by payment provider in GBP
     provider_fee = models.IntegerField(null=True, blank=True)
     # Amount charged by us to process payment
-    app_fee = models.IntegerField(null=True, blank=True)
+    app_fee = models.IntegerField()
 
     @property
     def is_refunded(self) -> bool:

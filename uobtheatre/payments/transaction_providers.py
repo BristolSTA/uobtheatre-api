@@ -1,6 +1,8 @@
 import abc
+from enum import Enum
+from inspect import FullArgSpec
 import re
-from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Type
+from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Type, Tuple
 from uuid import uuid4
 
 from django.conf import settings
@@ -12,6 +14,23 @@ from uobtheatre.utils.exceptions import PaymentException, SquareException
 
 if TYPE_CHECKING:
     from uobtheatre.payments.payables import Payable
+
+class RefundType(Enum):
+    Full = "Full"
+    # A user refund only refund the value, not the app fee
+    User = "User"
+
+    def get_value(self, transaction: "payment_models.Transaction") -> Tuple[int, int]:
+        """
+        Returns:
+            int: The amount to refund from the value of the booking
+            int: The amount to refund from the app_fee of the booking
+        """
+        match self:
+            case RefundType.Full:
+                return (-transaction.value, -transaction.app_fee)
+            case RefundType.User:
+                return (-(transaction.value - transaction.app_fee), 0)
 
 
 class TransactionProvider(abc.ABC):
@@ -51,7 +70,7 @@ class TransactionProvider(abc.ABC):
 
     @classmethod
     def create_payment_object(
-        cls, pay_object: "Payable", value: int, app_fee, **kwargs
+        cls, pay_object: "Payable", value: int, app_fee: int, **kwargs
     ) -> "payment_models.Transaction":
         return payment_models.Transaction.objects.create(
             provider_name=cls.name,
@@ -108,6 +127,12 @@ class RefundProvider(TransactionProvider, abc.ABC):
     def create_payment_object(cls, *args, **kwargs) -> "payment_models.Transaction":
         kwargs["type"] = payment_models.Transaction.Type.REFUND
         return super().create_payment_object(*args, **kwargs)
+    
+    @abc.abstractmethod
+    def refund(self, payment: "payment_models.Transaction", refund_type: RefundType=RefundType.Full):
+        """
+        Refund the provided transaction
+        """
 
 
 class PaymentProvider(TransactionProvider, abc.ABC):
@@ -260,12 +285,14 @@ class ManualCardRefund(RefundProvider):
     description = "Manually refund"
     is_automatic = False
 
-    def refund(self, payment: "payment_models.Transaction"):
+    def refund(self, payment: "payment_models.Transaction", refund_type: RefundType=RefundType.Full):
+        value_refund_value, app_fee_refund_value = refund_type.get_value(payment)
         self.create_payment_object(
             payment.pay_object,
-            -payment.value,
-            -payment.app_fee if payment.app_fee is not None else None,
-            provider_fee=-payment.provider_fee if payment.provider_fee else None,
+            value_refund_value,
+            app_fee_refund_value,
+            # We refund the provider fee for a full refund, but not for other reund types
+            provider_fee= (-payment.provider_fee if payment.provider_fee else None) if RefundType.Full else 0,
             status=payment_models.Transaction.Status.COMPLETED,
         )
 
@@ -281,13 +308,15 @@ class SquareRefund(RefundProvider, SquareAPIMixin):
     def __init__(self, idempotency_key: str):
         self.idempotency_key = idempotency_key
 
-    def refund(self, payment: "payment_models.Transaction"):
+    def refund(self, payment: "payment_models.Transaction", refund_type: RefundType=RefundType.Full):
         """
         Refund payment using square refund api
         """
+        refund_value, app_fee_refund_value = refund_type.get_value(payment)
+
         body = {
             "idempotency_key": str(self.idempotency_key),
-            "amount_money": {"amount": payment.value, "currency": payment.currency},
+            "amount_money": {"amount": refund_value, "currency": payment.currency},
             "payment_id": payment.provider_transaction_id,
         }
         response = self.client.refunds.refund_payment(body)
@@ -299,7 +328,8 @@ class SquareRefund(RefundProvider, SquareAPIMixin):
         self.create_payment_object(
             payment.pay_object,
             -amount_details["amount"],
-            -payment.app_fee if payment.app_fee is not None else None,
+            app_fee_refund_value,
+            provider_fee=None,
             provider_transaction_id=square_refund_id,
             currency=amount_details["currency"],
             status=payment_models.Transaction.Status.PENDING,

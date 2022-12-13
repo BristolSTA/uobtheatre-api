@@ -433,6 +433,78 @@ class UnCheckInBooking(AuthRequiredMixin, SafeMutation):
         return UnCheckInBooking(booking=booking, performance=performance)
 
 
+class RefundBooking(AuthRequiredMixin, SafeMutation):
+    """Mutation to refund a booking
+
+    Args:
+        booking_id (str): The id of the booking to refund 
+
+
+    Returns:
+        TODO
+
+    Raises:
+        TODO
+        GQLException: 
+    """
+
+    booking = graphene.Field(BookingNode)
+
+    class Arguments:
+        booking_id = IdInputField(required=True)
+
+    @classmethod
+    def resolve_mutation(cls, _, info, booking_id):
+        performance = Performance.objects.get(id=performance)
+        booking = Booking.objects.get(reference=booking_reference)
+
+        # check if the booking pertains to the correct performance
+        if booking.performance != performance:
+            # raise booking performance does not match performance given
+            raise GQLException(
+                field="performance",
+                message="The booking performance does not match the given performance.",
+            )
+
+        # Check user has permission to check in this booking
+        if not info.context.user.has_perm(
+            "productions.boxoffice", performance.production
+        ):
+            raise AuthorizationException(
+                message="You do not have permission to uncheck in this booking.",
+            )
+
+        ticket_objects = list(map(lambda ticket: ticket.to_ticket(), tickets))
+        # loop through the ticket IDs given
+
+        tickets_not_in_booking = [
+            ticket for ticket in ticket_objects if ticket.booking != booking
+        ]
+
+        if tickets_not_in_booking:
+            raise GQLExceptions(
+                exceptions=[
+                    GQLException(
+                        field="booking_reference",
+                        message=f"The booking of ticket {ticket.id} does not match the given booking.",
+                    )
+                    for ticket in tickets_not_in_booking
+                ]
+            )
+
+        tickets_checked_in = [ticket for ticket in ticket_objects if ticket.checked_in]
+
+        if not tickets_checked_in:
+            raise BadRequestException(
+                message="The booking has no checked-in tickets.",
+            )
+
+        for ticket in tickets_checked_in:
+            ticket.uncheck_in()
+
+        return UnCheckInBooking(booking=booking, performance=performance)
+
+
 class Mutation(graphene.ObjectType):
     """Mutations for bookings"""
 
