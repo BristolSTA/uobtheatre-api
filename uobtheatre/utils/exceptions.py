@@ -58,8 +58,8 @@ class GQLErrorUnion(graphene.Union):
 
 
 class MutationResult:
-    success = graphene.Boolean(default_value=True)
-    errors = graphene.List(GQLErrorUnion)
+    success = graphene.Boolean(default_value=True, required=True)
+    errors = graphene.List(graphene.NonNull(GQLErrorUnion))
 
 
 class AuthOutput(MutationResult):
