@@ -9,10 +9,8 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models import Max, Min, Sum
 from django.db.models.query import Q, QuerySet
-from django.template.defaultfilters import truncatewords
 from django.utils import timezone
 from django.utils.functional import cached_property
-from django.utils.html import strip_tags
 from django_tiptap.fields import TipTapTextField
 from guardian.shortcuts import get_objects_for_user
 
@@ -1000,14 +998,6 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
         """The total number of tickets sold across all performances"""
         return sum(
             performance.total_tickets_sold() for performance in self.performances.all()
-        )
-
-    @property
-    def shortdescription(self) -> Optional[str]:
-        return (
-            self.short_description or truncatewords(strip_tags(self.description), 20)
-            if self.description
-            else None
         )
 
     def sales_breakdown(self, breakdowns: list[str] = None):
