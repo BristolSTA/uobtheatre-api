@@ -322,38 +322,6 @@ def test_production_venues():
     assertQuerysetEqual(production.venues.distinct().all(), [venue_1, venue_2])
 
 
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    "short_description,description,expected",
-    [
-        [
-            "the end of the world as we know it",
-            "Description",
-            "the end of the world as we know it",
-        ],
-        [
-            "",
-            """ The <b> New Hit Musical </b>
-                About somebody who dyed their hair blonde but is legally ginger
-                A link to a ginger with a soul!!""",
-            "The New Hit Musical About somebody who dyed their hair blonde but is legally ginger A link to a ginger …",
-        ],
-        [
-            None,
-            """ The <b> New Hit Musical </b>
-                About somebody who dyed their""",
-            "The New Hit Musical About somebody who dyed their",
-        ],
-        [None, None, None],
-    ],
-)
-def test_production_shortdescription(short_description, description, expected):
-    production = ProductionFactory(
-        short_description=short_description, description=description
-    )
-    assert production.shortdescription == expected
-
-
 ###
 # Performance
 ###

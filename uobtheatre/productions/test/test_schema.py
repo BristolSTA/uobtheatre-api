@@ -90,7 +90,7 @@ def test_productions_schema(gql_client):
                 }
                 start
                 end
-                shortdescription
+                short_description
                 minSeatPrice
                 cast {
                   id
