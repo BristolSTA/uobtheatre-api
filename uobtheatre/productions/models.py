@@ -823,7 +823,9 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
 
     name = models.CharField(max_length=255)
     subtitle = models.CharField(max_length=255, null=True, blank=True)
+
     description = TipTapTextField(null=True, blank=True)
+    short_description = models.CharField(max_length=255, null=True, blank=True)
 
     venues = models.ManyToManyField(Venue, through=Performance, editable=False)
 

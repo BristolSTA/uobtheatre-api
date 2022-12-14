@@ -191,6 +191,8 @@ class ProductionNode(PermissionsMixin, AssignedUsersMixin, DjangoObjectType):
     total_capacity = graphene.Int(required=True)
     total_tickets_sold = graphene.Int(required=True)
 
+    short_description = graphene.String()
+
     def resolve_venues(self, info):
         return self.venues.distinct()
 
