@@ -623,7 +623,6 @@ type ProductionNode implements Node {
   salesBreakdown: SalesBreakdownNode
   totalCapacity: Int!
   totalTicketsSold: Int!
-  shortdescription: String
 }
 
 type ProductionNodeConnection {
