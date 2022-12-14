@@ -15,8 +15,8 @@ type AddressNode implements Node {
 }
 
 type ArchiveAccount {
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
 }
 
 input BookingMutationInput {
@@ -31,8 +31,8 @@ input BookingMutationInput {
 
 type BookingMutationPayload {
   booking: BookingNode
-  errors: [GQLErrorUnion]
-  success: Boolean
+  errors: [GQLErrorUnion!]
+  success: Boolean!
   clientMutationId: String
 }
 
@@ -72,8 +72,8 @@ enum BookingStatus {
 }
 
 type CancelPayment {
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
 }
 
 type CastMemberNode implements Node {
@@ -85,8 +85,8 @@ type CastMemberNode implements Node {
 }
 
 type CheckInBooking {
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
   performance: PerformanceNode
   booking: BookingNode
 }
@@ -106,8 +106,8 @@ input ConcessionTypeMutationInput {
 
 type ConcessionTypeMutationPayload {
   concessionType: ConcessionTypeNode
-  errors: [GQLErrorUnion]
-  success: Boolean
+  errors: [GQLErrorUnion!]
+  success: Boolean!
   clientMutationId: String
 }
 
@@ -178,38 +178,38 @@ scalar Date
 scalar DateTime
 
 type DeleteAccount {
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
 }
 
 type DeleteBooking {
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
 }
 
 type DeleteConcessionTypeMutation {
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
 }
 
 type DeleteDiscountMutation {
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
 }
 
 type DeleteDiscountRequirementMutation {
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
 }
 
 type DeletePerformanceMutation {
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
 }
 
 type DeletePerformanceSeatGroupMutation {
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
 }
 
 input DiscountMutationInput {
@@ -222,8 +222,8 @@ input DiscountMutationInput {
 
 type DiscountMutationPayload {
   discount: DiscountNode
-  errors: [GQLErrorUnion]
-  success: Boolean
+  errors: [GQLErrorUnion!]
+  success: Boolean!
   clientMutationId: String
 }
 
@@ -256,8 +256,8 @@ input DiscountRequirementMutationInput {
 
 type DiscountRequirementMutationPayload {
   discountRequirement: DiscountRequirementNode
-  errors: [GQLErrorUnion]
-  success: Boolean
+  errors: [GQLErrorUnion!]
+  success: Boolean!
   clientMutationId: String
 }
 
@@ -308,8 +308,8 @@ type FinancialTransferNode {
 union GQLErrorUnion = FieldError | NonFieldError
 
 type GenerateReport {
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
   downloadUri: String
   report: ReportNode
 }
@@ -390,8 +390,8 @@ type NonFieldError {
 
 type ObtainJSONWebToken {
   token: String
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
   user: UserNode
   unarchiving: Boolean
   refreshToken: String
@@ -405,25 +405,25 @@ type PageInfo {
 }
 
 type PasswordChange {
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
   refreshToken: String
   token: String
 }
 
 type PasswordReset {
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
 }
 
 type PasswordSet {
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
 }
 
 type PayBooking {
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
   booking: BookingNode
   payment: TransactionNode
 }
@@ -453,8 +453,8 @@ input PerformanceMutationInput {
 
 type PerformanceMutationPayload {
   performance: PerformanceNode
-  errors: [GQLErrorUnion]
-  success: Boolean
+  errors: [GQLErrorUnion!]
+  success: Boolean!
   clientMutationId: String
 }
 
@@ -508,8 +508,8 @@ input PerformanceSeatGroupMutationInput {
 
 type PerformanceSeatGroupMutationPayload {
   performanceSeatGroup: PerformanceSeatGroupNode
-  errors: [GQLErrorUnion]
-  success: Boolean
+  errors: [GQLErrorUnion!]
+  success: Boolean!
   clientMutationId: String
 }
 
@@ -585,8 +585,8 @@ input ProductionMutationInput {
 
 type ProductionMutationPayload {
   production: ProductionNode
-  errors: [GQLErrorUnion]
-  success: Boolean
+  errors: [GQLErrorUnion!]
+  success: Boolean!
   clientMutationId: String
 }
 
@@ -637,8 +637,8 @@ type ProductionNodeEdge {
 }
 
 type ProductionPermissionsMutation {
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
 }
 
 enum ProductionStatus {
@@ -679,27 +679,27 @@ type Query {
 }
 
 type RecordFinancialTransfer {
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
   transfer: FinancialTransferNode
 }
 
 type RefreshToken {
   token: String
   payload: GenericScalar
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
   refreshToken: String
 }
 
 type Register {
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
 }
 
 type RemoveSecondaryEmail {
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
 }
 
 type ReportNode {
@@ -713,14 +713,14 @@ input ReportOption {
 }
 
 type ResendActivationEmail {
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
 }
 
 type RevokeToken {
   revoked: Int
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
 }
 
 type SalesBreakdownNode {
@@ -763,18 +763,18 @@ type SeatNode implements Node {
 }
 
 type SendPasswordResetEmail {
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
 }
 
 type SendSecondaryEmailActivation {
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
 }
 
 type SetProductionStatus {
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
 }
 
 type SocietyNode implements Node {
@@ -823,8 +823,8 @@ enum Status {
 }
 
 type SwapEmails {
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
 }
 
 input TicketIDInput {
@@ -913,15 +913,15 @@ enum TransferMethodEnum {
 }
 
 type UnCheckInBooking {
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
   performance: PerformanceNode
   booking: BookingNode
 }
 
 type UpdateAccount {
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
 }
 
 type UserNode implements Node {
@@ -977,17 +977,17 @@ type VenueNodeEdge {
 }
 
 type VerifyAccount {
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
 }
 
 type VerifySecondaryEmail {
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
 }
 
 type VerifyToken {
   payload: GenericScalar
-  success: Boolean
-  errors: [GQLErrorUnion]
+  success: Boolean!
+  errors: [GQLErrorUnion!]
 }
