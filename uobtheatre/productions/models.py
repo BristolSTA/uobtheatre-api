@@ -17,6 +17,7 @@ from guardian.shortcuts import get_objects_for_user
 from uobtheatre.images.models import Image
 from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Transaction
+from uobtheatre.payments.payables import Payable
 from uobtheatre.productions.exceptions import (
     InvalidConcessionTypeException,
     InvalidSeatGroupException,
@@ -244,7 +245,9 @@ class PerformanceQuerySet(QuerySet):
         This excludes any bookings that have been refunded.
         """
         return User.objects.filter(
-            bookings__in=self.bookings().refunded(bool_val=False)
+            bookings__in=self.bookings()
+            .refunded(bool_val=False)
+            .filter(status=Payable.Status.PAID)
         ).distinct()
 
 
