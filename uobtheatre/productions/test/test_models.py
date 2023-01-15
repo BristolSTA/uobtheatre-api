@@ -1381,11 +1381,8 @@ def test_performances_booked_users():
     TransactionFactory(value=-2, pay_object=booking_3)
 
     # Not included as in progress
-    booking_4 = BookingFactory(
-        performance=performance_1, status=Payable.Status.IN_PROGRESS
-    )
+    _ = BookingFactory(performance=performance_1, status=Payable.Status.IN_PROGRESS)
 
-    print(booking_4.status)
     # Make another booking for the same user and assert it only shows up once
     performance_2 = PerformanceFactory()
     TransactionFactory(
