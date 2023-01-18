@@ -1,6 +1,7 @@
 # pylint: disable=too-many-public-methods,too-many-lines
 import datetime
 import math
+from itertools import groupby
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from autoslug import AutoSlugField
@@ -606,7 +607,9 @@ class Performance(
             or (self.end and self.end < timezone.now())
         )
 
-    def validate_tickets(self, tickets, deleted_tickets=None):
+    def validate_tickets(
+        self, tickets, deleted_tickets=None
+    ):  # pylint: disable=too-many-locals
         """Validates a set of tickets to be added to the performance.
 
         Used to check if an update to the Performances Tickets is possible with
@@ -689,11 +692,22 @@ class Performance(
             for concession_type in concession_types  # pylint: disable=consider-iterating-dictionary
             if concession_type not in self.single_discounts_map.keys()
         ]
-
         if concession_types_not_in_performance:
             raise InvalidConcessionTypeException(
                 f"{' '.join(concession_types_not_in_performance)} are not assigned to the performance {self}"
             )
+
+        # Check that the tickets being booked do not exceed concession type limit
+        for tickets_concession_type, grouped_tickets in groupby(
+            tickets, lambda ticket: ticket.concession_type
+        ):
+            concession_type_max_tickets = tickets_concession_type.max_per_booking
+            if (not concession_type_max_tickets is None) and (
+                len(list(grouped_tickets)) > concession_type_max_tickets
+            ):
+                raise NotEnoughCapacityException(
+                    f"You may not book more than {concession_type_max_tickets} {tickets_concession_type.name} ticket(s) to the performance {self}"
+                )
 
     def has_boxoffice_permission(self, user: "User") -> bool:
         """

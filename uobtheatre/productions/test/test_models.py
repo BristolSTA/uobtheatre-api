@@ -950,6 +950,43 @@ def test_performance_validate_tickets_concession_type_not_in_performance():
 
 
 @pytest.mark.django_db
+def test_performance_validate_tickets_concession_type_max_per_booking():
+    adult = ConcessionTypeFactory(name="Adult")
+    student_booking_lim = 1
+    student = ConcessionTypeFactory(name="Student", max_per_booking=student_booking_lim)
+
+    psg = PerformanceSeatingFactory(capacity=100)
+
+    requirement_1 = DiscountRequirementFactory(concession_type=adult)
+    requirement_1.discount.performances.set([psg.performance])
+
+    requirement_2 = DiscountRequirementFactory(concession_type=student)
+    requirement_2.discount.performances.set([psg.performance])
+
+    booking_1 = BookingFactory(performance=psg.performance)
+
+    tickets = [
+        Ticket(seat_group=psg.seat_group, booking=booking_1, concession_type=adult),
+        Ticket(seat_group=psg.seat_group, booking=booking_1, concession_type=student),
+        Ticket(seat_group=psg.seat_group, booking=booking_1, concession_type=student),
+    ]
+
+    with pytest.raises(NotEnoughCapacityException) as err:
+        psg.performance.validate_tickets(tickets=tickets)
+    assert (
+        err.value.message
+        == f"You may not book more than {student_booking_lim} {student.name} ticket(s) to the performance {psg.performance}"
+    )
+
+    tickets = [
+        Ticket(seat_group=psg.seat_group, booking=booking_1, concession_type=adult),
+        Ticket(seat_group=psg.seat_group, booking=booking_1, concession_type=adult),
+        Ticket(seat_group=psg.seat_group, booking=booking_1, concession_type=student),
+    ]
+    psg.performance.validate_tickets(tickets=tickets)
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     "disabled,sold_out,past,expected",
     [

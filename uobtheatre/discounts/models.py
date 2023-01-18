@@ -19,6 +19,8 @@ class ConcessionType(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
 
+    max_per_booking = models.IntegerField(null=True, blank=True)
+
     def __str__(self) -> str:
         return str(self.name)
 

@@ -8,6 +8,7 @@ class ConcessionTypeForm(MutationForm):
         fields = (
             "name",
             "description",
+            "max_per_booking",
         )
 
 

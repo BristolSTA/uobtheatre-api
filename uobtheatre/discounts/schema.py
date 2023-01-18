@@ -25,7 +25,7 @@ class ConcessionTypeNode(DjangoObjectType):
     class Meta:
         model = ConcessionType
         interfaces = (relay.Node,)
-        fields = ("name", "description")
+        fields = ("name", "description", "max_per_booking")
 
 
 class DiscountRequirementNode(DjangoObjectType):

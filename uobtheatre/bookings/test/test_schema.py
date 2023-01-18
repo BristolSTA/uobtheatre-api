@@ -498,6 +498,8 @@ def test_discounts_node(gql_client):
                         }
                         concessionType {
                           id
+                          name
+                          max_per_booking
                         }
                       }
                     }
@@ -549,7 +551,9 @@ def test_discounts_node(gql_client):
                                                         "id": to_global_id(
                                                             "ConcessionTypeNode",
                                                             requirement.concession_type.id,
-                                                        )
+                                                        ),
+                                                        "name": requirement.concession_type.name,
+                                                        "max_per_booking": requirement.concession_type.max_per_booking,
                                                     },
                                                 }
                                                 for requirement in discount.requirements.all()
