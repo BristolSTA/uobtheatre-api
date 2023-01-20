@@ -41,14 +41,14 @@ type BookingNode implements Node {
   createdAt: DateTime!
   updatedAt: DateTime!
   status: BookingStatus!
-  user: ExtendedUserNode
+  user: ExtendedUserNode!
   reference: String!
   creator: ExtendedUserNode!
   performance: PerformanceNode!
   adminDiscountPercentage: Float!
   accessibilityInfo: String
   expiresAt: DateTime!
-  tickets: [TicketNode!]
+  tickets: [TicketNode!]!
   priceBreakdown: PriceBreakdownNode
   transactions(offset: Int, before: String, after: String, first: Int, last: Int, type: String, provider: String, createdAt: DateTime, id: ID): TransactionNodeConnection
   expired: Boolean!
