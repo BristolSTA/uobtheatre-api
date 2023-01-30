@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, Tuple
 from typing import TYPE_CHECKING, Optional
 
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -27,6 +27,23 @@ from uobtheatre.utils.models import BaseModel, TimeStampedMixin
 
 if TYPE_CHECKING:
     from uobtheatre.payments.payables import Payable
+
+class RefundType(Enum):
+    Full = "Full"
+    # A user refund only refund the value, not the app fee
+    User = "User"
+
+    def get_value(self, transaction: "Transaction") -> Tuple[int, int]:
+        """
+        Returns:
+            int: The amount to refund from the value of the booking
+            int: The amount to refund from the app_fee of the booking
+        """
+        match self:
+            case RefundType.Full:
+                return (-transaction.value, -transaction.app_fee)
+            case RefundType.User:
+                return (-(transaction.value - transaction.app_fee), 0)
 
 
 class TransactionQuerySet(QuerySet):
@@ -267,7 +284,7 @@ class Transaction(TimeStampedMixin, BaseModel):
         """
         refund_payment.delay(self.pk)
 
-    def refund(self, refund_provider: RefundProvider = None):
+    def refund(self, refund_provider: RefundProvider = None, refund_type: RefundType = RefundType.Full):
         """
         Refund the payment
 
@@ -290,7 +307,7 @@ class Transaction(TimeStampedMixin, BaseModel):
                     f"A {self.provider_name} payment cannot be automatically refunded"
                 )
 
-        refund_provider.refund(self)
+        refund_provider.refund(self, refund_type)
 
 
 class SalesBreakdown:
