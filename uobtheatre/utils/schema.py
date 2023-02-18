@@ -132,8 +132,7 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
 
         # Iterate over all the fields in the form
         form = cls.get_form(root, info, **input_items)
-        for (key, field) in form.fields.items():
-
+        for key, field in form.fields.items():
             # If the field is a model choice field and it has a value (i.e. accepts an ID), try converting from a global ID
             if isinstance(field, ModelChoiceField) and form[key].value():
                 try:
@@ -316,7 +315,8 @@ class ModelDeletionMutation(AuthRequiredMixin, SafeMutation):
     ):  # pragma: no cover
         """Inits the subclass with meta..."""
         if not model:
-            raise Exception("model is required for ModelDeletionMutation") # pylint: disable=broad-exception-raised
+            # pylint: disable=broad-exception-raised
+            raise Exception("model is required for ModelDeletionMutation")
 
         _meta = ModelDeletionMutationOptions(cls)
         _meta.model = model
@@ -378,10 +378,12 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
     ):  # pragma: no cover
         """Inits the subclass with meta..."""
         if not model:
-            raise Exception("model is required for AssignPermissionsMutation") # pylint: disable=broad-exception-raised
+            # pylint: disable=broad-exception-raised
+            raise Exception("model is required for AssignPermissionsMutation")
 
         if isinstance(model, PermissionableModel):
-            raise Exception("model must be Permissionable") # pylint: disable=broad-exception-raised
+            # pylint: disable=broad-exception-raised
+            raise Exception("model must be Permissionable")
 
         _meta = ModelDeletionMutationOptions(cls)
         _meta.model = model
