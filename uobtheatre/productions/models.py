@@ -1027,4 +1027,5 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
             "view_bookings": ("change_production", "force_change_production"),
             "change_production": ("change_production", "force_change_production"),
             "sales": ("change_production", "force_change_production"),
+            "approve_production": ("approve_production"),
         }
