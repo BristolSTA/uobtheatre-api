@@ -16,6 +16,40 @@ def test_str_user():
 
 
 @pytest.mark.django_db
+def test_has_perm_via_direct():
+    user = UserFactory()
+    production = ProductionFactory()
+
+    assign_perm("productions.change_production", user)
+
+    assert user.has_perm("change_production", production)
+    assert user.has_perm("productions.change_production", production)
+
+
+@pytest.mark.django_db
+def test_has_perm_via_object():
+    user = UserFactory()
+    production = ProductionFactory()
+
+    assign_perm("productions.change_production", user, production)
+
+    assert user.has_perm("change_production", production)
+    assert user.has_perm("productions.change_production", production)
+
+@pytest.mark.django_db
+def test_has_perm_via_group():
+    user = UserFactory()
+    production = ProductionFactory()
+    group = GroupFactory()
+    group.user_set.add(user)
+
+    assign_perm("productions.change_production", group)
+
+    assert user.has_perm("change_production", production)
+    assert user.has_perm("productions.change_production", production)
+
+
+@pytest.mark.django_db
 def test_boxoffice_permissions_object_level(
     gql_client: AuthenticateableGQLClient,
 ):
@@ -124,7 +158,6 @@ def test_user_get_global_permissions_superuser():
 def test_user_has_any_objects_with_perms(
     global_perms, object_perms, query_perms, expected
 ):
-
     user = UserFactory()
     for perm in global_perms:
         user.assign_perm(perm)

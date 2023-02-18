@@ -90,7 +90,7 @@ class AuthOutput(MutationResult):
             ]
             return non_field_errors + field_errors
 
-        raise Exception("Internal error")
+        raise Exception("Internal error") # pylint: disable=broad-exception-raised
 
 
 class MutationException(Exception):

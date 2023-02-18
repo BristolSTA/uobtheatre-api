@@ -104,6 +104,7 @@ class OpenAdmin(Ability):
                     "productions.add_production",
                     "productions.change_production",
                     "productions.view_production",
+                    "productions.approve_production",
                 ]
             )
             or user.has_any_objects_with_perms(["societies.add_production"])
