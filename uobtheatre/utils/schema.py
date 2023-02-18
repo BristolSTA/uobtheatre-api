@@ -316,7 +316,7 @@ class ModelDeletionMutation(AuthRequiredMixin, SafeMutation):
     ):  # pragma: no cover
         """Inits the subclass with meta..."""
         if not model:
-            raise Exception("model is required for ModelDeletionMutation")
+            raise Exception("model is required for ModelDeletionMutation") # pylint: disable=broad-exception-raised
 
         _meta = ModelDeletionMutationOptions(cls)
         _meta.model = model
@@ -378,10 +378,10 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
     ):  # pragma: no cover
         """Inits the subclass with meta..."""
         if not model:
-            raise Exception("model is required for AssignPermissionsMutation")
+            raise Exception("model is required for AssignPermissionsMutation") # pylint: disable=broad-exception-raised
 
         if isinstance(model, PermissionableModel):
-            raise Exception("model must be Permissionable")
+            raise Exception("model must be Permissionable") # pylint: disable=broad-exception-raised
 
         _meta = ModelDeletionMutationOptions(cls)
         _meta.model = model

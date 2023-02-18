@@ -57,7 +57,7 @@ class User(AbilitiesMixin, AbstractUser, BaseModel):
             bool: Whether the user has permission to access the object/model.
         """
         if not "." in perm and obj:
-            perm = obj._meta.app_label + "." + perm
+            perm = obj._meta.app_label + "." + perm # pylint: disable=protected-access
 
         return super().has_perm(perm) or (super().has_perm(perm, obj) if obj else False)
 

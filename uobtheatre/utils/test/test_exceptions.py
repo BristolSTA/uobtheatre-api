@@ -49,7 +49,7 @@ def test_auth_error_handling_no_error():
 def test_safe_mutation_throws_unknown_exception():
     class SomeMutation(SafeMutation):
         def resolve_mutation(cls, info, **inputs):  # pylint: disable=no-self-argument
-            raise Exception("Some exception")
+            raise Exception("Some exception") # pylint: disable=broad-exception-raised
 
     with pytest.raises(Exception, match="Some exception"):
         SomeMutation.mutate(None, None)
