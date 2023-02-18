@@ -27,6 +27,7 @@ from uobtheatre.utils.filters import filter_passes_on_model
 from uobtheatre.utils.models import BaseModel, TimeStampedMixin
 from uobtheatre.utils.utils import combinations, create_short_uuid
 from uobtheatre.venues.models import Seat, SeatGroup
+from uobtheatre.wallets.google_wallet import GoogleWallet
 
 if TYPE_CHECKING:
     from uobtheatre.payments.transaction_providers import PaymentProvider
@@ -596,6 +597,15 @@ class Booking(TimeStampedMixin, Payable):
     @property
     def display_name(self):
         return f"Booking Ref. {self.reference} for {str(self.performance).lower()}"
+
+    # TODO Putting this in the query might be a bit spooky...
+    @property
+    def google_wallet_url(self):
+        wallet_client = GoogleWallet()
+        # wallet_client.create_ticket_class(self.performance.id, self.performance.production.name, self.performance.production.society.name)
+        # TODO When a booking is created generate the object and then just generate the url here
+        print("About to jwt thing")
+        return wallet_client.create_jwt_new_objects(self.id, self.performance.google_wallet_event_id)
 
 
 class TicketQuerySet(QuerySet):

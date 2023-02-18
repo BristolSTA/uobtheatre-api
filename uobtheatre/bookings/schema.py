@@ -258,6 +258,7 @@ class BookingNode(DjangoObjectType):
     )
     expired = graphene.Boolean(required=True)
     sales_breakdown = graphene.Field(SalesBreakdownNode)
+    google_wallet_url = graphene.String()
 
     def resolve_price_breakdown(self, _):
         return self

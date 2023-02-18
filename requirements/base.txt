@@ -61,6 +61,10 @@ PyJWT==1.7.0
 
 squareup>=9.0.0.20210226
 
+#=== Google API (Wallet) ===#
+
+google-api-python-client==2.74.0
+
 #=== Logging ===#
 
 sentry-sdk==1.14.0

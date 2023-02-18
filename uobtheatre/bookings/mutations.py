@@ -432,7 +432,6 @@ class UnCheckInBooking(AuthRequiredMixin, SafeMutation):
 
         return UnCheckInBooking(booking=booking, performance=performance)
 
-
 class Mutation(graphene.ObjectType):
     """Mutations for bookings"""
 
