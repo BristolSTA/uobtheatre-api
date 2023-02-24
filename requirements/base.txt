@@ -36,7 +36,7 @@ psycopg2==2.9.5  # https://github.com/psycopg/psycopg2
 
 #=== Django core ===#
 
-django==3.2.16
+django==3.2.18
 
 #=== Django Extras ===#
 
