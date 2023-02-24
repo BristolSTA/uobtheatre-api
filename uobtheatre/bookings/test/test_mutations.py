@@ -534,7 +534,7 @@ def test_create_booking_admin_discount(gql_client, discount, should_be_valid):
         discount,
     )
     gql_client.login()
-    assign_perm("change_production", gql_client.user, performance.production)
+    assign_perm("apply_booking_discount", gql_client.user, performance.production)
     response = gql_client.execute(request)
 
     assert response["data"]["booking"]["success"] is should_be_valid
