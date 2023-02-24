@@ -4,30 +4,31 @@
 	"service": "api",
 	"workspaceFolder": "/app/uobtheatre-api",
 	"postCreateCommand": "make setup-devcontainer",
-	"settings": {
-		"terminal.integrated.shell.linux": "/bin/bash",
-		"python.pythonPath": "/usr/local/bin/python",
-		"python.linting.enabled": true,
-		"python.linting.pylintEnabled": true,
-		"python.formatting.autopep8Path": "/usr/local/bin/autopep8",
-		"python.formatting.blackPath": "/usr/local/bin/black",
-		"python.formatting.yapfPath": "/usr/local/bin/yapf",
-		"python.linting.banditPath": "/usr/local/bin/bandit",
-		"python.linting.flake8Path": "/usr/local/bin/flake8",
-		"python.linting.mypyPath": "/usr/local/bin/mypy",
-		"python.linting.pycodestylePath": "/usr/local/bin/pycodestyle",
-		"python.linting.pydocstylePath": "/usr/local/bin/pydocstyle",
-		"python.linting.pylintPath": "/usr/local/bin/pylint"
+	"customizations": {
+		"vscode": {
+			"settings": {
+				"python.pythonPath": "/usr/local/bin/python",
+				"python.linting.enabled": true,
+				"python.linting.pylintEnabled": true,
+				"python.formatting.autopep8Path": "/usr/local/bin/autopep8",
+				"python.formatting.blackPath": "/usr/local/bin/black",
+				"python.formatting.yapfPath": "/usr/local/bin/yapf",
+				"python.linting.banditPath": "/usr/local/bin/bandit",
+				"python.linting.flake8Path": "/usr/local/bin/flake8",
+				"python.linting.mypyPath": "/usr/local/bin/mypy",
+				"python.linting.pycodestylePath": "/usr/local/bin/pycodestyle",
+				"python.linting.pydocstylePath": "/usr/local/bin/pydocstyle",
+				"python.linting.pylintPath": "/usr/local/bin/pylint"
+			},
+			"extensions": [
+				"ms-python.python",
+				"njpwerner.autodocstring",
+				"eamodio.gitlens"
+			]
+		}
 	},
-
-	"extensions": [
-		"ms-python.python",
-		"njpwerner.autodocstring",
-		"eamodio.gitlens"
-	],
-
 	"remoteEnv": {
 		"DATABASE_URL": "postgres://${containerEnv:POSTGRES_USER}:${containerEnv:POSTGRES_PASSWORD}@${containerEnv:POSTGRES_HOST}:${containerEnv:POSTGRES_PORT}/${containerEnv:POSTGRES_DB}",
-		"DEV_CONTAINER": true
+		"DEV_CONTAINER": "true"
 	}
 }
