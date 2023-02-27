@@ -97,6 +97,7 @@ class SquareWebhooks(APIView):
                 ).sync_transaction_with_provider(data)
 
             elif request_data["type"] == "refund.updated":
+                # This is a refund webhook
                 Transaction.objects.get(
                     provider_transaction_id=request_data["data"]["id"],
                     type=Transaction.Type.REFUND,

@@ -10,7 +10,7 @@ from square.http.api_response import ApiResponse as SquareApiResponse
 from uobtheatre.payments import models as payment_models
 from uobtheatre.payments.exceptions import (
     CantBeRefundedException,
-    IncorrectTransactionProvider,
+    IncorrectTransactionProviderException,
 )
 from uobtheatre.utils.exceptions import PaymentException, SquareException
 
@@ -291,7 +291,7 @@ class SquarePOSRefund(RefundProvider, SquareAPIMixin):
         """
 
         if not payment.provider == SquarePOS:
-            raise IncorrectTransactionProvider()
+            raise IncorrectTransactionProviderException()
 
         if not payment.provider_transaction_id:
             raise CantBeRefundedException(

@@ -16,7 +16,7 @@ class CantBePaidForException(GQLException):
         super().__init__(message)
 
 
-class IncorrectTransactionProvider(GQLException):
+class IncorrectTransactionProviderException(GQLException):
     def __init__(
         self, message="The supplied transaction is not of the correct type"
     ) -> None:
