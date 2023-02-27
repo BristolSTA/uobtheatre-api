@@ -432,6 +432,11 @@ class SquarePOS(PaymentProvider, SquarePaymentMethod):
         self.idempotency_key = idempotency_key
         super().__init__()
 
+    @classmethod
+    @property
+    def refund_providers(cls):
+        return (SquarePOSRefund(idempotency_key=str(uuid4())),)
+
     def pay(
         self, value: int, app_fee: int, pay_object: "Payable"
     ) -> "payment_models.Transaction":
