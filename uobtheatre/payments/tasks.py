@@ -14,7 +14,7 @@ class RefundTask(BaseTask, abc.ABC):
         self, exc, task_id, args, kwargs, einfo
     ):  # pylint: disable=too-many-arguments
         if isinstance(exc, CantBeRefundedException):
-            self.update_state(state="SKIPPED")
+            self.update_state(state="SKIPPED", meta={"message": exc.message})
         else:
             super().on_failure(exc, task_id, args, kwargs, einfo)
 

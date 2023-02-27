@@ -30,6 +30,7 @@ class ProductionFactory(factory.django.DjangoModelFactory):
     cover_image = factory.SubFactory(ImageFactory)
     contact_email = factory.Faker("email")
     status = Production.Status.PUBLISHED
+    short_description = factory.Faker("sentence", nb_words=15)
 
     class Meta:
         model = Production

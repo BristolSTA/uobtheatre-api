@@ -78,6 +78,7 @@ class ProductionForm(MutationForm):
             "subtitle",
             "society",
             "description",
+            "short_description",
             "cover_image",
             "poster_image",
             "featured_image",

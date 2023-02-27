@@ -251,8 +251,8 @@ class BookingFilter(FilterSet):
 
 class BookingNode(DjangoObjectType):
     price_breakdown = graphene.Field(PriceBreakdownNode)
-    tickets = DjangoListField(TicketNode)
-    user = graphene.Field(ExtendedUserNode)
+    tickets = DjangoListField(TicketNode, required=True)
+    user = graphene.Field(ExtendedUserNode, required=True)
     transactions = DjangoFilterConnectionField(
         "uobtheatre.payments.schema.TransactionNode"
     )

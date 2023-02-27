@@ -17,6 +17,7 @@ from guardian.shortcuts import get_objects_for_user
 from uobtheatre.images.models import Image
 from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Transaction
+from uobtheatre.payments.payables import Payable
 from uobtheatre.productions.exceptions import (
     InvalidConcessionTypeException,
     InvalidSeatGroupException,
@@ -244,7 +245,9 @@ class PerformanceQuerySet(QuerySet):
         This excludes any bookings that have been refunded.
         """
         return User.objects.filter(
-            bookings__in=self.bookings().refunded(bool_val=False)
+            bookings__in=self.bookings()
+            .refunded(bool_val=False)
+            .filter(status=Payable.Status.PAID)
         ).distinct()
 
 
@@ -823,7 +826,9 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
 
     name = models.CharField(max_length=255)
     subtitle = models.CharField(max_length=255, null=True, blank=True)
+
     description = TipTapTextField(null=True, blank=True)
+    short_description = models.CharField(max_length=255, null=True, blank=True)
 
     venues = models.ManyToManyField(Venue, through=Performance, editable=False)
 
@@ -1022,4 +1027,5 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
             "view_bookings": ("change_production", "force_change_production"),
             "change_production": ("change_production", "force_change_production"),
             "sales": ("change_production", "force_change_production"),
+            "approve_production": ("approve_production"),
         }

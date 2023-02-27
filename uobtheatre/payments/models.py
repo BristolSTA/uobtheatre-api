@@ -313,7 +313,7 @@ class SalesBreakdown:
             0,
         )
         NET_TRANSACTIONS = Sum("value")
-        NET_CARD_TRANSACTIONS = Sum("value", filter=(~Q(provider_name=Cash.name)))
+        NET_CARD_TRANSACTIONS = Sum("value", filter=~Q(provider_name=Cash.name))
         TOTAL_PAYMENTS = Sum("value", filter=Q(type=Transaction.Type.PAYMENT))
         TOTAL_CARD_PAYMENTS = Sum(
             "value",

@@ -58,8 +58,8 @@ class GQLErrorUnion(graphene.Union):
 
 
 class MutationResult:
-    success = graphene.Boolean(default_value=True)
-    errors = graphene.List(GQLErrorUnion)
+    success = graphene.Boolean(default_value=True, required=True)
+    errors = graphene.List(graphene.NonNull(GQLErrorUnion))
 
 
 class AuthOutput(MutationResult):
@@ -90,7 +90,7 @@ class AuthOutput(MutationResult):
             ]
             return non_field_errors + field_errors
 
-        raise Exception("Internal error")
+        raise Exception("Internal error") # pylint: disable=broad-exception-raised
 
 
 class MutationException(Exception):
