@@ -3,6 +3,7 @@ Utils
 """
 
 import itertools
+from functools import reduce
 from typing import List, Set, Tuple, TypeVar
 
 import shortuuid
@@ -33,4 +34,12 @@ def combinations(
         combination
         for i in range(1, max_length + 1)
         for combination in itertools.combinations(iterable * i, i)
+    )
+
+
+def deep_get(dictionary, keys, default=None):
+    return reduce(
+        lambda d, key: d.get(key, default) if isinstance(d, dict) else default,
+        keys.split("."),
+        dictionary,
     )

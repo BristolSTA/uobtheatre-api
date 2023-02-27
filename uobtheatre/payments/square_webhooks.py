@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.transaction_providers import SquarePOS
+from uobtheatre.utils.utils import deep_get
 
 
 class SquareWebhooks(APIView):
@@ -107,6 +108,13 @@ class SquareWebhooks(APIView):
             else:
                 return Response(status=202)
         except Transaction.DoesNotExist:
+            # Check for the correct location
+            if (
+                not deep_get(request_data["data"], "object.payment.location_id")
+                == settings.SQUARE_SETTINGS["SQUARE_LOCATION"]
+            ):
+                return Response(status=202)
+
             return Response("Unknown Transaction", status=404)
 
         return Response(status=200)
