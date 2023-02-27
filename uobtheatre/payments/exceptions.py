@@ -14,3 +14,10 @@ class CantBeCanceledException(GQLException):
 class CantBePaidForException(GQLException):
     def __init__(self, message="This payable cannot be paid for") -> None:
         super().__init__(message)
+
+
+class IncorrectTransactionProvider(GQLException):
+    def __init__(
+        self, message="The supplied transaction is not of the correct type"
+    ) -> None:
+        super().__init__(message)

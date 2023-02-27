@@ -12,12 +12,13 @@ from uobtheatre.payments.transaction_providers import (
     PaymentProvider,
     RefundProvider,
     SquareOnline,
+    SquarePOSRefund,
     SquareRefund,
 )
 
 
 def test_refund_method_all():
-    assert RefundProvider.__all__ == [ManualCardRefund, SquareRefund]
+    assert RefundProvider.__all__ == [ManualCardRefund, SquareRefund, SquarePOSRefund]
 
 
 @pytest.mark.parametrize(
