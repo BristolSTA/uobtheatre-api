@@ -25,7 +25,9 @@ def test_base_refund_task_on_failure(exception, makes_skipped):
         instance.on_failure(exception, "1234", tuple(), {}, None)
 
     if makes_skipped:
-        update_state_mock.assert_called_once_with(state="SKIPPED")
+        update_state_mock.assert_called_once_with(
+            state="SKIPPED", meta={"message": "This object cannot be refunded"}
+        )
         super_mock.assert_not_called()
     else:
         update_state_mock.assert_not_called()
