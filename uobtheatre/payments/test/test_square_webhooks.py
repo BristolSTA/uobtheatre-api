@@ -312,3 +312,33 @@ def test_handle_refund_update_webhook(rest_client):
     assert response.status_code == 200
     assert payment.provider_fee == -7
     assert payment.status == Transaction.Status.COMPLETED
+
+
+@pytest.mark.django_db
+def test_handle_valid_but_unknown_transaction(rest_client):
+    payload = deepcopy(TEST_PAYMENT_UPDATE_PAYLOAD)
+    payload["data"]["object"]["payment"]["location_id"] = "LMHPTEST"
+
+    with patch.object(SquareWebhooks, "is_valid_callback", return_value=True):
+        response = rest_client.post(
+            "/square",
+            payload,
+            HTTP_X_SQUARE_SIGNATURE="signature",
+            format="json",
+        )
+    assert response.status_code == 404
+
+
+@pytest.mark.django_db
+def test_handle_valid_but_unknown_transaction_other_location(rest_client):
+    payload = deepcopy(TEST_PAYMENT_UPDATE_PAYLOAD)
+    payload["data"]["object"]["payment"]["location_id"] = "LMHPTESTUNKNOWN"
+
+    with patch.object(SquareWebhooks, "is_valid_callback", return_value=True):
+        response = rest_client.post(
+            "/square",
+            payload,
+            HTTP_X_SQUARE_SIGNATURE="signature",
+            format="json",
+        )
+    assert response.status_code == 202
