@@ -39,7 +39,6 @@ from uobtheatre.venues.test.factories import VenueFactory
 
 @pytest.mark.django_db
 def test_productions_schema(gql_client):
-
     production = ProductionFactory()
     performances = [PerformanceFactory(production=production) for i in range(2)]
 
@@ -771,7 +770,7 @@ def test_assignable_permissions(gql_client, perms, can_assign):
     if can_assign is False:
         assert response["data"]["production"]["assignablePermissions"] is None
         return
-    assert len(response["data"]["production"]["assignablePermissions"]) == 9
+    assert len(response["data"]["production"]["assignablePermissions"]) == 10
     assert {
         "name": "boxoffice",
         "description": "Can use boxoffice for production",
