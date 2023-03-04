@@ -134,6 +134,28 @@ TEST_UPDATE_REFUND_PAYLOAD = {
 }
 
 
+@pytest.mark.parametrize(
+    "object_data,expected_location",
+    [
+        (
+            {"payment": {"location_id": "LOCATION123"}},
+            "LOCATION123",
+        ),
+        (
+            {"checkout": {"location_id": "LOCATION123"}},
+            "LOCATION123",
+        ),
+        (
+            {"refund": {"location_id": "LOCATION123"}},
+            "LOCATION123",
+        ),
+        ({"invalid": {"location_id": "LOCATION123"}}, None),
+    ],
+)
+def test_get_object_location_id(object_data, expected_location):
+    assert SquareWebhooks.get_object_location_id(object_data) == expected_location
+
+
 @pytest.mark.django_db
 def test_handle_checkout_webhook(rest_client):
     transaction = TransactionFactory(
@@ -157,15 +179,23 @@ def test_handle_checkout_webhook(rest_client):
 
 
 @pytest.mark.django_db
-def test_handle_checkout_webhook_with_unknown_transaction(rest_client):
+@pytest.mark.parametrize(
+    "status,expected_code", [("COMPLETED", 404), ("CANCELED", 202)]
+)
+def test_handle_checkout_webhook_with_unknown_transaction(
+    status, expected_code, rest_client
+):
+    payload = deepcopy(TEST_TERMINAL_CHECKOUT_PAYLOAD)
+    payload["data"]["object"]["checkout"]["status"] = status
+
     with patch.object(SquareWebhooks, "is_valid_callback", return_value=True):
         response = rest_client.post(
             "/square",
-            TEST_TERMINAL_CHECKOUT_PAYLOAD,
+            payload,
             HTTP_X_SQUARE_SIGNATURE="signature",
             format="json",
         )
-    assert response.status_code == 404
+    assert response.status_code == expected_code
 
 
 @pytest.mark.django_db

@@ -84,12 +84,21 @@ class SquareWebhooks(APIView):
         try:
             if request_data["type"] == "terminal.checkout.updated":
                 # This is a terminal checkout
-                Transaction.objects.get(
-                    provider_transaction_id=request_data["data"]["object"]["checkout"][
-                        "id"
-                    ],
-                    provider_name=SquarePOS.name,
-                ).sync_transaction_with_provider()
+                try:
+                    Transaction.objects.get(
+                        provider_transaction_id=request_data["data"]["object"][
+                            "checkout"
+                        ]["id"],
+                        provider_name=SquarePOS.name,
+                    ).sync_transaction_with_provider()
+                except Transaction.DoesNotExist as exc:
+                    if (
+                        request_data["data"]["object"]["checkout"]["status"]
+                        == "CANCELED"
+                    ):
+                        # If we can't find the transaction, and square is telling us it has been cancelled, we don't mind
+                        return Response(status=202)
+                    raise exc
 
             elif request_data["type"] == "payment.updated":
                 # This is a payment update webhook
