@@ -61,6 +61,17 @@ class SquareWebhooks(APIView):
             base64.b64encode(generated_hash), callback_signature.encode("utf-8")
         )
 
+    @classmethod
+    def get_object_location_id(cls, object_data: dict) -> str | None:
+        """Returns the string location ID found within the square webhook payload object"""
+        object_types = ["checkout", "payment", "refund"]
+
+        for object_type in object_types:
+            if location_id := deep_get(object_data, f"{object_type}.location_id"):
+                return location_id
+
+        return None
+
     def post(self, request, **_):
         """
         Endpoint for square webhooks
@@ -110,7 +121,7 @@ class SquareWebhooks(APIView):
         except Transaction.DoesNotExist:
             # Check for the correct location
             if (
-                not deep_get(request_data["data"], "object.payment.location_id")
+                not self.get_object_location_id(request_data["data"]["object"])
                 == settings.SQUARE_SETTINGS["SQUARE_LOCATION"]
             ):
                 return Response(status=202)
