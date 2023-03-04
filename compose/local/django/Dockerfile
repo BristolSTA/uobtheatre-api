@@ -1,7 +1,7 @@
-ARG PYTHON_VERSION=3.10.6-slim-buster
+ARG PYTHON_VERSION=3.10
 
 # define an alias for the specfic python version used in this file.
-FROM python:${PYTHON_VERSION} as python
+FROM mcr.microsoft.com/vscode/devcontainers/python:${PYTHON_VERSION} as python
 
 # Python build stage
 FROM python as python-build-stage
