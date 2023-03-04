@@ -1,5 +1,5 @@
 from copy import deepcopy
-from unittest.mock import PropertyMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -35,6 +35,7 @@ TEST_TERMINAL_CHECKOUT_PAYLOAD = {
                 "reference_id": "id72709",
                 "status": "COMPLETED",
                 "updated_at": "2020-04-10T14:44:06.039Z",
+                "location_id": "LMHPTEST",
             }
         },
     },
@@ -78,7 +79,7 @@ TEST_PAYMENT_UPDATE_PAYLOAD = {
                 "delay_duration": "PT168H",
                 "delayed_until": "2020-11-29T21:16:51.086Z",
                 "id": "hYy9pRFVxpDsO1FB05SunFWUe9JZY",
-                "location_id": "S8GWD5R9QB376",
+                "location_id": "LMHPTEST",
                 "order_id": "03O3USaPaAaFnI6kkwB1JxGgBsUZY",
                 "receipt_number": "hYy9",
                 "receipt_url": "https://squareup.com/receipt/preview/hYy9pRFVxpDsO1FB05SunFWU11111",
@@ -109,7 +110,7 @@ TEST_UPDATE_REFUND_PAYLOAD = {
                 "amount_money": {"amount": 100, "currency": "GBP"},
                 "created_at": "2021-12-13T21:01:32.340Z",
                 "id": "xwo62Kt4WIOAh9LrczZxzbQbIZCZY_RVpsRbbUP3LmklUotq0kfiJnn1jDOqhNHymoqa6iDpd",
-                "location_id": "LN9PN3P67S0QV",
+                "location_id": "LMHPTEST",
                 "order_id": "tsjSHOoLci0yftfu8Z5BYFO2Me4F",
                 "payment_id": "xwo62Kt4WIOAh9LrczZxzbQbIZCZY",
                 "processing_fee": [
@@ -134,25 +135,16 @@ TEST_UPDATE_REFUND_PAYLOAD = {
 
 
 @pytest.mark.django_db
-def test_handle_checkout_webhook(rest_client, monkeypatch):
+def test_handle_checkout_webhook(rest_client):
     transaction = TransactionFactory(
         provider_transaction_id="dhgENdnFOPXqO", provider_name=SquarePOS.name
     )
-    monkeypatch.setenv("SQUARE_WEBHOOK_SIGNATURE_KEY", "Hd_mmQkhER3EPkpRpNQh9Q")
+
     BookingFactory(reference="id72709", status=Payable.Status.IN_PROGRESS)
 
     with patch.object(
-        SquareWebhooks, "webhook_url", new_callable=PropertyMock
-    ) as url_mock, patch.object(
-        SquareWebhooks, "webhook_signature_key", new_callable=PropertyMock
-    ) as key_mock, patch.object(
-        SquarePOS, "sync_transaction", autospec=True
-    ) as sync_mock:
-        url_mock.return_value = (
-            "https://webhook.site/5bca8c49-e6f0-40ed-9415-4035bc05b48d"
-        )
-        key_mock.return_value = "Hd_mmQkhER3EPkpRpNQh9Q"
-
+        SquareWebhooks, "is_valid_callback", return_value=True
+    ), patch.object(SquarePOS, "sync_transaction", autospec=True) as sync_mock:
         response = rest_client.post(
             "/square",
             TEST_TERMINAL_CHECKOUT_PAYLOAD,
@@ -198,16 +190,7 @@ def test_handle_payment_update_webhook_no_processing_fee(rest_client):
         provider_transaction_id="hYy9pRFVxpDsO1FB05SunFWUe9JZY", provider_fee=None
     )
 
-    with patch.object(
-        SquareWebhooks, "webhook_url", new_callable=PropertyMock
-    ) as url_mock, patch.object(
-        SquareWebhooks, "webhook_signature_key", new_callable=PropertyMock
-    ) as key_mock:
-        url_mock.return_value = (
-            "https://webhook.site/b683d582-b125-401d-ae08-4453030fd84f"
-        )
-        key_mock.return_value = "1JKsHXm1f5TCz7PQGJDzSw"
-
+    with patch.object(SquareWebhooks, "is_valid_callback", return_value=True):
         response = rest_client.post(
             "/square",
             TEST_PAYMENT_UPDATE_PAYLOAD,
@@ -316,13 +299,10 @@ def test_handle_refund_update_webhook(rest_client):
 
 @pytest.mark.django_db
 def test_handle_valid_but_unknown_transaction(rest_client):
-    payload = deepcopy(TEST_PAYMENT_UPDATE_PAYLOAD)
-    payload["data"]["object"]["payment"]["location_id"] = "LMHPTEST"
-
     with patch.object(SquareWebhooks, "is_valid_callback", return_value=True):
         response = rest_client.post(
             "/square",
-            payload,
+            TEST_PAYMENT_UPDATE_PAYLOAD,
             HTTP_X_SQUARE_SIGNATURE="signature",
             format="json",
         )
