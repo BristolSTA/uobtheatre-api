@@ -53,7 +53,6 @@ from uobtheatre.venues.test.factories import SeatGroupFactory, VenueFactory
 
 @pytest.mark.django_db
 def test_production_duration():
-
     production = ProductionFactory()
 
     # Create a performance with a long duration
@@ -103,7 +102,6 @@ def test_production_duration():
 
 @pytest.mark.django_db
 def test_production_duration_with_no_performances():
-
     # Create production with no performances
     production = ProductionFactory()
     assert production.duration is None
@@ -204,7 +202,6 @@ def test_str_production_team_memeber():
 
 @pytest.mark.django_db
 def test_production_slug_is_unique():
-
     # Create 2 productions with the same name
     prod1 = ProductionFactory(name="show-name")
     prod2 = ProductionFactory(name="show-name")
@@ -267,9 +264,11 @@ def test_production_min_price_no_perfs():
 
 @pytest.mark.django_db
 def test_production_total_capacity():
-    perf_1 = PerformanceFactory(capacity=100)
-    perf_2 = PerformanceFactory(production=perf_1.production, capacity=150)
+    prod = ProductionFactory()
+    perf_1 = PerformanceFactory(production=prod, capacity=100)
     PerformanceSeatingFactory(performance=perf_1, capacity=1000)
+
+    perf_2 = PerformanceFactory(production=prod, capacity=150)
     PerformanceSeatingFactory(performance=perf_2, capacity=140)
     perf_1.production.refresh_from_db()
 
@@ -378,7 +377,6 @@ def test_performance_duration(start, end, expected_seconds):
 
 @pytest.mark.django_db
 def test_performance_seat_bookings():
-
     prod = ProductionFactory()
 
     perf1 = PerformanceFactory(production=prod)
@@ -610,7 +608,6 @@ def test_performance_capacity_remaining(
     ), patch.object(
         performance, "total_tickets_sold_or_reserved", return_value=sold_tickets
     ):
-
         assert performance.capacity_remaining == expected
 
 
@@ -646,7 +643,6 @@ def test_performance_seat_group_capacity_remaining(
         if seat_group
         else total_sold_tickets,
     ) as total_tickets_sold_or_reserved_mock:
-
         assert performance.seat_group_capacity_remaining(seat_group) == expected
         total_seat_group_capacity_mock.assert_called_once_with(seat_group=seat_group)
         total_tickets_sold_or_reserved_mock.assert_any_call(seat_group=seat_group)
@@ -680,7 +676,6 @@ def test_performance_str(name, start, string):
 
 @pytest.mark.django_db
 def test_performance_min_price_free_performance():
-
     performance = PerformanceFactory()
     PerformanceSeatingFactory(performance=performance, price=0)
     PerformanceSeatingFactory(performance=performance, price=20)
@@ -1289,7 +1284,6 @@ def test_performance_refund_bookings(disabled, fails):
     with patch(
         "uobtheatre.productions.tasks.refund_performance.delay",
     ) as refund_task_mock:
-
         if fails:
             with pytest.raises(CantBeRefundedException):
                 performance.refund_bookings(user)
