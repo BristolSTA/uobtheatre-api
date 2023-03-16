@@ -64,11 +64,16 @@ class AuthenticateableGQLClient(GQLClient):
 
 @pytest.fixture
 def square_client():
-    return Client(
-        square_version="2020-11-18",
-        access_token=settings.SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],  # type: ignore
-        environment=settings.SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],  # type: ignore
-    )
+    """Make a square clients"""
+    kwargs = {
+        "square_version": "2020-11-18",
+        "access_token": settings.SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],  # type: ignore
+        "environment": settings.SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],  # type: ignore
+    }
+
+    if square_url := settings.SQUARE_SETTINGS["SQUARE_URL"]:
+        kwargs["custom_url"] = square_url
+    return Client(**kwargs)
 
 
 @pytest.fixture(scope="session")

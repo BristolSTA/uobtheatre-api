@@ -313,6 +313,7 @@ GRAPHENE = {
 
 # Square payments
 SQUARE_SETTINGS = {
+    "SQUARE_URL": env("SQUARE_URL", default=None),
     "SQUARE_ACCESS_TOKEN": env(
         "SQUARE_ACCESS_TOKEN",
         default="",

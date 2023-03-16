@@ -185,11 +185,16 @@ class PaymentProvider(TransactionProvider, abc.ABC):
 class SquareAPIMixin(abc.ABC):
     """Mixin that inserts square API client and handlers"""
 
-    client = Client(
-        square_version="2020-11-18",
-        access_token=settings.SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],  # type: ignore
-        environment=settings.SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],  # type: ignore
-    )
+    kwargs = {
+        "square_version": "2020-11-18",
+        "access_token": settings.SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],  # type: ignore
+        "environment": settings.SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],  # type: ignore
+    }
+
+    if square_url := settings.SQUARE_SETTINGS["SQUARE_URL"]:  # pragma: no cover
+        kwargs["custom_url"] = square_url
+
+    client = Client(**kwargs)
 
     @classmethod
     def _handle_response_failure(cls, response: SquareApiResponse) -> None:
