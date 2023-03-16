@@ -191,7 +191,7 @@ class SquareAPIMixin(abc.ABC):
         "environment": settings.SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],  # type: ignore
     }
 
-    if square_url := settings.SQUARE_SETTINGS["SQUARE_URL"]:
+    if square_url := settings.SQUARE_SETTINGS["SQUARE_URL"]:  # pragma: no cover
         kwargs["custom_url"] = square_url
 
     client = Client(**kwargs)
