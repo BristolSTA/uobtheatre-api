@@ -275,7 +275,6 @@ def test_list_devices_empty_response(gql_client, mock_square):
 def test_filter_list_devices(
     gql_client, mock_square, filters, expect_called, expected_args
 ):
-
     PerformanceFactory()
     gql_client.login()
     assign_perm("productions.boxoffice", gql_client.user)

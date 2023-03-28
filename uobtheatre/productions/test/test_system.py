@@ -333,7 +333,6 @@ def test_total_production_creation_workflow(gql_client):
 
 @pytest.mark.django_db
 def test_correct_capacities(gql_client):
-
     venue_capacity = 207
     venue = VenueFactory(internal_capacity=venue_capacity)
     sg_all_capacity = venue_capacity  # 207

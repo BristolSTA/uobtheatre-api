@@ -34,15 +34,9 @@ setup:
 	make collect-static
 	python -m venv .venv
 	source .venv/bin/activate
-	make setup-precommit
 	make up
 
-setup-precommit:
-	pip install pre-commit
-	pre-commit install
-
 setup-devcontainer:
-	make setup-precommit
 	make migrate
 	pip install -r requirements/local.txt
 
@@ -154,12 +148,11 @@ mypy: ## Type checking - mypy
 schema: ## Dumps graphql schema in schema.json
 	$(COMMAND_PREFIX) ./manage.py graphql_schema --schema uobtheatre.schema.schema --out schema.graphql
 
-pr: ## Runs everything required (that is not included in precommit) for a pr
+pr: ## Runs everything required for a pr
 	make schema
 	make test
 
 build:
-	python precommit_config_generator.py
 	docker-compose build api celery
 
 django-shell: ## Open django shell

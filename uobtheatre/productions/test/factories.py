@@ -20,7 +20,6 @@ from uobtheatre.venues.test.factories import VenueFactory
 
 
 class ProductionFactory(factory.django.DjangoModelFactory):
-
     name = factory.Faker("sentence", nb_words=3)
     subtitle = factory.Faker("sentence", nb_words=6)
     description = factory.Faker("sentence", nb_words=20)
@@ -37,7 +36,6 @@ class ProductionFactory(factory.django.DjangoModelFactory):
 
 
 class PerformanceFactory(factory.django.DjangoModelFactory):
-
     doors_open = factory.Faker(
         "future_datetime", tzinfo=timezone.get_current_timezone()
     )

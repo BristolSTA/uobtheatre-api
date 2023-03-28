@@ -58,7 +58,7 @@ class MutationForm(ModelForm):
         self.user = user
 
         if len(self.data.keys()) == 0 or "id" in self.data:
-            for (key, _) in list(self.fields.items()):
+            for key, _ in list(self.fields.items()):
                 self.fields[key].required = False
 
     def _clean_fields(self):

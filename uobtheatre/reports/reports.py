@@ -212,7 +212,6 @@ class OutstandingSocietyPayments(Report):
     """Generates a report on outstanding balances to be paid to societies"""
 
     def run(self):
-
         productions_dataset = DataSet(
             "Productions",
             [

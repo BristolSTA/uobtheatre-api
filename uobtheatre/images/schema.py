@@ -6,7 +6,6 @@ from uobtheatre.images.models import Image
 
 
 class ImageNode(DjangoObjectType):
-
     url = graphene.String()
 
     def resolve_url(self, info):

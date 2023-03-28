@@ -141,7 +141,6 @@ from uobtheatre.venues.test.factories import SeatFactory, SeatGroupFactory
 def test_create_booking_mutation(
     data, seat_group_capacity, performance_capacity, is_valid, gql_client
 ):
-
     performance = PerformanceFactory(id=1, capacity=performance_capacity)
     seat_group = SeatGroupFactory(id=1)
     PerformanceSeatingFactory(
@@ -328,7 +327,6 @@ def test_cant_create_booking_with_unbookable_performance(gql_client):
 
 @pytest.mark.django_db
 def test_create_booking_with_taget_user_without_perms(gql_client):
-
     psg = PerformanceSeatingFactory()
     request = """
         mutation {
@@ -371,7 +369,6 @@ def test_create_booking_with_taget_user_without_perms(gql_client):
 
 @pytest.mark.django_db
 def test_create_booking_with_taget_user(gql_client):
-
     user = UserFactory(email="abc@email.com")
     psg = PerformanceSeatingFactory()
     request = """
@@ -412,7 +409,6 @@ def test_create_booking_with_taget_user(gql_client):
 
 @pytest.mark.django_db
 def test_create_booking_with_new_taget_user(gql_client):
-
     psg = PerformanceSeatingFactory()
     request = """
         mutation {
@@ -828,7 +824,6 @@ def test_create_booking_with_invalid_seat_group(gql_client):
     ],
 )
 def test_update_booking(current_tickets, planned_tickets, expected_tickets, gql_client):
-
     seat_group_1 = SeatGroupFactory(id=1)
     seat_group_2 = SeatGroupFactory(id=2)
     performance = PerformanceFactory()
@@ -1118,7 +1113,6 @@ def test_update_booking_set_target_user(gql_client):
 
 @pytest.mark.django_db
 def test_update_booking_set_target_user_to_same_user(gql_client):
-
     user = UserFactory(email="user@email.com")
     creator = gql_client.login().user
     booking = BookingFactory(user=user, status=Payable.Status.IN_PROGRESS)
@@ -1304,7 +1298,6 @@ def test_update_booking_without_permission(gql_client):
 
 @pytest.mark.django_db
 def test_update_booking_capacity_error(gql_client):
-
     seat_group = SeatGroupFactory(name="Seat Group 1")
     concession_type = ConcessionTypeFactory()
     booking = BookingFactory(
@@ -1364,7 +1357,6 @@ def test_update_booking_capacity_error(gql_client):
 
 @pytest.mark.django_db
 def test_update_paid_booking_fails(gql_client):
-
     seat_group = SeatGroupFactory()
     concession_type = ConcessionTypeFactory()
     booking = BookingFactory(user=gql_client.login().user, status=Payable.Status.PAID)
@@ -2229,7 +2221,6 @@ def test_paybooking_unsupported_payment_provider(info):
 
 @pytest.mark.django_db
 def test_pay_booking_fails_if_already_paid(gql_client):
-
     booking = BookingFactory(user=gql_client.login().user, status=Payable.Status.PAID)
     request_query = """
         mutation {
@@ -2285,7 +2276,6 @@ def test_check_in_booking(
     non_booking_ticket_id_list,
     gql_client,
 ):
-
     """
     What are we testing?
     that only the expected tickets are checked in

@@ -23,7 +23,6 @@ class SeatNode(DjangoObjectType):
 
 
 class VenueNode(DjangoObjectType):
-
     productions = DjangoFilterConnectionField(
         "uobtheatre.productions.schema.ProductionNode"
     )
