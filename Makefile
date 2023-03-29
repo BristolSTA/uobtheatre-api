@@ -150,6 +150,7 @@ schema: ## Dumps graphql schema in schema.json
 
 pr: ## Runs everything required for a pr
 	make schema
+	make lint
 	make test
 
 build:
