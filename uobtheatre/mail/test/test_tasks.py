@@ -5,7 +5,6 @@ from uobtheatre.mail.tasks import send_emails
 
 @pytest.mark.django_db
 def test_send_emails_task(mailoutbox):
-
     send_emails(
         ["joe@example.org", "jill@example.org"], "Subject", "Yes", "<p>Yes!</p>"
     )

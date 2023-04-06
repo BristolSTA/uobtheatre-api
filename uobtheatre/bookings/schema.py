@@ -86,7 +86,6 @@ class PriceBreakdownNode(DjangoObjectType):
         return self.subtotal
 
     def resolve_tickets(self, _):
-
         # Group the ticket together, this returns a list of tuples.
         # The first element of the tuple is itself a tuple which contains the
         # seat_group and concession_type, the second element of the typle

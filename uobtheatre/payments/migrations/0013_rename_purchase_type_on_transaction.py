@@ -10,7 +10,6 @@ def convert_purcahse_to_payment(apps, _):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("payments", "0012_alter_transaction_provider_name"),
     ]

@@ -5,7 +5,6 @@ class Reports(models.Model):
     """A pseudo model to store report permissions"""
 
     class Meta:
-
         managed = False  # No database table creation or deletion  \
         # operations will be performed for this model.
 

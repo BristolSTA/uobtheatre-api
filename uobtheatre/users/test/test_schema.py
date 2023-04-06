@@ -11,7 +11,6 @@ from uobtheatre.users.test.factories import UserFactory
 
 @pytest.mark.django_db
 def test_user_schema(gql_client):
-
     user = gql_client.login().user
 
     # Create some booking

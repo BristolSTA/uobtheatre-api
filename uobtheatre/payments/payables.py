@@ -53,6 +53,7 @@ class PayableQuerySet(QuerySet):
 
 PayableManager = models.Manager.from_queryset(PayableQuerySet)
 
+
 # pylint: disable=too-many-public-methods
 class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
     """

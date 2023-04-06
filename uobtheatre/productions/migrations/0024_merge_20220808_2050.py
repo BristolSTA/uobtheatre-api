@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("productions", "0021_alter_performance_interval_duration_mins"),
         ("productions", "0023_auto_20220707_1722"),

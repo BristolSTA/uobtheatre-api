@@ -39,7 +39,6 @@ from uobtheatre.venues.test.factories import VenueFactory
 
 @pytest.mark.django_db
 def test_productions_schema(gql_client):
-
     production = ProductionFactory()
     performances = [PerformanceFactory(production=production) for i in range(2)]
 

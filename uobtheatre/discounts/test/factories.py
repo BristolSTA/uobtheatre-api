@@ -4,7 +4,6 @@ from uobtheatre.discounts.models import ConcessionType, Discount, DiscountRequir
 
 
 class DiscountFactory(factory.django.DjangoModelFactory):
-
     name = factory.Faker("sentence", nb_words=2)
     percentage = 0.2
 
@@ -13,7 +12,6 @@ class DiscountFactory(factory.django.DjangoModelFactory):
 
 
 class ConcessionTypeFactory(factory.django.DjangoModelFactory):
-
     name = factory.Faker("sentence", nb_words=2)
 
     class Meta:
@@ -21,7 +19,6 @@ class ConcessionTypeFactory(factory.django.DjangoModelFactory):
 
 
 class DiscountRequirementFactory(factory.django.DjangoModelFactory):
-
     number = 1
     concession_type = factory.SubFactory(ConcessionTypeFactory)
     discount = factory.SubFactory("uobtheatre.discounts.test.factories.DiscountFactory")

@@ -36,6 +36,7 @@ def test_has_perm_via_object():
     assert user.has_perm("change_production", production)
     assert user.has_perm("productions.change_production", production)
 
+
 @pytest.mark.django_db
 def test_has_perm_via_group():
     user = UserFactory()

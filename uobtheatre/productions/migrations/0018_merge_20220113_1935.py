@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("productions", "0016_auto_20220113_1416"),
         ("productions", "0017_alter_production_status"),

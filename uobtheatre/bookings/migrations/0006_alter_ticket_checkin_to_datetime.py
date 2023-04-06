@@ -19,7 +19,6 @@ def ticket_check_in_to_datetime(apps, _):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ("bookings", "0005_alter_booking_status"),

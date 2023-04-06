@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("venues", "0004_alter_venue_internal_capacity"),
         ("productions", "0018_merge_20220113_1935"),

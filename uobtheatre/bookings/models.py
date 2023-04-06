@@ -206,6 +206,7 @@ def generate_expires_at():
 
 BookingManager = models.Manager.from_queryset(BookingQuerySet)
 
+
 # pylint: disable=too-many-public-methods
 class Booking(TimeStampedMixin, Payable):
     """A booking for a performance
@@ -519,7 +520,6 @@ class Booking(TimeStampedMixin, Payable):
 
         # find tickets to delete
         for ticket in self.tickets.all():
-
             if existing_tickets.get(ticket.id):
                 # if a given booking ticket is in the requested tickets - you keep it -
                 existing_tickets.pop(ticket.id, None)

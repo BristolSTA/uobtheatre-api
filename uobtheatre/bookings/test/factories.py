@@ -30,7 +30,6 @@ class ValueMiscCostFactory(factory.django.DjangoModelFactory):
 
 
 class BookingFactory(factory.django.DjangoModelFactory):
-
     user = factory.SubFactory(UserFactory)
     creator = factory.SubFactory(UserFactory)
     performance = factory.SubFactory(PerformanceFactory)
@@ -41,7 +40,6 @@ class BookingFactory(factory.django.DjangoModelFactory):
 
 
 class PerformanceSeatingFactory(factory.django.DjangoModelFactory):
-
     price = factory.Faker("pyint")
     performance = factory.SubFactory(PerformanceFactory)
     capacity = factory.Faker("pyint")
@@ -52,7 +50,6 @@ class PerformanceSeatingFactory(factory.django.DjangoModelFactory):
 
 
 class TicketFactory(factory.django.DjangoModelFactory):
-
     seat_group = factory.SubFactory(SeatGroupFactory)
     booking = factory.SubFactory(BookingFactory)
     concession_type = factory.SubFactory(

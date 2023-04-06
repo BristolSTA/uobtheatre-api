@@ -8,7 +8,6 @@ from uobtheatre.payments.models import Transaction
 
 
 class TransactionFactory(factory.django.DjangoModelFactory):
-
     pay_object = factory.SubFactory(BookingFactory)
     type = Transaction.Type.PAYMENT
     provider_name = transaction_providers.SquareOnline.name

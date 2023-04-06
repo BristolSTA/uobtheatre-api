@@ -1043,7 +1043,6 @@ def test_booking_can_be_refunded(is_refunded, status, production_status, expecte
         "uobtheatre.bookings.models.Booking.is_refunded",
         new_callable=PropertyMock(return_value=is_refunded),
     ):
-
         booking = BookingFactory(
             performance=PerformanceFactory(production=production), status=status
         )
