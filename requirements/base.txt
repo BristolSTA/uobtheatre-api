@@ -1,7 +1,7 @@
 #=== Tools ===#
 
 # Generate slugs
-django-autoslug==1.9.8
+django-autoslug==1.9.9
 
 # generates short UUID's for booking reference
 shortuuid>=1.0.1
