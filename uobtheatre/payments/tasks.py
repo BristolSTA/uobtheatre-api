@@ -1,4 +1,6 @@
 import abc
+from typing import Union
+from uuid import UUID
 
 from django.contrib.contenttypes.models import ContentType
 
@@ -29,7 +31,7 @@ def refund_payment(payment_pk: int):
 
 @app.task(base=RefundTask, throws=(CantBeRefundedException,))
 def refund_payable(
-    payable_id: int, payable_content_type_id: int, authorizing_user_id: int
+    payable_id: int, payable_content_type_id: int, authorizing_user_id: Union[UUID, str]
 ):
     """Refund a payable object automatically"""
     from uobtheatre.payments.payables import Payable

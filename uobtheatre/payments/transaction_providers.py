@@ -25,12 +25,12 @@ class TransactionProvider(abc.ABC):
     def __init_subclass__(cls) -> None:
         cls.name = TransactionProvider.generate_name(cls.__name__)
 
-    @classmethod
+    @classmethod  # type: ignore[misc] # mypy 0.981 complains about @property on class methods. This is deprecated in 3.11
     @property
     def __all__(cls) -> Sequence[Type["TransactionProvider"]]:
         return PaymentProvider.__all__ + RefundProvider.__all__  # type: ignore
 
-    @classmethod
+    @classmethod  # type: ignore[misc] # mypy 0.981 complains about @property on class methods. This is deprecated in 3.11
     @property
     @abc.abstractmethod
     def description(cls):
@@ -43,10 +43,10 @@ class TransactionProvider(abc.ABC):
         name = name.replace("-", "_")
         return name.upper()
 
-    @classmethod
+    @classmethod  # type: ignore[misc] # mypy 0.981 complains about @property on class methods. This is deprecated in 3.11
     @property
     def choices(cls):
-        choices = [(method.name, method.name) for method in cls.__all__]
+        choices = [(method.name, method.name) for method in cls.__all__]  # type: ignore[attr-defined]
         return choices
 
     @classmethod
@@ -95,7 +95,7 @@ class RefundProvider(TransactionProvider, abc.ABC):
         super().__init_subclass__()
         cls.__all__ = cls.__all__.append(cls)  # type: ignore
 
-    @classmethod
+    @classmethod  # type: ignore[misc] # mypy 0.981 complains about @property on class methods. This is deprecated in 3.11
     @property
     @abc.abstractmethod
     def is_automatic(cls) -> bool:
@@ -144,13 +144,13 @@ class PaymentProvider(TransactionProvider, abc.ABC):
         kwargs["type"] = payment_models.Transaction.Type.PAYMENT
         return super().create_payment_object(*args, **kwargs)
 
-    @classmethod
+    @classmethod  # type: ignore[misc] # mypy 0.981 complains about @property on class methods. This is deprecated in 3.11
     @property
     def refund_providers(cls) -> tuple[RefundProvider, ...]:
         """A tuple of methods that can be used to refund payments"""
         return tuple()
 
-    @classmethod
+    @classmethod  # type: ignore[misc] # mypy 0.981 complains about @property on class methods. This is deprecated in 3.11
     @property
     def is_refundable(cls) -> bool:
         return bool(cls.refund_providers)
@@ -161,7 +161,7 @@ class PaymentProvider(TransactionProvider, abc.ABC):
             type(provider) for provider in cls.refund_providers  # type: ignore
         )
 
-    @classmethod
+    @classmethod  # type: ignore[misc] # mypy 0.981 complains about @property on class methods. This is deprecated in 3.11
     @property
     def automatic_refund_provider(cls) -> Optional[RefundProvider]:
         """
@@ -173,7 +173,7 @@ class PaymentProvider(TransactionProvider, abc.ABC):
             (method for method in cls.refund_providers if method.is_automatic), None  # type: ignore
         )
 
-    @classmethod
+    @classmethod  # type: ignore[misc] # mypy 0.981 complains about @property on class methods. This is deprecated in 3.11
     @property
     def is_auto_refundable(cls) -> bool:
         """
@@ -344,7 +344,7 @@ class Card(ManualPaymentMethodMixin, PaymentProvider):
 
     description = "Manual card payment"
 
-    @classmethod
+    @classmethod  # type: ignore[misc] # mypy 0.981 complains about @property on class methods. This is deprecated in 3.11
     @property
     def refund_providers(cls):
         return (ManualCardRefund(),)
@@ -531,7 +531,7 @@ class SquareOnline(PaymentProvider, SquarePaymentMethod):
 
     description = "Square online card payment"
 
-    @classmethod
+    @classmethod  # type: ignore[misc] # mypy 0.981 complains about @property on class methods. This is deprecated in 3.11
     @property
     def refund_providers(cls):
         return (SquareRefund(idempotency_key=str(uuid4())),)

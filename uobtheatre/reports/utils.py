@@ -163,7 +163,9 @@ class ExcelReport:  # pragma: no cover
             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
         response["Content-Disposition"] = (
-            "attachment; filename=%s" % self.name.lower().replace(" ", "_") + ".xlsx"
+            "attachment; filename=%s"
+            % (self.name or "uobtheatre-export").lower().replace(" ", "_")
+            + ".xlsx"
         )
         return response
 

@@ -40,7 +40,7 @@ class CustomDjangoObjectType(DjangoObjectType):
         abstract = True
 
 
-class AuthRequiredMixin:
+class AuthRequiredMixin(graphene.Mutation):
     """Adds check to see if user is logged in before mutation
 
     At the start of mutate, checks if the user is authentacated (logged in to
@@ -79,7 +79,7 @@ class AssignedUsersMixin:
     assignable_permissions = graphene.List(PermissionNode)
 
     def resolve_assigned_users(self, info):
-        if not info.context.user.has_perm("change_" + self._meta.model_name, self):
+        if not info.context.user.has_perm("change_" + self._meta.model_name, self):  # type: ignore[attr-defined]
             return None
 
         return [
@@ -93,7 +93,7 @@ class AssignedUsersMixin:
         ]
 
     def resolve_assignable_permissions(self, info):
-        if not info.context.user.has_perm("change_" + str(self._meta.model_name), self):
+        if not info.context.user.has_perm("change_" + str(self._meta.model_name), self):  # type: ignore[attr-defined]
             return None
 
         if not isinstance(self, PermissionableModel):  # pragma: no cover
@@ -235,8 +235,7 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
 
     @classmethod
     def resolve_mutation(cls, root, info, **inputs):
-        # pylint: disable=bad-super-call
-        return super(DjangoModelFormMutation, cls).mutate(root, info, inputs)
+        return super(DjangoModelFormMutation, cls).mutate(root, info, inputs)  # type: ignore
 
     @classmethod
     def perform_mutate(cls, form, info):

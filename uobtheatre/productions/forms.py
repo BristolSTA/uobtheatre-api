@@ -41,7 +41,7 @@ class ProductionForm(MutationForm):
 
     def clean(self):
         """Validate form data on clean"""
-        cleaned_data = super().clean()
+        cleaned_data = super().clean() or {}
         warnings = cleaned_data.get("contentWarnings") or []
 
         for warning in warnings:
@@ -93,7 +93,7 @@ class PerformanceForm(MutationForm):
 
     def clean(self):
         """Validate form data on clean"""
-        cleaned_data = super().clean()
+        cleaned_data = super().clean() or {}
         doors_open = cleaned_data.get("doors_open")
         start = cleaned_data.get("start") or self.instance.start
         end = cleaned_data.get("end") or self.instance.end

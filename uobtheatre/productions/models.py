@@ -37,7 +37,7 @@ from uobtheatre.utils.validators import (
 from uobtheatre.venues.models import SeatGroup, Venue
 
 if TYPE_CHECKING:
-    from uobtheatre.bookings.models import ConcessionType, Ticket
+    from uobtheatre.bookings.models import ConcessionType, TicketQuerySet
 
 
 class CrewRole(models.Model):
@@ -312,7 +312,7 @@ class Performance(
         return self.VALIDATOR.validate(self)
 
     @property
-    def tickets(self) -> QuerySet["Ticket"]:
+    def tickets(self) -> "TicketQuerySet":
         """Get tickets for this performance
 
         Returns:
@@ -323,7 +323,7 @@ class Performance(
         return Ticket.objects.filter(booking__in=self.bookings.all())  # type: ignore
 
     @property
-    def checked_in_tickets(self) -> QuerySet["Ticket"]:
+    def checked_in_tickets(self) -> "TicketQuerySet":
         """Get all checked in tickets
 
         Returns:
@@ -332,7 +332,7 @@ class Performance(
         return self.tickets.sold().filter(checked_in_at__isnull=False)  # type: ignore
 
     @property
-    def unchecked_in_tickets(self) -> QuerySet["Ticket"]:
+    def unchecked_in_tickets(self) -> "TicketQuerySet":
         """Get all unchecked in tickets
 
         Returns:
@@ -893,7 +893,7 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
             "Complete",
         )  # Production has been closed and paid for/transactions settled
 
-        @classmethod
+        @classmethod  # type: ignore[misc] # mypy 0.981 complains about @property on class methods. This is deprecated in 3.11
         @property
         def PRIVATE_STATUSES(cls):  # pylint: disable=invalid-name
             return [cls.DRAFT, cls.PENDING, cls.APPROVED]

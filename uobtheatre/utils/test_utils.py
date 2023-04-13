@@ -1,6 +1,7 @@
 """
 Utils for the tests
 """
+from typing import Dict, Tuple
 
 import pytest
 
@@ -86,7 +87,7 @@ def ticket_list_dict_gen(ticket_list):
     """
     Given a lits of Ticket objects, return a dictionary with the count of each ticket.
     """
-    ticket_dict = {}
+    ticket_dict: Dict[Tuple[int, int, int], int] = {}
     for ticket in ticket_list:
         ticket_key = (ticket.seat_group.id, ticket.concession_type.id, ticket.seat.id)
         if ticket_key in ticket_dict:

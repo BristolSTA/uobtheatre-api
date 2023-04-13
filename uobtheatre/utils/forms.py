@@ -58,7 +58,7 @@ class MutationForm(ModelForm):
         self.user = user
 
         if len(self.data.keys()) == 0 or "id" in self.data:
-            for (key, _) in list(self.fields.items()):
+            for key, _ in list(self.fields.items()):
                 self.fields[key].required = False
 
     def _clean_fields(self):
@@ -88,6 +88,11 @@ class MutationForm(ModelForm):
     @property
     def is_creation(self):
         return not bool(self.instance.pk)
+
+    # pylint: disable=useless-parent-delegation
+    def _save_m2m(self):
+        # This "useless" function is required to stop mypy from squawking about this class not having this function in child classes
+        super()._save_m2m()  # type: ignore[misc]
 
     class Meta:
         abstract = True

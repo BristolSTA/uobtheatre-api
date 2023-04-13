@@ -1,3 +1,5 @@
+from typing import Optional
+
 import graphene
 
 from uobtheatre.bookings.abilities import ModifyBooking
@@ -8,6 +10,7 @@ from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.transaction_providers import (
     Card,
     Cash,
+    PaymentProvider,
     SquareOnline,
     SquarePOS,
 )
@@ -185,7 +188,6 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         verify_token=None,
         **kwargs,
     ):
-
         # Get the performance and if it doesn't exist throw an error
         booking = Booking.objects.get(id=kwargs["id"])
 
@@ -235,6 +237,8 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
                 field="idempotency_key",
                 code="missing_required",
             )
+
+        payment_method: Optional[PaymentProvider] = None
 
         if payment_provider == SquareOnline.name:
             if not nonce:

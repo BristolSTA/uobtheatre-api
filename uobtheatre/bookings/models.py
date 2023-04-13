@@ -206,6 +206,7 @@ def generate_expires_at():
 
 BookingManager = models.Manager.from_queryset(BookingQuerySet)
 
+
 # pylint: disable=too-many-public-methods
 class Booking(TimeStampedMixin, Payable):
     """A booking for a performance
@@ -229,14 +230,6 @@ class Booking(TimeStampedMixin, Payable):
 
     reference = models.CharField(
         default=create_short_uuid, editable=False, max_length=12, unique=True
-    )
-
-    # Stores who created the booking
-    # For regular bookings this will be the user
-    # For boxoffice bookings it will be the logged in boxoffice user
-    # For admin bookings it will be the logged in admin
-    creator = models.ForeignKey(
-        User, on_delete=models.RESTRICT, related_name="created_bookings"
     )
 
     performance = models.ForeignKey(
@@ -519,7 +512,6 @@ class Booking(TimeStampedMixin, Payable):
 
         # find tickets to delete
         for ticket in self.tickets.all():
-
             if existing_tickets.get(ticket.id):
                 # if a given booking ticket is in the requested tickets - you keep it -
                 existing_tickets.pop(ticket.id, None)
@@ -572,7 +564,9 @@ class Booking(TimeStampedMixin, Payable):
     @property
     def is_reservation_expired(self):
         """Returns whether the booking is considered expired"""
-        return filter_passes_on_model(self, lambda qs: qs.expired())
+        return filter_passes_on_model(
+            self, lambda qs: qs.expired()  # type:ignore[union-attr]
+        )
 
     def validate_cant_be_refunded(self) -> Optional[CantBeRefundedException]:
         if error := super().validate_cant_be_refunded():
