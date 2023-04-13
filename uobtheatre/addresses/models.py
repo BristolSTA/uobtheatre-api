@@ -23,7 +23,8 @@ class Address(models.Model):
             return pytz.UTC
 
         finder = TimezoneFinder()
-        return pytz.timezone(finder.timezone_at(lat=self.latitude, lng=self.longitude))
+        timezone = finder.timezone_at(lat=self.latitude, lng=self.longitude)
+        return pytz.timezone(timezone) if timezone else pytz.UTC
 
     def __str__(self):
         return f"{self.building_name + ', ' if self.building_name else ''}{self.building_number + ', ' if self.building_number else ''}{self.street}, {self.city}, {self.postcode}"

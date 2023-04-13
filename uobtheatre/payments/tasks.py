@@ -1,4 +1,6 @@
 import abc
+from typing import Union
+from uuid import UUID
 
 from django.contrib.contenttypes.models import ContentType
 

@@ -79,6 +79,14 @@ class Payable(BaseModel):  # type: ignore
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bookings")
 
+    # Stores who created the booking
+    # For regular bookings this will be the user
+    # For boxoffice bookings it will be the logged in boxoffice user
+    # For admin bookings it will be the logged in admin
+    creator = models.ForeignKey(
+        User, on_delete=models.RESTRICT, related_name="created_bookings"
+    )
+
     objects = PayableManager()
 
     @property
