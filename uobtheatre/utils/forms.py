@@ -89,5 +89,10 @@ class MutationForm(ModelForm):
     def is_creation(self):
         return not bool(self.instance.pk)
 
+    # pylint: disable=useless-parent-delegation
+    def _save_m2m(self):
+        # This "useless" function is required to stop mypy from squawking about this class not having this function in child classes
+        super()._save_m2m()  # type: ignore[misc]
+
     class Meta:
         abstract = True

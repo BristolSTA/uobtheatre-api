@@ -25,12 +25,12 @@ class BaseModel(models.Model):
         model.pk = None
         return model
 
-    @classmethod
+    @classmethod  # type: ignore[misc] # mypy 0.981 complains about @property on class methods. This is deprecated in 3.11
     @property
     def content_type(cls):
         return ContentType.objects.get_for_model(cls)
 
-    @classmethod
+    @classmethod  # type: ignore[misc] # mypy 0.981 complains about @property on class methods. This is deprecated in 3.11
     @property
     def _node_name(cls):
         return f"{cls.__name__}Node"

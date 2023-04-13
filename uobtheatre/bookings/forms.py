@@ -63,7 +63,7 @@ class BookingForm(MutationForm):
 
     def clean(self):
         """Validate and clean form data"""
-        cleaned_data = super().clean()
+        cleaned_data = super().clean() or {}
 
         if not self.instance.creator_id:
             # If the instance has no creater, the current user is the creator

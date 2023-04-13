@@ -88,6 +88,9 @@ def test_permissions_mixin_resolve_permissions_with_get_perms(info):
         def get_perms(self, _):
             pass
 
+        class Meta:
+            model = Production
+
     schema = TestModelSchema()
     with patch.object(schema, "get_perms") as mock_get_perms, patch(
         "uobtheatre.users.abilities.get_perms"
@@ -104,7 +107,8 @@ def test_permissions_mixin_resolve_permissions_with_get_perms(info):
 @pytest.mark.django_db
 def test_permissions_mixin_resolve_permissions_without_get_perms(info):
     class TestModelSchema(PermissionsMixin):
-        pass
+        class Meta:
+            model = Production
 
     schema = TestModelSchema()
     with patch("uobtheatre.users.abilities.get_perms") as mock_get_perms, patch.object(
@@ -119,7 +123,8 @@ def test_permissions_mixin_resolve_permissions_without_get_perms(info):
 @pytest.mark.django_db
 def test_permissions_mixin_resolve_permissions_with_groups(info):
     class TestModelSchema(PermissionsMixin):
-        pass
+        class Meta:
+            model = Production
 
     model = ProductionFactory()
     group = GroupFactory()

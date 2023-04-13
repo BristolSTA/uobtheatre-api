@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any
 import graphene
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
+from graphene_django import DjangoObjectType
 from guardian.shortcuts import get_perms
 
 if TYPE_CHECKING:
@@ -113,7 +114,7 @@ class OpenAdmin(Ability):
         )
 
 
-class PermissionsMixin:
+class PermissionsMixin(DjangoObjectType):
     """
     Add permissions to schema. This is a list of string, if a string is
     included then the user has this permission.
@@ -139,3 +140,6 @@ class PermissionsMixin:
         if hasattr(self, "get_perms"):
             return self.get_perms(info.context.user, self) + global_perms
         return get_perms(info.context.user, self) + global_perms
+
+    class Meta:
+        abstract = True

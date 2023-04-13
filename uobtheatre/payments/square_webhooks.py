@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.transaction_providers import SquarePOS
+from uobtheatre.utils.utils import deep_get
 
 
 class SquareWebhooks(APIView):
@@ -60,6 +61,17 @@ class SquareWebhooks(APIView):
             base64.b64encode(generated_hash), callback_signature.encode("utf-8")
         )
 
+    @classmethod
+    def get_object_location_id(cls, object_data: dict) -> str | None:
+        """Returns the string location ID found within the square webhook payload object"""
+        object_types = ["checkout", "payment", "refund"]
+
+        for object_type in object_types:
+            if location_id := deep_get(object_data, f"{object_type}.location_id"):
+                return location_id
+
+        return None
+
     def post(self, request, **_):
         """
         Endpoint for square webhooks
@@ -72,12 +84,21 @@ class SquareWebhooks(APIView):
         try:
             if request_data["type"] == "terminal.checkout.updated":
                 # This is a terminal checkout
-                Transaction.objects.get(
-                    provider_transaction_id=request_data["data"]["object"]["checkout"][
-                        "id"
-                    ],
-                    provider_name=SquarePOS.name,
-                ).sync_transaction_with_provider()
+                try:
+                    Transaction.objects.get(
+                        provider_transaction_id=request_data["data"]["object"][
+                            "checkout"
+                        ]["id"],
+                        provider_name=SquarePOS.name,
+                    ).sync_transaction_with_provider()
+                except Transaction.DoesNotExist as exc:
+                    if (
+                        request_data["data"]["object"]["checkout"]["status"]
+                        == "CANCELED"
+                    ):
+                        # If we can't find the transaction, and square is telling us it has been cancelled, we don't mind
+                        return Response(status=202)
+                    raise exc
 
             elif request_data["type"] == "payment.updated":
                 # This is a payment update webhook
@@ -107,6 +128,13 @@ class SquareWebhooks(APIView):
             else:
                 return Response(status=202)
         except Transaction.DoesNotExist:
+            # Check for the correct location
+            if (
+                not self.get_object_location_id(request_data["data"]["object"])
+                == settings.SQUARE_SETTINGS["SQUARE_LOCATION"]
+            ):
+                return Response(status=202)
+
             return Response("Unknown Transaction", status=404)
 
         return Response(status=200)

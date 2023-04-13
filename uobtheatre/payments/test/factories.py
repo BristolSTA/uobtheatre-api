@@ -61,22 +61,22 @@ def mock_payment_method(
     class MockPaymentMethod:  # pylint: disable=missing-class-docstring
         pay = MagicMock(return_value=TransactionFactory())
 
-        @classmethod
+        @classmethod  # type: ignore[misc] # mypy 0.981 complains about @property on class methods. This is deprecated in 3.11
         @property
         def name(cls):
             return name
 
-        @classmethod
+        @classmethod  # type: ignore[misc] # mypy 0.981 complains about @property on class methods. This is deprecated in 3.11
         @property
         def refund_providers(cls):
             return refund_providers
 
-        @classmethod
+        @classmethod  # type: ignore[misc] # mypy 0.981 complains about @property on class methods. This is deprecated in 3.11
         @property
         def automatic_refund_provider(cls):
             return automatic_refund_provider
 
-        @classmethod
+        @classmethod  # type: ignore[misc] # mypy 0.981 complains about @property on class methods. This is deprecated in 3.11
         @property
         def is_refundable(cls):
             return is_refundable

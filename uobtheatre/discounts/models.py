@@ -103,7 +103,9 @@ class Discount(models.Model):
         ]
 
         discounts_with_same_requirements_names = [
-            discount.name for discount in discounts_with_same_requirements
+            discount.name
+            for discount in discounts_with_same_requirements
+            if discount.name
         ]
 
         if len(discounts_with_same_requirements) != 0:
