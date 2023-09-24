@@ -246,6 +246,12 @@ class Booking(TimeStampedMixin, Payable):
         related_name="bookings",
     )
 
+    transferred_from = models.ForeignKey(
+        "Booking",
+        on_delete=models.RESTRICT,
+        null=True
+    )
+
     # An additional discount that can be applied to the booking by an admin
     # To create a concession ticket a 100% discount can be applied.
     admin_discount_percentage = models.FloatField(

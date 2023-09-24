@@ -431,6 +431,69 @@ class UnCheckInBooking(AuthRequiredMixin, SafeMutation):
 
         return UnCheckInBooking(booking=booking, performance=performance)
 
+class TransferBooking(AuthRequiredMixin, SafeMutation):
+
+    old_booking = graphene.Field(BookingNode)
+    new_booking = graphene.Field(BookingNode)
+    class Arguments:
+        old_booking_id = IdInputField(required=True)
+        new_booking_id = IdInputField(required=True)
+        force = graphene.Boolean()
+
+    @classmethod
+    def resolve_mutation(cls, _, info, old_booking_id, new_booking_id, force = False):
+  
+        old_booking = Booking.objects.get(id=old_booking_id)
+        new_booking = Booking.objects.get(id=new_booking_id)
+
+        # Check user has permission to transfer this booking
+        if not info.context.user.has_perm(
+            "productions.transfer_booking", old_booking.performance.production
+        ):
+            raise AuthorizationException(
+                message="You do not have permission to transfer this booking.",
+            )
+      
+        # Check if booking are from different performances
+        if old_booking.performance == new_booking.performance:
+            raise GQLException(
+               message="The bookings are for the same performance, U stupid.",
+            )
+
+        # Check if booking are from same production
+        if not old_booking.performance.production == new_booking.performance.production:
+            raise GQLException(
+               message="The bookings are for different productions, Yikies.",
+            )
+
+        # Check price is the same price and have a override
+        if not old_booking.subtotal == new_booking.subtotal and not force:
+            raise GQLException(
+                message="The prices of the two booking are different, please confirm you have not f*cked up"
+            )
+
+        # Check old booking is active (paid and not canceled)
+
+        # Check new booking and old booking have same owner
+
+        # New booking is a draft
+
+        # Check old booking has no checked in tickets
+
+        # Check both bookings have same number of tickets
+
+        
+        new_booking.admin_discount_percentage = 1
+        new_booking.transferred_from = old_booking
+        new_booking.save()
+        new_booking.complete()
+        old_booking.status = Payable.Status.CANCELLED
+        old_booking.save()
+
+        return TransferBooking(old_booking = old_booking, new_booking = new_booking)
+
+
+
 
 class Mutation(graphene.ObjectType):
     """Mutations for bookings"""
@@ -440,3 +503,4 @@ class Mutation(graphene.ObjectType):
     pay_booking = PayBooking.Field()
     check_in_booking = CheckInBooking.Field()
     uncheck_in_booking = UnCheckInBooking.Field()
+    transfer_booking = TransferBooking.Field()
