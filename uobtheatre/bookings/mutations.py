@@ -473,14 +473,34 @@ class TransferBooking(AuthRequiredMixin, SafeMutation):
             )
 
         # Check old booking is active (paid and not canceled)
+        if not old_booking.status == Payable.Status.PAID:
+            raise GQLException(
+                message="The old booking is not paid for",
+            )
 
         # Check new booking and old booking have same owner
+        if not old_booking.user == new_booking.user:
+            raise GQLException(
+                message="The bookings are not owned by the same user",
+            )
 
         # New booking is a draft
+        if not new_booking.status == Payable.Status.IN_PROGRESS:
+            raise GQLException(
+                message="The new booking is not a draft",
+            )
 
         # Check old booking has no checked in tickets
+        if old_booking.tickets.filter(checked_in=True).count() > 0:
+            raise GQLException(
+                message="The old booking has checked in tickets",
+            )
 
         # Check both bookings have same number of tickets
+        if not old_booking.tickets.count() == new_booking.tickets.count():
+            raise GQLException(
+                message="The bookings have different number of tickets",
+            )
 
         
         new_booking.admin_discount_percentage = 1
