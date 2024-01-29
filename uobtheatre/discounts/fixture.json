@@ -1,0 +1,24 @@
+[
+    {
+        "model": "discounts.discount",
+        "pk": 1,
+        "requirements": [
+            {
+                "model": "discounts.discountrequirement",
+                "pk": 1
+            }
+        ]
+    },
+    {
+        "model": "discounts.concessiontype",
+        "pk": 1,
+        "name": "Student",
+        "description": "Student discount"
+    },
+    {
+        "model": "discounts.concessiontype",
+        "pk": 2,
+        "name": "Adult",
+        "description": "Test2"
+    }
+]
