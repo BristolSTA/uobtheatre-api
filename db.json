@@ -787,7 +787,7 @@
     }
   },
   {
-    "model": "discounts.concessiontype",
+    "model": "discounts.concessionType",
     "pk": 1,
     "fields": {
       "name": "Adult",
@@ -795,7 +795,7 @@
     }
   },
   {
-    "model": "discounts.concessiontype",
+    "model": "discounts.concessionType",
     "pk": 2,
     "fields": {
       "name": "Student",
@@ -803,7 +803,7 @@
     }
   },
   {
-    "model": "discounts.concessiontype",
+    "model": "discounts.concessionType",
     "pk": 3,
     "fields": {
       "name": "Child",
@@ -811,7 +811,7 @@
     }
   },
   {
-    "model": "discounts.concessiontype",
+    "model": "discounts.concessionType",
     "pk": 4,
     "fields": {
       "name": "Old Person",
