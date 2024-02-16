@@ -185,7 +185,6 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         verify_token=None,
         **kwargs,
     ):
-
         # Get the performance and if it doesn't exist throw an error
         booking = Booking.objects.get(id=kwargs["id"])
 

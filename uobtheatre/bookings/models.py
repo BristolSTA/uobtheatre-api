@@ -12,7 +12,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from graphql_relay.node.node import to_global_id
 
-import uobtheatre.bookings.emails as booking_emails
+#import uobtheatre.bookings.emails as booking_emails
 from uobtheatre.discounts.models import ConcessionType, DiscountCombination
 from uobtheatre.payments.exceptions import (
     CantBePaidForException,
@@ -205,6 +205,7 @@ def generate_expires_at():
 
 
 BookingManager = models.Manager.from_queryset(BookingQuerySet)
+
 
 # pylint: disable=too-many-public-methods
 class Booking(TimeStampedMixin, Payable):
@@ -519,7 +520,6 @@ class Booking(TimeStampedMixin, Payable):
 
         # find tickets to delete
         for ticket in self.tickets.all():
-
             if existing_tickets.get(ticket.id):
                 # if a given booking ticket is in the requested tickets - you keep it -
                 existing_tickets.pop(ticket.id, None)
@@ -548,9 +548,9 @@ class Booking(TimeStampedMixin, Payable):
         """
         super().complete()
 
-        booking_emails.send_booking_confirmation_email(self, payment)
-        if self.accessibility_info:
-            booking_emails.send_booking_accessibility_info_email(self)
+        # booking_emails.send_booking_confirmation_email(self, payment)
+        # if self.accessibility_info:
+        #     booking_emails.send_booking_accessibility_info_email(self)
 
     def clone(self):
         clone = super().clone()

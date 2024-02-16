@@ -16,7 +16,7 @@ This will:
 - Pull all the docker images
 - Build the api image
 - Collect the static files
-- Setup a venv and precommit
+- Setup a venv
 - Start the api and db
 
 (If you are on windows you will need to copy the commands into git bash from the makefile or use wsl)
@@ -27,19 +27,6 @@ This will:
 - [docker](https://docs.docker.com/get-docker/)
 - [docker-compose](https://docs.docker.com/compose/install/)
 
-## Pre-commit
-
-Pre-commit is required to format code and do lots of nice checks.
-
-It should be installed by `make setup`.
-
-Otherwise, it can be installed manually with:
-```
-pip install pre-commit
-pre-commit install
-```
-
-If this case every commit should trigger the precommit hook. You will always need to be commit from within the venv for this to work.
 
 ## Visual Studio Dev Container
 
@@ -134,7 +121,7 @@ make build
 ```
 
 This does the following:
-- Set the requirements for mypy precommit
+- Set the requirements for mypy
 - Rebuild the api
 
 If mypy gives an error about not being able to find the new package, add it to the list of "additional_dependencies" in `.pre-commit-config.yaml`.

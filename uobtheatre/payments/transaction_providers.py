@@ -93,7 +93,7 @@ class RefundProvider(TransactionProvider, abc.ABC):
 
     def __init_subclass__(cls) -> None:
         super().__init_subclass__()
-        cls.__all__ = cls.__all__.append(cls)  # type: ignore
+        cls.__all__ = cls.__all__.append(cls)  # type: ignore #pylint: disable=assignment-from-no-return
 
     @classmethod
     @property

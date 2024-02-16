@@ -31,7 +31,6 @@ def test_graphql_jwt_auth_backend(
         return_value=get_user_response,
         side_effect=JSONWebTokenError() if raise_jwt_exception else None,
     ) as mock_get_user_by_token:
-
         if exception:
             with pytest.raises(AuthenticationFailed, match=exception):
                 backend.authenticate(request)
@@ -65,7 +64,6 @@ def test_graphql_jwt_auth_backend_invalid_header(meta, exception):
     with mock.patch(
         "uobtheatre.users.backends.get_user_by_token"
     ) as mock_get_user_by_token:
-
         if exception:
             with pytest.raises(AuthenticationFailed, match=exception):
                 response = backend.authenticate(request)

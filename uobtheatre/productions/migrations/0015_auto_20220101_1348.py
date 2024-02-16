@@ -5,7 +5,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("societies", "0006_alter_society_options"),
         ("productions", "0014_merge_20220101_1347"),

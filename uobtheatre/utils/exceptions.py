@@ -18,6 +18,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from graphene.utils.str_converters import to_camel_case
 from graphene_django.types import ErrorType
+from sentry_sdk import capture_exception
 
 
 class ExceptionMiddleware:  # pragma: no cover
@@ -28,6 +29,7 @@ class ExceptionMiddleware:  # pragma: no cover
 
     def on_error(self, exc):
         traceback.print_tb(exc.__traceback__)
+        capture_exception(exc)
         raise exc
 
     def resolve(self, next, root, info, **kwargs):  # pylint: disable=redefined-builtin
@@ -90,7 +92,7 @@ class AuthOutput(MutationResult):
             ]
             return non_field_errors + field_errors
 
-        raise Exception("Internal error") # pylint: disable=broad-exception-raised
+        raise Exception("Internal error")  # pylint: disable=broad-exception-raised
 
 
 class MutationException(Exception):

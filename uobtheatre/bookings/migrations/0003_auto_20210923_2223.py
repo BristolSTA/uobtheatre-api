@@ -6,7 +6,6 @@ import uobtheatre.bookings.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("bookings", "0002_initial"),
     ]

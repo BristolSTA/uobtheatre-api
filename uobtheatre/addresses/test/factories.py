@@ -4,7 +4,6 @@ from uobtheatre.addresses.models import Address
 
 
 class AddressFactory(factory.django.DjangoModelFactory):
-
     street = factory.Faker("street_name")
     building_name = factory.Faker("sentence", nb_words=2)
     building_number = factory.Faker("bothify", text="##")

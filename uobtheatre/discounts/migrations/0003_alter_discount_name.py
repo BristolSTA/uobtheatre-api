@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("discounts", "0002_alter_discountrequirement_concession_type"),
     ]

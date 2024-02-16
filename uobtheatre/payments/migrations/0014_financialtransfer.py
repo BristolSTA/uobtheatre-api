@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("societies", "0006_alter_society_options"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),

@@ -29,7 +29,6 @@ from uobtheatre.venues.test.factories import SeatGroupFactory
 
 @pytest.mark.django_db
 def test_tickets_schema(gql_client):
-
     gql_client.login().user
     booking = BookingFactory()
     tickets = [TicketFactory(booking=booking) for _ in range(1)]
@@ -140,7 +139,6 @@ def test_tickets_schema(gql_client):
 
 @pytest.mark.django_db
 def test_ticket_checked_in_by_perm(gql_client):
-
     user = gql_client.login().user
     booking = BookingFactory(user=user)
     tickets = [TicketFactory(booking=booking) for _ in range(1)]
@@ -188,7 +186,6 @@ def test_ticket_checked_in_by_perm(gql_client):
 
 @pytest.mark.django_db
 def test_bookings_schema(gql_client):
-
     booking = BookingFactory(status=Payable.Status.IN_PROGRESS)
     # Create a booking that is not owned by the same user
     BookingFactory(status=Payable.Status.IN_PROGRESS)
@@ -844,7 +841,6 @@ def test_bookings_qs(gql_client):
 
 @pytest.mark.django_db
 def test_booking_filter_checked_in(gql_client):
-
     # No tickets booking
     _ = BookingFactory(user=gql_client.login().user)
 
@@ -900,7 +896,6 @@ def test_booking_filter_checked_in(gql_client):
 
 @pytest.mark.django_db
 def test_booking_filter_active(gql_client):
-
     now = timezone.now()
 
     production = ProductionFactory()
@@ -950,7 +945,6 @@ def test_booking_filter_active(gql_client):
 
 @pytest.mark.django_db
 def test_booking_order_checked_in(gql_client):
-
     # None checked in
     booking_none = BookingFactory(user=gql_client.login().user)
     TicketFactory(booking=booking_none)
@@ -1008,7 +1002,6 @@ def test_booking_order_checked_in(gql_client):
 
 @pytest.mark.django_db
 def test_booking_order_start(gql_client):
-
     now = timezone.now()
 
     # First

@@ -6,7 +6,6 @@ import uobtheatre.utils.form_validators
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("productions", "0012_alter_production_status"),
     ]

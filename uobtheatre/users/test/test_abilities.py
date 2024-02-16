@@ -24,7 +24,6 @@ def test_ability_mixin_perms():
     assign_perm("change_production", user, production)
 
     with patch.object(OpenBoxoffice, "user_has_for", return_value=True):
-
         assert (
             user.get_perms(user, production).sort()
             == [
