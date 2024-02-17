@@ -1073,10 +1073,10 @@ def test_complete(with_payment, with_accessibility):
     ) as mock_send_email, patch(
         "uobtheatre.bookings.emails.send_booking_accessibility_info_email"
     ) as mock_send_accessibility_email:
-    kwargs = {}
-    if with_payment:
-        kwargs["payment"] = TransactionFactory()
-    booking.complete(**kwargs)
+        kwargs = {}
+        if with_payment:
+            kwargs["payment"] = TransactionFactory()
+        booking.complete(**kwargs)
         mock_send_email.assert_called_once()
 
         if with_accessibility:
