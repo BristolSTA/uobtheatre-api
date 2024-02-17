@@ -548,9 +548,9 @@ class Booking(TimeStampedMixin, Payable):
         """
         super().complete()
 
-        # booking_emails.send_booking_confirmation_email(self, payment)
-        # if self.accessibility_info:
-        #     booking_emails.send_booking_accessibility_info_email(self)
+        booking_emails.send_booking_confirmation_email(self, payment)
+        if self.accessibility_info:
+            booking_emails.send_booking_accessibility_info_email(self)
 
     def clone(self):
         clone = super().clone()
