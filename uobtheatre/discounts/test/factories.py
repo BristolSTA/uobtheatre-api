@@ -10,8 +10,8 @@ class DiscountFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Discount
 
-
 class ConcessionTypeFactory(factory.django.DjangoModelFactory):
+
     name = factory.Faker("sentence", nb_words=2)
 
     class Meta:

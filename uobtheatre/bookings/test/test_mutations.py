@@ -2781,3 +2781,76 @@ def test_uncheck_in_booking_incorrect_ticket(gql_client):
             }
         }
     }
+
+@pytest.mark.django_db
+@pytest.mark.parametrize("with_auth", [True, False])
+def test_transfer_in_a_ideal_world(gql_client, with_auth):
+    user = UserFactory()
+    performance1 = PerformanceFactory()
+    performance2 = PerformanceFactory(production = performance1.production)
+    new_booking = BookingFactory(performance=performance1, user=user)
+    old_booking = BookingFactory(performance=performance2, user=user)
+
+    performance_seat_group_1 = PerformanceSeatingFactory(price = 69, performance=performance1)
+    PerformanceSeatingFactory(price = 69, performance= performance2, seat_group=performance_seat_group_1.seat_group)
+    TicketFactory(booking=new_booking, seat_group=performance_seat_group_1.seat_group)
+    TicketFactory(booking=old_booking, seat_group=performance_seat_group_1.seat_group)
+
+    gql_client.login()
+    if with_auth:
+        assign_perm("productions.transfer_booking", gql_client.user)
+
+    request_query = """
+    mutation {
+    transferBooking(
+            oldBookingId: "%s"
+            newBookingId: "%s"
+        ) {
+            success
+
+            oldBooking{
+                id
+            }
+            newBooking{
+                id
+            }
+        }
+    }
+    
+    """
+    response = gql_client.execute(
+        request_query
+        % (
+             to_global_id("BookingNode", old_booking.id),
+             to_global_id("BookingNode", new_booking.id),
+            
+        )
+    )
+
+    if not with_auth:
+        assert response == { "data": {
+            "transferBooking": {
+                "success": False,
+                "oldBooking": None,
+                "newBooking": None,
+                }
+            }
+        }
+        return
+
+    assert response == {
+        "data": {
+            "transferBooking": {
+                "success": True,
+                "oldBooking": {"id": to_global_id("BookingNode", old_booking.id)},
+                "newBooking": {"id": to_global_id("BookingNode", new_booking.id)},
+                }
+            }
+        }
+
+    old_booking.refresh_from_db()
+    new_booking.refresh_from_db()
+
+    assert old_booking.status == Payable.Status.CANCELLED
+    assert new_booking.status == Payable.Status.PAID
+    assert new_booking.transferred_from == old_booking
