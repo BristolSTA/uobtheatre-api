@@ -507,7 +507,7 @@ class TransferBooking(AuthRequiredMixin, SafeMutation):
         new_booking.transferred_from = old_booking
         new_booking.save()
         new_booking.complete()
-        old_booking.status = Payable.Status.CANCELLED
+        old_booking.status = Payable.Status.TRANSFERRED
         old_booking.save()
 
         return TransferBooking(old_booking = old_booking, new_booking = new_booking)
