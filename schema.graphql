@@ -71,6 +71,7 @@ enum BookingStatus {
   IN_PROGRESS
   CANCELLED
   PAID
+  TRANSFERRED
 }
 
 type CancelPayment {
