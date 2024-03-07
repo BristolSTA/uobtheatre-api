@@ -549,9 +549,11 @@ def test_performance_total_capacity(
     seat_group_capacities, performance_capacity, venue_capacity, expected
 ):
     performance = PerformanceFactory(
-        venue=VenueFactory(internal_capacity=venue_capacity)
-        if not venue_capacity is None
-        else None,
+        venue=(
+            VenueFactory(internal_capacity=venue_capacity)
+            if not venue_capacity is None
+            else None
+        ),
         capacity=performance_capacity,
     )
 
@@ -639,9 +641,9 @@ def test_performance_seat_group_capacity_remaining(
     ) as total_seat_group_capacity_mock, patch.object(
         performance,
         "total_tickets_sold_or_reserved",
-        side_effect=lambda seat_group=None: seat_group_sold_tickets
-        if seat_group
-        else total_sold_tickets,
+        side_effect=lambda seat_group=None: (
+            seat_group_sold_tickets if seat_group else total_sold_tickets
+        ),
     ) as total_tickets_sold_or_reserved_mock:
         assert performance.seat_group_capacity_remaining(seat_group) == expected
         total_seat_group_capacity_mock.assert_called_once_with(seat_group=seat_group)
