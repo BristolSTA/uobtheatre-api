@@ -180,11 +180,11 @@ def test_productions_schema(gql_client):
                                         "CastMemberNode", cast_member.id
                                     ),
                                     "name": cast_member.name,
-                                    "profilePicture": {
-                                        "url": cast_member.profile_picture.file.url
-                                    }
-                                    if cast_member.profile_picture
-                                    else None,
+                                    "profilePicture": (
+                                        {"url": cast_member.profile_picture.file.url}
+                                        if cast_member.profile_picture
+                                        else None
+                                    ),
                                     "role": cast_member.role,
                                     "production": {
                                         "id": to_global_id(

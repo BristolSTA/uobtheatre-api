@@ -87,12 +87,14 @@ class PermissionableModel(models.Model):
             PermissionNode(
                 name=permission.codename,
                 description=permission.name,
-                user_can_assign=any(
-                    user.has_perm(permission, self)
-                    for permission in assignable_permissions[permission.codename]
-                )
-                if permission.codename in assignable_permissions
-                else False,
+                user_can_assign=(
+                    any(
+                        user.has_perm(permission, self)
+                        for permission in assignable_permissions[permission.codename]
+                    )
+                    if permission.codename in assignable_permissions
+                    else False
+                ),
             )
             for permission in available_perms
         ]
