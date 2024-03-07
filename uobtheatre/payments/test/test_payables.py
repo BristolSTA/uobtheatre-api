@@ -165,9 +165,11 @@ def test_is_locked(has_pending_transaction):
     booking = BookingFactory()
     TransactionFactory(
         pay_object=booking,
-        status=Transaction.Status.PENDING
-        if has_pending_transaction
-        else Transaction.Status.COMPLETED,
+        status=(
+            Transaction.Status.PENDING
+            if has_pending_transaction
+            else Transaction.Status.COMPLETED
+        ),
     )
 
     assert booking.is_locked == has_pending_transaction

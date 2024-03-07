@@ -126,16 +126,22 @@ class PeriodTotalsBreakdown(TimeScopedReport):
         for payment in payments:
             # Handle production
             row = production_totals_set.find_or_create_row_by_first_column(
-                payment.pay_object.performance.production.id
-                if payment.pay_object
-                else "",
-                [
+                (
                     payment.pay_object.performance.production.id
                     if payment.pay_object
-                    else "",
-                    payment.pay_object.performance.production.name
-                    if payment.pay_object
-                    else "",
+                    else ""
+                ),
+                [
+                    (
+                        payment.pay_object.performance.production.id
+                        if payment.pay_object
+                        else ""
+                    ),
+                    (
+                        payment.pay_object.performance.production.name
+                        if payment.pay_object
+                        else ""
+                    ),
                     0,
                 ],
             )

@@ -93,9 +93,9 @@ class PerformanceAdmin(DangerousAdminConfirmMixin, ModelAdmin):
         # automatically
         form.fields["users"].disabled = True
         form.fields["user_reason"].disabled = True
-        form.fields[
-            "user_reason"
-        ].help_text = "This will be generated automatically for each user, this is the example for the first user"
+        form.fields["user_reason"].help_text = (
+            "This will be generated automatically for each user, this is the example for the first user"
+        )
 
         if form.is_valid():
             form.submit()

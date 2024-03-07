@@ -216,9 +216,13 @@ def test_url_validator(url, is_valid):
 def test_call_validator(has_errors):
     class MockValidator(Validator):
         validate = MagicMock(
-            return_value=None
-            if not has_errors
-            else ValidationErrors(exceptions=[ValidationError(message="Some error")])
+            return_value=(
+                None
+                if not has_errors
+                else ValidationErrors(
+                    exceptions=[ValidationError(message="Some error")]
+                )
+            )
         )
 
     validator = MockValidator()

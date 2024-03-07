@@ -38,9 +38,9 @@ class TicketInputType(graphene.InputObjectType):
         return Ticket(
             seat_group=SeatGroup.objects.get(id=self.seat_group_id),
             concession_type=ConcessionType.objects.get(id=self.concession_type_id),
-            seat=Seat.objects.get(id=self.seat_id)
-            if self.seat_id is not None
-            else None,
+            seat=(
+                Seat.objects.get(id=self.seat_id) if self.seat_id is not None else None
+            ),
         )
 
 

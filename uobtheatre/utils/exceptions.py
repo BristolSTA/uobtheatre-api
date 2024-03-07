@@ -9,7 +9,6 @@ In general a mutation will also return MutationResult fields (success: bool and
 error: Union[FieldError, NonFieldError])
 """
 
-
 import traceback
 from typing import Any, Iterable, List, Union
 
@@ -123,13 +122,15 @@ class GQLException(MutationException):
 
     def resolve(self) -> List[Union[FieldError, NonFieldError]]:
         return [
-            FieldError(
-                message=self.message,
-                code=self.code,
-                field=self.field,
+            (
+                FieldError(
+                    message=self.message,
+                    code=self.code,
+                    field=self.field,
+                )
+                if self.field
+                else NonFieldError(message=self.message, code=self.code)
             )
-            if self.field
-            else NonFieldError(message=self.message, code=self.code)
         ]
 
 

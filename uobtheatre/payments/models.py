@@ -82,7 +82,6 @@ TransactionManager = models.Manager.from_queryset(TransactionQuerySet)
 
 
 class Transaction(TimeStampedMixin, BaseModel):
-
     """The model for a transaction.
 
     When ever a transaction is made for a Production a Payment object is
