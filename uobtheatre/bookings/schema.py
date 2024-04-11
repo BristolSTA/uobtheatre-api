@@ -192,6 +192,9 @@ class BookingFilter(FilterSet):
 
     Restricts BookingNode to only return Bookings owned by the User. Adds
     ordering filter for created_at.
+
+    Also adds filtering for bookings based on the name of its associated
+    production.
     """
 
     status_in = django_filters.MultipleChoiceFilter(
@@ -199,6 +202,11 @@ class BookingFilter(FilterSet):
     )
 
     search = django_filters.CharFilter(method="search_bookings", label="Search")
+
+    production_search = django_filters.CharFilter(
+        method="production_search_bookings", label="Production Search"
+    )
+
     checked_in = django_filters.BooleanFilter(
         method="filter_checked_in", label="Checked In"
     )
@@ -234,6 +242,22 @@ class BookingFilter(FilterSet):
                 | Q(user__email__icontains=word)
                 | Q(reference__icontains=word)
             )
+        return queryset.filter(query)
+
+    def production_search_bookings(self, queryset, _, value):
+        """
+        Given a query string, searches through the bookings using the name of each associated production
+
+        Args:
+            queryset (Queryset): The bookings queryset.
+            value (str): The search query.
+
+        Returns:
+            Queryset: Filtered booking queryset.
+        """
+        query = Q()
+        for word in value.split():
+            query = query | Q(performance__production__name__icontains=word)
         return queryset.filter(query)
 
     def filter_checked_in(self, queryset, _, value):
