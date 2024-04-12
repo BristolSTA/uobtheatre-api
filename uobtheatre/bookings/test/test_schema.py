@@ -795,6 +795,66 @@ def test_bookings_search(search_phrase, expected_filtered_bookings, gql_client):
     assert len(response_bookings_id) == len(expected_booking_ids)
     assert set(response_bookings_id) == set(expected_booking_ids)
 
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "search_phrase, expected_filtered_bookings",
+    [
+        ("prod", [1,2,3]), # Check case-insensitivity
+        ("prod ", [1,2,3]), # Check *final* spaces *are* stripped
+        ("prod2", [3]), # Check spaces within prod name *aren't* ignored
+        ("prod 2", [2]), # Check spaces *aren't* treated as an OR, and also
+                         # check *internal* spaces *aren't* stripped
+        ("def", []), # Check actually filtering
+        ("", [1,2,3]), # Empty string should return all
+        ("aces", [2,3]) # Check matches all the way to the end; doesn't need
+                        # full word
+    ],
+)
+def test_bookings_productions_search(search_phrase, expected_filtered_bookings,
+                          gql_client):
+
+    prod1 = ProductionFactory(name="Prod1")
+    prod2 = ProductionFactory(name="prod 2 spaces")
+    prod3 = ProductionFactory(name="prod2spaces")
+
+    BookingFactory(id=1, reference="abc123",
+                   performance=PerformanceFactory(production=prod1))
+    BookingFactory(id=2, reference="abcdef",
+                   performance=PerformanceFactory(production=prod2))
+    BookingFactory(id=3, reference="ghijkl",
+                   performance=PerformanceFactory(production=prod3))
+
+    request = (
+            """
+            query {
+                bookings(productionSearch:"%s") {
+                  edges {
+                    node {
+                      id
+                    }
+                  }
+                }
+            }
+        """
+            % search_phrase
+    )
+
+    boxoffice_perm = Permission.objects.get(codename="boxoffice")
+    gql_client.login().user.user_permissions.add(boxoffice_perm)
+
+    response = gql_client.execute(request)
+
+    response_bookings_id = [
+        node["node"]["id"] for node in response["data"]["bookings"]["edges"]
+    ]
+    expected_booking_ids = [
+        to_global_id("BookingNode", booking_id)
+        for booking_id in expected_filtered_bookings
+    ]
+
+    assert len(response_bookings_id) == len(expected_booking_ids)
+    assert set(response_bookings_id) == set(expected_booking_ids)
+
 
 @pytest.mark.django_db
 def test_bookings_qs(gql_client):
