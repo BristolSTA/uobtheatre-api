@@ -255,9 +255,7 @@ class BookingFilter(FilterSet):
         Returns:
             Queryset: Filtered booking queryset.
         """
-        query = Q()
-        for word in value.split():
-            query = query | Q(performance__production__name__icontains=word)
+        query = Q() | Q(performance__production__name__icontains=value)
         return queryset.filter(query)
 
     def filter_checked_in(self, queryset, _, value):
