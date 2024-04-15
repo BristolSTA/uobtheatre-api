@@ -46,7 +46,7 @@ class Venue(TimeStampedMixin, BaseModel):
             list of Production: A list of all the productions in this Venue.
         """
         production_model = apps.get_model("productions", "production")
-        return production_model.objects.filter(performances__venue=self)
+        return production_model.objects.filter(performances__venue=self).distinct()
 
     def __str__(self):
         return str(self.name)
