@@ -2,7 +2,6 @@
 Defines base schema for api
 """
 
-
 import graphene
 
 import uobtheatre.bookings.mutations as bookings_mutations
