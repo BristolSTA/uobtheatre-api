@@ -861,7 +861,7 @@ def test_bookings_slug_filter(slug, expected_filtered_bookings, gql_client):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "id, expected_filtered_bookings",
+    "performance_id, expected_filtered_bookings",
     [
         ("", [1, 2, 3]),  # Empty should return all, but not error
         (to_global_id("PerformanceNode", 10), [1]),  # Check basic query
@@ -871,12 +871,14 @@ def test_bookings_slug_filter(slug, expected_filtered_bookings, gql_client):
         (to_global_id("PerformanceNode", 30), []),
     ],
 )
-def test_bookings_performance_id(id, expected_filtered_bookings, gql_client):
+def test_bookings_performance_id(
+    performance_id, expected_filtered_bookings, gql_client
+):
 
     performance_1 = PerformanceFactory(id=10)
     performance_2 = PerformanceFactory(id=20)
 
-    b1 = BookingFactory(id=1, performance=performance_1)  # id: 10
+    BookingFactory(id=1, performance=performance_1)  # id: 10
     BookingFactory(id=2, performance=performance_2)  # id: 20
     BookingFactory(id=3, performance=performance_2)  # id: 20
 
@@ -892,7 +894,7 @@ def test_bookings_performance_id(id, expected_filtered_bookings, gql_client):
                 }
             }
         """
-        % id
+        % performance_id
     )
 
     boxoffice_perm = Permission.objects.get(codename="boxoffice")
