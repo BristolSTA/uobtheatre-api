@@ -797,37 +797,150 @@ def test_bookings_search(search_phrase, expected_filtered_bookings, gql_client):
     assert len(response_bookings_id) == len(expected_booking_ids)
     assert set(response_bookings_id) == set(expected_booking_ids)
 
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "slug, expected_filtered_bookings",
+    [
+        ("", [1, 2, 3, 4, 5]),  # Empty should return all
+        ("test", [1, 2]),  # Check multiple performances for a production
+        ("teeth", [3, 4]),  # Check multiple bookings for a performances
+        ("te", []),  # Check matches whole slug
+        ("test teeth", []),  # Check spaces aren't treated as an OR
+        ("teeth-test", [5]),  # Check hyphens work correctly
+    ],
+)
+def test_bookings_slug_filter(slug, expected_filtered_bookings, gql_client):
+
+    production_1 = ProductionFactory(name="Test")
+    production_2 = ProductionFactory(name="Teeth")
+    production_3 = ProductionFactory(name="Teeth Test")
+
+    performance_1 = PerformanceFactory(production=production_1)
+    performance_2 = PerformanceFactory(production=production_1)
+    performance_3 = PerformanceFactory(production=production_2)
+    performance_4 = PerformanceFactory(production=production_3)
+
+    BookingFactory(id=1, performance=performance_1)  # slug: test
+    BookingFactory(id=2, performance=performance_2)  # slug: test
+    BookingFactory(id=3, performance=performance_3)  # slug: teeth
+    BookingFactory(id=4, performance=performance_3)  # slug: teeth
+    BookingFactory(id=5, performance=performance_4)  # slug: teeth-test
+
+    request = (
+        """
+            query {
+                bookings(productionSlug:"%s") {
+                  edges {
+                    node {
+                      id
+                    }
+                  }
+                }
+            }
+        """
+        % slug
+    )
+
+    boxoffice_perm = Permission.objects.get(codename="boxoffice")
+    gql_client.login().user.user_permissions.add(boxoffice_perm)
+
+    response = gql_client.execute(request)
+
+    response_bookings_id = [
+        node["node"]["id"] for node in response["data"]["bookings"]["edges"]
+    ]
+    expected_booking_ids = [
+        to_global_id("BookingNode", booking_id)
+        for booking_id in expected_filtered_bookings
+    ]
+
+    assert len(response_bookings_id) == len(expected_booking_ids)
+    assert set(response_bookings_id) == set(expected_booking_ids)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "id, expected_filtered_bookings",
+    [
+        ("", [1, 2, 3]),  # Empty should return all, but not error
+        (to_global_id("PerformanceNode", 10), [1]),  # Check basic query
+        # Check multiple bookings for a performance
+        (to_global_id("PerformanceNode", 20), [2, 3]),
+        # Check performances that don't exist - should not error
+        (to_global_id("PerformanceNode", 30), []),
+    ],
+)
+def test_bookings_performance_id(id, expected_filtered_bookings, gql_client):
+
+    performance_1 = PerformanceFactory(id=10)
+    performance_2 = PerformanceFactory(id=20)
+
+    b1 = BookingFactory(id=1, performance=performance_1)  # id: 10
+    BookingFactory(id=2, performance=performance_2)  # id: 20
+    BookingFactory(id=3, performance=performance_2)  # id: 20
+
+    request = (
+        """
+            query {
+                bookings(performanceId:"%s") {
+                  edges {
+                    node {
+                      id
+                    }
+                  }
+                }
+            }
+        """
+        % id
+    )
+
+    boxoffice_perm = Permission.objects.get(codename="boxoffice")
+    gql_client.login().user.user_permissions.add(boxoffice_perm)
+
+    response = gql_client.execute(request)
+
+    response_bookings_id = [
+        node["node"]["id"] for node in response["data"]["bookings"]["edges"]
+    ]
+    expected_booking_ids = [
+        to_global_id("BookingNode", booking_id)
+        for booking_id in expected_filtered_bookings
+    ]
+
+    assert len(response_bookings_id) == len(expected_booking_ids)
+    assert set(response_bookings_id) == set(expected_booking_ids)
+
+
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "search_phrase, expected_filtered_bookings",
     [
-        ("prod", [1,2,3]), # Check case-insensitivity
-        ("prod ", [1,2,3]), # Check *final* spaces *are* stripped
-        ("prod2", [3]), # Check spaces within prod name *aren't* ignored
-        ("prod 2", [2]), # Check spaces *aren't* treated as an OR, and also
-                         # check *internal* spaces *aren't* stripped
-        ("def", []), # Check actually filtering
-        ("", [1,2,3]), # Empty string should return all
-        ("aces", [2,3]) # Check matches all the way to the end; doesn't need
-                        # full word
+        ("prod", [1, 2, 3]),  # Check case-insensitivity
+        ("prod ", [1, 2, 3]),  # Check *final* spaces *are* stripped
+        ("prod2", [3]),  # Check spaces within prod name *aren't* ignored
+        ("prod 2", [2]),  # Check spaces *aren't* treated as an OR, and also
+        # check *internal* spaces *aren't* stripped
+        ("def", []),  # Check actually filtering
+        ("", [1, 2, 3]),  # Empty string should return all
+        ("aces", [2, 3]),  # Check matches all the way to the end; doesn't need
+        # full word
     ],
 )
-def test_bookings_productions_search(search_phrase, expected_filtered_bookings,
-                          gql_client):
+def test_bookings_productions_search(
+    search_phrase, expected_filtered_bookings, gql_client
+):
 
     prod1 = ProductionFactory(name="Prod1")
     prod2 = ProductionFactory(name="prod 2 spaces")
     prod3 = ProductionFactory(name="prod2spaces")
 
-    BookingFactory(id=1, reference="abc123",
-                   performance=PerformanceFactory(production=prod1))
-    BookingFactory(id=2, reference="abcdef",
-                   performance=PerformanceFactory(production=prod2))
-    BookingFactory(id=3, reference="ghijkl",
-                   performance=PerformanceFactory(production=prod3))
+    BookingFactory(id=1, performance=PerformanceFactory(production=prod1))
+    BookingFactory(id=2, performance=PerformanceFactory(production=prod2))
+    BookingFactory(id=3, performance=PerformanceFactory(production=prod3))
 
     request = (
-            """
+        """
             query {
                 bookings(productionSearch:"%s") {
                   edges {
@@ -838,7 +951,7 @@ def test_bookings_productions_search(search_phrase, expected_filtered_bookings,
                 }
             }
         """
-            % search_phrase
+        % search_phrase
     )
 
     boxoffice_perm = Permission.objects.get(codename="boxoffice")
