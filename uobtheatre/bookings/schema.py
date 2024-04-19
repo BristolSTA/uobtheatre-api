@@ -7,6 +7,7 @@ from django_filters import OrderingFilter
 from graphene import relay
 from graphene_django import DjangoListField, DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
+from graphql_relay.node.node import from_global_id
 
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
 from uobtheatre.productions.models import Performance
@@ -207,6 +208,14 @@ class BookingFilter(FilterSet):
         method="production_search_bookings", label="Production Search"
     )
 
+    production_slug = django_filters.CharFilter(
+        method="filter_production_slug", label="Production Slug"
+    )
+
+    performance_id = django_filters.CharFilter(
+        method="filter_performance_id", label="Performance ID"
+    )
+
     checked_in = django_filters.BooleanFilter(
         method="filter_checked_in", label="Checked In"
     )
@@ -256,6 +265,37 @@ class BookingFilter(FilterSet):
             Queryset: Filtered booking queryset.
         """
         query = Q() | Q(performance__production__name__icontains=value)
+        return queryset.filter(query)
+
+    def filter_production_slug(self, queryset, _, value):
+        """
+        Given a query string, searches through the bookings using the slug of
+        each associated production. Only return *exact matches*.
+
+        Args:
+            queryset (Queryset): The bookings queryset.
+            value (str): The search query.
+
+        Returns:
+            Queryset: Filtered booking queryset.
+        """
+        query = Q() | Q(performance__production__slug=value)
+        return queryset.filter(query)
+
+    def filter_performance_id(self, queryset, _, value):
+        """
+        Given a query string - the ID of the performance in base64, searches
+        through the bookings using the id of each associated performance.
+        Only return *exact matches*.
+
+        Args:
+            queryset (Queryset): The bookings queryset.
+            value (str): The search query.
+
+        Returns:
+            Queryset: Filtered booking queryset.
+        """
+        query = Q() | Q(performance__id=from_global_id(value)[1])
         return queryset.filter(query)
 
     def filter_checked_in(self, queryset, _, value):
