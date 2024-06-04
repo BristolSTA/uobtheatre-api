@@ -11,3 +11,5 @@ updates:
       interval: "daily"
     # Allow up to 20 open pull requests for pip dependencies
     open-pull-requests-limit: 20
+    # Point to fix/migration branch
+    target-branch: "fix/migration"
