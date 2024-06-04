@@ -51,7 +51,6 @@ class MockApiResponse:
 def mock_payment_method(
     name="payment_method",
     is_refundable: bool = True,
-    refund_providers=None,
     automatic_refund_provider=None,
 ):
     """
@@ -65,11 +64,6 @@ def mock_payment_method(
         @property
         def name(cls):
             return name
-
-        @classmethod
-        @property
-        def refund_providers(cls):
-            return refund_providers
 
         @classmethod
         @property
