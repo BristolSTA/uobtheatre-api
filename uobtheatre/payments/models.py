@@ -212,7 +212,6 @@ class Transaction(TimeStampedMixin, BaseModel):
             ).send(
                 "Refund successfully processed", user.email
             )
-            return
 
     def cancel(self):
         """
