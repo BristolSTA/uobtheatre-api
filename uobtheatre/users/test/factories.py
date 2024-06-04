@@ -34,10 +34,6 @@ class UserFactory(factory.django.DjangoModelFactory):
     @factory.post_generation
     def groups(self, create, extracted, **_):
         """Handle user group adding on create"""
-        if not create:  # pragma: no cover
-            # This function isn't covered by our tests as it is only used by internal python files. Don't delete it!
-            return
-
         if extracted:
             for group in extracted:
                 self.groups.add(group)
