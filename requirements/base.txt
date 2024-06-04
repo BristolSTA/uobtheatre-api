@@ -32,7 +32,7 @@ html2text==2024.2.26
 
 #=== Database ===#
 
-psycopg2==2.9.5  # https://github.com/psycopg/psycopg2
+psycopg2==2.9.9  # https://github.com/psycopg/psycopg2
 
 #=== Django core ===#
 
