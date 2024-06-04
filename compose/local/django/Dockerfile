@@ -67,4 +67,7 @@ RUN chmod +x /start
 # copy application code to WORKDIR
 COPY . ${APP_HOME}
 
+# Exposes port 8000 to the outside world
+EXPOSE 8000
+
 ENTRYPOINT ["/entrypoint"]
