@@ -26,12 +26,10 @@ class TransactionProvider(abc.ABC):
         cls.name = TransactionProvider.generate_name(cls.__name__)
 
     @classmethod
-    @property
     def __all__(cls) -> Sequence[Type["TransactionProvider"]]:
         return PaymentProvider.__all__ + RefundProvider.__all__  # type: ignore
 
     @classmethod
-    @property
     @abc.abstractmethod
     def description(cls):
         pass
@@ -44,7 +42,6 @@ class TransactionProvider(abc.ABC):
         return name.upper()
 
     @classmethod
-    @property
     def choices(cls):
         choices = [(method.name, method.name) for method in cls.__all__]
         return choices
@@ -96,7 +93,6 @@ class RefundProvider(TransactionProvider, abc.ABC):
         cls.__all__ = cls.__all__.append(cls)  # type: ignore #pylint: disable=assignment-from-no-return
 
     @classmethod
-    @property
     @abc.abstractmethod
     def is_automatic(cls) -> bool:
         """
@@ -145,13 +141,11 @@ class PaymentProvider(TransactionProvider, abc.ABC):
         return super().create_payment_object(*args, **kwargs)
 
     @classmethod
-    @property
     def refund_providers(cls) -> tuple[RefundProvider, ...]:
         """A tuple of methods that can be used to refund payments"""
         return tuple()
 
     @classmethod
-    @property
     def is_refundable(cls) -> bool:
         return bool(cls.refund_providers)
 
@@ -162,7 +156,6 @@ class PaymentProvider(TransactionProvider, abc.ABC):
         )
 
     @classmethod
-    @property
     def automatic_refund_provider(cls) -> Optional[RefundProvider]:
         """
         Return the first payment method that can be used automatically. This
@@ -174,7 +167,6 @@ class PaymentProvider(TransactionProvider, abc.ABC):
         )
 
     @classmethod
-    @property
     def is_auto_refundable(cls) -> bool:
         """
         Returns whether this payment method has an automatic refund method.
@@ -350,7 +342,6 @@ class Card(ManualPaymentMethodMixin, PaymentProvider):
     description = "Manual card payment"
 
     @classmethod
-    @property
     def refund_providers(cls):
         return (ManualCardRefund(),)
 
@@ -537,7 +528,6 @@ class SquareOnline(PaymentProvider, SquarePaymentMethod):
     description = "Square online card payment"
 
     @classmethod
-    @property
     def refund_providers(cls):
         return (SquareRefund(idempotency_key=str(uuid4())),)
 

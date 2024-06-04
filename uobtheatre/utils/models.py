@@ -26,12 +26,10 @@ class BaseModel(models.Model):
         return model
 
     @classmethod
-    @property
     def content_type(cls):
         return ContentType.objects.get_for_model(cls)
 
     @classmethod
-    @property
     def _node_name(cls):
         return f"{cls.__name__}Node"
 
