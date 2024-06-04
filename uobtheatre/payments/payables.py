@@ -224,7 +224,9 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
 
         return payment
 
-    def complete(self, payment: Transaction = None):  # pylint: disable=unused-argument
+    def complete(
+        self, payment: Optional[Transaction] = None
+    ):  # pylint: disable=unused-argument
         """
         Called once the pay object has been completly paid for. Payment passed
         is the finishing transaction

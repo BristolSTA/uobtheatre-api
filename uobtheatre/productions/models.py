@@ -709,7 +709,7 @@ class Performance(
             return True
         return False
 
-    def sales_breakdown(self, breakdowns: list[str] = None):
+    def sales_breakdown(self, breakdowns: Optional[list[str]] = None):
         """Generates a breakdown of the sales of this performance"""
         return self.qs.transactions().annotate_sales_breakdown(breakdowns)
 
@@ -1003,7 +1003,7 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
             performance.total_tickets_sold() for performance in self.performances.all()
         )
 
-    def sales_breakdown(self, breakdowns: list[str] = None):
+    def sales_breakdown(self, breakdowns: Optional[list[str]] = None):
         """Generates a breakdown of the sales of this production"""
         return self.qs.transactions().annotate_sales_breakdown(breakdowns)
 

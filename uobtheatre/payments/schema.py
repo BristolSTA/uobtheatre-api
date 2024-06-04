@@ -1,3 +1,5 @@
+from typing import Optional
+
 import django_filters
 import graphene
 from graphene import relay
@@ -76,7 +78,10 @@ class Query(graphene.ObjectType):
     )
 
     def resolve_payment_devices(
-        self, info, payment_provider: str = None, paired: bool = None
+        self,
+        info,
+        payment_provider: Optional[str] = None,
+        paired: Optional[bool] = None,
     ):
         """
         Returns square payment devices.

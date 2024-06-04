@@ -541,7 +541,7 @@ class Booking(TimeStampedMixin, Payable):
 
         return super().pay(payment_method)
 
-    def complete(self, payment: Transaction = None):
+    def complete(self, payment: Optional[Transaction] = None):
         """
         Complete the booking (after it has been paid for) and send the
         confirmation email.

@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from uobtheatre.mail.composer import MailComposer
 from uobtheatre.payments.models import Transaction
@@ -8,7 +8,9 @@ if TYPE_CHECKING:
     from uobtheatre.bookings.models import Booking
 
 
-def send_booking_confirmation_email(booking: "Booking", payment: Transaction = None):
+def send_booking_confirmation_email(
+    booking: "Booking", payment: Optional[Transaction] = None
+):
     """
     Send email confirmation which includes a link to the booking.
     """

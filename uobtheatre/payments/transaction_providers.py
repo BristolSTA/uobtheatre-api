@@ -62,7 +62,9 @@ class TransactionProvider(abc.ABC):
         )
 
     @classmethod
-    def sync_transaction(cls, payment: "payment_models.Transaction", data: dict = None):
+    def sync_transaction(
+        cls, payment: "payment_models.Transaction", data: Optional[dict] = None
+    ):
         """Syncs the refund payment from the provider"""
 
     @classmethod
@@ -311,7 +313,9 @@ class SquareRefund(RefundProvider, SquareAPIMixin):
         )
 
     @classmethod
-    def sync_transaction(cls, payment: "payment_models.Transaction", data: dict = None):
+    def sync_transaction(
+        cls, payment: "payment_models.Transaction", data: Optional[dict] = None
+    ):
         if not data:
             response = cls.client.refunds.get_payment_refund(
                 cls.get_payment_provider_id(payment)
@@ -418,7 +422,9 @@ class SquarePOS(PaymentProvider, SquarePaymentMethod):
         )
 
     @classmethod
-    def list_devices(cls, product_type: str = None, status: str = None) -> list[dict]:
+    def list_devices(
+        cls, product_type: Optional[str] = None, status: Optional[str] = None
+    ) -> list[dict]:
         """List the device codes available on square.
 
         Args:
@@ -476,7 +482,9 @@ class SquarePOS(PaymentProvider, SquarePaymentMethod):
         cls._handle_response_failure(response)
 
     @classmethod
-    def sync_transaction(cls, payment: "payment_models.Transaction", data: dict = None):
+    def sync_transaction(
+        cls, payment: "payment_models.Transaction", data: Optional[dict] = None
+    ):
         """Syncs the given payment with the raw payment data"""
         payment_id = cls.get_payment_provider_id(payment)
 
@@ -542,7 +550,7 @@ class SquareOnline(PaymentProvider, SquarePaymentMethod):
         return (SquareRefund(idempotency_key=str(uuid4())),)
 
     def __init__(
-        self, nonce: str, idempotency_key: str, verify_token: str = None
+        self, nonce: str, idempotency_key: str, verify_token: Optional[str] = None
     ) -> None:
         """
         Args:
@@ -606,7 +614,9 @@ class SquareOnline(PaymentProvider, SquarePaymentMethod):
         )
 
     @classmethod
-    def sync_transaction(cls, payment: "payment_models.Transaction", data: dict = None):
+    def sync_transaction(
+        cls, payment: "payment_models.Transaction", data: Optional[dict] = None
+    ):
         """Syncs the given payment with the raw payment data"""
         payment_id = cls.get_payment_provider_id(payment)
 

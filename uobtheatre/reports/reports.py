@@ -1,7 +1,7 @@
 import abc
 from abc import ABC
 from dataclasses import dataclass, field
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 from graphql_relay.node.node import from_global_id
 
@@ -54,7 +54,7 @@ class DataSet:
 class Report(ABC):
     """An abstract class for a generic report"""
 
-    def __init__(self, options: list = None):
+    def __init__(self, options: Optional[list] = None):
         self.datasets: list[DataSet] = []
         self.meta: list[MetaItem] = []
         self.options = options or []
