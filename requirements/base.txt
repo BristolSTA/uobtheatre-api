@@ -71,7 +71,7 @@ django-anymail[amazon_ses]==9.1  # https://github.com/anymail/django-anymail
 django-inlinecss==0.3.0
 
 #=== Timezones ===#
-timezonefinder==6.1.9
+timezonefinder==6.5.0
 pytz==2022.7.1
 
 #=== Task Queue ===#
