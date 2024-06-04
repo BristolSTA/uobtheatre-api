@@ -3,7 +3,7 @@
 from django.db import migrations
 
 
-def convert_purcahse_to_payment(apps, _):
+def convert_purcahse_to_payment(apps, _): # pragma: no cover
     Transaction = apps.get_model("payments", "Transaction")
     transactions = Transaction.objects.filter(type="PURCHASE")
     transactions.update(type="PAYMENT")
