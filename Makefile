@@ -21,7 +21,7 @@ ifneq (,$(findstring a,  $(MAKEFLAGS)))
   export VERBOSE
 endif
 
-COMMAND_PREFIX=$(if $(DEV_CONTAINER),,docker compose run --rm api)
+COMMAND_PREFIX=$(if $(DEV_CONTAINER),,docker-compose run --rm api)
 
 PONY: help
 
@@ -29,7 +29,7 @@ help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 setup:
-	docker compose pull
+	docker-compose pull
 	make build
 	make collect-static
 	python -m venv .venv
@@ -41,16 +41,16 @@ setup-devcontainer:
 	pip install -r requirements/local.txt
 
 up: ## Run background
-	docker compose up -d api postgres celery celery-beat redis
+	docker-compose up -d api postgres celery celery-beat redis
 
 up-v: ## Run verbose
-	docker compose up
+	docker-compose up
 
 up-adminer:  ## Up adminer on port 8001
-	docker compose up -d adminer
+	docker-compose up -d adminer
 
 down: ## Down
-	docker compose down
+	docker-compose down
 
 dump: ## dumps databse objects into fixture
 	$(COMMAND_PREFIX) python manage.py dumpdata users images addresses venues societies productions discounts bookings payments --indent 2 > db.json
@@ -83,10 +83,10 @@ superuser: ## Seed the db with admin superuser
 	$(COMMAND_PREFIX) python manage.py loaddata uobtheatre/users/fixtures.json
 
 psql: ## Connect to db
-	docker compose exec postgres psql -d postgres -U postgres
+	docker-compose exec postgres psql -d postgres -U postgres
 
 clean: ## Remove all the things
-	docker compose down --volumes --rmi all || true
+	docker-compose down --volumes --rmi all || true
 
 test: ## Run unit tests in docker container
 	$(COMMAND_PREFIX) pytest -k "not system_test" --cov uobtheatre --cov-fail-under 100 --cov-report term-missing $(TEST_PATH) $(TEST)
@@ -139,7 +139,7 @@ clean-migrations: ## Do the migrations from scratch
 
 clean-migrations-tom: ## Do the migrations from scratch
 	find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
-	docker compose run --rm --user "$$(id -u):$$(id -g)" api python manage.py makemigrations
+	docker-compose run --rm --user "$$(id -u):$$(id -g)" api python manage.py makemigrations
 	make clean-postgres-migrate
 
 mypy: ## Type checking - mypy
@@ -154,13 +154,13 @@ pr: ## Runs everything required for a pr
 	make test
 
 build:
-	docker compose build api celery
+	docker-compose build api celery
 
 django-shell: ## Open django shell
 	$(COMMAND_PREFIX) python manage.py shell
 
 api-shell: ## Open django shell
-	docker compose exec api /bin/bash
+	docker-compose exec api /bin/bash
 
 flush:
 	$(COMMAND_PREFIX) python manage.py flush

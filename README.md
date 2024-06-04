@@ -5,7 +5,7 @@
 
 # Quick Start (Getting the api running)
 
-If you have docker and docker compose installed run:
+If you have docker and docker-compose installed run:
 
 ```
 make setup
@@ -25,7 +25,7 @@ This will:
 
 - Python 3.10
 - [docker](https://docs.docker.com/get-docker/)
-- [docker compose](https://docs.docker.com/compose/install/)
+- [docker-compose](https://docs.docker.com/compose/install/)
 
 
 ## Visual Studio Dev Container

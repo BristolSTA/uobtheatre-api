@@ -14,11 +14,11 @@ API for uobtheatre. Check out the project's [documentation](http://BristolSTA.gi
 Start the dev server for local development:
 
 ```bash
-docker compose up
+docker-compose up
 ```
 
 Create a superuser to login to the admin:
 
 ```bash
-docker compose run --rm web ./manage.py createsuperuser
+docker-compose run --rm web ./manage.py createsuperuser
 ```
