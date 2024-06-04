@@ -48,6 +48,6 @@ jobs:
           envs: API_SERVICE_NAME, AUX_SERVICE_NAMES
           script: |
             cd /var/sta
-            docker-compose pull $API_SERVICE_NAME $AUX_SERVICE_NAMES
-            docker-compose up -d $API_SERVICE_NAME $AUX_SERVICE_NAMES
-            docker-compose exec -T $API_SERVICE_NAME python manage.py migrate
+            docker compose pull $API_SERVICE_NAME $AUX_SERVICE_NAMES
+            docker compose up -d $API_SERVICE_NAME $AUX_SERVICE_NAMES
+            docker compose exec -T $API_SERVICE_NAME python manage.py migrate
