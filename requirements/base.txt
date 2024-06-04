@@ -22,7 +22,7 @@ django-admin-confirm==1.0.0
 django-configurations==2.4
 
 # Django config
-django-environ==0.10.0  # https://github.com/joke2k/django-environ
+django-environ==0.11.2  # https://github.com/joke2k/django-environ
 
 # Spreadsheet generation
 xlsxwriter==3.0.9
