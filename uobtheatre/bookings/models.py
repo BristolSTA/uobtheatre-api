@@ -12,7 +12,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from graphql_relay.node.node import to_global_id
 
-#import uobtheatre.bookings.emails as booking_emails
+import uobtheatre.bookings.emails as booking_emails
 from uobtheatre.discounts.models import ConcessionType, DiscountCombination
 from uobtheatre.payments.exceptions import (
     CantBePaidForException,
