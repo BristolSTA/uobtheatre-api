@@ -28,7 +28,7 @@ AWS_AUTO_CREATE_BUCKET = True
 AWS_QUERYSTRING_AUTH = False
 MEDIA_URL = f"https://s3.amazonaws.com/{AWS_STORAGE_BUCKET_NAME}/"
 
-STATICFILES_LOCATION = "static"
+STATICFILES_LOCATION = "staticfiles"
 STATICFILES_STORAGE = "uobtheatre.storages.StaticStorage"
 
 MEDIAFILES_LOCATION = "media"

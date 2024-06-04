@@ -50,7 +50,7 @@ jobs:
     - name: Install dependencies
       run: pip install -r requirements/local.txt
 
-    # Collect static
+    # Collect staticfiles
     - name: Collect Static
       run: ./manage.py collectstatic --noinput
 
@@ -104,7 +104,7 @@ jobs:
       run: |
         pylint uobtheatre
 
-    - name: mypy - static type checking
+    - name: mypy - staticfiles type checking
       run: |
         mypy uobtheatre
 
