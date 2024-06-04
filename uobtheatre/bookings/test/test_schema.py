@@ -521,14 +521,16 @@ def test_discounts_node(gql_client):
                                             ),
                                             "percentage": discount.percentage,
                                             "name": discount.name,
-                                            "seatGroup": {
-                                                to_global_id(
-                                                    "SeatGroupNode",
-                                                    discount.seat_group.id,
-                                                )
-                                            }
-                                            if discount.seat_group
-                                            else None,
+                                            "seatGroup": (
+                                                {
+                                                    to_global_id(
+                                                        "SeatGroupNode",
+                                                        discount.seat_group.id,
+                                                    )
+                                                }
+                                                if discount.seat_group
+                                                else None
+                                            ),
                                             "requirements": [
                                                 {
                                                     "id": to_global_id(

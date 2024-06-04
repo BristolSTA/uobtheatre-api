@@ -36,6 +36,7 @@
             "updated_at": "2020-11-11T12:24:32+0000",
             "name": "The Anson Rooms",
             "internal_capacity": 1000,
+            "address": 1,
             "slug": "anson-rooms",
             "image": 1
         }
