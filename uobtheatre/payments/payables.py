@@ -19,7 +19,7 @@ from uobtheatre.payments.models import SalesBreakdown, Transaction
 from uobtheatre.payments.tasks import refund_payable
 from uobtheatre.users.models import User
 from uobtheatre.utils.filters import filter_passes_on_model
-from uobtheatre.utils.models import AbstractModelMeta, BaseModel
+from uobtheatre.utils.models import BaseModel
 
 if TYPE_CHECKING:
     from uobtheatre.payments.transaction_providers import PaymentProvider
@@ -55,7 +55,7 @@ PayableManager = models.Manager.from_queryset(PayableQuerySet)
 
 
 # pylint: disable=too-many-public-methods
-class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
+class Payable(BaseModel):  # type: ignore
     """
     An model which can be paid for
     """

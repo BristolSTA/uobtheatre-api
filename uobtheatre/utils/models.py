@@ -43,10 +43,6 @@ class BaseModel(models.Model):
         abstract = True
 
 
-class AbstractModelMeta(abc.ABCMeta, type(models.Model)):  # type: ignore
-    pass
-
-
 class TimeStampedMixin(models.Model):
     """Adds created_at and updated_at to a model
 
