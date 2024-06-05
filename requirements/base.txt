@@ -19,7 +19,7 @@ django-cors-headers==3.14.0
 django-admin-confirm==1.0.0
 
 # TODO check if required
-django-configurations==2.4
+django-configurations==2.5.1
 
 # Django config
 django-environ==0.11.2  # https://github.com/joke2k/django-environ
