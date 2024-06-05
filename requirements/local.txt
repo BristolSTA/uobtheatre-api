@@ -25,4 +25,4 @@ factory-boy==3.3.0
 faker==25.5.0; python_version >= '3.6'
 
 # Unsure
-jedi==0.18.2; python_version >= '3.6'
+jedi==0.19.1; python_version >= '3.6'
