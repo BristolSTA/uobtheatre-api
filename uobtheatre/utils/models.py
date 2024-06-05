@@ -25,10 +25,9 @@ class BaseModel(models.Model):
         model.pk = None
         return model
 
-    @classmethod
     @property
-    def content_type(cls):
-        return ContentType.objects.get_for_model(cls)
+    def content_type(self):
+        return ContentType.objects.get_for_model(self)
 
     @classmethod
     @property
