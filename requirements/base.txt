@@ -13,7 +13,7 @@ django-filter==22.1
 Pillow>=8.1.2
 
 # Cors
-django-cors-headers==3.14.0
+django-cors-headers==4.3.1
 
 # Admin confirmation messages
 django-admin-confirm==1.0.0
