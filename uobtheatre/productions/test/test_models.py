@@ -1,7 +1,7 @@
 # pylint: disable=too-many-lines
 import math
 import random
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 from unittest.mock import PropertyMock, patch
 
 import pytest

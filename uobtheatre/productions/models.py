@@ -304,7 +304,9 @@ class Performance(
 
     disabled = models.BooleanField(default=True)
 
-    seat_groups = models.ManyToManyField(SeatGroup, through="PerformanceSeatGroup")
+    seat_groups: models.ManyToManyField = models.ManyToManyField(
+        SeatGroup, through="PerformanceSeatGroup"
+    )
 
     capacity = models.IntegerField(null=True, blank=True)
 
