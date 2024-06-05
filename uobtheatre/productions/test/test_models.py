@@ -1,7 +1,7 @@
 # pylint: disable=too-many-lines
 import math
 import random
-from datetime import timedelta
+from datetime import timedelta, datetime
 from unittest.mock import PropertyMock, patch
 
 import pytest
@@ -56,7 +56,7 @@ def test_production_duration():
     production = ProductionFactory()
 
     # Create a performance with a long duration
-    start = timezone.datetime(
+    start = datetime(
         day=2,
         month=3,
         year=2020,
@@ -65,7 +65,7 @@ def test_production_duration():
         second=10,
         tzinfo=timezone.get_current_timezone(),
     )
-    end = timezone.datetime(
+    end = datetime(
         day=3,
         month=4,
         year=2021,
@@ -77,7 +77,7 @@ def test_production_duration():
     PerformanceFactory(start=start, end=end, production=production)
 
     # Create a performance with a short duration
-    start = timezone.datetime(
+    start = datetime(
         day=2,
         month=3,
         year=2020,
@@ -86,7 +86,7 @@ def test_production_duration():
         second=10,
         tzinfo=timezone.get_current_timezone(),
     )
-    end = timezone.datetime(
+    end = datetime(
         day=2,
         month=3,
         year=2020,
@@ -331,7 +331,7 @@ def test_production_venues():
     "start,end,expected_seconds",
     [
         [
-            timezone.datetime(
+            datetime(
                 day=2,
                 month=3,
                 year=2020,
@@ -340,7 +340,7 @@ def test_production_venues():
                 second=10,
                 tzinfo=timezone.get_current_timezone(),
             ),
-            timezone.datetime(
+            datetime(
                 day=3,
                 month=4,
                 year=2021,
@@ -353,7 +353,7 @@ def test_production_venues():
         ],
         [
             None,
-            timezone.datetime(
+            datetime(
                 day=3,
                 month=4,
                 year=2021,
