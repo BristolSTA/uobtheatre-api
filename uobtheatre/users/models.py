@@ -32,7 +32,7 @@ class User(AbilitiesMixin, AbstractUser, BaseModel):
         blank=False,
     )
     USERNAME_FIELD = "email"
-    REQUIRED_FIELDS: list[str] = ["first_name", "last_name"]
+    REQUIRED_FIELDS = ["first_name", "last_name"]
 
     def __str__(self):
         return self.full_name
