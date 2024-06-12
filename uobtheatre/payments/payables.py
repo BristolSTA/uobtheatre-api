@@ -70,6 +70,8 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
         IN_PROGRESS = "IN_PROGRESS", "In Progress"
         CANCELLED = "CANCELLED", "Cancelled"
         PAID = "PAID", "Paid"
+        TRANSFERRED = "TRANSFERRED", "Transferred"
+        
 
     status = models.CharField(
         max_length=20,
