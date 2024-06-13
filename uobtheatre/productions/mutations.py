@@ -179,6 +179,7 @@ class ProductionMutation(SafeFormMutation, AuthRequiredMixin):
         info.context.user.assign_perm("change_production", response.production)
         info.context.user.assign_perm("sales", response.production)
         info.context.user.assign_perm("boxoffice", response.production)
+        info.context.user.assign_perm("apply_booking_discount", response.production)
 
     class Meta:
         form_class = ProductionForm

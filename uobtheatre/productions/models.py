@@ -1018,6 +1018,7 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
             ("force_change_production", "Can edit production once live"),
             ("view_bookings", "Can inspect bookings and users for this production"),
             ("approve_production", "Can approve production pending publication"),
+            ("apply_booking_discount", "Can create comps for a production"),
         )
 
     class PermissionsMeta:
@@ -1028,4 +1029,5 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
             "change_production": ("change_production", "force_change_production"),
             "sales": ("change_production", "force_change_production"),
             "approve_production": ("approve_production"),
+            "apply_booking_discount": ("apply_booking_discount"),
         }

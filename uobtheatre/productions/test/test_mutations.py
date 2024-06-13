@@ -78,6 +78,27 @@ def test_production_mutation_create(gql_client, with_permission):
         }
         assert Production.objects.count() == 1
 
+        production = Production.objects.first()
+        perms_has = [
+            "view_production",
+            "view_bookings",
+            "change_production",
+            "sales",
+            "boxoffice",
+            "apply_booking_discount",
+        ]
+
+        perms_not_has = [
+            "force_change_production",
+            "approve_production",
+        ]
+
+        for perm in perms_has:
+            assert gql_client.user.has_perm(perm, production)
+
+        for perm in perms_not_has:
+            assert not gql_client.user.has_perm(perm, production)
+
 
 @pytest.mark.django_db
 def test_production_mutation_create_bad_society(gql_client):
