@@ -9,6 +9,7 @@ from square.http.api_response import ApiResponse as SquareApiResponse
 
 from uobtheatre.payments import models as payment_models
 from uobtheatre.utils.exceptions import PaymentException, SquareException
+from uobtheatre.utils.models import classproperty
 
 if TYPE_CHECKING:
     from uobtheatre.payments.payables import Payable
@@ -26,12 +27,12 @@ class TransactionProvider(abc.ABC):
         cls.name = TransactionProvider.generate_name(cls.__name__)
 
     @classmethod
-    @property
+    @classproperty
     def __all__(cls) -> Sequence[Type["TransactionProvider"]]:
         return PaymentProvider.__all__ + RefundProvider.__all__  # type: ignore
 
     @classmethod
-    @property
+    @classproperty
     @abc.abstractmethod
     def description(cls):
         pass
@@ -44,7 +45,7 @@ class TransactionProvider(abc.ABC):
         return name.upper()
 
     @classmethod
-    @property
+    @classproperty
     def choices(cls):
         choices = [(method.name, method.name) for method in cls.__all__]
         return choices
@@ -91,14 +92,14 @@ class RefundProvider(TransactionProvider, abc.ABC):
     Abscract class for all refund methods.
     """
 
-    __all__: Sequence[Type["RefundProvider"]] = []
+    __all__: Sequence[Type["RefundProvider"]] = []  # type: ignore
 
     def __init_subclass__(cls) -> None:
         super().__init_subclass__()
         cls.__all__ = cls.__all__.append(cls)  # type: ignore #pylint: disable=assignment-from-no-return
 
     @classmethod
-    @property
+    @classproperty
     @abc.abstractmethod
     def is_automatic(cls) -> bool:
         """
@@ -129,7 +130,7 @@ class PaymentProvider(TransactionProvider, abc.ABC):
     payment method.
     """
 
-    __all__: Sequence[Type["PaymentProvider"]] = []
+    __all__: Sequence[Type["PaymentProvider"]] = []  # type: ignore
 
     def __init_subclass__(cls) -> None:
         super().__init_subclass__()
@@ -147,13 +148,13 @@ class PaymentProvider(TransactionProvider, abc.ABC):
         return super().create_payment_object(*args, **kwargs)
 
     @classmethod
-    @property
+    @classproperty
     def refund_providers(cls) -> tuple[RefundProvider, ...]:
         """A tuple of methods that can be used to refund payments"""
         return tuple()
 
     @classmethod
-    @property
+    @classproperty
     def is_refundable(cls) -> bool:
         return bool(cls.refund_providers)
 
@@ -164,7 +165,7 @@ class PaymentProvider(TransactionProvider, abc.ABC):
         )
 
     @classmethod
-    @property
+    @classproperty
     def automatic_refund_provider(cls) -> Optional[RefundProvider]:
         """
         Return the first payment method that can be used automatically. This
@@ -176,7 +177,7 @@ class PaymentProvider(TransactionProvider, abc.ABC):
         )
 
     @classmethod
-    @property
+    @classproperty
     def is_auto_refundable(cls) -> bool:
         """
         Returns whether this payment method has an automatic refund method.
@@ -265,7 +266,7 @@ class ManualCardRefund(RefundProvider):
     """
 
     description = "Manually refund"
-    is_automatic = False
+    is_automatic = False  # type: ignore
 
     def refund(self, payment: "payment_models.Transaction"):
         self.create_payment_object(
@@ -283,7 +284,7 @@ class SquareRefund(RefundProvider, SquareAPIMixin):
     """
 
     description = "Square refund"
-    is_automatic = True
+    is_automatic = True  # type: ignore
 
     def __init__(self, idempotency_key: str):
         self.idempotency_key = idempotency_key
@@ -354,7 +355,7 @@ class Card(ManualPaymentMethodMixin, PaymentProvider):
     description = "Manual card payment"
 
     @classmethod
-    @property
+    @classproperty
     def refund_providers(cls):
         return (ManualCardRefund(),)
 
@@ -545,7 +546,7 @@ class SquareOnline(PaymentProvider, SquarePaymentMethod):
     description = "Square online card payment"
 
     @classmethod
-    @property
+    @classproperty
     def refund_providers(cls):
         return (SquareRefund(idempotency_key=str(uuid4())),)
 

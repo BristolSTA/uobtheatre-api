@@ -27,7 +27,12 @@ from uobtheatre.productions.tasks import refund_performance
 from uobtheatre.societies.models import Society
 from uobtheatre.users.abilities import AbilitiesMixin
 from uobtheatre.users.models import User
-from uobtheatre.utils.models import BaseModel, PermissionableModel, TimeStampedMixin
+from uobtheatre.utils.models import (
+    BaseModel,
+    PermissionableModel,
+    TimeStampedMixin,
+    classproperty,
+)
 from uobtheatre.utils.validators import (
     RelatedObjectsValidator,
     RequiredFieldsValidator,
@@ -896,7 +901,7 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
         )  # Production has been closed and paid for/transactions settled
 
         @classmethod
-        @property
+        @classproperty
         def PRIVATE_STATUSES(cls):  # pylint: disable=invalid-name
             return [cls.DRAFT, cls.PENDING, cls.APPROVED]
 

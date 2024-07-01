@@ -11,6 +11,14 @@ from django.db import models
 from graphql_relay.node.node import to_global_id
 
 
+class classproperty:  # pylint: disable=invalid-name
+    def __init__(self, fget):
+        self.fget = fget
+
+    def __get__(self, obj, owner):
+        return self.fget(owner)
+
+
 class BaseModel(models.Model):
     """
     Base model for all UOB models. TODO actually use this
@@ -30,7 +38,7 @@ class BaseModel(models.Model):
         return ContentType.objects.get_for_model(self)
 
     @classmethod
-    @property
+    @classproperty
     def _node_name(cls):
         return f"{cls.__name__}Node"
 
