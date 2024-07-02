@@ -67,7 +67,7 @@ sentry-sdk==2.7.1
 whitenoise==6.7.0  # https://github.com/evansd/whitenoise
 
 #=== Email ===#
-django-anymail[amazon_ses]==10.3  # https://github.com/anymail/django-anymail
+django-anymail[amazon_ses]==11.0  # https://github.com/anymail/django-anymail
 django-inlinecss==0.3.0
 
 #=== Timezones ===#
