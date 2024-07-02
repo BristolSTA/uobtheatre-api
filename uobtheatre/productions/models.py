@@ -643,7 +643,7 @@ class Performance(
             deleted_tickets = []
 
         # Get the number of each seat group
-        seat_group_counts: Dict[SeatGroup, int] = {}
+        seat_group_counts: Dict[SeatGroup, int] = {}  # type: ignore
         for ticket in tickets:
             # If a SeatGroup with this id does not exist an error will be thrown
             seat_group = ticket.seat_group
@@ -661,7 +661,7 @@ class Performance(
             seat_group_counts[seat_group] = (seat_group_count or 0) - 1
 
         # Check each seat group is in the performance
-        seat_groups_not_in_performance: List[str] = [
+        seat_groups_not_in_performance: List[str] = [  # type: ignore
             seat_group.name
             for seat_group in seat_group_counts.keys()  # pylint: disable=consider-iterating-dictionary
             if seat_group not in self.seat_groups.all()
@@ -691,7 +691,7 @@ class Performance(
 
         # Check each concession type is in the performance
         concession_types = {ticket.concession_type for ticket in tickets}
-        concession_types_not_in_performance: List[str] = [
+        concession_types_not_in_performance: List[str] = [  # type: ignore
             concession_type.name
             for concession_type in concession_types  # pylint: disable=consider-iterating-dictionary
             if concession_type not in self.single_discounts_map.keys()

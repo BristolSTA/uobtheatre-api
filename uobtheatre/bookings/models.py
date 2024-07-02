@@ -217,7 +217,7 @@ class Booking(TimeStampedMixin, Payable):
         A user can only have 1 In Progress booking per performance.
     """
 
-    objects: models.Manager = BookingManager()  # type: ignore[assignment]
+    objects: models.Manager = BookingManager()  # type: ignore
 
     class Meta:
         constraints = [
