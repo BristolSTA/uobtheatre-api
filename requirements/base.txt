@@ -64,7 +64,7 @@ squareup>=9.0.0.20210226
 #=== Logging ===#
 
 sentry-sdk==2.7.1
-whitenoise==6.6.0  # https://github.com/evansd/whitenoise
+whitenoise==6.7.0  # https://github.com/evansd/whitenoise
 
 #=== Email ===#
 django-anymail[amazon_ses]==10.3  # https://github.com/anymail/django-anymail
