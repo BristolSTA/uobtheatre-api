@@ -96,7 +96,7 @@ class Message(BaseModel):
         Returns:
             timedelta: Timedelta between start and end of event.
         """
-        return self.event_start - self.event_end
+        return self.event_end - self.event_start
 
     @property
     def to_display(self) -> bool:
