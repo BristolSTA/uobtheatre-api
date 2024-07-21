@@ -14,6 +14,11 @@ class SiteMessageFilterSet(FilterSet, UserPermissionFilterMixin):
         model = Message
 
 class SiteMessageNode(PermissionsMixin, DjangoObjectType):
+    event_duration = graphene.Int()
+
+    def resolve_event_duration(self, info):
+        return self.duration.total_seconds() // 60
+
     class Meta:
         model = Message
         interfaces = (relay.Node,)
