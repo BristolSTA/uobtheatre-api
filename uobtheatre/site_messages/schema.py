@@ -6,7 +6,7 @@ from graphene_django.filter import DjangoFilterConnectionField
 from uobtheatre.site_messages.models import Message
 from uobtheatre.users.abilities import PermissionsMixin
 from uobtheatre.utils.filters import FilterSet
-from uobtheatre.utils.schema import UserPermissionFilterMixin
+from uobtheatre.utils.schema import UserPermissionFilterMixin, IdInputField
 
 class SiteMessageFilterSet(FilterSet, UserPermissionFilterMixin):
     class Meta:
@@ -33,7 +33,7 @@ class SiteMessageNode(PermissionsMixin, DjangoObjectType):
 
 class Query(graphene.ObjectType):
     site_messages = DjangoFilterConnectionField(SiteMessageNode)
-    site_message = graphene.Field(SiteMessageNode, id=graphene.Int(required=True))
+    site_message = graphene.Field(SiteMessageNode, id=IdInputField(required=True))
 
     def resolve_site_message(self, _, id):
         try:
