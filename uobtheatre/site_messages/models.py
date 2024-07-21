@@ -6,10 +6,11 @@ from django.utils import timezone
 from graphql_relay.node.node import to_global_id
 
 from uobtheatre.users.models import User
+from uobtheatre.utils.models import BaseModel
 from uobtheatre.utils.validators import RequiredFieldsValidator
 
 
-class Message(models.Model):
+class Message(BaseModel):
     """The model for a site-wide message."""
 
     message = models.TextField(

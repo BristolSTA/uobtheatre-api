@@ -35,7 +35,7 @@ class Query(graphene.ObjectType):
     site_messages = DjangoFilterConnectionField(SiteMessageNode)
     site_message = graphene.Field(SiteMessageNode, id=graphene.Int(required=True))
 
-    def resolve_society(self, _, id):
+    def resolve_site_message(self, _, id):
         try:
             return Message.objects.get(id=id)
         except Message.DoesNotExist:
