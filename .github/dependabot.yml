@@ -13,3 +13,18 @@ updates:
     open-pull-requests-limit: 20
     # Point to fix/migration branch
     target-branch: "fix/migration"
+    groups:
+      # Create some good Dependabot package groups for this project
+      django:
+        patterns:
+          - "django*"
+      graphene:
+        patterns:
+          - "graphene*"
+      pytz:
+        patterns:
+          - "pytz*"
+          - "types-pytz"
+      pytest:
+        patterns:
+          - "pytest*"
