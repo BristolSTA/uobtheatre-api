@@ -138,7 +138,7 @@ class BookingQuerySet(PayableQuerySet):
         # Whilst it shouldn't occur a divide by zero is prevented setting to zero when the ticket count is zero
         return self.annotate_checked_in_count().annotate(
             proportion=Case(
-                When(Q(count=0), then=Cast(0, FloatField())),
+                When(Q(count=0), then=Cast(0, FloatField())), # type: ignore
                 default=Cast(F("checked_in_count"), FloatField())
                 / Cast(F("count"), FloatField()),
             )
