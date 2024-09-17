@@ -15,3 +15,18 @@ updates:
     open-pull-requests-limit: 10
     # Point to dev/dependabot branch
     target-branch: "dev/dependabot"
+    groups:
+      # Create some good Dependabot package groups for this project
+      django:
+        patterns:
+          - "django*"
+      graphene:
+        patterns:
+          - "graphene*"
+      pytz:
+        patterns:
+          - "pytz*"
+          - "types-pytz"
+      pytest:
+        patterns:
+          - "pytest*"

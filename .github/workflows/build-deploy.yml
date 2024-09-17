@@ -1,8 +1,12 @@
-name: Build, push, deploy
+name: Production Build, Push & Deploy
+
+# Pushes a new image to the main registry for pushes to the dev or main branch
+# Then logs in to the respective server and deploys the new image
+# Both dev and main branches are pushed to the same registry, but only the respective instance pulls the new image
 
 on:
   push:
-      branches: [dev, main]
+    branches: [dev, main]
 
 env:
   IMAGE_NAME: api
@@ -10,6 +14,14 @@ env:
 
   API_SERVICE_NAME: "${{ github.ref == 'refs/heads/main' && 'uobtheatre-api' || 'uobtheatre-api-staging' }}"
   AUX_SERVICE_NAMES: "${{ github.ref == 'refs/heads/main' && 'uobtheatre-api-celery-worker' || 'uobtheatre-api-staging-celery-worker' }}"
+
+  SSH_HOST: "${{ github.ref == 'refs/heads/main' && secrets.PROD_SERVER_SSH_HOST || secrets.SERVER_SSH_HOST }}"
+  SSH_USER: "${{ github.ref == 'refs/heads/main' && secrets.PROD_SERVER_SSH_USER || secrets.SERVER_SSH_USER }}"
+  SSH_KEY: "${{ github.ref == 'refs/heads/main' && secrets.PROD_SERVER_SSH_KEY || secrets.SERVER_SSH_KEY }}"
+  SSH_PORT: "${{ github.ref == 'refs/heads/main' && secrets.PROD_SERVER_SSH_PORT || secrets.SERVER_SSH_PORT }}"
+
+  DEPLOY_PATH: "${{ github.ref == 'refs/heads/main' && '/root/sta-compose' || '/var/sta' }}"
+  DOCKER_FILE: "${{ github.ref == 'refs/heads/main' && 'docker-compose.droplet.yml' || 'docker-compose.hetzner.yml' }}"
 
 jobs:
   build:
@@ -19,7 +31,7 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Build image
         run: docker build . --file compose/production/django/Dockerfile --tag ghcr.io/$IMAGE_OWNER/$IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}"
@@ -40,14 +52,16 @@ jobs:
         env:
           API_SERVICE_NAME: ${{ env.API_SERVICE_NAME }}
           AUX_SERVICE_NAMES: ${{ env.AUX_SERVICE_NAMES }}
+          DEPLOY_PATH: ${{ env.DEPLOY_PATH }}
+          DOCKER_FILE: ${{ env.DOCKER_FILE }}
         with:
-          host: ${{ secrets.SERVER_SSH_HOST }}
-          username: ${{ secrets.SERVER_SSH_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_SSH_PORT }}
-          envs: API_SERVICE_NAME, AUX_SERVICE_NAMES
+          host: ${{ env.SSH_HOST }}
+          username: ${{ env.SSH_USER }}
+          key: ${{ env.SSH_KEY }}
+          port: ${{ env.SSH_PORT }}
+          envs: API_SERVICE_NAME, AUX_SERVICE_NAMES, DEPLOY_PATH, DOCKER_FILE
           script: |
-            cd /var/sta
-            docker compose pull $API_SERVICE_NAME $AUX_SERVICE_NAMES
-            docker compose up -d $API_SERVICE_NAME $AUX_SERVICE_NAMES
-            docker compose exec -T $API_SERVICE_NAME python manage.py migrate
+            cd $DEPLOY_PATH
+            docker compose -f $DOCKER_FILE pull $API_SERVICE_NAME $AUX_SERVICE_NAMES
+            docker compose -f $DOCKER_FILE up -d $API_SERVICE_NAME $AUX_SERVICE_NAMES
+            docker compose -f $DOCKER_FILE exec -T $API_SERVICE_NAME python manage.py migrate
