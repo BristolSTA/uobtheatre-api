@@ -9,7 +9,9 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "daily"
+    assignees:
+      - 'happynth'
     # Allow up to 20 open pull requests for pip dependencies
-    open-pull-requests-limit: 20
-    # Point to fix/migration branch
-    target-branch: "fix/migration"
+    open-pull-requests-limit: 10
+    # Point to dev/dependabot branch
+    target-branch: "dev/dependabot"
