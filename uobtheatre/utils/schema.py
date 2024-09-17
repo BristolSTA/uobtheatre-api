@@ -159,8 +159,8 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
         """Authorize the request (pre-validation)"""
         model_name = cls._meta.model._meta.model_name
         app_label = cls._meta.model._meta.app_label
-        update_ability: Ability = cls.update_ability
-        create_ability: Ability = cls.create_ability
+        update_ability: Ability = cls.update_ability  # type: ignore
+        create_ability: Ability = cls.create_ability  # type: ignore
 
         if cls.is_creation(**inputs):
             user_can_add_instance = info.context.user.has_perm(

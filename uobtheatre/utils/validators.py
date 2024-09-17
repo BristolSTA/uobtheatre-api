@@ -207,7 +207,9 @@ class RelatedObjectsValidator(Validator):
     performance.
     """
 
-    def __init__(self, attribute: str, validator=None, min_number: int = None):
+    def __init__(
+        self, attribute: str, validator=None, min_number: Optional[int] = None
+    ):
         self.attribute = attribute
         self.validator = validator
         self.min_number = min_number

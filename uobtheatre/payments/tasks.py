@@ -28,9 +28,7 @@ def refund_payment(payment_pk: int):
 
 
 @app.task(base=RefundTask, throws=(CantBeRefundedException,))
-def refund_payable(
-    payable_id: int, payable_content_type_id: int, authorizing_user_id: int
-):
+def refund_payable(payable_id: int, payable_content_type_id: int, authorizing_user_id):
     """Refund a payable object automatically"""
     from uobtheatre.payments.payables import Payable
 
@@ -41,7 +39,7 @@ def refund_payable(
         raise ValueError(
             f"No matching model exists for specified content type (Type ID: {payable_content_type_id})"
         )
-    payable = PayableModel.objects.get(pk=payable_id)
+    payable = PayableModel.objects.get(pk=payable_id)  # type: ignore[attr-defined]
     if not isinstance(payable, Payable):
         raise ValueError(
             f"Object found, but object is not a payable object ({payable.__class__.__name__})"

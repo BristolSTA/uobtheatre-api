@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 import graphene
 from django.conf import settings
@@ -71,9 +71,9 @@ class GenerateReport(AuthRequiredMixin, SafeMutation):
         _,
         info,
         name: String,
-        start_time: DateTime = None,
-        end_time: DateTime = None,
-        options: List = None,
+        start_time: Optional[DateTime] = None,
+        end_time: Optional[DateTime] = None,
+        options: Optional[List] = None,
     ):
         if not name in available_reports:
             raise GQLException(

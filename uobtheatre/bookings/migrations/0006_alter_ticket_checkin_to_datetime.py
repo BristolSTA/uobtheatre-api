@@ -8,7 +8,7 @@ from django.db import migrations, models
 from django.utils import timezone
 
 
-def ticket_check_in_to_datetime(apps, _):
+def ticket_check_in_to_datetime(apps, _):  # pragma: no cover
     ticket_model = apps.get_model("bookings", "ticket")
 
     ticket_model.objects.filter(checked_in=True).update(

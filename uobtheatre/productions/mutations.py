@@ -101,7 +101,12 @@ class SetProductionStatus(AuthRequiredMixin, SafeMutation):
 
     @classmethod
     def resolve_mutation(
-        cls, _, info, production_id: int, status: Production.Status, message: str = None
+        cls,
+        _,
+        info,
+        production_id: int,
+        status: Production.Status,
+        message: Optional[str] = None,
     ):
         production = Production.objects.get(id=production_id)
         previous_status = production.status

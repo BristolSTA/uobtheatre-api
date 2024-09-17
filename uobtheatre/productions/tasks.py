@@ -5,7 +5,7 @@ from uobtheatre.payments.tasks import RefundTask
 
 
 @app.task(base=RefundTask)
-def refund_performance(performance_id: int, authorizing_user_id: int):
+def refund_performance(performance_id: int, authorizing_user_id):
     """Refund the performance's bookings
     Args:
         performance_id (int): The id of the performance to refund

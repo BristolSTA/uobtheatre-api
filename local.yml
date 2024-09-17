@@ -1,5 +1,3 @@
-version: '3'
-
 volumes:
   uobtheatre_local_postgres_data: {}
   uobtheatre_local_postgres_data_backups: {}

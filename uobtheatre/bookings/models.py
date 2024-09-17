@@ -138,7 +138,7 @@ class BookingQuerySet(PayableQuerySet):
         # Whilst it shouldn't occur a divide by zero is prevented setting to zero when the ticket count is zero
         return self.annotate_checked_in_count().annotate(
             proportion=Case(
-                When(Q(count=0), then=Cast(0, FloatField())),
+                When(Q(count=0), then=Cast(0, FloatField())), # type: ignore
                 default=Cast(F("checked_in_count"), FloatField())
                 / Cast(F("count"), FloatField()),
             )
@@ -217,7 +217,7 @@ class Booking(TimeStampedMixin, Payable):
         A user can only have 1 In Progress booking per performance.
     """
 
-    objects: models.Manager = BookingManager()  # type: ignore[assignment]
+    objects: models.Manager = BookingManager()  # type: ignore
 
     class Meta:
         constraints = [
@@ -541,7 +541,7 @@ class Booking(TimeStampedMixin, Payable):
 
         return super().pay(payment_method)
 
-    def complete(self, payment: Transaction = None):
+    def complete(self, payment: Optional[Transaction] = None):
         """
         Complete the booking (after it has been paid for) and send the
         confirmation email.

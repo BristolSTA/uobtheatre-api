@@ -1,6 +1,6 @@
 import abc
 from datetime import datetime
-from typing import List, Union
+from typing import List, Optional, Union
 
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -186,7 +186,7 @@ class Rule(ComposerItemInterface):
 class MailComposer(ComposerItemsContainer):
     """Compose a mail notificaiton"""
 
-    def greeting(self, user: User = None):
+    def greeting(self, user: Optional[User] = None):
         """Add a greeting to the email"""
         self.heading(
             "Hi %s" % user.first_name.capitalize()

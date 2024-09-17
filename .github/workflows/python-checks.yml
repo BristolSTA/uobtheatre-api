@@ -2,9 +2,9 @@ name: Package checks
 
 on:
   push:
-    branches: [ main, dev ]
+    branches: [ main, dev, dev/dependabot ]
   pull_request:
-    branches: [ main, dev, fix/migration ]
+    branches: [ main, dev, dev/dependabot ]
 
 jobs:
   test:
@@ -38,11 +38,11 @@ jobs:
           ${{ runner.os }}-pip-
 
     # Checkout the code
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     # Setup python
     - name: set up python 3.10
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: "3.10"
 
@@ -72,7 +72,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     # Set up cache for pip packages
-    - uses: actions/cache@v2
+    - uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -80,11 +80,11 @@ jobs:
           ${{ runner.os }}-pip-
 
     # Checkout the code
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     # Setup python
     - name: set up python 3.10
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: "3.10.6"
 
@@ -116,7 +116,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     # Set up cache for pip packages
-    - uses: actions/cache@v2
+    - uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -124,11 +124,11 @@ jobs:
           ${{ runner.os }}-pip-
 
     # Checkout the code
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     # Setup python
     - name: set up python 3.10
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: "3.10"
 
@@ -142,7 +142,7 @@ jobs:
 
     # Push up the schema
     - name: Commit schema
-      uses: EndBug/add-and-commit@v7.0.0
+      uses: EndBug/add-and-commit@v9
       with:
         message: 'Updated schema'
         author_name: github-actions
