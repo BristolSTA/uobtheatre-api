@@ -11,6 +11,14 @@ from django.db import models
 from graphql_relay.node.node import to_global_id
 
 
+class classproperty:  # pylint: disable=invalid-name
+    def __init__(self, fget):
+        self.fget = fget
+
+    def __get__(self, obj, owner):
+        return self.fget(owner)
+
+
 class BaseModel(models.Model):
     """
     Base model for all UOB models. TODO actually use this
@@ -25,13 +33,12 @@ class BaseModel(models.Model):
         model.pk = None
         return model
 
-    @classmethod
     @property
-    def content_type(cls):
-        return ContentType.objects.get_for_model(cls)
+    def content_type(self):
+        return ContentType.objects.get_for_model(self)
 
     @classmethod
-    @property
+    @classproperty
     def _node_name(cls):
         return f"{cls.__name__}Node"
 
@@ -41,10 +48,6 @@ class BaseModel(models.Model):
 
     class Meta:
         abstract = True
-
-
-class AbstractModelMeta(abc.ABCMeta, type(models.Model)):  # type: ignore
-    pass
 
 
 class TimeStampedMixin(models.Model):

@@ -1,6 +1,6 @@
 import io
 from datetime import datetime, timedelta
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import xlsxwriter
 from django.core import signing
@@ -21,10 +21,10 @@ class ExcelReport:  # pragma: no cover
     def __init__(  # pylint: disable=too-many-arguments
         self,
         report: reports.Report,
-        name: str = None,
-        descriptions: List = None,
-        meta: List = None,
-        user: User = None,
+        name: Optional[str] = None,
+        descriptions: Optional[List] = None,
+        meta: Optional[List] = None,
+        user: Optional[User] = None,
     ) -> None:
         """Initalise worbook, sheet, formatters, meta, headers and description"""
         self.name = name
@@ -118,8 +118,8 @@ class ExcelReport:  # pragma: no cover
         self,
         start: Tuple[int, int],
         items: List,
-        title: str = None,
-        items_format: str = None,
+        title: Optional[str] = None,
+        items_format: Optional[str] = None,
     ):
         """Writes a list (with optional header)"""
         start_row = start[0]
@@ -176,7 +176,7 @@ class ExcelReport:  # pragma: no cover
 
 
 def generate_report_download_signature(
-    user: User, report_name: str, options: List = None
+    user: User, report_name: str, options: Optional[List] = None
 ):
     """Generate a signed hash for the report to be downloaded
 

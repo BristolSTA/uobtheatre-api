@@ -212,7 +212,6 @@ class Transaction(TimeStampedMixin, BaseModel):
             ).send(
                 "Refund successfully processed", user.email
             )
-            return
 
     def cancel(self):
         """
@@ -266,7 +265,7 @@ class Transaction(TimeStampedMixin, BaseModel):
         """
         refund_payment.delay(self.pk)
 
-    def refund(self, refund_provider: RefundProvider = None):
+    def refund(self, refund_provider: Optional[RefundProvider] = None):
         """
         Refund the payment
 

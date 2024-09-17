@@ -19,7 +19,7 @@ from uobtheatre.payments.models import SalesBreakdown, Transaction
 from uobtheatre.payments.tasks import refund_payable
 from uobtheatre.users.models import User
 from uobtheatre.utils.filters import filter_passes_on_model
-from uobtheatre.utils.models import AbstractModelMeta, BaseModel
+from uobtheatre.utils.models import BaseModel
 
 if TYPE_CHECKING:
     from uobtheatre.payments.transaction_providers import PaymentProvider
@@ -55,7 +55,7 @@ PayableManager = models.Manager.from_queryset(PayableQuerySet)
 
 
 # pylint: disable=too-many-public-methods
-class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
+class Payable(BaseModel):  # type: ignore
     """
     An model which can be paid for
     """
@@ -112,7 +112,7 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
             return CantBeRefundedException(
                 f"{self.__class__.__name__} ({self}) can't be refunded due to it's status ({self.status})"
             )
-        if self.transactions.payments().count() == 0:
+        if self.transactions.payments().count() == 0: # type: ignore
             return CantBeRefundedException(
                 f"{self.__class__.__name__} ({self}) can't be refunded because it has no payments"
             )
@@ -148,7 +148,7 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
         if error := self.validate_cant_be_refunded():  # type: ignore
             raise error  # pylint: disable=raising-bad-type
 
-        for payment in self.transactions.filter(type=Transaction.Type.PAYMENT).all():
+        for payment in self.transactions.filter(type=Transaction.Type.PAYMENT).all(): # type: ignore
             payment.async_refund() if do_async else payment.refund()
 
         if send_admin_email:
@@ -213,7 +213,7 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
             )
 
         # Cancel and delete pending payments for this booking
-        for payment in self.transactions.filter(status=Transaction.Status.PENDING):
+        for payment in self.transactions.filter(status=Transaction.Status.PENDING): # type: ignore
             payment.cancel()
 
         payment = payment_method.pay(self.total, self.misc_costs_value, self)
@@ -224,7 +224,9 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
 
         return payment
 
-    def complete(self, payment: Transaction = None):  # pylint: disable=unused-argument
+    def complete(
+        self, payment: Optional[Transaction] = None
+    ):  # pylint: disable=unused-argument
         """
         Called once the pay object has been completly paid for. Payment passed
         is the finishing transaction
@@ -234,7 +236,7 @@ class Payable(BaseModel, metaclass=AbstractModelMeta):  # type: ignore
 
     @property
     def sales_breakdown(self) -> SalesBreakdown:
-        return SalesBreakdown(self.transactions)
+        return SalesBreakdown(self.transactions) # type: ignore
 
     @property
     def associated_tasks(self):

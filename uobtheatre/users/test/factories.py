@@ -32,11 +32,8 @@ class UserFactory(factory.django.DjangoModelFactory):
     is_staff = False
 
     @factory.post_generation
-    def groups(self, create, extracted, **_):
+    def groups(self, _, extracted):
         """Handle user group adding on create"""
-        if not create:
-            return
-
         if extracted:
             for group in extracted:
                 self.groups.add(group)
