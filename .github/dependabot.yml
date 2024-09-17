@@ -13,8 +13,8 @@ updates:
       - 'happynth'
     # Allow up to 20 open pull requests for pip dependencies
     open-pull-requests-limit: 10
-    # Point to dev/dependabot branch
-    target-branch: "dev/dependabot"
+    # Point to dependabot/dev branch
+    target-branch: "dependabot/dev"
     groups:
       # Create some good Dependabot package groups for this project
       django:
