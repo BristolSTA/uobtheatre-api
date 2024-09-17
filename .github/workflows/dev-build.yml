@@ -1,9 +1,11 @@
-name: Dev image build and push
+name: Local (Dev) Build & Push
+
+# Pushes a new image to the dev registry on every push to the dev branch (or manually triggered on a branch)
+# The local/dev image is for frontend development: It is the one uobtheatre-web pulls when running locally
 
 on:
   push:
-    branches:
-      - dev
+    branches: [dev]
 
   workflow_dispatch:
 
@@ -19,7 +21,7 @@ jobs:
       contents: read
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Build image
         run: docker build . --file compose/local/django/Dockerfile --tag ghcr.io/$IMAGE_OWNER/$IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}"
