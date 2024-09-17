@@ -2,9 +2,9 @@ name: Package checks
 
 on:
   push:
-    branches: [ main, dev, dev/dependabot ]
+    branches: [ main, dev, dependabot/dev ]
   pull_request:
-    branches: [ main, dev, dev/dependabot ]
+    branches: [ main, dev, dependabot/dev ]
 
 jobs:
   test:
