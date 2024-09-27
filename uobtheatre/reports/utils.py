@@ -18,7 +18,7 @@ signer = TimestampSigner()
 class ExcelReport:  # pragma: no cover
     """Generates an Excel xlxs spreadsheet"""
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         report: reports.Report,
         name: Optional[str] = None,

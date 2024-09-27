@@ -176,7 +176,7 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         verify_token = graphene.String(required=False)
 
     @classmethod
-    def resolve_mutation(  # pylint: disable=too-many-arguments, too-many-branches
+    def resolve_mutation(  # pylint: disable=too-many-arguments, too-many-branches, too-many-positional-arguments
         cls,
         _,
         info,

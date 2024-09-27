@@ -573,7 +573,7 @@ def test_set_production_status_pending_email(gql_client):
         mock.assert_any_call(super_user, production)
 
 
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "current_status,new_status,can_edit,global_permissions,should_pass",

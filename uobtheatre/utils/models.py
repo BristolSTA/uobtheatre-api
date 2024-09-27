@@ -26,7 +26,7 @@ class BaseModel(models.Model):
 
     @property
     def qs(self):
-        return self.__class__.objects.filter(pk=self.pk) # type: ignore
+        return self.__class__.objects.filter(pk=self.pk)  # type: ignore
 
     def clone(self):
         model = self.qs.get()
