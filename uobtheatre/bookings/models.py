@@ -1,4 +1,5 @@
 import math
+import datetime
 from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Union
 from urllib.parse import urlencode
 
@@ -11,7 +12,6 @@ from django.db.models.query import QuerySet
 from django.utils import timezone
 from django.utils.functional import cached_property
 from graphql_relay.node.node import to_global_id
-import datetime
 
 import uobtheatre.bookings.emails as booking_emails
 from uobtheatre.discounts.models import ConcessionType, DiscountCombination
