@@ -1,6 +1,7 @@
 """
 Utils for the tests
 """
+
 from typing import Dict, Tuple
 
 import pytest

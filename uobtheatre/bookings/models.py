@@ -11,6 +11,7 @@ from django.db.models.query import QuerySet
 from django.utils import timezone
 from django.utils.functional import cached_property
 from graphql_relay.node.node import to_global_id
+import datetime
 
 import uobtheatre.bookings.emails as booking_emails
 from uobtheatre.discounts.models import ConcessionType, DiscountCombination
@@ -138,7 +139,7 @@ class BookingQuerySet(PayableQuerySet):
         # Whilst it shouldn't occur a divide by zero is prevented setting to zero when the ticket count is zero
         return self.annotate_checked_in_count().annotate(
             proportion=Case(
-                When(Q(count=0), then=Cast(0, FloatField())), # type: ignore
+                When(Q(count=0), then=Cast(0, FloatField())),  # type: ignore
                 default=Cast(F("checked_in_count"), FloatField())
                 / Cast(F("count"), FloatField()),
             )
@@ -201,7 +202,7 @@ class BookingQuerySet(PayableQuerySet):
 
 def generate_expires_at():
     """Generates the expires at timestamp for a booking"""
-    return timezone.now() + timezone.timedelta(minutes=15)
+    return timezone.now() + datetime.timedelta(minutes=15)
 
 
 BookingManager = models.Manager.from_queryset(BookingQuerySet)
@@ -565,7 +566,7 @@ class Booking(TimeStampedMixin, Payable):
     def is_reservation_expired(self):
         """Returns whether the booking is considered expired"""
         return filter_passes_on_model(
-            self, lambda qs: qs.expired()  # type:ignore[union-attr]
+            self, lambda qs: qs.expired()  # type:ignore
         )
 
     def validate_cant_be_refunded(self) -> Optional[CantBeRefundedException]:
