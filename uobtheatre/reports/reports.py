@@ -296,7 +296,7 @@ class OutstandingSocietyPayments(Report):
         self.meta.append(
             MetaItem(
                 "Total Outstanding",
-                str(sum(row[2] for row in societies_dataset.data)),
+                str(sum(int(row[2]) for row in societies_dataset.data)),
             )
         )
 

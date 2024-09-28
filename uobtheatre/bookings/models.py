@@ -1,3 +1,4 @@
+import datetime
 import math
 from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Union
 from urllib.parse import urlencode
@@ -138,7 +139,7 @@ class BookingQuerySet(PayableQuerySet):
         # Whilst it shouldn't occur a divide by zero is prevented setting to zero when the ticket count is zero
         return self.annotate_checked_in_count().annotate(
             proportion=Case(
-                When(Q(count=0), then=Cast(0, FloatField())), # type: ignore
+                When(Q(count=0), then=Cast(0, FloatField())),  # type: ignore
                 default=Cast(F("checked_in_count"), FloatField())
                 / Cast(F("count"), FloatField()),
             )
@@ -201,7 +202,7 @@ class BookingQuerySet(PayableQuerySet):
 
 def generate_expires_at():
     """Generates the expires at timestamp for a booking"""
-    return timezone.now() + timezone.timedelta(minutes=15)
+    return timezone.now() + datetime.timedelta(minutes=15)
 
 
 BookingManager = models.Manager.from_queryset(BookingQuerySet)
@@ -230,14 +231,6 @@ class Booking(TimeStampedMixin, Payable):
 
     reference = models.CharField(
         default=create_short_uuid, editable=False, max_length=12, unique=True
-    )
-
-    # Stores who created the booking
-    # For regular bookings this will be the user
-    # For boxoffice bookings it will be the logged in boxoffice user
-    # For admin bookings it will be the logged in admin
-    creator = models.ForeignKey(
-        User, on_delete=models.RESTRICT, related_name="created_bookings"
     )
 
     performance = models.ForeignKey(
@@ -572,7 +565,9 @@ class Booking(TimeStampedMixin, Payable):
     @property
     def is_reservation_expired(self):
         """Returns whether the booking is considered expired"""
-        return filter_passes_on_model(self, lambda qs: qs.expired())
+        return filter_passes_on_model(
+            self, lambda qs: qs.expired()  # type:ignore
+        )
 
     def validate_cant_be_refunded(self) -> Optional[CantBeRefundedException]:
         if error := super().validate_cant_be_refunded():

@@ -29,7 +29,7 @@ class MockApiResponse:
     Mock of the Square API response class.
     """
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         reason_phrase="Some phrase",
         status_code=400,

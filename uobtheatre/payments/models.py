@@ -136,11 +136,11 @@ class Transaction(TimeStampedMixin, BaseModel):
         "pay_object_type", "pay_object_id"
     )  # type: ignore
 
-    type = models.CharField(
+    type: TextChoices = models.CharField(
         max_length=20,
         choices=Type.choices,
         default=Type.PAYMENT,
-    )
+    )  # type: ignore
     status: TextChoices = models.CharField(
         max_length=20,
         choices=Status.choices,
@@ -176,7 +176,9 @@ class Transaction(TimeStampedMixin, BaseModel):
     def provider(self):
         return next(
             method
-            for method in list(TransactionProvider.__all__)
+            for method in list(  # type: ignore[call-overload]
+                TransactionProvider.__all__
+            )
             if method.name == self.provider_name
         )
 

@@ -8,4 +8,4 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):  # pylint: disable=unused-argument
         number_of_users = User.objects.count()
-        self.stdout.write(str(self.style.SUCCESS(number_of_users)))
+        self.stdout.write(str(self.style.SUCCESS(str(number_of_users))))
