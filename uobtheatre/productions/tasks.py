@@ -1,3 +1,6 @@
+from typing import Union
+from uuid import UUID
+
 from django.core.mail import mail_admins
 
 from config.celery import app

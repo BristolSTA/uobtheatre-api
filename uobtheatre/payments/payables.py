@@ -79,6 +79,14 @@ class Payable(BaseModel):  # type: ignore
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bookings")
 
+    # Stores who created the booking
+    # For regular bookings this will be the user
+    # For boxoffice bookings it will be the logged in boxoffice user
+    # For admin bookings it will be the logged in admin
+    creator = models.ForeignKey(
+        User, on_delete=models.RESTRICT, related_name="created_bookings"
+    )
+
     objects = PayableManager()
 
     @property
@@ -112,7 +120,7 @@ class Payable(BaseModel):  # type: ignore
             return CantBeRefundedException(
                 f"{self.__class__.__name__} ({self}) can't be refunded due to it's status ({self.status})"
             )
-        if self.transactions.payments().count() == 0: # type: ignore
+        if self.transactions.payments().count() == 0:  # type: ignore
             return CantBeRefundedException(
                 f"{self.__class__.__name__} ({self}) can't be refunded because it has no payments"
             )
@@ -148,7 +156,7 @@ class Payable(BaseModel):  # type: ignore
         if error := self.validate_cant_be_refunded():  # type: ignore
             raise error  # pylint: disable=raising-bad-type
 
-        for payment in self.transactions.filter(type=Transaction.Type.PAYMENT).all(): # type: ignore
+        for payment in self.transactions.filter(type=Transaction.Type.PAYMENT).all():  # type: ignore
             payment.async_refund() if do_async else payment.refund()
 
         if send_admin_email:
@@ -213,7 +221,7 @@ class Payable(BaseModel):  # type: ignore
             )
 
         # Cancel and delete pending payments for this booking
-        for payment in self.transactions.filter(status=Transaction.Status.PENDING): # type: ignore
+        for payment in self.transactions.filter(status=Transaction.Status.PENDING):  # type: ignore
             payment.cancel()
 
         payment = payment_method.pay(self.total, self.misc_costs_value, self)
@@ -236,7 +244,7 @@ class Payable(BaseModel):  # type: ignore
 
     @property
     def sales_breakdown(self) -> SalesBreakdown:
-        return SalesBreakdown(self.transactions) # type: ignore
+        return SalesBreakdown(self.transactions)  # type: ignore
 
     @property
     def associated_tasks(self):

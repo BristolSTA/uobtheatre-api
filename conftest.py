@@ -83,7 +83,7 @@ def mock_square():
     """
 
     @contextmanager
-    def mock_client(  # pylint: disable=too-many-arguments
+    def mock_client(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         square_client_api,
         method: str,
         body: Optional[dict] = None,

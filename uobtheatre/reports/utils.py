@@ -18,7 +18,7 @@ signer = TimestampSigner()
 class ExcelReport:  # pragma: no cover
     """Generates an Excel xlxs spreadsheet"""
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         report: reports.Report,
         name: Optional[str] = None,
@@ -163,7 +163,9 @@ class ExcelReport:  # pragma: no cover
             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
         response["Content-Disposition"] = (
-            "attachment; filename=%s" % self.name.lower().replace(" ", "_") + ".xlsx"
+            "attachment; filename=%s"
+            % (self.name or "uobtheatre-export").lower().replace(" ", "_")
+            + ".xlsx"
         )
         return response
 

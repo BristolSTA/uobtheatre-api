@@ -47,7 +47,7 @@ class TransactionProvider(abc.ABC):
     @classmethod
     @classproperty
     def choices(cls):
-        choices = [(method.name, method.name) for method in cls.__all__]
+        choices = [(method.name, method.name) for method in cls.__all__]  # type: ignore[attr-defined]
         return choices
 
     @classmethod

@@ -2255,7 +2255,7 @@ def test_pay_booking_fails_if_already_paid(gql_client):
     }
 
 
-# pylint: disable=too-many-arguments,too-many-locals,too-many-branches
+# pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-positional-arguments
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "performance_id, booking_obj, check_in_ticket_id_list, not_check_in_ticket_id_list, non_booking_ticket_id_list",
@@ -2266,7 +2266,7 @@ def test_pay_booking_fails_if_already_paid(gql_client):
         (1, {"booking_id": 4, "performance_id": 1}, [1, 2, 3], [], [4, 5, 6]),
         (1, {"booking_id": 4, "performance_id": 1}, [], [], [7, 8, 9]),
         (1, {"booking_id": 4, "performance_id": 2}, [1, 2, 3], [], [4, 5, 6]),
-    ],  # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
+    ],  # pylint: disable=too-many-arguments,too-many-locals,too-many-branches,too-many-positional-arguments
 )
 def test_check_in_booking(
     performance_id,
