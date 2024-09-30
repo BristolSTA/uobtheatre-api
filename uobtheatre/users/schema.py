@@ -3,6 +3,7 @@ from graphql_auth import mutations, schema
 from graphql_relay.node.node import to_global_id
 
 from uobtheatre.users.models import User
+from uobtheatre.users.tunrstile import validate
 
 
 class ExtendedUserNode(schema.UserNode):
@@ -38,6 +39,33 @@ class ExtendedUserNode(schema.UserNode):
             "permissions",
         )
 
+class RecaptchaMixin(graphene.Mutation):
+    @classmethod
+    def Field(cls, *args, **kwargs):
+        cls._meta.arguments.update({"recaptcha": graphene.String(required=False)})
+        return super().Field(*args, **kwargs)
+
+    @classmethod
+    def mutate(cls, root, info, **input):
+        # Check captcha
+        turnstile_response = validate(input.get('recaptcha', ""))
+        if turnstile_response.success != True:
+            return cls(success=False, errors={
+                "nonFieldErrors": [{
+                    "message": "Invalid captcha.",
+                    "code": "recaptcha"}]
+            })
+        # remove captcha from input
+        input.pop("recaptcha")
+        return super().mutate(root, info, **input)
+
+
+class CustomRegister(RecaptchaMixin, mutations.Register):
+    ...
+
+
+class CustomObtainJSONWebToken(RecaptchaMixin, mutations.ObtainJSONWebToken):
+    ...
 
 class AuthMutation(graphene.ObjectType):
     """User mutations
@@ -45,7 +73,7 @@ class AuthMutation(graphene.ObjectType):
     Adds mutations to schema from graphql_auth package.
     """
 
-    register = mutations.Register.Field()
+    register = mutations.CustomRegister.Field()
     verify_account = mutations.VerifyAccount.Field()
     resend_activation_email = mutations.ResendActivationEmail.Field()
     send_password_reset_email = mutations.SendPasswordResetEmail.Field()
@@ -61,7 +89,7 @@ class AuthMutation(graphene.ObjectType):
     remove_secondary_email = mutations.RemoveSecondaryEmail.Field()
 
     # django-graphql-jwt inheritances
-    login = mutations.ObtainJSONWebToken.Field()
+    login = mutations.CustomObtainJSONWebToken.Field()
     verify_token = mutations.VerifyToken.Field()
     refresh_token = mutations.RefreshToken.Field()
     revoke_token = mutations.RevokeToken.Field()
