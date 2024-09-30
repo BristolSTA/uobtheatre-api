@@ -18,7 +18,8 @@ class SiteVerifyResponse(pydantic.BaseModel):
     success: bool
     challenge_ts: Optional[str]
     hostname: Optional[str]
-    error_codes: list[str] = pydantic.Field(alias="error-codes", default_factory=list)
+    error_codes: list[str] = pydantic.Field(
+        alias="error-codes", default_factory=list)
     action: Optional[str]
     cdata: Optional[str]
 
@@ -49,15 +50,18 @@ failure_example = {
 
 def validate(turnstile_response: str, user_ip: Optional[str]) -> SiteVerifyResponse:
     if not cloudflare_secret_key:
-        raise Exception("You must call turnstile.init() with a valid secret key before using this function.")
+        raise Exception(
+            "You must call turnstile.init() with a valid secret key before using this function.")
 
     if not turnstile_response:
         model = SiteVerifyResponse(success=False, hostname=None)
-        model.error_codes.append('Submitted with no cloudflare client response')
+        model.error_codes.append(
+            'Submitted with no cloudflare client response')
         return model
 
     url = 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
-    model = SiteVerifyRequest(secret=cloudflare_secret_key, response=turnstile_response, remoteip=user_ip)
+    model = SiteVerifyRequest(
+        secret=cloudflare_secret_key, response=turnstile_response, remoteip=user_ip)
     try:
         resp = requests.post(url, data=model.dict())
         if resp.status_code != 200:
