@@ -59,7 +59,7 @@ class RegisterRecaptcha(mutations.Register):
         if turnstile_response.success != True:
             return cls(success=False, errors={
                 "nonFieldErrors": [{
-                    "message": "Invalid captcha.",
+                    "message": ''.join(turnstile_response.error_codes),
                     "code": "turnstile_token"}]
             })
         # remove captcha from input

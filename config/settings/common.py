@@ -114,6 +114,9 @@ else:
     }
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
 
+# Turnstile
+TURNSTILE_SECRET = env("TURNSTILE_SECRET", default=None)
+
 # General
 APPEND_SLASH = False
 TIME_ZONE = "UTC"

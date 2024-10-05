@@ -1,33 +1,29 @@
 # See details about Turnstile at https://blog.cloudflare.com/turnstile-private-captcha-alternative/
 
 from typing import Optional
+from django.conf import settings
 
 import pydantic
 import requests
 
-cloudflare_secret_key: Optional[str] = None
-
-
 class SiteVerifyRequest(pydantic.BaseModel):
     secret: str
     response: str
-    remoteip: Optional[str]
 
 
 class SiteVerifyResponse(pydantic.BaseModel):
     success: bool
-    challenge_ts: Optional[str]
-    hostname: Optional[str]
+    challenge_ts: Optional[str] = None
+    hostname: Optional[str] = None
     error_codes: list[str] = pydantic.Field(
         alias="error-codes", default_factory=list)
-    action: Optional[str]
-    cdata: Optional[str]
+    action: Optional[str] = None
+    cdata: Optional[str] = None
 
 
 request_example = {
     "secret": "0x5ABAAFAAAn72SdCAP75q6sPP9P6zooFZt",
-    "response": "???",
-    "remoteip": "1.2.3.4"
+    "response": "???"
 }
 
 success_example = {
@@ -48,20 +44,20 @@ failure_example = {
 }
 
 
-def validate(turnstile_response: str, user_ip: Optional[str]) -> SiteVerifyResponse:
-    if not cloudflare_secret_key:
+def validate(turnstile_response: str) -> SiteVerifyResponse:
+    if not settings.TURNSTILE_SECRET:
         raise Exception(
-            "You must call turnstile.init() with a valid secret key before using this function.")
+            "No secret key is defined.")
 
     if not turnstile_response:
-        model = SiteVerifyResponse(success=False, hostname=None)
+        model = SiteVerifyResponse(success=False, hostname=None,)
         model.error_codes.append(
             'Submitted with no cloudflare client response')
         return model
 
     url = 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
     model = SiteVerifyRequest(
-        secret=cloudflare_secret_key, response=turnstile_response, remoteip=user_ip)
+        secret=settings.TURNSTILE_SECRET, response=turnstile_response)
     try:
         resp = requests.post(url, data=model.dict())
         if resp.status_code != 200:
@@ -79,12 +75,3 @@ def validate(turnstile_response: str, user_ip: Optional[str]) -> SiteVerifyRespo
             f'Failure status code: Unknown',
             f'Failure details: {x}'])
         return model
-
-
-def init(secret_key: str):
-    global cloudflare_secret_key
-
-    if not secret_key:
-        return
-
-    cloudflare_secret_key = secret_key.strip()
