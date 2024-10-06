@@ -40,7 +40,7 @@ class ExtendedUserNode(schema.UserNode):
         )
 
 
-class RegisterRecaptcha(mutations.Register):
+class TurnstileMixin(graphene.Mutation):
 
     """
     Verifies a recaptcha with turnstile
@@ -53,7 +53,7 @@ class RegisterRecaptcha(mutations.Register):
         return super().Field(*args, **kwargs)
 
     @classmethod
-    def resolve_mutation(cls, root, info, **input):
+    def mutate(cls, root, info, **input):
         # Check captcha
         turnstile_response = validate(input.get('turnstile_token', ""))
         if turnstile_response.success != True:
@@ -64,7 +64,13 @@ class RegisterRecaptcha(mutations.Register):
             })
         # remove captcha from input
         input.pop("turnstile_token")
-        return super().resolve_mutation(root, info, **input)
+        return super().mutate(root, info, **input)
+    
+class RegisterTurnstile(TurnstileMixin, mutations.Register):
+    """
+    Registers a new user with Turnstile verification.
+    """
+    pass
 
 
 class AuthMutation(graphene.ObjectType):
@@ -73,7 +79,7 @@ class AuthMutation(graphene.ObjectType):
     Adds mutations to schema from graphql_auth package.
     """
 
-    register = RegisterRecaptcha.Field()
+    register = RegisterTurnstile.Field()
     verify_account = mutations.VerifyAccount.Field()
     resend_activation_email = mutations.ResendActivationEmail.Field()
     send_password_reset_email = mutations.SendPasswordResetEmail.Field()
