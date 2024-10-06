@@ -41,36 +41,44 @@ class ExtendedUserNode(schema.UserNode):
 
 
 class TurnstileMixin(graphene.Mutation):
-
     """
     Verifies a recaptcha with turnstile
     """
 
     @classmethod
     def Field(cls, *args, **kwargs):
-        cls._meta.arguments.update(
-            {"turnstile_token": graphene.String(required=False)})
+        cls._meta.arguments.update({"turnstile_token": graphene.String(required=False)})
         return super().Field(*args, **kwargs)
 
     @classmethod
-    def mutate(cls, root, info, **input):
-        # Check captcha
-        turnstile_response = validate(input.get('turnstile_token', ""))
-        if turnstile_response.success != True:
-            return cls(success=False, errors={
-                "nonFieldErrors": [{
-                    "message": ''.join(turnstile_response.error_codes),
-                    "code": "turnstile_token"}]
-            })
-        # remove captcha from input
-        input.pop("turnstile_token")
-        return super().mutate(root, info, **input)
-    
+    def mutate(cls, root, info, **inputs):
+        """
+        Intercepts the mutation to validate the turnstile token before proceeding.
+        """
+        # Validate Turnstile
+        turnstile_response = validate(inputs.get("turnstile_token", ""))
+        if not turnstile_response.success:
+            return cls(
+                success=False,
+                errors={
+                    "FieldErrors": [
+                        {
+                            "message": "".join(turnstile_response.error_codes),
+                            "field": "turnstileToken",
+                            "code": "turnstileTokenReject",
+                        }
+                    ]
+                },
+            )
+        # Remove Turnstile from input
+        inputs.pop("turnstile_token")
+        return super().mutate(root, info, **inputs)
+
+
 class RegisterTurnstile(TurnstileMixin, mutations.Register):
     """
     Registers a new user with Turnstile verification.
     """
-    pass
 
 
 class AuthMutation(graphene.ObjectType):
