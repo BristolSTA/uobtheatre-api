@@ -68,11 +68,11 @@ def validate(turnstile_response: str) -> SiteVerifyResponse:
         return model
 
     url = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
-    model = SiteVerifyRequest(
+    request = SiteVerifyRequest(
         secret=settings.TURNSTILE_SECRET, response=turnstile_response
     )
     try:
-        resp = requests.post(url, data=model.dict(), timeout=30)
+        resp = requests.post(url, data=request.model_dump(), timeout=30)
         if resp.status_code != 200:
             model = SiteVerifyResponse(success=False, hostname=None)
             model.error_codes.extend(
