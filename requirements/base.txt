@@ -7,7 +7,7 @@ django-autoslug==1.9.9
 shortuuid>=1.0.1
 
 # Filtering
-django-filter==22.1
+django-filter==24.3
 
 # Something to do with images
 Pillow>=8.1.2
@@ -36,13 +36,13 @@ psycopg2==2.9.9  # https://github.com/psycopg/psycopg2
 
 #=== Django core ===#
 
-django<4.0.0
+django<6.0.0
 
 #=== Django Extras ===#
 
 django-guardian==2.4.0  # https://github.com/django-guardian/django-guardian
-django_tiptap==0.0.10  # https://github.com/django-tiptap/django_tiptap
-djangorestframework==3.15.1  # https://www.django-rest-framework.org
+django_tiptap==0.0.18  # https://github.com/django-tiptap/django_tiptap
+djangorestframework==3.15.2  # https://www.django-rest-framework.org
 django-nonrelated-inlines==0.2
 
 #=== GQL core ===#
@@ -54,7 +54,7 @@ graphene-django==2.15.0
 
 django-graphql-auth==0.3.16
 # These are apparently a package deal atm so we need both
-django-graphql-jwt==0.3.0
+django-graphql-jwt==0.4.0
 PyJWT==1.7.0
 
 #=== Payments ===#
@@ -67,7 +67,7 @@ sentry-sdk==2.15.0
 whitenoise==6.7.0  # https://github.com/evansd/whitenoise
 
 #=== Email ===#
-django-anymail[amazon_ses]==11.0.1  # https://github.com/anymail/django-anymail
+django-anymail[amazon_ses]==12.0  # https://github.com/anymail/django-anymail
 django-inlinecss==0.3.0
 
 #=== Timezones ===#
