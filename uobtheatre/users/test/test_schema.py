@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 import pytest
+from django.test import override_settings
 from graphql_auth.models import UserStatus
 from graphql_relay.node.node import to_global_id
 
@@ -75,6 +76,7 @@ def test_user_schema_unauthenticated(gql_client):
     assert response == {"data": {"me": None}}
 
 
+@override_settings(TURNSTILE_SECRET="1x0000000000000000000000000000000AA")
 @pytest.mark.django_db
 def test_user_field_error(gql_client):
     UserFactory()
@@ -87,6 +89,7 @@ def test_user_field_error(gql_client):
             password2: "notsostrongpassword"
             firstName: "Tom"
             lastName: "Streuli"
+            turnstileToken: "XXXX.DUMMY.TOKEN.XXXX"
           ) {
             success,
             errors {
@@ -116,6 +119,56 @@ def test_user_field_error(gql_client):
                         "message": "The two password fields didn’t match.",
                         "field": "password2",
                         "code": "password_mismatch",
+                    }
+                ],
+            }
+        }
+    }
+
+
+@override_settings(TURNSTILE_SECRET="2x0000000000000000000000000000000AA")
+@pytest.mark.django_db
+def test_turnstile_rejection(gql_client):
+    UserFactory()
+    response = gql_client.execute(
+        """
+        mutation {
+          register(
+            email: "test@email.com"
+            password1: "strongpassword"
+            password2: "strongpassword"
+            firstName: "Alex"
+            lastName: "Streuli"
+            turnstileToken: "XXXX.DUMMY.TOKEN.XXXX"
+          ) {
+            success,
+            errors {
+              __typename
+              ... on NonFieldError {
+                message
+                code
+              }
+              ... on FieldError {
+                message
+                field
+                code
+              }
+            }
+          }
+        }
+        """
+    )
+
+    assert response == {
+        "data": {
+            "register": {
+                "success": False,
+                "errors": [
+                    {
+                        "__typename": "FieldError",
+                        "message": "invalid-input-response",
+                        "field": "FieldErrors",
+                        "code": "turnstileTokenReject",
                     }
                 ],
             }
@@ -162,6 +215,7 @@ def test_user_wrong_credentials(gql_client):
     }
 
 
+@override_settings(TURNSTILE_SECRET="1x0000000000000000000000000000000AA")
 @pytest.mark.django_db
 def test_user_register(gql_client):
     # Create an account
@@ -174,6 +228,7 @@ def test_user_register(gql_client):
             password2: "strongpassword"
             firstName: "James"
             lastName: "Tooof"
+            turnstileToken: "XXXX.DUMMY.TOKEN.XXXX"
           ) {
             success
           }
