@@ -3,6 +3,7 @@ from graphql_auth import mutations, schema
 from graphql_relay.node.node import to_global_id
 
 from uobtheatre.users.models import User
+from uobtheatre.users.turnstile import validate
 
 
 class ExtendedUserNode(schema.UserNode):
@@ -39,13 +40,54 @@ class ExtendedUserNode(schema.UserNode):
         )
 
 
+class TurnstileMixin(graphene.Mutation):
+    """
+    Verifies a recaptcha with turnstile
+    """
+
+    @classmethod
+    def Field(cls, *args, **kwargs):
+        cls._meta.arguments.update({"turnstile_token": graphene.String(required=True)})
+        return super().Field(*args, **kwargs)
+
+    @classmethod
+    def mutate(cls, root, info, **inputs):
+        """
+        Intercepts the mutation to validate the turnstile token before proceeding.
+        """
+        # Validate Turnstile
+        turnstile_response = validate(inputs.get("turnstile_token", ""))
+        if not turnstile_response.success:
+            return cls(
+                success=False,
+                errors={
+                    "FieldErrors": [
+                        {
+                            "message": "".join(turnstile_response.error_codes),
+                            "field": "turnstileToken",
+                            "code": "turnstileTokenReject",
+                        }
+                    ]
+                },
+            )
+        # Remove Turnstile from input
+        inputs.pop("turnstile_token")
+        return super().mutate(root, info, **inputs)
+
+
+class RegisterTurnstile(TurnstileMixin, mutations.Register):
+    """
+    Registers a new user with Turnstile verification.
+    """
+
+
 class AuthMutation(graphene.ObjectType):
     """User mutations
 
     Adds mutations to schema from graphql_auth package.
     """
 
-    register = mutations.Register.Field()
+    register = RegisterTurnstile.Field()
     verify_account = mutations.VerifyAccount.Field()
     resend_activation_email = mutations.ResendActivationEmail.Field()
     send_password_reset_email = mutations.SendPasswordResetEmail.Field()
