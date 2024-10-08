@@ -47,7 +47,7 @@ class TurnstileMixin(graphene.Mutation):
 
     @classmethod
     def Field(cls, *args, **kwargs):
-        cls._meta.arguments.update({"turnstile_token": graphene.String(required=False)})
+        cls._meta.arguments.update({"turnstile_token": graphene.String(required=True)})
         return super().Field(*args, **kwargs)
 
     @classmethod

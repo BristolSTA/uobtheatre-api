@@ -345,7 +345,7 @@ type Mutation {
   deleteDiscount(id: IdInputField!): DeleteDiscountMutation
   discountRequirement(input: DiscountRequirementMutationInput!): DiscountRequirementMutationPayload
   deleteDiscountRequirement(id: IdInputField!): DeleteDiscountRequirementMutation
-  register(turnstileToken: String, email: String!, firstName: String!, lastName: String!, password1: String!, password2: String!): RegisterTurnstile
+  register(turnstileToken: String!, email: String!, firstName: String!, lastName: String!, password1: String!, password2: String!): RegisterTurnstile
   verifyAccount(token: String!): VerifyAccount
   resendActivationEmail(email: String!): ResendActivationEmail
   sendPasswordResetEmail(email: String!): SendPasswordResetEmail
