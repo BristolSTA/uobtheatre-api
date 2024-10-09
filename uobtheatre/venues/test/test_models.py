@@ -27,7 +27,9 @@ def test_venue_productions():
     production_2 = ProductionFactory()
 
     PerformanceFactory(production=production_1, venue=venue1)
-    PerformanceFactory(production=production_1, venue=venue1) # Catching productions being duplicated by .fliter() when there are multiple performance in the same venue
+    PerformanceFactory(
+        production=production_1, venue=venue1
+    )  # Catching productions being duplicated by .fliter() when there are multiple performance in the same venue
     PerformanceFactory(production=production_1, venue=venue2)
     PerformanceFactory(production=production_2, venue=venue2)
 
