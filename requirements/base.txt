@@ -47,7 +47,7 @@ django-nonrelated-inlines==0.2
 
 #=== GQL core ===#
 
-graphene==2.1.9
+graphene==3.3
 graphene-django==2.15.0
 
 #=== Auth ===#
