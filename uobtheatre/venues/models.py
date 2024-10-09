@@ -32,6 +32,7 @@ class Venue(TimeStampedMixin, BaseModel):
     name = models.CharField(max_length=255)
     internal_capacity = models.PositiveSmallIntegerField()
     description = TipTapTextField(null=True, blank=True)
+    accessibility_info = models.TextField(null=True, blank=True)
     address = models.ForeignKey(Address, on_delete=models.CASCADE)
     image = models.ForeignKey(Image, on_delete=models.RESTRICT, related_name="venues")
     publicly_listed = models.BooleanField(default=True)
@@ -45,7 +46,7 @@ class Venue(TimeStampedMixin, BaseModel):
             list of Production: A list of all the productions in this Venue.
         """
         production_model = apps.get_model("productions", "production")
-        return production_model.objects.filter(performances__venue=self)
+        return production_model.objects.filter(performances__venue=self).distinct()
 
     def __str__(self):
         return str(self.name)

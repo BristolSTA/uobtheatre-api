@@ -955,6 +955,7 @@ type VenueNode implements Node {
   name: String!
   internalCapacity: Int!
   description: String
+  accessibilityInfo: String
   address: AddressNode!
   image: ImageNode!
   publiclyListed: Boolean!
