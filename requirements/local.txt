@@ -12,7 +12,7 @@ pylint >= 3.3.1 # Linting
 # mypy stuff
 mypy >= 1.11.2 # Type checking
 django-stubs >= 5.0.2
-types-python-dateutil==2.9.0.20240906
+types-python-dateutil==2.9.0.20241003
 types-requests==2.32.0.20240914
 
 # testing
@@ -23,7 +23,7 @@ pytest-django >= 0.2.0
 pytest-factoryboy >= 2.1.0
 coveralls >= 3.0.1
 factory-boy==3.3.1
-faker==28.4.1; python_version >= '3.6'
+faker==30.3.0; python_version >= '3.6'
 
 # Unsure
 jedi==0.19.1; python_version >= '3.6'

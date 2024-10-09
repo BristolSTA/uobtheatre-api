@@ -64,7 +64,7 @@ squareup>=9.0.0.20210226
 
 #=== Logging ===#
 
-sentry-sdk==2.14.0
+sentry-sdk==2.16.0
 whitenoise==6.7.0  # https://github.com/evansd/whitenoise
 
 #=== Email ===#
@@ -72,10 +72,10 @@ django-anymail[amazon_ses]==11.0.1  # https://github.com/anymail/django-anymail
 django-inlinecss==0.3.0
 
 #=== Timezones ===#
-timezonefinder==6.5.2
+timezonefinder==6.5.3
 pytz==2024.2
-types-pytz==2024.2.0.20240913
+types-pytz==2024.2.0.20241003
 
 #=== Task Queue ===#
 django-celery-results==2.5.1
-redis==5.0.8
+redis==5.1.1
