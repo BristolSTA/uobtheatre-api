@@ -918,6 +918,8 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
         ContentWarning, blank=True, through=ProductionContentWarning
     )
 
+    production_alert = models.TextField(null=True, blank=True)
+
     slug = AutoSlugField(populate_from="name", unique=True, blank=True, editable=True)
 
     def __str__(self):
