@@ -56,6 +56,7 @@ INSTALLED_APPS = (
     "uobtheatre.reports",
     "uobtheatre.mail",
     "uobtheatre.finance",
+    "uobtheatre.site_messages",
     "uobtheatre",
     "admin_confirm",
 )

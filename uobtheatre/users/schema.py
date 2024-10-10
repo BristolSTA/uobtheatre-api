@@ -37,6 +37,7 @@ class ExtendedUserNode(schema.UserNode):
             "bookings",
             "created_bookings",
             "permissions",
+            "created_site_messages",
         )
 
 
