@@ -24,6 +24,12 @@ class Society(BaseModel, TimeStampedMixin):
 
     members = models.ManyToManyField("users.User", related_name="societies", blank=True)
 
+    su_status = models.BooleanField(
+        default=True,
+        verbose_name="SU Society",
+        help_text="If true, society productions are included in automated reporting.",
+    )
+
     def __str__(self):
         return str(self.name)
 
