@@ -34,6 +34,7 @@ class SocietyNode(PermissionsMixin, DjangoObjectType):
             "members",
             "productions",
             "permissions",
+            "su_status",
         )
 
 

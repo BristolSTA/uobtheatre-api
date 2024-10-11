@@ -85,6 +85,7 @@ class ProductionForm(MutationForm):
             "age_rating",
             "facebook_event",
             "contact_email",
+            "production_alert",
         )
 
 
