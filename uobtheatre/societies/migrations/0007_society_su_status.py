@@ -6,13 +6,17 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('societies', '0006_alter_society_options'),
+        ("societies", "0006_alter_society_options"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='society',
-            name='su_status',
-            field=models.BooleanField(default=True, help_text='If true, society productions are included in automated reporting.', verbose_name='SU Society'),
+            model_name="society",
+            name="su_status",
+            field=models.BooleanField(
+                default=True,
+                help_text="If true, society productions are included in automated reporting.",
+                verbose_name="SU Society",
+            ),
         ),
     ]
