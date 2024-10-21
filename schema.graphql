@@ -471,6 +471,7 @@ type PerformanceNode implements Node {
   description: String
   extraInformation: String
   disabled: Boolean!
+  isRelaxed: Boolean
   seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
   capacity: Int
   discounts(offset: Int, before: String, after: String, first: Int, last: Int, group: Boolean, id: ID): DiscountNodeConnection!
