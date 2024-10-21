@@ -331,6 +331,7 @@ class PerformanceNode(DjangoObjectType):
     duration_mins = graphene.Int()
     is_inperson = graphene.Boolean(required=True)
     is_online = graphene.Boolean(required=True)
+    is_relaxed = graphene.Boolean()
     sold_out = graphene.Boolean(required=True)
     is_bookable = graphene.Boolean(required=True)
     tickets_breakdown = graphene.Field(PerformanceTicketsBreakdown, required=True)
@@ -349,6 +350,9 @@ class PerformanceNode(DjangoObjectType):
         return True
 
     def resolve_is_online(self, info):
+        return False
+
+    def resolve_is_relaxed(self, info):
         return False
 
     def resolve_duration_mins(self, info):

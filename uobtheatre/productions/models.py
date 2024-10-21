@@ -306,6 +306,7 @@ class Performance(
 
     description = models.TextField(null=True, blank=True)
     extra_information = models.TextField(null=True, blank=True)
+    is_relaxed = models.BooleanField(default=False)
 
     disabled = models.BooleanField(default=True)
 
