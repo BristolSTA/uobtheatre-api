@@ -353,7 +353,7 @@ class PerformanceNode(DjangoObjectType):
         return False
 
     def resolve_is_relaxed(self, info):
-        return False
+        return self.is_relaxed
 
     def resolve_duration_mins(self, info):
         return self.duration.total_seconds() // 60
