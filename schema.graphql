@@ -330,11 +330,21 @@ type MetaItemNode {
 }
 
 type MiscCostNode implements Node {
-  id: ID!
   name: String!
   description: String
   percentage: Float
   value: Float
+  id: ID!
+}
+
+type MiscCostNodeConnection {
+  pageInfo: PageInfo!
+  edges: [MiscCostNodeEdge]!
+}
+
+type MiscCostNodeEdge {
+  node: MiscCostNode
+  cursor: String!
 }
 
 type Mutation {
@@ -666,6 +676,7 @@ input ProductionWarning {
 type Query {
   images: [ImageNode]
   paymentDevices(paymentProvider: PaymentProvider, paired: Boolean): [SquarePaymentDevice]
+  miscCosts(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String): MiscCostNodeConnection
   bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, user: ID, creator: ID, reference: String, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, productionSearch: String, productionSlug: String, performanceId: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection
   me: ExtendedUserNode
   societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String, userHasPermission: String): SocietyNodeConnection
