@@ -330,11 +330,11 @@ type MetaItemNode {
 }
 
 type MiscCostNode implements Node {
+  id: ID!
   name: String!
   description: String
   percentage: Float
   value: Float
-  id: ID!
 }
 
 type MiscCostNodeConnection {

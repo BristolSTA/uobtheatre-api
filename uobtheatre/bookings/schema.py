@@ -31,6 +31,7 @@ class MiscCostNode(DjangoObjectType):
         interfaces = (relay.Node,)
         filterset_class = MiscCostFilter
         fields = (
+            "id",
             "name",
             "description",
             "percentage",
