@@ -61,7 +61,7 @@ def send_booking_confirmation_email(
 def send_booking_accessibility_info_email(
     booking: "Booking",
 ):
-    """Sends an email to the production contact email, and to those with view sales and bookings permissions for a production, notifying them of a booking that has been amde with accessibility information"""
+    """Sends an email to the production contact email, and to those with view sales and bookings permissions for a production, notifying them of a booking that has been made with accessibility information"""
 
     emails_to_notify = [booking.performance.production.contact_email] + list(
         get_users_with_perm("productions.view_bookings", booking.performance.production)
@@ -74,6 +74,34 @@ def send_booking_accessibility_info_email(
         .greeting()
         .line(
             f"A booking has been created for {booking.performance} with the following accessibility information:"
+        )
+        .line(f"'{booking.accessibility_info}'")
+        .action(
+            f"/administration/productions/{booking.performance.production.slug}/bookings/{booking.reference}",
+            "View Booking Details",
+        )
+    )
+    for email in emails_to_notify:
+        mail.send(
+            f"Accessibility alert for {booking.performance.production.name}", email
+        )
+
+def update_booking_accessibility_info_email(
+    booking: "Booking",
+):
+    """Sends an email to the production contact email, and to those with view sales and bookings permissions for a production, notifying them of a booking that has been updated with accessibility information"""
+
+    emails_to_notify = [booking.performance.production.contact_email] + list(
+        get_users_with_perm("productions.view_bookings", booking.performance.production)
+        .all()
+        .values_list("email", flat=True)
+    )
+
+    mail = (
+        MailComposer()
+        .greeting()
+        .line(
+            f"A booking has been updated for {booking.performance} with the following accessibility information:"
         )
         .line(f"'{booking.accessibility_info}'")
         .action(

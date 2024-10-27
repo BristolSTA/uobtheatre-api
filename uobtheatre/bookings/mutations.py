@@ -1,8 +1,10 @@
 from typing import Optional
 
 import graphene
+from django.utils import timezone
 
 from uobtheatre.bookings.abilities import ModifyBooking
+import uobtheatre.bookings.emails as booking_emails
 from uobtheatre.bookings.forms import BookingForm
 from uobtheatre.bookings.models import Booking, Ticket
 from uobtheatre.bookings.schema import BookingNode
@@ -435,6 +437,60 @@ class UnCheckInBooking(AuthRequiredMixin, SafeMutation):
             ticket.uncheck_in()
 
         return UnCheckInBooking(booking=booking, performance=performance)
+    
+class UpdateBookingAccessibilityInfo(AuthRequiredMixin, SafeMutation):
+    """Mutation to un-check in the tickets of a Booking.
+
+    Args:
+        booking_reference (str): The booking reference
+        accessibility_info (str): The new accessibility info for the booking
+
+    Returns:
+        booking (BookingNode): The Booking.
+
+    Raises:
+        GQLException: If the change was unsuccessful
+    """
+
+    booking = graphene.Field(BookingNode)
+
+    class Arguments:
+        booking_reference = graphene.String(required=True)
+        accessibility_info = graphene.String(required=True)
+
+    @classmethod
+    def authorize_request(cls, _, info, booking_reference, **inputs):
+        booking = Booking.objects.get(id=booking_reference)
+        user = info.context.user
+
+        # This mutation should only be used for completed bookings
+        if not booking.status == Payable.Status.PAID:
+            raise GQLException(
+                message="This booking is not completed"
+            )
+        
+        # The booking must be in the future
+        if not booking.performance.start > timezone.now():
+            raise GQLException(
+                message="This booking is in the past"
+            )
+
+        # It must be the user's booking
+        if not booking.user == user:
+            raise AuthorizationException()
+        
+    @classmethod
+    def resolve_mutation(cls, _, info, booking_reference, accessibility_info):
+        booking = Booking.objects.get(id=booking_reference)
+
+        # Update the booking
+        booking.accessibility_info = accessibility_info
+        booking.save()
+
+        # Email the production team
+        booking_emails.send_booking_accessibility_info_email(booking)
+
+        return UpdateBookingAccessibilityInfo(booking=booking)
 
 
 class Mutation(graphene.ObjectType):
@@ -445,3 +501,4 @@ class Mutation(graphene.ObjectType):
     pay_booking = PayBooking.Field()
     check_in_booking = CheckInBooking.Field()
     uncheck_in_booking = UnCheckInBooking.Field()
+    update_booking_accessibility_info = UpdateBookingAccessibilityInfo.Field()
