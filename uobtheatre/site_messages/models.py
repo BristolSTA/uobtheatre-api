@@ -1,15 +1,14 @@
 import datetime
-from typing import Optional
 
 from django.db import models
-from django.utils import timezone
-from graphql_relay.node.node import to_global_id
-from django.db.models.query import QuerySet
 from django.db.models import F
+from django.db.models.query import QuerySet
+from django.utils import timezone
 
 from uobtheatre.users.models import User
 from uobtheatre.utils.models import BaseModel
 from uobtheatre.utils.validators import RequiredFieldsValidator
+
 
 class MessageQuerySet(QuerySet):
     """Queryset for Messages, also used as manager."""
@@ -21,24 +20,14 @@ class MessageQuerySet(QuerySet):
     def annotate_start(self):
         """Annotate the event start of the message."""
         return self.annotate(start=F("event_start"))
-    
+
     def annotate_end(self):
         """Annotate the event end of the production."""
         return self.annotate(end=F("event_end"))
-    
-    def annotate_to_display(self):
-        """Annotate whether the message should be displayed."""
-        return self.annotate(to_display=F("to_display"))
-    
-    def to_display(self, bool_value=True) -> QuerySet:
-        """Filter for messages that should currently be displayed."""
-        if bool_value:
-            query_set = self.annotate_to_display().filter(to_display=True)
-        else:
-            query_set = self.exclude(to_display=True)
-        return query_set
+
 
 MessageManager = models.Manager.from_queryset(MessageQuerySet)
+
 
 class Message(BaseModel):
     """The model for a site-wide message."""

@@ -6,9 +6,8 @@ from graphene_django import DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
 
 from uobtheatre.site_messages.models import Message
-from uobtheatre.users.abilities import PermissionsMixin
 from uobtheatre.utils.filters import FilterSet
-from uobtheatre.utils.schema import UserPermissionFilterMixin, IdInputField
+from uobtheatre.utils.schema import IdInputField
 
 
 class SiteMessageByMethodOrderingFilter(django_filters.OrderingFilter):
@@ -29,7 +28,9 @@ class SiteMessageByMethodOrderingFilter(django_filters.OrderingFilter):
             ("-end", "End (descending)"),
         ]
 
-    def filter(self, query_set, value: str):
+    def filter(
+        self, query_set, value: str
+    ):  # pylint: disable=too-many-return-statements
         """Fitler for display start, event start and event end of messages
 
         Adds following options:
@@ -51,7 +52,7 @@ class SiteMessageByMethodOrderingFilter(django_filters.OrderingFilter):
             return query_set.annotate_start().order_by("display_start")
         if value and "-display_start" in value:
             return query_set.annotate_start().order_by("-display_start")
-        
+
         if value and "start" in value:
             return query_set.annotate_start().order_by("start")
         if value and "-start" in value:
@@ -86,8 +87,6 @@ class SiteMessageFilterSet(FilterSet):
     end__gte = django_filters.DateTimeFilter(method="end_filter")
     end__lte = django_filters.DateTimeFilter(method="end_filter")
 
-    to_display = django_filters.BooleanFilter(method = "to_display_filter")
-
     @classmethod
     def display_start_filter(cls, query_set, value, date=None):
         return query_set.annotate_display().filter(**{value: date})
@@ -99,16 +98,13 @@ class SiteMessageFilterSet(FilterSet):
     @classmethod
     def end_filter(cls, query_set, value, date=None):
         return query_set.annotate_end().filter(**{value: date})
-    
-    @classmethod
-    def to_display_filter(cls, query_set, _, value):
-        return query_set.to_display(value)
 
     class Meta:
         model = Message
-        fields = '__all__'
+        fields = "__all__"
 
     order_by = SiteMessageByMethodOrderingFilter()
+
 
 class SiteMessageNode(DjangoObjectType):
     event_duration = graphene.Int()
@@ -117,7 +113,7 @@ class SiteMessageNode(DjangoObjectType):
 
     def resolve_event_duration(self, info):
         return self.duration.total_seconds() // 60
-    
+
     def resolve_to_display(self, info):
         return self.to_display
 
@@ -140,12 +136,9 @@ class SiteMessageNode(DjangoObjectType):
             "to_display",
         )
 
+
 class Query(graphene.ObjectType):
+    """Query for site messages"""
+
     site_messages = DjangoFilterConnectionField(SiteMessageNode)
     site_message = graphene.Field(SiteMessageNode, id=IdInputField(required=True))
-
-    def resolve_site_message(self, _, id):
-        try:
-            return Message.objects.get(id=id)
-        except Message.DoesNotExist:
-            return None

@@ -1,12 +1,10 @@
 import graphene
 
+from uobtheatre.site_messages.forms import SiteMessageForm
 from uobtheatre.site_messages.models import Message
 from uobtheatre.site_messages.schema import SiteMessageNode
-from uobtheatre.site_messages.forms import SiteMessageForm
-from uobtheatre.utils.schema import (
-    AuthRequiredMixin,
-    SafeFormMutation,
-)
+from uobtheatre.utils.schema import AuthRequiredMixin, SafeFormMutation
+
 
 class SiteMessageMutation(SafeFormMutation, AuthRequiredMixin):
     """
@@ -21,6 +19,7 @@ class SiteMessageMutation(SafeFormMutation, AuthRequiredMixin):
 
     class Meta:
         form_class = SiteMessageForm
+
 
 class Mutation(graphene.ObjectType):
     site_message = SiteMessageMutation.Field()
