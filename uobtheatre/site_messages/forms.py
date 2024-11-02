@@ -8,6 +8,12 @@ from uobtheatre.utils.forms import MutationForm
 
 class SiteMessageForm(MutationForm):
     """Form for creating/updating a site message"""
+    def clean(self):
+        """Validate and clean form data"""
+        print("Cleaning")
+        if not self.instance.creator_id:
+            # If the instance has no creater, the current user is the creator
+            self.instance.creator = self.user
 
     user_email = CharField(required=False)
 

@@ -65,7 +65,7 @@ class Message(BaseModel):
 
     # The user that created the message
     creator = models.ForeignKey(
-        User, on_delete=models.RESTRICT, related_name="created_site_messages"
+        User, null=True, on_delete=models.SET_NULL, related_name="created_site_messages"
     )
 
     class Type(models.TextChoices):
@@ -141,7 +141,6 @@ class Message(BaseModel):
             "active",
             "event_start",
             "event_end",
-            "creator",
             "type",
             "dismissal_policy",
         ]

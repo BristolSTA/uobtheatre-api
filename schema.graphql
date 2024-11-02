@@ -836,7 +836,7 @@ type SiteMessageNode implements Node {
   displayStart: DateTime
   eventStart: DateTime!
   eventEnd: DateTime!
-  creator: ExtendedUserNode!
+  creator: ExtendedUserNode
   type: MessageType!
   dismissalPolicy: MessageDismissalPolicy!
   eventDuration: Int

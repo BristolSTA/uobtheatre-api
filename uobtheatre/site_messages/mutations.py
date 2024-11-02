@@ -19,6 +19,7 @@ class SiteMessageMutation(SafeFormMutation, AuthRequiredMixin):
 
     class Meta:
         form_class = SiteMessageForm
+        createAbility = "site_messages.add_message"
 
 
 class Mutation(graphene.ObjectType):
