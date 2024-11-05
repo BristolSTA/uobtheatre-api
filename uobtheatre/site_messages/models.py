@@ -147,7 +147,7 @@ class Message(BaseModel):
     )
 
     def __str__(self):
-        return f"Site {self.type.title()} (Event {self.event_start} until {self.event_start})"
+        return f"Site {self.type.title()} (Event {self.event_start.strftime('%d/%m/%Y')} until {self.event_end.strftime('%d/%m/%Y')})"
 
     class Meta:
         verbose_name = "Site Message"

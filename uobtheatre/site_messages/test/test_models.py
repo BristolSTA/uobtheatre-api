@@ -1,46 +1,13 @@
 import pytest
-import pytz
+import datetime
 
-from uobtheatre.addresses.test.factories import AddressFactory
+from uobtheatre.site_messages.test.factories import SiteMessageFactory
 
 
-@pytest.mark.parametrize(
-    "building_name, building_number, output",
-    [
-        (
-            "The Richmond Building",
-            "105",
-            "The Richmond Building, 105, Queens Road, Bristol, BS1 1AE",
-        ),
-        (
-            "The Richmond Building",
-            None,
-            "The Richmond Building, Queens Road, Bristol, BS1 1AE",
-        ),
-        (None, "105", "105, Queens Road, Bristol, BS1 1AE"),
-        (None, None, "Queens Road, Bristol, BS1 1AE"),
-    ],
-)
 @pytest.mark.django_db
-def test_address_to_string(building_name, building_number, output):
-    address = AddressFactory(
-        building_name=building_name,
-        building_number=building_number,
-        street="Queens Road",
-        city="Bristol",
-        postcode="BS1 1AE",
+def test_str_siteMessage():
+    siteMessage = SiteMessageFactory()
+
+    assert str(siteMessage) == "Site {0} (Event {1} until {2})".format(
+       siteMessage.type.title(), siteMessage.event_start.strftime('%d/%m/%Y'), siteMessage.event_end.strftime('%d/%m/%Y')
     )
-
-    assert str(address) == output
-
-
-@pytest.mark.django_db
-def test_timezone_without_coordinates():
-    address = AddressFactory(latitude=None, longitude=None)
-    assert address.timezone == pytz.UTC
-
-
-@pytest.mark.django_db
-def test_timezone_with_coordinates():
-    address = AddressFactory(latitude=51.45662710361974, longitude=-2.613237959640326)
-    assert address.timezone.zone == "Europe/London"
