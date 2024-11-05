@@ -1,9 +1,13 @@
-import pytest
 import datetime
-from graphql_relay.node.node import to_global_id
-from django.utils import timezone
 
-from uobtheatre.site_messages.test.factories import SiteMessageFactory, create_site_message
+import pytest
+from django.utils import timezone
+from graphql_relay.node.node import to_global_id
+
+from uobtheatre.site_messages.test.factories import (
+    SiteMessageFactory,
+    create_site_message,
+)
 
 
 @pytest.mark.django_db
@@ -51,9 +55,13 @@ def test_site_message_schema(gql_client):
                             "eventStart": message.event_start.isoformat(),
                             "eventEnd": message.event_end.isoformat(),
                             "type": message.type,
-                            "creator": {"id": to_global_id("UserNode", message.creator.id)},
+                            "creator": {
+                                "id": to_global_id("UserNode", message.creator.id)
+                            },
                             "dismissalPolicy": message.dismissal_policy,
-                            "eventDuration": int(message.duration.total_seconds() // 60),
+                            "eventDuration": int(
+                                message.duration.total_seconds() // 60
+                            ),
                             "toDisplay": message.to_display,
                         }
                     }
@@ -93,6 +101,7 @@ def test_resolve_site_message(gql_client, query_args, expected_message):
     else:
         assert response["data"]["siteMessage"] is None
 
+
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "factories, requests",
@@ -104,7 +113,7 @@ def test_resolve_site_message(gql_client, query_args, expected_message):
                 (SiteMessageFactory, {"active": True}),
                 (SiteMessageFactory, {"active": False}),
             ],
-            [('active: true', 2), ('active: false', 1)],
+            [("active: true", 2), ("active: false", 1)],
         ),
         # type exact test
         (
@@ -157,25 +166,25 @@ def test_site_message_orderby(order_by, expected_order, gql_client):
             display_start=current_time + datetime.timedelta(days=1),
             event_start=current_time + datetime.timedelta(days=3),
             event_end=current_time + datetime.timedelta(days=7),
-            id=0
+            id=0,
         ),
         create_site_message(
             display_start=current_time + datetime.timedelta(days=2),
             event_start=current_time + datetime.timedelta(days=6),
             event_end=current_time + datetime.timedelta(days=9),
-            id=1
+            id=1,
         ),
         create_site_message(
             display_start=current_time + datetime.timedelta(days=3),
             event_start=current_time + datetime.timedelta(days=4),
             event_end=current_time + datetime.timedelta(days=8),
-            id=2
+            id=2,
         ),
         create_site_message(
             display_start=current_time + datetime.timedelta(days=4),
             event_start=current_time + datetime.timedelta(days=5),
             event_end=current_time + datetime.timedelta(days=5),
-            id=3
+            id=3,
         ),
     ]
     request = """
@@ -193,8 +202,10 @@ def test_site_message_orderby(order_by, expected_order, gql_client):
     response = gql_client.execute(request % order_by)
 
     assert response["data"]["siteMessages"]["edges"] == [
-        {"node": {"id": to_global_id("SiteMessageNode", messages[i].id)}} for i in expected_order
+        {"node": {"id": to_global_id("SiteMessageNode", messages[i].id)}}
+        for i in expected_order
     ]
+
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
@@ -206,9 +217,11 @@ def test_site_message_orderby(order_by, expected_order, gql_client):
         ("start_Lte", 4, [0, 2]),
         ("end_Gte", 6, [0, 2, 1]),
         ("end_Lte", 6, [3]),
-    ]
+    ],
 )
-def test_site_message_time_filters(filter_name, value_days, expected_outputs, gql_client):
+def test_site_message_time_filters(
+    filter_name, value_days, expected_outputs, gql_client
+):
     current_time = timezone.now().replace(microsecond=0, second=0)
 
     messages = [
@@ -216,25 +229,25 @@ def test_site_message_time_filters(filter_name, value_days, expected_outputs, gq
             display_start=current_time + datetime.timedelta(days=1),
             event_start=current_time + datetime.timedelta(days=3),
             event_end=current_time + datetime.timedelta(days=7),
-            id=0
+            id=0,
         ),
         create_site_message(
             display_start=current_time + datetime.timedelta(days=2),
             event_start=current_time + datetime.timedelta(days=6),
             event_end=current_time + datetime.timedelta(days=9),
-            id=1
+            id=1,
         ),
         create_site_message(
             display_start=current_time + datetime.timedelta(days=3),
             event_start=current_time + datetime.timedelta(days=4),
             event_end=current_time + datetime.timedelta(days=8),
-            id=2
+            id=2,
         ),
         create_site_message(
             display_start=current_time + datetime.timedelta(days=4),
             event_start=current_time + datetime.timedelta(days=5),
             event_end=current_time + datetime.timedelta(days=5),
-            id=3
+            id=3,
         ),
     ]
     # Check we get 6 of the upcoming messages back in the right order
@@ -259,5 +272,6 @@ def test_site_message_time_filters(filter_name, value_days, expected_outputs, gq
     )
 
     assert response["data"]["siteMessages"]["edges"] == [
-        {"node": {"id": to_global_id("SiteMessageNode", messages[i].id)}} for i in expected_outputs
+        {"node": {"id": to_global_id("SiteMessageNode", messages[i].id)}}
+        for i in expected_outputs
     ]

@@ -8,7 +8,7 @@ from uobtheatre.utils.forms import MutationForm
 
 class SiteMessageForm(MutationForm):
     """Form for creating/updating a site message"""
-    
+
     def clean(self):
         """Validate and clean form data"""
         print("Cleaning SiteMessageForm")

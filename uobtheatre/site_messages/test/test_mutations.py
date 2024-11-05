@@ -56,6 +56,7 @@ def test_site_message_mutation_create(gql_client, with_permission):
         }
         assert Message.objects.count() == 1
 
+
 @pytest.mark.django_db
 @pytest.mark.parametrize("with_permission", [True, False])
 def test_update_site_message(gql_client, with_permission):
@@ -91,7 +92,9 @@ def test_update_site_message(gql_client, with_permission):
             }
          }
         }
-    """ % (to_global_id("SiteMessageNode", message.id))
+    """ % (
+        to_global_id("SiteMessageNode", message.id)
+    )
 
     if with_permission:
         assign_perm("site_messages.change_message", gql_client.user)

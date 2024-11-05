@@ -813,9 +813,7 @@ input SiteMessageMutationInput {
   eventStart: DateTime
   eventEnd: DateTime
   type: String
-  creator: ID
   dismissalPolicy: String
-  userEmail: String
   id: ID
   clientMutationId: String
 }
@@ -824,7 +822,6 @@ type SiteMessageMutationPayload {
   message: SiteMessageNode
   errors: [GQLErrorUnion!]
   success: Boolean!
-  siteMessage: SiteMessageNode
   clientMutationId: String
 }
 
