@@ -141,10 +141,12 @@ class Query(graphene.ObjectType):
     """Query for site messages"""
 
     site_messages = DjangoFilterConnectionField(SiteMessageNode)
-    site_message = graphene.Field(SiteMessageNode, id=IdInputField(required=True))
+    site_message = graphene.Field(
+        SiteMessageNode, message_id=IdInputField(required=True)
+    )
 
-    def resolve_site_message(self, info, id):
+    def resolve_site_message(self, info, message_id):
         try:
-            return Message.objects.get(id=id)
+            return Message.objects.get(id=message_id)
         except Message.DoesNotExist:
             return None

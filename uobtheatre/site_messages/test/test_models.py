@@ -6,11 +6,11 @@ from uobtheatre.site_messages.test.factories import SiteMessageFactory
 
 
 @pytest.mark.django_db
-def test_str_siteMessage():
-    siteMessage = SiteMessageFactory()
+def test_str_site_message():
+    site_message = SiteMessageFactory()
 
-    assert str(siteMessage) == "Site {0} (Event {1} until {2})".format(
-        siteMessage.type.title(),
-        siteMessage.event_start.strftime("%d/%m/%Y"),
-        siteMessage.event_end.strftime("%d/%m/%Y"),
+    assert str(site_message) == "Site {0} (Event {1} until {2})".format(
+        site_message.type.title(),
+        site_message.event_start.strftime("%d/%m/%Y"),
+        site_message.event_end.strftime("%d/%m/%Y"),
     )

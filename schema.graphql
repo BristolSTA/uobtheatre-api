@@ -689,7 +689,7 @@ input ProductionWarning {
 
 type Query {
   siteMessages(offset: Int, before: String, after: String, first: Int, last: Int, message: String, active: Boolean, indefiniteOverride: Boolean, displayStart: DateTime, eventStart: DateTime, eventEnd: DateTime, creator: ID, type: String, dismissalPolicy: String, id: ID, displayStart_Gte: DateTime, displayStart_Lte: DateTime, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, orderBy: String): SiteMessageNodeConnection
-  siteMessage(id: IdInputField!): SiteMessageNode
+  siteMessage(messageId: IdInputField!): SiteMessageNode
   images: [ImageNode]
   paymentDevices(paymentProvider: PaymentProvider, paired: Boolean): [SquarePaymentDevice]
   miscCosts(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String): MiscCostNodeConnection

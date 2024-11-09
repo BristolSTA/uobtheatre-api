@@ -28,18 +28,21 @@ class SiteMessageFactory(factory.django.DjangoModelFactory):
         model = Message
 
 
-def create_site_message(display_start, event_start, event_end, id):
+def create_site_message(display_start, event_start, event_end, message_id):
     """Create a site message with given timing information to test ordering
     Args:
         display_start (datetime)
         event_start (datetime)
         event_end (datetime)
-        id (int)
+        message_id (int)
 
     Returns:
         message: The generated Site Message.
     """
     message = SiteMessageFactory(
-        display_start=display_start, event_start=event_start, event_end=event_end, id=id
+        display_start=display_start,
+        event_start=event_start,
+        event_end=event_end,
+        id=message_id,
     )
     return message

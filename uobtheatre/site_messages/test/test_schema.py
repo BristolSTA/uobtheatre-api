@@ -82,8 +82,8 @@ def test_site_message_schema(gql_client):
     ],
 )
 def test_resolve_site_message(gql_client, query_args, expected_message):
-    SiteMessageFactory(id=1)
-    SiteMessageFactory(id=2)
+    SiteMessageFactory(message_id=1)
+    SiteMessageFactory(message_id=2)
 
     request = """
       query {
@@ -166,25 +166,25 @@ def test_site_message_orderby(order_by, expected_order, gql_client):
             display_start=current_time + datetime.timedelta(days=1),
             event_start=current_time + datetime.timedelta(days=3),
             event_end=current_time + datetime.timedelta(days=7),
-            id=0,
+            message_id=0,
         ),
         create_site_message(
             display_start=current_time + datetime.timedelta(days=2),
             event_start=current_time + datetime.timedelta(days=6),
             event_end=current_time + datetime.timedelta(days=9),
-            id=1,
+            message_id=1,
         ),
         create_site_message(
             display_start=current_time + datetime.timedelta(days=3),
             event_start=current_time + datetime.timedelta(days=4),
             event_end=current_time + datetime.timedelta(days=8),
-            id=2,
+            message_id=2,
         ),
         create_site_message(
             display_start=current_time + datetime.timedelta(days=4),
             event_start=current_time + datetime.timedelta(days=5),
             event_end=current_time + datetime.timedelta(days=5),
-            id=3,
+            message_id=3,
         ),
     ]
     request = """
@@ -229,25 +229,25 @@ def test_site_message_time_filters(
             display_start=current_time + datetime.timedelta(days=1),
             event_start=current_time + datetime.timedelta(days=3),
             event_end=current_time + datetime.timedelta(days=7),
-            id=0,
+            message_id=0,
         ),
         create_site_message(
             display_start=current_time + datetime.timedelta(days=2),
             event_start=current_time + datetime.timedelta(days=6),
             event_end=current_time + datetime.timedelta(days=9),
-            id=1,
+            message_id=1,
         ),
         create_site_message(
             display_start=current_time + datetime.timedelta(days=3),
             event_start=current_time + datetime.timedelta(days=4),
             event_end=current_time + datetime.timedelta(days=8),
-            id=2,
+            message_id=2,
         ),
         create_site_message(
             display_start=current_time + datetime.timedelta(days=4),
             event_start=current_time + datetime.timedelta(days=5),
             event_end=current_time + datetime.timedelta(days=5),
-            id=3,
+            message_id=3,
         ),
     ]
     # Check we get 6 of the upcoming messages back in the right order
