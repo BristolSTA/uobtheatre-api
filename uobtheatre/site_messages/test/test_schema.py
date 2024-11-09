@@ -76,14 +76,14 @@ def test_site_message_schema(gql_client):
 @pytest.mark.parametrize(
     "query_args, expected_message",
     [
-        (f'id: "{to_global_id("SiteMessageNode", 1)}"', 1),
-        (f'id: "{to_global_id("SiteMessageNode", 2)}"', 2),
-        (f'id: "{to_global_id("SiteMessageNode", 3)}"', None),
+        (f'messageId: "{to_global_id("SiteMessageNode", 1)}"', 1),
+        (f'messageId: "{to_global_id("SiteMessageNode", 2)}"', 2),
+        (f'messageId: "{to_global_id("SiteMessageNode", 3)}"', None),
     ],
 )
 def test_resolve_site_message(gql_client, query_args, expected_message):
-    SiteMessageFactory(message_id=1)
-    SiteMessageFactory(message_id=2)
+    SiteMessageFactory(id=1)
+    SiteMessageFactory(id=2)
 
     request = """
       query {
