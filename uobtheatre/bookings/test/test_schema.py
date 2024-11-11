@@ -800,6 +800,62 @@ def test_bookings_search(search_phrase, expected_filtered_bookings, gql_client):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
+    "search_phrase, expected_filtered_bookings",
+    [
+        ("jam", [1, 3]),
+        ("alex", [2]),
+        ("abc", []),
+        ("def", []),
+        ("mrfantastic", [2]),
+        ("irrelvent words mrfantastic", [2]),
+        ("james alex", [1, 2, 3]),
+    ],
+)
+def test_creator_search(search_phrase, expected_filtered_bookings, gql_client):
+    user_1 = UserFactory(
+        first_name="James", last_name="Elgar", email="jameselgar@email.com"
+    )
+    user_2 = UserFactory(
+        first_name="Alex", last_name="Toff", email="mrfantastic@email.com"
+    )
+    BookingFactory(id=1, creator=user_1, reference="abc123")
+    BookingFactory(id=2, creator=user_2, reference="abcdef")
+    BookingFactory(id=3, user=user_2, creator=user_1, reference="duplicate")
+
+    request = (
+        """
+        query {
+            bookings(creatorSearch:"%s") {
+        	  edges {
+        	    node {
+        	      id
+        	    }
+        	  }
+        	}
+        }
+    """
+        % search_phrase
+    )
+
+    boxoffice_perm = Permission.objects.get(codename="boxoffice")
+    gql_client.login().user.user_permissions.add(boxoffice_perm)
+
+    response = gql_client.execute(request)
+
+    response_bookings_id = [
+        node["node"]["id"] for node in response["data"]["bookings"]["edges"]
+    ]
+    expected_booking_ids = [
+        to_global_id("BookingNode", booking_id)
+        for booking_id in expected_filtered_bookings
+    ]
+
+    assert len(response_bookings_id) == len(expected_booking_ids)
+    assert set(response_bookings_id) == set(expected_booking_ids)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
     "slug, expected_filtered_bookings",
     [
         ("", [1, 2, 3, 4, 5]),  # Empty should return all
