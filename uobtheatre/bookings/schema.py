@@ -212,7 +212,7 @@ class BookingFilter(FilterSet):
     ordering filter for created_at.
 
     Also adds filtering for bookings based on the name of its associated
-    production.
+    production, and an optional one based on the creator of the booking.
     """
 
     status_in = django_filters.MultipleChoiceFilter(
@@ -220,6 +220,10 @@ class BookingFilter(FilterSet):
     )
 
     search = django_filters.CharFilter(method="search_bookings", label="Search")
+
+    creator_search = django_filters.CharFilter(
+        method="creator_search_bookings", label="Creator Search"
+    )
 
     production_search = django_filters.CharFilter(
         method="production_search_bookings", label="Production Search"
@@ -267,6 +271,27 @@ class BookingFilter(FilterSet):
                 | Q(user__last_name__icontains=word)
                 | Q(user__email__icontains=word)
                 | Q(reference__icontains=word)
+            )
+        return queryset.filter(query)
+
+    def creator_search_bookings(self, queryset, _, value):
+        """
+        Given a query string, searches through the bookings using the name of its creator
+
+        Args:
+            queryset (Queryset): The bookings queryset.
+            value (str): The search query.
+
+        Returns:
+            Queryset: Filtered booking queryset.
+        """
+        query = Q()
+        for word in value.split():
+            query = (
+                query
+                | Q(creator__first_name__icontains=word)
+                | Q(creator__last_name__icontains=word)
+                | Q(creator__email__icontains=word)
             )
         return queryset.filter(query)
 
