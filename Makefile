@@ -74,7 +74,7 @@ check-users: ## Do the migrations
 	$(COMMAND_PREFIX) `python manage.py number_of_users | tail -n 1` | grep 0
 
 seed: ## Seed the db with some example data
-	$(COMMAND_PREFIX) python manage.py loaddata uobtheatre/images/fixtures.json uobtheatre/addresses/fixtures.json uobtheatre/users/fixtures.json uobtheatre/venues/fixtures.json uobtheatre/societies/fixtures.json uobtheatre/productions/fixtures.json uobtheatre/bookings/fixtures.json
+	$(COMMAND_PREFIX) python manage.py loaddata uobtheatre/images/fixtures.json uobtheatre/addresses/fixtures.json uobtheatre/users/fixtures.json uobtheatre/venues/fixtures.json uobtheatre/societies/fixtures.json uobtheatre/productions/fixtures.json uobtheatre/bookings/fixtures.json uobtheatre/site_messages/fixtures.json
 
 seed-testfixtures: ## Seed the data for e2e testing
 	$(COMMAND_PREFIX) python manage.py loaddata db.json
