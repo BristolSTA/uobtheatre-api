@@ -19,6 +19,7 @@ from uobtheatre.payments.transaction_providers import (
     RefundProvider,
     SquareOnline,
     SquarePOS,
+    SquarePOSRefund,
     SquareRefund,
     TransactionProvider,
 )
@@ -42,6 +43,7 @@ def test_transaction_method_all():
         SquareOnline,
         ManualCardRefund,
         SquareRefund,
+        SquarePOSRefund,
     ]
 
 

@@ -8,6 +8,10 @@ from square.client import Client
 from square.http.api_response import ApiResponse as SquareApiResponse
 
 from uobtheatre.payments import models as payment_models
+from uobtheatre.payments.exceptions import (
+    CantBeRefundedException,
+    IncorrectTransactionProviderException,
+)
 from uobtheatre.utils.exceptions import PaymentException, SquareException
 from uobtheatre.utils.models import classproperty
 
@@ -278,6 +282,63 @@ class ManualCardRefund(RefundProvider):
         )
 
 
+class SquarePOSRefund(RefundProvider, SquareAPIMixin):
+    """
+    Refund method for refunding Square POS (aka Terminal) checkouts
+    """
+
+    description = "Square POS refund"
+    is_automatic = True
+
+    def __init__(self, idempotency_key: str):
+        self.idempotency_key = idempotency_key
+
+    def refund(self, payment: "payment_models.Transaction"):
+        """
+        Refund payments associated with terminal checkout
+        """
+
+        if not payment.provider == SquarePOS:
+            raise IncorrectTransactionProviderException()
+
+        if not payment.provider_transaction_id:
+            raise CantBeRefundedException(
+                "This object does not have a provider transaction ID"
+            )
+
+        # First, get all of the payments associated with the checkout
+        checkout = SquarePOS.get_checkout(payment.provider_transaction_id)
+
+        # Iterate over each payment, and create a refund transaction for each
+        for payment_id in checkout["payment_ids"]:
+            response = self.client.payments.get_payment(payment_id)
+
+            payment_amount_details = response.body["payment"]["amount_money"]
+
+            body = {
+                "idempotency_key": str(f"{self.idempotency_key}_{payment_id}"),
+                "amount_money": {
+                    "amount": payment_amount_details["amount"],
+                    "currency": payment_amount_details["currency"],
+                },
+                "payment_id": payment_id,
+            }
+            response = self.client.refunds.refund_payment(body)
+            self._handle_response_failure(response)
+
+            amount_details = response.body["refund"]["amount_money"]
+            square_refund_id = response.body["refund"]["id"]
+
+            self.create_payment_object(
+                payment.pay_object,
+                -amount_details["amount"],
+                -payment.app_fee if payment.app_fee is not None else None,
+                provider_transaction_id=square_refund_id,
+                currency=amount_details["currency"],
+                status=payment_models.Transaction.Status.PENDING,
+            )
+
+
 class SquareRefund(RefundProvider, SquareAPIMixin):
     """
     Refund method for refunding square payments.
@@ -380,6 +441,11 @@ class SquarePOS(PaymentProvider, SquarePaymentMethod):
         self.device_id = device_id
         self.idempotency_key = idempotency_key
         super().__init__()
+
+    @classmethod
+    @property
+    def refund_providers(cls):
+        return (SquarePOSRefund(idempotency_key=str(uuid4())),)
 
     def pay(
         self, value: int, app_fee: int, pay_object: "Payable"
