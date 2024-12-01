@@ -130,6 +130,7 @@ class PerformanceForm(MutationForm):
             "interval_duration_mins",
             "description",
             "disabled",
+            "is_relaxed",
             "capacity",
             "production",
         )
