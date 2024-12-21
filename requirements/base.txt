@@ -32,7 +32,7 @@ html2text==2024.2.26
 
 #=== Database ===#
 
-psycopg2==2.9.9  # https://github.com/psycopg/psycopg2
+psycopg2==2.9.10  # https://github.com/psycopg/psycopg2
 
 #=== Django core ===#
 
@@ -64,18 +64,18 @@ squareup>=9.0.0.20210226
 
 #=== Logging ===#
 
-sentry-sdk==2.16.0
-whitenoise==6.7.0  # https://github.com/evansd/whitenoise
+sentry-sdk==2.18.0
+whitenoise==6.8.2  # https://github.com/evansd/whitenoise
 
 #=== Email ===#
 django-anymail[amazon_ses]==11.0.1  # https://github.com/anymail/django-anymail
 django-inlinecss==0.3.0
 
 #=== Timezones ===#
-timezonefinder==6.5.3
+timezonefinder==6.5.4
 pytz==2024.2
 types-pytz==2024.2.0.20241003
 
 #=== Task Queue ===#
 django-celery-results==2.5.1
-redis==5.1.1
+redis==5.2.0

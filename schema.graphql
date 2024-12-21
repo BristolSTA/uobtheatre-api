@@ -276,6 +276,7 @@ type ExtendedUserNode {
   email: String!
   bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, user: ID, creator: ID, reference: String, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, productionSearch: String, productionSlug: String, performanceId: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection!
   createdBookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, user: ID, creator: ID, reference: String, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, productionSearch: String, productionSlug: String, performanceId: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection!
+  createdSiteMessages(offset: Int, before: String, after: String, first: Int, last: Int, message: String, active: Boolean, indefiniteOverride: Boolean, displayStart: DateTime, eventStart: DateTime, eventEnd: DateTime, creator: ID, type: String, dismissalPolicy: String, id: ID, displayStart_Gte: DateTime, displayStart_Lte: DateTime, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, orderBy: String): SiteMessageNodeConnection!
   pk: Int
   archived: Boolean
   verified: Boolean
@@ -324,6 +325,18 @@ type ImageNode implements Node {
   url: String
 }
 
+enum MessageDismissalPolicy {
+  DEFAULT
+  SINGLE
+  BANNED
+}
+
+enum MessageType {
+  MAINTENANCE
+  INFORMATION
+  ALERT
+}
+
 type MetaItemNode {
   name: String!
   value: String!
@@ -337,7 +350,18 @@ type MiscCostNode implements Node {
   value: Float
 }
 
+type MiscCostNodeConnection {
+  pageInfo: PageInfo!
+  edges: [MiscCostNodeEdge]!
+}
+
+type MiscCostNodeEdge {
+  node: MiscCostNode
+  cursor: String!
+}
+
 type Mutation {
+  siteMessage(input: SiteMessageMutationInput!): SiteMessageMutationPayload
   recordFinancialTransfer(method: TransferMethodEnum!, reason: String, societyId: IdInputField!, value: Int!): RecordFinancialTransfer
   concessionType(input: ConcessionTypeMutationInput!): ConcessionTypeMutationPayload
   deleteConcessionType(id: IdInputField!): DeleteConcessionTypeMutation
@@ -665,8 +689,11 @@ input ProductionWarning {
 }
 
 type Query {
+  siteMessages(offset: Int, before: String, after: String, first: Int, last: Int, message: String, active: Boolean, indefiniteOverride: Boolean, displayStart: DateTime, eventStart: DateTime, eventEnd: DateTime, creator: ID, type: String, dismissalPolicy: String, id: ID, displayStart_Gte: DateTime, displayStart_Lte: DateTime, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, orderBy: String): SiteMessageNodeConnection
+  siteMessage(messageId: IdInputField!): SiteMessageNode
   images: [ImageNode]
   paymentDevices(paymentProvider: PaymentProvider, paired: Boolean): [SquarePaymentDevice]
+  miscCosts(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String): MiscCostNodeConnection
   bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, user: ID, creator: ID, reference: String, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, productionSearch: String, productionSlug: String, performanceId: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection
   me: ExtendedUserNode
   societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String, userHasPermission: String): SocietyNodeConnection
@@ -777,6 +804,51 @@ type SendSecondaryEmailActivation {
 type SetProductionStatus {
   success: Boolean!
   errors: [GQLErrorUnion!]
+}
+
+input SiteMessageMutationInput {
+  message: String
+  active: Boolean
+  indefiniteOverride: Boolean
+  displayStart: DateTime
+  eventStart: DateTime
+  eventEnd: DateTime
+  type: String
+  dismissalPolicy: String
+  id: ID
+  clientMutationId: String
+}
+
+type SiteMessageMutationPayload {
+  message: SiteMessageNode
+  errors: [GQLErrorUnion!]
+  success: Boolean!
+  clientMutationId: String
+}
+
+type SiteMessageNode implements Node {
+  id: ID!
+  message: String!
+  active: Boolean!
+  indefiniteOverride: Boolean!
+  displayStart: DateTime
+  eventStart: DateTime!
+  eventEnd: DateTime!
+  creator: ExtendedUserNode
+  type: MessageType!
+  dismissalPolicy: MessageDismissalPolicy!
+  eventDuration: Int
+  toDisplay: Boolean
+}
+
+type SiteMessageNodeConnection {
+  pageInfo: PageInfo!
+  edges: [SiteMessageNodeEdge]!
+}
+
+type SiteMessageNodeEdge {
+  node: SiteMessageNode
+  cursor: String!
 }
 
 type SocietyNode implements Node {
@@ -941,6 +1013,7 @@ type UserNode implements Node {
   bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, user: ID, creator: ID, reference: String, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, productionSearch: String, productionSlug: String, performanceId: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection!
   createdBookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, user: ID, creator: ID, reference: String, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, productionSearch: String, productionSlug: String, performanceId: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection!
   ticketsCheckedInByUser(offset: Int, before: String, after: String, first: Int, last: Int): TicketNodeConnection!
+  createdSiteMessages(offset: Int, before: String, after: String, first: Int, last: Int, message: String, active: Boolean, indefiniteOverride: Boolean, displayStart: DateTime, eventStart: DateTime, eventEnd: DateTime, creator: ID, type: String, dismissalPolicy: String, id: ID, displayStart_Gte: DateTime, displayStart_Lte: DateTime, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, orderBy: String): SiteMessageNodeConnection!
   pk: Int
   archived: Boolean
   verified: Boolean

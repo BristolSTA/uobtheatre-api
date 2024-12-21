@@ -58,8 +58,10 @@ class MiscCost(models.Model):
     Additional costs are added to a booking's final total.
     For example: Booking fee/Theatre improvement levy.
 
-    A misc costs is defined by either a value or a percentage. If both are
-    supplied the percentage will take precedence.
+    A misc costs is defined by either a value or a percentage, but not both.
+
+    Percentages are in decimal form (e.g. 0.1 for 10%).
+    Value is in pence.
 
     Note:
         Currently all misc costs are applied to all bookings.

@@ -16,10 +16,27 @@ from uobtheatre.users.schema import ExtendedUserNode
 from uobtheatre.utils.filters import FilterSet
 
 
+class MiscCostFilter(FilterSet):
+    class Meta:
+        model = MiscCost
+        fields = (
+            "id",
+            "name",
+        )
+
+
 class MiscCostNode(DjangoObjectType):
     class Meta:
         model = MiscCost
         interfaces = (relay.Node,)
+        filterset_class = MiscCostFilter
+        fields = (
+            "id",
+            "name",
+            "description",
+            "percentage",
+            "value",
+        )
 
 
 class TicketNode(DjangoObjectType):
@@ -350,4 +367,5 @@ class Query(graphene.ObjectType):
     These queries are appended to the main schema Query.
     """
 
+    miscCosts = DjangoFilterConnectionField(MiscCostNode)
     bookings = DjangoFilterConnectionField(BookingNode)
