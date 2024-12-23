@@ -74,7 +74,7 @@ django-inlinecss==0.3.0
 #=== Timezones ===#
 timezonefinder==6.5.7
 pytz==2024.2
-types-pytz==2024.2.0.20241003
+types-pytz==2024.2.0.20241221
 
 #=== Task Queue ===#
 django-celery-results==2.5.1
