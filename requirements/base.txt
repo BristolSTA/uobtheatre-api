@@ -73,8 +73,8 @@ django-inlinecss==0.3.0
 
 #=== Timezones ===#
 timezonefinder==6.5.8
-pytz==2024.2
-types-pytz==2024.2.0.20241221
+pytz==2025.1
+types-pytz==2025.1.0.20250204
 
 #=== Task Queue ===#
 django-celery-results==2.5.1
