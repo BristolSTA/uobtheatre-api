@@ -85,3 +85,71 @@ def send_booking_accessibility_info_email(
         mail.send(
             f"Accessibility alert for {booking.performance.production.name}", email
         )
+
+def send_booking_accessibility_removed_email(
+    booking: "Booking",
+    previous_accessibility_info: str,
+):
+    """
+    Sends an email to the production contact email and to those with view sales and bookings permissions for a production,
+    notifying that a previously accessible booking has had its accessibility information removed.
+    """
+
+    emails_to_notify = [booking.performance.production.contact_email] + list(
+        get_users_with_perm("productions.view_bookings", booking.performance.production)
+        .all()
+        .values_list("email", flat=True)
+    )
+
+    mail = (
+        MailComposer()
+        .greeting()
+        .line(
+            f"A booking for {booking.performance} has had its accessibility information removed. The previous information was:"
+        )
+        .line(f"'{previous_accessibility_info}'")
+        .action(
+            f"/administration/productions/{booking.performance.production.slug}/bookings/{booking.reference}",
+            "View Booking Details",
+        )
+    )
+    for email in emails_to_notify:
+        mail.send(
+            f"Accessibility alert for {booking.performance.production.name}", email
+        )
+
+def send_booking_accessibility_updated_email(
+    booking: "Booking",
+    previous_accessibility_info: str,
+):
+    """
+    Sends an email to the production contact email and to those with view sales and bookings permissions for a production,
+    notifying that a booking has had its accessibility information updated.
+    """
+
+    emails_to_notify = [booking.performance.production.contact_email] + list(
+        get_users_with_perm("productions.view_bookings", booking.performance.production)
+        .all()
+        .values_list("email", flat=True)
+    )
+
+    mail = (
+        MailComposer()
+        .greeting()
+        .line(
+            f"A booking for {booking.performance} has had its accessibility information updated. The new accessibility information is:"
+        )
+        .line(f"'{booking.accessibility_info}'")
+        .line(
+            f"The previous information was:"
+        )
+        .line(f"'{previous_accessibility_info}'")
+        .action(
+            f"/administration/productions/{booking.performance.production.slug}/bookings/{booking.reference}",
+            "View Booking Details",
+        )
+    )
+    for email in emails_to_notify:
+        mail.send(
+            f"Accessibility alert for {booking.performance.production.name}", email
+        )

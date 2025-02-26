@@ -6,6 +6,7 @@ from uobtheatre.bookings.abilities import ModifyBooking
 from uobtheatre.bookings.forms import BookingForm
 from uobtheatre.bookings.models import Booking, Ticket
 from uobtheatre.bookings.schema import BookingNode
+import uobtheatre.bookings.emails as booking_emails
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.transaction_providers import (
     Card,
@@ -122,6 +123,36 @@ class BookingMutation(SafeFormMutation, AuthRequiredMixin):
         create_ability = AllwaysPasses
         update_ability = ModifyBooking
 
+class UpdateBookingAccessibilityInfo(AuthRequiredMixin, SafeMutation):
+    """
+    Mutation to update the accessibility information for a booking.
+    """
+
+    class Arguments:
+        booking_id = IdInputField(required=True)
+        accessibility_info = graphene.String()
+
+    @classmethod
+    def resolve_mutation(cls, _, info, booking_id, accessibility_info):
+        booking = Booking.objects.get(id=booking_id)
+        previous_accessibility_info = booking.accessibility_info
+
+        if previous_accessibility_info and not accessibility_info:
+            booking_emails.send_booking_accessibility_removed_email(booking, previous_accessibility_info)
+
+        elif accessibility_info and not previous_accessibility_info:
+            booking_emails.send_booking_accessibility_info_email(booking)
+
+        elif accessibility_info != previous_accessibility_info:
+            booking_emails.send_booking_accessibility_updated_email(booking, previous_accessibility_info)
+
+        booking.accessibility_info = accessibility_info
+        booking.save()
+
+        return UpdateBookingAccessibilityInfo(booking=booking)
+    
+    class Meta:
+        ability = ModifyBooking
 
 class DeleteBooking(ModelDeletionMutation):
     """Deletes a given booking.
@@ -452,6 +483,7 @@ class Mutation(graphene.ObjectType):
     """Mutations for bookings"""
 
     booking = BookingMutation.Field()
+    update_booking_accessibility_info = UpdateBookingAccessibilityInfo.Field()
     delete_booking = DeleteBooking.Field()
     pay_booking = PayBooking.Field()
     check_in_booking = CheckInBooking.Field()

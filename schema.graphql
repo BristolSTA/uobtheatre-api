@@ -399,6 +399,7 @@ type Mutation {
   cancelPayment(paymentId: IdInputField!): CancelPayment
   generateReport(endTime: DateTime, name: String!, options: [ReportOption], startTime: DateTime): GenerateReport
   booking(input: BookingMutationInput!): BookingMutationPayload
+  updateBookingAccessibilityInfo(accessibilityInfo: String, bookingId: IdInputField!): UpdateBookingAccessibilityInfo
   deleteBooking(id: IdInputField!): DeleteBooking
   payBooking(deviceId: String, id: IdInputField!, idempotencyKey: String, nonce: String, paymentProvider: PaymentProvider, price: Int!, verifyToken: String): PayBooking
   checkInBooking(bookingReference: String!, performance: IdInputField!, tickets: [TicketIDInput]!): CheckInBooking
@@ -996,6 +997,11 @@ type UnCheckInBooking {
 }
 
 type UpdateAccount {
+  success: Boolean!
+  errors: [GQLErrorUnion!]
+}
+
+type UpdateBookingAccessibilityInfo {
   success: Boolean!
   errors: [GQLErrorUnion!]
 }
