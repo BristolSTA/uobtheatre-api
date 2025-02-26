@@ -12,6 +12,7 @@ from uobtheatre.productions.models import (
     Production,
     ProductionContentWarning,
     ProductionTeamMember,
+    RelaxedCategory,
     Society,
     Venue,
 )
@@ -46,6 +47,8 @@ class PerformanceFactory(factory.django.DjangoModelFactory):
     disabled = False
     production = factory.SubFactory(ProductionFactory)
     venue = factory.SubFactory(VenueFactory)
+    is_relaxed = True
+    relaxed_name = factory.Faker("sentence", nb_words=1)
 
     class Meta:
         model = Performance
@@ -100,6 +103,18 @@ class ProductionContentWarningFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = ProductionContentWarning
+
+
+class RelaxedCategoryFactory(factory.django.DjangoModelFactory):
+    performance = factory.SubFactory(PerformanceFactory)
+    short_description = factory.Faker("sentence", nb_words=3)
+    long_description = factory.Faker("sentence", nb_words=5)
+    help_text = factory.Faker("sentence", nb_words=5)
+    default_relaxed = factory.Faker("boolean")
+    default_sensory_friendly = factory.Faker("boolean")
+
+    class Meta:
+        model = RelaxedCategory
 
 
 def create_production(start, end, production_id=None):
