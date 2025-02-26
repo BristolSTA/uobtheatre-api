@@ -131,6 +131,8 @@ class PerformanceForm(MutationForm):
             "description",
             "disabled",
             "is_relaxed",
+            "relaxed_name",
+            "relaxed_categories",
             "capacity",
             "production",
         )
