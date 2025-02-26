@@ -9,3 +9,24 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "daily"
+    assignees:
+      - 'happynth'
+    # Allow up to 20 open pull requests for pip dependencies
+    open-pull-requests-limit: 10
+    # Point to dependabot/dev branch
+    target-branch: "dependabot/dev"
+    groups:
+      # Create some good Dependabot package groups for this project
+      django:
+        patterns:
+          - "django*"
+      graphene:
+        patterns:
+          - "graphene*"
+      pytz:
+        patterns:
+          - "pytz*"
+          - "types-pytz"
+      pytest:
+        patterns:
+          - "pytest*"

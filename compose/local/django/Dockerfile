@@ -1,10 +1,10 @@
 ARG PYTHON_VERSION=3.10
 
 # define an alias for the specfic python version used in this file.
-FROM mcr.microsoft.com/vscode/devcontainers/python:${PYTHON_VERSION} as python
+FROM mcr.microsoft.com/vscode/devcontainers/python:${PYTHON_VERSION} AS python
 
 # Python build stage
-FROM python as python-build-stage
+FROM python AS python-build-stage
 
 ARG BUILD_ENVIRONMENT=local
 
@@ -24,7 +24,7 @@ RUN pip wheel --wheel-dir /usr/src/app/wheels  \
 
 
 # Python 'run' stage
-FROM python as python-run-stage
+FROM python AS python-run-stage
 
 ARG BUILD_ENVIRONMENT=local
 ARG APP_HOME=/app/uobtheatre-api
@@ -66,5 +66,8 @@ RUN chmod +x /start
 
 # copy application code to WORKDIR
 COPY . ${APP_HOME}
+
+# Exposes port 8000 to the outside world
+EXPOSE 8000
 
 ENTRYPOINT ["/entrypoint"]

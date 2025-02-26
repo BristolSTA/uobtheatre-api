@@ -9,9 +9,8 @@ In general a mutation will also return MutationResult fields (success: bool and
 error: Union[FieldError, NonFieldError])
 """
 
-
 import traceback
-from typing import Any, Iterable, List, Union
+from typing import Any, Iterable, List, Optional, Union
 
 import graphene
 from django.core.exceptions import ObjectDoesNotExist
@@ -123,13 +122,15 @@ class GQLException(MutationException):
 
     def resolve(self) -> List[Union[FieldError, NonFieldError]]:
         return [
-            FieldError(
-                message=self.message,
-                code=self.code,
-                field=self.field,
+            (
+                FieldError(
+                    message=self.message,
+                    code=self.code,
+                    field=self.field,
+                )
+                if self.field
+                else NonFieldError(message=self.message, code=self.code)
             )
-            if self.field
-            else NonFieldError(message=self.message, code=self.code)
         ]
 
 
@@ -138,7 +139,7 @@ class GQLExceptions(MutationException):
     Many GQL errors
     """
 
-    def __init__(self, exceptions: Iterable[MutationException] = None):
+    def __init__(self, exceptions: Optional[Iterable[MutationException]] = None):
         super().__init__()
         self.exceptions = list(exceptions) if exceptions else []
 
@@ -233,7 +234,7 @@ class FormExceptions(GQLExceptions):
     An exception for handling form errors
     """
 
-    def __init__(self, form_errors: list[ErrorType] = None):
+    def __init__(self, form_errors: Optional[list[ErrorType]] = None):
         """
         A form returns a list of error dicts that contains the field name
         and a list of error message. This init method creates a field error for

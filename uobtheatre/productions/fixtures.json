@@ -23,9 +23,10 @@
       "subtitle": "This is an example show",
       "description": "The description of the example show",
       "society": 1,
-      "warnings": [
+      "content_warnings": [
         1
       ],
+      "status": "COMPLETE",
       "slug": "example-show"
     }
   },
@@ -39,9 +40,10 @@
       "subtitle": "This is an example show",
       "description": "The description of the example show",
       "society": 1,
-      "warnings": [
+      "content_warnings": [
         1
       ],
+      "status": "PUBLISHED",
       "slug": "example-show-2"
     }
   },
@@ -53,9 +55,9 @@
       "updated_at": "2020-11-11T12:24:32+0000",
       "production": 1,
       "venue": 1,
-      "doors_open": "2020-11-11T12:04:32+0000",
-      "start": "2020-11-11T12:24:32+0000",
-      "end": "2020-11-11T14:24:32+0000",
+      "doors_open": "2040-11-11T12:04:32+0000",
+      "start": "2040-11-11T12:24:32+0000",
+      "end": "2040-11-11T14:24:32+0000",
       "disabled": true
     }
   },
@@ -67,9 +69,9 @@
       "updated_at": "2020-11-11T12:24:32+0000",
       "production": 1,
       "venue": 1,
-      "doors_open": "2020-11-12T12:04:32+0000",
-      "start": "2020-11-12T12:24:32+0000",
-      "end": "2020-11-12T14:24:32+0000",
+      "doors_open": "2040-11-12T12:04:32+0000",
+      "start": "2040-11-12T12:24:32+0000",
+      "end": "2040-11-12T14:24:32+0000",
       "disabled": false
     }
   },
@@ -81,9 +83,9 @@
       "updated_at": "2020-11-11T12:24:32+0000",
       "production": 1,
       "venue": 2,
-      "doors_open": "2020-11-13T12:04:32+0000",
-      "start": "2020-11-13T12:24:32+0000",
-      "end": "2020-11-13T14:22:32+0000",
+      "doors_open": "2040-11-13T12:04:32+0000",
+      "start": "2040-11-13T12:24:32+0000",
+      "end": "2040-11-13T14:22:32+0000",
       "disabled": false
     }
   },
@@ -95,9 +97,9 @@
       "updated_at": "2020-11-11T12:24:32+0000",
       "production": 2,
       "venue": 1,
-      "doors_open": "2020-11-11T12:04:32+0000",
-      "start": "2020-12-11T12:24:32+0000",
-      "end": "2020-12-11T14:24:32+0000",
+      "doors_open": "2040-11-11T12:04:32+0000",
+      "start": "2040-12-11T12:24:32+0000",
+      "end": "2040-12-11T14:24:32+0000",
       "disabled": true
     }
   },

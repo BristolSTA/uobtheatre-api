@@ -1,7 +1,7 @@
 #=== Tools ===#
 
 # Generate slugs
-django-autoslug==1.9.8
+django-autoslug==1.9.9
 
 # generates short UUID's for booking reference
 shortuuid>=1.0.1
@@ -13,36 +13,36 @@ django-filter==22.1
 Pillow>=8.1.2
 
 # Cors
-django-cors-headers==3.14.0
+django-cors-headers==4.4.0
 
 # Admin confirmation messages
 django-admin-confirm==1.0.0
 
 # TODO check if required
-django-configurations==2.4
+django-configurations==2.5.1
 
 # Django config
-django-environ==0.10.0  # https://github.com/joke2k/django-environ
+django-environ==0.11.2  # https://github.com/joke2k/django-environ
 
 # Spreadsheet generation
-xlsxwriter==3.0.9
+xlsxwriter>=3.2.0
 
 # Text formatting
-html2text==2020.1.16
+html2text==2024.2.26
 
 #=== Database ===#
 
-psycopg2==2.9.5  # https://github.com/psycopg/psycopg2
+psycopg2==2.9.10  # https://github.com/psycopg/psycopg2
 
 #=== Django core ===#
 
-django==3.2.18
+django<4.0.0
 
 #=== Django Extras ===#
 
 django-guardian==2.4.0  # https://github.com/django-guardian/django-guardian
 django_tiptap==0.0.10  # https://github.com/django-tiptap/django_tiptap
-djangorestframework==3.13.1  # https://www.django-rest-framework.org
+djangorestframework==3.15.1  # https://www.django-rest-framework.org
 django-nonrelated-inlines==0.2
 
 #=== GQL core ===#
@@ -56,6 +56,7 @@ django-graphql-auth==0.3.16
 # These are apparently a package deal atm so we need both
 django-graphql-jwt==0.3.0
 PyJWT==1.7.0
+pydantic==2.9.2
 
 #=== Payments ===#
 
@@ -63,17 +64,18 @@ squareup>=9.0.0.20210226
 
 #=== Logging ===#
 
-sentry-sdk==1.19.1
-whitenoise==6.4.0  # https://github.com/evansd/whitenoise
+sentry-sdk==2.18.0
+whitenoise==6.8.2  # https://github.com/evansd/whitenoise
 
 #=== Email ===#
-django-anymail[amazon_ses]==9.1  # https://github.com/anymail/django-anymail
+django-anymail[amazon_ses]==11.0.1  # https://github.com/anymail/django-anymail
 django-inlinecss==0.3.0
 
 #=== Timezones ===#
-timezonefinder==6.1.9
-pytz==2022.7.1
+timezonefinder==6.5.4
+pytz==2024.2
+types-pytz==2024.2.0.20241003
 
 #=== Task Queue ===#
-django-celery-results==2.2.0
-redis==4.5.4
+django-celery-results==2.5.1
+redis==5.2.0

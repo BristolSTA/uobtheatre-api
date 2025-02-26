@@ -1,6 +1,6 @@
 import io
 from datetime import datetime, timedelta
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import xlsxwriter
 from django.core import signing
@@ -18,13 +18,13 @@ signer = TimestampSigner()
 class ExcelReport:  # pragma: no cover
     """Generates an Excel xlxs spreadsheet"""
 
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         report: reports.Report,
-        name: str = None,
-        descriptions: List = None,
-        meta: List = None,
-        user: User = None,
+        name: Optional[str] = None,
+        descriptions: Optional[List] = None,
+        meta: Optional[List] = None,
+        user: Optional[User] = None,
     ) -> None:
         """Initalise worbook, sheet, formatters, meta, headers and description"""
         self.name = name
@@ -118,8 +118,8 @@ class ExcelReport:  # pragma: no cover
         self,
         start: Tuple[int, int],
         items: List,
-        title: str = None,
-        items_format: str = None,
+        title: Optional[str] = None,
+        items_format: Optional[str] = None,
     ):
         """Writes a list (with optional header)"""
         start_row = start[0]
@@ -163,7 +163,9 @@ class ExcelReport:  # pragma: no cover
             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
         response["Content-Disposition"] = (
-            "attachment; filename=%s" % self.name.lower().replace(" ", "_") + ".xlsx"
+            "attachment; filename=%s"
+            % (self.name or "uobtheatre-export").lower().replace(" ", "_")
+            + ".xlsx"
         )
         return response
 
@@ -176,7 +178,7 @@ class ExcelReport:  # pragma: no cover
 
 
 def generate_report_download_signature(
-    user: User, report_name: str, options: List = None
+    user: User, report_name: str, options: Optional[List] = None
 ):
     """Generate a signed hash for the report to be downloaded
 

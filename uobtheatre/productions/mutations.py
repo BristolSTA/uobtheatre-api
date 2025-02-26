@@ -78,10 +78,9 @@ class SetProductionStatus(AuthRequiredMixin, SafeMutation):
             ):
                 return
 
-        # If they have permission to approve and they are tyring to approve a
-        # pending.
+        # If they have permission to approve they can either approve or reject a pending production
         if (
-            update_status == Production.Status.APPROVED
+            update_status in [Production.Status.APPROVED, Production.Status.DRAFT]
             and production.status == Production.Status.PENDING
             and user.has_perm("productions.approve_production", production)
         ):
@@ -101,7 +100,12 @@ class SetProductionStatus(AuthRequiredMixin, SafeMutation):
 
     @classmethod
     def resolve_mutation(
-        cls, _, info, production_id: int, status: Production.Status, message: str = None
+        cls,
+        _,
+        info,
+        production_id: int,
+        status: Production.Status,
+        message: Optional[str] = None,
     ):
         production = Production.objects.get(id=production_id)
         previous_status = production.status

@@ -1,10 +1,10 @@
-name: Package checks
+name: CI
 
 on:
   push:
-    branches: [ main, dev ]
+    branches: [ main, dev, dependabot/dev ]
   pull_request:
-    branches: [ main, dev ]
+    branches: [ main, dev, dependabot/dev ]
 
 jobs:
   test:
@@ -27,40 +27,40 @@ jobs:
           # Maps tcp port 5432 on service container to the host
           - 5432:5432
 
-
     steps:
     # Set up cache for pip packages
-    - uses: actions/cache@v2
+    - name: Cache pip packages 📦
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip-
 
-    # Checkout the code
-    - uses: actions/checkout@v2
+    - name: Checkout 🛎
+      uses: actions/checkout@master
 
     # Setup python
-    - name: set up python 3.10
-      uses: actions/setup-python@v2
+    - name: Setup python 3.10 env 🏗
+      uses: actions/setup-python@v5
       with:
         python-version: "3.10"
 
     # Install dependencies
-    - name: Install dependencies
+    - name: Install dependencies 👨🏻‍💻
       run: pip install -r requirements/local.txt
 
     # Collect static
-    - name: Collect Static
+    - name: Collect Static 📦
       run: ./manage.py collectstatic --noinput
 
-    - name: Tests
+    - name: Run tests 🧪
       run: |
         pytest --cov uobtheatre --cov-fail-under 100 -m "not system_test"
       env:
         DATABASE_URL: postgresql://postgres:postgres@0.0.0.0:5432/uobtheatre_api
 
-    - name: System tests
+    - name: Run system tests ‍🔬
       if: ${{ github.actor != 'dependabot[bot]' }}
       run: |
         pytest --cov uobtheatre -m "system_test"
@@ -72,77 +72,141 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     # Set up cache for pip packages
-    - uses: actions/cache@v2
+    - name: Cache pip packages 📦
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip-
 
-    # Checkout the code
-    - uses: actions/checkout@v2
+    - name: Checkout 🛎
+      uses: actions/checkout@master
 
     # Setup python
-    - name: set up python 3.10
-      uses: actions/setup-python@v2
+    - name: Setup python 3.10 env 🏗
+      uses: actions/setup-python@v5
       with:
-        python-version: "3.10.6"
+        python-version: "3.10"
 
     # Install dependencies
-    - name: Install dependencies
+    - name: Install dependencies 👨🏻‍💻
       run: pip install -r requirements/local.txt
 
-    - name: black - formatting
+    - name: Run black - formatting
       run: |
-        black uobtheatre
+        black uobtheatre --check
 
-    - name: isort - sort imports
+    - name: Run isort - sort imports
       run: |
-        isort uobtheatre
+        isort uobtheatre -c
 
-    - name: pylint - linting
+    - name: Run pylint - linting
       run: |
         pylint uobtheatre
 
-    - name: mypy - static type checking
+    - name: Run mypy - static type checking
       run: |
         mypy uobtheatre
 
     # Check migrations have been made
-    - name: Ensure migrations have been generated
+    - name: Ensure migrations have been generated 👀
       run: python manage.py makemigrations --check
+
+  fixtures:
+    runs-on: ubuntu-latest
+
+    services:
+      db_service:
+        image: postgres
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_DB: uobtheatre_api
+          POSTGRES_PASSWORD: postgres
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          # Maps tcp port 5432 on service container to the host
+          - 5432:5432
+
+    steps:
+    # Set up cache for pip packages
+    - name: Cache pip packages 📦
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Checkout 🛎
+      uses: actions/checkout@master
+
+    # Setup python
+    - name: Setup python 3.10 env 🏗
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+
+    # Install dependencies
+    - name: Install dependencies 👨🏻‍💻
+      run: pip install -r requirements/local.txt
+
+    # Collect static
+    - name: Collect Static 📦
+      run: ./manage.py collectstatic --noinput
+
+    - name: Check example fixture data can still be loaded 🔄
+      run: |
+        ./manage.py migrate
+        ./manage.py loaddata uobtheatre/images/fixtures.json uobtheatre/addresses/fixtures.json uobtheatre/users/fixtures.json uobtheatre/venues/fixtures.json uobtheatre/societies/fixtures.json uobtheatre/productions/fixtures.json uobtheatre/bookings/fixtures.json
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@0.0.0.0:5432/uobtheatre_api
+
+    - name: Check e2e fixture data can still be loaded 🔄
+      run: |
+        ./manage.py flush --no-input
+        ./manage.py loaddata db.json
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@0.0.0.0:5432/uobtheatre_api
 
   schema:
     runs-on: ubuntu-latest
     steps:
     # Set up cache for pip packages
-    - uses: actions/cache@v2
+    - name: Cache pip packages 📦
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip-
 
-    # Checkout the code
-    - uses: actions/checkout@v2
+    - name: Checkout 🛎
+      uses: actions/checkout@master
 
     # Setup python
-    - name: set up python 3.10
-      uses: actions/setup-python@v2
+    - name: Setup python 3.10 env 🏗
+      uses: actions/setup-python@v5
       with:
         python-version: "3.10"
 
     # Install dependencies
-    - name: Install dependencies
+    - name: Install dependencies 👨🏻‍💻
       run: pip install -r requirements/local.txt
+
     # Generate schmea
-    - name: Generate schema
+    - name: Generate schema 🤖
       run: |
         ./manage.py graphql_schema --schema uobtheatre.schema.schema --out schema.graphql
 
     # Push up the schema
-    - name: Commit schema
-      uses: EndBug/add-and-commit@v7.0.0
+    - name: Commit schema 🕸
+      uses: EndBug/add-and-commit@v9
       with:
         message: 'Updated schema'
         author_name: github-actions

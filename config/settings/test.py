@@ -51,3 +51,7 @@ EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 # MEDIA
 # ------------------------------------------------------------------------------
 MEDIA_ROOT = tempfile.mkdtemp()
+
+# OTHER
+# ------------------------------------------------------------------------------
+SQUARE_SETTINGS["SQUARE_LOCATION"] = "LMHPTEST"

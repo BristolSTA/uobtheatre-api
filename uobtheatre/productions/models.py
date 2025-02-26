@@ -7,8 +7,8 @@ from autoslug import AutoSlugField
 from django.contrib.contenttypes.models import ContentType
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.db.models import Max, Min, Sum
-from django.db.models.query import Q, QuerySet
+from django.db.models import Max, Min, Q, Sum
+from django.db.models.query import QuerySet
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django_tiptap.fields import TipTapTextField
@@ -27,7 +27,12 @@ from uobtheatre.productions.tasks import refund_performance
 from uobtheatre.societies.models import Society
 from uobtheatre.users.abilities import AbilitiesMixin
 from uobtheatre.users.models import User
-from uobtheatre.utils.models import BaseModel, PermissionableModel, TimeStampedMixin
+from uobtheatre.utils.models import (
+    BaseModel,
+    PermissionableModel,
+    TimeStampedMixin,
+    classproperty,
+)
 from uobtheatre.utils.validators import (
     RelatedObjectsValidator,
     RequiredFieldsValidator,
@@ -37,7 +42,7 @@ from uobtheatre.utils.validators import (
 from uobtheatre.venues.models import SeatGroup, Venue
 
 if TYPE_CHECKING:
-    from uobtheatre.bookings.models import ConcessionType, Ticket
+    from uobtheatre.bookings.models import ConcessionType, TicketQuerySet
 
 
 class CrewRole(models.Model):
@@ -304,7 +309,9 @@ class Performance(
 
     disabled = models.BooleanField(default=True)
 
-    seat_groups = models.ManyToManyField(SeatGroup, through="PerformanceSeatGroup")
+    seat_groups: models.ManyToManyField = models.ManyToManyField(
+        SeatGroup, through="PerformanceSeatGroup"
+    )
 
     capacity = models.IntegerField(null=True, blank=True)
 
@@ -312,7 +319,7 @@ class Performance(
         return self.VALIDATOR.validate(self)
 
     @property
-    def tickets(self) -> QuerySet["Ticket"]:
+    def tickets(self) -> "TicketQuerySet":
         """Get tickets for this performance
 
         Returns:
@@ -323,7 +330,7 @@ class Performance(
         return Ticket.objects.filter(booking__in=self.bookings.all())  # type: ignore
 
     @property
-    def checked_in_tickets(self) -> QuerySet["Ticket"]:
+    def checked_in_tickets(self) -> "TicketQuerySet":
         """Get all checked in tickets
 
         Returns:
@@ -332,7 +339,7 @@ class Performance(
         return self.tickets.sold().filter(checked_in_at__isnull=False)  # type: ignore
 
     @property
-    def unchecked_in_tickets(self) -> QuerySet["Ticket"]:
+    def unchecked_in_tickets(self) -> "TicketQuerySet":
         """Get all unchecked in tickets
 
         Returns:
@@ -636,7 +643,7 @@ class Performance(
             deleted_tickets = []
 
         # Get the number of each seat group
-        seat_group_counts: Dict[SeatGroup, int] = {}
+        seat_group_counts: Dict[SeatGroup, int] = {}  # type: ignore
         for ticket in tickets:
             # If a SeatGroup with this id does not exist an error will be thrown
             seat_group = ticket.seat_group
@@ -654,7 +661,7 @@ class Performance(
             seat_group_counts[seat_group] = (seat_group_count or 0) - 1
 
         # Check each seat group is in the performance
-        seat_groups_not_in_performance: List[str] = [
+        seat_groups_not_in_performance: List[str] = [  # type: ignore
             seat_group.name
             for seat_group in seat_group_counts.keys()  # pylint: disable=consider-iterating-dictionary
             if seat_group not in self.seat_groups.all()
@@ -684,7 +691,7 @@ class Performance(
 
         # Check each concession type is in the performance
         concession_types = {ticket.concession_type for ticket in tickets}
-        concession_types_not_in_performance: List[str] = [
+        concession_types_not_in_performance: List[str] = [  # type: ignore
             concession_type.name
             for concession_type in concession_types  # pylint: disable=consider-iterating-dictionary
             if concession_type not in self.single_discounts_map.keys()
@@ -709,7 +716,7 @@ class Performance(
             return True
         return False
 
-    def sales_breakdown(self, breakdowns: list[str] = None):
+    def sales_breakdown(self, breakdowns: Optional[list[str]] = None):
         """Generates a breakdown of the sales of this performance"""
         return self.qs.transactions().annotate_sales_breakdown(breakdowns)
 
@@ -894,7 +901,7 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
         )  # Production has been closed and paid for/transactions settled
 
         @classmethod
-        @property
+        @classproperty
         def PRIVATE_STATUSES(cls):  # pylint: disable=invalid-name
             return [cls.DRAFT, cls.PENDING, cls.APPROVED]
 
@@ -910,6 +917,8 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
     content_warnings = models.ManyToManyField(
         ContentWarning, blank=True, through=ProductionContentWarning
     )
+
+    production_alert = models.TextField(null=True, blank=True)
 
     slug = AutoSlugField(populate_from="name", unique=True, blank=True, editable=True)
 
@@ -1003,7 +1012,7 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
             performance.total_tickets_sold() for performance in self.performances.all()
         )
 
-    def sales_breakdown(self, breakdowns: list[str] = None):
+    def sales_breakdown(self, breakdowns: Optional[list[str]] = None):
         """Generates a breakdown of the sales of this production"""
         return self.qs.transactions().annotate_sales_breakdown(breakdowns)
 

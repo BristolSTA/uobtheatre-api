@@ -412,6 +412,14 @@ def test_production_mutation_update_by_local_id(gql_client):
             Production.Status.APPROVED,
             True,
         ),
+        # Someone who can approve can reject pending
+        (
+            ["productions.approve_production"],
+            False,
+            Production.Status.PENDING,
+            Production.Status.DRAFT,
+            True,
+        ),
         # Someone who can approve cannot do other things
         (
             ["productions.approve_production"],
@@ -420,7 +428,7 @@ def test_production_mutation_update_by_local_id(gql_client):
             Production.Status.PUBLISHED,
             False,
         ),
-        # Fincance can close
+        # Finance can close
         (
             ["reports.finance_reports"],
             False,
@@ -573,7 +581,7 @@ def test_set_production_status_pending_email(gql_client):
         mock.assert_any_call(super_user, production)
 
 
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments,too-many-positional-arguments
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "current_status,new_status,can_edit,global_permissions,should_pass",

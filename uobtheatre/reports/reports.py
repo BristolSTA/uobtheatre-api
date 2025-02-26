@@ -1,7 +1,7 @@
 import abc
 from abc import ABC
 from dataclasses import dataclass, field
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 from graphql_relay.node.node import from_global_id
 
@@ -54,7 +54,7 @@ class DataSet:
 class Report(ABC):
     """An abstract class for a generic report"""
 
-    def __init__(self, options: list = None):
+    def __init__(self, options: Optional[list] = None):
         self.datasets: list[DataSet] = []
         self.meta: list[MetaItem] = []
         self.options = options or []
@@ -126,16 +126,22 @@ class PeriodTotalsBreakdown(TimeScopedReport):
         for payment in payments:
             # Handle production
             row = production_totals_set.find_or_create_row_by_first_column(
-                payment.pay_object.performance.production.id
-                if payment.pay_object
-                else "",
-                [
+                (
                     payment.pay_object.performance.production.id
                     if payment.pay_object
-                    else "",
-                    payment.pay_object.performance.production.name
-                    if payment.pay_object
-                    else "",
+                    else ""
+                ),
+                [
+                    (
+                        payment.pay_object.performance.production.id
+                        if payment.pay_object
+                        else ""
+                    ),
+                    (
+                        payment.pay_object.performance.production.name
+                        if payment.pay_object
+                        else ""
+                    ),
                     0,
                 ],
             )
@@ -290,7 +296,7 @@ class OutstandingSocietyPayments(Report):
         self.meta.append(
             MetaItem(
                 "Total Outstanding",
-                str(sum(row[2] for row in societies_dataset.data)),
+                str(sum(int(row[2]) for row in societies_dataset.data)),
             )
         )
 
