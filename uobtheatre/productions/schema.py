@@ -16,6 +16,7 @@ from uobtheatre.productions.models import (
     Production,
     ProductionContentWarning,
     ProductionTeamMember,
+    RelaxedCategory,
 )
 from uobtheatre.users.abilities import PermissionsMixin
 from uobtheatre.utils.filters import FilterSet
@@ -63,6 +64,20 @@ class ContentWarningNode(DjangoObjectType):
     class Meta:
         model = ContentWarning
         fields = ("short_description", "long_description")
+        filter_fields = ("id",)
+        interfaces = (relay.Node,)
+
+
+class RelaxedCategoryNode(DjangoObjectType):
+    class Meta:
+        model = RelaxedCategory
+        fields = (
+            "short_description",
+            "long_description",
+            "help_text",
+            "default_relaxed",
+            "default_sensory_friendly",
+        )
         filter_fields = ("id",)
         interfaces = (relay.Node,)
 
@@ -332,6 +347,8 @@ class PerformanceNode(DjangoObjectType):
     is_inperson = graphene.Boolean(required=True)
     is_online = graphene.Boolean(required=True)
     is_relaxed = graphene.Boolean()
+    relaxed_name = graphene.String()
+    relaxed_categories = graphene.List(RelaxedCategoryNode)
     sold_out = graphene.Boolean(required=True)
     is_bookable = graphene.Boolean(required=True)
     tickets_breakdown = graphene.Field(PerformanceTicketsBreakdown, required=True)
@@ -354,6 +371,12 @@ class PerformanceNode(DjangoObjectType):
 
     def resolve_is_relaxed(self, info):
         return self.is_relaxed
+
+    def resolve_relaxed_name(self, info):
+        return self.relaxed_name
+
+    def resolve_relaxed_categories(self, info):
+        return self.relaxed_categories.all()
 
     def resolve_duration_mins(self, info):
         return self.duration.total_seconds() // 60
@@ -402,6 +425,7 @@ class Query(graphene.ObjectType):
     productions = DjangoFilterConnectionField(ProductionNode)
     performances = DjangoFilterConnectionField(PerformanceNode)
     warnings = DjangoFilterConnectionField(ContentWarningNode)
+    relaxed_categories = DjangoFilterConnectionField(RelaxedCategoryNode)
 
     production = graphene.Field(
         ProductionNode, id=IdInputField(), slug=graphene.String()
