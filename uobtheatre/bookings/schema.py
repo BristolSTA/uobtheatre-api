@@ -71,7 +71,8 @@ class PriceBreakdownTicketNode(graphene.ObjectType):
     ticket_price = graphene.Int(required=True)
     number = graphene.Int(required=True)
     seat_group = graphene.Field("uobtheatre.venues.schema.SeatGroupNode")
-    concession_type = graphene.Field("uobtheatre.discounts.schema.ConcessionTypeNode")
+    concession_type = graphene.Field(
+        "uobtheatre.discounts.schema.ConcessionTypeNode")
     total_price = graphene.Int(required=True)
 
     def resolve_total_price(self, _):
@@ -219,7 +220,14 @@ class BookingFilter(FilterSet):
         choices=Booking.Status.choices, field_name="status"
     )
 
-    search = django_filters.CharFilter(method="search_bookings", label="Search")
+    search = django_filters.CharFilter(
+        method="search_bookings", label="Search")
+
+    user_search = django_filters.CharFilter(
+        method="user_search_bookings", label="User Search")
+
+    creator_search = django_filters.CharFilter(
+        method="creator_search_bookings", label="Creator Search")
 
     production_search = django_filters.CharFilter(
         method="production_search_bookings", label="Production Search"
@@ -249,8 +257,8 @@ class BookingFilter(FilterSet):
 
     def search_bookings(self, queryset, _, value):
         """
-        Given a query string, searches through the bookings using first name,
-        last name, email and booking reference.
+        Given a query string, searches through the bookings using the user's first name,
+        last name, and email and booking reference.
 
         Args:
             queryset (Queryset): The bookings queryset.
@@ -267,6 +275,50 @@ class BookingFilter(FilterSet):
                 | Q(user__last_name__icontains=word)
                 | Q(user__email__icontains=word)
                 | Q(reference__icontains=word)
+            )
+        return queryset.filter(query)
+
+    def user_search_bookings(self, queryset, _, value):
+        """
+        Given a query string, searches through the bookings using the user's first name,
+        last name, and email.
+
+        Args:
+            queryset (Queryset): The bookings queryset.
+            value (str): The search query.
+
+        Returns:
+            Queryset: Filtered booking queryset.
+        """
+        query = Q()
+        for word in value.split():
+            query = (
+                query
+                | Q(user__first_name__icontains=word)
+                | Q(user__last_name__icontains=word)
+                | Q(user__email__icontains=word)
+            )
+        return queryset.filter(query)
+
+    def creator_search_bookings(self, queryset, _, value):
+        """
+        Given a query string, searches through the bookings using first name,
+        last name, email and booking reference.
+
+        Args:
+            queryset (Queryset): The bookings queryset.
+            value (str): The search query.
+
+        Returns:
+            Queryset: Filtered booking queryset.
+        """
+        query = Q()
+        for word in value.split():
+            query = (
+                query
+                | Q(creator__first_name__icontains=word)
+                | Q(creator__last_name__icontains=word)
+                | Q(creator__email__icontains=word)
             )
         return queryset.filter(query)
 
