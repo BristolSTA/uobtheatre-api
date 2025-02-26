@@ -149,7 +149,7 @@ class UpdateBookingAccessibilityInfo(AuthRequiredMixin, SafeMutation):
         booking.accessibility_info = accessibility_info
         booking.save()
 
-        return UpdateBookingAccessibilityInfo(booking=booking)
+        return cls(success=True)
     
     class Meta:
         ability = ModifyBooking
