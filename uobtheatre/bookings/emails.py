@@ -86,6 +86,7 @@ def send_booking_accessibility_info_email(
             f"Accessibility alert for {booking.performance.production.name}", email
         )
 
+
 def send_booking_accessibility_removed_email(
     booking: "Booking",
     previous_accessibility_info: str,
@@ -118,6 +119,7 @@ def send_booking_accessibility_removed_email(
             f"Accessibility alert for {booking.performance.production.name}", email
         )
 
+
 def send_booking_accessibility_updated_email(
     booking: "Booking",
     previous_accessibility_info: str,
@@ -140,9 +142,7 @@ def send_booking_accessibility_updated_email(
             f"A booking for {booking.performance} has had its accessibility information updated. The new accessibility information is:"
         )
         .line(f"'{booking.accessibility_info}'")
-        .line(
-            f"The previous information was:"
-        )
+        .line("The previous information was:")
         .line(f"'{previous_accessibility_info}'")
         .action(
             f"/administration/productions/{booking.performance.production.slug}/bookings/{booking.reference}",

@@ -154,3 +154,69 @@ def test_send_booking_accessibility_info_email(mailoutbox):
         mail.subject == f"Accessibility alert for {booking.performance.production.name}"
     )
     assert "Some details about accessibility concerns" in mail.body
+
+
+@pytest.mark.django_db
+def test_send_booking_accessibility_removed_info_email(mailoutbox):
+    booking = BookingFactory()
+    UserFactory(email="user1@example.org").assign_perm(
+        "view_bookings", booking.performance.production
+    )
+    UserFactory(email="user2@example.org").assign_perm(
+        "view_production", booking.performance.production
+    )
+    booking.performance.production.contact_email = "production@example.org"
+    booking.performance.production.save()
+
+    previous_accessibility_info = "Some details about accessibility concerns"
+    booking_emails.send_booking_accessibility_removed_email(
+        booking, previous_accessibility_info
+    )
+
+    assert len(mailoutbox) == 2
+    assert mailoutbox[0].to == ["production@example.org"]
+    assert mailoutbox[1].to == ["user1@example.org"]
+    mail = mailoutbox[0]
+    assert (
+        mail.subject == f"Accessibility alert for {booking.performance.production.name}"
+    )
+    assert (
+        "has had its accessibility information removed. The previous information was:"
+        in mail.body
+    )
+    assert previous_accessibility_info in mail.body
+
+
+@pytest.mark.django_db
+def test_send_booking_accessibility_updated_info_email(mailoutbox):
+    booking = BookingFactory(
+        accessibility_info="Some further details about accessibility concerns"
+    )
+    UserFactory(email="user1@example.org").assign_perm(
+        "view_bookings", booking.performance.production
+    )
+    UserFactory(email="user2@example.org").assign_perm(
+        "view_production", booking.performance.production
+    )
+    booking.performance.production.contact_email = "production@example.org"
+    booking.performance.production.save()
+
+    previous_accessibility_info = "Some details about accessibility concerns"
+    booking_emails.send_booking_accessibility_updated_email(
+        booking, previous_accessibility_info
+    )
+
+    assert len(mailoutbox) == 2
+    assert mailoutbox[0].to == ["production@example.org"]
+    assert mailoutbox[1].to == ["user1@example.org"]
+    mail = mailoutbox[0]
+    assert (
+        mail.subject == f"Accessibility alert for {booking.performance.production.name}"
+    )
+    assert (
+        "has had its accessibility information updated. The new accessibility information is:"
+        in mail.body
+    )
+    assert "Some further details about accessibility concerns" in mail.body
+    assert "The previous information was:" in mail.body
+    assert previous_accessibility_info in mail.body
