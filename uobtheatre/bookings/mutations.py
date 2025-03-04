@@ -147,6 +147,9 @@ class UpdateBookingAccessibilityInfo(AuthRequiredMixin, SafeMutation):
         booking = Booking.objects.get(id=booking_id)
         previous_accessibility_info = booking.accessibility_info
 
+        booking.accessibility_info = accessibility_info
+        booking.save()
+
         if previous_accessibility_info and not accessibility_info:
             booking_emails.send_booking_accessibility_removed_email(
                 booking, previous_accessibility_info
@@ -159,9 +162,6 @@ class UpdateBookingAccessibilityInfo(AuthRequiredMixin, SafeMutation):
             booking_emails.send_booking_accessibility_updated_email(
                 booking, previous_accessibility_info
             )
-
-        booking.accessibility_info = accessibility_info
-        booking.save()
 
         return cls(success=True)
 
