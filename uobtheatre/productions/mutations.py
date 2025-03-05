@@ -152,7 +152,7 @@ class SetProductionStatus(AuthRequiredMixin, SafeMutation):
             for performance in production.performances.all():
                 for booking in performance.bookings.all():
                     if booking.accessibility_info:
-                        booking.accessibility_info = ""
+                        booking.accessibility_info = None
                         booking.save()
 
         return cls(success=True)

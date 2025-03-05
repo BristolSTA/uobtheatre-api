@@ -149,7 +149,7 @@ class UpdateBookingAccessibilityInfo(AuthRequiredMixin, SafeMutation):
         previous_accessibility_info = booking.accessibility_info
 
         # Check the booking is in the future, otherwise return error
-        if booking.performance.start < timezone.now():
+        if booking.performance.start and booking.performance.start < timezone.now():
             raise GQLException(
                 message="Accessibility information can only be updated for future performances"
             )

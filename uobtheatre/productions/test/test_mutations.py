@@ -500,6 +500,74 @@ def test_set_production_status_draft(status, gql_client):
 
 
 @pytest.mark.django_db
+def test_set_production_status_complete_remove_accessibility(gql_client):
+    production = ProductionFactory(status=Production.Status.CLOSED)
+    performance = PerformanceFactory(production=production)
+    booking = BookingFactory(
+        performance=performance, accessibility_info="I need extra entry time"
+    )
+    booking2 = BookingFactory(performance=performance)
+
+    gql_client.login()
+    query = """
+        mutation {
+          setProductionStatus(productionId: "%s", status: COMPLETE) {
+            success
+          }
+        }
+    """ % (
+        to_global_id("ProductionNode", production.id),
+    )
+
+    with patch.object(
+        SetProductionStatus, "authorize_request", return_value=None
+    ), patch.object(Production.VALIDATOR, "validate", return_value=[]) as validator:
+        response = gql_client.execute(query)
+        assert response["data"]["setProductionStatus"]["success"]
+
+        validator.assert_called_once()
+
+    production.refresh_from_db()
+    booking.refresh_from_db()
+    assert str(production.status) == "COMPLETE"
+    assert booking.accessibility_info is None
+    assert booking2.accessibility_info is None
+
+
+@pytest.mark.django_db
+def test_set_production_status_otherwise_not_remove_accessibility(gql_client):
+    production = ProductionFactory(status=Production.Status.PUBLISHED)
+    performance = PerformanceFactory(production=production)
+    booking = BookingFactory(
+        performance=performance, accessibility_info="I need extra entry time"
+    )
+
+    gql_client.login()
+    query = """
+        mutation {
+          setProductionStatus(productionId: "%s", status: CLOSED) {
+            success
+          }
+        }
+    """ % (
+        to_global_id("ProductionNode", production.id),
+    )
+
+    with patch.object(
+        SetProductionStatus, "authorize_request", return_value=None
+    ), patch.object(Production.VALIDATOR, "validate", return_value=[]) as validator:
+        response = gql_client.execute(query)
+        assert response["data"]["setProductionStatus"]["success"]
+
+        validator.assert_called_once()
+
+    production.refresh_from_db()
+    booking.refresh_from_db()
+    assert str(production.status) == "CLOSED"
+    assert booking.accessibility_info == "I need extra entry time"
+
+
+@pytest.mark.django_db
 def test_set_production_status_approved_email(gql_client):
     production = ProductionFactory(status=Production.Status.PENDING)
 
