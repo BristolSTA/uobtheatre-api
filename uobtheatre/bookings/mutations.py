@@ -2,6 +2,8 @@ from typing import Optional
 
 import graphene
 
+from django.utils import timezone
+
 import uobtheatre.bookings.emails as booking_emails
 from uobtheatre.bookings.abilities import ModifyAccessibility, ModifyBooking
 from uobtheatre.bookings.forms import BookingForm
@@ -146,6 +148,12 @@ class UpdateBookingAccessibilityInfo(AuthRequiredMixin, SafeMutation):
     def resolve_mutation(cls, _, info, booking_id, accessibility_info):
         booking = Booking.objects.get(id=booking_id)
         previous_accessibility_info = booking.accessibility_info
+
+        # Check the booking is in the future, otherwise return error
+        if booking.performance.start < timezone.now():
+            raise GQLException(
+                message="Accessibility information can only be updated for future performances"
+            )
 
         booking.accessibility_info = accessibility_info
         booking.save()
