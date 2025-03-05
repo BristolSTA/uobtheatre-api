@@ -1,7 +1,6 @@
 from typing import Optional
 
 import graphene
-
 from django.utils import timezone
 
 import uobtheatre.bookings.emails as booking_emails

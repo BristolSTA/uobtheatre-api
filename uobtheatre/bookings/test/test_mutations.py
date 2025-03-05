@@ -2897,3 +2897,41 @@ def test_accessibility_mutation_unauthorized_user(gql_client):
         response["data"]["updateBookingAccessibilityInfo"]["errors"][0]["message"]
         == "You do not have permission to modify the accessibility information for this booking"
     )
+
+
+@pytest.mark.django_db
+def test_past_production_accessibility_denied(gql_client):
+    gql_client.login()
+    booking = BookingFactory(user=gql_client.user)
+    booking.performance.start = timezone.now() - timedelta(days=1)
+    booking.performance.save()
+
+    request_query = """
+        mutation {
+            updateBookingAccessibilityInfo(
+                bookingId: "%s"
+                accessibilityInfo: "I need a wheelchair space"
+            ) {
+                success
+                errors {
+                    __typename
+                    ... on NonFieldError {
+                        message
+                    }
+                    ... on FieldError {
+                        message
+                    }
+                }
+            }
+        }
+    """ % (
+        to_global_id("BookingNode", booking.id)
+    )
+
+    response = gql_client.execute(request_query)
+
+    assert response["data"]["updateBookingAccessibilityInfo"]["success"] is False
+    assert (
+        response["data"]["updateBookingAccessibilityInfo"]["errors"][0]["message"]
+        == "Accessibility information can only be updated for future performances"
+    )
