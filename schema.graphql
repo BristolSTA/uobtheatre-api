@@ -9,6 +9,7 @@ type AddressNode implements Node {
   street: String!
   city: String!
   postcode: String!
+  what3words: String
   latitude: Float
   longitude: Float
   id: ID!
@@ -1040,6 +1041,8 @@ type VenueNode implements Node {
   internalCapacity: Int!
   description: String
   accessibilityInfo: String
+  email: String
+  website: String
   address: AddressNode!
   image: ImageNode!
   publiclyListed: Boolean!

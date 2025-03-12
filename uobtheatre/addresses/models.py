@@ -13,6 +13,12 @@ class Address(models.Model):
     street = models.CharField(max_length=255)
     city = models.CharField(max_length=255)
     postcode = models.CharField(max_length=9)
+    what3words = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="A what3words address, taking the form 'word.word.word'",
+    )
     latitude = models.FloatField(blank=True, null=True)
     longitude = models.FloatField(blank=True, null=True)
 
