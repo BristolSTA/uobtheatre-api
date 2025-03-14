@@ -242,6 +242,10 @@ class BookingFilter(FilterSet):
     expired = django_filters.BooleanFilter(
         method="filter_expired", label="Expired Bookings"
     )
+    has_accessibility_info = django_filters.BooleanFilter(
+        method="filter_accessibility",
+        label="Has Accessibility Info",
+    )
 
     class Meta:
         model = Booking
@@ -323,6 +327,9 @@ class BookingFilter(FilterSet):
 
     def filter_expired(self, queryset, _, value):
         return queryset.expired(value)
+
+    def filter_accessibility(self, queryset, _, value):
+        return queryset.has_accessibility_info(value)
 
     order_by = BookingByMethodOrderingFilter()
 

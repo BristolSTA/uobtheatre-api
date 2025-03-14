@@ -201,6 +201,21 @@ class BookingQuerySet(PayableQuerySet):
             ~Q(status=Payable.Status.IN_PROGRESS) | Q(expires_at__gt=timezone.now())
         )
 
+    def has_accessibility_info(self, bool_val=True) -> QuerySet:
+        """
+        Bookings that have accessibility information will be returned
+
+        Args:
+            bool_val (bool): when True: return only bookings with accessibility information,
+            when False: return only bookings without accessibility information
+
+        Returns:
+            QuerySet: the filtered queryset
+        """
+        if bool_val:
+            return self.exclude(accessibility_info__isnull=True)
+        return self.filter(accessibility_info__isnull=True)
+
 
 def generate_expires_at():
     """Generates the expires at timestamp for a booking"""
