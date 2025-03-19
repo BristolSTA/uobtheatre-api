@@ -775,7 +775,6 @@ def test_assignable_permissions(
             production(slug: "my-production") {
                 assignablePermissions {
                     name
-                    description
                     userCanAssign
                 }
             }
