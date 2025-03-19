@@ -11,7 +11,7 @@ class TransactionFactory(factory.django.DjangoModelFactory):
     pay_object = factory.SubFactory(BookingFactory)
     type = Transaction.Type.PAYMENT
     provider_name = transaction_providers.SquareOnline.name
-    value = factory.Faker("pyint", min_value=0)
+    value = factory.Faker("pyint", min_value=100)
     currency = "GBP"
     card_brand = "MASTERCARD"
     last_4 = "1111"
@@ -19,6 +19,8 @@ class TransactionFactory(factory.django.DjangoModelFactory):
         "bothify",
         text="##??",
     )
+    provider_fee = factory.Faker("pyint", min_value=0, max_value=10)
+    app_fee = factory.Faker("pyint", min_value=15, max_value=80)
 
     class Meta:
         model = Transaction

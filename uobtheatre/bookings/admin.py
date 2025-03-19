@@ -103,7 +103,11 @@ class BookingAdmin(DangerousAdminConfirmMixin, admin.ModelAdmin):
         refunded_bookings = []
         for booking in queryset:
             try:
-                booking.refund(authorizing_user=request.user, send_admin_email=False, preserve_provider_fees=False)
+                booking.refund(
+                    authorizing_user=request.user,
+                    send_admin_email=False,
+                    preserve_provider_fees=False,
+                )
                 refunded_bookings.append(booking)
             except CantBeRefundedException:
                 self.message_user(
@@ -126,13 +130,19 @@ class BookingAdmin(DangerousAdminConfirmMixin, admin.ModelAdmin):
             )
 
     @confirm_dangerous_action
-    @admin.action(description="Issue square fee accomodating refund", permissions=["change"])
+    @admin.action(
+        description="Issue square fee accomodating refund", permissions=["change"]
+    )
     def issue_provider_refund(self, request, queryset):
         """Action to issue refund for selected booking(s)"""
         refunded_bookings = []
         for booking in queryset:
             try:
-                booking.refund(authorizing_user=request.user, send_admin_email=False, preserve_provider_fees=True)
+                booking.refund(
+                    authorizing_user=request.user,
+                    send_admin_email=False,
+                    preserve_provider_fees=True,
+                )
                 refunded_bookings.append(booking)
             except CantBeRefundedException:
                 self.message_user(
@@ -155,13 +165,19 @@ class BookingAdmin(DangerousAdminConfirmMixin, admin.ModelAdmin):
             )
 
     @confirm_dangerous_action
-    @admin.action(description="Issue uobtheatre fee accomodating refund", permissions=["change"])
+    @admin.action(
+        description="Issue uobtheatre fee accomodating refund", permissions=["change"]
+    )
     def issue_app_refund(self, request, queryset):
         """Action to issue refund for selected booking(s)"""
         refunded_bookings = []
         for booking in queryset:
             try:
-                booking.refund(authorizing_user=request.user, send_admin_email=False, preserve_app_fees=True)
+                booking.refund(
+                    authorizing_user=request.user,
+                    send_admin_email=False,
+                    preserve_app_fees=True,
+                )
                 refunded_bookings.append(booking)
             except CantBeRefundedException:
                 self.message_user(

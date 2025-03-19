@@ -297,7 +297,7 @@ class Transaction(TimeStampedMixin, BaseModel):
                     f"A {self.provider_name} payment cannot be automatically refunded"
                 )
 
-        refund_amount = self.value
+        refund_amount = None
 
         if (
             preserve_provider_fees
@@ -305,15 +305,16 @@ class Transaction(TimeStampedMixin, BaseModel):
             and preserve_app_fees
             and self.app_fee
         ):
+            refund_amount = self.value
             refund_amount -= max(
                 self.provider_fee, self.app_fee
-            )  # Refund the larger of the two fees so we don't double dip
+            )  # Refund minus the larger of the two fees so we protect ourselves but don't double dip
         elif preserve_provider_fees and self.provider_fee is not None:
+            refund_amount = self.value
             refund_amount -= self.provider_fee
         elif preserve_app_fees and self.app_fee is not None:
+            refund_amount = self.value
             refund_amount -= self.app_fee
-
-        print(f"Refunding {refund_amount} from {self.value}")
 
         refund_provider.refund(self, custom_refund_amount=refund_amount)
 

@@ -142,7 +142,7 @@ class Payable(BaseModel):  # type: ignore
         """
         refund_payable.delay(self.pk, self.content_type.pk, authorizing_user.pk)
 
-    def refund(
+    def refund(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         authorizing_user: User,
         do_async=True,

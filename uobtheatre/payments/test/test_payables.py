@@ -275,7 +275,7 @@ def test_payable_refund(mailoutbox, can_be_refunded, send_email, do_async):
 
         def test():
             pay_object.refund(
-                UserFactory(), do_async=do_async, send_admin_email=send_email
+                authorizing_user=UserFactory(), do_async=do_async, send_admin_email=send_email
             )
 
         if not can_be_refunded:

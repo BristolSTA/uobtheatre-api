@@ -268,7 +268,20 @@ class ManualCardRefund(RefundProvider):
     description = "Manually refund"
     is_automatic = False  # type: ignore
 
-    def refund(self, payment: "payment_models.Transaction", custom_refund_amount: Optional[int] = None):
+    def refund(
+        self,
+        payment: "payment_models.Transaction",
+        custom_refund_amount: Optional[int] = None,
+    ):
+        """
+        Refund payment using square refund api, then create a new payment object
+        with the refund amount.
+
+        Args:
+            payment (Payment): The payment to be refunded
+            custom_refund_amount (int): The amount to be refunded. If not
+                provided the full amount will be refunded.
+        """
         if custom_refund_amount and custom_refund_amount > payment.value:
             raise PaymentException("Refund amount is greater than payment amount")
 
@@ -322,6 +335,8 @@ class SquareRefund(RefundProvider, SquareAPIMixin):
 
         amount_details = response.body["refund"]["amount_money"]
         square_refund_id = response.body["refund"]["id"]
+
+        app_fee_reduction = None
 
         if payment.app_fee:
             # If the refund amount is less than the total amount minus the app fee, leave the app fee as is
