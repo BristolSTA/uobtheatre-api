@@ -134,13 +134,13 @@ class Payable(BaseModel):  # type: ignore
             )
         return None
 
-    def async_refund(self, authorizing_user: User):
+    def async_refund(self, authorizing_user: User, preserve_provider_fees: bool = True, preserve_app_fees: bool = False):
         """
         Create "refund_payable" task to refund all the payments for the
         payable. This tasks calls the refund method with `do_async` to queue a
         refund tasks for each payment.
         """
-        refund_payable.delay(self.pk, self.content_type.pk, authorizing_user.pk)
+        refund_payable.delay(self.pk, self.content_type.pk, authorizing_user.pk, preserve_provider_fees, preserve_app_fees)
 
     def refund(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,

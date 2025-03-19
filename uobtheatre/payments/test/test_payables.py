@@ -238,11 +238,20 @@ def test_validate_cant_be_refunded(
 
 
 @pytest.mark.django_db
-def test_async_refund():
+@pytest.mark.parametrize(
+    "preserve_provider_fees,preserve_app_fees",
+    [
+        (False, False),
+        (True, False),
+        (False, True),
+        (True, True),
+    ],
+)
+def test_async_refund(preserve_provider_fees, preserve_app_fees):
     booking = BookingFactory(id=45)
     with patch.object(refund_payable, "delay") as mock:
-        booking.async_refund(UserFactory(id=3))
-        mock.assert_called_once_with(45, booking.content_type.pk, 3)
+        booking.async_refund(UserFactory(id=3), preserve_provider_fees, preserve_app_fees)
+        mock.assert_called_once_with(45, booking.content_type.pk, 3, preserve_provider_fees, preserve_app_fees)
 
 
 @pytest.mark.django_db

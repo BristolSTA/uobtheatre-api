@@ -30,7 +30,7 @@ def refund_payment(payment_pk: int):
 
 
 @app.task(base=RefundTask, throws=(CantBeRefundedException,))
-def refund_payable(payable_id: int, payable_content_type_id: int, authorizing_user_id):
+def refund_payable(payable_id: int, payable_content_type_id: int, authorizing_user_id, preserve_provider_fees: bool = False, preserve_app_fees: bool = False):
     """Refund a payable object automatically"""
     from uobtheatre.payments.payables import Payable
 
@@ -49,4 +49,4 @@ def refund_payable(payable_id: int, payable_content_type_id: int, authorizing_us
     from uobtheatre.users.models import User
 
     authorizing_user = User.objects.get(pk=authorizing_user_id)
-    payable.refund(authorizing_user, send_admin_email=False)
+    payable.refund(authorizing_user, send_admin_email=False, preserve_provider_fees=preserve_provider_fees, preserve_app_fees=preserve_app_fees)
