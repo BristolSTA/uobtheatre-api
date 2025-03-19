@@ -313,6 +313,8 @@ class Transaction(TimeStampedMixin, BaseModel):
         elif preserve_app_fees and self.app_fee is not None:
             refund_amount -= self.app_fee
 
+        print(f"Refunding {refund_amount} from {self.value}")
+
         refund_provider.refund(self, custom_refund_amount=refund_amount)
 
     class Meta:

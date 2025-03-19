@@ -147,7 +147,8 @@ class Payable(BaseModel):  # type: ignore
         authorizing_user: User,
         do_async=True,
         send_admin_email=True,
-        preserve_fees=True,
+        preserve_provider_fees=True,
+        preserve_app_fees=False,
     ):
         """
         Refund the all the payments in the payable.
@@ -158,7 +159,8 @@ class Payable(BaseModel):  # type: ignore
                 Otherwise payments are refunded synchronously.
             send_admin_email (bool): If true send an email to the admins after the
                 refunds are created/queued.
-            preserve_fees (bool): If true the platform fees are not refunded.
+            preserve_provider_fees (bool): If true the refund is reduced by the amount required to cover the payment provider fees.
+            preserve_app_fees (bool): If true the refund is reduced by the amount required to cover all our fees.
         """
         if error := self.validate_cant_be_refunded():  # type: ignore
             raise error  # pylint: disable=raising-bad-type
@@ -167,7 +169,7 @@ class Payable(BaseModel):  # type: ignore
             (
                 payment.async_refund()
                 if do_async
-                else payment.refund(preserve_fees=preserve_fees)
+                else payment.refund(preserve_provider_fees, preserve_app_fees)
             )
 
         if send_admin_email:
