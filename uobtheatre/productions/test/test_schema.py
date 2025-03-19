@@ -743,10 +743,27 @@ def test_production_assigned_users(gql_client, with_perm, users, expected_users)
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    ("perms", "can_assign"),
-    [([], False), (["boxoffice"], False), (["boxoffice", "change_production"], True)],
+    ("perms", "can_assign", "expected_permissions", "expected_perm_count"),
+    [
+        ([], False, [], 0),
+        (["boxoffice"], False, [], 0),
+        (
+            ["boxoffice", "change_production"],
+            True,
+            [
+                "boxoffice",
+                "view_production",
+                "view_bookings",
+                "change_production",
+                "sales",
+            ],
+            6,
+        ),
+    ],
 )
-def test_assignable_permissions(gql_client, perms, can_assign):
+def test_assignable_permissions(
+    gql_client, perms, can_assign, expected_permissions, expected_perm_count
+):
     production = ProductionFactory(slug="my-production")
     gql_client.login()
 
@@ -770,17 +787,27 @@ def test_assignable_permissions(gql_client, perms, can_assign):
     if can_assign is False:
         assert response["data"]["production"]["assignablePermissions"] is None
         return
-    assert len(response["data"]["production"]["assignablePermissions"]) == 9
-    assert {
-        "name": "boxoffice",
-        "description": "Can use boxoffice for production",
-        "userCanAssign": True,
-    } in response["data"]["production"]["assignablePermissions"]
-    assert {
-        "name": "add_production",
-        "description": "Can add production",
-        "userCanAssign": False,
-    } in response["data"]["production"]["assignablePermissions"]
+
+    assert len(response["data"]["production"]["assignablePermissions"]) == 10
+
+    assert (
+        len(
+            [
+                perm
+                for perm in response["data"]["production"]["assignablePermissions"]
+                if perm["userCanAssign"]
+            ]
+        )
+        == expected_perm_count
+    )
+
+    for perm in expected_permissions:
+        assert {
+            "name": perm,
+            "userCanAssign": True,
+        } in response["data"][
+            "production"
+        ]["assignablePermissions"]
 
 
 @pytest.mark.django_db

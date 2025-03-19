@@ -82,27 +82,77 @@ def test_book_for_performance_any():
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "production_status,user_perms,expected",
+    "production_status,production_permissions,global_permissions,expected",
     [
-        (Production.Status.DRAFT, [], False),
-        (Production.Status.PENDING, [], False),
-        (Production.Status.APPROVED, [], False),
-        (Production.Status.PUBLISHED, [], True),
-        (Production.Status.CLOSED, [], False),
-        (Production.Status.PENDING, ["productions.change_production"], False),
-        (Production.Status.APPROVED, ["productions.change_production"], True),
-        (Production.Status.APPROVED, ["productions.force_change_production"], True),
+        (Production.Status.DRAFT, [], [], False),
+        (Production.Status.PENDING, [], [], False),
+        (Production.Status.APPROVED, [], [], False),
+        (Production.Status.PUBLISHED, [], [], True),
+        (Production.Status.CLOSED, [], [], False),
+        (Production.Status.COMPLETE, [], [], False),
+        # Make sure global & specific production change perms don't elevate permissions
+        (Production.Status.PENDING, [], ["productions.change_production"], False),
+        (Production.Status.APPROVED, [], ["productions.change_production"], False),
+        (
+            Production.Status.APPROVED,
+            [],
+            ["productions.force_change_production"],
+            False,
+        ),
+        (Production.Status.PUBLISHED, [], ["productions.change_production"], True),
+        (
+            Production.Status.PUBLISHED,
+            [],
+            ["productions.force_change_production"],
+            True,
+        ),
+        (Production.Status.PENDING, ["productions.change_production"], [], False),
+        (Production.Status.APPROVED, ["productions.change_production"], [], False),
+        (
+            Production.Status.APPROVED,
+            ["productions.force_change_production"],
+            [],
+            False,
+        ),
+        (Production.Status.PUBLISHED, ["productions.change_production"], [], True),
+        (
+            Production.Status.PUBLISHED,
+            ["productions.force_change_production"],
+            [],
+            True,
+        ),
+        # Make sure global & specific box office perms don't elevate permissions
+        (Production.Status.PENDING, [], ["productions.boxoffice"], False),
+        (Production.Status.APPROVED, [], ["productions.boxoffice"], False),
+        (Production.Status.PUBLISHED, [], ["productions.boxoffice"], True),
+        (Production.Status.PENDING, ["productions.boxoffice"], [], False),
+        (Production.Status.APPROVED, ["productions.boxoffice"], [], False),
+        (Production.Status.PUBLISHED, ["productions.boxoffice"], [], True),
+        # Make sure comp ticket perms let you comp early
+        (Production.Status.PENDING, [], ["productions.comp_tickets"], False),
+        (Production.Status.APPROVED, [], ["productions.comp_tickets"], True),
+        (Production.Status.PUBLISHED, [], ["productions.comp_tickets"], True),
+        (Production.Status.PENDING, ["productions.comp_tickets"], [], False),
+        (Production.Status.APPROVED, ["productions.comp_tickets"], [], True),
+        (Production.Status.PUBLISHED, ["productions.comp_tickets"], [], True),
     ],
 )
-def test_book_for_performance_has_for(production_status, user_perms, expected):
+def test_book_for_performance_has_for(
+    production_status, production_permissions, global_permissions, expected
+):
     user = UserFactory()
-
-    for perm in user_perms:
-        user.assign_perm(perm)
-
+    production = ProductionFactory(status=production_status)
     performance = PerformanceFactory(
-        production=ProductionFactory(status=production_status)
+        production=production,
     )
+
+    for permission in global_permissions:
+        assign_perm(
+            permission,
+            user,
+        )
+    for permission in production_permissions:
+        assign_perm(permission, user, production)
 
     with patch(
         "uobtheatre.productions.models.Performance.is_bookable",
