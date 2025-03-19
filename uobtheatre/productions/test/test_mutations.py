@@ -142,7 +142,8 @@ def test_production_mutation_create_with_missing_info(gql_client):
 
 
 @pytest.mark.django_db
-def test_production_mutation_create_update(gql_client):
+@pytest.mark.parametrize("with_permission", [True, False])
+def test_production_mutation_create_update(gql_client, with_permission):
     production = ProductionFactory(
         name="My Old Name", subtitle="My subtitle", status=Production.Status.DRAFT
     )
@@ -153,6 +154,7 @@ def test_production_mutation_create_update(gql_client):
             input: {
                 id: "%s"
                 name: "My New Name"
+                productionAlert: "My alert"
              }
           ) {
             success
@@ -176,14 +178,17 @@ def test_production_mutation_create_update(gql_client):
     )
 
     gql_client.login()
-    assign_perm("change_production", gql_client.user, production)
+    if with_permission:
+        assign_perm("change_production", gql_client.user, production)
 
     response = gql_client.execute(request)
-    assert response["data"]["production"]["success"] is True
-    assert response["data"]["production"]["production"] == {
-        "name": "My New Name",
-        "subtitle": "My subtitle",
-    }
+    assert response["data"]["production"]["success"] is with_permission
+
+    if with_permission:
+        assert response["data"]["production"]["production"] == {
+            "name": "My New Name",
+            "subtitle": "My subtitle",
+        }
 
 
 @pytest.mark.django_db
