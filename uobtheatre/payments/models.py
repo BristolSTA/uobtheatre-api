@@ -299,7 +299,12 @@ class Transaction(TimeStampedMixin, BaseModel):
 
         refund_amount = self.value
 
-        if preserve_provider_fees and preserve_app_fees:
+        if (
+            preserve_provider_fees
+            and self.provider_fee
+            and preserve_app_fees
+            and self.app_fee
+        ):
             refund_amount -= max(
                 self.provider_fee, self.app_fee
             )  # Refund the larger of the two fees so we don't double dip

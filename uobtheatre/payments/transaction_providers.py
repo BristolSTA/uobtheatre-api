@@ -297,7 +297,7 @@ class SquareRefund(RefundProvider, SquareAPIMixin):
         """
         Refund payment using square refund api
         """
-        if custom_refund_amount > payment.value:
+        if custom_refund_amount and custom_refund_amount > payment.value:
             raise PaymentException("Refund amount is greater than payment amount")
 
         refund_amount = (
