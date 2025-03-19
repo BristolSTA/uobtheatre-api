@@ -142,7 +142,13 @@ class Payable(BaseModel):  # type: ignore
         """
         refund_payable.delay(self.pk, self.content_type.pk, authorizing_user.pk)
 
-    def refund(self, authorizing_user: User, do_async=True, send_admin_email=True):
+    def refund(
+        self,
+        authorizing_user: User,
+        do_async=True,
+        send_admin_email=True,
+        preserve_fees=True,
+    ):
         """
         Refund the all the payments in the payable.
 
@@ -152,12 +158,17 @@ class Payable(BaseModel):  # type: ignore
                 Otherwise payments are refunded synchronously.
             send_admin_email (bool): If true send an email to the admins after the
                 refunds are created/queued.
+            preserve_fees (bool): If true the platform fees are not refunded.
         """
         if error := self.validate_cant_be_refunded():  # type: ignore
             raise error  # pylint: disable=raising-bad-type
 
         for payment in self.transactions.filter(type=Transaction.Type.PAYMENT).all():  # type: ignore
-            payment.async_refund() if do_async else payment.refund()
+            (
+                payment.async_refund()
+                if do_async
+                else payment.refund(preserve_fees=preserve_fees)
+            )
 
         if send_admin_email:
             mail = payable_refund_initiated_email(authorizing_user, [self])

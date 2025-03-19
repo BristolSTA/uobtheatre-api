@@ -289,14 +289,26 @@ class SquareRefund(RefundProvider, SquareAPIMixin):
     def __init__(self, idempotency_key: str):
         self.idempotency_key = idempotency_key
 
-    def refund(self, payment: "payment_models.Transaction"):
+    def refund(
+        self,
+        payment: "payment_models.Transaction",
+        custom_refund_amount: Optional[int] = None,
+    ):
         """
         Refund payment using square refund api
         """
+        if custom_refund_amount > payment.value:
+            raise PaymentException("Refund amount is greater than payment amount")
+
+        refund_amount = (
+            custom_refund_amount if custom_refund_amount is not None else payment.value
+        )
+
         body = {
             "idempotency_key": str(self.idempotency_key),
-            "amount_money": {"amount": payment.value, "currency": payment.currency},
+            "amount_money": {"amount": refund_amount, "currency": payment.currency},
             "payment_id": payment.provider_transaction_id,
+            "reason": f"Refund for {payment.pay_object.payment_reference_id}",
         }
         response = self.client.refunds.refund_payment(body)
         self._handle_response_failure(response)

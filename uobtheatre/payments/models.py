@@ -267,11 +267,18 @@ class Transaction(TimeStampedMixin, BaseModel):
         """
         refund_payment.delay(self.pk)
 
-    def refund(self, refund_provider: Optional[RefundProvider] = None):
+    def refund(
+        self,
+        preserve_provider_fees=True,
+        preserve_app_fees=False,
+        refund_provider: Optional[RefundProvider] = None,
+    ):
         """
         Refund the payment
 
         Args:
+            preserve_provider_fees (bool): If true the refund is reduced by the amount required to cover the payment provider fees.
+            preserve_app_fees (bool): If true the refund is reduced by the amount required to cover all our fees.
             refund_provider (RefundProvider): If a refund provider is provider,
                 that is used to refund the payment. Otherwise the
                 automatic_refund_provider of the payment transaction provider
@@ -290,7 +297,21 @@ class Transaction(TimeStampedMixin, BaseModel):
                     f"A {self.provider_name} payment cannot be automatically refunded"
                 )
 
-        refund_provider.refund(self)
+        refund_amount = self.value
+
+        if preserve_provider_fees and preserve_app_fees:
+            refund_amount -= max(
+                self.provider_fee, self.app_fee
+            )  # Refund the larger of the two fees so we don't double dip
+        elif preserve_provider_fees and self.provider_fee is not None:
+            refund_amount -= self.provider_fee
+        elif preserve_app_fees and self.app_fee is not None:
+            refund_amount -= self.app_fee
+
+        refund_provider.refund(self, custom_refund_amount=refund_amount)
+
+    class Meta:
+        ordering = ["-created_at"]
 
 
 class SalesBreakdown:
