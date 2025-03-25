@@ -73,7 +73,7 @@ django-inlinecss==0.3.0
 
 #=== Timezones ===#
 timezonefinder==6.5.9
-pytz==2025.1
+pytz==2025.2
 types-pytz==2025.1.0.20250318
 
 #=== Task Queue ===#
