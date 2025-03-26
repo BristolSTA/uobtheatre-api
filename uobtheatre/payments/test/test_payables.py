@@ -250,8 +250,12 @@ def test_validate_cant_be_refunded(
 def test_async_refund(preserve_provider_fees, preserve_app_fees):
     booking = BookingFactory(id=45)
     with patch.object(refund_payable, "delay") as mock:
-        booking.async_refund(UserFactory(id=3), preserve_provider_fees, preserve_app_fees)
-        mock.assert_called_once_with(45, booking.content_type.pk, 3, preserve_provider_fees, preserve_app_fees)
+        booking.async_refund(
+            UserFactory(id=3), preserve_provider_fees, preserve_app_fees
+        )
+        mock.assert_called_once_with(
+            45, booking.content_type.pk, 3, preserve_provider_fees, preserve_app_fees
+        )
 
 
 @pytest.mark.django_db
@@ -284,7 +288,9 @@ def test_payable_refund(mailoutbox, can_be_refunded, send_email, do_async):
 
         def test():
             pay_object.refund(
-                authorizing_user=UserFactory(), do_async=do_async, send_admin_email=send_email
+                authorizing_user=UserFactory(),
+                do_async=do_async,
+                send_admin_email=send_email,
             )
 
         if not can_be_refunded:
@@ -297,7 +303,10 @@ def test_payable_refund(mailoutbox, can_be_refunded, send_email, do_async):
 
         assert mock.call_count == (2 if can_be_refunded else 0)
         assert len(mailoutbox) == (1 if can_be_refunded and send_email else 0)
-        if can_be_refunded:
+        if can_be_refunded and not do_async:
+            mock.assert_any_call(payment_1, True, False)
+            mock.assert_any_call(payment_2, True, False)
+        elif can_be_refunded:
             mock.assert_any_call(payment_1)
             mock.assert_any_call(payment_2)
 

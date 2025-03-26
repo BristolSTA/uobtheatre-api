@@ -145,6 +145,7 @@ def create_fixtures():
         value=booking_2.total,
         provider_name=transaction_providers.Cash.name,
         app_fee=booking_2.misc_costs_value,
+        provider_fee=0,
     )
     payment_2.created_at = "2021-09-05T12:00:01-00:00"
     payment_2.save()
@@ -152,6 +153,8 @@ def create_fixtures():
     payment_3 = TransactionFactory(
         pay_object=booking_3,
         value=booking_3.total,
+        app_fee=0,
+        provider_fee=0,
     )
     payment_3.created_at = "2021-09-08T12:00:01-00:00"
     payment_3.save()

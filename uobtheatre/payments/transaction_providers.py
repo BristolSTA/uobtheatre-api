@@ -289,10 +289,23 @@ class ManualCardRefund(RefundProvider):
             custom_refund_amount if custom_refund_amount is not None else payment.value
         )
 
+        app_fee_reduction = None
+
+        if payment.app_fee:
+            print(payment.app_fee)
+            # If the refund amount is less than the total amount minus the app fee, leave the app fee as is
+            # Otherwise, reduce the app fee by whatever is needed to make the numbers add up
+            # Thereby ensuring that we keep an amount to cover fees
+            remaining_app_fee = payment.app_fee
+            if (payment.value - refund_amount) < payment.app_fee:
+                remaining_app_fee = payment.value - refund_amount
+
+            app_fee_reduction = payment.app_fee - remaining_app_fee
+
         self.create_payment_object(
             payment.pay_object,
             -refund_amount,
-            -payment.app_fee if payment.app_fee is not None else None,
+            -app_fee_reduction if app_fee_reduction is not None else None,
             provider_fee=-payment.provider_fee if payment.provider_fee else None,
             status=payment_models.Transaction.Status.COMPLETED,
         )

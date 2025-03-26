@@ -1233,7 +1233,7 @@ def test_sales_breakdown_with_blank_fees():
     performance = PerformanceFactory()
     booking = BookingFactory(performance=performance)
 
-    TransactionFactory(pay_object=booking, value=200)
+    TransactionFactory(pay_object=booking, value=200, provider_fee=0, app_fee=0)
 
     assert performance.sales_breakdown() == {
         "app_fee": 0,
