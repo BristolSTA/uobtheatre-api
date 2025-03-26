@@ -46,7 +46,7 @@ def test_create_and_refund_booking(square_client):
     payment.refund()
 
     assert Transaction.objects.count() == 2
-    refund = Transaction.objects.last()
+    refund = Transaction.objects.latest("created_at")
 
     assert refund.value == -1300
     assert refund.app_fee == -100
