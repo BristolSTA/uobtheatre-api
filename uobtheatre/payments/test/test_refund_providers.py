@@ -77,9 +77,15 @@ def test_manual_refund_method_refund():
     assert payment.provider_name == ManualCardRefund.name
     assert payment.type == Transaction.Type.REFUND
 
+
 @pytest.mark.django_db
-@pytest.mark.parametrize("value,app_fee,custom_refund_amount,expected_app_fee", [(100, 20, 90, -10), (100, 20, 80, 0), (100, 0, 90, None)])
-def test_manual_refund_method_custom_amount_refund(value, app_fee, custom_refund_amount, expected_app_fee):
+@pytest.mark.parametrize(
+    "value,app_fee,custom_refund_amount,expected_app_fee",
+    [(100, 20, 90, -10), (100, 20, 80, 0), (100, 0, 90, None)],
+)
+def test_manual_refund_method_custom_amount_refund(
+    value, app_fee, custom_refund_amount, expected_app_fee
+):
     refund_payment = TransactionFactory(
         value=value,
         provider_fee=10,
@@ -97,6 +103,7 @@ def test_manual_refund_method_custom_amount_refund(value, app_fee, custom_refund
     assert payment.provider_fee == -10
     assert payment.provider_name == ManualCardRefund.name
     assert payment.type == Transaction.Type.REFUND
+
 
 @pytest.mark.django_db
 def test_manual_refund_method_custom_amount_too_high_refund():
@@ -147,7 +154,7 @@ def test_square_refund_refund(mock_square):
     refund_method.create_payment_object.assert_called_once_with(
         payment.pay_object,
         -100,
-        0,
+        -20,
         provider_transaction_id="abc",
         currency="GBP",
         status=Transaction.Status.PENDING,
@@ -161,13 +168,20 @@ def test_square_refund_refund(mock_square):
         }
     )
 
+
 @pytest.mark.django_db
-def test_square_refund_custom_amount_refund(mock_square):
+@pytest.mark.parametrize(
+    "value,app_fee,custom_refund_amount,expected_app_fee",
+    [(100, 20, 90, -10), (100, 20, 80, 0), (100, 0, 90, None)],
+)
+def test_square_refund_custom_amount_refund(
+    mock_square, value, app_fee, custom_refund_amount, expected_app_fee
+):
     idempotency_key = str(uuid4())
     refund_method = SquareRefund(idempotency_key=idempotency_key)
 
     refund_method.create_payment_object = MagicMock()
-    payment = TransactionFactory()
+    payment = TransactionFactory(value=value, provider_fee=10, app_fee=app_fee)
 
     with mock_square(
         SquareRefund.client.refunds,
@@ -178,7 +192,7 @@ def test_square_refund_custom_amount_refund(mock_square):
             "refund": {
                 "id": "abc",
                 "status": "PENDING",
-                "amount_money": {"amount": 90, "currency": "GBP"},
+                "amount_money": {"amount": custom_refund_amount, "currency": "GBP"},
                 "payment_id": "abc",
                 "order_id": "nRDUxsrkGgorM3g8AT64kCLBLa4F",
                 "created_at": "2021-12-30T10:40:54.672Z",
@@ -191,8 +205,8 @@ def test_square_refund_custom_amount_refund(mock_square):
 
     refund_method.create_payment_object.assert_called_once_with(
         payment.pay_object,
-        -90,
-        0,
+        -custom_refund_amount,
+        expected_app_fee,
         provider_transaction_id="abc",
         currency="GBP",
         status=Transaction.Status.PENDING,
@@ -205,6 +219,7 @@ def test_square_refund_custom_amount_refund(mock_square):
             "reason": f"Refund for {payment.pay_object.payment_reference_id}",
         }
     )
+
 
 @pytest.mark.django_db
 def test_square_refund_custom_amount_too_high_refund(mock_square):
@@ -231,9 +246,10 @@ def test_square_refund_custom_amount_too_high_refund(mock_square):
                 "location_id": "LN9PN3P67S0QV",
             }
         },
-    ) as mock:
+    ):
         with pytest.raises(PaymentException):
             refund_method.refund(payment, payment.value + 1)
+
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(

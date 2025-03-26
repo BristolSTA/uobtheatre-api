@@ -1123,7 +1123,9 @@ def test_sales_breakdown_production():
     performance_2 = PerformanceFactory(production=production)
     booking_1 = BookingFactory(performance=performance_1)
     booking_2 = BookingFactory(performance=performance_2)
+    booking_3 = BookingFactory(performance=performance_2)
 
+    # Initial Bookings
     TransactionFactory(
         pay_object=booking_1,
         provider_fee=2,
@@ -1146,6 +1148,15 @@ def test_sales_breakdown_production():
         provider_name=Card.name,
     )
     TransactionFactory(
+        pay_object=booking_3,
+        provider_fee=10,
+        app_fee=50,
+        value=800,
+        provider_name=Card.name,
+    )
+
+    # Refunds
+    TransactionFactory(
         pay_object=booking_1,
         provider_fee=-4,
         app_fee=-200,
@@ -1160,19 +1171,27 @@ def test_sales_breakdown_production():
         value=400,
         provider_name=SquareOnline.name,
     )
+    TransactionFactory(
+        pay_object=booking_3,
+        provider_fee=0,
+        app_fee=0,
+        value=-750,
+        provider_name=SquareOnline.name,
+        type=Transaction.Type.REFUND,
+    )
 
     assert production.sales_breakdown() == {
-        "app_fee": 450,
-        "app_payment_value": 434,
-        "provider_payment_value": 16,
+        "app_fee": 500,
+        "app_payment_value": 474,
+        "provider_payment_value": 26,
         "society_revenue": 750,
         "society_transfer_value": 550,
-        "total_card_payments": 1600,
-        "total_payments": 1800,
-        "total_refunds": -600,
-        "total_card_refunds": -600,
-        "net_transactions": 1200,
-        "net_card_transactions": 1000,
+        "total_card_payments": 2400,
+        "total_payments": 2600,
+        "total_refunds": -1350,
+        "total_card_refunds": -1350,
+        "net_transactions": 1250,
+        "net_card_transactions": 1050,
     }
 
 
