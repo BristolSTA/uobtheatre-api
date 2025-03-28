@@ -11,7 +11,7 @@ from uobtheatre.payments.test.factories import TransactionFactory
 
 @pytest.mark.django_db
 def test_payment_model_signals(mailoutbox):
-    booking = BookingFactory(status=Payable.Status.PAID)
+    booking = BookingFactory(status=Payable.Status.REFUND_PROCESSING)
     booking.user.email = "myuser@example.org"
     TransactionFactory(value=200, pay_object=booking)
 
@@ -23,7 +23,7 @@ def test_payment_model_signals(mailoutbox):
         status=Transaction.Status.PENDING,
     )
 
-    assert booking.status == Payable.Status.PAID
+    assert booking.status == Payable.Status.REFUND_PROCESSING
     assert booking.is_locked is True
     assert booking.is_refunded is False
 
@@ -38,6 +38,6 @@ def test_payment_model_signals(mailoutbox):
     assert len(mailoutbox) == 1  # Email confirming successful refund
     assert mailoutbox[0].subject == "Refund successfully processed"
     assert mailoutbox[0].to[0] == "myuser@example.org"
-    assert booking.status == Payable.Status.CANCELLED
+    assert booking.status == Payable.Status.REFUNDED
     assert booking.is_locked is False
     assert booking.is_refunded is True

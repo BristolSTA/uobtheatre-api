@@ -40,12 +40,15 @@ class PayableQuerySet(QuerySet):
 
     def refunded(self, bool_val=True) -> QuerySet:
         """
-        A payable is refunded if the value of all the payments for the pay
+        A payable is refunded if its Status is REFUNDED
+        or, for legacy support, if the value of all the payments for the pay
         object are equal to the value of all the refunds and all payments are
         completed.
         """
         qs = self.annotate_transaction_count().annotate_transaction_value()  # type: ignore
-        filter_query = Q(transaction_totals=0, transaction_count__gt=1)
+        filter_query = Q(transaction_totals=0, transaction_count__gt=1) | Q(
+            status=Payable.Status.REFUNDED
+        )
         if bool_val:
             return qs.filter(filter_query)
         return qs.exclude(filter_query)
@@ -70,6 +73,8 @@ class Payable(BaseModel):  # type: ignore
         IN_PROGRESS = "IN_PROGRESS", "In Progress"
         CANCELLED = "CANCELLED", "Cancelled"
         PAID = "PAID", "Paid"
+        REFUND_PROCESSING = "REFUND_PROCESSING", "Refund Processing"
+        REFUNDED = "REFUNDED", "Refunded"
 
     status = models.CharField(
         max_length=20,
@@ -116,23 +121,28 @@ class Payable(BaseModel):  # type: ignore
 
     def validate_cant_be_refunded(self) -> Optional[CantBeRefundedException]:
         """Validates if the booking can't be refunded. If it can't, it returns an exception. If it can, it returns None"""
-        if self.status not in [self.Status.PAID, self.Status.CANCELLED]:
-            return CantBeRefundedException(
-                f"{self.__class__.__name__} ({self}) can't be refunded due to it's status ({self.status})"
+        exception = None
+        if self.status == self.Status.REFUND_PROCESSING:
+            exception = CantBeRefundedException(
+                f"{self.__class__.__name__} ({self}) can't be refunded because it is already being refunded"
             )
-        if self.transactions.payments().count() == 0:  # type: ignore
-            return CantBeRefundedException(
+        elif self.status not in [self.Status.PAID, self.Status.CANCELLED]:
+            exception = CantBeRefundedException(
+                f"{self.__class__.__name__} ({self}) can't be refunded due to its status ({self.status})"
+            )
+        elif self.transactions.payments().count() == 0:  # type: ignore
+            exception = CantBeRefundedException(
                 f"{self.__class__.__name__} ({self}) can't be refunded because it has no payments"
             )
-        if self.is_refunded:
-            return CantBeRefundedException(
-                f"{self.__class__.__name__} ({self}) can't be refunded because is already refunded"
+        elif self.is_refunded:
+            exception = CantBeRefundedException(
+                f"{self.__class__.__name__} ({self}) can't be refunded because it is already refunded"
             )
-        if self.is_locked:
-            return CantBeRefundedException(
+        elif self.is_locked:
+            exception = CantBeRefundedException(
                 f"{self.__class__.__name__} ({self}) can't be refunded because it is locked"
             )
-        return None
+        return exception
 
     def async_refund(
         self,
@@ -179,6 +189,10 @@ class Payable(BaseModel):  # type: ignore
         """
         if error := self.validate_cant_be_refunded():  # type: ignore
             raise error  # pylint: disable=raising-bad-type
+
+        # Set the status to REFUND_PROCESSING
+        self.status = Payable.Status.REFUND_PROCESSING
+        self.save()
 
         for payment in self.transactions.filter(type=Transaction.Type.PAYMENT).all():  # type: ignore
             (

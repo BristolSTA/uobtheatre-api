@@ -322,7 +322,9 @@ class Transaction(TimeStampedMixin, BaseModel):
 
         if refund_amount and refund_amount < 0:
             # Refund amount can't be negative
-            raise CantBeRefundedException("This refund would result in a negative refund amount")
+            raise CantBeRefundedException(
+                "This refund would result in a negative refund amount"
+            )
 
         refund_provider.refund(self, custom_refund_amount=refund_amount)
 

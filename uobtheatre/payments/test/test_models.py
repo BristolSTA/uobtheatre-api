@@ -500,6 +500,38 @@ def test_refund_payment_with_provider_preserve_fees(
 
 
 @pytest.mark.django_db
+def test_negative_refund_amount_throws_error():
+    """
+    When a refund is called that preserves app and provider fees, the refund method
+    of the provided refund provider should be called with the correct amount.
+    """
+    payment = TransactionFactory(value=20, provider_fee=25)
+
+    refund_method = mock_refund_method()
+    default_refund_method = mock_refund_method()
+    with mock.patch(
+        "uobtheatre.payments.models.Transaction.provider",
+        new_callable=PropertyMock,
+    ) as p_mock, mock.patch.object(
+        payment, "can_be_refunded", return_value=True
+    ) as can_be_refunded_mock:
+        p_mock.return_value = mock_payment_method(
+            is_refundable=True,
+            automatic_refund_provider=default_refund_method,
+        )
+        with pytest.raises(CantBeRefundedException):
+            payment.refund(
+                refund_provider=refund_method,
+                preserve_provider_fees=True,
+                preserve_app_fees=True,
+            )
+            # Assert we check it can be refunded
+            can_be_refunded_mock.assert_called_once_with(
+                refund_provider=refund_method, raises=True
+            )
+
+
+@pytest.mark.django_db
 def test_notify_user_refund_email(mailoutbox):
     transaction = TransactionFactory(
         type=Transaction.Type.REFUND, status=Transaction.Status.PENDING

@@ -135,7 +135,7 @@ def test_society_transfer_value():
         ([5, -5], True, False),
     ],
 )
-def test_is_refunded(payment_values, has_pending, is_refunded):
+def test_legacy_is_refunded(payment_values, has_pending, is_refunded):
     # Create some payments for different payobjects
     [TransactionFactory(status=Transaction.Status.COMPLETED) for _ in range(10)]
 
@@ -154,6 +154,17 @@ def test_is_refunded(payment_values, has_pending, is_refunded):
 
     if payment := pay_object.transactions.first():
         assert payment.is_refunded == is_refunded
+
+
+@pytest.mark.django_db
+def test_is_refunded():
+    for status in Payable.Status:
+        booking = BookingFactory(status=status)
+
+        if status == Payable.Status.REFUNDED:
+            assert booking.is_refunded is True
+        else:
+            assert booking.is_refunded is False
 
 
 @pytest.mark.django_db
@@ -184,14 +195,14 @@ def test_is_locked(has_pending_transaction):
             1,
             True,
             True,
-            "Booking (ABCD123) can't be refunded due to it's status (IN_PROGRESS)",
+            "Booking (ABCD123) can't be refunded due to its status (IN_PROGRESS)",
         ),
         (
             Booking.Status.PAID,
             1,
             True,
             True,
-            "Booking (ABCD123) can't be refunded because is already refunded",
+            "Booking (ABCD123) can't be refunded because it is already refunded",
         ),
         (
             Booking.Status.PAID,
@@ -213,6 +224,13 @@ def test_is_locked(has_pending_transaction):
             False,
             False,
             "Booking (ABCD123) can't be refunded because it has no payments",
+        ),
+        (
+            Booking.Status.REFUND_PROCESSING,
+            2,
+            False,
+            True,
+            "Booking (ABCD123) can't be refunded because it is already being refunded",
         ),
     ],
 )
