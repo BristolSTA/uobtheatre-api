@@ -117,7 +117,7 @@ class BookingAdmin(DangerousAdminConfirmMixin, admin.ModelAdmin):
                 )
                 break
 
-        if num_refunded := len(refunded_bookings):
+        if (num_refunded := len(refunded_bookings)) > 0:
             self.message_user(
                 request, f"{num_refunded} bookings have had refunds requested"
             )
@@ -152,7 +152,7 @@ class BookingAdmin(DangerousAdminConfirmMixin, admin.ModelAdmin):
                 )
                 break
 
-        if num_refunded := len(refunded_bookings):
+        if (num_refunded := len(refunded_bookings)) > 0:
             self.message_user(
                 request, f"{num_refunded} bookings have had refunds requested"
             )
@@ -187,7 +187,7 @@ class BookingAdmin(DangerousAdminConfirmMixin, admin.ModelAdmin):
                 )
                 break
 
-        if num_refunded := len(refunded_bookings):
+        if (num_refunded := len(refunded_bookings)) > 0:
             self.message_user(
                 request, f"{num_refunded} bookings have had refunds requested"
             )

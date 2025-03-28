@@ -170,8 +170,12 @@ class Payable(BaseModel):  # type: ignore
                 Otherwise payments are refunded synchronously.
             send_admin_email (bool): If true send an email to the admins after the
                 refunds are created/queued.
-            preserve_provider_fees (bool): If true the refund is reduced by the amount required to cover the payment provider fees.
-            preserve_app_fees (bool): If true the refund is reduced by the amount required to cover all our fees.
+            preserve_provider_fees (bool): If true the refund is reduced by the amount required to cover the payment's provider_fee
+                i.e. the refund is reduced by the amount required to cover only Square's fees.
+                If both preserve_provider_fees and preserve_app_fees are true, the refund is reduced by the larger of the two fees.
+            preserve_app_fees (bool): If true the refund is reduced by the amount required to cover the payment's app_fee
+                i.e. the refund is reduced by the amount required to cover our fees (the various misc_costs, such as the theatre improvement levy).
+                If both preserve_provider_fees and preserve_app_fees are true, the refund is reduced by the larger of the two fees.
         """
         if error := self.validate_cant_be_refunded():  # type: ignore
             raise error  # pylint: disable=raising-bad-type

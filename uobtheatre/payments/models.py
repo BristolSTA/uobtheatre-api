@@ -277,8 +277,12 @@ class Transaction(TimeStampedMixin, BaseModel):
         Refund the payment
 
         Args:
-            preserve_provider_fees (bool): If true the refund is reduced by the amount required to cover the payment provider fees.
-            preserve_app_fees (bool): If true the refund is reduced by the amount required to cover all our fees.
+            preserve_provider_fees (bool): If true the refund is reduced by the amount required to cover the payment's provider_fee
+                i.e. the refund is reduced by the amount required to cover only Square's fees.
+                If both preserve_provider_fees and preserve_app_fees are true, the refund is reduced by the larger of the two fees.
+            preserve_app_fees (bool): If true the refund is reduced by the amount required to cover the payment's app_fee
+                i.e. the refund is reduced by the amount required to cover our fees (the various misc_costs, such as the theatre improvement levy).
+                If both preserve_provider_fees and preserve_app_fees are true, the refund is reduced by the larger of the two fees.
             refund_provider (RefundProvider): If a refund provider is provider,
                 that is used to refund the payment. Otherwise the
                 automatic_refund_provider of the payment transaction provider
@@ -315,6 +319,10 @@ class Transaction(TimeStampedMixin, BaseModel):
         elif preserve_app_fees and self.app_fee is not None:
             refund_amount = self.value
             refund_amount -= self.app_fee
+
+        if refund_amount and refund_amount < 0:
+            # Refund amount can't be negative
+            raise CantBeRefundedException("This refund would result in a negative refund amount")
 
         refund_provider.refund(self, custom_refund_amount=refund_amount)
 
