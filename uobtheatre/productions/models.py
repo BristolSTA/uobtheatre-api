@@ -1022,11 +1022,12 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
     class Meta:
         ordering = ["id"]
         permissions = (
-            ("boxoffice", "Can use boxoffice for production"),
+            ("boxoffice", "Can use box office for production"),
             ("sales", "Can view sales for production"),
-            ("force_change_production", "Can edit production once live"),
+            ("force_change_production", "Can change production once live"),
             ("view_bookings", "Can inspect bookings and users for this production"),
-            ("approve_production", "Can approve production pending publication"),
+            ("approve_production", "Can approve production"),
+            ("comp_tickets", "Can issue complimentary tickets"),
         )
 
     class PermissionsMeta:
@@ -1036,5 +1037,6 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
             "view_bookings": ("change_production", "force_change_production"),
             "change_production": ("change_production", "force_change_production"),
             "sales": ("change_production", "force_change_production"),
+            "comp_tickets": ("change_production", "force_change_production"),
             "approve_production": ("approve_production"),
         }

@@ -77,8 +77,19 @@ class BookingMutation(SafeFormMutation, AuthRequiredMixin):
         """Authorize the targer user (via email) parameter"""
         # Target user
         if ("user" in inputs or "user_email" in inputs) and (
-            not info.context.user.has_perm(
-                "productions.boxoffice", target_performance.production
+            not (
+                (
+                    "admin_discount_percentage" in inputs
+                    and info.context.user.has_perm(
+                        "productions.comp_tickets", target_performance.production
+                    )
+                )  # The ticket is a comp ticket and the user has the permission to issue it
+                or (
+                    "admin_discount_percentage" not in inputs
+                    and info.context.user.has_perm(
+                        "productions.boxoffice", target_performance.production
+                    )
+                )  # The ticket is not a comp ticket and the user has box office permissions
             )
         ):
             raise AuthorizationException(
@@ -92,7 +103,7 @@ class BookingMutation(SafeFormMutation, AuthRequiredMixin):
         # Check performance is bookable
         if not BookForPerformance.user_has_for(info.context.user, target_performance):
             raise NotBookableException(
-                message="This performance is not able to be booked at the moment"
+                message="You do not have permission to book for this performance",
             )
 
     @classmethod

@@ -321,7 +321,7 @@ def test_cant_create_booking_with_unbookable_performance(gql_client):
     assert response["data"]["booking"]["success"] is False
     assert (
         response["data"]["booking"]["errors"][0]["message"]
-        == "This performance is not able to be booked at the moment"
+        == "You do not have permission to book for this performance"
     )
 
 
@@ -570,7 +570,7 @@ def test_create_booking_not_bookable(gql_client):
     response = gql_client.login().execute(request)
 
     assert response["data"]["booking"]["errors"] == [
-        {"message": "This performance is not able to be booked at the moment"}
+        {"message": "You do not have permission to book for this performance"}
     ]
 
 
