@@ -15,8 +15,8 @@ class Migration(migrations.Migration):
             name="what3words",
             field=models.CharField(
                 blank=True,
-                help_text="A what3words address, taking the form 'word.word.word'",
-                max_length=255,
+                help_text="A what3words address, taking the form '///word.word.word'",
+                max_length=64,
                 null=True,
             ),
         ),
