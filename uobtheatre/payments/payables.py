@@ -203,17 +203,17 @@ class Payable(BaseModel):  # type: ignore
 
         if send_admin_email:
             if preserve_provider_fees and preserve_app_fees:
-                refund_type = "Payment provider and UOB Theatre fee-accomodating"
+                refund_type = "Payment provider and website fee-accommodating"
             elif preserve_provider_fees:
-                refund_type = "Payment provider fee-accomodating"
+                refund_type = "Payment provider fee-accommodating"
             elif preserve_app_fees:
-                refund_type = "UOB Theatre fee-accomodating"
+                refund_type = "Website fee-accommodating"
             else:
                 refund_type = "Full"
             # Send an email to the admins
             mail = payable_refund_initiated_email(authorizing_user, [self], refund_type)
             mail_admins(
-                f"{self.__class__.__name__} Refunds Initiated",
+                f"{refund_type.title()} {self.__class__.__name__} Refunds Initiated",
                 mail.to_plain_text(),
                 html_message=mail.to_html(),
             )

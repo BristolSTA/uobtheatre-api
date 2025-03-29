@@ -278,6 +278,34 @@ def test_async_refund(preserve_provider_fees, preserve_app_fees):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
+    "preserve_provider_fees,preserve_app_fees,refund_type",
+    [
+        (False, False, "Full"),
+        (True, False, "Payment provider fee-accommodating"),
+        (False, True, "Website fee-accommodating"),
+        (True, True, "Payment provider and website fee-accommodating"),
+    ],
+)
+def test_refund(mailoutbox, preserve_provider_fees, preserve_app_fees, refund_type):
+    user = UserFactory(id=3)
+    booking = BookingFactory(id=45)
+    TransactionFactory(pay_object=booking)
+
+    booking.refund(
+        user,
+        preserve_provider_fees=preserve_provider_fees,
+        preserve_app_fees=preserve_app_fees,
+    )
+
+    assert len(mailoutbox) == 1
+    assert (
+        mailoutbox[0].subject
+        == f"[UOBTheatre] {refund_type.title()} Booking Refunds Initiated"
+    )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
     "can_be_refunded,send_email,do_async",
     [
         (True, False, False),
