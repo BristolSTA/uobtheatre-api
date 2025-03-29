@@ -93,111 +93,78 @@ class BookingAdmin(DangerousAdminConfirmMixin, admin.ModelAdmin):
         "performance__production__name",
         "user__email",
     ]
-    actions = ["issue_full_refund", "issue_provider_refund", "issue_app_refund"]
+    actions = [
+        "issue_full_refund",
+        "issue_payment_provider_fee_accomodating_refund",
+        "issue_uobtheatre_fee_accomodating_refund",
+        "issue_all_fee_accomodating_refund",
+    ]
     inlines = [TransactionInline, SeatBookingInline, BookingTaskStackedInline]
+
+    def issue_custom_refund(
+        self, request, queryset, preserve_provider_fees, preserve_app_fees
+    ):
+        """Action to issue refund for selected booking(s)"""
+        refunded_bookings = []
+        for booking in queryset:
+            try:
+                booking.refund(
+                    authorizing_user=request.user,
+                    send_admin_email=False,
+                    preserve_provider_fees=preserve_provider_fees,
+                    preserve_app_fees=preserve_app_fees,
+                )
+                refunded_bookings.append(booking)
+            except CantBeRefundedException:
+                self.message_user(
+                    request,
+                    f"One or more bookings could not be refunded ({booking})",
+                    level=messages.ERROR,
+                )
+                break
+
+        if (num_refunded := len(refunded_bookings)) > 0:
+            self.message_user(
+                request, f"{num_refunded} bookings have had refunds requested"
+            )
+
+            mail = payable_refund_initiated_email(
+                request.user, refunded_bookings, "Full"
+            )
+            mail_admins(
+                "Booking Refunds Initiated",
+                mail.to_plain_text(),
+                html_message=mail.to_html(),
+            )
 
     @confirm_dangerous_action
     @admin.action(description="Issue full refund", permissions=["change"])
     def issue_full_refund(self, request, queryset):
-        """Action to issue refund for selected booking(s)"""
-        refunded_bookings = []
-        for booking in queryset:
-            try:
-                booking.refund(
-                    authorizing_user=request.user,
-                    send_admin_email=False,
-                    preserve_provider_fees=False,
-                )
-                refunded_bookings.append(booking)
-            except CantBeRefundedException:
-                self.message_user(
-                    request,
-                    f"One or more bookings could not be refunded ({booking})",
-                    level=messages.ERROR,
-                )
-                break
-
-        if (num_refunded := len(refunded_bookings)) > 0:
-            self.message_user(
-                request, f"{num_refunded} bookings have had refunds requested"
-            )
-
-            mail = payable_refund_initiated_email(request.user, refunded_bookings)
-            mail_admins(
-                "Booking Refunds Initiated",
-                mail.to_plain_text(),
-                html_message=mail.to_html(),
-            )
+        """Action to issue full refund(s) for selected booking(s)"""
+        self.issue_custom_refund(request, queryset, False, False)
 
     @confirm_dangerous_action
-    @admin.action(
-        description="Issue square fee accomodating refund", permissions=["change"]
-    )
-    def issue_provider_refund(self, request, queryset):
-        """Action to issue refund for selected booking(s)"""
-        refunded_bookings = []
-        for booking in queryset:
-            try:
-                booking.refund(
-                    authorizing_user=request.user,
-                    send_admin_email=False,
-                    preserve_provider_fees=True,
-                )
-                refunded_bookings.append(booking)
-            except CantBeRefundedException:
-                self.message_user(
-                    request,
-                    f"One or more bookings could not be refunded ({booking})",
-                    level=messages.ERROR,
-                )
-                break
-
-        if (num_refunded := len(refunded_bookings)) > 0:
-            self.message_user(
-                request, f"{num_refunded} bookings have had refunds requested"
-            )
-
-            mail = payable_refund_initiated_email(request.user, refunded_bookings)
-            mail_admins(
-                "Booking Refunds Initiated",
-                mail.to_plain_text(),
-                html_message=mail.to_html(),
-            )
+    @admin.action(description="Issue provider refund", permissions=["change"])
+    def issue_payment_provider_fee_accomodating_refund(self, request, queryset):
+        """Action to issue payment provider fee-accomodating refund(s) for selected booking(s)"""
+        self.issue_custom_refund(request, queryset, True, False)
 
     @confirm_dangerous_action
     @admin.action(
         description="Issue uobtheatre fee accomodating refund", permissions=["change"]
     )
-    def issue_app_refund(self, request, queryset):
-        """Action to issue refund for selected booking(s)"""
-        refunded_bookings = []
-        for booking in queryset:
-            try:
-                booking.refund(
-                    authorizing_user=request.user,
-                    send_admin_email=False,
-                    preserve_app_fees=True,
-                )
-                refunded_bookings.append(booking)
-            except CantBeRefundedException:
-                self.message_user(
-                    request,
-                    f"One or more bookings could not be refunded ({booking})",
-                    level=messages.ERROR,
-                )
-                break
+    def issue_uobtheatre_fee_accomodating_refund(self, request, queryset):
+        """Action to issue uobtheatre fee-accomodating refund(s) for selected booking(s)"""
+        self.issue_custom_refund(request, queryset, False, True)
 
-        if (num_refunded := len(refunded_bookings)) > 0:
-            self.message_user(
-                request, f"{num_refunded} bookings have had refunds requested"
-            )
-
-            mail = payable_refund_initiated_email(request.user, refunded_bookings)
-            mail_admins(
-                "Booking Refunds Initiated",
-                mail.to_plain_text(),
-                html_message=mail.to_html(),
-            )
+    @confirm_dangerous_action
+    @admin.action(
+        description="Issue provider and uobtheatre fee accomodating refund",
+        permissions=["change"],
+    )
+    def issue_all_fee_accomodating_refund(self, request, queryset):
+        """Action to issue provider and uobtheatre fee-accomodating refund(s) for selected booking(s)"""
+        self.issue_custom_refund(request, queryset, True, True)
 
     def get_performance_name(self, obj):
         return obj.performance.production.name

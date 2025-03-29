@@ -1310,7 +1310,25 @@ def test_performance_refund_bookings(disabled, fails):
                 performance.refund_bookings(user)
         else:
             performance.refund_bookings(user)
-            refund_task_mock.assert_called_once_with(1, 123)
+            refund_task_mock.assert_called_once_with(1, 123, True, False)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "preserve_provider_fees, preserve_app_fees",
+    [(True, True), (False, False), (True, False), (False, True)],
+)
+def test_performance_refund_bookings_options(preserve_provider_fees, preserve_app_fees):
+    performance = PerformanceFactory(id=1, disabled=True)
+    user = UserFactory(id=123)
+
+    with patch(
+        "uobtheatre.productions.tasks.refund_performance.delay",
+    ) as refund_task_mock:
+        performance.refund_bookings(user, preserve_provider_fees, preserve_app_fees)
+        refund_task_mock.assert_called_once_with(
+            1, 123, preserve_provider_fees, preserve_app_fees
+        )
 
 
 @pytest.mark.django_db

@@ -20,6 +20,11 @@ def test_refund_performance_task(mailoutbox):
     ) as refund_mock:
         refund_performance(performance.pk, auth_user.pk)
 
-    refund_mock.assert_called_once_with(booking, authorizing_user=auth_user)
+    refund_mock.assert_called_once_with(
+        booking,
+        authorizing_user=auth_user,
+        preserve_provider_fees=True,
+        preserve_app_fees=False,
+    )
     assert len(mailoutbox) == 1
     assert mailoutbox[0].subject == "[UOBTheatre] Performance Refunds Initiated"

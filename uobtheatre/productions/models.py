@@ -720,11 +720,22 @@ class Performance(
         """Generates a breakdown of the sales of this performance"""
         return self.qs.transactions().annotate_sales_breakdown(breakdowns)
 
-    def refund_bookings(self, authorizing_user: User):
+    def refund_bookings(
+        self,
+        authorizing_user: User,
+        preserve_provider_fees: bool = True,
+        preserve_app_fees: bool = False,
+    ):
         """Refund the performance's bookings
 
         Args:
             authorizing_user (User): The user authorizing the refund
+            preserve_provider_fees (bool): If true the refund is reduced by the amount required to cover the payment's provider_fee
+                i.e. the refund is reduced by the amount required to cover only Square's fees.
+                If both preserve_provider_fees and preserve_app_fees are true, the refund is reduced by the larger of the two fees.
+            preserve_app_fees (bool): If true the refund is reduced by the amount required to cover the payment's app_fee
+                i.e. the refund is reduced by the amount required to cover our fees (the various misc_costs, such as the theatre improvement levy).
+                If both preserve_provider_fees and preserve_app_fees are true, the refund is reduced by the larger of the two fees.
 
         Raises:
             CantBeRefundedException: Raised if the performance can't be refunded
@@ -732,7 +743,9 @@ class Performance(
         if not self.disabled:
             raise CantBeRefundedException(f"{self} is not set to disabled")
 
-        refund_performance.delay(self.pk, authorizing_user.id)
+        refund_performance.delay(
+            self.pk, authorizing_user.id, preserve_provider_fees, preserve_app_fees
+        )
 
     def __str__(self):
         if self.start is None:

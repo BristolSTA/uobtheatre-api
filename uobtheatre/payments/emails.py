@@ -7,12 +7,14 @@ from uobtheatre.users.models import User
 from uobtheatre.utils.lang import pluralize
 
 
-def payable_refund_initiated_email(authorizing_user: User, models: List[Model]):
+def payable_refund_initiated_email(
+    authorizing_user: User, models: List[Model], refund_type: str
+):
     return (
         MailComposer()
         .greeting()
         .line(
-            f"Refund(s) have been initiated for the following {pluralize('item', models)}:"
+            f"{refund_type} refund(s) have been initiated for the following {pluralize('item', models)}:"
         )
         .line(
             ", ".join(
