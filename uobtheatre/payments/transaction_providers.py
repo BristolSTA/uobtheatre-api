@@ -1,6 +1,6 @@
 import abc
 import re
-from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Type
+from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Type, Union
 from uuid import uuid4
 
 from django.conf import settings
@@ -13,6 +13,8 @@ from square.requests.device_checkout_options import DeviceCheckoutOptionsParams 
 from square.types.payment import Payment
 from square.types.payment_refund import PaymentRefund
 from square.types.terminal_checkout import TerminalCheckout
+from square.requests.location import LocationParams
+from square.types.location import Location
 
 from uobtheatre.payments import models as payment_models
 from uobtheatre.utils.exceptions import PaymentException, SquareException
@@ -196,7 +198,7 @@ class SquareAPIMixin(abc.ABC):
     """Mixin that inserts square API client and handlers"""
 
     kwargs = {
-        "version": "2020-11-18",
+        "version": "2025-04-16",
         "token": settings.SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],  # type: ignore
         "environment": settings.SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],  # type: ignore
     }
@@ -207,7 +209,7 @@ class SquareAPIMixin(abc.ABC):
     client = Client(**kwargs)
 
     @classmethod
-    def _square_transaction_processing_fee(cls, square_object: PaymentRefund) -> Optional[int]:
+    def _square_transaction_processing_fee(cls, square_object: Union[PaymentRefund, Payment]) -> Optional[int]:
         """
         Get processing fee from a square transaction object dict.
 
@@ -226,7 +228,7 @@ class SquareAPIMixin(abc.ABC):
         )
 
     @classmethod
-    def _fill_payment_from_square_response_object(cls, payment, response_object: PaymentRefund):
+    def _fill_payment_from_square_response_object(cls, payment, response_object: Union[Payment, PaymentRefund]):
         """Updates and fills a payment model from a refund response object"""
         if not response_object.status:
             raise PaymentException(
@@ -533,7 +535,7 @@ class SquarePOS(PaymentProvider, SquarePaymentMethod):
         )
 
     @classmethod
-    def list_devices(cls, status: Optional[str] = None) -> list[Device]:
+    def list_devices(cls, status: Optional[str] = None, location_id: Optional[str] = None) -> list[Device]:
         """List the device codes available on square.
 
         Args:
@@ -541,7 +543,7 @@ class SquarePOS(PaymentProvider, SquarePaymentMethod):
                 for just paried devices use: "PAIRED"
 
         Returns:
-            list of dict: A list of dictionaries which store the device code
+            list of Devices: A list of Devices which store the device code
                 info. When connection to a device the `device_id` should be
                 used.
 
@@ -549,7 +551,7 @@ class SquarePOS(PaymentProvider, SquarePaymentMethod):
             SquareException: If the square request returns an error
         """
         try:
-            response = cls.client.devices.list().items
+            response = cls.client.devices.list(location_id=location_id).items
 
         except ApiError as error:
             raise SquareException(error) from error
@@ -559,6 +561,9 @@ class SquarePOS(PaymentProvider, SquarePaymentMethod):
         
         if status:
             response = [device for device in response if device.status == status]
+        
+        for device in response:
+            device.location_id = 
 
         return response
 
@@ -604,7 +609,7 @@ class SquarePOS(PaymentProvider, SquarePaymentMethod):
 
     @classmethod
     def sync_transaction(
-        cls, payment: "payment_models.Transaction", data: Optional[TerminalCheckoutParams] = None # type: ignore[override]
+        cls, payment: "payment_models.Transaction", data: Optional[TerminalCheckout] = None # type: ignore[override]
     ):
         """Syncs the given payment with the raw payment data"""
         payment_id = cls.get_payment_provider_id(payment)
@@ -615,32 +620,33 @@ class SquarePOS(PaymentProvider, SquarePaymentMethod):
             raise PaymentException(
                 f"Transaction failed to sync due to a lack of checkout: {payment.pay_object.payment_reference_id}"
             )
+        
+        payment.provider_fee = None
 
-        payment.provider_fee = (
-            sum(
-                filter(
-                    None,
-                    [
-                        cls._square_transaction_processing_fee(
-                            cls.get_payment(payment_id)
-                        )
-                        for payment_id in checkout.items
-                    ],
-                )
-            )
-            if "payment_ids" in checkout
-            else None
-        )
+        if checkout.payment_ids:
+            for payment_id in checkout.payment_ids:
+                payment_object = cls.get_payment(payment_id)
+                if not payment_object:
+                    continue
+
+                processing_fee = cls._square_transaction_processing_fee(payment_object)
+                if processing_fee:
+                    payment.provider_fee = (payment.provider_fee or 0) + processing_fee
+
         old_status = payment.status
         payment.status = payment_models.Transaction.Status.from_square_status(
-            checkout["status"]
+            checkout.status if checkout.status else "CANCELLED"
         )
         status_changed = not payment.status == old_status
         # If the checkout has failed
         if payment.status == payment_models.Transaction.Status.FAILED:
-            # Delete the cehckout payment
+            # Delete the checkout payment
+            if not checkout.id:
+                raise PaymentException(
+                    f"Transaction failed to sync due to a lack of checkout id: {payment.pay_object.payment_reference_id}"
+                )
             payment_models.Transaction.objects.get(
-                provider_transaction_id=checkout["id"],
+                provider_transaction_id=checkout.id,
                 provider_name=SquarePOS.name,
                 status=payment_models.Transaction.Status.PENDING,
             ).delete()
@@ -711,7 +717,8 @@ class SquareOnline(PaymentProvider, SquarePaymentMethod):
             ApiResponse: Response object from Square
 
         Raises:
-            SquareException: If the request was unsuccessful.
+            SquareException: If the API call was unsuccessful
+            PaymentException: If the payment otherwise failed
         """
 
         kwargs = {
@@ -730,24 +737,49 @@ class SquareOnline(PaymentProvider, SquarePaymentMethod):
         except ApiError as error:
             raise SquareException(error) from error
 
-        card_details = response.body["payment"]["card_details"]["card"]
-        amount_details = response.body["payment"]["amount_money"]
+        if not response.payment:
+            error_message = (
+                response.errors[0].detail if response.errors else "No payment returned"
+            )
+            raise PaymentException(
+                f"Payment failed for {pay_object.payment_reference_id}: {error_message}"
+            )
+
+        card_payment_details = response.payment.card_details
+        if not card_payment_details:
+            error_message = (
+                response.errors[0].detail if response.errors else "No card details returned"
+            )
+            raise PaymentException(
+                f"Payment failed for {pay_object.payment_reference_id}: {error_message}"
+            )
+
+        card_details = card_payment_details.card
+        amount_details = response.payment.amount_money
+        square_payment_id = response.payment.id
+
+        if not (card_details and amount_details and square_payment_id):
+            error_message = (
+                response.errors[0].detail if response.errors else "Incomplete payment details"
+            )
+            raise PaymentException(
+                f"Payment failed for {pay_object.payment_reference_id}: {error_message}"
+            )
 
         # Create payment object with info that is returned
-        square_payment_id = response.body["payment"]["id"]
         return self.create_payment_object(
             pay_object,
-            amount_details["amount"],
+            amount_details.amount,
             app_fee,
-            card_brand=card_details["card_brand"],
-            last_4=card_details["last_4"],
+            card_brand=card_details.card_brand,
+            last_4=card_details.last4,
             provider_transaction_id=square_payment_id,
-            currency=amount_details["currency"],
+            currency=amount_details.currency,
         )
 
     @classmethod
     def sync_transaction(
-        cls, payment: "payment_models.Transaction", data: Optional[dict] = None
+        cls, payment: "payment_models.Transaction", data: Optional[Payment] = None # type: ignore[override]
     ):
         """Syncs the given payment with the raw payment data"""
         payment_id = cls.get_payment_provider_id(payment)

@@ -106,13 +106,13 @@ class Query(graphene.ObjectType):
             devices.extend(
                 [
                     SquarePaymentDevice(
-                        id=device["id"],
-                        name=device["name"],
-                        code=device["code"],
-                        status=device["status"],
-                        product_type=device["product_type"],
-                        location_id=device["location_id"],
-                        device_id=device.get("device_id"),
+                        id=device.id,
+                        name=device.attributes.name,
+                        code=device.attributes.manufacturers_id,
+                        status=device.status,
+                        product_type=device.attributes.type,
+                        location_id=device,
+                        device_id=device.i,
                     )
                     for device in SquarePOS.list_devices(status=status)
                 ]
