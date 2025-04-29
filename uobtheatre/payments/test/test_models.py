@@ -4,6 +4,8 @@ from unittest.mock import MagicMock, PropertyMock, patch
 import pytest
 from pytest_django.asserts import assertQuerysetEqual
 
+from square.types.get_payment_response import GetPaymentResponse
+
 from uobtheatre.payments.exceptions import (
     CantBeCanceledException,
     CantBeRefundedException,
@@ -71,29 +73,30 @@ def test_transaction_type_filters():
 @pytest.mark.django_db
 def test_update_payment_from_square(mock_square):
     payment = TransactionFactory(provider_fee=0, provider_transaction_id="abc")
+
+    mock_response = GetPaymentResponse(
+        payment={
+            "id": "RGdfG3spBBfui4ZJy4HFFogUKjKZY",
+            "amount_money": {"amount": 1990, "currency": "GBP"},
+            "status": "COMPLETED",
+            "delay_duration": "PT168H",
+            "source_type": "CARD",
+            "processing_fee": [
+                {
+                    "effective_at": "2021-10-03T09:46:42.000Z",
+                    "type": "INITIAL",
+                    "amount_money": {"amount": 58, "currency": "GBP"},
+                }
+            ],
+            "total_money": { "amount": 1990, "currency": "GBP"},
+            "approved_money": { "amount": 1990, "currency": "GBP"},
+        }
+    )
+
     with mock_square(
         SquareOnline.client.payments,
-        "get_payment",
-        status_code=200,
-        success=True,
-        body={
-            "payment": {
-                "id": "RGdfG3spBBfui4ZJy4HFFogUKjKZY",
-                "amount_money": {"amount": 1990, "currency": "GBP"},
-                "status": "COMPLETED",
-                "delay_duration": "PT168H",
-                "source_type": "CARD",
-                "processing_fee": [
-                    {
-                        "effective_at": "2021-10-03T09:46:42.000Z",
-                        "type": "INITIAL",
-                        "amount_money": {"amount": 58, "currency": "GBP"},
-                    }
-                ],
-                "total_money": {"amount": 1990, "currency": "GBP"},
-                "approved_money": {"amount": 1990, "currency": "GBP"},
-            }
-        },
+        "get",
+        response=mock_response
     ):
         payment.sync_transaction_with_provider()
 
@@ -106,7 +109,7 @@ def test_update_payment_from_square_no_provider_id(mock_square):
     payment = TransactionFactory(provider_fee=0, provider_transaction_id=None)
     with mock_square(
         SquareOnline.client.payments,
-        "get_payment",
+        "get",
     ) as mock_get, pytest.raises(PaymentException):
         payment.sync_transaction_with_provider()
     mock_get.assert_not_called()
@@ -117,22 +120,23 @@ def test_update_payment_from_square_no_provider_id(mock_square):
 @pytest.mark.django_db
 def test_update_payment_from_square_no_processing_fee(mock_square):
     payment = TransactionFactory(provider_fee=None, provider_transaction_id="abc")
-    with mock_square(
-        SquareOnline.client.payments,
-        "get_payment",
-        status_code=200,
-        success=True,
-        body={
-            "payment": {
-                "id": "RGdfG3spBBfui4ZJy4HFFogUKjKZY",
+
+    mock_response = GetPaymentResponse(
+        payment={
+            "id": "RGdfG3spBBfui4ZJy4HFFogUKjKZY",
                 "amount_money": {"amount": 1990, "currency": "GBP"},
                 "status": "COMPLETED",
                 "delay_duration": "PT168H",
                 "source_type": "CARD",
                 "total_money": {"amount": 1990, "currency": "GBP"},
                 "approved_money": {"amount": 1990, "currency": "GBP"},
-            }
-        },
+        }
+    )
+
+    with mock_square(
+        SquareOnline.client.payments,
+        "get",
+        mock_response
     ):
         payment.sync_transaction_with_provider()
 

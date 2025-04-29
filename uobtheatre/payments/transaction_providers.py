@@ -6,15 +6,18 @@ from uuid import uuid4
 from django.conf import settings
 from square import Square as Client
 from square.core.api_error import ApiError
-from square.types.device import Device
+from square.requests.device_checkout_options import (
+    DeviceCheckoutOptionsParams as DeviceCheckoutOptions,
+)
+from square.requests.location import LocationParams
 from square.requests.money import MoneyParams
 from square.requests.terminal_checkout import TerminalCheckoutParams
-from square.requests.device_checkout_options import DeviceCheckoutOptionsParams as DeviceCheckoutOptions
+from square.types.device import Device
+from square.types.device_code import DeviceCode
+from square.types.location import Location
 from square.types.payment import Payment
 from square.types.payment_refund import PaymentRefund
 from square.types.terminal_checkout import TerminalCheckout
-from square.requests.location import LocationParams
-from square.types.location import Location
 
 from uobtheatre.payments import models as payment_models
 from uobtheatre.utils.exceptions import PaymentException, SquareException
@@ -209,7 +212,9 @@ class SquareAPIMixin(abc.ABC):
     client = Client(**kwargs)
 
     @classmethod
-    def _square_transaction_processing_fee(cls, square_object: Union[PaymentRefund, Payment]) -> Optional[int]:
+    def _square_transaction_processing_fee(
+        cls, square_object: Union[PaymentRefund, Payment]
+    ) -> Optional[int]:
         """
         Get processing fee from a square transaction object dict.
 
@@ -224,11 +229,15 @@ class SquareAPIMixin(abc.ABC):
             return None
 
         return sum(
-            fee.amount_money.amount for fee in square_object.processing_fee if fee.amount_money and fee.amount_money.amount
+            fee.amount_money.amount
+            for fee in square_object.processing_fee
+            if fee.amount_money and fee.amount_money.amount
         )
 
     @classmethod
-    def _fill_payment_from_square_response_object(cls, payment, response_object: Union[Payment, PaymentRefund]):
+    def _fill_payment_from_square_response_object(
+        cls, payment, response_object: Union[Payment, PaymentRefund]
+    ):
         """Updates and fills a payment model from a refund response object"""
         if not response_object.status:
             raise PaymentException(
@@ -362,16 +371,16 @@ class SquareRefund(RefundProvider, SquareAPIMixin):
 
         except ApiError as error:
             raise SquareException(error) from error
-        
+
         if not response.refund:
             if response.errors:
                 raise PaymentException(
                     f"Refund failed for {payment.pay_object.payment_reference_id}: {response.errors[0].detail}"
                 )
-            else:
-                raise PaymentException(
-                    f"Refund failed for {payment.pay_object.payment_reference_id}"
-                )
+
+            raise PaymentException(
+                f"Refund failed for {payment.pay_object.payment_reference_id}"
+            )
 
         square_refund_details = response.refund.amount_money
         square_refund_amount = square_refund_details.amount
@@ -382,10 +391,10 @@ class SquareRefund(RefundProvider, SquareAPIMixin):
                 raise PaymentException(
                     f"Refund failed for {payment.pay_object.payment_reference_id}: {response.errors[0].detail}"
                 )
-            else:
-                raise PaymentException(
-                    f"Refund failed for {payment.pay_object.payment_reference_id}"
-                )
+
+            raise PaymentException(
+                f"Refund failed for {payment.pay_object.payment_reference_id}"
+            )
 
         app_fee_reduction = None
 
@@ -410,7 +419,7 @@ class SquareRefund(RefundProvider, SquareAPIMixin):
 
     @classmethod
     def sync_transaction(
-        cls, payment: "payment_models.Transaction", data: Optional[PaymentRefund] = None # type: ignore[override]
+        cls, payment: "payment_models.Transaction", data: Optional[PaymentRefund] = None  # type: ignore[override]
     ):
         if not data:
             try:
@@ -418,9 +427,9 @@ class SquareRefund(RefundProvider, SquareAPIMixin):
 
             except ApiError as error:
                 raise SquareException(error) from error
-            
+
             data = response.refund
-        
+
         if not data:
             raise PaymentException(
                 f"Transaction failed to sync after refund for payment {payment.pay_object.payment_reference_id}"
@@ -495,6 +504,7 @@ class SquarePOS(PaymentProvider, SquarePaymentMethod):
 
         Raises:
             SquareException: If the request was unsuccessful.
+            PaymentException: If the payment otherwise failed
 
         Returns:
             Payment: Created payment
@@ -503,26 +513,27 @@ class SquarePOS(PaymentProvider, SquarePaymentMethod):
         checkout = TerminalCheckoutParams(
             amount_money=MoneyParams(amount=value, currency="GBP"),
             reference_id=pay_object.payment_reference_id,
-            device_options=DeviceCheckoutOptions(device_id=self.device_id)
+            device_options=DeviceCheckoutOptions(device_id=self.device_id),
         )
 
         try:
             response = self.client.terminal.checkouts.create(
-                idempotency_key=self.idempotency_key,
-                checkout=checkout
+                idempotency_key=self.idempotency_key, checkout=checkout
             )
 
         except ApiError as error:
             raise SquareException(error) from error
-        
+
         if not (response.checkout and response.checkout.id):
             if response.errors:
                 raise PaymentException(
                     f"Checkout failed for {pay_object.payment_reference_id} - response missing checkout or checkout ID: {response.errors[0].detail}"
                 )
-            else:
-                raise PaymentException(f"Checkout failed for {pay_object.payment_reference_id} - response missing checkout or checkout ID")
-        
+
+            raise PaymentException(
+                f"Checkout failed for {pay_object.payment_reference_id} - response missing checkout or checkout ID"
+            )
+
         square_transaction_id = response.checkout.id
 
         return self.create_payment_object(
@@ -535,15 +546,19 @@ class SquarePOS(PaymentProvider, SquarePaymentMethod):
         )
 
     @classmethod
-    def list_devices(cls, status: Optional[str] = None, location_id: Optional[str] = None) -> list[Device]:
+    def list_devices(
+        cls, status: Optional[str] = None, location_id: Optional[str] = None
+    ) -> list[DeviceCode]:
         """List the device codes available on square.
 
         Args:
             status (str): If provided filters the result by the status type,
                 for just paried devices use: "PAIRED"
+            location_id (str): If provided filters the result by the
+                Square location id.
 
         Returns:
-            list of Devices: A list of Devices which store the device code
+            list of DeviceCode: A list of Devices which store the device code
                 info. When connection to a device the `device_id` should be
                 used.
 
@@ -551,19 +566,15 @@ class SquarePOS(PaymentProvider, SquarePaymentMethod):
             SquareException: If the square request returns an error
         """
         try:
-            response = cls.client.devices.list(location_id=location_id).items
+            response = cls.client.devices.codes.list(
+                location_id=location_id, status=status
+            ).items
 
         except ApiError as error:
             raise SquareException(error) from error
-        
+
         if not response:
             return []
-        
-        if status:
-            response = [device for device in response if device.status == status]
-        
-        for device in response:
-            device.location_id = 
 
         return response
 
@@ -597,10 +608,13 @@ class SquarePOS(PaymentProvider, SquarePaymentMethod):
 
         Raises:
             SquareException: When request is not successful
+            PaymentException: If the payment otherwise failed
         """
         if not payment.provider_transaction_id:
-            raise PaymentException(f"Cannot cancel payment without provider_transaction_id: {payment.pay_object.payment_reference_id}")
-        
+            raise PaymentException(
+                f"Cannot cancel payment without provider_transaction_id: {payment.pay_object.payment_reference_id}"
+            )
+
         try:
             cls.client.terminal.checkouts.cancel(payment.provider_transaction_id)
 
@@ -609,7 +623,7 @@ class SquarePOS(PaymentProvider, SquarePaymentMethod):
 
     @classmethod
     def sync_transaction(
-        cls, payment: "payment_models.Transaction", data: Optional[TerminalCheckout] = None # type: ignore[override]
+        cls, payment: "payment_models.Transaction", data: Optional[TerminalCheckout] = None  # type: ignore[override]
     ):
         """Syncs the given payment with the raw payment data"""
         payment_id = cls.get_payment_provider_id(payment)
@@ -620,7 +634,7 @@ class SquarePOS(PaymentProvider, SquarePaymentMethod):
             raise PaymentException(
                 f"Transaction failed to sync due to a lack of checkout: {payment.pay_object.payment_reference_id}"
             )
-        
+
         payment.provider_fee = None
 
         if checkout.payment_ids:
@@ -748,7 +762,9 @@ class SquareOnline(PaymentProvider, SquarePaymentMethod):
         card_payment_details = response.payment.card_details
         if not card_payment_details:
             error_message = (
-                response.errors[0].detail if response.errors else "No card details returned"
+                response.errors[0].detail
+                if response.errors
+                else "No card details returned"
             )
             raise PaymentException(
                 f"Payment failed for {pay_object.payment_reference_id}: {error_message}"
@@ -760,7 +776,9 @@ class SquareOnline(PaymentProvider, SquarePaymentMethod):
 
         if not (card_details and amount_details and square_payment_id):
             error_message = (
-                response.errors[0].detail if response.errors else "Incomplete payment details"
+                response.errors[0].detail
+                if response.errors
+                else "Incomplete payment details"
             )
             raise PaymentException(
                 f"Payment failed for {pay_object.payment_reference_id}: {error_message}"
@@ -779,14 +797,14 @@ class SquareOnline(PaymentProvider, SquarePaymentMethod):
 
     @classmethod
     def sync_transaction(
-        cls, payment: "payment_models.Transaction", data: Optional[Payment] = None # type: ignore[override]
+        cls, payment: "payment_models.Transaction", data: Optional[Payment] = None  # type: ignore[override]
     ):
         """Syncs the given payment with the raw payment data"""
         payment_id = cls.get_payment_provider_id(payment)
 
         if data is None:
             data = cls.get_payment(payment_id)
-        
+
         if not data:
             raise PaymentException(
                 f"Transaction failed to sync after refund for payment {payment.pay_object.payment_reference_id}"

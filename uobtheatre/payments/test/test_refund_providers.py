@@ -3,6 +3,10 @@ from uuid import uuid4
 
 import pytest
 
+from square.types.refund_payment_response import RefundPaymentResponse
+from square.types.payment_refund import PaymentRefund
+from square.types.processing_fee import ProcessingFee
+
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.payments.transaction_providers import (
@@ -131,23 +135,23 @@ def test_square_refund_refund(mock_square):
     refund_method.create_payment_object = MagicMock()
     payment = TransactionFactory(value=100, provider_fee=10, app_fee=20)
 
+    mock_response = RefundPaymentResponse(
+        refund={
+            "id": "abc",
+            "status": "PENDING",
+            "amount_money": {"amount": 100, "currency": "GBP"},
+            "payment_id": "abc",
+            "order_id": "nRDUxsrkGgorM3g8AT64kCLBLa4F",
+            "created_at": "2021-12-30T10:40:54.672Z",
+            "updated_at": "2021-12-30T10:40:54.672Z",
+            "location_id": "LN9PN3P67S0QV",
+        }
+    )
+
     with mock_square(
         SquareRefund.client.refunds,
         "refund_payment",
-        status_code=200,
-        success=True,
-        body={
-            "refund": {
-                "id": "abc",
-                "status": "PENDING",
-                "amount_money": {"amount": 100, "currency": "GBP"},
-                "payment_id": "abc",
-                "order_id": "nRDUxsrkGgorM3g8AT64kCLBLa4F",
-                "created_at": "2021-12-30T10:40:54.672Z",
-                "updated_at": "2021-12-30T10:40:54.672Z",
-                "location_id": "LN9PN3P67S0QV",
-            }
-        },
+        mock_response,
     ) as mock:
         refund_method.refund(payment)
 
@@ -160,12 +164,10 @@ def test_square_refund_refund(mock_square):
         status=Transaction.Status.PENDING,
     )
     mock.assert_called_once_with(
-        {
-            "idempotency_key": idempotency_key,
-            "amount_money": {"amount": payment.value, "currency": payment.currency},
-            "payment_id": payment.provider_transaction_id,
-            "reason": f"Refund for {payment.pay_object.payment_reference_id}",
-        }
+        idempotency_key = idempotency_key,
+        amount_money = {"amount": payment.value, "currency": payment.currency},
+        payment_id = payment.provider_transaction_id,
+        reason = f"Refund for {payment.pay_object.payment_reference_id}"
     )
 
 
@@ -183,23 +185,23 @@ def test_square_refund_custom_amount_refund(
     refund_method.create_payment_object = MagicMock()
     payment = TransactionFactory(value=value, provider_fee=10, app_fee=app_fee)
 
+    mock_response = RefundPaymentResponse(
+        refund={
+            "id": "abc",
+            "status": "PENDING",
+            "amount_money": {"amount": custom_refund_amount, "currency": "GBP"},
+            "payment_id": "abc",
+            "order_id": "nRDUxsrkGgorM3g8AT64kCLBLa4F",
+            "created_at": "2021-12-30T10:40:54.672Z",
+            "updated_at": "2021-12-30T10:40:54.672Z",
+            "location_id": "LN9PN3P67S0QV",
+        }
+    )
+
     with mock_square(
         SquareRefund.client.refunds,
         "refund_payment",
-        status_code=200,
-        success=True,
-        body={
-            "refund": {
-                "id": "abc",
-                "status": "PENDING",
-                "amount_money": {"amount": custom_refund_amount, "currency": "GBP"},
-                "payment_id": "abc",
-                "order_id": "nRDUxsrkGgorM3g8AT64kCLBLa4F",
-                "created_at": "2021-12-30T10:40:54.672Z",
-                "updated_at": "2021-12-30T10:40:54.672Z",
-                "location_id": "LN9PN3P67S0QV",
-            }
-        },
+        mock_response,
     ) as mock:
         refund_method.refund(payment)
 
@@ -212,12 +214,10 @@ def test_square_refund_custom_amount_refund(
         status=Transaction.Status.PENDING,
     )
     mock.assert_called_once_with(
-        {
-            "idempotency_key": idempotency_key,
-            "amount_money": {"amount": payment.value, "currency": payment.currency},
-            "payment_id": payment.provider_transaction_id,
-            "reason": f"Refund for {payment.pay_object.payment_reference_id}",
-        }
+        idempotency_key = idempotency_key,
+        amount_money = {"amount": payment.value, "currency": payment.currency},
+        payment_id = payment.provider_transaction_id,
+        reason = f"Refund for {payment.pay_object.payment_reference_id}"
     )
 
 
@@ -229,23 +229,23 @@ def test_square_refund_custom_amount_too_high_refund(mock_square):
     refund_method.create_payment_object = MagicMock()
     payment = TransactionFactory()
 
+    mock_response = RefundPaymentResponse(
+        refund={
+            "id": "abc",
+            "status": "PENDING",
+            "amount_money": {"amount": payment.value + 1, "currency": "GBP"},
+            "payment_id": "abc",
+            "order_id": "nRDUxsrkGgorM3g8AT64kCLBLa4F",
+            "created_at": "2021-12-30T10:40:54.672Z",
+            "updated_at": "2021-12-30T10:40:54.672Z",
+            "location_id": "LN9PN3P67S0QV",
+        }
+    )
+
     with mock_square(
         SquareRefund.client.refunds,
         "refund_payment",
-        status_code=200,
-        success=True,
-        body={
-            "refund": {
-                "id": "abc",
-                "status": "PENDING",
-                "amount_money": {"amount": 90, "currency": "GBP"},
-                "payment_id": "abc",
-                "order_id": "nRDUxsrkGgorM3g8AT64kCLBLa4F",
-                "created_at": "2021-12-30T10:40:54.672Z",
-                "updated_at": "2021-12-30T10:40:54.672Z",
-                "location_id": "LN9PN3P67S0QV",
-            }
-        },
+        mock_response
     ):
         with pytest.raises(PaymentException):
             refund_method.refund(payment, payment.value + 1)
@@ -264,17 +264,17 @@ def test_square_refund_custom_amount_too_high_refund(mock_square):
 def test_square_online_sync_transaction(data_fees, data_status):
     payment = TransactionFactory(status=Transaction.Status.PENDING, provider_fee=None)
 
-    data = {
-        "status": data_status,
-    }
-
-    if data_fees:
-        data["processing_fee"] = [
-            {
-                "amount_money": {"amount": fee, "currency": "GBP"},
-            }
-            for fee in data_fees
-        ]
+    data = PaymentRefund(
+        status=data_status,
+        id="abc",
+        amount_money={"amount": 10, "currency": "GBP"},
+        processing_fee=[
+            ProcessingFee(
+                amount_money={"amount": fee, "currency": "GBP"},
+            )
+            for fee in data_fees if data_fees
+        ] if data_fees else None
+    )
 
     SquareRefund.sync_transaction(payment, data)
 
@@ -299,16 +299,25 @@ def test_square_refund_sync_payment(mock_square, with_data):
         provider_name=SquareRefund.name,
         status=Transaction.Status.PENDING,
     )
-    data = {
-        "id": "abc",
-        "status": "COMPLETED",
-        "processing_fee": [{"amount_money": {"amount": -10, "currency": "GBP"}}],
-    }
+    data = PaymentRefund(
+        id="abc",
+        status="COMPLETED",
+        amount_money={"amount": -10, "currency": "GBP"},
+        processing_fee=[
+            ProcessingFee(
+                amount_money={"amount": -10, "currency": "GBP"},
+            )
+        ],
+    )
+
+    mock_response = RefundPaymentResponse(
+        refund=data
+    )
+
     with mock_square(
         SquareRefund.client.refunds,
-        "get_payment_refund",
-        body={"refund": data},
-        success=True,
+        "get",
+        mock_response
     ):
         payment.sync_transaction_with_provider(data=data if with_data else None)
         payment.refresh_from_db()

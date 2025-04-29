@@ -10,6 +10,7 @@ from django.test import RequestFactory
 from graphene.test import Client as GQLClient
 from rest_framework.test import APIClient
 from square import Square as Client
+from square.core.api_error import ApiError
 
 from uobtheatre.payments.test.factories import MockApiResponse
 from uobtheatre.schema import schema as app_schema
@@ -82,30 +83,48 @@ def mock_square():
     Used to mock the square client
     """
 
+    default_exception = ApiError(
+        status_code=400,
+        body={
+            "errors": [
+                {
+                    "category": "",
+                    "detail": "",
+                    "code": "MY_CODE",
+                }
+            ]
+        },
+    )
+
     @contextmanager
     def mock_client(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         square_client_api,
         method: str,
-        body: Optional[dict] = None,
-        success: Optional[bool] = None,
-        reason_phrase: Optional[str] = None,
-        status_code: Optional[int] = None,
-        errors: Optional[List] = None,
+        response: Optional[any] = None,
+        exception: Optional[Exception] = None,
+        throw_default_exception: bool = False,
     ):
         """
         Mock a provided square client object
+
+        Args:
+            square_client_api: The square client object to mock
+            method: The method to mock
+            response: The response to return
+            exception: The exception to raise
+            throw_default_exception: Whether to throw the default API exception
         """
         with patch.object(
             square_client_api,
             method,
         ) as mocked_square:
-            mocked_square.return_value = MockApiResponse(
-                body=body,
-                success=success,
-                reason_phrase=reason_phrase,
-                status_code=status_code,
-                errors=errors,
-            )
+            if exception:
+                mocked_square.side_effect = exception
+            elif throw_default_exception:
+                mocked_square.side_effect = default_exception
+            
+            mocked_square.return_value = response
+            
             yield mocked_square
 
     return mock_client

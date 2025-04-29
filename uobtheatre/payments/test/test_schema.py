@@ -2,6 +2,9 @@ import pytest
 from graphql_relay.node.node import to_global_id
 from guardian.shortcuts import assign_perm
 
+from square.core.pagination import SyncPager
+from square.types.device_code import DeviceCode
+
 from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.payments.transaction_providers import SquarePOS
@@ -105,38 +108,40 @@ def test_list_devices(gql_client, mock_square):
     gql_client.login()
     assign_perm("productions.boxoffice", gql_client.user)
 
+    mock_response = SyncPager(
+        has_next=False,
+        items=[
+            DeviceCode(
+                id="X12GC60W7P7V8",
+                name="Boxoffice Terminal",
+                code="SGEKNB",
+                device_id="121CS145A5000029",
+                product_type="TERMINAL_API",
+                location_id="LMHP97T10P8JV",
+                created_at="2021-07-31T11:43:37.000Z",
+                status="PAIRED",
+                status_changed_at="2021-07-31T11:44:41.000Z",
+                paired_at="2021-07-31T11:44:41.000Z",
+            ),
+            DeviceCode(
+                id="GAHYMA4WV6SVQ",
+                name="Terminal API Device created on 13-Aug-2021",
+                code="ENENKR",
+                product_type="TERMINAL_API",
+                location_id="LMHP97T10P8JV",
+                pair_by="2021-08-13T21:31:39.000Z",
+                created_at="2021-08-13T21:26:40.000Z",
+                status="UNPAIRED",
+                status_changed_at="2021-08-13T21:26:39.000Z",
+            ),
+        ],
+        get_next=None,
+    )
+
     with mock_square(
-        SquarePOS.client.devices,
-        "list_device_codes",
-        body={
-            "device_codes": [
-                {
-                    "id": "X12GC60W7P7V8",
-                    "name": "Boxoffice Terminal",
-                    "code": "SGEKNB",
-                    "device_id": "121CS145A5000029",
-                    "product_type": "TERMINAL_API",
-                    "location_id": "LMHP97T10P8JV",
-                    "created_at": "2021-07-31T11:43:37.000Z",
-                    "status": "PAIRED",
-                    "status_changed_at": "2021-07-31T11:44:41.000Z",
-                    "paired_at": "2021-07-31T11:44:41.000Z",
-                },
-                {
-                    "id": "GAHYMA4WV6SVQ",
-                    "name": "Terminal API Device created on 13-Aug-2021",
-                    "code": "ENENKR",
-                    "product_type": "TERMINAL_API",
-                    "location_id": "LMHP97T10P8JV",
-                    "pair_by": "2021-08-13T21:31:39.000Z",
-                    "created_at": "2021-08-13T21:26:40.000Z",
-                    "status": "UNPAIRED",
-                    "status_changed_at": "2021-08-13T21:26:39.000Z",
-                },
-            ]
-        },
-        status_code=200,
-        success=True,
+        SquarePOS.client.devices.codes,
+        "list",
+        mock_response
     ):
         response = gql_client.execute(
             """

@@ -2,6 +2,14 @@ from unittest.mock import PropertyMock, patch
 
 import pytest
 
+from square.types.create_payment_response import CreatePaymentResponse
+from square.types.get_payment_response import GetPaymentResponse
+from square.types.create_terminal_checkout_response import CreateTerminalCheckoutResponse
+from square.types.terminal_checkout import TerminalCheckout
+from square.core.pagination import SyncPager
+from square.types.device_code import DeviceCode
+from square.types.payment import Payment
+
 from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.payments.exceptions import (
     CantBeCanceledException,
@@ -130,25 +138,27 @@ def test_square_online_pay_success(mock_square, with_sca_token):
     """
     Test paying a booking with square
     """
+
+    mock_response = CreatePaymentResponse(
+        payment={
+            "id": "abc",
+            "card_details": {
+                "card": {
+                    "card_brand": "MASTERCARD",
+                    "last4": "1234",
+                }
+            },
+            "amount_money": {
+                "currency": "GBP",
+                "amount": 10,
+            },
+        }
+    )
+
     with mock_square(
         SquareOnline.client.payments,
-        "create_payment",
-        body={
-            "payment": {
-                "id": "abc",
-                "card_details": {
-                    "card": {
-                        "card_brand": "MASTERCARD",
-                        "last_4": "1234",
-                    }
-                },
-                "amount_money": {
-                    "currency": "GBP",
-                    "amount": 10,
-                },
-            }
-        },
-        success=True,
+        "create",
+        mock_response
     ) as mock:
         booking = BookingFactory(reference="abcd")
         payment_method = SquareOnline(
@@ -160,15 +170,22 @@ def test_square_online_pay_success(mock_square, with_sca_token):
     assert Transaction.objects.count() == 1
     assert Transaction.objects.first() == payment
 
-    expected_body = {
-        "idempotency_key": "key",
-        "source_id": "nonce",
-        "amount_money": {"amount": 20, "currency": "GBP"},
-        "reference_id": "abcd",
-    }
+    
     if with_sca_token:
-        expected_body["verification_token"] = "verify_token"
-    mock.assert_called_once_with(expected_body)
+        mock.assert_called_once_with(
+            idempotency_key="key",
+            source_id="nonce",
+            amount_money={ "amount": 20, "currency": "GBP"},
+            reference_id="abcd",
+            verification_token="verify_token"
+        )
+    else:
+        mock.assert_called_once_with(
+            idempotency_key="key",
+            source_id="nonce",
+            amount_money={ "amount": 20, "currency": "GBP"},
+            reference_id="abcd",
+        )
 
     # Assert a payment of the correct type is created
     assert payment is not None
@@ -193,10 +210,8 @@ def test_square_online_pay_failure(mock_square):
     """
     with mock_square(
         SquareOnline.client.payments,
-        "create_payment",
-        reason_phrase="Some phrase",
-        status_code=400,
-        success=False,
+        "create",
+        throw_default_exception=True,
     ):
         payment_method = SquareOnline("nonce", "abc")
         with pytest.raises(SquareException):
@@ -211,19 +226,21 @@ def test_square_online_sync_payment(mock_square):
     payment = TransactionFactory(
         value=100, provider_fee=None, status=Transaction.Status.PENDING
     )
+
+    mock_response = GetPaymentResponse(
+        payment={
+            "id": "abc",
+            "status": "COMPLETED",
+            "processing_fee": [
+                {"amount_money": {"amount": -10, "currency": "GBP"}}
+            ],
+        }
+    )
+
     with mock_square(
         SquareOnline.client.payments,
-        "get_payment",
-        body={
-            "payment": {
-                "id": "abc",
-                "status": "COMPLETED",
-                "processing_fee": [
-                    {"amount_money": {"amount": -10, "currency": "GBP"}}
-                ],
-            }
-        },
-        success=True,
+        "get",
+        mock_response,
     ):
         payment.sync_transaction_with_provider()
         payment.refresh_from_db()
@@ -243,21 +260,22 @@ def test_square_online_cancel_payment():
 ###
 @pytest.mark.django_db
 def test_square_pos_pay_success(mock_square):
+
+    mock_response = CreateTerminalCheckoutResponse(
+        checkout={
+            "id": "ScegTcoaJ0kqO",
+            "amount_money": { "amount": 100, "currency": "GBP"},
+            "device_options": {
+                "device_id": "121CS145A5000029",
+            },
+            "status": "PENDING",
+        }
+    )
+
     with mock_square(
-        SquarePOS.client.terminal,
-        "create_terminal_checkout",
-        status_code=200,
-        success=True,
-        body={
-            "checkout": {
-                "id": "ScegTcoaJ0kqO",
-                "amount_money": {"amount": 100, "currency": "GBP"},
-                "device_options": {
-                    "device_id": "121CS145A5000029",
-                },
-                "status": "PENDING",
-            }
-        },
+        SquarePOS.client.terminal.checkouts,
+        "create",
+        mock_response,
     ):
         payment_method = SquarePOS("device_id", "ikey")
         payment_method.pay(100, 14, BookingFactory())
@@ -276,11 +294,9 @@ def test_square_pos_pay_success(mock_square):
 @pytest.mark.django_db
 def test_square_pos_pay_failure(mock_square):
     with mock_square(
-        SquarePOS.client.terminal,
-        "create_terminal_checkout",
-        status_code=400,
-        success=False,
-        reason_phrase="Device not found",
+        SquarePOS.client.terminal.checkouts,
+        "create",
+        throw_default_exception=True,
     ):
         with pytest.raises(SquareException):
             payment_method = SquarePOS("device_id", "ikey")
@@ -292,23 +308,46 @@ def test_square_pos_pay_failure(mock_square):
 
 @pytest.mark.django_db
 def test_square_pos_list_devices_success(mock_square):
+    mock_response = SyncPager(
+        has_next=False,
+        items=[
+            DeviceCode(
+                device_id="a",
+            ),
+            DeviceCode(
+                device_id="b",
+            ),
+            DeviceCode(
+                device_id="c",
+            ),
+        ],
+        get_next=None,
+    )
+
     with mock_square(
-        SquarePOS.client.devices,
-        "list_device_codes",
-        status_code=200,
-        success=True,
-        body={"device_codes": ["a", "b", "c"]},
+        SquarePOS.client.devices.codes,
+        "list",
+        mock_response,
     ):
-        assert SquarePOS.list_devices() == ["a", "b", "c"]
+        assert SquarePOS.list_devices() == [
+            DeviceCode(
+                device_id="a",
+            ),
+            DeviceCode(
+                device_id="b",
+            ),
+            DeviceCode(
+                device_id="c",
+            ),
+        ]
 
 
 @pytest.mark.django_db
 def test_square_pos_list_devices_failure(mock_square):
     with mock_square(
-        SquarePOS.client.devices,
-        "list_device_codes",
-        status_code=400,
-        success=False,
+        SquarePOS.client.devices.codes,
+        "list",
+        throw_default_exception=True,
     ):
         with pytest.raises(SquareException):
             SquarePOS.list_devices()
@@ -317,10 +356,9 @@ def test_square_pos_list_devices_failure(mock_square):
 @pytest.mark.django_db
 def test_square_get_checkout_error(mock_square):
     with mock_square(
-        SquarePOS.client.terminal,
-        "get_terminal_checkout",
-        status_code=400,
-        success=False,
+        SquarePOS.client.terminal.checkouts,
+        "get",
+        throw_default_exception=True,
     ):
         with pytest.raises(SquareException):
             SquarePOS.get_checkout("abc")
@@ -328,25 +366,68 @@ def test_square_get_checkout_error(mock_square):
 
 @pytest.mark.django_db
 def test_square_get_checkout(mock_square):
+    mock_response = CreateTerminalCheckoutResponse(
+        checkout={
+            "id": "08YceKh7B3ZqO",
+            "amount_money": {
+                "amount": 2610,
+                "currency": "GBP"
+            },
+            "reference_id": "id11572",
+            "note": "A brief note",
+            "device_options": {
+            "device_id": "dbb5d83a-7838-11ea-bc55-0242ac130003",
+            "tip_settings": {
+                "allow_tipping": False
+            },
+            "skip_receipt_screen": False
+            },
+            "status": "IN_PROGRESS",
+            "location_id": "LOCATION_ID",
+            "created_at": "2020-04-06T16:39:32.545Z",
+            "updated_at": "2020-04-06T16:39:323.001Z",
+            "app_id": "APP_ID",
+            "deadline_duration": "PT5M"
+        }
+    )
+
     with mock_square(
-        SquarePOS.client.terminal,
-        "get_terminal_checkout",
-        status_code=200,
-        success=True,
-        body={"checkout": {"abc": "def"}},
+        SquarePOS.client.terminal.checkouts,
+        "get",
+        mock_response,
     ):
-        assert SquarePOS.get_checkout("abc") == {"abc": "def"}
+        assert SquarePOS.get_checkout("08YceKh7B3ZqO") == TerminalCheckout(
+            id="08YceKh7B3ZqO",
+            amount_money={
+                "amount": 2610,
+                "currency": "GBP"
+            },
+            reference_id="id11572",
+            note="A brief note",
+            device_options={
+                "device_id": "dbb5d83a-7838-11ea-bc55-0242ac130003",
+                "tip_settings": {
+                    "allow_tipping": False
+                },
+                "skip_receipt_screen": False
+            },
+            status="IN_PROGRESS",
+            location_id="LOCATION_ID",
+            created_at="2020-04-06T16:39:32.545Z",
+            updated_at="2020-04-06T16:39:323.001Z",
+            app_id="APP_ID",
+            deadline_duration="PT5M",
+        )
 
 
 @pytest.mark.django_db
 def test_square_pos_cancel_failure(mock_square):
     payment = TransactionFactory()
+
     with mock_square(
-        SquarePOS.client.terminal,
-        "cancel_terminal_checkout",
-        status_code=400,
-        success=False,
-        reason_phrase="Checkout not found",
+        SquarePOS.client.terminal.checkouts,
+        "cancel",
+        throw_default_exception=True,
     ):
         with pytest.raises(SquareException):
             payment_method = SquarePOS("device_id", "ikey")
@@ -358,29 +439,62 @@ def test_square_pos_cancel_failure(mock_square):
     "checkout_return,expected_transaction_status,expected_booking_status",
     [
         (
-            {
-                "id": "abc",
-                "status": "COMPLETED",
-                "payment_ids": ["abc123"],
-            },
+            TerminalCheckout(
+                id="abc",
+                status="COMPLETED",
+                payment_ids=["abc123"],
+                amount_money={
+                    "amount": 100,
+                    "currency": "GBP",
+                },
+                device_options={
+                    "device_id": "abc",
+                    "tip_settings": {
+                        "allow_tipping": False
+                    },
+                    "skip_receipt_screen": False
+                },
+            ),
             Transaction.Status.COMPLETED,
             Payable.Status.PAID,
         ),
         (
-            {
-                "id": "abc",
-                "status": "CANCELED",
-                "payment_ids": ["abc123"],
-            },
+            TerminalCheckout(
+                id="abc",
+                status="CANCELED",
+                payment_ids=["abc123"],
+                amount_money={
+                    "amount": 100,
+                    "currency": "GBP",
+                },
+                device_options={
+                    "device_id": "abc",
+                    "tip_settings": {
+                        "allow_tipping": False
+                    },
+                    "skip_receipt_screen": False
+                },
+            ),
             Transaction.Status.FAILED,
             Payable.Status.IN_PROGRESS,
         ),
         (
-            {
-                "id": "abc",
-                "status": "PENDING",
-                "payment_ids": ["abc123"],
-            },
+            TerminalCheckout(
+                id="abc",
+                status="PENDING",
+                payment_ids=["abc123"],
+                amount_money={
+                    "amount": 100,
+                    "currency": "GBP",
+                },
+                device_options={
+                    "device_id": "abc",
+                    "tip_settings": {
+                        "allow_tipping": False
+                    },
+                    "skip_receipt_screen": False
+                },
+            ),
             Transaction.Status.PENDING,
             Payable.Status.IN_PROGRESS,
         ),
@@ -406,10 +520,12 @@ def test_square_pos_sync_payment(
     ) as get_checkout_mock, patch.object(
         SquarePOS,
         "get_payment",
-        return_value={
-            "status": "COMPLETED",
-            "processing_fee": [{"amount_money": {"amount": -10, "currency": "GBP"}}],
-        },
+        return_value=Payment(
+            status="COMPLETED",
+            processing_fee=[
+                {"amount_money": {"amount": -10, "currency": "GBP"}}
+            ],
+        )
     ) as get_payment_mock:
         payment.sync_transaction_with_provider()
 
@@ -434,9 +550,8 @@ def test_square_pos_sync_payment(
 def test_square_get_payments_error(mock_square):
     with mock_square(
         SquareOnline.client.payments,
-        "get_payment",
-        status_code=400,
-        success=False,
+        "get",
+        throw_default_exception=True,
     ):
         with pytest.raises(SquareException):
             SquareOnline.get_payment("abc")
@@ -444,14 +559,28 @@ def test_square_get_payments_error(mock_square):
 
 @pytest.mark.django_db
 def test_square_get_payment(mock_square):
+    mock_response = GetPaymentResponse(
+        payment={
+            "id": "abc",
+            "status": "COMPLETED",
+            "processing_fee": [
+                {"amount_money": {"amount": -10, "currency": "GBP"}}
+            ],
+        }
+    )
+
     with mock_square(
         SquareOnline.client.payments,
-        "get_payment",
-        status_code=200,
-        success=True,
-        body={"payment": {"abc": "def"}},
+        "get",
+        mock_response
     ):
-        assert SquareOnline.get_payment("abc") == {"abc": "def"}
+        assert SquareOnline.get_payment("abc") == Payment(
+            id="abc",
+            status="COMPLETED",
+            processing_fee=[
+                {"amount_money": {"amount": -10, "currency": "GBP"}}
+            ],
+        )
 
 
 @pytest.mark.parametrize(
