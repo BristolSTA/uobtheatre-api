@@ -9,7 +9,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory
 from graphene.test import Client as GQLClient
 from rest_framework.test import APIClient
-from square.client import Client
+from square import Square as Client
 
 from uobtheatre.payments.test.factories import MockApiResponse
 from uobtheatre.schema import schema as app_schema
@@ -66,13 +66,13 @@ class AuthenticateableGQLClient(GQLClient):
 def square_client():
     """Make a square clients"""
     kwargs = {
-        "square_version": "2020-11-18",
-        "access_token": settings.SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],  # type: ignore
+        "version": "2020-11-18",
+        "token": settings.SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],  # type: ignore
         "environment": settings.SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],  # type: ignore
     }
 
     if square_url := settings.SQUARE_SETTINGS["SQUARE_URL"]:
-        kwargs["custom_url"] = square_url
+        kwargs["base_url"] = square_url
     return Client(**kwargs)
 
 

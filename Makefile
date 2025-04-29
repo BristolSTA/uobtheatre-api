@@ -37,8 +37,9 @@ setup:
 	make up
 
 setup-devcontainer:
-	make migrate
+	pip install -r requirements/base.txt
 	pip install -r requirements/local.txt
+	make migrate
 
 up: ## Run background
 	docker compose up -d api postgres celery celery-beat redis
