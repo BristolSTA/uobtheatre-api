@@ -114,7 +114,9 @@ class Query(graphene.ObjectType):
                         location_id=device.location_id,
                         device_id=device.device_id,
                     )
-                    for device in SquarePOS.list_devices(status=status)
+                    for device in SquarePOS.list_devices(
+                        product_type="TERMINAL_API", status=status
+                    )
                 ]
             )
 

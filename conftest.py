@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 from types import SimpleNamespace
-from typing import List, Optional
+from typing import Any, List, Optional
 from unittest.mock import patch
 
 import pytest
@@ -12,7 +12,6 @@ from rest_framework.test import APIClient
 from square import Square as Client
 from square.core.api_error import ApiError
 
-from uobtheatre.payments.test.factories import MockApiResponse
 from uobtheatre.schema import schema as app_schema
 from uobtheatre.users.test.factories import UserFactory
 
@@ -100,7 +99,7 @@ def mock_square():
     def mock_client(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         square_client_api,
         method: str,
-        response: Optional[any] = None,
+        response: Optional[Any] = None,
         exception: Optional[Exception] = None,
         throw_default_exception: bool = False,
     ):
@@ -122,9 +121,9 @@ def mock_square():
                 mocked_square.side_effect = exception
             elif throw_default_exception:
                 mocked_square.side_effect = default_exception
-            
+
             mocked_square.return_value = response
-            
+
             yield mocked_square
 
     return mock_client

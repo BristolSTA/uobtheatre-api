@@ -2,10 +2,9 @@ from unittest.mock import MagicMock
 from uuid import uuid4
 
 import pytest
-
-from square.types.refund_payment_response import RefundPaymentResponse
 from square.types.payment_refund import PaymentRefund
 from square.types.processing_fee import ProcessingFee
+from square.types.refund_payment_response import RefundPaymentResponse
 
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.test.factories import TransactionFactory
@@ -164,10 +163,10 @@ def test_square_refund_refund(mock_square):
         status=Transaction.Status.PENDING,
     )
     mock.assert_called_once_with(
-        idempotency_key = idempotency_key,
-        amount_money = {"amount": payment.value, "currency": payment.currency},
-        payment_id = payment.provider_transaction_id,
-        reason = f"Refund for {payment.pay_object.payment_reference_id}"
+        idempotency_key=idempotency_key,
+        amount_money={"amount": payment.value, "currency": payment.currency},
+        payment_id=payment.provider_transaction_id,
+        reason=f"Refund for {payment.pay_object.payment_reference_id}",
     )
 
 
@@ -214,10 +213,10 @@ def test_square_refund_custom_amount_refund(
         status=Transaction.Status.PENDING,
     )
     mock.assert_called_once_with(
-        idempotency_key = idempotency_key,
-        amount_money = {"amount": payment.value, "currency": payment.currency},
-        payment_id = payment.provider_transaction_id,
-        reason = f"Refund for {payment.pay_object.payment_reference_id}"
+        idempotency_key=idempotency_key,
+        amount_money={"amount": payment.value, "currency": payment.currency},
+        payment_id=payment.provider_transaction_id,
+        reason=f"Refund for {payment.pay_object.payment_reference_id}",
     )
 
 
@@ -242,11 +241,7 @@ def test_square_refund_custom_amount_too_high_refund(mock_square):
         }
     )
 
-    with mock_square(
-        SquareRefund.client.refunds,
-        "refund_payment",
-        mock_response
-    ):
+    with mock_square(SquareRefund.client.refunds, "refund_payment", mock_response):
         with pytest.raises(PaymentException):
             refund_method.refund(payment, payment.value + 1)
 
@@ -268,12 +263,17 @@ def test_square_online_sync_transaction(data_fees, data_status):
         status=data_status,
         id="abc",
         amount_money={"amount": 10, "currency": "GBP"},
-        processing_fee=[
-            ProcessingFee(
-                amount_money={"amount": fee, "currency": "GBP"},
-            )
-            for fee in data_fees if data_fees
-        ] if data_fees else None
+        processing_fee=(
+            [
+                ProcessingFee(
+                    amount_money={"amount": fee, "currency": "GBP"},
+                )
+                for fee in data_fees
+                if data_fees
+            ]
+            if data_fees
+            else None
+        ),
     )
 
     SquareRefund.sync_transaction(payment, data)
@@ -310,15 +310,9 @@ def test_square_refund_sync_payment(mock_square, with_data):
         ],
     )
 
-    mock_response = RefundPaymentResponse(
-        refund=data
-    )
+    mock_response = RefundPaymentResponse(refund=data)
 
-    with mock_square(
-        SquareRefund.client.refunds,
-        "get",
-        mock_response
-    ):
+    with mock_square(SquareRefund.client.refunds, "get", mock_response):
         payment.sync_transaction_with_provider(data=data if with_data else None)
         payment.refresh_from_db()
     assert payment.provider_fee == -10

@@ -78,6 +78,7 @@ def test_cancel_payment_success(gql_client, mock_square):
     assert response["data"]["cancelPayment"]["success"]
     assert not response["data"]["cancelPayment"]["errors"]
 
+
 @pytest.mark.django_db
 def test_cancel_payment_failure(gql_client, mock_square):
     gql_client.login()

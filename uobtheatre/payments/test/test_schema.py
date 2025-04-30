@@ -1,7 +1,6 @@
 import pytest
 from graphql_relay.node.node import to_global_id
 from guardian.shortcuts import assign_perm
-
 from square.core.pagination import SyncPager
 from square.types.device_code import DeviceCode
 
@@ -138,11 +137,7 @@ def test_list_devices(gql_client, mock_square):
         get_next=None,
     )
 
-    with mock_square(
-        SquarePOS.client.devices.codes,
-        "list",
-        mock_response
-    ):
+    with mock_square(SquarePOS.client.devices.codes, "list", mock_response):
         response = gql_client.execute(
             """
             query {
@@ -191,27 +186,27 @@ def test_list_devices_without_boxoffice_permissions(gql_client, mock_square):
     Test that an error is returned if a user tried to list devices without
     permissions to access the boxoffice.
     """
-    with mock_square(
-        SquarePOS.client.devices,
-        "list_device_codes",
-        body={
-            "data": {
-                "paymentDevices": [
-                    {
-                        "id": "X12GC60W7P7V8",
-                        "name": "Boxoffice Terminal",
-                        "code": "SGEKNB",
-                        "deviceId": "121CS145A5000029",
-                        "status": "PAIRED",
-                        "productType": "TERMINAL_API",
-                        "locationId": "LMHP97T10P8JV",
-                    },
-                ]
-            }
-        },
-        status_code=200,
-        success=True,
-    ):
+
+    mock_response = SyncPager(
+        has_next=False,
+        items=[
+            DeviceCode(
+                id="X12GC60W7P7V8",
+                name="Boxoffice Terminal",
+                code="SGEKNB",
+                device_id="121CS145A5000029",
+                product_type="TERMINAL_API",
+                location_id="LMHP97T10P8JV",
+                created_at="2021-07-31T11:43:37.000Z",
+                status="PAIRED",
+                status_changed_at="2021-07-31T11:44:41.000Z",
+                paired_at="2021-07-31T11:44:41.000Z",
+            ),
+        ],
+        get_next=None,
+    )
+
+    with mock_square(SquarePOS.client.devices.codes, "list", mock_response):
         response = gql_client.execute(
             """
             query {
@@ -235,13 +230,13 @@ def test_list_devices_empty_response(gql_client, mock_square):
     gql_client.login()
     assign_perm("productions.boxoffice", gql_client.user)
 
-    with mock_square(
-        SquarePOS.client.devices,
-        "list_device_codes",
-        body={},
-        status_code=200,
-        success=True,
-    ):
+    mock_response = SyncPager(
+        has_next=False,
+        items=[],
+        get_next=None,
+    )
+
+    with mock_square(SquarePOS.client.devices.codes, "list", mock_response):
         response = gql_client.execute(
             """
             query {
@@ -262,18 +257,18 @@ def test_list_devices_empty_response(gql_client, mock_square):
         (
             "paymentProvider: SQUARE_POS, paired: false",
             True,
-            {"status": "UNPAIRED", "product_type": "TERMINAL_API"},
+            {"product_type": "TERMINAL_API", "status": "UNPAIRED", "location_id": None},
         ),
         ("paymentProvider: SQUARE_ONLINE", False, {}),
         (
             "paymentProvider: SQUARE_POS",
             True,
-            {"status": None, "product_type": "TERMINAL_API"},
+            {"product_type": "TERMINAL_API", "status": None, "location_id": None},
         ),
         (
             "paymentProvider: SQUARE_POS, paired: true",
             True,
-            {"status": "PAIRED", "product_type": "TERMINAL_API"},
+            {"product_type": "TERMINAL_API", "status": "PAIRED", "location_id": None},
         ),
     ],
 )
@@ -284,12 +279,14 @@ def test_filter_list_devices(
     gql_client.login()
     assign_perm("productions.boxoffice", gql_client.user)
 
+    mock_response = SyncPager(
+        has_next=False,
+        items=[],
+        get_next=None,
+    )
+
     with mock_square(
-        SquarePOS.client.devices,
-        "list_device_codes",
-        body={"device_codes": []},
-        status_code=200,
-        success=True,
+        SquarePOS.client.devices.codes, "list", mock_response
     ) as list_devices_mock:
         response = gql_client.execute(
             """

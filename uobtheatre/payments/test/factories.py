@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 
 import factory
+from square.core.api_error import ApiError
 
 from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.payments import transaction_providers
@@ -24,30 +25,6 @@ class TransactionFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = Transaction
-
-
-class MockApiResponse:
-    """
-    Mock of the Square API response class.
-    """
-
-    def __init__(  # pylint: disable=too-many-arguments,too-many-positional-arguments
-        self,
-        reason_phrase="Some phrase",
-        status_code=400,
-        success=False,
-        body=None,
-        errors=None,
-    ):
-        """Initialse the mock api response"""
-        self.reason_phrase = reason_phrase
-        self.status_code = status_code
-        self.success = success
-        self.body = body
-        self.errors = errors
-
-    def is_success(self):
-        return self.success
 
 
 def mock_payment_method(

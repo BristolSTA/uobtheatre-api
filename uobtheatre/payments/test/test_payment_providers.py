@@ -1,14 +1,17 @@
 from unittest.mock import PropertyMock, patch
 
 import pytest
-
-from square.types.create_payment_response import CreatePaymentResponse
-from square.types.get_payment_response import GetPaymentResponse
-from square.types.create_terminal_checkout_response import CreateTerminalCheckoutResponse
-from square.types.terminal_checkout import TerminalCheckout
 from square.core.pagination import SyncPager
+from square.types.create_payment_response import CreatePaymentResponse
+from square.types.create_terminal_checkout_response import (
+    CreateTerminalCheckoutResponse,
+)
+from square.types.device_checkout_options import DeviceCheckoutOptions
 from square.types.device_code import DeviceCode
+from square.types.get_payment_response import GetPaymentResponse
+from square.types.money import Money
 from square.types.payment import Payment
+from square.types.terminal_checkout import TerminalCheckout
 
 from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.payments.exceptions import (
@@ -155,11 +158,7 @@ def test_square_online_pay_success(mock_square, with_sca_token):
         }
     )
 
-    with mock_square(
-        SquareOnline.client.payments,
-        "create",
-        mock_response
-    ) as mock:
+    with mock_square(SquareOnline.client.payments, "create", mock_response) as mock:
         booking = BookingFactory(reference="abcd")
         payment_method = SquareOnline(
             "nonce", "key", "verify_token" if with_sca_token else None
@@ -170,20 +169,19 @@ def test_square_online_pay_success(mock_square, with_sca_token):
     assert Transaction.objects.count() == 1
     assert Transaction.objects.first() == payment
 
-    
     if with_sca_token:
         mock.assert_called_once_with(
             idempotency_key="key",
             source_id="nonce",
-            amount_money={ "amount": 20, "currency": "GBP"},
+            amount_money={"amount": 20, "currency": "GBP"},
             reference_id="abcd",
-            verification_token="verify_token"
+            verification_token="verify_token",
         )
     else:
         mock.assert_called_once_with(
             idempotency_key="key",
             source_id="nonce",
-            amount_money={ "amount": 20, "currency": "GBP"},
+            amount_money={"amount": 20, "currency": "GBP"},
             reference_id="abcd",
         )
 
@@ -231,9 +229,7 @@ def test_square_online_sync_payment(mock_square):
         payment={
             "id": "abc",
             "status": "COMPLETED",
-            "processing_fee": [
-                {"amount_money": {"amount": -10, "currency": "GBP"}}
-            ],
+            "processing_fee": [{"amount_money": {"amount": -10, "currency": "GBP"}}],
         }
     )
 
@@ -264,7 +260,7 @@ def test_square_pos_pay_success(mock_square):
     mock_response = CreateTerminalCheckoutResponse(
         checkout={
             "id": "ScegTcoaJ0kqO",
-            "amount_money": { "amount": 100, "currency": "GBP"},
+            "amount_money": {"amount": 100, "currency": "GBP"},
             "device_options": {
                 "device_id": "121CS145A5000029",
             },
@@ -369,25 +365,20 @@ def test_square_get_checkout(mock_square):
     mock_response = CreateTerminalCheckoutResponse(
         checkout={
             "id": "08YceKh7B3ZqO",
-            "amount_money": {
-                "amount": 2610,
-                "currency": "GBP"
-            },
+            "amount_money": {"amount": 2610, "currency": "GBP"},
             "reference_id": "id11572",
             "note": "A brief note",
             "device_options": {
-            "device_id": "dbb5d83a-7838-11ea-bc55-0242ac130003",
-            "tip_settings": {
-                "allow_tipping": False
-            },
-            "skip_receipt_screen": False
+                "device_id": "dbb5d83a-7838-11ea-bc55-0242ac130003",
+                "tip_settings": {"allow_tipping": False},
+                "skip_receipt_screen": False,
             },
             "status": "IN_PROGRESS",
             "location_id": "LOCATION_ID",
             "created_at": "2020-04-06T16:39:32.545Z",
             "updated_at": "2020-04-06T16:39:323.001Z",
             "app_id": "APP_ID",
-            "deadline_duration": "PT5M"
+            "deadline_duration": "PT5M",
         }
     )
 
@@ -398,18 +389,13 @@ def test_square_get_checkout(mock_square):
     ):
         assert SquarePOS.get_checkout("08YceKh7B3ZqO") == TerminalCheckout(
             id="08YceKh7B3ZqO",
-            amount_money={
-                "amount": 2610,
-                "currency": "GBP"
-            },
+            amount_money={"amount": 2610, "currency": "GBP"},
             reference_id="id11572",
             note="A brief note",
             device_options={
                 "device_id": "dbb5d83a-7838-11ea-bc55-0242ac130003",
-                "tip_settings": {
-                    "allow_tipping": False
-                },
-                "skip_receipt_screen": False
+                "tip_settings": {"allow_tipping": False},
+                "skip_receipt_screen": False,
             },
             status="IN_PROGRESS",
             location_id="LOCATION_ID",
@@ -443,17 +429,14 @@ def test_square_pos_cancel_failure(mock_square):
                 id="abc",
                 status="COMPLETED",
                 payment_ids=["abc123"],
-                amount_money={
-                    "amount": 100,
-                    "currency": "GBP",
-                },
-                device_options={
-                    "device_id": "abc",
-                    "tip_settings": {
-                        "allow_tipping": False
-                    },
-                    "skip_receipt_screen": False
-                },
+                amount_money=Money(
+                    amount=100,
+                    currency="GBP",
+                ),
+                device_options=DeviceCheckoutOptions(
+                    device_id="abc",
+                    skip_receipt_screen=False,
+                ),
             ),
             Transaction.Status.COMPLETED,
             Payable.Status.PAID,
@@ -463,17 +446,14 @@ def test_square_pos_cancel_failure(mock_square):
                 id="abc",
                 status="CANCELED",
                 payment_ids=["abc123"],
-                amount_money={
-                    "amount": 100,
-                    "currency": "GBP",
-                },
-                device_options={
-                    "device_id": "abc",
-                    "tip_settings": {
-                        "allow_tipping": False
-                    },
-                    "skip_receipt_screen": False
-                },
+                amount_money=Money(
+                    amount=100,
+                    currency="GBP",
+                ),
+                device_options=DeviceCheckoutOptions(
+                    device_id="abc",
+                    skip_receipt_screen=False,
+                ),
             ),
             Transaction.Status.FAILED,
             Payable.Status.IN_PROGRESS,
@@ -483,17 +463,14 @@ def test_square_pos_cancel_failure(mock_square):
                 id="abc",
                 status="PENDING",
                 payment_ids=["abc123"],
-                amount_money={
-                    "amount": 100,
-                    "currency": "GBP",
-                },
-                device_options={
-                    "device_id": "abc",
-                    "tip_settings": {
-                        "allow_tipping": False
-                    },
-                    "skip_receipt_screen": False
-                },
+                amount_money=Money(
+                    amount=100,
+                    currency="GBP",
+                ),
+                device_options=DeviceCheckoutOptions(
+                    device_id="abc",
+                    skip_receipt_screen=False,
+                ),
             ),
             Transaction.Status.PENDING,
             Payable.Status.IN_PROGRESS,
@@ -522,10 +499,8 @@ def test_square_pos_sync_payment(
         "get_payment",
         return_value=Payment(
             status="COMPLETED",
-            processing_fee=[
-                {"amount_money": {"amount": -10, "currency": "GBP"}}
-            ],
-        )
+            processing_fee=[{"amount_money": {"amount": -10, "currency": "GBP"}}],
+        ),
     ) as get_payment_mock:
         payment.sync_transaction_with_provider()
 
@@ -563,23 +538,15 @@ def test_square_get_payment(mock_square):
         payment={
             "id": "abc",
             "status": "COMPLETED",
-            "processing_fee": [
-                {"amount_money": {"amount": -10, "currency": "GBP"}}
-            ],
+            "processing_fee": [{"amount_money": {"amount": -10, "currency": "GBP"}}],
         }
     )
 
-    with mock_square(
-        SquareOnline.client.payments,
-        "get",
-        mock_response
-    ):
+    with mock_square(SquareOnline.client.payments, "get", mock_response):
         assert SquareOnline.get_payment("abc") == Payment(
             id="abc",
             status="COMPLETED",
-            processing_fee=[
-                {"amount_money": {"amount": -10, "currency": "GBP"}}
-            ],
+            processing_fee=[{"amount_money": {"amount": -10, "currency": "GBP"}}],
         )
 
 

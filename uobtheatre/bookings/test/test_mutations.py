@@ -8,9 +8,10 @@ import pytest
 from django.utils import timezone
 from graphql_relay.node.node import from_global_id, to_global_id
 from guardian.shortcuts import assign_perm
-
 from square.types.create_payment_response import CreatePaymentResponse
-from square.types.create_terminal_checkout_response import CreateTerminalCheckoutResponse
+from square.types.create_terminal_checkout_response import (
+    CreateTerminalCheckoutResponse,
+)
 
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.mutations import PayBooking
@@ -1596,9 +1597,7 @@ def test_pay_booking_square_error(mock_square, gql_client):
     """
 
     with mock_square(
-        SquareOnline.client.payments,
-        "create",
-        throw_default_exception=True
+        SquareOnline.client.payments, "create", throw_default_exception=True
     ):
         response = gql_client.execute(
             request_query % to_global_id("BookingNode", booking.id)
@@ -1898,11 +1897,7 @@ def test_pay_booking_success(mock_square, gql_client, with_sca_token):
         }
     )
 
-    with mock_square(
-        SquareOnline.client.payments,
-        "create",
-        mock_response
-    ):
+    with mock_square(SquareOnline.client.payments, "create", mock_response):
         response = gql_client.execute(
             request_query
             % (
@@ -1988,18 +1983,13 @@ def test_pay_booking_success_square_pos(mock_square, gql_client):
     mock_response = CreateTerminalCheckoutResponse(
         checkout={
             "id": "08YceKh7B3ZqO",
-            "amount_money": {
-                "amount": 100,
-                "currency": "GBP"
-            },
+            "amount_money": {"amount": 100, "currency": "GBP"},
             "reference_id": "id11572",
             "note": "A brief note",
             "device_options": {
                 "device_id": "dbb5d83a-7838-11ea-bc55-0242ac130003",
-                "tip_settings": {
-                    "allow_tipping": False
-                },
-                "skip_receipt_screen": False
+                "tip_settings": {"allow_tipping": False},
+                "skip_receipt_screen": False,
             },
             "status": "PENDING",
             "location_id": "LOCATION_ID",
@@ -2007,15 +1997,11 @@ def test_pay_booking_success_square_pos(mock_square, gql_client):
             "updated_at": "2020-04-06T16:39:32.545Z",
             "app_id": "APP_ID",
             "deadline_duration": "PT5M",
-            "payment_type": "CARD_PRESENT"
+            "payment_type": "CARD_PRESENT",
         }
     )
 
-    with mock_square(
-        SquarePOS.client.terminal.checkouts,
-        "create",
-        mock_response
-    ):
+    with mock_square(SquarePOS.client.terminal.checkouts, "create", mock_response):
         response = gql_client.execute(
             request_query % to_global_id("BookingNode", booking.id)
         )

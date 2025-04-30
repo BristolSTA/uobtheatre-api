@@ -3,7 +3,6 @@ from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
 from pytest_django.asserts import assertQuerysetEqual
-
 from square.types.get_payment_response import GetPaymentResponse
 
 from uobtheatre.payments.exceptions import (
@@ -88,16 +87,12 @@ def test_update_payment_from_square(mock_square):
                     "amount_money": {"amount": 58, "currency": "GBP"},
                 }
             ],
-            "total_money": { "amount": 1990, "currency": "GBP"},
-            "approved_money": { "amount": 1990, "currency": "GBP"},
+            "total_money": {"amount": 1990, "currency": "GBP"},
+            "approved_money": {"amount": 1990, "currency": "GBP"},
         }
     )
 
-    with mock_square(
-        SquareOnline.client.payments,
-        "get",
-        response=mock_response
-    ):
+    with mock_square(SquareOnline.client.payments, "get", response=mock_response):
         payment.sync_transaction_with_provider()
 
     payment.refresh_from_db()
@@ -124,20 +119,16 @@ def test_update_payment_from_square_no_processing_fee(mock_square):
     mock_response = GetPaymentResponse(
         payment={
             "id": "RGdfG3spBBfui4ZJy4HFFogUKjKZY",
-                "amount_money": {"amount": 1990, "currency": "GBP"},
-                "status": "COMPLETED",
-                "delay_duration": "PT168H",
-                "source_type": "CARD",
-                "total_money": {"amount": 1990, "currency": "GBP"},
-                "approved_money": {"amount": 1990, "currency": "GBP"},
+            "amount_money": {"amount": 1990, "currency": "GBP"},
+            "status": "COMPLETED",
+            "delay_duration": "PT168H",
+            "source_type": "CARD",
+            "total_money": {"amount": 1990, "currency": "GBP"},
+            "approved_money": {"amount": 1990, "currency": "GBP"},
         }
     )
 
-    with mock_square(
-        SquareOnline.client.payments,
-        "get",
-        mock_response
-    ):
+    with mock_square(SquareOnline.client.payments, "get", mock_response):
         payment.sync_transaction_with_provider()
 
     payment.refresh_from_db()

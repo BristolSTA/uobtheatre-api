@@ -1,6 +1,6 @@
 import abc
 import re
-from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Type, Union
+from typing import TYPE_CHECKING, Any, Dict, Literal, Optional, Sequence, Type, Union
 from uuid import uuid4
 
 from django.conf import settings
@@ -547,11 +547,16 @@ class SquarePOS(PaymentProvider, SquarePaymentMethod):
 
     @classmethod
     def list_devices(
-        cls, status: Optional[str] = None, location_id: Optional[str] = None
+        cls,
+        product_type: Optional[Literal["TERMINAL_API"]] = None,
+        status: Optional[str] = None,
+        location_id: Optional[str] = None,
     ) -> list[DeviceCode]:
         """List the device codes available on square.
 
         Args:
+            product_type (str): If provided filters the result by the
+                product type. For just terminal devices use: "TERMINAL_API"
             status (str): If provided filters the result by the status type,
                 for just paried devices use: "PAIRED"
             location_id (str): If provided filters the result by the
@@ -565,9 +570,10 @@ class SquarePOS(PaymentProvider, SquarePaymentMethod):
         Raises:
             SquareException: If the square request returns an error
         """
+
         try:
             response = cls.client.devices.codes.list(
-                location_id=location_id, status=status
+                product_type=product_type, status=status, location_id=location_id
             ).items
 
         except ApiError as error:
