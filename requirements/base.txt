@@ -56,7 +56,7 @@ django-graphql-auth==0.3.16
 # These are apparently a package deal atm so we need both
 django-graphql-jwt==0.3.0
 PyJWT==1.7.0
-pydantic==2.11.3
+pydantic==2.11.4
 
 #=== Payments ===#
 
