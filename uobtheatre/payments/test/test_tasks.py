@@ -43,12 +43,33 @@ def test_refund_payment_task():
 
 
 @pytest.mark.django_db
-def test_refund_payable_task():
+@pytest.mark.parametrize(
+    "preserve_provider_fees,preserve_app_fees",
+    [
+        (True, False),
+        (False, True),
+        (True, True),
+        (False, False),
+    ],
+)
+def test_refund_payable_task(preserve_provider_fees, preserve_app_fees):
     booking = BookingFactory(id=123)
     auth_user = UserFactory()
     with patch("uobtheatre.bookings.models.Booking.refund", autospec=True) as mock:
-        refund_payable(123, booking.content_type.pk, auth_user.pk)
-    mock.assert_called_once_with(booking, auth_user, send_admin_email=False)
+        refund_payable(
+            123,
+            booking.content_type.pk,
+            auth_user.pk,
+            preserve_provider_fees,
+            preserve_app_fees,
+        )
+    mock.assert_called_once_with(
+        booking,
+        auth_user,
+        send_admin_email=False,
+        preserve_provider_fees=preserve_provider_fees,
+        preserve_app_fees=preserve_app_fees,
+    )
 
 
 @pytest.mark.django_db

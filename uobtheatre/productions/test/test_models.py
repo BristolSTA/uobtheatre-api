@@ -1123,7 +1123,9 @@ def test_sales_breakdown_production():
     performance_2 = PerformanceFactory(production=production)
     booking_1 = BookingFactory(performance=performance_1)
     booking_2 = BookingFactory(performance=performance_2)
+    booking_3 = BookingFactory(performance=performance_2)
 
+    # Initial Bookings
     TransactionFactory(
         pay_object=booking_1,
         provider_fee=2,
@@ -1146,6 +1148,15 @@ def test_sales_breakdown_production():
         provider_name=Card.name,
     )
     TransactionFactory(
+        pay_object=booking_3,
+        provider_fee=10,
+        app_fee=50,
+        value=800,
+        provider_name=Card.name,
+    )
+
+    # Refunds
+    TransactionFactory(
         pay_object=booking_1,
         provider_fee=-4,
         app_fee=-200,
@@ -1160,19 +1171,27 @@ def test_sales_breakdown_production():
         value=400,
         provider_name=SquareOnline.name,
     )
+    TransactionFactory(
+        pay_object=booking_3,
+        provider_fee=0,
+        app_fee=0,
+        value=-750,
+        provider_name=SquareOnline.name,
+        type=Transaction.Type.REFUND,
+    )
 
     assert production.sales_breakdown() == {
-        "app_fee": 450,
-        "app_payment_value": 434,
-        "provider_payment_value": 16,
+        "app_fee": 500,
+        "app_payment_value": 474,
+        "provider_payment_value": 26,
         "society_revenue": 750,
         "society_transfer_value": 550,
-        "total_card_payments": 1600,
-        "total_payments": 1800,
-        "total_refunds": -600,
-        "total_card_refunds": -600,
-        "net_transactions": 1200,
-        "net_card_transactions": 1000,
+        "total_card_payments": 2400,
+        "total_payments": 2600,
+        "total_refunds": -1350,
+        "total_card_refunds": -1350,
+        "net_transactions": 1250,
+        "net_card_transactions": 1050,
     }
 
 
@@ -1233,7 +1252,7 @@ def test_sales_breakdown_with_blank_fees():
     performance = PerformanceFactory()
     booking = BookingFactory(performance=performance)
 
-    TransactionFactory(pay_object=booking, value=200)
+    TransactionFactory(pay_object=booking, value=200, provider_fee=0, app_fee=0)
 
     assert performance.sales_breakdown() == {
         "app_fee": 0,
@@ -1291,7 +1310,25 @@ def test_performance_refund_bookings(disabled, fails):
                 performance.refund_bookings(user)
         else:
             performance.refund_bookings(user)
-            refund_task_mock.assert_called_once_with(1, 123)
+            refund_task_mock.assert_called_once_with(1, 123, True, False)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "preserve_provider_fees, preserve_app_fees",
+    [(True, True), (False, False), (True, False), (False, True)],
+)
+def test_performance_refund_bookings_options(preserve_provider_fees, preserve_app_fees):
+    performance = PerformanceFactory(id=1, disabled=True)
+    user = UserFactory(id=123)
+
+    with patch(
+        "uobtheatre.productions.tasks.refund_performance.delay",
+    ) as refund_task_mock:
+        performance.refund_bookings(user, preserve_provider_fees, preserve_app_fees)
+        refund_task_mock.assert_called_once_with(
+            1, 123, preserve_provider_fees, preserve_app_fees
+        )
 
 
 @pytest.mark.django_db
@@ -1393,3 +1430,74 @@ def test_performances_booked_users():
         [booking_1.user, booking_2.user],
         ordered=False,
     )
+
+
+@pytest.mark.django_db
+def test_user_can_see_production_with_permission():
+    user = UserFactory()
+    production = ProductionFactory(status=Production.Status.DRAFT)
+    assign_perm("view_production", user, production)
+
+    assert production in Production.objects.user_can_see(user)
+
+
+@pytest.mark.django_db
+def test_user_can_see_production_with_ticket():
+    user = UserFactory()
+    production = ProductionFactory(status=Production.Status.APPROVED)
+    performance = PerformanceFactory(
+        production=production, start=(timezone.now() + timedelta(days=1))
+    )
+    BookingFactory(user=user, performance=performance)
+
+    assert production in Production.objects.user_can_see(user)
+
+
+@pytest.mark.django_db
+def test_user_cannot_see_private_production_without_permission_or_ticket():
+    user = UserFactory()
+    production = ProductionFactory(status=Production.Status.DRAFT)
+
+    assert production not in Production.objects.user_can_see(user)
+
+
+@pytest.mark.django_db
+def test_user_can_see_public_production():
+    user = UserFactory()
+    production = ProductionFactory(status=Production.Status.PUBLISHED)
+
+    assert production in Production.objects.user_can_see(user)
+
+
+@pytest.mark.django_db
+def test_user_can_see_production_with_multiple_permissions():
+    user = UserFactory()
+    production = ProductionFactory(status=Production.Status.DRAFT)
+    assign_perm("view_production", user, production)
+    assign_perm("approve_production", user, production)
+
+    assert production in Production.objects.user_can_see(user)
+
+
+@pytest.mark.django_db
+def test_user_can_see_production_with_recent_ticket():
+    user = UserFactory()
+    production = ProductionFactory(status=Production.Status.DRAFT)
+    performance = PerformanceFactory(
+        production=production, start=(timezone.now() - timedelta(days=6))
+    )
+    BookingFactory(user=user, performance=performance)
+
+    assert production in Production.objects.user_can_see(user)
+
+
+@pytest.mark.django_db
+def test_user_cannot_see_production_with_old_ticket():
+    user = UserFactory()
+    production = ProductionFactory(status=Production.Status.DRAFT)
+    performance = PerformanceFactory(
+        production=production, start=(timezone.now() - timedelta(days=8))
+    )
+    BookingFactory(user=user, performance=performance)
+
+    assert production not in Production.objects.user_can_see(user)

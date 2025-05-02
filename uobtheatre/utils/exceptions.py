@@ -18,6 +18,7 @@ from django.db import transaction
 from graphene.utils.str_converters import to_camel_case
 from graphene_django.types import ErrorType
 from sentry_sdk import capture_exception
+from square.core.api_error import ApiError
 
 
 class ExceptionMiddleware:  # pragma: no cover
@@ -176,26 +177,24 @@ class PaymentException(GQLException):
 class SquareException(GQLException):
     """An exception with the square API"""
 
-    def __init__(self, square_response):
+    def __init__(self, api_error: ApiError):
         passthrough_error_categories = [
             "PAYMENT_METHOD_ERROR",
         ]
         error = (
-            square_response.errors[0]
-            if square_response.errors and len(square_response.errors)
-            else None
+            api_error.errors[0] if api_error.errors and len(api_error.errors) else None
         )
         message = (
             (
-                error["detail"]
-                if error["category"] in passthrough_error_categories
-                else "There was an issue processing your payment (%s)" % error["code"]
+                error.detail
+                if error.category in passthrough_error_categories
+                else "There was an issue processing your payment (%s)" % error.code
             )
             if error
-            else square_response.reason_phrase
+            else api_error.body
         )
 
-        super().__init__(message, square_response.status_code)
+        super().__init__(message, api_error.status_code)
 
 
 class AuthException(GQLException):

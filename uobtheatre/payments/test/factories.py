@@ -11,7 +11,7 @@ class TransactionFactory(factory.django.DjangoModelFactory):
     pay_object = factory.SubFactory(BookingFactory)
     type = Transaction.Type.PAYMENT
     provider_name = transaction_providers.SquareOnline.name
-    value = factory.Faker("pyint", min_value=0)
+    value = factory.Faker("pyint", min_value=100)
     currency = "GBP"
     card_brand = "MASTERCARD"
     last_4 = "1111"
@@ -19,33 +19,11 @@ class TransactionFactory(factory.django.DjangoModelFactory):
         "bothify",
         text="##??",
     )
+    provider_fee = factory.Faker("pyint", min_value=0, max_value=10)
+    app_fee = factory.Faker("pyint", min_value=15, max_value=80)
 
     class Meta:
         model = Transaction
-
-
-class MockApiResponse:
-    """
-    Mock of the Square API response class.
-    """
-
-    def __init__(  # pylint: disable=too-many-arguments,too-many-positional-arguments
-        self,
-        reason_phrase="Some phrase",
-        status_code=400,
-        success=False,
-        body=None,
-        errors=None,
-    ):
-        """Initialse the mock api response"""
-        self.reason_phrase = reason_phrase
-        self.status_code = status_code
-        self.success = success
-        self.body = body
-        self.errors = errors
-
-    def is_success(self):
-        return self.success
 
 
 def mock_payment_method(

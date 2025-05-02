@@ -1,6 +1,8 @@
+# mypy: disable-error-code="attr-defined, union-attr, arg-type, assignment"
 import uuid
 
 import pytest
+from square import Square as Client
 
 from uobtheatre.bookings.test.factories import (
     BookingFactory,
@@ -17,7 +19,7 @@ pytestmark = pytest.mark.system_test
 
 @pytest.mark.django_db
 @pytest.mark.square_integration
-def test_create_and_refund_booking(square_client):
+def test_create_and_refund_booking(square_client: Client):
     # Create a booking with a seat costing 1200 and a misc cost of 100
     ValueMiscCostFactory(value=100)
     booking = BookingFactory(status=Payable.Status.IN_PROGRESS)
@@ -36,24 +38,22 @@ def test_create_and_refund_booking(square_client):
     # This is async so should not be set yet (set by the webhooks)
     assert payment.provider_fee is None
 
-    response = square_client.payments.get_payment(payment.provider_transaction_id)
-    assert response.is_success()
+    response = square_client.payments.get(payment.provider_transaction_id)
 
-    square_payment = response.body["payment"]
-    assert square_payment["amount_money"]["amount"] == 1300
+    square_payment = response.payment
+    assert square_payment.amount_money.amount == 1300
 
     # Refund the payment
     payment.refund()
 
     assert Transaction.objects.count() == 2
-    refund = Transaction.objects.last()
+    refund = Transaction.objects.latest("created_at")
 
     assert refund.value == -1300
     assert refund.app_fee == -100
     assert refund.status == Transaction.Status.PENDING
 
-    response = square_client.refunds.get_payment_refund(refund.provider_transaction_id)
-    assert response.is_success()
+    response = square_client.refunds.get(refund.provider_transaction_id)
 
-    square_refund = response.body["refund"]
-    assert square_refund["amount_money"]["amount"] == 1300
+    square_refund = response.refund
+    assert square_refund.amount_money.amount == 1300

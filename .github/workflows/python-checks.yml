@@ -93,13 +93,13 @@ jobs:
     - name: Install dependencies 👨🏻‍💻
       run: pip install -r requirements/local.txt
 
+    - name: Run isort - sort imports
+      run: |
+        isort --profile black uobtheatre -c
+
     - name: Run black - formatting
       run: |
         black uobtheatre --check
-
-    - name: Run isort - sort imports
-      run: |
-        isort uobtheatre -c
 
     - name: Run pylint - linting
       run: |

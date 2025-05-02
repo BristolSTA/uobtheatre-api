@@ -568,7 +568,9 @@ def test_production_and_performance_sales_breakdowns(gql_client):
     booking = BookingFactory(performance=performance, status=Payable.Status.IN_PROGRESS)
     perf_seat_group = PerformanceSeatingFactory(performance=performance, price=100)
     TicketFactory(booking=booking, seat_group=perf_seat_group.seat_group)
-    TransactionFactory(pay_object=booking, value=booking.total)
+    TransactionFactory(
+        pay_object=booking, value=booking.total, app_fee=0, provider_fee=0
+    )
 
     request = """
         {

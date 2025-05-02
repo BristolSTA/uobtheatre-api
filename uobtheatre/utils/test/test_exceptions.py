@@ -2,8 +2,8 @@ from types import SimpleNamespace
 
 import pytest
 from graphene_django.types import ErrorType
+from square.core.api_error import ApiError
 
-from uobtheatre.payments.test.factories import MockApiResponse
 from uobtheatre.productions.models import Performance
 from uobtheatre.utils.exceptions import (
     AuthorizationException,
@@ -105,7 +105,20 @@ def test_gql_exceptions():
 
 
 def test_square_exception():
-    exception = SquareException(MockApiResponse())
+    exception = SquareException(
+        ApiError(
+            status_code=400,
+            body={
+                "errors": [
+                    {
+                        "category": "PAYMENT_METHOD_ERROR",
+                        "code": "SOMETHING_WRONG",
+                        "detail": "Some phrase",
+                    }
+                ]
+            },
+        )
+    )
     assert len(exception.resolve()) == 1
     compare_gql_objects(
         exception.resolve()[0], NonFieldError(message="Some phrase", code=400)
@@ -114,14 +127,17 @@ def test_square_exception():
 
 def test_square_exception_with_payment_method_error():
     exception = SquareException(
-        MockApiResponse(
-            errors=[
-                {
-                    "category": "PAYMENT_METHOD_ERROR",
-                    "code": "SOMETHING_WRONG",
-                    "detail": "Detailed error message",
-                }
-            ]
+        ApiError(
+            status_code=400,
+            body={
+                "errors": [
+                    {
+                        "category": "PAYMENT_METHOD_ERROR",
+                        "code": "SOMETHING_WRONG",
+                        "detail": "Detailed error message",
+                    }
+                ]
+            },
         )
     )
     assert len(exception.resolve()) == 1
@@ -133,14 +149,17 @@ def test_square_exception_with_payment_method_error():
 
 def test_square_exception_with_non_payment_method_error():
     exception = SquareException(
-        MockApiResponse(
-            errors=[
-                {
-                    "category": "API_ERROR",
-                    "code": "SOMETHING_WRONG",
-                    "detail": "Detailed error message",
-                }
-            ]
+        ApiError(
+            status_code=400,
+            body={
+                "errors": [
+                    {
+                        "category": "API_ERROR",
+                        "code": "SOMETHING_WRONG",
+                        "detail": "Detailed error message",
+                    }
+                ]
+            },
         )
     )
     assert len(exception.resolve()) == 1
@@ -233,14 +252,3 @@ def test_form_exceptions(form_errors, expected_resolve_output):
 )
 def test_eq(exception1, exception2, expect_eq):
     assert (exception1 == exception2) == expect_eq
-
-
-def test_square_exception_args():
-    exc = SquareException(
-        SimpleNamespace(
-            errors=[{"detail": "abc", "category": "PAYMENT_METHOD_ERROR"}],
-            status_code=200,
-        )
-    )
-    assert exc.args == ("abc", 200, None, None)
-    assert str(exc) == "('abc', 200, None, None)"

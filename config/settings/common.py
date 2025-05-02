@@ -7,6 +7,7 @@ from os.path import join
 from typing import List
 
 import environ
+from square.environment import SquareEnvironment
 
 env = environ.Env()
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -324,9 +325,14 @@ SQUARE_SETTINGS = {
         "SQUARE_ACCESS_TOKEN",
         default="",
     ),
-    "SQUARE_ENVIRONMENT": env(
-        "SQUARE_ENVIRONMENT",
-        default="sandbox",
+    "SQUARE_ENVIRONMENT": (
+        SquareEnvironment.PRODUCTION
+        if env(
+            "SQUARE_ENVIRONMENT",
+            default="SANDBOX",
+        )
+        == "PRODUCTION"
+        else SquareEnvironment.SANDBOX
     ),
     "SQUARE_LOCATION": env(
         "SQUARE_LOCATION",

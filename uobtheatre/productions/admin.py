@@ -37,16 +37,26 @@ class ProductionAdmin(GuardedModelAdmin):
 class PerformanceAdmin(DangerousAdminConfirmMixin, ModelAdmin):
     """Custom performance admin page for actions"""
 
-    actions = ["issue_refunds", "email_users"]
+    actions = [
+        "email_users",
+        "issue_full_refunds",
+        "issue_payment_provider_fee_accomodating_refund",
+        "issue_uobtheatre_fee_accomodating_refund",
+        "issue_all_fee_accomodating_refund",
+    ]
 
-    @confirm_dangerous_action
-    @admin.action(description="Issue refunds", permissions=["change"])
-    def issue_refunds(self, request, queryset):
-        """Action to issue refund for bookings in selected performances(s)"""
+    def issue_custom_refunds(
+        self, request, queryset, preserve_provider_fees, preserve_app_fees
+    ):
+        """Action to issue refund for selected booking(s)"""
         successful_count = 0
         for performance in queryset:
             try:
-                performance.refund_bookings(authorizing_user=request.user)
+                performance.refund_bookings(
+                    authorizing_user=request.user,
+                    preserve_provider_fees=preserve_provider_fees,
+                    preserve_app_fees=preserve_app_fees,
+                )
                 successful_count += 1
             except CantBeRefundedException as exception:
                 self.message_user(
@@ -58,6 +68,35 @@ class PerformanceAdmin(DangerousAdminConfirmMixin, ModelAdmin):
             request,
             f"Requested refunds for {successful_count} {pluralize('performance', successful_count)}.",
         )
+
+    @confirm_dangerous_action
+    @admin.action(description="Issue full refunds", permissions=["change"])
+    def issue_full_refunds(self, request, queryset):
+        """Action to issue full refund(s) for selected booking(s)"""
+        self.issue_custom_refunds(request, queryset, False, False)
+
+    @confirm_dangerous_action
+    @admin.action(description="Issue provider refund", permissions=["change"])
+    def issue_payment_provider_fee_accomodating_refund(self, request, queryset):
+        """Action to issue payment provider fee-accomodating refund(s) for selected booking(s)"""
+        self.issue_custom_refunds(request, queryset, True, False)
+
+    @confirm_dangerous_action
+    @admin.action(
+        description="Issue uobtheatre fee accomodating refund", permissions=["change"]
+    )
+    def issue_uobtheatre_fee_accomodating_refund(self, request, queryset):
+        """Action to issue uobtheatre fee-accomodating refund(s) for selected booking(s)"""
+        self.issue_custom_refunds(request, queryset, False, True)
+
+    @confirm_dangerous_action
+    @admin.action(
+        description="Issue provider and uobtheatre fee accomodating refund",
+        permissions=["change"],
+    )
+    def issue_all_fee_accomodating_refund(self, request, queryset):
+        """Action to issue provider and uobtheatre fee-accomodating refund(s) for selected booking(s)"""
+        self.issue_custom_refunds(request, queryset, True, True)
 
     @admin.action(description="Email users", permissions=["change"])
     def email_users(self, _, queryset):

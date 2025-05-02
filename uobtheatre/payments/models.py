@@ -267,11 +267,22 @@ class Transaction(TimeStampedMixin, BaseModel):
         """
         refund_payment.delay(self.pk)
 
-    def refund(self, refund_provider: Optional[RefundProvider] = None):
+    def refund(
+        self,
+        preserve_provider_fees=True,
+        preserve_app_fees=False,
+        refund_provider: Optional[RefundProvider] = None,
+    ):
         """
         Refund the payment
 
         Args:
+            preserve_provider_fees (bool): If true the refund is reduced by the amount required to cover the payment's provider_fee
+                i.e. the refund is reduced by the amount required to cover only Square's fees.
+                If both preserve_provider_fees and preserve_app_fees are true, the refund is reduced by the larger of the two fees.
+            preserve_app_fees (bool): If true the refund is reduced by the amount required to cover the payment's app_fee
+                i.e. the refund is reduced by the amount required to cover our fees (the various misc_costs, such as the theatre improvement levy).
+                If both preserve_provider_fees and preserve_app_fees are true, the refund is reduced by the larger of the two fees.
             refund_provider (RefundProvider): If a refund provider is provider,
                 that is used to refund the payment. Otherwise the
                 automatic_refund_provider of the payment transaction provider
@@ -290,7 +301,35 @@ class Transaction(TimeStampedMixin, BaseModel):
                     f"A {self.provider_name} payment cannot be automatically refunded"
                 )
 
-        refund_provider.refund(self)
+        refund_amount = None
+
+        if (
+            preserve_provider_fees
+            and self.provider_fee
+            and preserve_app_fees
+            and self.app_fee
+        ):
+            refund_amount = self.value
+            refund_amount -= max(
+                self.provider_fee, self.app_fee
+            )  # Refund minus the larger of the two fees so we protect ourselves but don't double dip
+        elif preserve_provider_fees and self.provider_fee is not None:
+            refund_amount = self.value
+            refund_amount -= self.provider_fee
+        elif preserve_app_fees and self.app_fee is not None:
+            refund_amount = self.value
+            refund_amount -= self.app_fee
+
+        if refund_amount and refund_amount < 0:
+            # Refund amount can't be negative
+            raise CantBeRefundedException(
+                "This refund would result in a negative refund amount"
+            )
+
+        refund_provider.refund(self, custom_refund_amount=refund_amount)
+
+    class Meta:
+        ordering = ["-created_at"]
 
 
 class SalesBreakdown:
