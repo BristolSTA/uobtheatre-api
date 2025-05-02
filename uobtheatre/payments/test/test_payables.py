@@ -291,11 +291,16 @@ def test_refund(mailoutbox, preserve_provider_fees, preserve_app_fees, refund_ty
     booking = BookingFactory(id=45)
     TransactionFactory(pay_object=booking)
 
-    booking.refund(
-        user,
-        preserve_provider_fees=preserve_provider_fees,
-        preserve_app_fees=preserve_app_fees,
-    )
+    with patch.object(
+        Transaction,
+        "async_refund",
+        return_value=None,
+    ):
+        booking.refund(
+            user,
+            preserve_provider_fees=preserve_provider_fees,
+            preserve_app_fees=preserve_app_fees,
+        )
 
     assert len(mailoutbox) == 1
     assert (
