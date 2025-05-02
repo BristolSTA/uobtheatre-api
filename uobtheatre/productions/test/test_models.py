@@ -1092,6 +1092,7 @@ def test_qs_running_on():
     ]
 
 
+
 @pytest.mark.django_db
 def test_has_group_discounts():
     performance = PerformanceFactory()
@@ -1430,3 +1431,69 @@ def test_performances_booked_users():
         [booking_1.user, booking_2.user],
         ordered=False,
     )
+
+@pytest.mark.django_db
+def test_user_can_see_production_with_permission():
+    user = UserFactory()
+    production = ProductionFactory(status=Production.Status.DRAFT)
+    assign_perm("view_production", user, production)
+
+    assert production in Production.objects.user_can_see(user)
+
+
+@pytest.mark.django_db
+def test_user_can_see_production_with_ticket():
+    user = UserFactory()
+    production = ProductionFactory(status=Production.Status.APPROVED)
+    performance = PerformanceFactory(production=production, start=(timezone.now() + timedelta(days=1)))
+    BookingFactory(user=user, performance=performance)
+
+    assert production in Production.objects.user_can_see(user)
+
+
+@pytest.mark.django_db
+def test_user_cannot_see_private_production_without_permission_or_ticket():
+    user = UserFactory()
+    production = ProductionFactory(status=Production.Status.DRAFT)
+
+    assert production not in Production.objects.user_can_see(user)
+
+
+@pytest.mark.django_db
+def test_user_can_see_public_production():
+    user = UserFactory()
+    production = ProductionFactory(status=Production.Status.PUBLISHED)
+
+    assert production in Production.objects.user_can_see(user)
+
+
+@pytest.mark.django_db
+def test_user_can_see_production_with_multiple_permissions():
+    user = UserFactory()
+    production = ProductionFactory(status=Production.Status.DRAFT)
+    assign_perm("view_production", user, production)
+    assign_perm("approve_production", user, production)
+
+    assert production in Production.objects.user_can_see(user)
+
+
+@pytest.mark.django_db
+def test_user_can_see_production_with_recent_ticket():
+    user = UserFactory()
+    production = ProductionFactory(status=Production.Status.DRAFT)
+    performance = PerformanceFactory(production=production, start=(timezone.now() - timedelta(days=6)))
+    BookingFactory(user=user, performance=performance)
+
+    print(Production.objects.user_can_see(user))
+
+    assert production in Production.objects.user_can_see(user)
+
+
+@pytest.mark.django_db
+def test_user_cannot_see_production_with_old_ticket():
+    user = UserFactory()
+    production = ProductionFactory(status=Production.Status.DRAFT)
+    performance = PerformanceFactory(production=production, start=(timezone.now() - timedelta(days=8)))
+    BookingFactory(user=user, performance=performance)
+
+    assert production not in Production.objects.user_can_see(user)

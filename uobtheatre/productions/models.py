@@ -806,12 +806,24 @@ class ProductionQuerySet(QuerySet):
         Returns:
             QuerySet: The filtered queryset
         """
+        # Productions the user has explicit permissions to view
         productions_user_can_view_admin = get_objects_for_user(
             user, ["view_production", "approve_production"], self, any_perm=True
         ).values_list("id", flat=True)
+
+        # Productions the user has tickets for that are within the last week or the future
+        productions_user_has_tickets = []
+        if user.is_authenticated:
+            one_week_ago = timezone.now() - datetime.timedelta(days=7)
+            productions_user_has_tickets = self.filter(
+                performances__bookings__user=user,
+                performances__start__gte=one_week_ago,
+            ).values_list("id", flat=True)
+
         return self.filter(
             ~Q(status__in=Production.Status.PRIVATE_STATUSES)
             | Q(id__in=productions_user_can_view_admin)
+            | Q(id__in=productions_user_has_tickets)
         )
 
     def performances(self):
