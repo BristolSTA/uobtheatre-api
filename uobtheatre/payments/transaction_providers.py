@@ -9,12 +9,9 @@ from square.core.api_error import ApiError
 from square.requests.device_checkout_options import (
     DeviceCheckoutOptionsParams as DeviceCheckoutOptions,
 )
-from square.requests.location import LocationParams
 from square.requests.money import MoneyParams
 from square.requests.terminal_checkout import TerminalCheckoutParams
-from square.types.device import Device
 from square.types.device_code import DeviceCode
-from square.types.location import Location
 from square.types.payment import Payment
 from square.types.payment_refund import PaymentRefund
 from square.types.terminal_checkout import TerminalCheckout
@@ -313,7 +310,6 @@ class ManualCardRefund(RefundProvider):
         app_fee_reduction = None
 
         if payment.app_fee:
-            print(payment.app_fee)
             # If the refund amount is less than the total amount minus the app fee, leave the app fee as is
             # Otherwise, reduce the app fee by whatever is needed to make the numbers add up
             # Thereby ensuring that we keep an amount to cover fees
@@ -386,7 +382,7 @@ class SquareRefund(RefundProvider, SquareAPIMixin):
         square_refund_amount = square_refund_details.amount
         square_refund_id = response.refund.id
 
-        if not square_refund_id or not square_refund_amount:
+        if not square_refund_amount:
             if response.errors:
                 raise PaymentException(
                     f"Refund failed for {payment.pay_object.payment_reference_id}: {response.errors[0].detail}"
@@ -432,7 +428,7 @@ class SquareRefund(RefundProvider, SquareAPIMixin):
 
         if not data:
             raise PaymentException(
-                f"Transaction failed to sync after refund for payment {payment.pay_object.payment_reference_id}"
+                f"Transaction failed to sync after refund for payment {payment.pay_object.payment_reference_id}: could not find refund from Square"
             )
 
         cls._fill_payment_from_square_response_object(payment, data).save()

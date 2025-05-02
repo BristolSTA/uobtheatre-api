@@ -73,6 +73,7 @@ def square_client():
 
     if square_url := settings.SQUARE_SETTINGS["SQUARE_URL"]:
         kwargs["base_url"] = square_url
+
     return Client(**kwargs)
 
 

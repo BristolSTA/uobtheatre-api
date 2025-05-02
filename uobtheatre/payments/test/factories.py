@@ -1,7 +1,6 @@
 from unittest.mock import MagicMock
 
 import factory
-from square.core.api_error import ApiError
 
 from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.payments import transaction_providers

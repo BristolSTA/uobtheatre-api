@@ -1,13 +1,17 @@
+# pylint: disable=too-many-lines
 from unittest.mock import PropertyMock, patch
 
 import pytest
 from square.core.pagination import SyncPager
+from square.types.card import Card as SquareCard
+from square.types.card_payment_details import CardPaymentDetails
 from square.types.create_payment_response import CreatePaymentResponse
 from square.types.create_terminal_checkout_response import (
     CreateTerminalCheckoutResponse,
 )
 from square.types.device_checkout_options import DeviceCheckoutOptions
 from square.types.device_code import DeviceCode
+from square.types.error import Error
 from square.types.get_payment_response import GetPaymentResponse
 from square.types.money import Money
 from square.types.payment import Payment
@@ -202,7 +206,7 @@ def test_square_online_pay_success(mock_square, with_sca_token):
 
 
 @pytest.mark.django_db
-def test_square_online_pay_failure(mock_square):
+def test_square_online_pay_api_failure(mock_square):
     """
     Test paying a booking with square
     """
@@ -213,6 +217,152 @@ def test_square_online_pay_failure(mock_square):
     ):
         payment_method = SquareOnline("nonce", "abc")
         with pytest.raises(SquareException):
+            payment_method.pay(100, 0, BookingFactory())
+
+    # Assert no payments are created
+    assert Transaction.objects.count() == 0
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "response",
+    [
+        CreatePaymentResponse(),
+        CreatePaymentResponse(
+            errors=[
+                Error(
+                    category="API_ERROR",
+                    code="INVALID_REQUEST_ERROR",
+                    detail="Invalid request",
+                )
+            ]
+        ),
+        CreatePaymentResponse(
+            payment=Payment(
+                id="abc",
+                amount_money=Money(
+                    currency="GBP",
+                    amount=10,
+                ),
+            )
+        ),
+        CreatePaymentResponse(
+            payment=Payment(
+                id="abc",
+                amount_money=Money(
+                    currency="GBP",
+                    amount=10,
+                ),
+            ),
+            errors=[
+                Error(
+                    category="API_ERROR",
+                    code="INVALID_REQUEST_ERROR",
+                    detail="Invalid request",
+                )
+            ],
+        ),
+        CreatePaymentResponse(
+            payment=Payment(
+                id="abc",
+                card_details=CardPaymentDetails(),
+                amount_money=Money(
+                    currency="GBP",
+                    amount=10,
+                ),
+            ),
+        ),
+        CreatePaymentResponse(
+            payment=Payment(
+                id="abc",
+                card_details=CardPaymentDetails(),
+                amount_money=Money(
+                    currency="GBP",
+                    amount=10,
+                ),
+            ),
+            errors=[
+                Error(
+                    category="API_ERROR",
+                    code="INVALID_REQUEST_ERROR",
+                    detail="Invalid request",
+                )
+            ],
+        ),
+        CreatePaymentResponse(
+            payment=Payment(
+                id="abc",
+                card_details=CardPaymentDetails(
+                    card=SquareCard(
+                        card_brand="MASTERCARD",
+                        last4="1234",
+                    ),
+                ),
+            ),
+        ),
+        CreatePaymentResponse(
+            payment=Payment(
+                id="abc",
+                card_details=CardPaymentDetails(
+                    card=SquareCard(
+                        card_brand="MASTERCARD",
+                        last4="1234",
+                    ),
+                ),
+            ),
+            errors=[
+                Error(
+                    category="API_ERROR",
+                    code="INVALID_REQUEST_ERROR",
+                    detail="Invalid request",
+                )
+            ],
+        ),
+        CreatePaymentResponse(
+            payment=Payment(
+                card_details=CardPaymentDetails(
+                    card=SquareCard(
+                        card_brand="MASTERCARD",
+                        last4="1234",
+                    ),
+                ),
+                amount_money=Money(
+                    currency="GBP",
+                    amount=10,
+                ),
+            ),
+        ),
+        CreatePaymentResponse(
+            payment=Payment(
+                card_details=CardPaymentDetails(
+                    card=SquareCard(
+                        card_brand="MASTERCARD",
+                        last4="1234",
+                    ),
+                ),
+                amount_money=Money(
+                    currency="GBP",
+                    amount=10,
+                ),
+            ),
+            errors=[
+                Error(
+                    category="API_ERROR",
+                    code="INVALID_REQUEST_ERROR",
+                    detail="Invalid request",
+                )
+            ],
+        ),
+    ],
+)
+def test_square_online_pay_payment_failure(mock_square, response):
+    with mock_square(
+        SquareOnline.client.payments,
+        "create",
+        response,
+    ):
+        payment_method = SquareOnline("nonce", "abc")
+        with pytest.raises(PaymentException):
             payment_method.pay(100, 0, BookingFactory())
 
     # Assert no payments are created
@@ -242,6 +392,54 @@ def test_square_online_sync_payment(mock_square):
         payment.refresh_from_db()
     assert payment.provider_fee == -10
     assert payment.status == Transaction.Status.COMPLETED
+
+
+@pytest.mark.django_db
+def test_square_online_sync_payment_no_status(mock_square):
+    payment = TransactionFactory(
+        value=100, provider_fee=None, status=Transaction.Status.PENDING
+    )
+
+    mock_response = GetPaymentResponse(
+        payment={
+            "id": "abc",
+            "processing_fee": [{"amount_money": {"amount": -10, "currency": "GBP"}}],
+        }
+    )
+
+    with mock_square(
+        SquareOnline.client.payments,
+        "get",
+        mock_response,
+    ):
+        with pytest.raises(PaymentException):
+            payment.sync_transaction_with_provider()
+
+    # Assert the payment is not updated
+    payment.refresh_from_db()
+    assert payment.status == Transaction.Status.PENDING
+
+
+@pytest.mark.django_db
+def test_square_online_sync_payment_no_payment(mock_square):
+    payment = TransactionFactory(
+        value=100, provider_fee=None, status=Transaction.Status.PENDING
+    )
+
+    mock_response = GetPaymentResponse()
+
+    with mock_square(
+        SquareOnline.client.payments,
+        "get",
+        mock_response,
+    ):
+        with pytest.raises(PaymentException):
+            payment.sync_transaction_with_provider()
+
+        payment.refresh_from_db()
+
+    assert payment.provider_fee is None
+    assert payment.status == Transaction.Status.PENDING
 
 
 @pytest.mark.django_db
@@ -288,13 +486,72 @@ def test_square_pos_pay_success(mock_square):
 
 
 @pytest.mark.django_db
-def test_square_pos_pay_failure(mock_square):
+def test_square_pos_pay_api_failure(mock_square):
     with mock_square(
         SquarePOS.client.terminal.checkouts,
         "create",
         throw_default_exception=True,
     ):
         with pytest.raises(SquareException):
+            payment_method = SquarePOS("device_id", "ikey")
+            payment_method.pay(100, 0, BookingFactory())
+
+    # Assert no payments are created
+    assert Transaction.objects.count() == 0
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "response",
+    [
+        CreateTerminalCheckoutResponse(),
+        CreateTerminalCheckoutResponse(
+            errors=[
+                Error(
+                    category="API_ERROR",
+                    code="INVALID_REQUEST_ERROR",
+                    detail="Invalid request",
+                )
+            ]
+        ),
+        CreateTerminalCheckoutResponse(
+            checkout=TerminalCheckout(
+                amount_money=Money(
+                    amount=100,
+                    currency="GBP",
+                ),
+                device_options=DeviceCheckoutOptions(
+                    device_id="abc",
+                    skip_receipt_screen=False,
+                ),
+                status="PENDING",
+            )
+        ),
+        CreateTerminalCheckoutResponse(
+            checkout=TerminalCheckout(
+                amount_money=Money(
+                    amount=100,
+                    currency="GBP",
+                ),
+                device_options=DeviceCheckoutOptions(
+                    device_id="abc",
+                    skip_receipt_screen=False,
+                ),
+                status="PENDING",
+            ),
+            errors=[
+                Error(
+                    category="API_ERROR",
+                    code="INVALID_REQUEST_ERROR",
+                    detail="Invalid request",
+                )
+            ],
+        ),
+    ],
+)
+def test_square_pos_pay_payment_failure(mock_square, response):
+    with mock_square(SquarePOS.client.terminal.checkouts, "create", response):
+        with pytest.raises(PaymentException):
             payment_method = SquarePOS("device_id", "ikey")
             payment_method.pay(100, 0, BookingFactory())
 
@@ -407,7 +664,7 @@ def test_square_get_checkout(mock_square):
 
 
 @pytest.mark.django_db
-def test_square_pos_cancel_failure(mock_square):
+def test_square_pos_cancel_api_failure(mock_square):
     payment = TransactionFactory()
 
     with mock_square(
@@ -416,6 +673,19 @@ def test_square_pos_cancel_failure(mock_square):
         throw_default_exception=True,
     ):
         with pytest.raises(SquareException):
+            payment_method = SquarePOS("device_id", "ikey")
+            payment_method.cancel(payment)
+
+
+@pytest.mark.django_db
+def test_square_pos_cancel_payment_failure(mock_square):
+    payment = TransactionFactory(provider_transaction_id=None)
+
+    with mock_square(
+        SquarePOS.client.terminal.checkouts,
+        "cancel",
+    ):
+        with pytest.raises(PaymentException):
             payment_method = SquarePOS("device_id", "ikey")
             payment_method.cancel(payment)
 
@@ -514,6 +784,266 @@ def test_square_pos_sync_payment(
     assert payment.provider_fee == -10
     assert payment.status == expected_transaction_status
     assert payment.pay_object.status == expected_booking_status
+
+
+@pytest.mark.django_db
+def test_square_pos_sync_multiple_payment_ids():
+    payment = TransactionFactory(
+        pay_object=BookingFactory(status=Payable.Status.IN_PROGRESS),
+        value=100,
+        provider_fee=None,
+        status=Transaction.Status.PENDING,
+        provider_name=SquarePOS.name,
+        provider_transaction_id="abc",
+    )
+
+    mock_response = TerminalCheckout(
+        id="abc",
+        status="COMPLETED",
+        payment_ids=["abc123", "def123"],
+        amount_money=Money(
+            amount=100,
+            currency="GBP",
+        ),
+        device_options=DeviceCheckoutOptions(
+            device_id="abc",
+            skip_receipt_screen=False,
+        ),
+    )
+
+    with patch.object(
+        SquarePOS,
+        "get_checkout",
+        return_value=mock_response,
+    ) as get_checkout_mock, patch.object(
+        SquarePOS,
+        "get_payment",
+        return_value=Payment(
+            status="COMPLETED",
+            processing_fee=[{"amount_money": {"amount": -10, "currency": "GBP"}}],
+        ),
+    ) as get_payment_mock:
+        payment.sync_transaction_with_provider()
+
+        get_checkout_mock.assert_called_once_with("abc")
+        get_payment_mock.assert_any_call("abc123")
+        get_payment_mock.assert_any_call("def123")
+        assert get_payment_mock.call_count == 2
+
+        payment.refresh_from_db()
+
+    assert payment.provider_fee == -20
+    assert payment.status == Transaction.Status.COMPLETED
+    assert payment.pay_object.status == Payable.Status.PAID
+
+
+@pytest.mark.django_db
+def test_square_pos_sync_no_payments():
+    payment = TransactionFactory(
+        pay_object=BookingFactory(status=Payable.Status.IN_PROGRESS),
+        value=100,
+        provider_fee=None,
+        status=Transaction.Status.PENDING,
+        provider_name=SquarePOS.name,
+        provider_transaction_id="abc",
+    )
+
+    mock_response = TerminalCheckout(
+        id="abc",
+        status="COMPLETED",
+        payment_ids=["abc123", "def123"],
+        amount_money=Money(
+            amount=100,
+            currency="GBP",
+        ),
+        device_options=DeviceCheckoutOptions(
+            device_id="abc",
+            skip_receipt_screen=False,
+        ),
+    )
+
+    with patch.object(
+        SquarePOS,
+        "get_checkout",
+        return_value=mock_response,
+    ) as get_checkout_mock, patch.object(
+        SquarePOS,
+        "get_payment",
+        return_value=None,
+    ) as get_payment_mock:
+        payment.sync_transaction_with_provider()
+
+        get_checkout_mock.assert_called_once_with("abc")
+        assert get_payment_mock.call_count == 2
+
+        payment.refresh_from_db()
+
+    assert payment.provider_fee is None
+    assert payment.status == Transaction.Status.COMPLETED
+    assert payment.pay_object.status == Payable.Status.PAID
+
+
+@pytest.mark.django_db
+def test_square_pos_sync_no_payment_fees():
+    payment = TransactionFactory(
+        pay_object=BookingFactory(status=Payable.Status.IN_PROGRESS),
+        value=100,
+        provider_fee=None,
+        status=Transaction.Status.PENDING,
+        provider_name=SquarePOS.name,
+        provider_transaction_id="abc",
+    )
+
+    mock_response = TerminalCheckout(
+        id="abc",
+        status="COMPLETED",
+        payment_ids=["abc123", "def123"],
+        amount_money=Money(
+            amount=100,
+            currency="GBP",
+        ),
+        device_options=DeviceCheckoutOptions(
+            device_id="abc",
+            skip_receipt_screen=False,
+        ),
+    )
+
+    with patch.object(
+        SquarePOS,
+        "get_checkout",
+        return_value=mock_response,
+    ) as get_checkout_mock, patch.object(
+        SquarePOS,
+        "get_payment",
+        return_value=Payment(),
+    ) as get_payment_mock:
+        payment.sync_transaction_with_provider()
+
+        get_checkout_mock.assert_called_once_with("abc")
+        assert get_payment_mock.call_count == 2
+
+        payment.refresh_from_db()
+
+    assert payment.provider_fee is None
+    assert payment.status == Transaction.Status.COMPLETED
+    assert payment.pay_object.status == Payable.Status.PAID
+
+
+@pytest.mark.django_db
+def test_square_pos_sync_no_payment_id():
+    payment = TransactionFactory(
+        pay_object=BookingFactory(status=Payable.Status.IN_PROGRESS),
+        value=100,
+        provider_fee=None,
+        status=Transaction.Status.PENDING,
+        provider_name=SquarePOS.name,
+        provider_transaction_id="abc",
+    )
+
+    mock_response = TerminalCheckout(
+        id="abc",
+        status="COMPLETED",
+        amount_money=Money(
+            amount=100,
+            currency="GBP",
+        ),
+        device_options=DeviceCheckoutOptions(
+            device_id="abc",
+            skip_receipt_screen=False,
+        ),
+    )
+
+    with patch.object(
+        SquarePOS,
+        "get_checkout",
+        return_value=mock_response,
+    ) as get_checkout_mock, patch.object(
+        SquarePOS,
+        "get_payment",
+        return_value=Payment(
+            status="COMPLETED",
+            processing_fee=[{"amount_money": {"amount": -10, "currency": "GBP"}}],
+        ),
+    ) as get_payment_mock:
+        payment.sync_transaction_with_provider()
+
+        get_checkout_mock.assert_called_once_with("abc")
+        assert get_payment_mock.call_count == 0
+
+        payment.refresh_from_db()
+
+    assert payment.provider_fee is None
+    assert payment.status == Transaction.Status.COMPLETED
+    assert payment.pay_object.status == Payable.Status.PAID
+
+
+@pytest.mark.django_db
+def test_square_pos_sync_no_terminal_id():
+    payment = TransactionFactory(
+        pay_object=BookingFactory(status=Payable.Status.IN_PROGRESS),
+        value=100,
+        provider_fee=None,
+        status=Transaction.Status.PENDING,
+        provider_name=SquarePOS.name,
+        provider_transaction_id="abc",
+    )
+
+    mock_response = TerminalCheckout(
+        status="FAILED",
+        payment_ids=["abc123"],
+        amount_money=Money(
+            amount=100,
+            currency="GBP",
+        ),
+        device_options=DeviceCheckoutOptions(
+            device_id="abc",
+            skip_receipt_screen=False,
+        ),
+    )
+
+    with patch.object(
+        SquarePOS,
+        "get_checkout",
+        return_value=mock_response,
+    ), patch.object(
+        SquarePOS,
+        "get_payment",
+        return_value=Payment(
+            status="COMPLETED",
+            processing_fee=[{"amount_money": {"amount": -10, "currency": "GBP"}}],
+        ),
+    ):
+        with pytest.raises(PaymentException):
+            payment.sync_transaction_with_provider()
+
+        payment.refresh_from_db()
+
+    assert payment.status == Transaction.Status.PENDING
+    assert payment.pay_object.status == Payable.Status.IN_PROGRESS
+
+
+@pytest.mark.django_db
+def test_square_pos_sync_payment_no_checkout():
+    payment = TransactionFactory(
+        pay_object=BookingFactory(status=Payable.Status.IN_PROGRESS),
+        value=100,
+        provider_fee=None,
+        status=Transaction.Status.PENDING,
+        provider_name=SquarePOS.name,
+        provider_transaction_id="abc",
+    )
+
+    with patch.object(
+        SquarePOS,
+        "get_checkout",
+        return_value=None,
+    ):
+        with pytest.raises(PaymentException):
+            payment.sync_transaction_with_provider()
+            payment.refresh_from_db()
+
+    assert payment.status == Transaction.Status.PENDING
+    assert payment.pay_object.status == Payable.Status.IN_PROGRESS
 
 
 ###

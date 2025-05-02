@@ -1,7 +1,9 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import pytest
+from square.types.error import Error
+from square.types.money import Money
 from square.types.payment_refund import PaymentRefund
 from square.types.processing_fee import ProcessingFee
 from square.types.refund_payment_response import RefundPaymentResponse
@@ -17,7 +19,7 @@ from uobtheatre.payments.transaction_providers import (
     SquareOnline,
     SquareRefund,
 )
-from uobtheatre.utils.exceptions import PaymentException
+from uobtheatre.utils.exceptions import PaymentException, SquareException
 
 
 def test_refund_method_all():
@@ -171,6 +173,82 @@ def test_square_refund_refund(mock_square):
 
 
 @pytest.mark.django_db
+def test_square_refund_api_error(mock_square):
+    idempotency_key = str(uuid4())
+    refund_method = SquareRefund(idempotency_key=idempotency_key)
+    payment = TransactionFactory(value=100, provider_fee=10, app_fee=20)
+
+    with mock_square(
+        SquareRefund.client.refunds,
+        "refund_payment",
+        throw_default_exception=True,
+    ):
+        with pytest.raises(SquareException):
+            refund_method.refund(payment)
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "response",
+    [
+        RefundPaymentResponse(),
+        RefundPaymentResponse(
+            errors=[
+                Error(
+                    category="API_ERROR",
+                    code="INVALID_REQUEST_ERROR",
+                    detail="Invalid request",
+                )
+            ]
+        ),
+        RefundPaymentResponse(
+            refund=PaymentRefund(
+                status="PENDING",
+                id="abc",
+                amount_money=Money(amount=None, currency="GBP"),
+                payment_id="abc",
+                order_id="nRDUxsrkGgorM3g8AT64kCLBLa4F",
+                created_at="2021-12-30T10:40:54.672Z",
+                updated_at="2021-12-30T10:40:54.672Z",
+                location_id="LN9PN3P67S0QV",
+            ),
+        ),
+        RefundPaymentResponse(
+            refund=PaymentRefund(
+                status="PENDING",
+                id="abc",
+                amount_money=Money(amount=None, currency="GBP"),
+                payment_id="abc",
+                order_id="nRDUxsrkGgorM3g8AT64kCLBLa4F",
+                created_at="2021-12-30T10:40:54.672Z",
+                updated_at="2021-12-30T10:40:54.672Z",
+                location_id="LN9PN3P67S0QV",
+            ),
+            errors=[
+                Error(
+                    category="API_ERROR",
+                    code="INVALID_REQUEST_ERROR",
+                    detail="Invalid request",
+                )
+            ],
+        ),
+    ],
+)
+def test_square_refund_payment_exceptions(mock_square, response):
+    idempotency_key = str(uuid4())
+    refund_method = SquareRefund(idempotency_key=idempotency_key)
+    payment = TransactionFactory(value=100, provider_fee=10, app_fee=20)
+
+    with mock_square(
+        SquareRefund.client.refunds,
+        "refund_payment",
+        response,
+    ):
+        with pytest.raises(PaymentException):
+            refund_method.refund(payment)
+
+
+@pytest.mark.django_db
 @pytest.mark.parametrize(
     "value,app_fee,custom_refund_amount,expected_app_fee",
     [(100, 20, 90, -10), (100, 20, 80, 0), (100, 0, 90, None)],
@@ -317,3 +395,41 @@ def test_square_refund_sync_payment(mock_square, with_data):
         payment.refresh_from_db()
     assert payment.provider_fee == -10
     assert payment.status == Transaction.Status.COMPLETED
+
+
+@pytest.mark.django_db
+def test_square_refund_sync_payment_api_error(mock_square):
+    payment = TransactionFactory(
+        value=-100,
+        provider_fee=None,
+        provider_name=SquareRefund.name,
+        status=Transaction.Status.PENDING,
+    )
+
+    with mock_square(SquareRefund.client.refunds, "get", throw_default_exception=True):
+        with pytest.raises(SquareException):
+            payment.sync_transaction_with_provider()
+            payment.refresh_from_db()
+
+    assert payment.provider_fee is None
+    assert payment.status == Transaction.Status.PENDING
+
+
+@pytest.mark.django_db
+def test_square_refund_sync_payment_no_refund(mock_square):
+    payment = TransactionFactory(
+        value=-100,
+        provider_fee=None,
+        provider_name=SquareRefund.name,
+        status=Transaction.Status.PENDING,
+    )
+
+    with mock_square(
+        SquareRefund.client.refunds, "get", response=RefundPaymentResponse(refund=None)
+    ):
+        with pytest.raises(PaymentException):
+            payment.sync_transaction_with_provider()
+            payment.refresh_from_db()
+
+    assert payment.provider_fee is None
+    assert payment.status == Transaction.Status.PENDING

@@ -5,6 +5,8 @@ import json
 from django.conf import settings
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from square.types.payment import Payment
+from square.types.payment_refund import PaymentRefund
 
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.transaction_providers import SquarePOS
@@ -111,7 +113,7 @@ class SquareWebhooks(APIView):
                 if not provider_id:
                     # Not a terminal checkout, therefore it is a standard payment
                     provider_id = square_payment["id"]
-                    data = square_payment
+                    data = Payment(**square_payment)
 
                 Transaction.objects.get(
                     provider_transaction_id=provider_id,
@@ -119,12 +121,13 @@ class SquareWebhooks(APIView):
 
             elif request_data["type"] == "refund.updated":
                 # This is a refund webhook
+                square_refund = request_data["data"]["object"]["refund"]
+                refund_data = PaymentRefund(**square_refund)
+
                 Transaction.objects.get(
                     provider_transaction_id=request_data["data"]["id"],
                     type=Transaction.Type.REFUND,
-                ).sync_transaction_with_provider(
-                    request_data["data"]["object"]["refund"]
-                )
+                ).sync_transaction_with_provider(refund_data)
             else:
                 return Response(status=202)
         except Transaction.DoesNotExist:
