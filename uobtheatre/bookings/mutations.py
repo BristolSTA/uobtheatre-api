@@ -154,21 +154,19 @@ class UpdateBookingAccessibilityInfo(AuthRequiredMixin, SafeMutation):
                 message="Accessibility information can only be updated for future performances"
             )
 
+        booking.previous_accessibility_info = previous_accessibility_info
+        booking.accessibility_info_updated_at = timezone.now()
         booking.accessibility_info = accessibility_info
         booking.save()
 
         if previous_accessibility_info and not accessibility_info:
-            booking_emails.send_booking_accessibility_removed_email(
-                booking, previous_accessibility_info
-            )
+            booking_emails.send_booking_accessibility_removed_email(booking)
         elif accessibility_info and not previous_accessibility_info:
             booking_emails.send_booking_accessibility_info_email(booking)
         elif previous_accessibility_info and (
             accessibility_info != previous_accessibility_info
         ):
-            booking_emails.send_booking_accessibility_updated_email(
-                booking, previous_accessibility_info
-            )
+            booking_emails.send_booking_accessibility_updated_email(booking)
 
         return cls(success=True)
 

@@ -13,6 +13,8 @@ from uobtheatre.productions.test.factories import PerformanceFactory, Production
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.venues.test.factories import AddressFactory, VenueFactory
 
+CONF_CLOSER = "Please remember that accessibility information is sensitive and should be treated with care. Only those who need to know should be informed of this information."
+
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
@@ -153,7 +155,9 @@ def test_send_booking_accessibility_info_email(mailoutbox):
     assert (
         mail.subject == f"Accessibility alert for {booking.performance.production.name}"
     )
-    assert "Some details about accessibility concerns" in mail.body
+    assert "Some details about accessibility concerns" not in mail.body
+    assert "added" in mail.body
+    assert CONF_CLOSER in mail.body
 
 
 @pytest.mark.django_db
@@ -169,9 +173,7 @@ def test_send_booking_accessibility_removed_info_email(mailoutbox):
     booking.performance.production.save()
 
     previous_accessibility_info = "Some details about accessibility concerns"
-    booking_emails.send_booking_accessibility_removed_email(
-        booking, previous_accessibility_info
-    )
+    booking_emails.send_booking_accessibility_removed_email(booking)
 
     assert len(mailoutbox) == 2
     assert mailoutbox[0].to == ["production@example.org"]
@@ -180,11 +182,9 @@ def test_send_booking_accessibility_removed_info_email(mailoutbox):
     assert (
         mail.subject == f"Accessibility alert for {booking.performance.production.name}"
     )
-    assert (
-        "has had its accessibility information removed. The previous information was:"
-        in mail.body
-    )
-    assert previous_accessibility_info in mail.body
+    assert previous_accessibility_info not in mail.body
+    assert "removed" in mail.body
+    assert CONF_CLOSER in mail.body
 
 
 @pytest.mark.django_db
@@ -202,9 +202,7 @@ def test_send_booking_accessibility_updated_info_email(mailoutbox):
     booking.performance.production.save()
 
     previous_accessibility_info = "Some details about accessibility concerns"
-    booking_emails.send_booking_accessibility_updated_email(
-        booking, previous_accessibility_info
-    )
+    booking_emails.send_booking_accessibility_updated_email(booking)
 
     assert len(mailoutbox) == 2
     assert mailoutbox[0].to == ["production@example.org"]
@@ -213,10 +211,7 @@ def test_send_booking_accessibility_updated_info_email(mailoutbox):
     assert (
         mail.subject == f"Accessibility alert for {booking.performance.production.name}"
     )
-    assert (
-        "has had its accessibility information updated. The new accessibility information is:"
-        in mail.body
-    )
-    assert "Some further details about accessibility concerns" in mail.body
-    assert "The previous information was:" in mail.body
-    assert previous_accessibility_info in mail.body
+    assert "Some further details about accessibility concerns" not in mail.body
+    assert previous_accessibility_info not in mail.body
+    assert "updated" in mail.body
+    assert CONF_CLOSER in mail.body

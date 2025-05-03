@@ -1098,9 +1098,6 @@ def test_booking_filter_has_accessibility_info(gql_client, has_accessibility_inf
     true_response = gql_client.execute(request_query % "true")
     false_response = gql_client.execute(request_query % "false")
 
-    print(true_response)
-    print(false_response)
-
     if has_accessibility_info:
         assert len(true_response["data"]["bookings"]["edges"]) == 1
         assert (

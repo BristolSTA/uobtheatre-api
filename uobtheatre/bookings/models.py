@@ -260,7 +260,17 @@ class Booking(TimeStampedMixin, Payable):
         default=0, validators=[MaxValueValidator(1), MinValueValidator(0)]
     )
 
+    # Accessibility information for the booking
+    # We store the previous accessibility information so that production staff
+    # can see what has changed when they get an email letting them know
+    # that the accessibility information has changed.
     accessibility_info = models.TextField(null=True, blank=True)
+    accessibility_info_updated_at = models.DateTimeField(
+        null=True, blank=True, editable=False
+    )
+    previous_accessibility_info = models.TextField(
+        null=True, blank=True, editable=False
+    )
 
     expires_at = models.DateTimeField(default=generate_expires_at)
 

@@ -2825,6 +2825,10 @@ def test_accessibility_mutation(existing_info, new_info, gql_client):
 
     assert response["data"]["updateBookingAccessibilityInfo"]["success"] is True
     assert Booking.objects.get(id=booking.id).accessibility_info == new_info
+    assert (
+        Booking.objects.get(id=booking.id).previous_accessibility_info == existing_info
+    )
+    assert Booking.objects.get(id=booking.id).accessibility_info_updated_at is not None
 
 
 @pytest.mark.django_db
@@ -2890,7 +2894,6 @@ def test_accessibility_mutation_unauthorized_user(gql_client):
     )
 
     response = gql_client.execute(request_query)
-    print(response)
 
     assert response["data"]["updateBookingAccessibilityInfo"]["success"] is False
     assert (

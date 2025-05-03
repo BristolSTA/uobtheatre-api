@@ -73,12 +73,14 @@ def send_booking_accessibility_info_email(
         MailComposer()
         .greeting()
         .line(
-            f"A booking has been created for {booking.performance} with the following accessibility information:"
+            f"A patron has <strong>added</strong> accessibility information in their booking for {booking.performance}. Please review the booking for further information and see if any action is required. Ensure you liase with your venue and front of house teams about this: do not assume that they are aware of this information. Please contact the patron directly if you need to discuss this information with them."
         )
-        .line(f"'{booking.accessibility_info}'")
         .action(
             f"/administration/productions/{booking.performance.production.slug}/bookings/{booking.reference}",
             "View Booking Details",
+        )
+        .line(
+            "Please remember that accessibility information is sensitive and should be treated with care. Only those who need to know should be informed of this information."
         )
     )
     for email in emails_to_notify:
@@ -89,7 +91,6 @@ def send_booking_accessibility_info_email(
 
 def send_booking_accessibility_removed_email(
     booking: "Booking",
-    previous_accessibility_info: str,
 ):
     """
     Sends an email to the production contact email and to those with view sales and bookings permissions for a production,
@@ -106,12 +107,14 @@ def send_booking_accessibility_removed_email(
         MailComposer()
         .greeting()
         .line(
-            f"A booking for {booking.performance} has had its accessibility information removed. The previous information was:"
+            f"A patron has <strong>removed</strong> their accessibility information in their booking for {booking.performance}. You may still view the previously entered accessibility information for your reference. Ensure you liase with your venue and front of house teams about this: do not assume that they are aware of this information. Please contact the patron directly if you need to clarify this information with them."
         )
-        .line(f"'{previous_accessibility_info}'")
         .action(
             f"/administration/productions/{booking.performance.production.slug}/bookings/{booking.reference}",
             "View Booking Details",
+        )
+        .line(
+            "Please remember that accessibility information is sensitive and should be treated with care. Only those who need to know should be informed of this information."
         )
     )
     for email in emails_to_notify:
@@ -122,7 +125,6 @@ def send_booking_accessibility_removed_email(
 
 def send_booking_accessibility_updated_email(
     booking: "Booking",
-    previous_accessibility_info: str,
 ):
     """
     Sends an email to the production contact email and to those with view sales and bookings permissions for a production,
@@ -139,14 +141,14 @@ def send_booking_accessibility_updated_email(
         MailComposer()
         .greeting()
         .line(
-            f"A booking for {booking.performance} has had its accessibility information updated. The new accessibility information is:"
+            f"A patron has <strong>updated</strong> their accessibility information in their booking for {booking.performance}. You may still view the previously entered accessibility information for your reference. Ensure you liase with your venue and front of house teams about this: do not assume that they are aware of this information. Please contact the patron directly if you need to clarify this information with them."
         )
-        .line(f"'{booking.accessibility_info}'")
-        .line("The previous information was:")
-        .line(f"'{previous_accessibility_info}'")
         .action(
             f"/administration/productions/{booking.performance.production.slug}/bookings/{booking.reference}",
             "View Booking Details",
+        )
+        .line(
+            "Please remember that accessibility information is sensitive and should be treated with care. Only those who need to know should be informed of this information."
         )
     )
     for email in emails_to_notify:
