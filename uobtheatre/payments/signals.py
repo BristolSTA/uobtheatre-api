@@ -27,22 +27,23 @@ def pre_transaction_save_callback(transaction_instance: Transaction):
     if not old_instance:
         return
 
+    # If the transaction is a refund and the status has changed to completed, notify the user
     if (
         transaction_instance.type == Transaction.Type.REFUND
         and transaction_instance.status == Transaction.Status.COMPLETED
         and not old_instance.status == Transaction.Status.COMPLETED
     ):
-        # This refund transaction has now been completed. Notify the payment owner
         transaction_instance.notify_user()
 
 
 def post_transaction_save_callback(transaction_instance: Transaction):
     """Post save payment actions"""
-    # If the object is refunded and not locked, set it to cancelled
+    # If the payable is an in-process refund and the transaction has now been completed, mark the payable as refunded
     if (
-        not transaction_instance.Status == Payable.Status.CANCELLED
+        transaction_instance.pay_object.status == Payable.Status.REFUND_PROCESSING
+        and not transaction_instance.pay_object.Status == Payable.Status.REFUNDED
         and not transaction_instance.pay_object.is_locked
         and transaction_instance.pay_object.is_refunded
     ):
-        transaction_instance.pay_object.status = Payable.Status.CANCELLED
+        transaction_instance.pay_object.status = Payable.Status.REFUNDED
         transaction_instance.pay_object.save()

@@ -734,11 +734,22 @@ class Performance(
         """Generates a breakdown of the sales of this performance"""
         return self.qs.transactions().annotate_sales_breakdown(breakdowns)
 
-    def refund_bookings(self, authorizing_user: User):
+    def refund_bookings(
+        self,
+        authorizing_user: User,
+        preserve_provider_fees: bool = True,
+        preserve_app_fees: bool = False,
+    ):
         """Refund the performance's bookings
 
         Args:
             authorizing_user (User): The user authorizing the refund
+            preserve_provider_fees (bool): If true the refund is reduced by the amount required to cover the payment's provider_fee
+                i.e. the refund is reduced by the amount required to cover only Square's fees.
+                If both preserve_provider_fees and preserve_app_fees are true, the refund is reduced by the larger of the two fees.
+            preserve_app_fees (bool): If true the refund is reduced by the amount required to cover the payment's app_fee
+                i.e. the refund is reduced by the amount required to cover our fees (the various misc_costs, such as the theatre improvement levy).
+                If both preserve_provider_fees and preserve_app_fees are true, the refund is reduced by the larger of the two fees.
 
         Raises:
             CantBeRefundedException: Raised if the performance can't be refunded
@@ -746,7 +757,9 @@ class Performance(
         if not self.disabled:
             raise CantBeRefundedException(f"{self} is not set to disabled")
 
-        refund_performance.delay(self.pk, authorizing_user.id)
+        refund_performance.delay(
+            self.pk, authorizing_user.id, preserve_provider_fees, preserve_app_fees
+        )
 
     def __str__(self):
         if self.start is None:
@@ -807,12 +820,24 @@ class ProductionQuerySet(QuerySet):
         Returns:
             QuerySet: The filtered queryset
         """
+        # Productions the user has explicit permissions to view
         productions_user_can_view_admin = get_objects_for_user(
             user, ["view_production", "approve_production"], self, any_perm=True
         ).values_list("id", flat=True)
+
+        # Productions the user has tickets for that are within the last week or the future
+        productions_user_has_tickets = []
+        if user.is_authenticated:
+            one_week_ago = timezone.now() - datetime.timedelta(days=7)
+            productions_user_has_tickets = self.filter(
+                performances__bookings__user=user,
+                performances__start__gte=one_week_ago,
+            ).values_list("id", flat=True)
+
         return self.filter(
             ~Q(status__in=Production.Status.PRIVATE_STATUSES)
             | Q(id__in=productions_user_can_view_admin)
+            | Q(id__in=productions_user_has_tickets)
         )
 
     def performances(self):
@@ -1036,11 +1061,12 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
     class Meta:
         ordering = ["id"]
         permissions = (
-            ("boxoffice", "Can use boxoffice for production"),
+            ("boxoffice", "Can use box office for production"),
             ("sales", "Can view sales for production"),
-            ("force_change_production", "Can edit production once live"),
+            ("force_change_production", "Can change production once live"),
             ("view_bookings", "Can inspect bookings and users for this production"),
-            ("approve_production", "Can approve production pending publication"),
+            ("approve_production", "Can approve production"),
+            ("comp_tickets", "Can issue complimentary tickets"),
         )
 
     class PermissionsMeta:
@@ -1050,5 +1076,6 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
             "view_bookings": ("change_production", "force_change_production"),
             "change_production": ("change_production", "force_change_production"),
             "sales": ("change_production", "force_change_production"),
+            "comp_tickets": ("change_production", "force_change_production"),
             "approve_production": ("approve_production"),
         }

@@ -135,7 +135,7 @@ def test_society_transfer_value():
         ([5, -5], True, False),
     ],
 )
-def test_is_refunded(payment_values, has_pending, is_refunded):
+def test_legacy_is_refunded(payment_values, has_pending, is_refunded):
     # Create some payments for different payobjects
     [TransactionFactory(status=Transaction.Status.COMPLETED) for _ in range(10)]
 
@@ -154,6 +154,17 @@ def test_is_refunded(payment_values, has_pending, is_refunded):
 
     if payment := pay_object.transactions.first():
         assert payment.is_refunded == is_refunded
+
+
+@pytest.mark.django_db
+def test_is_refunded():
+    for status in Payable.Status:
+        booking = BookingFactory(status=status)
+
+        if status == Payable.Status.REFUNDED:
+            assert booking.is_refunded is True
+        else:
+            assert booking.is_refunded is False
 
 
 @pytest.mark.django_db
@@ -184,14 +195,14 @@ def test_is_locked(has_pending_transaction):
             1,
             True,
             True,
-            "Booking (ABCD123) can't be refunded due to it's status (IN_PROGRESS)",
+            "Booking (ABCD123) can't be refunded due to its status (IN_PROGRESS)",
         ),
         (
             Booking.Status.PAID,
             1,
             True,
             True,
-            "Booking (ABCD123) can't be refunded because is already refunded",
+            "Booking (ABCD123) can't be refunded because it is already refunded",
         ),
         (
             Booking.Status.PAID,
@@ -213,6 +224,13 @@ def test_is_locked(has_pending_transaction):
             False,
             False,
             "Booking (ABCD123) can't be refunded because it has no payments",
+        ),
+        (
+            Booking.Status.REFUND_PROCESSING,
+            2,
+            False,
+            True,
+            "Booking (ABCD123) can't be refunded because it is already being refunded",
         ),
     ],
 )
@@ -238,11 +256,57 @@ def test_validate_cant_be_refunded(
 
 
 @pytest.mark.django_db
-def test_async_refund():
+@pytest.mark.parametrize(
+    "preserve_provider_fees,preserve_app_fees",
+    [
+        (False, False),
+        (True, False),
+        (False, True),
+        (True, True),
+    ],
+)
+def test_async_refund(preserve_provider_fees, preserve_app_fees):
     booking = BookingFactory(id=45)
     with patch.object(refund_payable, "delay") as mock:
-        booking.async_refund(UserFactory(id=3))
-        mock.assert_called_once_with(45, booking.content_type.pk, 3)
+        booking.async_refund(
+            UserFactory(id=3), preserve_provider_fees, preserve_app_fees
+        )
+        mock.assert_called_once_with(
+            45, booking.content_type.pk, 3, preserve_provider_fees, preserve_app_fees
+        )
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "preserve_provider_fees,preserve_app_fees,refund_type",
+    [
+        (False, False, "Full"),
+        (True, False, "Payment provider fee-accommodating"),
+        (False, True, "Website fee-accommodating"),
+        (True, True, "Payment provider and website fee-accommodating"),
+    ],
+)
+def test_refund(mailoutbox, preserve_provider_fees, preserve_app_fees, refund_type):
+    user = UserFactory(id=3)
+    booking = BookingFactory(id=45)
+    TransactionFactory(pay_object=booking)
+
+    with patch.object(
+        Transaction,
+        "async_refund",
+        return_value=None,
+    ):
+        booking.refund(
+            user,
+            preserve_provider_fees=preserve_provider_fees,
+            preserve_app_fees=preserve_app_fees,
+        )
+
+    assert len(mailoutbox) == 1
+    assert (
+        mailoutbox[0].subject
+        == f"[UOBTheatre] {refund_type.title()} Booking Refunds Initiated"
+    )
 
 
 @pytest.mark.django_db
@@ -275,7 +339,9 @@ def test_payable_refund(mailoutbox, can_be_refunded, send_email, do_async):
 
         def test():
             pay_object.refund(
-                UserFactory(), do_async=do_async, send_admin_email=send_email
+                authorizing_user=UserFactory(),
+                do_async=do_async,
+                send_admin_email=send_email,
             )
 
         if not can_be_refunded:
@@ -288,7 +354,10 @@ def test_payable_refund(mailoutbox, can_be_refunded, send_email, do_async):
 
         assert mock.call_count == (2 if can_be_refunded else 0)
         assert len(mailoutbox) == (1 if can_be_refunded and send_email else 0)
-        if can_be_refunded:
+        if can_be_refunded and not do_async:
+            mock.assert_any_call(payment_1, True, False)
+            mock.assert_any_call(payment_2, True, False)
+        elif can_be_refunded:
             mock.assert_any_call(payment_1)
             mock.assert_any_call(payment_2)
 

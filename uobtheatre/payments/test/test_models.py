@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, PropertyMock, patch
 
 import pytest
 from pytest_django.asserts import assertQuerysetEqual
+from square.types.get_payment_response import GetPaymentResponse
 
 from uobtheatre.payments.exceptions import (
     CantBeCanceledException,
@@ -71,30 +72,27 @@ def test_transaction_type_filters():
 @pytest.mark.django_db
 def test_update_payment_from_square(mock_square):
     payment = TransactionFactory(provider_fee=0, provider_transaction_id="abc")
-    with mock_square(
-        SquareOnline.client.payments,
-        "get_payment",
-        status_code=200,
-        success=True,
-        body={
-            "payment": {
-                "id": "RGdfG3spBBfui4ZJy4HFFogUKjKZY",
-                "amount_money": {"amount": 1990, "currency": "GBP"},
-                "status": "COMPLETED",
-                "delay_duration": "PT168H",
-                "source_type": "CARD",
-                "processing_fee": [
-                    {
-                        "effective_at": "2021-10-03T09:46:42.000Z",
-                        "type": "INITIAL",
-                        "amount_money": {"amount": 58, "currency": "GBP"},
-                    }
-                ],
-                "total_money": {"amount": 1990, "currency": "GBP"},
-                "approved_money": {"amount": 1990, "currency": "GBP"},
-            }
-        },
-    ):
+
+    mock_response = GetPaymentResponse(
+        payment={
+            "id": "RGdfG3spBBfui4ZJy4HFFogUKjKZY",
+            "amount_money": {"amount": 1990, "currency": "GBP"},
+            "status": "COMPLETED",
+            "delay_duration": "PT168H",
+            "source_type": "CARD",
+            "processing_fee": [
+                {
+                    "effective_at": "2021-10-03T09:46:42.000Z",
+                    "type": "INITIAL",
+                    "amount_money": {"amount": 58, "currency": "GBP"},
+                }
+            ],
+            "total_money": {"amount": 1990, "currency": "GBP"},
+            "approved_money": {"amount": 1990, "currency": "GBP"},
+        }
+    )
+
+    with mock_square(SquareOnline.client.payments, "get", response=mock_response):
         payment.sync_transaction_with_provider()
 
     payment.refresh_from_db()
@@ -106,7 +104,7 @@ def test_update_payment_from_square_no_provider_id(mock_square):
     payment = TransactionFactory(provider_fee=0, provider_transaction_id=None)
     with mock_square(
         SquareOnline.client.payments,
-        "get_payment",
+        "get",
     ) as mock_get, pytest.raises(PaymentException):
         payment.sync_transaction_with_provider()
     mock_get.assert_not_called()
@@ -117,23 +115,20 @@ def test_update_payment_from_square_no_provider_id(mock_square):
 @pytest.mark.django_db
 def test_update_payment_from_square_no_processing_fee(mock_square):
     payment = TransactionFactory(provider_fee=None, provider_transaction_id="abc")
-    with mock_square(
-        SquareOnline.client.payments,
-        "get_payment",
-        status_code=200,
-        success=True,
-        body={
-            "payment": {
-                "id": "RGdfG3spBBfui4ZJy4HFFogUKjKZY",
-                "amount_money": {"amount": 1990, "currency": "GBP"},
-                "status": "COMPLETED",
-                "delay_duration": "PT168H",
-                "source_type": "CARD",
-                "total_money": {"amount": 1990, "currency": "GBP"},
-                "approved_money": {"amount": 1990, "currency": "GBP"},
-            }
-        },
-    ):
+
+    mock_response = GetPaymentResponse(
+        payment={
+            "id": "RGdfG3spBBfui4ZJy4HFFogUKjKZY",
+            "amount_money": {"amount": 1990, "currency": "GBP"},
+            "status": "COMPLETED",
+            "delay_duration": "PT168H",
+            "source_type": "CARD",
+            "total_money": {"amount": 1990, "currency": "GBP"},
+            "approved_money": {"amount": 1990, "currency": "GBP"},
+        }
+    )
+
+    with mock_square(SquareOnline.client.payments, "get", mock_response):
         payment.sync_transaction_with_provider()
 
     payment.refresh_from_db()
@@ -320,7 +315,7 @@ def test_refund_payment_with_provider():
             is_refundable=True,
             automatic_refund_provider=default_refund_method,
         )
-        payment.refund(refund_method)
+        payment.refund(refund_provider=refund_method, preserve_provider_fees=False)
 
         # Assert we check it can be refunded
         can_be_refunded_mock.assert_called_once_with(
@@ -328,7 +323,7 @@ def test_refund_payment_with_provider():
         )
 
         # Assert the refund method on the correct provider is called
-        refund_method.refund.assert_called_once_with(payment)
+        refund_method.refund.assert_called_once_with(payment, custom_refund_amount=None)
         default_refund_method.refund.assert_not_called()
 
 
@@ -346,11 +341,11 @@ def test_refund_payment_with_default_provider():
             is_refundable=True,
             automatic_refund_provider=refund_method,
         )
-        payment.refund()
+        payment.refund(preserve_provider_fees=False)
 
         # Assert we check it can be refunded
         can_be_refunded_mock.assert_called_once_with(refund_provider=None, raises=True)
-        refund_method.refund.assert_called_once_with(payment)
+        refund_method.refund.assert_called_once_with(payment, custom_refund_amount=None)
 
 
 @pytest.mark.django_db
@@ -368,6 +363,167 @@ def test_refund_payment_with_no_auto_refund_method():
             payment.refund()
 
         assert exc.value.message == "A abc payment cannot be automatically refunded"
+
+
+@pytest.mark.django_db
+def test_refund_payment_with_provider_preserve_provider_fees():
+    """
+    When a refund is called that preserves provider fees, the refund method
+    of the provided refund provider should be called with the correct amount.
+    """
+    payment = TransactionFactory()
+    refund_method = mock_refund_method()
+    default_refund_method = mock_refund_method()
+    with mock.patch(
+        "uobtheatre.payments.models.Transaction.provider",
+        new_callable=PropertyMock,
+    ) as p_mock, mock.patch.object(
+        payment, "can_be_refunded", return_value=True
+    ) as can_be_refunded_mock:
+        p_mock.return_value = mock_payment_method(
+            is_refundable=True,
+            automatic_refund_provider=default_refund_method,
+        )
+        payment.refund(refund_provider=refund_method, preserve_provider_fees=True)
+
+        # Assert we check it can be refunded
+        can_be_refunded_mock.assert_called_once_with(
+            refund_provider=refund_method, raises=True
+        )
+
+        expected_refund_amount = payment.value - payment.provider_fee
+
+        # Assert the refund method on the correct provider is called with the correct amount
+        refund_method.refund.assert_called_once_with(
+            payment, custom_refund_amount=expected_refund_amount
+        )
+        default_refund_method.refund.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_refund_payment_with_provider_preserve_app_fees():
+    """
+    When a refund is called that preserves app fees, the refund method
+    of the provided refund provider should be called with the correct amount.
+    """
+    payment = TransactionFactory()
+    refund_method = mock_refund_method()
+    default_refund_method = mock_refund_method()
+    with mock.patch(
+        "uobtheatre.payments.models.Transaction.provider",
+        new_callable=PropertyMock,
+    ) as p_mock, mock.patch.object(
+        payment, "can_be_refunded", return_value=True
+    ) as can_be_refunded_mock:
+        p_mock.return_value = mock_payment_method(
+            is_refundable=True,
+            automatic_refund_provider=default_refund_method,
+        )
+        payment.refund(
+            refund_provider=refund_method,
+            preserve_provider_fees=False,
+            preserve_app_fees=True,
+        )
+
+        # Assert we check it can be refunded
+        can_be_refunded_mock.assert_called_once_with(
+            refund_provider=refund_method, raises=True
+        )
+
+        expected_refund_amount = payment.value - payment.app_fee
+
+        # Assert the refund method on the correct provider is called with the correct amount
+        refund_method.refund.assert_called_once_with(
+            payment, custom_refund_amount=expected_refund_amount
+        )
+        default_refund_method.refund.assert_not_called()
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "provider_fees, app_fees, expected_refund_minus",
+    [
+        (90, 10, 90),
+        (10, 90, 90),
+        (90, 90, 90),
+        (10, 10, 10),
+    ],
+)
+def test_refund_payment_with_provider_preserve_fees(
+    provider_fees, app_fees, expected_refund_minus
+):
+    """
+    When a refund is called that preserves app and provider fees, the refund method
+    of the provided refund provider should be called with the correct amount.
+    """
+    payment = TransactionFactory()
+
+    payment.provider_fee = provider_fees
+    payment.app_fee = app_fees
+    payment.save()
+
+    refund_method = mock_refund_method()
+    default_refund_method = mock_refund_method()
+    with mock.patch(
+        "uobtheatre.payments.models.Transaction.provider",
+        new_callable=PropertyMock,
+    ) as p_mock, mock.patch.object(
+        payment, "can_be_refunded", return_value=True
+    ) as can_be_refunded_mock:
+        p_mock.return_value = mock_payment_method(
+            is_refundable=True,
+            automatic_refund_provider=default_refund_method,
+        )
+        payment.refund(
+            refund_provider=refund_method,
+            preserve_provider_fees=True,
+            preserve_app_fees=True,
+        )
+
+        # Assert we check it can be refunded
+        can_be_refunded_mock.assert_called_once_with(
+            refund_provider=refund_method, raises=True
+        )
+
+        expected_refund_amount = payment.value - expected_refund_minus
+
+        # Assert the refund method on the correct provider is called with the correct amount
+        refund_method.refund.assert_called_once_with(
+            payment, custom_refund_amount=expected_refund_amount
+        )
+        default_refund_method.refund.assert_not_called()
+
+
+@pytest.mark.django_db
+def test_negative_refund_amount_throws_error():
+    """
+    When a refund is called that preserves app and provider fees, the refund method
+    of the provided refund provider should be called with the correct amount.
+    """
+    payment = TransactionFactory(value=20, provider_fee=25)
+
+    refund_method = mock_refund_method()
+    default_refund_method = mock_refund_method()
+    with mock.patch(
+        "uobtheatre.payments.models.Transaction.provider",
+        new_callable=PropertyMock,
+    ) as p_mock, mock.patch.object(
+        payment, "can_be_refunded", return_value=True
+    ) as can_be_refunded_mock:
+        p_mock.return_value = mock_payment_method(
+            is_refundable=True,
+            automatic_refund_provider=default_refund_method,
+        )
+        with pytest.raises(CantBeRefundedException):
+            payment.refund(
+                refund_provider=refund_method,
+                preserve_provider_fees=True,
+                preserve_app_fees=True,
+            )
+            # Assert we check it can be refunded
+            can_be_refunded_mock.assert_called_once_with(
+                refund_provider=refund_method, raises=True
+            )
 
 
 @pytest.mark.django_db

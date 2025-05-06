@@ -8,6 +8,10 @@ import pytest
 from django.utils import timezone
 from graphql_relay.node.node import from_global_id, to_global_id
 from guardian.shortcuts import assign_perm
+from square.types.create_payment_response import CreatePaymentResponse
+from square.types.create_terminal_checkout_response import (
+    CreateTerminalCheckoutResponse,
+)
 
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.mutations import PayBooking
@@ -321,7 +325,7 @@ def test_cant_create_booking_with_unbookable_performance(gql_client):
     assert response["data"]["booking"]["success"] is False
     assert (
         response["data"]["booking"]["errors"][0]["message"]
-        == "This performance is not able to be booked at the moment"
+        == "You do not have permission to book for this performance"
     )
 
 
@@ -570,7 +574,7 @@ def test_create_booking_not_bookable(gql_client):
     response = gql_client.login().execute(request)
 
     assert response["data"]["booking"]["errors"] == [
-        {"message": "This performance is not able to be booked at the moment"}
+        {"message": "You do not have permission to book for this performance"}
     ]
 
 
@@ -1574,31 +1578,26 @@ def test_pay_booking_square_error(mock_square, gql_client):
 
     request_query = """
     mutation {
-	payBooking(
-            id: "%s"
-            price: 100
-            nonce: "cnon:card-nonce-ok"
-            idempotencyKey: "my_idempotency_key_string"
-        ) {
-            success
-            errors {
-              __typename
-              ... on NonFieldError {
-                message
-                code
-              }
+        payBooking(
+                id: "%s"
+                price: 100
+                nonce: "cnon:card-nonce-ok"
+                idempotencyKey: "my_idempotency_key_string"
+            ) {
+                success
+                errors {
+                __typename
+                ... on NonFieldError {
+                    message
+                    code
+                }
+                }
             }
-          }
         }
     """
 
     with mock_square(
-        SquareOnline.client.payments,
-        "create_payment",
-        success=False,
-        reason_phrase="Some phrase",
-        status_code=400,
-        errors=[{"category": "", "detail": "", "code": "MY_CODE"}],
+        SquareOnline.client.payments, "create", throw_default_exception=True
     ):
         response = gql_client.execute(
             request_query % to_global_id("BookingNode", booking.id)
@@ -1882,26 +1881,23 @@ def test_pay_booking_success(mock_square, gql_client, with_sca_token):
         }
     """
 
-    with mock_square(
-        SquareOnline.client.payments,
-        "create_payment",
-        body={
-            "payment": {
-                "id": "abc",
-                "card_details": {
-                    "card": {
-                        "card_brand": "VISA",
-                        "last_4": "1111",
-                    }
-                },
-                "amount_money": {
-                    "currency": "GBP",
-                    "amount": 0,
-                },
-            }
-        },
-        success=True,
-    ):
+    mock_response = CreatePaymentResponse(
+        payment={
+            "id": "abc",
+            "card_details": {
+                "card": {
+                    "card_brand": "VISA",
+                    "last4": "1111",
+                }
+            },
+            "amount_money": {
+                "currency": "GBP",
+                "amount": 0,
+            },
+        }
+    )
+
+    with mock_square(SquareOnline.client.payments, "create", mock_response):
         response = gql_client.execute(
             request_query
             % (
@@ -1984,29 +1980,28 @@ def test_pay_booking_success_square_pos(mock_square, gql_client):
         }
     """
 
-    with mock_square(
-        SquarePOS.client.terminal,
-        "create_terminal_checkout",
-        body={
-            "checkout": {
-                "id": "qhpRUp4dPCfqO",
-                "amount_money": {"amount": 1000, "currency": "GBP"},
-                "device_options": {
-                    "device_id": "121CS145A5000029",
-                    "tip_settings": {"allow_tipping": False},
-                    "skip_receipt_screen": False,
-                },
-                "status": "PENDING",
-                "created_at": "2021-08-13T21:55:20.260Z",
-                "updated_at": "2021-08-13T21:55:20.260Z",
-                "app_id": "sq0idp-terKoT_PULVOpP8lAJHYQQ",
-                "deadline_duration": "PT5M",
-                "location_id": "LMHP97T10P8JV",
-                "payment_type": "CARD_PRESENT",
-            }
-        },
-        success=True,
-    ):
+    mock_response = CreateTerminalCheckoutResponse(
+        checkout={
+            "id": "08YceKh7B3ZqO",
+            "amount_money": {"amount": 100, "currency": "GBP"},
+            "reference_id": "id11572",
+            "note": "A brief note",
+            "device_options": {
+                "device_id": "dbb5d83a-7838-11ea-bc55-0242ac130003",
+                "tip_settings": {"allow_tipping": False},
+                "skip_receipt_screen": False,
+            },
+            "status": "PENDING",
+            "location_id": "LOCATION_ID",
+            "created_at": "2020-04-06T16:39:32.545Z",
+            "updated_at": "2020-04-06T16:39:32.545Z",
+            "app_id": "APP_ID",
+            "deadline_duration": "PT5M",
+            "payment_type": "CARD_PRESENT",
+        }
+    )
+
+    with mock_square(SquarePOS.client.terminal.checkouts, "create", mock_response):
         response = gql_client.execute(
             request_query % to_global_id("BookingNode", booking.id)
         )

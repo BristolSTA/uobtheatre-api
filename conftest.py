@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 from types import SimpleNamespace
-from typing import List, Optional
+from typing import Any, List, Optional
 from unittest.mock import patch
 
 import pytest
@@ -9,9 +9,9 @@ from django.contrib.auth.models import AnonymousUser
 from django.test import RequestFactory
 from graphene.test import Client as GQLClient
 from rest_framework.test import APIClient
-from square.client import Client
+from square import Square as Client
+from square.core.api_error import ApiError
 
-from uobtheatre.payments.test.factories import MockApiResponse
 from uobtheatre.schema import schema as app_schema
 from uobtheatre.users.test.factories import UserFactory
 
@@ -66,13 +66,14 @@ class AuthenticateableGQLClient(GQLClient):
 def square_client():
     """Make a square clients"""
     kwargs = {
-        "square_version": "2020-11-18",
-        "access_token": settings.SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],  # type: ignore
+        "version": "2025-04-16",
+        "token": settings.SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],  # type: ignore
         "environment": settings.SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],  # type: ignore
     }
 
     if square_url := settings.SQUARE_SETTINGS["SQUARE_URL"]:
-        kwargs["custom_url"] = square_url
+        kwargs["base_url"] = square_url
+
     return Client(**kwargs)
 
 
@@ -82,30 +83,48 @@ def mock_square():
     Used to mock the square client
     """
 
+    default_exception = ApiError(
+        status_code=400,
+        body={
+            "errors": [
+                {
+                    "category": "",
+                    "detail": "",
+                    "code": "MY_CODE",
+                }
+            ]
+        },
+    )
+
     @contextmanager
     def mock_client(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         square_client_api,
         method: str,
-        body: Optional[dict] = None,
-        success: Optional[bool] = None,
-        reason_phrase: Optional[str] = None,
-        status_code: Optional[int] = None,
-        errors: Optional[List] = None,
+        response: Optional[Any] = None,
+        exception: Optional[Exception] = None,
+        throw_default_exception: bool = False,
     ):
         """
         Mock a provided square client object
+
+        Args:
+            square_client_api: The square client object to mock
+            method: The method to mock
+            response: The response to return
+            exception: The exception to raise
+            throw_default_exception: Whether to throw the default API exception
         """
         with patch.object(
             square_client_api,
             method,
         ) as mocked_square:
-            mocked_square.return_value = MockApiResponse(
-                body=body,
-                success=success,
-                reason_phrase=reason_phrase,
-                status_code=status_code,
-                errors=errors,
-            )
+            if exception:
+                mocked_square.side_effect = exception
+            elif throw_default_exception:
+                mocked_square.side_effect = default_exception
+
+            mocked_square.return_value = response
+
             yield mocked_square
 
     return mock_client

@@ -40,12 +40,15 @@ class PayableQuerySet(QuerySet):
 
     def refunded(self, bool_val=True) -> QuerySet:
         """
-        A payable is refunded if the value of all the payments for the pay
+        A payable is refunded if its Status is REFUNDED
+        or, for legacy support, if the value of all the payments for the pay
         object are equal to the value of all the refunds and all payments are
         completed.
         """
         qs = self.annotate_transaction_count().annotate_transaction_value()  # type: ignore
-        filter_query = Q(transaction_totals=0, transaction_count__gt=1)
+        filter_query = Q(transaction_totals=0, transaction_count__gt=1) | Q(
+            status=Payable.Status.REFUNDED
+        )
         if bool_val:
             return qs.filter(filter_query)
         return qs.exclude(filter_query)
@@ -70,6 +73,8 @@ class Payable(BaseModel):  # type: ignore
         IN_PROGRESS = "IN_PROGRESS", "In Progress"
         CANCELLED = "CANCELLED", "Cancelled"
         PAID = "PAID", "Paid"
+        REFUND_PROCESSING = "REFUND_PROCESSING", "Refund Processing"
+        REFUNDED = "REFUNDED", "Refunded"
 
     status = models.CharField(
         max_length=20,
@@ -116,33 +121,56 @@ class Payable(BaseModel):  # type: ignore
 
     def validate_cant_be_refunded(self) -> Optional[CantBeRefundedException]:
         """Validates if the booking can't be refunded. If it can't, it returns an exception. If it can, it returns None"""
-        if self.status not in [self.Status.PAID, self.Status.CANCELLED]:
-            return CantBeRefundedException(
-                f"{self.__class__.__name__} ({self}) can't be refunded due to it's status ({self.status})"
+        exception = None
+        if self.status == self.Status.REFUND_PROCESSING:
+            exception = CantBeRefundedException(
+                f"{self.__class__.__name__} ({self}) can't be refunded because it is already being refunded"
             )
-        if self.transactions.payments().count() == 0:  # type: ignore
-            return CantBeRefundedException(
+        elif self.status not in [self.Status.PAID, self.Status.CANCELLED]:
+            exception = CantBeRefundedException(
+                f"{self.__class__.__name__} ({self}) can't be refunded due to its status ({self.status})"
+            )
+        elif self.transactions.payments().count() == 0:  # type: ignore
+            exception = CantBeRefundedException(
                 f"{self.__class__.__name__} ({self}) can't be refunded because it has no payments"
             )
-        if self.is_refunded:
-            return CantBeRefundedException(
-                f"{self.__class__.__name__} ({self}) can't be refunded because is already refunded"
+        elif self.is_refunded:
+            exception = CantBeRefundedException(
+                f"{self.__class__.__name__} ({self}) can't be refunded because it is already refunded"
             )
-        if self.is_locked:
-            return CantBeRefundedException(
+        elif self.is_locked:
+            exception = CantBeRefundedException(
                 f"{self.__class__.__name__} ({self}) can't be refunded because it is locked"
             )
-        return None
+        return exception
 
-    def async_refund(self, authorizing_user: User):
+    def async_refund(
+        self,
+        authorizing_user: User,
+        preserve_provider_fees: bool = True,
+        preserve_app_fees: bool = False,
+    ):
         """
         Create "refund_payable" task to refund all the payments for the
         payable. This tasks calls the refund method with `do_async` to queue a
         refund tasks for each payment.
         """
-        refund_payable.delay(self.pk, self.content_type.pk, authorizing_user.pk)
+        refund_payable.delay(
+            self.pk,
+            self.content_type.pk,
+            authorizing_user.pk,
+            preserve_provider_fees,
+            preserve_app_fees,
+        )
 
-    def refund(self, authorizing_user: User, do_async=True, send_admin_email=True):
+    def refund(  # pylint: disable=too-many-arguments, too-many-positional-arguments
+        self,
+        authorizing_user: User,
+        do_async=True,
+        send_admin_email=True,
+        preserve_provider_fees=True,
+        preserve_app_fees=False,
+    ):
         """
         Refund the all the payments in the payable.
 
@@ -152,17 +180,40 @@ class Payable(BaseModel):  # type: ignore
                 Otherwise payments are refunded synchronously.
             send_admin_email (bool): If true send an email to the admins after the
                 refunds are created/queued.
+            preserve_provider_fees (bool): If true the refund is reduced by the amount required to cover the payment's provider_fee
+                i.e. the refund is reduced by the amount required to cover only Square's fees.
+                If both preserve_provider_fees and preserve_app_fees are true, the refund is reduced by the larger of the two fees.
+            preserve_app_fees (bool): If true the refund is reduced by the amount required to cover the payment's app_fee
+                i.e. the refund is reduced by the amount required to cover our fees (the various misc_costs, such as the theatre improvement levy).
+                If both preserve_provider_fees and preserve_app_fees are true, the refund is reduced by the larger of the two fees.
         """
         if error := self.validate_cant_be_refunded():  # type: ignore
             raise error  # pylint: disable=raising-bad-type
 
+        # Set the status to REFUND_PROCESSING
+        self.status = Payable.Status.REFUND_PROCESSING
+        self.save()
+
         for payment in self.transactions.filter(type=Transaction.Type.PAYMENT).all():  # type: ignore
-            payment.async_refund() if do_async else payment.refund()
+            (
+                payment.async_refund()
+                if do_async
+                else payment.refund(preserve_provider_fees, preserve_app_fees)
+            )
 
         if send_admin_email:
-            mail = payable_refund_initiated_email(authorizing_user, [self])
+            if preserve_provider_fees and preserve_app_fees:
+                refund_type = "Payment provider and website fee-accommodating"
+            elif preserve_provider_fees:
+                refund_type = "Payment provider fee-accommodating"
+            elif preserve_app_fees:
+                refund_type = "Website fee-accommodating"
+            else:
+                refund_type = "Full"
+            # Send an email to the admins
+            mail = payable_refund_initiated_email(authorizing_user, [self], refund_type)
             mail_admins(
-                f"{self.__class__.__name__} Refunds Initiated",
+                f"{refund_type.title()} {self.__class__.__name__} Refunds Initiated",
                 mail.to_plain_text(),
                 html_message=mail.to_html(),
             )
