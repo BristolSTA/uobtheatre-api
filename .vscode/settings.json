@@ -6,5 +6,15 @@
         "uobtheatre"
     ],
     "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true
+    "python.testing.pytestEnabled": true,
+    // To allow for mail visualisation, on saving an HTML file in the mail directory or sub-directories, run the mail-vis helper
+    // The HTML files this generates can then be opened in a browser, or with a vs-code extension
+    "emeraldwalk.runonsave": {
+		"commands": [
+			{
+				"match": "mail.+\\.html$",
+				"cmd": "make mail-vis"
+			}
+		]
+	}
 }
