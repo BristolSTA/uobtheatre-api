@@ -14,6 +14,9 @@ export TEST_PATH
 ## Defines the test varaible
 ## This allows the users to specify a list of tests to run
 TEST=$(if $(test),-k '$(test)',)
+
+## By default, ignore the "visualisation" tests for the mail, as these are "pseudo-tests" used when updating the mail templates
+TEST+= --ignore=uobtheatre/mail/visualisations/
 export TEST
 
 ifneq (,$(findstring a,  $(MAKEFLAGS)))
@@ -165,3 +168,6 @@ api-shell: ## Open django shell
 
 flush:
 	$(COMMAND_PREFIX) python manage.py flush
+
+mail-vis: ## Generate HTML emails from the django templates, leveraging pytest
+	$(COMMAND_PREFIX) pytest uobtheatre/mail/visualisations/
