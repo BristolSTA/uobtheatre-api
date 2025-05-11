@@ -169,5 +169,6 @@ api-shell: ## Open django shell
 flush:
 	$(COMMAND_PREFIX) python manage.py flush
 
+## First we have to copy our static files to ensure CSS changes are carried through. Then, we can remake our HTML files for testing.
 mail-vis: ## Generate HTML emails from the django templates, leveraging pytest
-	$(COMMAND_PREFIX) pytest uobtheatre/mail/visualisations/
+	$(COMMAND_PREFIX) python manage.py collectstatic --noinput && pytest uobtheatre/mail/visualisations/

@@ -12,9 +12,9 @@
     "emeraldwalk.runonsave": {
 		"commands": [
 			{
-				"match": "mail.+\\.html$",
+				"match": "mail.+(\\.html|composer\\.py|\\.css)$",
 				"cmd": "make mail-vis"
 			}
 		]
-	}
+    }
 }
