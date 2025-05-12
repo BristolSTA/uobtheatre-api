@@ -56,6 +56,11 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
         self.items.append(Image(src, alt, title, href))
         return self
 
+    def logo(self):
+        """A UOB Theatre Logo item"""
+        self.items.append(Logo())
+        return self
+
     def box(self, content: ComposerItemInterface, bgUrl="", bgCol=""):
         """A Box composer item, used for holding arbitrary content with
         a background of an image or solid colour"""
@@ -187,6 +192,17 @@ class Image(ComposerItemInterface):
         template = get_template("componentsV2/image.html")
 
         return template.render({"alt": self.alt, "href": self.href, "src": self.src, "title": self.title})
+
+class Logo(ComposerItemInterface):
+    """A UOB Theatre Logo item"""
+
+    def to_text(self):
+        return "Stage Technicians' Association | UOB Theatre"
+
+    def to_html(self):
+        template = get_template("componentsV2/logo.html")
+
+        return template.render({"site_url": get_site_base()})
 
 
 class RowStack(ComposerItemInterface):
