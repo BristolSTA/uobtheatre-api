@@ -10,7 +10,7 @@ from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.productions.test.factories import ProductionFactory
 from uobtheatre.utils.lang import pluralize
 
-from uobtheatre.mail.composerV2 import (MailComposer)
+from uobtheatre.mail.composerV2 import *
 
 root = "./uobtheatre/mail/visualisations/v2/"
 
@@ -32,10 +32,22 @@ def test_simple_email():
 
     test_mail = (
         MailComposer()
-        .spacer(100, 50)
-        .paragraph("This is a test title", "This is a test message that's actually longer than you would expect it to be because it's important for the sake of testing that we have a really long message here that spans multiple lines.")
-        .spacer(50, 50)
-        .button("example.org", "Take Me to Example.Org!")
+        .colStack(
+            [
+                (Spacer(), 10),
+                (RowStack
+                    (
+                        [
+                            Box(
+                                Paragraph("This is a test title", "This is a test message that's actually longer than you would expect it to be because it's important for the sake of testing that we have a really long message here that spans multiple lines."),
+                                bgCol="#00ff00"),
+                            Spacer(height=50),
+                            Button("example.org", "Take Me to Example.Org!")
+                        ]
+                    ), 70),
+                (Spacer(), 10)
+            ]
+        )
     )
 
     write_html_file(test_mail, "simple_email.html")
