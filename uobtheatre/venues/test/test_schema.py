@@ -33,6 +33,8 @@ def test_venues_schema(gql_client):
                 image {
                   url
                 }
+                email
+                website
                 publiclyListed
                 slug
                 seatGroups {
@@ -78,6 +80,8 @@ def test_venues_schema(gql_client):
                             },
                             "internalCapacity": venue.internal_capacity,
                             "description": venue.description,
+                            "email": venue.email,
+                            "website": venue.website,
                             "image": {"url": venue.image.file.url},
                             "publiclyListed": venue.publicly_listed,
                             "slug": venue.slug,

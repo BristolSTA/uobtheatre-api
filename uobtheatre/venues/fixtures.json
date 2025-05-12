@@ -10,7 +10,9 @@
             "address": 1,
             "publicly_listed": true,
             "slug": "winston-theatre",
-            "image": 1
+            "image": 1,
+            "email": "support@uobtheatre.com",
+            "website": "https://uobtheatre.com"
         }
     },
     {

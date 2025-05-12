@@ -9,6 +9,7 @@ class AddressFactory(factory.django.DjangoModelFactory):
     building_number = factory.Faker("bothify", text="##")
     city = factory.Faker("city")
     postcode = factory.Faker("postcode", locale="en_GB")
+    what3words = factory.Faker("bothify", text="///??????.??????.??????")
     latitude = factory.Faker("latitude")
     longitude = factory.Faker("longitude")
 

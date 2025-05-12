@@ -1,8 +1,10 @@
 from typing import Optional
 
 import graphene
+from django.utils import timezone
 
-from uobtheatre.bookings.abilities import ModifyBooking
+import uobtheatre.bookings.emails as booking_emails
+from uobtheatre.bookings.abilities import ModifyAccessibility, ModifyBooking
 from uobtheatre.bookings.forms import BookingForm
 from uobtheatre.bookings.models import Booking, Ticket
 from uobtheatre.bookings.schema import BookingNode
@@ -121,6 +123,55 @@ class BookingMutation(SafeFormMutation, AuthRequiredMixin):
         form_class = BookingForm
         create_ability = AllwaysPasses
         update_ability = ModifyBooking
+
+
+class UpdateBookingAccessibilityInfo(AuthRequiredMixin, SafeMutation):
+    """
+    Mutation to update the accessibility information for a booking.
+    """
+
+    class Arguments:
+        booking_id = IdInputField(required=True)
+        accessibility_info = graphene.String()
+
+    @classmethod
+    def authorize_request(cls, _, info, **inputs):
+        booking = Booking.objects.get(id=inputs["booking_id"])
+        if not ModifyAccessibility.user_has_for(info.context.user, booking):
+            raise AuthorizationException(
+                message="You do not have permission to modify the accessibility information for this booking",
+            )
+        return super().authorize_request(_, info, **inputs)
+
+    @classmethod
+    def resolve_mutation(cls, _, info, booking_id, accessibility_info):
+        booking = Booking.objects.get(id=booking_id)
+        previous_accessibility_info = booking.accessibility_info
+
+        # Check the booking is in the future, otherwise return error
+        if booking.performance.start and booking.performance.start < timezone.now():
+            raise GQLException(
+                message="Accessibility information can only be updated for future performances"
+            )
+
+        booking.previous_accessibility_info = previous_accessibility_info
+        booking.accessibility_info_updated_at = timezone.now()
+        booking.accessibility_info = accessibility_info
+        booking.save()
+
+        if previous_accessibility_info and not accessibility_info:
+            booking_emails.send_booking_accessibility_removed_email(booking)
+        elif accessibility_info and not previous_accessibility_info:
+            booking_emails.send_booking_accessibility_info_email(booking)
+        elif previous_accessibility_info and (
+            accessibility_info != previous_accessibility_info
+        ):
+            booking_emails.send_booking_accessibility_updated_email(booking)
+
+        return cls(success=True)
+
+    class Meta:
+        ability = ModifyAccessibility
 
 
 class DeleteBooking(ModelDeletionMutation):
@@ -452,6 +503,7 @@ class Mutation(graphene.ObjectType):
     """Mutations for bookings"""
 
     booking = BookingMutation.Field()
+    update_booking_accessibility_info = UpdateBookingAccessibilityInfo.Field()
     delete_booking = DeleteBooking.Field()
     pay_booking = PayBooking.Field()
     check_in_booking = CheckInBooking.Field()

@@ -144,6 +144,17 @@ class SetProductionStatus(AuthRequiredMixin, SafeMutation):
             for user in involved_users:
                 send_production_needs_changes_email(user, production, message)
 
+        elif (
+            status == Production.Status.COMPLETE
+            and previous_status == Production.Status.CLOSED
+        ):
+            # Clear any involved bookings of accessibility information
+            for performance in production.performances.all():
+                for booking in performance.bookings.all():
+                    if booking.accessibility_info:
+                        booking.accessibility_info = None
+                        booking.save()
+
         return cls(success=True)
 
 

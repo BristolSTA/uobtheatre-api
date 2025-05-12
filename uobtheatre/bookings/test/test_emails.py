@@ -13,6 +13,8 @@ from uobtheatre.productions.test.factories import PerformanceFactory, Production
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.venues.test.factories import AddressFactory, VenueFactory
 
+CONF_CLOSER = "Please remember that accessibility information is sensitive and should be treated with care. Only those who need to know should be informed of this information."
+
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
@@ -153,4 +155,63 @@ def test_send_booking_accessibility_info_email(mailoutbox):
     assert (
         mail.subject == f"Accessibility alert for {booking.performance.production.name}"
     )
-    assert "Some details about accessibility concerns" in mail.body
+    assert "Some details about accessibility concerns" not in mail.body
+    assert "added" in mail.body
+    assert CONF_CLOSER in mail.body
+
+
+@pytest.mark.django_db
+def test_send_booking_accessibility_removed_info_email(mailoutbox):
+    booking = BookingFactory()
+    UserFactory(email="user1@example.org").assign_perm(
+        "view_bookings", booking.performance.production
+    )
+    UserFactory(email="user2@example.org").assign_perm(
+        "view_production", booking.performance.production
+    )
+    booking.performance.production.contact_email = "production@example.org"
+    booking.performance.production.save()
+
+    previous_accessibility_info = "Some details about accessibility concerns"
+    booking_emails.send_booking_accessibility_removed_email(booking)
+
+    assert len(mailoutbox) == 2
+    assert mailoutbox[0].to == ["production@example.org"]
+    assert mailoutbox[1].to == ["user1@example.org"]
+    mail = mailoutbox[0]
+    assert (
+        mail.subject == f"Accessibility alert for {booking.performance.production.name}"
+    )
+    assert previous_accessibility_info not in mail.body
+    assert "removed" in mail.body
+    assert CONF_CLOSER in mail.body
+
+
+@pytest.mark.django_db
+def test_send_booking_accessibility_updated_info_email(mailoutbox):
+    booking = BookingFactory(
+        accessibility_info="Some further details about accessibility concerns"
+    )
+    UserFactory(email="user1@example.org").assign_perm(
+        "view_bookings", booking.performance.production
+    )
+    UserFactory(email="user2@example.org").assign_perm(
+        "view_production", booking.performance.production
+    )
+    booking.performance.production.contact_email = "production@example.org"
+    booking.performance.production.save()
+
+    previous_accessibility_info = "Some details about accessibility concerns"
+    booking_emails.send_booking_accessibility_updated_email(booking)
+
+    assert len(mailoutbox) == 2
+    assert mailoutbox[0].to == ["production@example.org"]
+    assert mailoutbox[1].to == ["user1@example.org"]
+    mail = mailoutbox[0]
+    assert (
+        mail.subject == f"Accessibility alert for {booking.performance.production.name}"
+    )
+    assert "Some further details about accessibility concerns" not in mail.body
+    assert previous_accessibility_info not in mail.body
+    assert "updated" in mail.body
+    assert CONF_CLOSER in mail.body

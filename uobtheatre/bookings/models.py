@@ -201,6 +201,19 @@ class BookingQuerySet(PayableQuerySet):
             ~Q(status=Payable.Status.IN_PROGRESS) | Q(expires_at__gt=timezone.now())
         )
 
+    def has_accessibility_info(self, bool_val=True) -> QuerySet:
+        """
+        Bookings that have accessibility information will be returned
+
+        Args:
+            bool_val (bool): when True: return only bookings with accessibility information,
+            when False: return only bookings without accessibility information
+
+        Returns:
+            QuerySet: the filtered queryset
+        """
+        return self.exclude(accessibility_info__isnull=bool_val)
+
 
 def generate_expires_at():
     """Generates the expires at timestamp for a booking"""
@@ -247,7 +260,17 @@ class Booking(TimeStampedMixin, Payable):
         default=0, validators=[MaxValueValidator(1), MinValueValidator(0)]
     )
 
+    # Accessibility information for the booking
+    # We store the previous accessibility information so that production staff
+    # can see what has changed when they get an email letting them know
+    # that the accessibility information has changed.
     accessibility_info = models.TextField(null=True, blank=True)
+    accessibility_info_updated_at = models.DateTimeField(
+        null=True, blank=True, editable=False
+    )
+    previous_accessibility_info = models.TextField(
+        null=True, blank=True, editable=False
+    )
 
     expires_at = models.DateTimeField(default=generate_expires_at)
 

@@ -9,6 +9,7 @@ type AddressNode implements Node {
   street: String!
   city: String!
   postcode: String!
+  what3words: String
   latitude: Float
   longitude: Float
   id: ID!
@@ -47,6 +48,8 @@ type BookingNode implements Node {
   performance: PerformanceNode!
   adminDiscountPercentage: Float!
   accessibilityInfo: String
+  accessibilityInfoUpdatedAt: DateTime
+  previousAccessibilityInfo: String
   expiresAt: DateTime!
   tickets: [TicketNode!]!
   priceBreakdown: PriceBreakdownNode
@@ -276,8 +279,8 @@ type ExtendedUserNode {
   dateJoined: DateTime!
   id: String
   email: String!
-  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, user: ID, creator: ID, reference: String, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, productionSearch: String, productionSlug: String, performanceId: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection!
-  createdBookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, user: ID, creator: ID, reference: String, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, productionSearch: String, productionSlug: String, performanceId: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection!
+  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, user: ID, creator: ID, reference: String, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, accessibilityInfoUpdatedAt: DateTime, previousAccessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, productionSearch: String, productionSlug: String, performanceId: String, checkedIn: Boolean, active: Boolean, expired: Boolean, hasAccessibilityInfo: Boolean, orderBy: String): BookingNodeConnection!
+  createdBookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, user: ID, creator: ID, reference: String, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, accessibilityInfoUpdatedAt: DateTime, previousAccessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, productionSearch: String, productionSlug: String, performanceId: String, checkedIn: Boolean, active: Boolean, expired: Boolean, hasAccessibilityInfo: Boolean, orderBy: String): BookingNodeConnection!
   createdSiteMessages(offset: Int, before: String, after: String, first: Int, last: Int, message: String, active: Boolean, indefiniteOverride: Boolean, displayStart: DateTime, eventStart: DateTime, eventEnd: DateTime, creator: ID, type: String, dismissalPolicy: String, id: ID, displayStart_Gte: DateTime, displayStart_Lte: DateTime, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, orderBy: String): SiteMessageNodeConnection!
   pk: Int
   archived: Boolean
@@ -399,6 +402,7 @@ type Mutation {
   cancelPayment(paymentId: IdInputField!): CancelPayment
   generateReport(endTime: DateTime, name: String!, options: [ReportOption], startTime: DateTime): GenerateReport
   booking(input: BookingMutationInput!): BookingMutationPayload
+  updateBookingAccessibilityInfo(accessibilityInfo: String, bookingId: IdInputField!): UpdateBookingAccessibilityInfo
   deleteBooking(id: IdInputField!): DeleteBooking
   payBooking(deviceId: String, id: IdInputField!, idempotencyKey: String, nonce: String, paymentProvider: PaymentProvider, price: Int!, verifyToken: String): PayBooking
   checkInBooking(bookingReference: String!, performance: IdInputField!, tickets: [TicketIDInput]!): CheckInBooking
@@ -500,7 +504,7 @@ type PerformanceNode implements Node {
   seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
   capacity: Int
   discounts(offset: Int, before: String, after: String, first: Int, last: Int, group: Boolean, id: ID): DiscountNodeConnection!
-  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, user: ID, creator: ID, reference: String, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, productionSearch: String, productionSlug: String, performanceId: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection!
+  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, user: ID, creator: ID, reference: String, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, accessibilityInfoUpdatedAt: DateTime, previousAccessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, productionSearch: String, productionSlug: String, performanceId: String, checkedIn: Boolean, active: Boolean, expired: Boolean, hasAccessibilityInfo: Boolean, orderBy: String): BookingNodeConnection!
   capacityRemaining: Int
   ticketOptions: [PerformanceSeatGroupNode]
   minSeatPrice: Int
@@ -695,7 +699,7 @@ type Query {
   images: [ImageNode]
   paymentDevices(paymentProvider: PaymentProvider, paired: Boolean): [SquarePaymentDevice]
   miscCosts(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String): MiscCostNodeConnection
-  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, user: ID, creator: ID, reference: String, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, productionSearch: String, productionSlug: String, performanceId: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection
+  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, user: ID, creator: ID, reference: String, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, accessibilityInfoUpdatedAt: DateTime, previousAccessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, productionSearch: String, productionSlug: String, performanceId: String, checkedIn: Boolean, active: Boolean, expired: Boolean, hasAccessibilityInfo: Boolean, orderBy: String): BookingNodeConnection
   me: ExtendedUserNode
   societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String, userHasPermission: String): SocietyNodeConnection
   society(slug: String!): SocietyNode
@@ -1000,6 +1004,11 @@ type UpdateAccount {
   errors: [GQLErrorUnion!]
 }
 
+type UpdateBookingAccessibilityInfo {
+  success: Boolean!
+  errors: [GQLErrorUnion!]
+}
+
 type UserNode implements Node {
   lastLogin: DateTime
   isSuperuser: Boolean!
@@ -1011,8 +1020,8 @@ type UserNode implements Node {
   id: ID!
   email: String!
   societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String, userHasPermission: String): SocietyNodeConnection!
-  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, user: ID, creator: ID, reference: String, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, productionSearch: String, productionSlug: String, performanceId: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection!
-  createdBookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, user: ID, creator: ID, reference: String, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, productionSearch: String, productionSlug: String, performanceId: String, checkedIn: Boolean, active: Boolean, expired: Boolean, orderBy: String): BookingNodeConnection!
+  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, user: ID, creator: ID, reference: String, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, accessibilityInfoUpdatedAt: DateTime, previousAccessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, productionSearch: String, productionSlug: String, performanceId: String, checkedIn: Boolean, active: Boolean, expired: Boolean, hasAccessibilityInfo: Boolean, orderBy: String): BookingNodeConnection!
+  createdBookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, user: ID, creator: ID, reference: String, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, accessibilityInfoUpdatedAt: DateTime, previousAccessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, productionSearch: String, productionSlug: String, performanceId: String, checkedIn: Boolean, active: Boolean, expired: Boolean, hasAccessibilityInfo: Boolean, orderBy: String): BookingNodeConnection!
   ticketsCheckedInByUser(offset: Int, before: String, after: String, first: Int, last: Int): TicketNodeConnection!
   createdSiteMessages(offset: Int, before: String, after: String, first: Int, last: Int, message: String, active: Boolean, indefiniteOverride: Boolean, displayStart: DateTime, eventStart: DateTime, eventEnd: DateTime, creator: ID, type: String, dismissalPolicy: String, id: ID, displayStart_Gte: DateTime, displayStart_Lte: DateTime, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, orderBy: String): SiteMessageNodeConnection!
   pk: Int
@@ -1034,6 +1043,8 @@ type VenueNode implements Node {
   internalCapacity: Int!
   description: String
   accessibilityInfo: String
+  email: String
+  website: String
   address: AddressNode!
   image: ImageNode!
   publiclyListed: Boolean!

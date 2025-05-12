@@ -14,6 +14,7 @@ class AddressNode(DjangoObjectType):
             "street",
             "city",
             "postcode",
+            "what3words",
             "latitude",
             "longitude",
         )
