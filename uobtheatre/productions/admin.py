@@ -15,6 +15,7 @@ from uobtheatre.productions.models import (
     PerformanceSeatGroup,
     Production,
     ProductionTeamMember,
+    RelaxedCategory,
 )
 from uobtheatre.utils.admin import (
     DangerousAdminConfirmMixin,
@@ -157,3 +158,4 @@ admin.site.register(CastMember)
 admin.site.register(CrewRole)
 admin.site.register(PerformanceSeatGroup)
 admin.site.register(ProductionTeamMember)
+admin.site.register(RelaxedCategory)
