@@ -9,12 +9,12 @@
     "python.testing.pytestEnabled": true,
     // To allow for mail visualisation, on saving an HTML file in the mail directory or sub-directories, run the mail-vis helper
     // The HTML files this generates can then be opened in a browser, or with a vs-code extension
-    "emeraldwalk.runonsave": {
-		"commands": [
-			{
-				"match": "mail.+(\\.html|composer\\.py|\\.css)$",
-				"cmd": "make mail-vis"
-			}
-		]
-    }
+    // "emeraldwalk.runonsave": {
+		// "commands": [
+		// 	{
+		// 		"match": "mail.+(\\.html|composer\\.py|\\.css)$",
+		// 		"cmd": "make mail-vis"
+		// 	}
+		// ]
+    // }
 }

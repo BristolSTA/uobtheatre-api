@@ -172,3 +172,7 @@ flush:
 ## First we have to copy our static files to ensure CSS changes are carried through. Then, we can remake our HTML files for testing.
 mail-vis: ## Generate HTML emails from the django templates, leveraging pytest
 	$(COMMAND_PREFIX) python manage.py collectstatic --noinput && pytest uobtheatre/mail/visualisations/
+
+## A verbose version of the above command
+mail-vis-v: ## Generate HTML emails from the django templates, leveraging pytest
+	$(COMMAND_PREFIX) python manage.py collectstatic --noinput && pytest -s uobtheatre/mail/visualisations/
