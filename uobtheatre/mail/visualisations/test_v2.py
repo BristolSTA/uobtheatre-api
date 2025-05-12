@@ -32,22 +32,19 @@ def test_simple_email():
 
     test_mail = (
         MailComposer()
-        .colStack(
-            [
-                (Spacer(), 10),
-                (RowStack
-                    (
-                        [
-                            Box(
-                                Paragraph("This is a test title", "This is a test message that's actually longer than you would expect it to be because it's important for the sake of testing that we have a really long message here that spans multiple lines."),
-                                bgCol="#00ff00"),
-                            Spacer(height=50),
-                            Button("example.org", "Take Me to Example.Org!")
-                        ]
-                    ), 70),
-                (Spacer(), 10)
-            ]
-        )
+        .colStack([
+                (Spacer(), 5),
+                (RowStack([
+                    Logo(),
+                    Spacer(height=15),
+                    Box(
+                        Paragraph("This is a test title", "This is a test message that's actually longer than you would expect it to be because it's important for the sake of testing that we have a really long message here that spans multiple lines."),
+                        bgCol="#ffffff"),
+                    Spacer(height=50),
+                    Button("example.org", "Take Me to Example.Org!")
+                ]), 90),
+            (Spacer(), 5)
+        ])
     )
 
     write_html_file(test_mail, "simple_email.html")
