@@ -197,7 +197,7 @@ class MailComposer(ComposerItemsContainer):
 
     def get_complete_items(self):
         """Get the email body items (including any signature/signoff)"""
-        return self.items + [Line("Thanks,"), Line("The UOBTheatre Team")]
+        return self.items + [Line("Thanks,"), Line("The UOB Theatre Team")]
 
     def to_plain_text(self):
         """Generate the plain text version of the email"""

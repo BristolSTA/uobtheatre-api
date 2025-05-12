@@ -305,7 +305,7 @@ def test_refund(mailoutbox, preserve_provider_fees, preserve_app_fees, refund_ty
     assert len(mailoutbox) == 1
     assert (
         mailoutbox[0].subject
-        == f"[UOBTheatre] {refund_type.title()} Booking Refunds Initiated"
+        == f"[UOB Theatre] {refund_type.title()} Booking Refunds Initiated"
     )
 
 

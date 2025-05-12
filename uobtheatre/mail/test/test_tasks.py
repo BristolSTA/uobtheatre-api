@@ -15,4 +15,4 @@ def test_send_emails_task(mailoutbox):
     assert mailoutbox[0].to == ["joe@example.org"]
     assert mailoutbox[1].to == ["jill@example.org"]
     assert mailoutbox[2].to == ["webmaster@bristolsta.com"]
-    assert mailoutbox[2].subject == "[UOBTheatre] Mass Email Sent: Subject"
+    assert mailoutbox[2].subject == "[UOB Theatre] Mass Email Sent: Subject"

@@ -17,6 +17,7 @@
     display: inline-block;
     overflow: hidden;
     text-decoration: none;
+    text-align: center;
 }
 
 .button-blue,

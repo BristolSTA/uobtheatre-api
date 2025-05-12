@@ -112,6 +112,11 @@ p.sub {
 .header {
     padding: 25px 0;
     text-align: center;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
 }
 
 .header a {
@@ -119,6 +124,11 @@ p.sub {
     font-size: 19px;
     font-weight: bold;
     text-decoration: none;
+}
+
+.header img{
+    margin: 0;
+    vertical-align: middle;
 }
 
 /* Logo */

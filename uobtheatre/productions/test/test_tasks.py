@@ -27,4 +27,4 @@ def test_refund_performance_task(mailoutbox):
         preserve_app_fees=False,
     )
     assert len(mailoutbox) == 1
-    assert mailoutbox[0].subject == "[UOBTheatre] Performance Refunds Initiated"
+    assert mailoutbox[0].subject == "[UOB Theatre] Performance Refunds Initiated"
