@@ -1,0 +1,20 @@
+{% if title %}
+<table class="heading_block block-1" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
+  <tr>
+    <td class="pad">
+      <h3 style="margin: 0; color: #000000; direction: ltr; font-family: Fira Sans, Lucida Sans Unicode, Lucida Grande, sans-serif; font-size: 24px; font-weight: 700; letter-spacing: normal; line-height: 1.2; text-align: left; margin-top: 0; margin-bottom: 0; mso-line-height-alt: 29px;"><span class="tinyMce-placeholder" style="word-break: break-word;">{{title}}</span></h3>
+    </td>
+  </tr>
+</table>
+{% endif %}
+{% if message %}
+<table class="paragraph_block block-2" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
+  <tr>
+    <td class="pad">
+      <div style="color:#000000;direction:ltr;font-family:Fira Sans, Lucida Sans Unicode, Lucida Grande, sans-serif;font-size:16px;font-weight:300;letter-spacing:0px;line-height:1.5;text-align:left;mso-line-height-alt:24px;">
+        <p style="margin: 0;">{{message}}</p>
+      </div>
+    </td>
+  </tr>
+</table>
+{% endif %}
