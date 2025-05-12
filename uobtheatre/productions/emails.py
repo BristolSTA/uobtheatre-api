@@ -15,7 +15,7 @@ def send_production_approved_email(user: User, production: Production):
         "You may now create complimentry bookings and, when ready, make it public, by going to the production control panel."
     ).action(
         f"/administration/productions/{production.slug}",
-        "Goto Production Control Panel",
+        "Go To Production Control Panel",
     ).send(
         f"{production.name} has been approved", user.email
     )
@@ -36,7 +36,7 @@ def send_production_needs_changes_email(
         "You can go back to the production control panel to make the required changes."
     ).action(
         f"/administration/productions/{production.slug}",
-        "Goto Production Control Panel",
+        "Go To Production Control Panel",
     ).line(
         "If you need any help, please contact us at support@uobtheatre.com"
     ).send(
@@ -51,7 +51,7 @@ def send_production_ready_for_review_email(user: User, production: Production):
         f"'{production.name}' has been submitted for review. Please head to the admin control panel, verify the production's details and listing, and either approve or reject."
     ).action(
         f"/administration/productions/{production.slug}",
-        "Goto Production Control Panel",
+        "Go To Production Control Panel",
     ).send(
         f"{production.name} is ready for approval", user.email
     )

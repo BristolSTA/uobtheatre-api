@@ -34,6 +34,7 @@ class BookingFactory(factory.django.DjangoModelFactory):
     creator = factory.SubFactory(UserFactory)
     performance = factory.SubFactory(PerformanceFactory)
     status = Payable.Status.PAID
+    accessibility_info = factory.Faker("paragraph", nb_sentences=3)
 
     class Meta:
         model = Booking

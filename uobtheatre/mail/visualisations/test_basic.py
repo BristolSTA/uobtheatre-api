@@ -108,7 +108,7 @@ def test_booking_accessibility_info_email():
         .line(
             f"A booking has been created for {booking.performance} with the following accessibility information:"
         )
-        .line(f"'{booking.accessibility_info}'")
+        .quote(f"'{booking.accessibility_info}'")
         .action(
             f"/administration/productions/{booking.performance.production.slug}/bookings/{booking.reference}",
             "View Booking Details",
@@ -158,7 +158,7 @@ def test__production_approved_email():
         "You may now create complimentry bookings and, when ready, make it public, by going to the production control panel."
     ).action(
         f"/administration/productions/{production.slug}",
-        "Goto Production Control Panel",
+        "Go To Production Control Panel",
     )
 
     write_html_file(mail, "production_approved.html")

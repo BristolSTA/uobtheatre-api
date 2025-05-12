@@ -75,7 +75,7 @@ def send_booking_accessibility_info_email(
         .line(
             f"A booking has been created for {booking.performance} with the following accessibility information:"
         )
-        .line(f"'{booking.accessibility_info}'")
+        .quote(f"'{booking.accessibility_info}'")
         .action(
             f"/administration/productions/{booking.performance.production.slug}/bookings/{booking.reference}",
             "View Booking Details",

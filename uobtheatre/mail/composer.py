@@ -42,6 +42,12 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
         self.items.append(Line(text))
         return self
 
+    def quote(self, text: str):
+        """A paragraph of text, assigned the CSS 'quote' class. May contain simple HTML, which will be stripped for plain text version"""
+        self.items.append(Quote(text))
+        return self
+
+
     def action(self, url, text):
         """Create an action button"""
         action = Action(url, text)
@@ -118,6 +124,22 @@ class Line(ComposerItemInterface):
 
     def to_html(self):
         return "<p>%s</p>" % self.text
+
+
+class Quote(ComposerItemInterface):
+    """A paragraph composer item, styled to look like a quote"""
+
+    def __init__(self, text) -> None:
+        super().__init__()
+        self.text = text
+
+    def to_text(self):
+        return strip_tags(self.text)
+
+    def to_html(self):
+        template = get_template("components/quote.html")
+
+        return template.render({"text": self.text})
 
 
 class Image(ComposerItemInterface):

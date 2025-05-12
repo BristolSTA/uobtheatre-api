@@ -1,0 +1,6 @@
+/* Style the quote class to look like a speech quote */
+.quote {
+    font-style: italic; /* Italicize the text */
+    margin-left: 20px; /* Slightly indent the quote */
+    color: #555; /* Use a slightly lighter shade of color */
+}
