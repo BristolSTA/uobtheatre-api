@@ -51,12 +51,12 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
         self.items.append(Button(href, text))
         return self
 
-    def image(self, alt: str, title: str, href: str, src: str):
+    def image(self, src: str, alt="", title="", href=""):
         """An Image composer item"""
-        self.items.append(Image(alt, title, href, src))
+        self.items.append(Image(src, alt, title, href))
         return self
 
-    def box(self, bgUrl: str, bgCol: str, content: ComposerItemInterface):
+    def box(self, content: ComposerItemInterface, bgUrl="", bgCol=""):
         """A Box composer item, used for holding arbitrary content with
         a background of an image or solid colour"""
         self.items.append(Box(bgUrl, bgCol, content))
@@ -67,16 +67,17 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
         self.items.append(RowStack(rowStack))
         return self
 
-    def colStack(self, colStack: List[(ComposerItemInterface, float)]):
-        """A RowStack composer item"""
-        """Takes in a list of items to put in a row,
-        along with their associated widths in percentages"""
+    def colStack(self, colStack: List[object]):
+        """A ColStack composer item.
+        Takes in a list of items to put in a row,
+        along with their associated widths in percentages.
+        i.e., really a list of type List[(ComposerItemInterface, float)]"""
         self.items.append(ColStack(colStack))
         return self
 
-    def spacer(self, width: int, height: float):
-        """A Spacer composer item"""
-        """The height should be an integer, in pixels.
+    def spacer(self, width=0, height=0):
+        """A Spacer composer item.
+        The height should be an integer, in pixels.
         The width should be a number between 0 and 100,
         representing a percentage of the total width."""
         self.items.append(Spacer(width, height))
@@ -154,7 +155,7 @@ class Box(ComposerItemInterface):
     """A Box composer item, used for holding arbitrary content with
     a background of an image or solid colour"""
 
-    def __init__(self, bgUrl, bgCol, content) -> None:
+    def __init__(self, content, bgUrl="", bgCol="") -> None:
         super().__init__()
         self.bgUrl = bgUrl
         self.bgCol = bgCol
@@ -172,7 +173,7 @@ class Box(ComposerItemInterface):
 class Image(ComposerItemInterface):
     """An Image composer item"""
 
-    def __init__(self, alt, title, href, src) -> None:
+    def __init__(self, src, alt="", title="", href="") -> None:
         super().__init__()
         self.href = href
         self.title = title
@@ -189,7 +190,7 @@ class Image(ComposerItemInterface):
 
 
 class RowStack(ComposerItemInterface):
-    """An RowStack composer item"""
+    """A RowStack composer item"""
 
     def __init__(self, rowStack) -> None:
         super().__init__()
@@ -201,12 +202,12 @@ class RowStack(ComposerItemInterface):
     def to_html(self):
         template = get_template("componentsV2/rowStack.html")
 
-        return template.render({"rowStack": self.rowStack})
+        return template.render({"rowStack": [row.to_html() for row in self.rowStack]})
 
 
 class ColStack(ComposerItemInterface):
-    """A ColStack composer item"""
-    """Takes in a list of items to put in a row,
+    """A ColStack composer item.
+    Takes in a list of items to put in a row,
         along with their associated widths in percentages"""
 
     def __init__(self, colStack) -> None:
@@ -219,17 +220,16 @@ class ColStack(ComposerItemInterface):
     def to_html(self):
         template = get_template("componentsV2/colStack.html")
 
-        return template.render({"colStack": self.colStack})
+        return template.render({"colStack": [(col.to_html(), width) for (col, width) in self.colStack]})
 
 
 class Spacer(ComposerItemInterface):
-    """A Spacer composer item"""
-
-    """The height should be an integer, in pixels.
+    """A Spacer composer item.
+    The height should be an integer, in pixels.
     The width should be a number between 0 and 100,
     representing a percentage of the total width."""
 
-    def __init__(self, width, height) -> None:
+    def __init__(self, width=0, height=0) -> None:
         super().__init__()
         self.width = width
         self.height = height
