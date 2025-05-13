@@ -6,18 +6,18 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('bookings', '0009_prev_booking_accessibility_info'),
+        ("bookings", "0009_prev_booking_accessibility_info"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='booking',
-            name='accessibility_info_updated_at',
+            model_name="booking",
+            name="accessibility_info_updated_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='booking',
-            name='previous_accessibility_info',
+            model_name="booking",
+            name="previous_accessibility_info",
             field=models.TextField(blank=True, null=True),
         ),
     ]
