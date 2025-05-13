@@ -111,8 +111,14 @@ class BookingMutation(SafeFormMutation, AuthRequiredMixin):
     @classmethod
     def authorize_admin_discount(cls, info, target_performance, **inputs):
         """Authorize the admin discount given"""
-        if "admin_discount_percentage" in inputs and not info.context.user.has_perm(
-            "change_production", target_performance.production
+        if (
+            "admin_discount_percentage" in inputs
+            and not info.context.user.has_perm(
+                "change_production", target_performance.production
+            )
+            and not info.context.user.has_perm(
+                "productions.comp_tickets", target_performance.production
+            )
         ):
             raise AuthorizationException(
                 message="You do not have permission to assign an admin discount",

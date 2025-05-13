@@ -265,12 +265,8 @@ class Booking(TimeStampedMixin, Payable):
     # can see what has changed when they get an email letting them know
     # that the accessibility information has changed.
     accessibility_info = models.TextField(null=True, blank=True)
-    accessibility_info_updated_at = models.DateTimeField(
-        null=True, blank=True, editable=False
-    )
-    previous_accessibility_info = models.TextField(
-        null=True, blank=True, editable=False
-    )
+    accessibility_info_updated_at = models.DateTimeField(null=True, blank=True)
+    previous_accessibility_info = models.TextField(null=True, blank=True)
 
     expires_at = models.DateTimeField(default=generate_expires_at)
 
