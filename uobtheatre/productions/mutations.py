@@ -192,6 +192,7 @@ class ProductionMutation(SafeFormMutation, AuthRequiredMixin):
         info.context.user.assign_perm("view_production", response.production)
         info.context.user.assign_perm("view_bookings", response.production)
         info.context.user.assign_perm("change_production", response.production)
+        info.context.user.assign_perm("comp_tickets", response.production)
         info.context.user.assign_perm("sales", response.production)
         info.context.user.assign_perm("boxoffice", response.production)
 
