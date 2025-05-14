@@ -128,10 +128,16 @@ class BookingAdmin(DangerousAdminConfirmMixin, admin.ModelAdmin):
                 request, f"{num_refunded} bookings have had refunds requested"
             )
 
-            refund_type = "Provider and UOB Theatre fee-accommodating" if (
-                preserve_provider_fees and preserve_app_fees
-            ) else "Provider fee-accommodating" if preserve_provider_fees else (
-                "UOB Theatre fee-accommodating" if preserve_app_fees else "Full"
+            refund_type = (
+                "Provider and UOB Theatre fee-accommodating"
+                if (preserve_provider_fees and preserve_app_fees)
+                else (
+                    "Provider fee-accommodating"
+                    if preserve_provider_fees
+                    else (
+                        "UOB Theatre fee-accommodating" if preserve_app_fees else "Full"
+                    )
+                )
             )
 
             mail = payable_refund_initiated_email(
