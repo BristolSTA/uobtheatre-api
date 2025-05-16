@@ -1,7 +1,11 @@
 {% if title %}
 <table class="heading_block block-1" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
   <tr>
+    {% if message %}
+    <td style="padding: 10px 10px 5px 10px;">
+    {% else %}
     <td class="pad">
+    {% endif %}
       <h3 style="margin: 0; color: #000000; direction: ltr;"><span class="tinyMce-placeholder" style="word-break: break-word;">
         {% if html %}
         {{title|safe}}
@@ -16,7 +20,11 @@
 {% if message %}
 <table class="paragraph_block block-2" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
   <tr>
+    {% if title %}
+    <td style="padding: 5px 10px 10px 10px;">
+    {% else %}
     <td class="pad">
+    {% endif %}
       <div style>
         <p style="margin: 0;">
         {% if html %}
