@@ -52,3 +52,49 @@ def test_text_only():
         "This is a test title", "<b>This</b> is a test message that's actually longer than you would expect it to be because it's important for the sake of testing that we have a really long message here that spans multiple lines.", True)
 
     write_html_file(test_mail, "text_only.html")
+
+
+@pytest.mark.django_db
+def test_booking_conf():
+
+    booking = BookingFactory()
+    payment = TransactionFactory()
+
+    test_mail = MailComposer.blank([
+
+        Paragraph(
+            title="Your booking to %s has been confirmed!" % booking.performance.production.name
+        ),
+
+        Image(src=mountainImage),
+
+        Paragraph(
+
+            message="This event opens at %s for a %s start. Please bring your tickets (printed or on your phone) or your booking reference (<strong>%s</strong>)."
+            if booking.user.status.verified  # type: ignore
+            else "This event opens at %s for a %s start. Please bring your booking reference (<strong>%s</strong>)."
+
+            % (
+                booking.performance.doors_open.astimezone(  # type: ignore
+                    booking.performance.venue.address.timezone  # type: ignore
+                ).strftime("%d %B %Y %H:%M %Z"),
+                booking.performance.start.astimezone(  # type: ignore
+                    booking.performance.venue.address.timezone  # type: ignore
+                ).strftime("%H:%M %Z"),
+                booking.reference,
+            ), html=True
+        ),
+
+        Button(booking.web_tickets_path, "View Tickets"),
+
+        Button("/user/booking/%s" % booking.reference, "View Booking"),
+
+        Paragraph(title="Payment Information", message=f"{payment.value_currency} paid ({payment.provider.description}{' - ID ' + payment.provider_transaction_id if payment.provider_transaction_id else '' })"
+                  ),
+
+        Paragraph(
+            message="If you have any accessability concerns, or otherwise need help, please contact <a href='mailto:support@uobtheatre.com'>support@uobtheatre.com</a>.", html=True
+        )]
+    )
+
+    write_html_file(test_mail, "booking_conf.html")
