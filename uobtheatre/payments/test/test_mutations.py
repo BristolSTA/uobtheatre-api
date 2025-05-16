@@ -116,7 +116,7 @@ def test_cancel_payment_failure(gql_client, mock_square):
     assert response["data"]["cancelPayment"]["errors"] == [
         {
             "__typename": "NonFieldError",
-            "message": "There was an issue processing your payment (MY_CODE)",
+            "message": "There was an issue processing your request (MY_CODE)",
             "code": "400",
         }
     ]

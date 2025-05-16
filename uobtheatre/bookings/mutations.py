@@ -505,6 +505,106 @@ class UnCheckInBooking(AuthRequiredMixin, SafeMutation):
         return UnCheckInBooking(booking=booking, performance=performance)
 
 
+class RefundBooking(AuthRequiredMixin, SafeMutation):
+    """Mutation to refund a booking.
+
+    Args:
+        booking_reference (str): The booking reference
+        performance (str): The id of the performance that the ticket is
+            being booked in for, this should match the performance of the
+            booking. If this is not the case an error will be thrown as the
+            Booking cannot be used for the Performance.
+        preservePaymentProviderFees (bool): Whether to preserve the payment
+            provider (usually Square) fees. This is used to determine whether the refund should
+            be a full refund or a partial refund.
+        preserveAppFees (bool): Whether to preserve the app (UOB Theatre's) fees. This is
+            used to determine whether the refund should be a full refund or a
+            partial refund.
+        refundReason (str): The reason for the refund.
+        supportTicketRef (str): The support ticket reference. This is used to
+            track the refund in the support system.
+
+
+
+    Returns:
+        booking (BookingNode): The Booking.
+
+    Raises:
+        GQLException: If the un-check in was unsuccessful
+        CantBeRefundedException: If the booking cannot be refunded
+        AuthorizationException: If the user does not have permission to
+            refund the booking
+    """
+
+    booking = graphene.Field(BookingNode)
+
+    class Arguments:
+        booking_reference = graphene.String(required=True)
+        performance = IdInputField(required=True)
+        refund_reason = graphene.String(required=True)
+        preserve_payment_provider_fees = graphene.Boolean(default_value=True)
+        preserve_app_fees = graphene.Boolean(default_value=False)
+        support_ticket_ref = graphene.String(default_value=None)
+
+    @classmethod
+    def resolve_mutation(
+        cls,
+        _,
+        info,
+        booking_reference,
+        performance,
+        refund_reason,
+        preserve_payment_provider_fees,
+        preserve_app_fees,
+        support_ticket_ref: Optional[str] = None,
+    ):  # pylint: disable=too-many-arguments, too-many-positional-arguments
+        performance = Performance.objects.get(id=performance)
+        booking = Booking.objects.get(reference=booking_reference)
+
+        # Check user has permission to refund this booking
+        if not info.context.user.has_perm("bookings.refund_booking"):
+            raise AuthorizationException(
+                message="You do not have permission to refund this booking.",
+            )
+
+        # Non-superusers must provide a support ticket reference
+        if not info.context.user.is_superuser and not support_ticket_ref:
+            raise GQLException(
+                message="A support ticket reference is required for non-superusers.",
+                field="support_ticket_ref",
+                code="missing_required",
+            )
+
+        # Check if the booking pertains to the correct performance
+        if booking.performance != performance:
+            # raise booking performance does not match performance given
+            raise GQLException(
+                field="performance",
+                message="The booking performance does not match the given performance.",
+            )
+
+        # Check if the booking is refundable
+        cant_be_refunded = booking.validate_cant_be_refunded()
+        if cant_be_refunded:
+            raise cant_be_refunded
+
+        # Refund the booking
+        try:
+            booking.refund(
+                authorizing_user=info.context.user,
+                do_async=False,
+                send_admin_email=True,
+                preserve_provider_fees=preserve_payment_provider_fees,
+                preserve_app_fees=preserve_app_fees,
+                refund_reason=refund_reason,
+                refund_support_ticket=support_ticket_ref,
+            )
+        except Exception as e:
+            raise GQLException(message=str(e)) from e
+
+        return RefundBooking(booking=booking)
+
+
 class Mutation(graphene.ObjectType):
     """Mutations for bookings"""
 
@@ -514,3 +614,4 @@ class Mutation(graphene.ObjectType):
     pay_booking = PayBooking.Field()
     check_in_booking = CheckInBooking.Field()
     uncheck_in_booking = UnCheckInBooking.Field()
+    refund_booking = RefundBooking.Field()

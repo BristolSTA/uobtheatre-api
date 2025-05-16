@@ -166,7 +166,7 @@ def test_square_exception_with_non_payment_method_error():
     compare_gql_objects(
         exception.resolve()[0],
         NonFieldError(
-            message="There was an issue processing your payment (SOMETHING_WRONG)",
+            message="There was an issue processing your request (SOMETHING_WRONG)",
             code=400,
         ),
     )
