@@ -9,12 +9,14 @@
 
 .header a {
     color: #dadada;
-    font-size: 19px;
+    font-size: 18px;
     font-weight: bold;
     text-decoration: none;
+    font-family: Montserrat, sans-serif;
 }
 
 .header img{
     margin: 0;
     vertical-align: middle;
+    width:120px;
 }
