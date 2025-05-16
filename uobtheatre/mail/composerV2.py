@@ -61,6 +61,11 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
         self.items.append(Logo())
         return self
 
+    def logo(self):
+        """A UOB Theatre Footer item"""
+        self.items.append(Footer())
+        return self
+
     def box(self, content: ComposerItemInterface, bgUrl="", bgCol=""):
         """A Box composer item, used for holding arbitrary content with
         a background of an image or solid colour"""
@@ -123,12 +128,15 @@ class Heading(ComposerItemInterface):
 
 
 class Paragraph(ComposerItemInterface):
-    """A Paragraph composer item"""
+    """A Paragraph composer item."""
 
-    def __init__(self, title, message) -> None:
+    def __init__(self, title="", message="", html=False) -> None:
+        """If html == True, then this string will parse the given HTML; be careful,
+        as if used improperly, this may open up scripting attacks."""
         super().__init__()
         self.title = title
         self.message = message
+        self.html = html
 
     def to_text(self):
         return strip_tags(self.title) + "\n" + strip_tags(self.message)
@@ -136,7 +144,7 @@ class Paragraph(ComposerItemInterface):
     def to_html(self):
         template = get_template("componentsV2/paragraph.html")
 
-        return template.render({"title": self.title, "message": self.message})
+        return template.render({"title": self.title, "message": self.message, "html": self.html})
 
 
 class Button(ComposerItemInterface):
@@ -205,6 +213,17 @@ class Logo(ComposerItemInterface):
         return template.render({"site_url": get_site_base()})
 
 
+class Footer(ComposerItemInterface):
+    """A UOB Theatre Footer item"""
+
+    def to_text(self):
+        return ("Copyright UOB Theatre %s" % datetime.now().year),
+
+    def to_html(self):
+        template = get_template("componentsV2/footer.html")
+
+        return template.render({"year": datetime.now().year})
+
 class RowStack(ComposerItemInterface):
     """A RowStack composer item"""
 
@@ -270,6 +289,27 @@ class MailComposer(ComposerItemsContainer):
             else "Hello"
         )
         return self
+
+    def blank(content: list[ComposerItemInterface]):
+        """Create a blank email, with the content (a list of elements to go in a RowStack) within"""
+        return (MailComposer()
+                .colStack([
+                    (Spacer(), 5),
+                    (RowStack([
+                        Logo(),
+                        Spacer(height=15),
+                        *content,
+                        Spacer(height=15),
+                        Footer()
+                    ]), 90),
+                    (Spacer(), 5)
+                ]))
+
+    def textOnly(title="", message="", html=False):
+        """Create an email that is text only. Takes in just a title and message.
+        If html == True, then this string will parse any given HTML; be careful,
+        as if used improperly, this may open up scripting attacks."""
+        return MailComposer.blank([Box(Paragraph(title, message, html), bgCol="white")])
 
     def get_complete_items(self):
         """Get the email body items (including any signature/signoff)"""

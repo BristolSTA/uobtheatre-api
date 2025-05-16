@@ -5,7 +5,10 @@
 body {
     margin: 0;
     padding: 0;
+    font-family: Montserrat, sans-serif;
 }
+
+
 
 a[x-apple-data-detectors] {
     color: inherit !important;
@@ -17,8 +20,32 @@ a[x-apple-data-detectors] {
     text-decoration: none;
 }
 
+h1 {
+    line-height: inherit;
+    font-weight:700px;
+    font-size: 20px;
+    color: #000000;
+}
+
+h2 {
+    line-height: inherit;
+    font-weight:600px;
+    font-size: 18px;
+    color: #000000;
+}
+
+h3 {
+    line-height: inherit;
+    font-weight:500px;
+    font-size: 16px;
+    color: #000000;
+}
+
 p {
-    line-height: inherit
+    line-height: inherit;
+    font-weight:400px;
+    font-size: 14px;
+    color: #000000;
 }
 
 .desktop_hide,
@@ -45,13 +72,6 @@ sub {
 
 
 @media (max-width:700px) {
-
-    .desktop_hide table.icons-inner,
-    .row-7 .column-1 .block-3.button_block .alignment .button,
-    .social_block.desktop_hide .social-table {
-        display: inline-block !important;
-    }
-
     .icons-inner {
         text-align: center;
     }
@@ -89,74 +109,5 @@ sub {
     .desktop_hide table {
         display: table !important;
         max-height: none !important;
-    }
-
-    .row-1 .column-1 .block-3.heading_block h1,
-    .row-2 .column-2 .block-2.heading_block h2,
-    .row-3 .column-2 .block-1.heading_block h3,
-    .row-4 .column-2 .block-1.heading_block h3,
-    .row-5 .column-2 .block-1.heading_block h3,
-    .row-7 .column-1 .block-1.heading_block h3,
-    .row-8 .column-1 .block-3.heading_block h2 {
-        font-size: 32px !important;
-    }
-
-    .row-1 .column-1 .block-4.paragraph_block td.pad>div {
-        font-size: 16px !important;
-    }
-
-    .row-1 .column-1 .block-4.paragraph_block td.pad,
-    .row-7 .column-1 .block-2.paragraph_block td.pad {
-        padding: 10px !important;
-    }
-
-    .row-3 .column-2 .block-1.heading_block h3,
-    .row-3 .column-2 .block-1.menu_block label .menu-trigger .menu-label,
-    .row-3 .column-2 .block-2.paragraph_block td.pad>div,
-    .row-3 .column-2 .block-3.heading_block h3,
-    .row-3 .column-2 .block-3.menu_block label .menu-trigger .menu-label,
-    .row-4 .column-2 .block-1.heading_block h3,
-    .row-4 .column-2 .block-1.menu_block label .menu-trigger .menu-label,
-    .row-4 .column-2 .block-2.paragraph_block td.pad>div,
-    .row-5 .column-2 .block-1.heading_block h3,
-    .row-5 .column-2 .block-1.menu_block label .menu-trigger .menu-label,
-    .row-5 .column-2 .block-2.paragraph_block td.pad>div,
-    .row-7 .column-1 .block-1.heading_block h3,
-    .row-7 .column-1 .block-1.menu_block label .menu-trigger .menu-label,
-    .row-7 .column-1 .block-3.button_block .alignment {
-        text-align: center !important;
-    }
-
-    .row-7 .column-1 .block-3.button_block span {
-        line-height: 32px !important;
-    }
-
-    .row-7 .column-1 .block-2.paragraph_block td.pad>div {
-        text-align: center !important;
-        font-size: 16px !important;
-    }
-
-    .row-7 .row-content {
-        padding: 0 !important;
-    }
-
-    .row-1 .column-1 {
-        padding: 5px 10px 0 !important;
-    }
-
-    .row-3 .column-1,
-    .row-4 .column-1,
-    .row-5 .column-1 {
-        padding: 5px !important;
-    }
-
-    .row-3 .column-2,
-    .row-4 .column-2,
-    .row-5 .column-2 {
-        padding: 5px 10px !important;
-    }
-
-    .row-7 .column-1 {
-        padding: 30px 10px 5px !important;
     }
 }

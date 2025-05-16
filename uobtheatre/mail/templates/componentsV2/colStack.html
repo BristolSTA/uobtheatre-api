@@ -6,7 +6,7 @@
 					<tbody>
 						<tr>
 								{% for col, width in colStack %}
-								<td class="column" width="{{width}}%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; font-weight: 400; text-align: left; padding-bottom: 5px; padding-top: 5px; vertical-align: top;">
+								<td class="column" width="{{width}}%" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; text-align: left; padding-bottom: 5px; padding-top: 5px; vertical-align: top;">
 									{{ col|safe }}
 								</td>
 								{% endfor %}
