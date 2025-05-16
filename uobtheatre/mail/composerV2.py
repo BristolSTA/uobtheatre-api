@@ -294,15 +294,15 @@ class MailComposer(ComposerItemsContainer):
         """Create a blank email, with the content (a list of elements to go in a RowStack) within"""
         return (MailComposer()
                 .colStack([
-                    (Spacer(), 5),
+                    (Spacer(), 10),
                     (RowStack([
                         Logo(),
                         Spacer(height=15),
-                        *content,
+                        Box(RowStack(content), bgCol="white"),
                         Spacer(height=15),
                         Footer()
-                    ]), 90),
-                    (Spacer(), 5)
+                    ]), 80),
+                    (Spacer(), 10)
                 ]))
 
     def textOnly(title="", message="", html=False):

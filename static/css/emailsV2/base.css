@@ -8,7 +8,9 @@ body {
     font-family: Montserrat, sans-serif;
 }
 
-
+.pad{
+    padding: 10px;
+}
 
 a[x-apple-data-detectors] {
     color: inherit !important;
@@ -71,7 +73,7 @@ sub {
 }
 
 
-@media (max-width:700px) {
+@media (max-width:400px) {
     .icons-inner {
         text-align: center;
     }
