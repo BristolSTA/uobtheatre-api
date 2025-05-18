@@ -408,6 +408,13 @@ class SalesBreakdown:
         return self.transaction_qs.get_sales_breakdown(
             self.Enums.PROVIDER_PAYMENT_VALUE
         )
+    
+    @property
+    def app_fee(self) -> int:
+        """The amount taken by us in paying for this object."""
+        return self.transaction_qs.get_sales_breakdown(
+            self.Enums.APP_FEE
+        )
 
     @property
     def app_payment_value(self) -> int:
