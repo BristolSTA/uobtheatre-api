@@ -72,8 +72,14 @@ sub {
     mso-hide: all;
 }
 
+.icon {
+    width: 1em;
+    height: 1em;
+    vertical-align: -0.125em;
+    color: #2B303A;
+  }
 
-@media (max-width:400px) {
+@media (max-width:700px) {
     .icons-inner {
         text-align: center;
     }
@@ -83,7 +89,7 @@ sub {
     }
 
     .image_block div.fullWidth {
-        max-width: 100% !important;
+        max-width: 95% !important;
     }
 
     .mobile_hide {
@@ -91,12 +97,14 @@ sub {
     }
 
     .row-content {
-        width: 100% !important;
+        width: 90% !important;
     }
 
     .stack .column {
         width: 100%;
         display: block;
+        height: 100%;
+        align: center;
     }
 
     .mobile_hide {

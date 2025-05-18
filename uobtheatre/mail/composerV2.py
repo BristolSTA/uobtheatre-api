@@ -20,13 +20,19 @@ def get_site_base():
 class ComposerItemInterface(abc.ABC):
     """Abstract interface for a mail composer item"""
 
-    def to_text(self) -> Union[str, None]:
+    def to_text(self) -> str:
         """Generate the plain text version of this item"""
         raise NotImplementedError()
 
     def to_html(self) -> str:
         """Generate the HTML version of this item"""
         raise NotImplementedError()
+
+    def sub_items(self):
+        """Return a list of all sub items that a composer item contains (e.g. a rowStack or colStack),
+        as well as itself.
+        Most items will return a list of just themselves here by default."""
+        return [self]
 
 
 class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
@@ -41,7 +47,7 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
         self.items.append(Heading(message))
         return self
 
-    def paragraph(self, title: str, message: str):
+    def paragraph(self, title: str, message: str, titleIcon: str, messageIcon: str):
         """A Paragraph composer item"""
         self.items.append(Paragraph(title, message))
         return self
@@ -49,6 +55,11 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
     def button(self, href: str, text: str):
         """A Button composer item"""
         self.items.append(Button(href, text))
+        return self
+
+    def buttonHelpText(self, href: str, text: str):
+        """A ButtonHelpText composer item"""
+        self.items.append(ButtonHelpText(href, text))
         return self
 
     def image(self, src: str, alt="", title="", href=""):
@@ -61,12 +72,12 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
         self.items.append(Logo())
         return self
 
-    def logo(self):
+    def footer(self):
         """A UOB Theatre Footer item"""
         self.items.append(Footer())
         return self
 
-    def box(self, content: ComposerItemInterface, bgUrl="", bgCol=""):
+    def box(self, content: ComposerItemInterface, bgUrl="", bgCol="#D0D0D0"):
         """A Box composer item, used for holding arbitrary content with
         a background of an image or solid colour"""
         self.items.append(Box(bgUrl, bgCol, content))
@@ -80,9 +91,15 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
     def colStack(self, colStack: List[object]):
         """A ColStack composer item.
         Takes in a list of items to put in a row,
-        along with their associated widths in percentages.
+        along with their associated widths as a string, in %.
         i.e., really a list of type List[(ComposerItemInterface, float)]"""
         self.items.append(ColStack(colStack))
+        return self
+
+    def boxCols(self, content: List[ComposerItemInterface]):
+        """This pre-makes a ColStack with an arbitrary number of even columns, using default
+        boxes to hold the content. This is a quick and easy way to split content into columns."""
+        self.items.append(BoxCols(content))
         return self
 
     def spacer(self, width=0, height=0):
@@ -126,17 +143,18 @@ class Heading(ComposerItemInterface):
 
         return template.render({"message": self.message})
 
-
 class Paragraph(ComposerItemInterface):
     """A Paragraph composer item."""
 
-    def __init__(self, title="", message="", html=False) -> None:
+    def __init__(self, title="", message="", titleIcon="", messageIcon="", html=False) -> None:
         """If html == True, then this string will parse the given HTML; be careful,
         as if used improperly, this may open up scripting attacks."""
         super().__init__()
         self.title = title
         self.message = message
         self.html = html
+        self.titleIcon = titleIcon
+        self.messageIcon = messageIcon
 
     def to_text(self):
         return strip_tags(self.title) + "\n" + strip_tags(self.message)
@@ -144,7 +162,7 @@ class Paragraph(ComposerItemInterface):
     def to_html(self):
         template = get_template("componentsV2/paragraph.html")
 
-        return template.render({"title": self.title, "message": self.message, "html": self.html})
+        return template.render({"title": self.title, "message": self.message, "messageIcon": self.messageIcon, "titleIcon": self.titleIcon, "html": self.html})
 
 
 class Button(ComposerItemInterface):
@@ -160,7 +178,22 @@ class Button(ComposerItemInterface):
 
     def to_html(self):
         template = get_template("componentsV2/button.html")
+        return template.render({"text": self.text, "href": self.href})
 
+
+class ButtonHelpText(ComposerItemInterface):
+    """A ButtonHelpText composer item"""
+
+    def __init__(self, href, text) -> None:
+        super().__init__()
+        self.href = href
+        self.text = text
+
+    def to_text(self):
+        return f"Can't click the \"{self.text}\" button above? Copy the following into your browser: {self.href}"
+
+    def to_html(self):
+        template = get_template("componentsV2/buttonHelp.html")
         return template.render({"text": self.text, "href": self.href})
 
 
@@ -168,7 +201,7 @@ class Box(ComposerItemInterface):
     """A Box composer item, used for holding arbitrary content with
     a background of an image or solid colour"""
 
-    def __init__(self, content, bgUrl="", bgCol="") -> None:
+    def __init__(self, content: ComposerItemInterface, bgUrl="", bgCol="#D0D0D0") -> None:
         super().__init__()
         self.bgUrl = bgUrl
         self.bgCol = bgCol
@@ -181,6 +214,10 @@ class Box(ComposerItemInterface):
         template = get_template("componentsV2/box.html")
 
         return template.render({"bgUrl": self.bgUrl, "bgCol": self.bgCol, "content": self.content.to_html()})
+
+    # Need to return the box's content as a subItem
+    def sub_items(self):
+        return [self] + self.content.sub_items()
 
 
 class Image(ComposerItemInterface):
@@ -217,7 +254,7 @@ class Footer(ComposerItemInterface):
     """A UOB Theatre Footer item"""
 
     def to_text(self):
-        return ("Copyright UOB Theatre %s" % datetime.now().year),
+        return f"Copyright UOB Theatre {datetime.now().year}"
 
     def to_html(self):
         template = get_template("componentsV2/footer.html")
@@ -227,35 +264,42 @@ class Footer(ComposerItemInterface):
 class RowStack(ComposerItemInterface):
     """A RowStack composer item"""
 
-    def __init__(self, rowStack) -> None:
+    def __init__(self, rowStack: List[ComposerItemInterface]) -> None:
         super().__init__()
         self.rowStack = rowStack
 
     def to_text(self):
-        return "\n".join([row.content.to_text() for row in self.rowStack])
+        return "\n".join([row.to_text() for row in self.rowStack])
 
     def to_html(self):
         template = get_template("componentsV2/rowStack.html")
 
         return template.render({"rowStack": [row.to_html() for row in self.rowStack]})
 
+    # Export and flatten the RowStack's sub items
+    def sub_items(self):
+        return [self] + [item for row in self.rowStack for item in row.sub_items()]
 
 class ColStack(ComposerItemInterface):
     """A ColStack composer item.
     Takes in a list of items to put in a row,
-        along with their associated widths in percentages"""
+        along with their associated widths as a float, in %."""
 
-    def __init__(self, colStack) -> None:
+    def __init__(self, colStack: List[tuple[ComposerItemInterface, float]]) -> None:
         super().__init__()
         self.colStack = colStack
 
     def to_text(self):
-        return "\n".join([col.content.to_text() for (col, _) in self.colStack])
+        return "\n".join([col.to_text() for [col, _] in self.colStack])
 
     def to_html(self):
         template = get_template("componentsV2/colStack.html")
 
         return template.render({"colStack": [(col.to_html(), width) for (col, width) in self.colStack]})
+
+        # Export and flatten the RowStack's sub items
+    def sub_items(self):
+        return [self] + [item for (col, _) in self.colStack for item in col.sub_items()]
 
 
 class Spacer(ComposerItemInterface):
@@ -278,6 +322,26 @@ class Spacer(ComposerItemInterface):
         return template.render({"width": self.width, "height": self.height})
 
 
+class BoxCols(ColStack):
+
+    """This pre-makes a ColStack with an arbitrary number of even columns, using default
+    boxes to hold the content. This is a quick and easy way to split content into columns."""
+
+    def __init__(self, content):
+
+        colCount = len(content)
+        spacerWidth = min(1, 5 - colCount)
+        colWidth = (100 - (colCount + 1) * spacerWidth) / colCount
+
+        cols = [(Spacer(), spacerWidth)]
+
+        for i in range(colCount):
+            cols.append((Box(content[i]), colWidth))
+            cols.append((Spacer(), spacerWidth))
+
+        super().__init__(cols)
+
+
 class MailComposer(ComposerItemsContainer):
     """Compose a mail notificaiton"""
 
@@ -290,9 +354,17 @@ class MailComposer(ComposerItemsContainer):
         )
         return self
 
-    def blank(content: list[ComposerItemInterface]):
-        """Create a blank email, with the content (a list of elements to go in a RowStack) within"""
-        return (MailComposer()
+    def blank(content: list[ComposerItemInterface]) -> ComposerItemInterface:
+        """Create a blank email, with the content (a list of elements to go in a RowStack) within.
+        This will also add a footer component with extra button details."""
+
+        # Prepare the footer for the buttons
+        buttons = []
+        for item in [item for row in content for item in row.sub_items()]:
+            if item.__class__ == Button:
+                buttons.append(ButtonHelpText(item.href, item.text))
+
+        mail = (MailComposer()
                 .colStack([
                     (Spacer(), 10),
                     (RowStack([
@@ -300,12 +372,17 @@ class MailComposer(ComposerItemsContainer):
                         Spacer(height=15),
                         Box(RowStack(content), bgCol="white"),
                         Spacer(height=15),
-                        Footer()
+                        Footer(),
+                        # If there are buttons, add that after the footer
+                        Spacer(height=(15 if len(buttons) > 0 else 0)),
+                        Box(RowStack(buttons), bgCol="rgba(0,0,0,0.2)"),
                     ]), 80),
                     (Spacer(), 10)
                 ]))
 
-    def textOnly(title="", message="", html=False):
+        return mail
+
+    def textOnly(title="", message="", html=False) -> ComposerItemInterface:
         """Create an email that is text only. Takes in just a title and message.
         If html == True, then this string will parse any given HTML; be careful,
         as if used improperly, this may open up scripting attacks."""
@@ -315,7 +392,7 @@ class MailComposer(ComposerItemsContainer):
         """Get the email body items (including any signature/signoff)"""
         return self.items
 
-    def to_plain_text(self):
+    def to_plain_text(self) -> str:
         """Generate the plain text version of the email"""
         return """{}""".format(
             "\n\n".join(
@@ -337,8 +414,6 @@ class MailComposer(ComposerItemsContainer):
             }
         )
 
-        print("Email: ", email)
-
         return email
 
     def get_email(self, subject, to_email):
@@ -353,6 +428,9 @@ class MailComposer(ComposerItemsContainer):
         """Send the email to the given email with the given subject"""
         msg = self.get_email(subject, to_email)
         msg.send()
+
+    def sub_items(self):
+        return [subItem for child in self.items for subItem in child.sub_items()]
 
 
 class MassMailComposer:
