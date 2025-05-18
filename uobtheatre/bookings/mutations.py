@@ -574,6 +574,14 @@ class RefundBooking(AuthRequiredMixin, SafeMutation):
                 field="support_ticket_ref",
                 code="missing_required",
             )
+        
+        # Check a refund reason is provided that isn't empty
+        if not refund_reason:
+            raise GQLException(
+                message="A refund reason is required.",
+                field="refund_reason",
+                code="missing_required",
+            )
 
         # Check if the booking pertains to the correct performance
         if booking.performance != performance:
