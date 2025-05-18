@@ -1,6 +1,9 @@
 import abc
+
 from datetime import datetime
 from typing import List, Optional, Union
+
+import codecs
 
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -8,6 +11,9 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import get_template
 from django.utils.html import strip_tags
 from html2text import html2text
+
+import qrcode
+import qrcode.image.svg
 
 from uobtheatre.mail.tasks import send_emails
 from uobtheatre.users.models import User
@@ -65,6 +71,11 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
     def image(self, src: str, alt="", title="", href=""):
         """An Image composer item"""
         self.items.append(Image(src, alt, title, href))
+        return self
+
+    def qr(self, content):
+        """An QR composer item"""
+        self.items.append(QR(content))
         return self
 
     def logo(self):
@@ -237,6 +248,31 @@ class Image(ComposerItemInterface):
         template = get_template("componentsV2/image.html")
 
         return template.render({"alt": self.alt, "href": self.href, "src": self.src, "title": self.title})
+
+
+class QR(ComposerItemInterface):
+    """An QR composer item"""
+
+    def __init__(self, content: str) -> None:
+        super().__init__()
+        self.content = content
+
+        # Encode the content to base64
+        b64String = codecs.encode(
+            content.encode(), "base64_codec").decode()[:-1]
+
+        # Then convert it to a QR code
+        qrFactory = qrcode.image.svg.SvgPathFillImage
+        self.qr = qrcode.make(
+            b64String, image_factory=qrFactory).to_string().decode("ascii")
+
+    def to_text(self):
+        return f"QR Code:\n{self.content}"
+
+    def to_html(self):
+        template = get_template("componentsV2/qrCode.html")
+
+        return template.render({"qr": self.qr})
 
 class Logo(ComposerItemInterface):
     """A UOB Theatre Logo item"""
