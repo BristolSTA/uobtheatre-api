@@ -1,8 +1,13 @@
-{% if title %}
-<table class="heading_block block-1" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
+<table width="100%" height="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
+  {% if title %}
   <tr>
     <td class="pad">
-      <h3 style="margin: 0; color: #000000; direction: ltr;"><span class="tinyMce-placeholder" style="word-break: break-word;">
+      <h3 style="margin: 0; color: #000000; direction: ltr; text-align: center;"><span class="tinyMce-placeholder" style="word-break: break-word;">
+        {% if titleIcon %}
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon" aria-hidden="true" focusable="false" viewBox="0 0 512 512">
+        <path fill="currentColor" d="{{titleIcon}}"/>
+        </svg>
+        {% endif %}
         {% if html %}
         {{title|safe}}
         {% else %}
@@ -11,14 +16,17 @@
       </span></h3>
     </td>
   </tr>
-</table>
-{% endif %}
-{% if message %}
-<table class="paragraph_block block-2" width="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; word-break: break-word;">
+  {% endif %}
+  {% if message %}
   <tr>
     <td class="pad">
       <div style>
         <p style="margin: 0;">
+        {% if messageIcon %}
+        <svg xmlns="http://www.w3.org/2000/svg" class="icon" aria-hidden="true" focusable="false" viewBox="0 0 512 512">
+        <path fill="currentColor" d="{{messageIcon}}"/>
+        </svg>
+        {% endif %}
         {% if html %}
         {{message|safe}}
         {% else %}
@@ -27,5 +35,5 @@
       </div>
     </td>
   </tr>
+  {% endif %}
 </table>
-{% endif %}
