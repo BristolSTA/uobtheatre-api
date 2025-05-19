@@ -1,11 +1,20 @@
-* {
-    box-sizing: border-box;
-}
-
 body {
     margin: 0;
     padding: 0;
     font-family: Montserrat, sans-serif;
+}
+
+body * {
+    box-sizing: border-box;
+}
+
+table{
+    table-layout: fixed;
+}
+
+td {
+    padding: 0;
+    margin: 0;
 }
 
 .pad{
@@ -95,9 +104,9 @@ sub {
     .mobile_hide {
         display: none;
     }
-
+    
     .row-content {
-        width: 90% !important;
+        width: 100% !important;
     }
 
     .stack .column {

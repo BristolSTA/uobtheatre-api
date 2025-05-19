@@ -129,12 +129,10 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
         self.items.append(BoxCols(content))
         return self
 
-    def spacer(self, width=0, height=0):
+    def spacer(self, height=0):
         """A Spacer composer item.
-        The height should be an integer, in pixels.
-        The width should be a number between 0 and 100,
-        representing a percentage of the total width."""
-        self.items.append(Spacer(width, height))
+        The height should be an integer, in pixels."""
+        self.items.append(Spacer(height))
         return self
 
     def append(self, item):
@@ -416,13 +414,10 @@ class ColStack(ComposerItemInterface):
 
 class Spacer(ComposerItemInterface):
     """A Spacer composer item.
-    The height should be an integer, in pixels.
-    The width should be a number between 0 and 100,
-    representing a percentage of the total width."""
+    The height should be an integer, in pixels."""
 
-    def __init__(self, width=0, height=0) -> None:
+    def __init__(self, height=0) -> None:
         super().__init__()
-        self.width = width
         self.height = height
 
     def to_text(self):
@@ -431,7 +426,7 @@ class Spacer(ComposerItemInterface):
     def to_html(self):
         template = get_template("componentsV2/spacer.html")
 
-        return template.render({"width": self.width, "height": self.height})
+        return template.render({"height": self.height})
 
 
 class BoxCols(ColStack):
@@ -441,15 +436,12 @@ class BoxCols(ColStack):
 
     def __init__(self, content):
 
-        colCount = len(content)
-        spacerWidth = min(1, 5 - colCount)
-        colWidth = (100 - (colCount + 1) * spacerWidth) / colCount
+        colWidth = 100 / len(content)
 
-        cols = [(Spacer(), spacerWidth)]
+        cols = []
 
-        for i in range(colCount):
+        for i in range(len(content)):
             cols.append((Box(content[i]), colWidth))
-            cols.append((Spacer(), spacerWidth))
 
         super().__init__(cols)
 
@@ -476,10 +468,7 @@ class MailComposer(ComposerItemsContainer):
             if item.__class__ == Button:
                 buttons.append(ButtonHelpText(item.href, item.text))
 
-        mail = (MailComposer()
-                .colStack([
-                    (Spacer(), 10),
-                    (RowStack([
+        mail = (MailComposer().rowStack([
                         Logo(),
                         Spacer(height=15),
                         Box(RowStack(content), bgCol="white"),
@@ -488,9 +477,7 @@ class MailComposer(ComposerItemsContainer):
                         # If there are buttons, add that after the footer
                         Spacer(height=(15 if len(buttons) > 0 else 0)),
                         Box(RowStack(buttons), bgCol="rgba(0,0,0,0.2)"),
-                    ]), 80),
-                    (Spacer(), 10)
-                ]))
+        ]))
 
         return mail
 
