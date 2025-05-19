@@ -17,14 +17,18 @@ root = "./uobtheatre/mail/visualisations/basic/"
 mountainImage = "https://media.gettyimages.com/id/1211045588/photo/beautiful-winter-mountain-landscape-with-snow-and-glacier-lake.jpg?b=1&s=1024x1024&w=gi&k=20&c=gjiSUA2OVP3s8zJkmJDsBL2V80Hprvjdv5ZdEkV3VuE="
 
 
-def write_html_file(mail, filename):
-    # Delete the existing file
-    if not os.path.exists(root + filename):
-        with open(root + filename, "x") as f:
-            f.write(mail.to_html())
-    else:
-        with open(root + filename, "w") as f:
-            f.write(mail.to_html())
+def write_files(mail, filename):
+    # Write both the .html and the .txt files for the html and plaintext visualisations
+    for extension in [".html", ".txt"]:
+        content = mail.to_html() if extension == ".html" else mail.to_plain_text()
+
+        # Delete the existing file if it already exists
+        if not os.path.exists(root + filename + extension):
+            with open(root + filename + extension, "x") as f:
+                f.write(content)
+        else:
+            with open(root + filename + extension, "w") as f:
+                f.write(content)
 
 @pytest.mark.django_db
 def test_simple_email():
@@ -41,7 +45,7 @@ def test_simple_email():
         .line("This is the final paragraph")
     )
 
-    write_html_file(test_mail, "simple_email.html")
+    write_files(test_mail, "simple_email")
 
 
 @pytest.mark.django_db
@@ -94,7 +98,7 @@ def test_booking_confirmation_email():
         "If you have any accessability concerns, or otherwise need help, please contact <a href='mailto:support@uobtheatre.com'>support@uobtheatre.com</a>."
     )
 
-    write_html_file(composer, "booking_confirmation.html")
+    write_files(composer, "booking_confirmation")
 
 
 @pytest.mark.django_db
@@ -115,7 +119,7 @@ def test_booking_accessibility_info_email():
         )
     )
 
-    write_html_file(mail, "accessibility_info.html")
+    write_files(mail, "accessibility_info")
 
 
 @pytest.mark.django_db
@@ -141,7 +145,7 @@ def test_payable_refund_initiated_email():
         )
     )
 
-    write_html_file(mail, "full_refund.html")
+    write_files(mail, "full_refund")
 
 
 @pytest.mark.django_db
@@ -161,4 +165,4 @@ def test__production_approved_email():
         "Go To Production Control Panel",
     )
 
-    write_html_file(mail, "production_approved.html")
+    write_files(mail, "production_approved")
