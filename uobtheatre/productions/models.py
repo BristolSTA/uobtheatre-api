@@ -159,6 +159,16 @@ class CrewMember(models.Model):
         ordering = ["id"]
 
 
+class RelaxedCategory(models.Model):
+    """Categories of adaptations for relaxed/sensory friendly etc. performances."""
+
+    short_description = models.CharField(max_length=255)
+    long_description = models.TextField(null=True, blank=True)
+    help_text = models.TextField(null=True, blank=True)
+    default_relaxed = models.BooleanField(default=False)
+    default_sensory_friendly = models.BooleanField(default=False)
+
+
 class PerformanceQuerySet(QuerySet):
     """Queryset for Performances, also used as manager."""
 
@@ -306,6 +316,10 @@ class Performance(
 
     description = models.TextField(null=True, blank=True)
     extra_information = models.TextField(null=True, blank=True)
+
+    is_relaxed = models.BooleanField(default=False)
+    relaxed_name = models.CharField(max_length=255, null=True, blank=True)
+    relaxed_categories = models.ManyToManyField(RelaxedCategory, blank=True)
 
     disabled = models.BooleanField(default=True)
 
