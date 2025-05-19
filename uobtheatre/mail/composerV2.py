@@ -18,6 +18,21 @@ import qrcode.image.svg
 from uobtheatre.mail.tasks import send_emails
 from uobtheatre.users.models import User
 
+# Icons have to be SVG paths
+# https://fontawesome.com/search?q=code&o=r&ic=free
+icons = {
+    "clock": "M464 256A208 208 0 1 1 48 256a208 208 0 1 1 416 0zM0 256a256 256 0 1 0 512 0A256 256 0 1 0 0 256zM232 120l0 136c0 8 4 15.5 10.7 20l96 64c11 7.4 25.9 4.4 33.3-6.7s4.4-25.9-6.7-33.3L280 243.2 280 120c0-13.3-10.7-24-24-24s-24 10.7-24 24z",
+    "search": "M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z",
+    "door-open": "M320 32c0-9.9-4.5-19.2-12.3-25.2S289.8-1.4 280.2 1l-179.9 45C79 51.3 64 70.5 64 92.5L64 448l-32 0c-17.7 0-32 14.3-32 32s14.3 32 32 32l64 0 192 0 32 0 0-32 0-448zM256 256c0 17.7-10.7 32-24 32s-24-14.3-24-32s10.7-32 24-32s24 14.3 24 32zm96-128l96 0 0 352c0 17.7 14.3 32 32 32l64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-32 0 0-320c0-35.3-28.7-64-64-64l-96 0 0 64z",
+    "play": "M73 39c-14.8-9.1-33.4-9.4-48.5-.9S0 62.6 0 80L0 432c0 17.4 9.4 33.4 24.5 41.9s33.7 8.1 48.5-.9L361 297c14.3-8.7 23-24.2 23-41s-8.7-32.2-23-41L73 39z",
+    "barcode": "M0 80C0 53.5 21.5 32 48 32l96 0c26.5 0 48 21.5 48 48l0 96c0 26.5-21.5 48-48 48l-96 0c-26.5 0-48-21.5-48-48L0 80zM64 96l0 64 64 0 0-64L64 96zM0 336c0-26.5 21.5-48 48-48l96 0c26.5 0 48 21.5 48 48l0 96c0 26.5-21.5 48-48 48l-96 0c-26.5 0-48-21.5-48-48l0-96zm64 16l0 64 64 0 0-64-64 0zM304 32l96 0c26.5 0 48 21.5 48 48l0 96c0 26.5-21.5 48-48 48l-96 0c-26.5 0-48-21.5-48-48l0-96c0-26.5 21.5-48 48-48zm80 64l-64 0 0 64 64 0 0-64zM256 304c0-8.8 7.2-16 16-16l64 0c8.8 0 16 7.2 16 16s7.2 16 16 16l32 0c8.8 0 16-7.2 16-16s7.2-16 16-16s16 7.2 16 16l0 96c0 8.8-7.2 16-16 16l-64 0c-8.8 0-16-7.2-16-16s-7.2-16-16-16s-16 7.2-16 16l0 64c0 8.8-7.2 16-16 16l-32 0c-8.8 0-16-7.2-16-16l0-160zM368 480a16 16 0 1 1 0-32 16 16 0 1 1 0 32zm64 0a16 16 0 1 1 0-32 16 16 0 1 1 0 32z",
+    "accessibility": "M192 96a48 48 0 1 0 0-96 48 48 0 1 0 0 96zM120.5 247.2c12.4-4.7 18.7-18.5 14-30.9s-18.5-18.7-30.9-14C43.1 225.1 0 283.5 0 352c0 88.4 71.6 160 160 160c61.2 0 114.3-34.3 141.2-84.7c6.2-11.7 1.8-26.2-9.9-32.5s-26.2-1.8-32.5 9.9C240 440 202.8 464 160 464C98.1 464 48 413.9 48 352c0-47.9 30.1-88.8 72.5-104.8zM259.8 176l-1.9-9.7c-4.5-22.3-24-38.3-46.8-38.3c-30.1 0-52.7 27.5-46.8 57l23.1 115.5c6 29.9 32.2 51.4 62.8 51.4l5.1 0c.4 0 .8 0 1.3 0l94.1 0c6.7 0 12.6 4.1 15 10.4L402 459.2c6 16.1 23.8 24.6 40.1 19.1l48-16c16.8-5.6 25.8-23.7 20.2-40.5s-23.7-25.8-40.5-20.2l-18.7 6.2-25.5-68c-11.7-31.2-41.6-51.9-74.9-51.9l-68.5 0-9.6-48 63.4 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-76.2 0z",
+    "money": "M96 96l0 224c0 35.3 28.7 64 64 64l416 0c35.3 0 64-28.7 64-64l0-224c0-35.3-28.7-64-64-64L160 32c-35.3 0-64 28.7-64 64zm64 160c35.3 0 64 28.7 64 64l-64 0 0-64zM224 96c0 35.3-28.7 64-64 64l0-64 64 0zM576 256l0 64-64 0c0-35.3 28.7-64 64-64zM512 96l64 0 0 64c-35.3 0-64-28.7-64-64zM288 208a80 80 0 1 1 160 0 80 80 0 1 1 -160 0zM48 120c0-13.3-10.7-24-24-24S0 106.7 0 120L0 360c0 66.3 53.7 120 120 120l400 0c13.3 0 24-10.7 24-24s-10.7-24-24-24l-400 0c-39.8 0-72-32.2-72-72l0-240z",
+    "card": "M64 32C28.7 32 0 60.7 0 96l0 32 576 0 0-32c0-35.3-28.7-64-64-64L64 32zM576 224L0 224 0 416c0 35.3 28.7 64 64 64l448 0c35.3 0 64-28.7 64-64l0-192zM112 352l64 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-64 0c-8.8 0-16-7.2-16-16s7.2-16 16-16zm112 16c0-8.8 7.2-16 16-16l128 0c8.8 0 16 7.2 16 16s-7.2 16-16 16l-128 0c-8.8 0-16-7.2-16-16z",
+    "trolley": "M0 24C0 10.7 10.7 0 24 0L69.5 0c22 0 41.5 12.8 50.6 32l411 0c26.3 0 45.5 25 38.6 50.4l-41 152.3c-8.5 31.4-37 53.3-69.5 53.3l-288.5 0 5.4 28.5c2.2 11.3 12.1 19.5 23.6 19.5L488 336c13.3 0 24 10.7 24 24s-10.7 24-24 24l-288.3 0c-34.6 0-64.3-24.6-70.7-58.5L77.4 54.5c-.7-3.8-4-6.5-7.9-6.5L24 48C10.7 48 0 37.3 0 24zM128 464a48 48 0 1 1 96 0 48 48 0 1 1 -96 0zm336-48a48 48 0 1 1 0 96 48 48 0 1 1 0-96z",
+    "ticket": "M64 64C28.7 64 0 92.7 0 128l0 64c0 8.8 7.4 15.7 15.7 18.6C34.5 217.1 48 235 48 256s-13.5 38.9-32.3 45.4C7.4 304.3 0 311.2 0 320l0 64c0 35.3 28.7 64 64 64l448 0c35.3 0 64-28.7 64-64l0-64c0-8.8-7.4-15.7-15.7-18.6C541.5 294.9 528 277 528 256s13.5-38.9 32.3-45.4c8.3-2.9 15.7-9.8 15.7-18.6l0-64c0-35.3-28.7-64-64-64L64 64zm64 112l0 160c0 8.8 7.2 16 16 16l288 0c8.8 0 16-7.2 16-16l0-160c0-8.8-7.2-16-16-16l-288 0c-8.8 0-16 7.2-16 16zM96 160c0-17.7 14.3-32 32-32l320 0c17.7 0 32 14.3 32 32l0 192c0 17.7-14.3 32-32 32l-320 0c-17.7 0-32-14.3-32-32l0-192z",
+    "bookmark": "M336 0H48C21.5 0 0 21.5 0 48v464l192-112 192 112V48c0-26.5-21.5-48-48-48zm0 428.4l-144-84-144 84V54a6 6 0 0 1 6-6h276c3.3 0 6 2.7 6 6V428.4z"
+}
 
 def get_site_base():
     return "https://%s" % Site.objects.get_current().domain
@@ -53,9 +68,10 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
         self.items.append(Heading(message))
         return self
 
-    def paragraph(self, title: str, message: str, titleIcon: str, messageIcon: str):
+    def paragraph(self, title: str, message: str, titleIcon: str, messageIcon: str, html: bool):
         """A Paragraph composer item"""
-        self.items.append(Paragraph(title, message))
+        self.items.append(
+            Paragraph(title, message, titleIcon, messageIcon, html))
         return self
 
     def button(self, href: str, text: str):
@@ -164,8 +180,9 @@ class Paragraph(ComposerItemInterface):
         self.title = title
         self.message = message
         self.html = html
-        self.titleIcon = titleIcon
-        self.messageIcon = messageIcon
+        self.titleIcon = icons[titleIcon] if titleIcon in icons.keys() else ""
+        self.messageIcon = icons[messageIcon] if messageIcon in icons.keys(
+        ) else ""
 
     def to_text(self):
         return strip_tags(self.title) + "\n" + strip_tags(self.message)
@@ -251,20 +268,16 @@ class Image(ComposerItemInterface):
 
 
 class QR(ComposerItemInterface):
-    """An QR composer item"""
+    """A QR composer item"""
 
     def __init__(self, content: str) -> None:
         super().__init__()
         self.content = content
 
-        # Encode the content to base64
-        b64String = codecs.encode(
-            content.encode(), "base64_codec").decode()[:-1]
-
-        # Then convert it to a QR code
+        # Convert the content to a QR code
         qrFactory = qrcode.image.svg.SvgPathFillImage
         self.qr = qrcode.make(
-            b64String, image_factory=qrFactory).to_string().decode("ascii")
+            content, image_factory=qrFactory).to_string().decode("ascii")
 
     def to_text(self):
         return f"QR Code:\n{self.content}"
@@ -273,6 +286,69 @@ class QR(ComposerItemInterface):
         template = get_template("componentsV2/qrCode.html")
 
         return template.render({"qr": self.qr})
+
+
+class TicketCodes(ComposerItemInterface):
+    """A TicketCodes composer item"""
+
+    def __init__(self, bookingRef: str, ticketIds: list[str]) -> None:
+        super().__init__()
+        self.bookingRef = bookingRef
+        self.ticketIds = ticketIds
+        self.ticketData = []
+        self.plural = "" if len(self.ticketData) == 1 else "s"
+
+        # Convert the tickets to data strings for the QR codes
+        for ticketId in ticketIds:
+            # Encode the ticket data to base64
+            b64String = codecs.encode(
+                f"[\"{bookingRef}\",\"{ticketId}\"]".encode(), "base64_codec").decode()[:-1]
+
+            self.ticketData.append(b64String)
+
+    def to_text(self):
+        plaintext = f"{len(self.ticketData)} ticket QR code{self.plural}:"
+
+        for ticketData in self.ticketData:
+            plaintext += f"\n{ticketData}"
+
+        return plaintext
+
+    def to_html(self):
+        # Maximum tickets per grid row, and as many grid rows as we need
+        maxPerRow = 3
+
+        qrContent = []
+        row = 0
+
+        # Create a grid of tickets as needed
+        while row < len(self.ticketData):
+            col = 0
+            rowContent = []
+
+            while row + col < len(self.ticketData):
+
+                # Create the ticket box
+                rowContent.append(RowStack(
+                    [Paragraph(title=f"Ticket {row+col+1}"), QR(self.ticketData[row + col])]))
+                col += 1
+
+                # Limit the number of tickets per row
+                if col == maxPerRow:
+                    break
+
+            # Add the columnStack to the content
+            qrContent.append(BoxCols(rowContent))
+
+            # Update the number of tickets added so far
+            row += maxPerRow
+
+        # Generate a pretty ticket element
+        content = RowStack(
+            [Paragraph(title=f"Your Ticket{self.plural}", titleIcon="ticket")]
+            + qrContent)
+
+        return content.to_html()
 
 class Logo(ComposerItemInterface):
     """A UOB Theatre Logo item"""
@@ -326,14 +402,14 @@ class ColStack(ComposerItemInterface):
         self.colStack = colStack
 
     def to_text(self):
-        return "\n".join([col.to_text() for [col, _] in self.colStack])
+        return "\n".join([col.to_text() for (col, _) in self.colStack if col.to_text()])
 
     def to_html(self):
         template = get_template("componentsV2/colStack.html")
 
         return template.render({"colStack": [(col.to_html(), width) for (col, width) in self.colStack]})
 
-        # Export and flatten the RowStack's sub items
+    # Export and flatten the RowStack's sub items
     def sub_items(self):
         return [self] + [item for (col, _) in self.colStack for item in col.sub_items()]
 
