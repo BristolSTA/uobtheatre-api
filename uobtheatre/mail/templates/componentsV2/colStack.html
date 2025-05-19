@@ -1,12 +1,12 @@
-<table class="row row-2" align="center" width="100%" height="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
+<table class="row row-2" align="center" width="100%" height="100%" border="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
 	<tbody>
 		<tr>
-			<td>
-				<table class="row-content stack" align="center" border="0" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-radius: 0; color: #000000; margin: 0 auto; width:100%;">
+			<td style="padding:0">
+				<table class="row-content stack" align="center" border="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-radius: 0; color: #000000; margin: 0 auto; width:100%;">
 					<tbody>
 						<tr>
 								{% for col, width in colStack %}
-								<td class="column" width="{{width}}%" height="1px" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; text-align: left; padding-bottom: 5px; padding-top: 5px; vertical-align: top;">
+								<td class="column pad" width="{{width}}%" height="1px" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; text-align: left; vertical-align: top;">
 									{{ col|safe }}
 								</td>
 								{% endfor %}
