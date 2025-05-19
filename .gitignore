@@ -121,4 +121,5 @@ media/*
 bin/
 
 # Mail visualisations
-uobtheatre/mail/visualisations/**/*.html
+uobtheatre/mail/visualisations/**/*
+!uobtheatre/mail/visualisations/**/*.py */
