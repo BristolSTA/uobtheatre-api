@@ -22,11 +22,19 @@ class RefundTask(BaseTask, abc.ABC):
 
 
 @app.task(base=RefundTask, throws=(CantBeRefundedException,))
-def refund_payment(payment_pk: int):
+def refund_payment(
+    payment_pk: int,
+    preserve_provider_fees: bool = True,
+    preserve_app_fees: bool = False,
+):
+    """Refund a payment automatically"""
     from uobtheatre.payments.models import Transaction
 
     payment = Transaction.objects.get(pk=payment_pk)
-    payment.refund()
+    payment.refund(
+        preserve_provider_fees=preserve_provider_fees,
+        preserve_app_fees=preserve_app_fees,
+    )
 
 
 @app.task(base=RefundTask, throws=(CantBeRefundedException,))

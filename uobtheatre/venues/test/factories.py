@@ -8,6 +8,8 @@ from uobtheatre.venues.models import Seat, SeatGroup, Venue
 class VenueFactory(factory.django.DjangoModelFactory):
     name = factory.Faker("sentence", nb_words=2)
     description = factory.Faker("paragraph", nb_sentences=3)
+    email = factory.Faker("email")
+    website = factory.Faker("url")
     internal_capacity = factory.Faker("pyint")
     address = factory.SubFactory(AddressFactory)
     image = factory.SubFactory(ImageFactory)

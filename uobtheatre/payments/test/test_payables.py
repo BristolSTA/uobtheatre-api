@@ -354,12 +354,9 @@ def test_payable_refund(mailoutbox, can_be_refunded, send_email, do_async):
 
         assert mock.call_count == (2 if can_be_refunded else 0)
         assert len(mailoutbox) == (1 if can_be_refunded and send_email else 0)
-        if can_be_refunded and not do_async:
+        if can_be_refunded:
             mock.assert_any_call(payment_1, True, False)
             mock.assert_any_call(payment_2, True, False)
-        elif can_be_refunded:
-            mock.assert_any_call(payment_1)
-            mock.assert_any_call(payment_2)
 
 
 @pytest.mark.django_db

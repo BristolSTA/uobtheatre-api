@@ -142,7 +142,8 @@ def test_production_mutation_create_with_missing_info(gql_client):
 
 
 @pytest.mark.django_db
-def test_production_mutation_create_update(gql_client):
+@pytest.mark.parametrize("with_permission", [True, False])
+def test_production_mutation_create_update(gql_client, with_permission):
     production = ProductionFactory(
         name="My Old Name", subtitle="My subtitle", status=Production.Status.DRAFT
     )
@@ -153,6 +154,7 @@ def test_production_mutation_create_update(gql_client):
             input: {
                 id: "%s"
                 name: "My New Name"
+                productionAlert: "My alert"
              }
           ) {
             success
@@ -176,14 +178,17 @@ def test_production_mutation_create_update(gql_client):
     )
 
     gql_client.login()
-    assign_perm("change_production", gql_client.user, production)
+    if with_permission:
+        assign_perm("change_production", gql_client.user, production)
 
     response = gql_client.execute(request)
-    assert response["data"]["production"]["success"] is True
-    assert response["data"]["production"]["production"] == {
-        "name": "My New Name",
-        "subtitle": "My subtitle",
-    }
+    assert response["data"]["production"]["success"] is with_permission
+
+    if with_permission:
+        assert response["data"]["production"]["production"] == {
+            "name": "My New Name",
+            "subtitle": "My subtitle",
+        }
 
 
 @pytest.mark.django_db
@@ -497,6 +502,74 @@ def test_set_production_status_draft(status, gql_client):
 
     production.refresh_from_db()
     assert str(production.status) == status
+
+
+@pytest.mark.django_db
+def test_set_production_status_complete_remove_accessibility(gql_client):
+    production = ProductionFactory(status=Production.Status.CLOSED)
+    performance = PerformanceFactory(production=production)
+    booking = BookingFactory(
+        performance=performance, accessibility_info="I need extra entry time"
+    )
+    booking2 = BookingFactory(performance=performance)
+
+    gql_client.login()
+    query = """
+        mutation {
+          setProductionStatus(productionId: "%s", status: COMPLETE) {
+            success
+          }
+        }
+    """ % (
+        to_global_id("ProductionNode", production.id),
+    )
+
+    with patch.object(
+        SetProductionStatus, "authorize_request", return_value=None
+    ), patch.object(Production.VALIDATOR, "validate", return_value=[]) as validator:
+        response = gql_client.execute(query)
+        assert response["data"]["setProductionStatus"]["success"]
+
+        validator.assert_called_once()
+
+    production.refresh_from_db()
+    booking.refresh_from_db()
+    assert str(production.status) == "COMPLETE"
+    assert booking.accessibility_info is None
+    assert booking2.accessibility_info is None
+
+
+@pytest.mark.django_db
+def test_set_production_status_otherwise_not_remove_accessibility(gql_client):
+    production = ProductionFactory(status=Production.Status.PUBLISHED)
+    performance = PerformanceFactory(production=production)
+    booking = BookingFactory(
+        performance=performance, accessibility_info="I need extra entry time"
+    )
+
+    gql_client.login()
+    query = """
+        mutation {
+          setProductionStatus(productionId: "%s", status: CLOSED) {
+            success
+          }
+        }
+    """ % (
+        to_global_id("ProductionNode", production.id),
+    )
+
+    with patch.object(
+        SetProductionStatus, "authorize_request", return_value=None
+    ), patch.object(Production.VALIDATOR, "validate", return_value=[]) as validator:
+        response = gql_client.execute(query)
+        assert response["data"]["setProductionStatus"]["success"]
+
+        validator.assert_called_once()
+
+    production.refresh_from_db()
+    booking.refresh_from_db()
+    assert str(production.status) == "CLOSED"
+    assert booking.accessibility_info == "I need extra entry time"
 
 
 @pytest.mark.django_db

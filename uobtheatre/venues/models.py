@@ -33,6 +33,12 @@ class Venue(TimeStampedMixin, BaseModel):
     internal_capacity = models.PositiveSmallIntegerField()
     description = TipTapTextField(null=True, blank=True)
     accessibility_info = models.TextField(null=True, blank=True)
+    email = models.EmailField(
+        null=True,
+        blank=True,
+        help_text="Contact email for the venue rather than production team",
+    )
+    website = models.URLField(null=True, blank=True)
     address = models.ForeignKey(Address, on_delete=models.CASCADE)
     image = models.ForeignKey(Image, on_delete=models.RESTRICT, related_name="venues")
     publicly_listed = models.BooleanField(default=True)

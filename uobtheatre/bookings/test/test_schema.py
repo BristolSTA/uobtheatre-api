@@ -1072,6 +1072,45 @@ def test_booking_filter_checked_in(gql_client):
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    "has_accessibility_info",
+    [False, True],
+)
+def test_booking_filter_has_accessibility_info(gql_client, has_accessibility_info):
+    gql_client.login()
+    booking = BookingFactory(user=gql_client.user)
+    if has_accessibility_info:
+        booking.accessibility_info = "This is some accessibility info"
+        booking.save()
+
+    request_query = """
+        {
+          bookings(hasAccessibilityInfo: %s) {
+              edges {
+                node {
+                  accessibilityInfo
+                }
+              }
+          }
+        }
+        """
+
+    true_response = gql_client.execute(request_query % "true")
+    false_response = gql_client.execute(request_query % "false")
+
+    if has_accessibility_info:
+        assert len(true_response["data"]["bookings"]["edges"]) == 1
+        assert (
+            true_response["data"]["bookings"]["edges"][0]["node"]["accessibilityInfo"]
+            == "This is some accessibility info"
+        )
+        assert len(false_response["data"]["bookings"]["edges"]) == 0
+    else:
+        assert len(true_response["data"]["bookings"]["edges"]) == 0
+        assert len(false_response["data"]["bookings"]["edges"]) == 1
+
+
+@pytest.mark.django_db
 def test_booking_filter_active(gql_client):
     now = timezone.now()
 

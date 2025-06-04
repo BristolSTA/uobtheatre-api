@@ -2,6 +2,7 @@ import pytest
 import pytz
 
 from uobtheatre.addresses.test.factories import AddressFactory
+from uobtheatre.utils.validators import ValidationError
 
 
 @pytest.mark.parametrize(
@@ -44,3 +45,34 @@ def test_timezone_without_coordinates():
 def test_timezone_with_coordinates():
     address = AddressFactory(latitude=51.45662710361974, longitude=-2.613237959640326)
     assert address.timezone.zone == "Europe/London"
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize(
+    "what3words, valid, error_message",
+    [
+        (None, True, None),
+        ("///word.word.word", True, None),
+        ("word.word.word", False, "The what3words address must start with '///'."),
+        (
+            "///word.word.word.word",
+            False,
+            "The what3words address must contain 3 words separated by dots.",
+        ),
+        (
+            "///word.word",
+            False,
+            "The what3words address must contain 3 words separated by dots.",
+        ),
+    ],
+)
+def test_invalid_what3words(what3words, valid, error_message):
+    address = AddressFactory()
+    address.what3words = what3words
+
+    if valid:
+        address.save()
+    else:
+        with pytest.raises(ValidationError) as excinfo:
+            address.save()
+        assert str(excinfo.value) == error_message

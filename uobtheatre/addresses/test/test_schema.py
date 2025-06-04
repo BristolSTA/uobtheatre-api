@@ -22,6 +22,7 @@ def test_address_schema(gql_client):
                   street
                   city
                   postcode
+                  what3words
                   latitude
                   longitude
                 }
@@ -46,6 +47,7 @@ def test_address_schema(gql_client):
                                 "street": venue.address.street,
                                 "city": venue.address.city,
                                 "postcode": venue.address.postcode,
+                                "what3words": venue.address.what3words,
                                 "latitude": float(venue.address.latitude),
                                 "longitude": float(venue.address.longitude),
                             },
