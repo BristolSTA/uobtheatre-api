@@ -169,7 +169,17 @@ class Heading(ComposerItemInterface):
         return template.render({"message": self.message})
 
 class Paragraph(ComposerItemInterface):
-    """A Paragraph composer item."""
+    """
+    A Paragraph composer item.
+    
+    Args:
+        title (str): The title of the paragraph
+        subtitle (str): The subtitle of the paragraph
+        subsubtitle (str): The subsubtitle of the paragraph
+        message (str): The message of the paragraph
+        titleIcon (str): The icon to use for the title, from the icons dict
+        messageIcon (str): The icon to use for the message, from the icons dict
+        html (bool): Whether to parse the message as HTML or not (default: False)"""
 
     def __init__(self, title="", subtitle="", subsubtitle="", message="", titleIcon="", messageIcon="", html=False) -> None:
         """If html == True, then this string will parse the given HTML; be careful,
@@ -201,6 +211,34 @@ class Paragraph(ComposerItemInterface):
 
         return template.render({"title": self.title, "subtitle": self.subtitle, "subsubtitle": self.subsubtitle, "message": self.message, "messageIcon": self.messageIcon, "titleIcon": self.titleIcon, "html": self.html})
 
+class ListItem(ComposerItemInterface):
+    """
+    A ListItem composer item
+
+    Args:
+        title (str): The title of the list item
+        message (str): The message of the list item
+        titleIcon (str): The icon to use for the title, from the icons dict
+        messageIcon (str): The icon to use for the message, from the icons dict
+        inline (bool): Whether to display the title and message on the same line or not (default: False)
+    """
+
+    def __init__(self, title="", message="", titleIcon="", messageIcon="", inline=False) -> None:
+        super().__init__()
+        self.title = title
+        self.message = message
+        self.titleIcon = icons[titleIcon] if titleIcon in icons.keys() else ""
+        self.messageIcon = icons[messageIcon] if messageIcon in icons.keys(
+        ) else ""
+        self.inline = inline
+
+    def to_text(self):
+        return strip_tags(self.title) + ": " + strip_tags(self.message)
+
+    def to_html(self):
+        template = get_template("componentsV2/listItem.html")
+
+        return template.render({"title": self.title, "message": self.message, "messageIcon": self.messageIcon, "titleIcon": self.titleIcon, "inline": self.inline})
 
 class Button(ComposerItemInterface):
     """A Button composer item"""

@@ -133,34 +133,37 @@ def test_booking_conf_new():
         BoxCols([
                 RowStack([
 
-                    Paragraph(subsubtitle="Timings",
-                                    message=f"Doors Open: {doors}", titleIcon="clock", messageIcon="door-open"),
+                    Paragraph(subsubtitle="Timings", titleIcon="clock"),
 
-                    Paragraph(
-                        message=f"Performance Starts: {start}", messageIcon="play")
+                    ListItem(title="Doors Open:", message=f"{doors}", titleIcon="door-open"),
+
+                    ListItem(title="Performance Starts:", message=f"{start}", titleIcon="play"),
 
                 ]),
 
-                RowStack([Paragraph(subsubtitle="Your Booking",
-                                    message=booking.reference, titleIcon="search", messageIcon="barcode"),
+                RowStack([
+                
+                    Paragraph(subsubtitle="Your Booking", titleIcon="search"),
 
-                          Button(booking.web_tickets_path, "View Tickets"),
+                    ListItem(title="Booking Reference:", message=booking.reference, messageIcon="barcode"),
 
-                          Button("/user/booking/%s" %
-                                 booking.reference, "View Booking")
+                    Button(booking.web_tickets_path, "View Tickets"),
 
-                          ])
+                    Button("/user/booking/%s" %
+                            booking.reference, "View Booking")
+                ])
             ]
         ),
 
         BoxCols([
 
             RowStack([
-                Paragraph(subsubtitle="Payment Information", message=f"{payment.value_currency} paid", titleIcon="trolley", messageIcon="money"
-                          ),
+                Paragraph(subsubtitle="Payment Information", titleIcon="trolley"),
 
-                Paragraph(
-                    message=f"{payment.provider.description}{' - ID ' + payment.provider_transaction_id if payment.provider_transaction_id else '' }", messageIcon="card"),
+                ListItem(message=f"{payment.value_currency} paid", messageIcon="money"),
+
+                ListItem(
+                    message=f"{payment.provider.description}{(' - ID ' + payment.provider_transaction_id) if payment.provider_transaction_id else '' }", messageIcon="card"),
             ]),
 
             RowStack([
