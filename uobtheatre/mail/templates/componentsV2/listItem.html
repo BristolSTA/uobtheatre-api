@@ -1,45 +1,27 @@
-<table width="100%" height="100%" border="0" cellpadding="10" cellspacing="0" role="presentation" style="word-break: break-word;">
-  <tr>
-    <td class="pad-sml">
-      {% if inline %}
-        <p>
-          {% if title %}
-            <strong>
-              {% if titleIcon %}
-                <svg xmlns="http://www.w3.org/2000/svg" class="icon" aria-hidden="true" focusable="false" viewBox="0 0 512 512">
-                  <path fill="currentColor" d="{{titleIcon}}"/>
-                </svg>
-              {% endif %}
-              {{title}}
-            </strong>
-          {% endif %}
-          {% if messageIcon %}
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon" aria-hidden="true" focusable="false" viewBox="0 0 512 512">
-              <path fill="currentColor" d="{{messageIcon}}"/>
-            </svg>
-          {% endif %}
-          {{message}}
-        </p>
-      {% else %}
-        {% if title %}
-          <h4 style="padding-bottom: 4px">
-            {% if titleIcon %}
-              <svg xmlns="http://www.w3.org/2000/svg" class="icon" aria-hidden="true" focusable="false" viewBox="0 0 512 512">
-                <path fill="currentColor" d="{{titleIcon}}"/>
-              </svg>
+<table class="full-width" border="0" cellspacing="0" cellpadding="0">
+    <tr>
+        <td class="list-item {% if inline %}list-item-inline{% endif %}">
+            {% if title %}
+                <span class="list-item-title">
+                    {% if titleIcon %}
+                        <svg class="icon" viewBox="0 0 512 512">
+                            <path d="{{ titleIcon }}"/>
+                        </svg>
+                    {% endif %}
+                    {{ title }}
+                </span>
             {% endif %}
-            {{title}}
-          </h4>
-        {% endif %}
-        <p>
-          {% if messageIcon %}
-            <svg xmlns="http://www.w3.org/2000/svg" class="icon" aria-hidden="true" focusable="false" viewBox="0 0 512 512">
-              <path fill="currentColor" d="{{messageIcon}}"/>
-            </svg>
-          {% endif %}
-          {{message}}
-        </p>
-      {% endif %}
-    </td>
-  </tr>
+            
+            {% if message %}
+                <span class="list-item-message">
+                    {% if messageIcon %}
+                        <svg class="icon" viewBox="0 0 512 512">
+                            <path d="{{ messageIcon }}"/>
+                        </svg>
+                    {% endif %}
+                    {{ message }}
+                </span>
+            {% endif %}
+        </td>
+    </tr>
 </table>
