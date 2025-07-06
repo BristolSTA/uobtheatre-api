@@ -114,9 +114,9 @@ def test_booking_conf_new():
     tickets = [TicketFactory(booking=booking) for _ in range(5)]
 
     doors = booking.performance.doors_open.astimezone(
-        booking.performance.venue.address.timezone).strftime('%d %B %Y %H:%M %Z')
+        booking.performance.venue.address.timezone).strftime('%A, %d %B %Y at %H:%M (%Z)')
     start = booking.performance.start.astimezone(
-        booking.performance.venue.address.timezone).strftime('%H:%M %Z')
+        booking.performance.venue.address.timezone).strftime('%A, %d %B %Y at %H:%M (%Z)')
 
 
 

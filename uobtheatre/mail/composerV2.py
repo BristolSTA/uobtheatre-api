@@ -275,7 +275,7 @@ class QR(ComposerItemInterface):
         # Convert the content to a QR code
         qrFactory = qrcode.image.svg.SvgPathFillImage
         self.qr = qrcode.make(
-            content, image_factory=qrFactory).to_string().decode("ascii")
+            content, image_factory=qrFactory, box_size=16).to_string().decode("ascii")
 
     def to_text(self):
         return f"QR Code:\n{self.content}"
@@ -314,7 +314,7 @@ class TicketCodes(ComposerItemInterface):
 
     def to_html(self):
         # Maximum tickets per grid row, and as many grid rows as we need
-        maxPerRow = 3
+        maxPerRow = 2
 
         qrContent = []
         row = 0
