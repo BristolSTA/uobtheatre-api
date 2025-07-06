@@ -128,12 +128,12 @@ def test_booking_conf_new():
 
         Image(src=mountainImage),
 
-        Paragraph(title="About Your Booking", titleIcon="bookmark"),
+        Paragraph(subtitle="About Your Booking", titleIcon="bookmark"),
 
         BoxCols([
                 RowStack([
 
-                    Paragraph(title="Timings",
+                    Paragraph(subsubtitle="Timings",
                                     message=f"Doors Open: {doors}", titleIcon="clock", messageIcon="door-open"),
 
                     Paragraph(
@@ -141,7 +141,7 @@ def test_booking_conf_new():
 
                 ]),
 
-                RowStack([Paragraph(title="Your Booking",
+                RowStack([Paragraph(subsubtitle="Your Booking",
                                     message=booking.reference, titleIcon="search", messageIcon="barcode"),
 
                           Button(booking.web_tickets_path, "View Tickets"),
@@ -156,15 +156,17 @@ def test_booking_conf_new():
         BoxCols([
 
             RowStack([
-                Paragraph(title="Payment Information", message=f"{payment.value_currency} paid", titleIcon="trolley", messageIcon="money"
+                Paragraph(subsubtitle="Payment Information", message=f"{payment.value_currency} paid", titleIcon="trolley", messageIcon="money"
                           ),
 
                 Paragraph(
                     message=f"{payment.provider.description}{' - ID ' + payment.provider_transaction_id if payment.provider_transaction_id else '' }", messageIcon="card"),
             ]),
 
-            Paragraph(title="Accessibility Information", titleIcon="accessibility",
+            RowStack([
+                Paragraph(subsubtitle="Accessibility Information", titleIcon="accessibility",
                       message="If you have any accessibility concerns, or otherwise need help, please contact <a href='mailto:support@uobtheatre.com'>support@uobtheatre.com</a>.", html=True)
+            ])
         ]),
 
         TicketCodes(booking.reference, [ticket.id for ticket in tickets])

@@ -171,11 +171,13 @@ class Heading(ComposerItemInterface):
 class Paragraph(ComposerItemInterface):
     """A Paragraph composer item."""
 
-    def __init__(self, title="", message="", titleIcon="", messageIcon="", html=False) -> None:
+    def __init__(self, title="", subtitle="", subsubtitle="", message="", titleIcon="", messageIcon="", html=False) -> None:
         """If html == True, then this string will parse the given HTML; be careful,
         as if used improperly, this may open up scripting attacks."""
         super().__init__()
         self.title = title
+        self.subtitle = subtitle
+        self.subsubtitle = subsubtitle
         self.message = message
         self.html = html
         self.titleIcon = icons[titleIcon] if titleIcon in icons.keys() else ""
@@ -183,12 +185,21 @@ class Paragraph(ComposerItemInterface):
         ) else ""
 
     def to_text(self):
-        return strip_tags(self.title) + "\n" + strip_tags(self.message)
+        text = ""
+        if self.title:
+            text += strip_tags(self.title) + "\n"
+        if self.subtitle:
+            text += strip_tags(self.subtitle) + "\n"
+        if self.subsubtitle:
+            text += strip_tags(self.subsubtitle) + "\n"
+        if self.message:
+            text += strip_tags(self.message) + "\n"
+        return text.rstrip("\n")
 
     def to_html(self):
         template = get_template("componentsV2/paragraph.html")
 
-        return template.render({"title": self.title, "message": self.message, "messageIcon": self.messageIcon, "titleIcon": self.titleIcon, "html": self.html})
+        return template.render({"title": self.title, "subtitle": self.subtitle, "subsubtitle": self.subsubtitle, "message": self.message, "messageIcon": self.messageIcon, "titleIcon": self.titleIcon, "html": self.html})
 
 
 class Button(ComposerItemInterface):
@@ -328,7 +339,7 @@ class TicketCodes(ComposerItemInterface):
 
                 # Create the ticket box
                 rowContent.append(RowStack(
-                    [Paragraph(title=f"Ticket {row+col+1}"), QR(self.ticketData[row + col])]))
+                    [Paragraph(subsubtitle=f"Ticket {row+col+1}"), QR(self.ticketData[row + col])]))
                 col += 1
 
                 # Limit the number of tickets per row
@@ -343,7 +354,7 @@ class TicketCodes(ComposerItemInterface):
 
         # Generate a pretty ticket element
         content = RowStack(
-            [Paragraph(title=f"Your Ticket{self.plural}", titleIcon="ticket")]
+            [Paragraph(subtitle=f"Your Ticket{self.plural}", titleIcon="ticket")]
             + qrContent)
 
         return content.to_html()
