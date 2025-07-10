@@ -277,7 +277,7 @@ class Button(ComposerItemInterface):
 
     def __init__(self, href, text) -> None:
         super().__init__()
-        self.href = href
+        self.href = href if not href[0] == "/" else get_site_base() + href
         self.text = text
 
     def to_text(self):
