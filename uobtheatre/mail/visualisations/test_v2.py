@@ -108,6 +108,9 @@ def _test_booking_conf():
 @pytest.mark.django_db
 def test_booking_conf_new():
 
+    user = UserFactory()
+    user.status.verified = True
+
     booking = BookingFactory()
     payment = TransactionFactory()
 
@@ -122,43 +125,39 @@ def test_booking_conf_new():
 
     test_mail = MailComposer.blank([
 
-        Paragraph(
+        Heading(
             title="Your booking to %s has been confirmed!" % booking.performance.production.name
         ),
 
         Image(src=mountainImage),
 
-        Paragraph(subtitle="About Your Booking", titleIcon="bookmark"),
+        Heading(subtitle="About Your Booking", titleIcon="bookmark"),
+        
+        BoxCols([
+            TimingsBlock(booking.performance),
+        ]),
 
         BoxCols([
-                RowStack([
+            RowStack([
+                Heading(subsubtitle="Your Booking", titleIcon="search"),
 
-                    Paragraph(subsubtitle="Timings", titleIcon="clock"),
+                ListItem(title="Booking Reference:", message=booking.reference, titleIcon="barcode"),
 
-                    ListItem(title="Doors Open:", message=f"{doors}", titleIcon="door-open"),
+                ListItem(message="Booking prattle here.")
+            ]),
+        ]),
 
-                    ListItem(title="Performance Starts:", message=f"{start}", titleIcon="play"),
+        BoxCols([
+            Button(booking.web_tickets_path, "View Tickets"),
 
-                ]),
-
-                RowStack([
-                
-                    Paragraph(subsubtitle="Your Booking", titleIcon="search"),
-
-                    ListItem(title="Booking Reference:", message=booking.reference, messageIcon="barcode"),
-
-                    Button(booking.web_tickets_path, "View Tickets"),
-
-                    Button("/user/booking/%s" %
-                            booking.reference, "View Booking")
-                ])
-            ]
-        ),
+            Button("/user/booking/%s" %
+                    booking.reference, "View Booking")
+        ]),
 
         BoxCols([
 
             RowStack([
-                Paragraph(subsubtitle="Payment Information", titleIcon="trolley"),
+                Heading(subsubtitle="Payment Information", titleIcon="trolley"),
 
                 ListItem(message=f"{payment.value_currency} paid", messageIcon="money"),
 
@@ -167,7 +166,7 @@ def test_booking_conf_new():
             ]),
 
             RowStack([
-                Paragraph(subsubtitle="Accessibility Information", titleIcon="accessibility",
+                Heading(subsubtitle="Accessibility Information", titleIcon="accessibility",
                       message="If you have any accessibility concerns, or otherwise need help, please contact <a href='mailto:support@uobtheatre.com'>support@uobtheatre.com</a>.", html=True)
             ])
         ]),

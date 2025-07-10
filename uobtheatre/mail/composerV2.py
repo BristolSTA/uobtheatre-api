@@ -63,15 +63,20 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
         super().__init__()
         self.items: List[ComposerItemInterface] = []
 
-    def heading(self, message: str):
-        """A Heading composer item"""
-        self.items.append(Heading(message))
+    def paragraph(self, message: str):
+        """A paragraph composer item"""
+        self.items.append(Paragraph(message))
         return self
 
-    def paragraph(self, title: str, message: str, titleIcon: str, messageIcon: str, html: bool):
-        """A Paragraph composer item"""
+    def heading(self, title: str, message: str, titleIcon: str, messageIcon: str, html: bool):
+        """A heading composer item"""
         self.items.append(
-            Paragraph(title, message, titleIcon, messageIcon, html))
+            Heading(title, message, titleIcon, messageIcon, html))
+        return self
+    
+    def greeting(self, user: Optional[User] = None):
+        """A greeting composer item"""
+        self.items.append(Greeting(user))
         return self
 
     def button(self, href: str, text: str):
@@ -135,6 +140,12 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
         self.items.append(Spacer(height))
         return self
 
+    def timingsBlock(self, performance):
+        """A TimingsBlock composer item.
+        A compound item that contains the timings of a performance, along with a latecomer disclamer."""
+        self.items.append(TimingsBlock(performance))
+        return self
+
     def append(self, item):
         self.items.append(item)
         return self
@@ -153,7 +164,27 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
         return """{}""".format("\n".join([item.to_html() or "" for item in self.items]))
 
 
-class Heading(ComposerItemInterface):
+class Greeting(ComposerItemInterface):
+    """
+    A Greeting composer item
+    
+    Args:
+        user (User, optional): The user to greet. If None, a generic greeting is used.
+    """
+
+    def __init__(self, user: Optional[User] = None) -> None:
+        super().__init__()
+        self.user = user
+        self.opener = "Hi %s," % self.user.first_name.capitalize() if self.user and self.user.status.verified else "Hello,"
+
+    def to_text(self):
+        return strip_tags(self.opener)
+
+    def to_html(self):
+        template = get_template("componentsV2/paragraph.html")
+        return template.render({"message": self.opener})
+
+class Paragraph(ComposerItemInterface):
     """A Heading composer item"""
 
     def __init__(self, message) -> None:
@@ -164,19 +195,20 @@ class Heading(ComposerItemInterface):
         return strip_tags(self.message)
 
     def to_html(self):
-        template = get_template("componentsV2/heading.html")
+        template = get_template("componentsV2/paragraph.html")
 
         return template.render({"message": self.message})
 
-class Paragraph(ComposerItemInterface):
+class Heading(ComposerItemInterface):
     """
-    A Paragraph composer item.
+    A Heading composer item.
     
     Args:
-        title (str): The title of the paragraph
-        subtitle (str): The subtitle of the paragraph
-        subsubtitle (str): The subsubtitle of the paragraph
-        message (str): The message of the paragraph
+        title (str): The title of the heading
+        subtitle (str): The subtitle of the heading
+        subsubtitle (str): The subsubtitle of the heading
+        message (str): The message displayed without padding below the heading
+        message (str): The message displayed without padding below the heading
         titleIcon (str): The icon to use for the title, from the icons dict
         messageIcon (str): The icon to use for the message, from the icons dict
         html (bool): Whether to parse the message as HTML or not (default: False)"""
@@ -207,7 +239,7 @@ class Paragraph(ComposerItemInterface):
         return text.rstrip("\n")
 
     def to_html(self):
-        template = get_template("componentsV2/paragraph.html")
+        template = get_template("componentsV2/heading.html")
 
         return template.render({"title": self.title, "subtitle": self.subtitle, "subsubtitle": self.subsubtitle, "message": self.message, "messageIcon": self.messageIcon, "titleIcon": self.titleIcon, "html": self.html})
 
@@ -377,7 +409,7 @@ class TicketCodes(ComposerItemInterface):
 
                 # Create the ticket box
                 rowContent.append(RowStack(
-                    [Paragraph(subsubtitle=f"Ticket {row+col+1}"), QR(self.ticketData[row + col])]))
+                    [Heading(subsubtitle=f"Ticket {row+col+1}"), QR(self.ticketData[row + col])]))
                 col += 1
 
                 # Limit the number of tickets per row
@@ -392,7 +424,7 @@ class TicketCodes(ComposerItemInterface):
 
         # Generate a pretty ticket element
         content = RowStack(
-            [Paragraph(subtitle=f"Your Ticket{self.plural}", titleIcon="ticket")]
+            [Heading(subtitle=f"Your Ticket{self.plural}", titleIcon="ticket")]
             + qrContent)
 
         return content.to_html()
@@ -495,17 +527,38 @@ class BoxCols(ColStack):
         super().__init__(cols)
 
 
+class TimingsBlock(ComposerItemInterface):
+    """
+    A compound composer item that displays the timings of a performance.
+    
+    Args:
+        performance (Performance): The performance object containing the timings.
+    """
+
+    latecomerDisclamer = "To limit disturbance to audiences and artists, we cannot guarantee that latecomers will be admitted to the performance. Latecomer policies are at the discresion of the production's Front of House team, who reserve the right to refuse entry to any person at their discretion."
+
+    def __init__(self, performance) -> None:
+        super().__init__()
+        self.performance = performance
+        self.doors = performance.doors_open.astimezone(
+            performance.venue.address.timezone).strftime('%A, %d %B %Y at %H:%M (%Z)')
+        self.start = performance.start.astimezone(
+            performance.venue.address.timezone).strftime('%A, %d %B %Y at %H:%M (%Z)')
+
+    def to_text(self):
+        return f"\nTimings:\n\nDoors Open: {self.doors}\nPerformance Starts: {self.start}\n{self.latecomerDisclamer}"
+
+    def to_html(self):
+        return RowStack([
+            Heading(subsubtitle="Timings", titleIcon="clock"),
+            ListItem(title="Doors Open:", message=f"{self.doors}", titleIcon="door-open"),
+            ListItem(title="Performance Starts:", message=f"{self.start}", titleIcon="play"),
+            ListItem(message=self.latecomerDisclamer),
+        ]).to_html()
+
+
 class MailComposer(ComposerItemsContainer):
     """Compose a mail notificaiton"""
-
-    def greeting(self, user: Optional[User] = None):
-        """Add a greeting to the email"""
-        self.heading(
-            "Hi %s" % user.first_name.capitalize()
-            if user and user.status.verified  # type: ignore
-            else "Hello"
-        )
-        return self
 
     def blank(content: list[ComposerItemInterface]) -> ComposerItemInterface:
         """Create a blank email, with the content (a list of elements to go in a RowStack) within.
@@ -519,12 +572,9 @@ class MailComposer(ComposerItemsContainer):
 
         mail = (MailComposer().rowStack([
                         Logo(),
-                        Spacer(height=15),
                         Box(RowStack(content), bgCol="white"),
-                        Spacer(height=15),
                         Footer(),
                         # If there are buttons, add that after the footer
-                        Spacer(height=(15 if len(buttons) > 0 else 0)),
                         Box(RowStack(buttons), bgCol="rgba(0,0,0,0.2)"),
         ]))
 
