@@ -216,8 +216,11 @@
 
     /* Footer styles */
     .footer {
-        text-align: center;
         padding: 20px;
+    }
+
+    .footer-text {
+        text-align: center;
         color: #999999;
         font-size: 12px;
     }
@@ -255,6 +258,7 @@
         display: table-cell;
         vertical-align: top;
         padding: 10px;
+        padding-top: 0;
     }
 
     .col-stack-item:first-child {

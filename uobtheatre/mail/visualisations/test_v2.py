@@ -134,24 +134,11 @@ def test_booking_conf_new():
         Heading(subtitle="About Your Booking", titleIcon="bookmark"),
         
         Box(
-            TimingsBlock(booking.performance),
+            TimingsBlock(booking.performance)
         ),
 
         Box(
-            RowStack([
-                Heading(subsubtitle="Your Booking", titleIcon="search"),
-
-                ListItem(title="Booking Reference:", message=booking.reference, titleIcon="barcode"),
-
-                ListItem(message="Booking prattle here."),
-
-                ColStack([
-                    (Button(booking.web_tickets_path, "View Tickets"), 50),
-
-                    (Button("/user/booking/%s" %
-                            booking.reference, "View Booking"), 50)
-                ])
-            ]),
+            BookingBlock(booking)
         ),
 
         BoxCols([

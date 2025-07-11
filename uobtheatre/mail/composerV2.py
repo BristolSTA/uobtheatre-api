@@ -109,10 +109,10 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
         self.items.append(Footer())
         return self
 
-    def box(self, content: ComposerItemInterface, bgUrl="", bgCol="#D0D0D0"):
+    def box(self, content: ComposerItemInterface, bgUrl="", bgCol="#D0D0D0", mb=True):
         """A Box composer item, used for holding arbitrary content with
         a background of an image or solid colour"""
-        self.items.append(Box(bgUrl, bgCol, content))
+        self.items.append(Box(bgUrl, bgCol, content, mb))
         return self
 
     def rowStack(self, rowStack: List[ComposerItemInterface]):
@@ -144,6 +144,12 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
         """A TimingsBlock composer item.
         A compound item that contains the timings of a performance, along with a latecomer disclamer."""
         self.items.append(TimingsBlock(performance))
+        return self
+    
+    def bookingBlock(self, booking):
+        """A BookingBlock composer item.
+        A compound item that contains the details of a booking, such as the reference, and buttons to view tickets and the booking."""
+        self.items.append(BookingBlock(booking))
         return self
 
     def append(self, item):
@@ -306,13 +312,21 @@ class ButtonHelpText(ComposerItemInterface):
 
 class Box(ComposerItemInterface):
     """A Box composer item, used for holding arbitrary content with
-    a background of an image or solid colour"""
+    a background of an image or solid colour
+    
+    Args:
+        content (ComposerItemInterface): The content to put inside the box
+        bgUrl (str): The URL of the background image (default: "")
+        bgCol (str): The background color (default: "#D0D0D0")
+        mb (bool): Whether to add a margin-bottom class (default: True)
+    """
 
-    def __init__(self, content: ComposerItemInterface, bgUrl="", bgCol="#D0D0D0") -> None:
+    def __init__(self, content: ComposerItemInterface, bgUrl="", bgCol="#D0D0D0", mb: bool = True) -> None:
         super().__init__()
         self.bgUrl = bgUrl
         self.bgCol = bgCol
         self.content = content
+        self.mb = mb
 
     def to_text(self):
         return self.content.to_text()
@@ -320,7 +334,7 @@ class Box(ComposerItemInterface):
     def to_html(self):
         template = get_template("componentsV2/box.html")
 
-        return template.render({"bgUrl": self.bgUrl, "bgCol": self.bgCol, "content": self.content.to_html()})
+        return template.render({"mb": self.mb, "bgUrl": self.bgUrl, "bgCol": self.bgCol, "content": self.content.to_html()})
 
     # Need to return the box's content as a subItem
     def sub_items(self):
@@ -546,7 +560,7 @@ class TimingsBlock(ComposerItemInterface):
             performance.venue.address.timezone).strftime('%A, %d %B %Y at %H:%M (%Z)')
 
     def to_text(self):
-        return f"\nTimings:\n\nDoors Open: {self.doors}\nPerformance Starts: {self.start}\n{self.latecomerDisclamer}"
+        return f"\nTimings:\n\nDoors Open: {self.doors}\nPerformance Starts: {self.start}\n\n{self.latecomerDisclamer}"
 
     def to_html(self):
         return RowStack([
@@ -554,6 +568,40 @@ class TimingsBlock(ComposerItemInterface):
             ListItem(title="Doors Open:", message=f"{self.doors}", titleIcon="door-open"),
             ListItem(title="Performance Starts:", message=f"{self.start}", titleIcon="play"),
             ListItem(message=self.latecomerDisclamer),
+        ]).to_html()
+    
+
+class BookingBlock(ComposerItemInterface):
+    """
+    A BookingBlock composer item.
+    
+    Args:
+        booking (Booking): The booking object containing the details.
+    """
+
+    bookingInfo = "Your booking details are below. If you have any questions, please contact us at <a href='mailto:support@example.com'>support@example.com</a>."
+
+    def __init__(self, booking) -> None:
+        super().__init__()
+        self.booking = booking
+
+    def to_text(self):
+        return f"\nYour Booking\n\nBooking Reference: {self.booking.reference}\n\n{self.bookingInfo}"
+
+    def to_html(self):
+        return RowStack([
+            Heading(subsubtitle="Your Booking", titleIcon="search"),
+
+            ListItem(title="Booking Reference:", message=self.booking.reference, titleIcon="barcode"),
+
+            ListItem(message="Booking prattle here."),
+
+            ColStack([
+                (Button(self.booking.web_tickets_path, "View Tickets"), 50),
+
+                (Button("/user/booking/%s" %
+                        self.booking.reference, "View Booking"), 50)
+            ])
         ]).to_html()
 
 
@@ -572,7 +620,7 @@ class MailComposer(ComposerItemsContainer):
 
         mail = (MailComposer().rowStack([
                         Logo(),
-                        Box(RowStack(content), bgCol="white"),
+                        Box(RowStack(content), bgCol="white", mb=False),
                         Footer(),
                         # If there are buttons, add that after the footer
                         Box(RowStack(buttons), bgCol="rgba(0,0,0,0.2)"),

@@ -1,4 +1,4 @@
-<table class="full-width full-height mb" border="0" cellspacing="0" cellpadding="0">
+<table class="full-width full-height {% if mb %}mb{% endif %}" border="0" cellspacing="0" cellpadding="0">
     <tr>
         <td class="box" style="{% if bgUrl %}background-image: url('{{ bgUrl }}'); background-size: cover; background-position: center;{% endif %}{% if bgCol %}background-color: {{ bgCol }};{% endif %}">
             {{ content|safe }}
