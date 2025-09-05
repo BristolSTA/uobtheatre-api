@@ -108,6 +108,27 @@ class Message(BaseModel):
         help_text="The policy for a message's dismissal. By default messages are dismissable, and this choice is stored in the cache until the event is over. Single-Session Only messages can be dismissed, but dismissal is not cached. Prevented messages cannot be dismissed by the user.",
     )
 
+    class DisplayLocation(models.TextChoices):
+        """The location on the site where the message should be displayed."""
+
+        BANNER = "BANNER", "Banner"  # Message is displayed in a banner at the top of the page
+        LANDING_MODAL = "LANDING_MODAL", "Landing Modal"  # Message is displayed in a modal on the landing page
+        BOOKING_MODAL = "BOOKING_MODAL", "Booking Modal"  # Message is displayed in a modal on the booking page
+        PRODUCTION_CREATION_MODAL = "PRODUCTION_CREATION_MODAL", "Production Creation/Edit Modal"  # Message is displayed in a modal on the production creation and editing page
+
+    display_location = models.CharField(
+        max_length=25,
+        choices=DisplayLocation.choices,
+        default=DisplayLocation.BANNER,
+        help_text="The location on the site where the message should be displayed. Banner messages are displayed in a banner at the top of the page. Landing Modal messages are displayed in a modal on the landing page. Booking Modal messages are displayed in a modal on the booking page. Production Creation/Edit Modal messages are displayed in a modal on the production creation and editing page.",
+    )
+
+    title = models.CharField(
+        max_length=255,
+        default="Site Message",
+        help_text="A title for the message. Displayed prominently in modals, but not in banners.",
+    )
+
     @property
     def duration(self) -> datetime.timedelta:
         """The event duration.

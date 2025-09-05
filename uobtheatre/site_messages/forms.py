@@ -26,4 +26,6 @@ class SiteMessageForm(MutationForm):
             "event_end",
             "type",
             "dismissal_policy",
+            "display_location",
+            "title",
         ]

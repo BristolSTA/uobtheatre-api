@@ -7,6 +7,7 @@ class MessageAdmin(admin.ModelAdmin):
     """Admin for Message model."""
 
     list_display = (
+        "title",
         "message",
         "active",
         "display_start",
@@ -15,7 +16,7 @@ class MessageAdmin(admin.ModelAdmin):
         "type",
         "creator",
     )
-    list_filter = ("active", "type")
+    list_filter = ("active", "type", "display_location")
     search_fields = ("message", "creator__email")
     date_hierarchy = "display_start"
 
