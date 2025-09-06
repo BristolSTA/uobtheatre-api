@@ -34,6 +34,8 @@ def test_site_message_schema(gql_client):
                 dismissalPolicy
                 eventDuration
                 toDisplay
+                displayLocation
+                title
               }
             }
           }
@@ -63,6 +65,8 @@ def test_site_message_schema(gql_client):
                                 message.duration.total_seconds() // 60
                             ),
                             "toDisplay": message.to_display,
+                            "displayLocation": message.display_location,
+                            "title": message.title,
                         }
                     }
                     for index, message in enumerate(messages)

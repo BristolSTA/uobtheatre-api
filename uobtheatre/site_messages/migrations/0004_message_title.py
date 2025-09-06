@@ -6,13 +6,17 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('site_messages', '0003_message_display_location'),
+        ("site_messages", "0003_message_display_location"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='message',
-            name='title',
-            field=models.CharField(default='Site Message', help_text='A title for the message. Displayed prominently in modals, but not in banners.', max_length=255),
+            model_name="message",
+            name="title",
+            field=models.CharField(
+                default="Site Message",
+                help_text="A title for the message. Displayed prominently in modals, but not in banners.",
+                max_length=255,
+            ),
         ),
     ]

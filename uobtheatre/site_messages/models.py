@@ -111,10 +111,22 @@ class Message(BaseModel):
     class DisplayLocation(models.TextChoices):
         """The location on the site where the message should be displayed."""
 
-        BANNER = "BANNER", "Banner"  # Message is displayed in a banner at the top of the page
-        LANDING_MODAL = "LANDING_MODAL", "Landing Modal"  # Message is displayed in a modal on the landing page
-        BOOKING_MODAL = "BOOKING_MODAL", "Booking Modal"  # Message is displayed in a modal on the booking page
-        PRODUCTION_CREATION_MODAL = "PRODUCTION_CREATION_MODAL", "Production Creation/Edit Modal"  # Message is displayed in a modal on the production creation and editing page
+        BANNER = (
+            "BANNER",
+            "Banner",
+        )  # Message is displayed in a banner at the top of the page
+        LANDING_MODAL = (
+            "LANDING_MODAL",
+            "Landing Modal",
+        )  # Message is displayed in a modal on the landing page
+        BOOKING_MODAL = (
+            "BOOKING_MODAL",
+            "Booking Modal",
+        )  # Message is displayed in a modal on the booking page
+        PRODUCTION_CREATION_MODAL = (
+            "PRODUCTION_CREATION_MODAL",
+            "Production Creation/Edit Modal",
+        )  # Message is displayed in a modal on the production creation and editing page
 
     display_location = models.CharField(
         max_length=25,
