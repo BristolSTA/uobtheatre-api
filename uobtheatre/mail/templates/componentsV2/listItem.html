@@ -19,7 +19,11 @@
                             <path d="{{ messageIcon }}"/>
                         </svg>
                     {% endif %}
+                    {% if htmlSafe %}
+                    {{ message|safe }}
+                    {% else %}
                     {{ message }}
+                    {% endif %}
                 </span>
             {% endif %}
         </td>

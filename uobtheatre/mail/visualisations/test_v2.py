@@ -87,7 +87,7 @@ def _test_booking_conf():
                     booking.performance.venue.address.timezone  # type: ignore
                 ).strftime("%H:%M %Z"),
                 booking.reference,
-            ), html=True
+            ), htmlSafe=True
         ),
 
         Button(booking.web_tickets_path, "View Tickets"),
@@ -98,7 +98,7 @@ def _test_booking_conf():
                   ),
 
         Paragraph(
-            message="If you have any accessability concerns, or otherwise need help, please contact <a href='mailto:support@uobtheatre.com'>support@uobtheatre.com</a>.", html=True
+            message="If you have any accessability concerns, or otherwise need help, please contact <a href='mailto:support@uobtheatre.com'>support@uobtheatre.com</a>.", htmlSafe=True
         )]
     )
 
@@ -151,10 +151,7 @@ def test_booking_conf_new():
                     message=f"{payment.provider.description}{(' - ID ' + payment.provider_transaction_id) if payment.provider_transaction_id else '' }", messageIcon="card"),
             ]),
 
-            RowStack([
-                Heading(subsubtitle="Accessibility Information", titleIcon="accessibility",
-                      message="If you have any accessibility concerns, or otherwise need help, please contact <a href='mailto:support@uobtheatre.com'>support@uobtheatre.com</a>.", html=True)
-            ])
+            AccessibilityBlock()
         ]),
 
         TicketCodes(booking.reference, [ticket.id for ticket in tickets])

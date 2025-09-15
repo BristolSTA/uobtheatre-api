@@ -9,7 +9,7 @@
                   <path d="{{ titleIcon }}"/>
               </svg>
             {% endif %}
-            {% if html %}
+            {% if htmlSafe %}
               {{title|safe}}
             {% else %}
               {{title}}
@@ -57,7 +57,7 @@
                   <path d="{{ messageIcon }}"/>
               </svg>
             {% endif %}
-            {% if html %}
+            {% if htmlSafe %}
               {{message|safe}}
             {% else %}
               {{message}}

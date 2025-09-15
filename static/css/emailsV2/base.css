@@ -126,18 +126,8 @@
 
     /* Links */
     a {
-        text-decoration: none;
-        color: inherit;
-    }
-
-    a[x-apple-data-detectors] {
-        color: inherit !important;
-        text-decoration: inherit !important;
-    }
-
-    #MessageViewBody a {
-        color: inherit;
-        text-decoration: none;
+        text-decoration: underline;
+        color: blue;
     }
 
     /* Buttons */

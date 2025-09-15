@@ -217,17 +217,17 @@ class Heading(ComposerItemInterface):
         message (str): The message displayed without padding below the heading
         titleIcon (str): The icon to use for the title, from the icons dict
         messageIcon (str): The icon to use for the message, from the icons dict
-        html (bool): Whether to parse the message as HTML or not (default: False)"""
+        htmlSafe (bool): Whether to parse the message as HTML or not (default: False)"""
 
-    def __init__(self, title="", subtitle="", subsubtitle="", message="", titleIcon="", messageIcon="", html=False) -> None:
-        """If html == True, then this string will parse the given HTML; be careful,
+    def __init__(self, title="", subtitle="", subsubtitle="", message="", titleIcon="", messageIcon="", htmlSafe=False) -> None:
+        """If htmlSafe == True, then this string will parse the given HTML; be careful,
         as if used improperly, this may open up scripting attacks."""
         super().__init__()
         self.title = title
         self.subtitle = subtitle
         self.subsubtitle = subsubtitle
         self.message = message
-        self.html = html
+        self.htmlSafe = htmlSafe
         self.titleIcon = icons[titleIcon] if titleIcon in icons.keys() else ""
         self.messageIcon = icons[messageIcon] if messageIcon in icons.keys(
         ) else ""
@@ -247,7 +247,7 @@ class Heading(ComposerItemInterface):
     def to_html(self):
         template = get_template("componentsV2/heading.html")
 
-        return template.render({"title": self.title, "subtitle": self.subtitle, "subsubtitle": self.subsubtitle, "message": self.message, "messageIcon": self.messageIcon, "titleIcon": self.titleIcon, "html": self.html})
+        return template.render({"title": self.title, "subtitle": self.subtitle, "subsubtitle": self.subsubtitle, "message": self.message, "messageIcon": self.messageIcon, "titleIcon": self.titleIcon, "htmlSafe": self.htmlSafe})
 
 class ListItem(ComposerItemInterface):
     """
@@ -259,9 +259,10 @@ class ListItem(ComposerItemInterface):
         titleIcon (str): The icon to use for the title, from the icons dict
         messageIcon (str): The icon to use for the message, from the icons dict
         inline (bool): Whether to display the title and message on the same line or not (default: False)
+        htmlSafe (bool): Whether to parse the message as HTML or not (default: False)
     """
 
-    def __init__(self, title="", message="", titleIcon="", messageIcon="", inline=False) -> None:
+    def __init__(self, title="", message="", titleIcon="", messageIcon="", inline=False, htmlSafe=False) -> None:
         super().__init__()
         self.title = title
         self.message = message
@@ -269,6 +270,7 @@ class ListItem(ComposerItemInterface):
         self.messageIcon = icons[messageIcon] if messageIcon in icons.keys(
         ) else ""
         self.inline = inline
+        self.htmlSafe = htmlSafe
 
     def to_text(self):
         return strip_tags(self.title) + ": " + strip_tags(self.message)
@@ -276,7 +278,7 @@ class ListItem(ComposerItemInterface):
     def to_html(self):
         template = get_template("componentsV2/listItem.html")
 
-        return template.render({"title": self.title, "message": self.message, "messageIcon": self.messageIcon, "titleIcon": self.titleIcon, "inline": self.inline})
+        return template.render({"title": self.title, "message": self.message, "messageIcon": self.messageIcon, "titleIcon": self.titleIcon, "inline": self.inline, "htmlSafe": self.htmlSafe})
 
 class Button(ComposerItemInterface):
     """A Button composer item"""
@@ -549,7 +551,7 @@ class TimingsBlock(ComposerItemInterface):
         performance (Performance): The performance object containing the timings.
     """
 
-    latecomerDisclamer = "To limit disturbance to audiences and artists, we cannot guarantee that latecomers will be admitted to the performance. Latecomer policies are at the discresion of the production's Front of House team, who reserve the right to refuse entry to any person at their discretion."
+    latecomerDisclamer = "To limit disturbance to audiences and artists, we cannot guarantee that latecomers will be admitted to the performance. Latecomer policies are at the discretion of the production's Front of House team, who reserve the right to refuse entry to any person at their discretion."
 
     def __init__(self, performance) -> None:
         super().__init__()
@@ -594,7 +596,7 @@ class BookingBlock(ComposerItemInterface):
 
             ListItem(title="Booking Reference:", message=self.booking.reference, titleIcon="barcode"),
 
-            ListItem(message="Booking prattle here."),
+            ListItem(message=self.bookingInfo, htmlSafe=True),
 
             ColStack([
                 (Button(self.booking.web_tickets_path, "View Tickets"), 50),
@@ -602,6 +604,26 @@ class BookingBlock(ComposerItemInterface):
                 (Button("/user/booking/%s" %
                         self.booking.reference, "View Booking"), 50)
             ])
+        ]).to_html()
+    
+
+class AccessibilityBlock(ComposerItemInterface):
+    """
+    An AccessibilityBlock composer item.
+    """
+
+    accessibilityMessage = "If you have any accessibility concerns, or otherwise need help, please contact <a href='mailto:support@uobtheatre.com'>support@uobtheatre.com</a>."
+
+    def __init__(self) -> None:
+        super().__init__()
+
+    def to_text(self):
+        return f"\nAccessibility Information:\n\n{strip_tags(self.accessibilityMessage)}"
+
+    def to_html(self):
+        return RowStack([
+            Heading(subsubtitle="Accessibility Information", titleIcon="accessibility"),
+            ListItem(message=self.accessibilityMessage, htmlSafe=True),
         ]).to_html()
 
 
@@ -628,11 +650,11 @@ class MailComposer(ComposerItemsContainer):
 
         return mail
 
-    def textOnly(title="", message="", html=False) -> ComposerItemInterface:
+    def textOnly(title="", message="", htmlSafe=False) -> ComposerItemInterface:
         """Create an email that is text only. Takes in just a title and message.
-        If html == True, then this string will parse any given HTML; be careful,
+        If htmlSafe == True, then this string will parse any given HTML; be careful,
         as if used improperly, this may open up scripting attacks."""
-        return MailComposer.blank([Box(Paragraph(title, message, html), bgCol="white")])
+        return MailComposer.blank([Box(Paragraph(title, message, htmlSafe), bgCol="white")])
 
     def get_complete_items(self):
         """Get the email body items (including any signature/signoff)"""
