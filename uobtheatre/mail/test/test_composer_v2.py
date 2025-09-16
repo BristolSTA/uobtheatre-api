@@ -5,7 +5,7 @@ from unittest.mock import patch
 import pytest
 from django.template.loader import get_template
 
-from uobtheatre.mail.composerV2 import (
+from uobtheatre.mail.composer_v2 import (
     QR,
     AccessibilityBlock,
     BookingBlock,
@@ -55,8 +55,8 @@ def test_heading():
         subtitle="Sub",
         subsubtitle="SubSub",
         message="Msg",
-        titleIcon="clock",
-        messageIcon="search",
+        title_icon="clock",
+        message_icon="search",
     )
     text = heading.to_text()
     assert "Title" in text and "Sub" in text and "Msg" in text
@@ -65,7 +65,7 @@ def test_heading():
 
 
 def test_list_item():
-    item = ListItem(title="T", message="M", titleIcon="clock", messageIcon="search")
+    item = ListItem(title="T", message="M", title_icon="clock", message_icon="search")
     assert item.to_text() == "T: M"
     assert "T" in item.to_html() and "M" in item.to_html()
 
@@ -201,7 +201,7 @@ def test_mailcomposer_blank_and_textonly():
     mail = MailComposer.blank([para])
     assert "Hello!" in mail.to_text()
     assert "Hello!" in mail.to_html()
-    textonly = MailComposer.textOnly(title="Title", message="Msg")
+    textonly = MailComposer.text_only(title="Title", message="Msg")
     assert "Title" in textonly.to_text() and "Msg" in textonly.to_text()
 
 

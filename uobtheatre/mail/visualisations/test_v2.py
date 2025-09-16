@@ -6,7 +6,7 @@ import factory
 import pytest
 
 from uobtheatre.bookings.test.factories import BookingFactory, TicketFactory
-from uobtheatre.mail.composerV2 import *
+from uobtheatre.mail.composer_v2 import *
 from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.productions.test.factories import ProductionFactory
 from uobtheatre.users.test.factories import UserFactory
@@ -52,7 +52,7 @@ def _test_simple_email():
 @pytest.mark.django_db
 def _test_text_only():
 
-    test_mail = MailComposer.textOnly(
+    test_mail = MailComposer.text_only(
         "This is a test title", "<b>This</b> is a test message that's actually longer than you would expect it to be because it's important for the sake of testing that we have a really long message here that spans multiple lines.", True)
 
     write_files(test_mail, "text_only")
@@ -130,7 +130,7 @@ def test_booking_conf_new():
 
         Image(src=mountainImage),
 
-        Heading(subtitle="About Your Booking", titleIcon="bookmark"),
+    Heading(subtitle="About Your Booking", title_icon="bookmark"),
         
         Box(
             TimingsBlock(booking.performance)
@@ -142,12 +142,12 @@ def test_booking_conf_new():
 
         BoxCols([
             RowStack([
-                Heading(subsubtitle="Payment Information", titleIcon="trolley"),
+                Heading(subsubtitle="Payment Information", title_icon="trolley"),
 
-                ListItem(message=f"{payment.value_currency} paid", messageIcon="money"),
+                ListItem(message=f"{payment.value_currency} paid", message_icon="money"),
 
                 ListItem(
-                    message=f"{payment.provider.description}{(' - ID ' + payment.provider_transaction_id) if payment.provider_transaction_id else '' }", messageIcon="card"),
+                    message=f"{payment.provider.description}{(' - ID ' + payment.provider_transaction_id) if payment.provider_transaction_id else '' }", message_icon="card"),
             ]),
 
             AccessibilityBlock()

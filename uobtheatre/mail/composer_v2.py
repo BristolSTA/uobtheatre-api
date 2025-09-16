@@ -83,10 +83,18 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
         return self
 
     def heading(
-        self, title: str, message: str, titleIcon: str, messageIcon: str, html: bool
-    ):
+        self, title: str, message: str, title_icon: str, message_icon: str, html: bool
+    ):  # pylint: disable=too-many-arguments, too-many-positional-arguments
         """A heading composer item"""
-        self.items.append(Heading(title, message, titleIcon, messageIcon, html))
+        self.items.append(
+            Heading(
+                title=title,
+                message=message,
+                title_icon=title_icon,
+                message_icon=message_icon,
+                html_safe=html,
+            )
+        )
         return self
 
     def greeting(self, user: Optional[User] = None):
@@ -99,7 +107,7 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
         self.items.append(Button(href, text))
         return self
 
-    def buttonHelpText(self, href: str, text: str):
+    def button_help_text(self, href: str, text: str):
         """A ButtonHelpText composer item"""
         self.items.append(ButtonHelpText(href, text))
         return self
@@ -124,26 +132,27 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
         self.items.append(Footer())
         return self
 
-    def box(self, content: ComposerItemInterface, bgUrl="", bgCol="#D0D0D0", mb=True):
+    def box(self, content: ComposerItemInterface, bg_url="", bg_col="#D0D0D0", mb=True):
         """A Box composer item, used for holding arbitrary content with
         a background of an image or solid colour"""
-        self.items.append(Box(bgUrl, bgCol, content, mb))
+        # Ensure argument order and names are correct for Box
+        self.items.append(Box(content=content, bg_url=bg_url, bg_col=bg_col, mb=mb))
         return self
 
-    def rowStack(self, rowStack: List[ComposerItemInterface]):
+    def row_stack(self, row_stack: List[ComposerItemInterface]):
         """A RowStack composer item"""
-        self.items.append(RowStack(rowStack))
+        self.items.append(RowStack(row_stack))
         return self
 
-    def colStack(self, colStack: List[object]):
+    def col_stack(self, col_stack: List[object]):
         """A ColStack composer item.
         Takes in a list of items to put in a row,
         along with their associated widths as a string, in %.
         i.e., really a list of type List[(ComposerItemInterface, float)]"""
-        self.items.append(ColStack(colStack))
+        self.items.append(ColStack(col_stack))
         return self
 
-    def boxCols(self, content: List[ComposerItemInterface]):
+    def box_cols(self, content: List[ComposerItemInterface]):
         """This pre-makes a ColStack with an arbitrary number of even columns, using default
         boxes to hold the content. This is a quick and easy way to split content into columns.
         """
@@ -156,21 +165,21 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
         self.items.append(Spacer(height))
         return self
 
-    def timingsBlock(self, performance):
+    def timings_block(self, performance):
         """A TimingsBlock composer item.
         A compound item that contains the timings of a performance, along with a latecomer disclamer.
         """
         self.items.append(TimingsBlock(performance))
         return self
 
-    def bookingBlock(self, booking):
+    def booking_block(self, booking):
         """A BookingBlock composer item.
         A compound item that contains the details of a booking, such as the reference, and buttons to view tickets and the booking.
         """
         self.items.append(BookingBlock(booking))
         return self
 
-    def accessibilityBlock(self):
+    def accessibility_block(self):
         """An AccessibilityBlock composer item.
         A compound item that contains information about accessibility."""
         self.items.append(AccessibilityBlock())
@@ -246,30 +255,30 @@ class Heading(ComposerItemInterface):
         subsubtitle (str): The subsubtitle of the heading
         message (str): The message displayed without padding below the heading
         message (str): The message displayed without padding below the heading
-        titleIcon (str): The icon to use for the title, from the icons dict
-        messageIcon (str): The icon to use for the message, from the icons dict
-        htmlSafe (bool): Whether to parse the message as HTML or not (default: False)"""
+    title_icon (str): The icon to use for the title, from the icons dict
+    message_icon (str): The icon to use for the message, from the icons dict
+    html_safe (bool): Whether to parse the message as HTML or not (default: False)"""
 
-    def __init__(
+    def __init__( # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         title="",
         subtitle="",
         subsubtitle="",
         message="",
-        titleIcon="",
-        messageIcon="",
-        htmlSafe=False,
+        title_icon="",
+        message_icon="",
+        html_safe=False,
     ) -> None:
-        """If htmlSafe == True, then this string will parse the given HTML; be careful,
+        """If html_safe == True, then this string will parse the given HTML; be careful,
         as if used improperly, this may open up scripting attacks."""
         super().__init__()
         self.title = title
         self.subtitle = subtitle
         self.subsubtitle = subsubtitle
         self.message = message
-        self.htmlSafe = htmlSafe
-        self.titleIcon = icons[titleIcon] if titleIcon in icons.keys() else ""
-        self.messageIcon = icons[messageIcon] if messageIcon in icons.keys() else ""
+        self.html_safe = html_safe
+        self.title_icon = icons[title_icon] if title_icon in icons else ""
+        self.message_icon = icons[message_icon] if message_icon in icons else ""
 
     def to_text(self):
         text = ""
@@ -292,9 +301,10 @@ class Heading(ComposerItemInterface):
                 "subtitle": self.subtitle,
                 "subsubtitle": self.subsubtitle,
                 "message": self.message,
-                "messageIcon": self.messageIcon,
-                "titleIcon": self.titleIcon,
-                "htmlSafe": self.htmlSafe,
+                # Keep template keys camelCase for compatibility
+                "messageIcon": self.message_icon,
+                "titleIcon": self.title_icon,
+                "htmlSafe": self.html_safe,
             }
         )
 
@@ -306,28 +316,28 @@ class ListItem(ComposerItemInterface):
     Args:
         title (str): The title of the list item
         message (str): The message of the list item
-        titleIcon (str): The icon to use for the title, from the icons dict
-        messageIcon (str): The icon to use for the message, from the icons dict
+    title_icon (str): The icon to use for the title, from the icons dict
+    message_icon (str): The icon to use for the message, from the icons dict
         inline (bool): Whether to display the title and message on the same line or not (default: False)
-        htmlSafe (bool): Whether to parse the message as HTML or not (default: False)
+    html_safe (bool): Whether to parse the message as HTML or not (default: False)
     """
 
-    def __init__(
+    def __init__( # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         title="",
         message="",
-        titleIcon="",
-        messageIcon="",
+        title_icon="",
+        message_icon="",
         inline=False,
-        htmlSafe=False,
+        html_safe=False,
     ) -> None:
         super().__init__()
         self.title = title
         self.message = message
-        self.titleIcon = icons[titleIcon] if titleIcon in icons.keys() else ""
-        self.messageIcon = icons[messageIcon] if messageIcon in icons.keys() else ""
+        self.title_icon = icons[title_icon] if title_icon in icons else ""
+        self.message_icon = icons[message_icon] if message_icon in icons else ""
         self.inline = inline
-        self.htmlSafe = htmlSafe
+        self.html_safe = html_safe
 
     def to_text(self):
         return strip_tags(self.title) + ": " + strip_tags(self.message)
@@ -339,10 +349,10 @@ class ListItem(ComposerItemInterface):
             {
                 "title": self.title,
                 "message": self.message,
-                "messageIcon": self.messageIcon,
-                "titleIcon": self.titleIcon,
+                "messageIcon": self.message_icon,
+                "titleIcon": self.title_icon,
                 "inline": self.inline,
-                "htmlSafe": self.htmlSafe,
+                "htmlSafe": self.html_safe,
             }
         )
 
@@ -385,17 +395,21 @@ class Box(ComposerItemInterface):
 
     Args:
         content (ComposerItemInterface): The content to put inside the box
-        bgUrl (str): The URL of the background image (default: "")
-        bgCol (str): The background color (default: "#D0D0D0")
+        bg_url (str): The URL of the background image (default: "")
+        bg_col (str): The background color (default: "#D0D0D0")
         mb (bool): Whether to add a margin-bottom class (default: True)
     """
 
     def __init__(
-        self, content: ComposerItemInterface, bgUrl="", bgCol="#D0D0D0", mb: bool = True
+        self,
+        content: ComposerItemInterface,
+        bg_url="",
+        bg_col="#D0D0D0",
+        mb: bool = True,
     ) -> None:
         super().__init__()
-        self.bgUrl = bgUrl
-        self.bgCol = bgCol
+        self.bg_url = bg_url
+        self.bg_col = bg_col
         self.content = content
         self.mb = mb
 
@@ -408,8 +422,9 @@ class Box(ComposerItemInterface):
         return template.render(
             {
                 "mb": self.mb,
-                "bgUrl": self.bgUrl,
-                "bgCol": self.bgCol,
+                # Keep template keys camelCase for compatibility
+                "bgUrl": self.bg_url,
+                "bgCol": self.bg_col,
                 "content": self.content.to_html(),
             }
         )
@@ -467,69 +482,69 @@ class QR(ComposerItemInterface):
 class TicketCodes(ComposerItemInterface):
     """A TicketCodes composer item"""
 
-    def __init__(self, bookingRef: str, ticketIds: list[str]) -> None:
+    def __init__(self, booking_ref: str, ticket_ids: list[str]) -> None:
         super().__init__()
-        self.bookingRef = bookingRef
-        self.ticketIds = ticketIds
-        self.ticketData = []
-        self.plural = "" if len(self.ticketData) == 1 else "s"
+        self.booking_ref = booking_ref
+        self.ticket_ids = ticket_ids
+        self.ticket_data: list[str] = []
+        self.plural = "" if len(self.ticket_ids) == 1 else "s"
 
         # Convert the tickets to data strings for the QR codes
-        for ticketId in ticketIds:
+        for ticket_id in ticket_ids:
             # Encode the ticket data to base64
-            b64String = codecs.encode(
-                f'["{bookingRef}","{ticketId}"]'.encode(), "base64_codec"
+            b64_string = codecs.encode(
+                f'["{booking_ref}","{ticket_id}"]'.encode(), "base64_codec"
             ).decode()[:-1]
 
-            self.ticketData.append(b64String)
+            self.ticket_data.append(b64_string)
 
     def to_text(self):
-        plaintext = f"{len(self.ticketData)} ticket QR code{self.plural}:"
+        plaintext = f"{len(self.ticket_data)} ticket QR code{self.plural}:"
 
-        for ticketData in self.ticketData:
-            plaintext += f"\n{ticketData}"
+        for ticket_data in self.ticket_data:
+            plaintext += f"\n{ticket_data}"
 
         return plaintext
 
     def to_html(self):
         # Maximum tickets per grid row, and as many grid rows as we need
-        maxPerRow = 2
+        max_per_row = 2
 
-        qrContent = []
+        qr_content: list[ComposerItemInterface] = []
         row = 0
 
         # Create a grid of tickets as needed
-        while row < len(self.ticketData):
+        while row < len(self.ticket_data):
             col = 0
-            rowContent = []
+            row_content = []
 
-            while row + col < len(self.ticketData):
+            while row + col < len(self.ticket_data):
 
                 # Create the ticket box
-                rowContent.append(
+                row_content.append(
                     RowStack(
                         [
                             Heading(subsubtitle=f"Ticket {row+col+1}"),
-                            QR(self.ticketData[row + col]),
+                            QR(self.ticket_data[row + col]),
                         ]
                     )
                 )
                 col += 1
 
                 # Limit the number of tickets per row
-                if col == maxPerRow:
+                if col == max_per_row:
                     break
 
             # Add the columnStack to the content
-            qrContent.append(BoxCols(rowContent))
+            qr_content.append(BoxCols(row_content))
 
             # Update the number of tickets added so far
-            row += maxPerRow
+            row += max_per_row
 
         # Generate a pretty ticket element
         content = RowStack(
-            [Heading(subtitle=f"Your Ticket{self.plural}", titleIcon="ticket")]
-            + qrContent
+            [Heading(subtitle=f"Your Ticket{self.plural}", title_icon="ticket")]
+            + qr_content
         )
 
         return content.to_html()
@@ -564,14 +579,14 @@ class RowStack(ComposerItemInterface):
     A RowStack composer item. Contains a list of child composer items.
     """
 
-    def __init__(self, rowStack: list[ComposerItemInterface]) -> None:
+    def __init__(self, row_stack: list[ComposerItemInterface]) -> None:
         super().__init__()
-        if not isinstance(rowStack, list):
-            raise ValueError("rowStack must be a list of ComposerItemInterface")
-        self.rowStack: list[ComposerItemInterface] = rowStack
+        if not isinstance(row_stack, list):
+            raise ValueError("row_stack must be a list of ComposerItemInterface")
+        self.row_stack: list[ComposerItemInterface] = row_stack
 
     def _stack_items(self) -> list["ComposerItemInterface"]:
-        return self.rowStack
+        return self.row_stack
 
     def to_text(self) -> str:
         return "\n".join([row.to_text() for row in self._stack_items()])
@@ -597,16 +612,16 @@ class ColStack(ComposerItemInterface):
     A ColStack composer item. Contains a list of (item, width) tuples.
     """
 
-    def __init__(self, colStack: list[tuple[ComposerItemInterface, float]]) -> None:
+    def __init__(self, col_stack: list[tuple[ComposerItemInterface, float]]) -> None:
         super().__init__()
-        if not isinstance(colStack, list):
+        if not isinstance(col_stack, list):
             raise ValueError(
-                "colStack must be a list of (ComposerItemInterface, float) tuples"
+                "col_stack must be a list of (ComposerItemInterface, float) tuples"
             )
-        self.colStack: list[tuple[ComposerItemInterface, float]] = colStack
+        self.col_stack: list[tuple[ComposerItemInterface, float]] = col_stack
 
     def _stack_items(self) -> list["ComposerItemInterface"]:
-        return [col for (col, _) in self.colStack]
+        return [col for (col, _) in self.col_stack]
 
     def to_text(self) -> str:
         return "\n".join(
@@ -616,7 +631,7 @@ class ColStack(ComposerItemInterface):
     def to_html(self) -> str:
         template = get_template("componentsV2/colStack.html")
         return template.render(
-            {"colStack": [(col.to_html(), width) for (col, width) in self.colStack]}
+            {"colStack": [(col.to_html(), width) for (col, width) in self.col_stack]}
         )
 
     def sub_items(self) -> list["ComposerItemInterface"]:
@@ -652,13 +667,10 @@ class BoxCols(ColStack):
     """
 
     def __init__(self, content):
-
-        colWidth = 100 / len(content)
-
+        col_width = 100 / len(content)
         cols = []
-
-        for i in range(len(content)):
-            cols.append((Box(content[i]), colWidth))
+        for item in content:
+            cols.append((Box(item), col_width))
 
         super().__init__(cols)
 
@@ -688,12 +700,12 @@ class TimingsBlock(ComposerItemInterface):
 
     def _stack_items(self):
         return [
-            Heading(subsubtitle="Timings", titleIcon="clock"),
+            Heading(subsubtitle="Timings", title_icon="clock"),
             ListItem(
-                title="Doors Open:", message=f"{self.doors}", titleIcon="door-open"
+                title="Doors Open:", message=f"{self.doors}", title_icon="door-open"
             ),
             ListItem(
-                title="Performance Starts:", message=f"{self.start}", titleIcon="play"
+                title="Performance Starts:", message=f"{self.start}", title_icon="play"
             ),
             ListItem(message=self.latecomerDisclaimer),
         ]
@@ -730,13 +742,13 @@ class BookingBlock(ComposerItemInterface):
 
     def _stack_items(self):
         return [
-            Heading(subsubtitle="Your Booking", titleIcon="search"),
+            Heading(subsubtitle="Your Booking", title_icon="search"),
             ListItem(
                 title="Booking Reference:",
                 message=self.booking.reference,
-                titleIcon="barcode",
+                title_icon="barcode",
             ),
-            ListItem(message=self.bookingInfo, htmlSafe=True),
+            ListItem(message=self.bookingInfo, html_safe=True),
             ColStack(
                 [
                     (Button(self.booking.web_tickets_path, "View Tickets"), 50),
@@ -770,9 +782,6 @@ class AccessibilityBlock(ComposerItemInterface):
 
     accessibilityMessage = "If you have any accessibility concerns, or otherwise need help, please contact <a href='mailto:support@uobtheatre.com'>support@uobtheatre.com</a>."
 
-    def __init__(self) -> None:
-        super().__init__()
-
     def to_text(self):
         return (
             f"\nAccessibility Information:\n\n{strip_tags(self.accessibilityMessage)}"
@@ -780,8 +789,10 @@ class AccessibilityBlock(ComposerItemInterface):
 
     def _stack_items(self):
         return [
-            Heading(subsubtitle="Accessibility Information", titleIcon="accessibility"),
-            ListItem(message=self.accessibilityMessage, htmlSafe=True),
+            Heading(
+                subsubtitle="Accessibility Information", title_icon="accessibility"
+            ),
+            ListItem(message=self.accessibilityMessage, html_safe=True),
         ]
 
     def to_html(self):
@@ -800,6 +811,7 @@ class AccessibilityBlock(ComposerItemInterface):
 class MailComposer(ComposerItemsContainer):
     """Compose a mail notificaiton"""
 
+    @staticmethod
     def blank(content: list[ComposerItemInterface]) -> ComposerItemInterface:
         """Create a blank email, with the content (a list of elements to go in a RowStack) within.
         This will also add a footer component with extra button details."""
@@ -811,24 +823,32 @@ class MailComposer(ComposerItemsContainer):
                 if isinstance(item, Button):
                     buttons.append(ButtonHelpText(item.href, item.text))
 
-        mail = MailComposer().rowStack(
+        mail = MailComposer().row_stack(
             [
                 Logo(),
-                Box(RowStack(content), bgCol="white", mb=False),
+                Box(RowStack(content), bg_col="white", mb=False),
                 Footer(),
                 # If there are buttons, add that after the footer
-                Box(RowStack(buttons), bgCol="rgba(0,0,0,0.2)"),
+                Box(RowStack(buttons), bg_col="rgba(0,0,0,0.2)"),
             ]
         )
 
         return mail
 
-    def textOnly(title="", message="", htmlSafe=False) -> ComposerItemInterface:
+    @staticmethod
+    def text_only(
+        title: str = "", message: str = "", html_safe: bool = False
+    ) -> ComposerItemInterface:
         """Create an email that is text only. Takes in just a title and message.
-        If htmlSafe == True, then this string will parse any given HTML; be careful,
+        If html_safe == True, then this string will parse any given HTML; be careful,
         as if used improperly, this may open up scripting attacks."""
         return MailComposer.blank(
-            [Box(Heading(title, message, htmlSafe), bgCol="white")]
+            [
+                Box(
+                    Heading(title=title, message=message, html_safe=html_safe),
+                    bg_col="white",
+                )
+            ]
         )
 
     def get_complete_items(self):
