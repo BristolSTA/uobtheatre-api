@@ -151,6 +151,12 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
         A compound item that contains the details of a booking, such as the reference, and buttons to view tickets and the booking."""
         self.items.append(BookingBlock(booking))
         return self
+    
+    def accessibilityBlock(self):
+        """An AccessibilityBlock composer item.
+        A compound item that contains information about accessibility."""
+        self.items.append(AccessibilityBlock())
+        return self
 
     def append(self, item):
         self.items.append(item)
@@ -564,13 +570,25 @@ class TimingsBlock(ComposerItemInterface):
     def to_text(self):
         return f"\nTimings:\n\nDoors Open: {self.doors}\nPerformance Starts: {self.start}\n\n{self.latecomerDisclamer}"
 
-    def to_html(self):
-        return RowStack([
+    def _stack_items(self):
+        return [
             Heading(subsubtitle="Timings", titleIcon="clock"),
             ListItem(title="Doors Open:", message=f"{self.doors}", titleIcon="door-open"),
             ListItem(title="Performance Starts:", message=f"{self.start}", titleIcon="play"),
             ListItem(message=self.latecomerDisclamer),
-        ]).to_html()
+        ]
+
+    def to_html(self):
+        return RowStack(self._stack_items()).to_html()
+
+    def sub_items(self):
+        subitems = [self]
+        for item in self._stack_items():
+            if hasattr(item, 'sub_items'):
+                subitems.extend(item.sub_items())
+            else:
+                subitems.append(item)
+        return subitems
     
 
 class BookingBlock(ComposerItemInterface):
@@ -590,21 +608,28 @@ class BookingBlock(ComposerItemInterface):
     def to_text(self):
         return f"\nYour Booking\n\nBooking Reference: {self.booking.reference}\n\n{self.bookingInfo}"
 
-    def to_html(self):
-        return RowStack([
+    def _stack_items(self):
+        return [
             Heading(subsubtitle="Your Booking", titleIcon="search"),
-
             ListItem(title="Booking Reference:", message=self.booking.reference, titleIcon="barcode"),
-
             ListItem(message=self.bookingInfo, htmlSafe=True),
-
             ColStack([
                 (Button(self.booking.web_tickets_path, "View Tickets"), 50),
-
-                (Button("/user/booking/%s" %
-                        self.booking.reference, "View Booking"), 50)
+                (Button(f"/user/booking/{self.booking.reference}", "View Booking"), 50)
             ])
-        ]).to_html()
+        ]
+
+    def to_html(self):
+        return RowStack(self._stack_items()).to_html()
+
+    def sub_items(self):
+        subitems = [self]
+        for item in self._stack_items():
+            if hasattr(item, 'sub_items'):
+                subitems.extend(item.sub_items())
+            else:
+                subitems.append(item)
+        return subitems
     
 
 class AccessibilityBlock(ComposerItemInterface):
@@ -620,11 +645,23 @@ class AccessibilityBlock(ComposerItemInterface):
     def to_text(self):
         return f"\nAccessibility Information:\n\n{strip_tags(self.accessibilityMessage)}"
 
-    def to_html(self):
-        return RowStack([
+    def _stack_items(self):
+        return [
             Heading(subsubtitle="Accessibility Information", titleIcon="accessibility"),
             ListItem(message=self.accessibilityMessage, htmlSafe=True),
-        ]).to_html()
+        ]
+
+    def to_html(self):
+        return RowStack(self._stack_items()).to_html()
+
+    def sub_items(self):
+        subitems = [self]
+        for item in self._stack_items():
+            if hasattr(item, 'sub_items'):
+                subitems.extend(item.sub_items())
+            else:
+                subitems.append(item)
+        return subitems
 
 
 class MailComposer(ComposerItemsContainer):
