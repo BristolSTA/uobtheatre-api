@@ -1,7 +1,7 @@
 import abc
 import codecs
 from datetime import datetime
-from typing import List, Optional, Union
+from typing import List, Optional, Sequence, Union, overload
 
 import qrcode
 import qrcode.image.svg
@@ -62,7 +62,7 @@ class ComposerItemInterface(abc.ABC):
         Recursively collect all sub-items from a composer item tree.
         Returns a flat list of all items (including the root).
         """
-        items = [item]
+        items: list["ComposerItemInterface"] = [item]
         if hasattr(item, "sub_items"):
             for sub in item.sub_items():
                 if sub is not item:
@@ -132,24 +132,30 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
         self.items.append(Footer())
         return self
 
-    def box(self, content: ComposerItemInterface, bg_url="", bg_col="#D0D0D0", mb=True):
+    def box(
+        self,
+        content: ComposerItemInterface,
+        bg_url: str = "",
+        bg_col: str = "#D0D0D0",
+        mb: bool = True,
+    ):
         """A Box composer item, used for holding arbitrary content with
         a background of an image or solid colour"""
         # Ensure argument order and names are correct for Box
         self.items.append(Box(content=content, bg_url=bg_url, bg_col=bg_col, mb=mb))
         return self
 
-    def row_stack(self, row_stack: List[ComposerItemInterface]):
+    def row_stack(self, row_stack: Sequence[ComposerItemInterface]):
         """A RowStack composer item"""
-        self.items.append(RowStack(row_stack))
+        self.items.append(RowStack(list(row_stack)))
         return self
 
-    def col_stack(self, col_stack: List[object]):
+    def col_stack(self, col_stack: Sequence[tuple[ComposerItemInterface, float]]):
         """A ColStack composer item.
         Takes in a list of items to put in a row,
         along with their associated widths as a string, in %.
         i.e., really a list of type List[(ComposerItemInterface, float)]"""
-        self.items.append(ColStack(col_stack))
+        self.items.append(ColStack(list(col_stack)))
         return self
 
     def box_cols(self, content: List[ComposerItemInterface]):
@@ -189,7 +195,7 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
         self.items.append(item)
         return self
 
-    def to_text(self) -> Union[str, None]:
+    def to_text(self) -> str:
         """Generate the plain text version of this item"""
         return """{}""".format(
             "\n\n".join(
@@ -215,11 +221,12 @@ class Greeting(ComposerItemInterface):
     def __init__(self, user: Optional[User] = None) -> None:
         super().__init__()
         self.user = user
-        self.opener = (
-            "Hi %s," % self.user.first_name.capitalize()
-            if self.user and self.user.status.verified
-            else "Hello,"
+        opener_name = (
+            self.user.first_name.capitalize()
+            if self.user and self.user.first_name
+            else None
         )
+        self.opener = f"Hi {opener_name}," if opener_name else "Hello,"
 
     def to_text(self):
         return strip_tags(self.opener)
@@ -232,9 +239,10 @@ class Greeting(ComposerItemInterface):
 class Paragraph(ComposerItemInterface):
     """A Heading composer item"""
 
-    def __init__(self, message) -> None:
+    def __init__(self, message: str = "", *, title: str = "", **_: object) -> None:
         super().__init__()
-        self.message = message
+        # Visualisation tests sometimes pass a title or extra kwargs; accept and ignore them
+        self.message = message or title
 
     def to_text(self):
         return strip_tags(self.message)
@@ -403,11 +411,19 @@ class Box(ComposerItemInterface):
     def __init__(
         self,
         content: ComposerItemInterface,
-        bg_url="",
-        bg_col="#D0D0D0",
+        bg_url: str = "",
+        bg_col: str = "#D0D0D0",
         mb: bool = True,
+        **kwargs: object,
     ) -> None:
         super().__init__()
+        # Support legacy/camelCase kwargs from visualisations: bgCol, mb
+        if isinstance(kwargs.get("bgCol"), str):
+            bg_col = kwargs["bgCol"]  # type: ignore[assignment]
+        if isinstance(kwargs.get("bgUrl"), str):
+            bg_url = kwargs["bgUrl"]  # type: ignore[assignment]
+        if isinstance(kwargs.get("mb"), bool):
+            mb = kwargs["mb"]  # type: ignore[assignment]
         self.bg_url = bg_url
         self.bg_col = bg_col
         self.content = content
@@ -579,11 +595,10 @@ class RowStack(ComposerItemInterface):
     A RowStack composer item. Contains a list of child composer items.
     """
 
-    def __init__(self, row_stack: list[ComposerItemInterface]) -> None:
+    def __init__(self, row_stack: Sequence[ComposerItemInterface]) -> None:
         super().__init__()
-        if not isinstance(row_stack, list):
-            raise ValueError("row_stack must be a list of ComposerItemInterface")
-        self.row_stack: list[ComposerItemInterface] = row_stack
+        # Accept any sequence and normalize to list for internal storage
+        self.row_stack: list[ComposerItemInterface] = list(row_stack)
 
     def _stack_items(self) -> list["ComposerItemInterface"]:
         return self.row_stack
@@ -598,7 +613,7 @@ class RowStack(ComposerItemInterface):
         )
 
     def sub_items(self) -> list["ComposerItemInterface"]:
-        subitems = [self]
+        subitems: list[ComposerItemInterface] = [self]
         for row in self._stack_items():
             if hasattr(row, "sub_items"):
                 subitems.extend(row.sub_items())
@@ -612,13 +627,12 @@ class ColStack(ComposerItemInterface):
     A ColStack composer item. Contains a list of (item, width) tuples.
     """
 
-    def __init__(self, col_stack: list[tuple[ComposerItemInterface, float]]) -> None:
+    def __init__(
+        self, col_stack: Sequence[tuple[ComposerItemInterface, float]]
+    ) -> None:
         super().__init__()
-        if not isinstance(col_stack, list):
-            raise ValueError(
-                "col_stack must be a list of (ComposerItemInterface, float) tuples"
-            )
-        self.col_stack: list[tuple[ComposerItemInterface, float]] = col_stack
+        # Accept any sequence and normalize to list for internal storage
+        self.col_stack: list[tuple[ComposerItemInterface, float]] = list(col_stack)
 
     def _stack_items(self) -> list["ComposerItemInterface"]:
         return [col for (col, _) in self.col_stack]
@@ -635,7 +649,7 @@ class ColStack(ComposerItemInterface):
         )
 
     def sub_items(self) -> list["ComposerItemInterface"]:
-        subitems = [self]
+        subitems: list[ComposerItemInterface] = [self]
         for col in self._stack_items():
             if hasattr(col, "sub_items"):
                 subitems.extend(col.sub_items())
@@ -666,9 +680,9 @@ class BoxCols(ColStack):
     boxes to hold the content. This is a quick and easy way to split content into columns.
     """
 
-    def __init__(self, content):
+    def __init__(self, content: Sequence[ComposerItemInterface]):
         col_width = 100 / len(content)
-        cols = []
+        cols: list[tuple[ComposerItemInterface, float]] = []
         for item in content:
             cols.append((Box(item), col_width))
 

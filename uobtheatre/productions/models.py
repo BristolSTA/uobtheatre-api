@@ -874,10 +874,12 @@ class ProductionQuerySet(QuerySet):
         productions_user_has_tickets: QuerySet[Any] = self.none()
         if user.is_authenticated:
             one_week_ago = timezone.now() - datetime.timedelta(days=7)
-            productions_user_has_tickets = self.filter(
-                performances__bookings__user=user,
-                performances__start__gte=one_week_ago,
-            ).values_list("id", flat=True)
+            productions_user_has_tickets = list(
+                self.filter(
+                    performances__bookings__user=user,
+                    performances__start__gte=one_week_ago,
+                ).values_list("id", flat=True)
+            )
 
         return self.filter(
             ~Q(status__in=Production.Status.PRIVATE_STATUSES)

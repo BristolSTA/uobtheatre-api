@@ -213,11 +213,8 @@ class MailComposer(ComposerItemsContainer):
 
     def greeting(self, user: Optional[User] = None):
         """Add a greeting to the email"""
-        self.heading(
-            "Hi %s" % user.first_name.capitalize()
-            if user and user.status.verified  # type: ignore
-            else "Hello"
-        )
+        name = user.first_name.capitalize() if user and user.first_name else None
+        self.heading("Hi %s" % name if name else "Hello")
         return self
 
     def get_complete_items(self):
