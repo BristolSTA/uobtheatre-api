@@ -259,7 +259,7 @@ class Heading(ComposerItemInterface):
     message_icon (str): The icon to use for the message, from the icons dict
     html_safe (bool): Whether to parse the message as HTML or not (default: False)"""
 
-    def __init__( # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         title="",
         subtitle="",
@@ -322,7 +322,7 @@ class ListItem(ComposerItemInterface):
     html_safe (bool): Whether to parse the message as HTML or not (default: False)
     """
 
-    def __init__( # pylint: disable=too-many-arguments, too-many-positional-arguments
+    def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
         title="",
         message="",
