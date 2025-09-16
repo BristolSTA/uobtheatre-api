@@ -1,16 +1,16 @@
 # Use pytest functionality to generate HTML emails in the visualisations folder for generation
 
-import pytest
 import os
 
 import factory
-from uobtheatre.bookings.test.factories import BookingFactory
-from uobtheatre.payments.test.factories import TransactionFactory
-from uobtheatre.users.test.factories import UserFactory
-from uobtheatre.productions.test.factories import ProductionFactory
-from uobtheatre.utils.lang import pluralize
+import pytest
 
-from uobtheatre.mail.composer import (MailComposer)
+from uobtheatre.bookings.test.factories import BookingFactory
+from uobtheatre.mail.composer import MailComposer
+from uobtheatre.payments.test.factories import TransactionFactory
+from uobtheatre.productions.test.factories import ProductionFactory
+from uobtheatre.users.test.factories import UserFactory
+from uobtheatre.utils.lang import pluralize
 
 root = "./uobtheatre/mail/visualisations/basic/"
 

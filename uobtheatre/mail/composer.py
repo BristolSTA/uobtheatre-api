@@ -47,7 +47,6 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
         self.items.append(Quote(text))
         return self
 
-
     def action(self, url, text):
         """Create an action button"""
         action = Action(url, text)
