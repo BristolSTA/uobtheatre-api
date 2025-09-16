@@ -49,11 +49,26 @@ class ComposerItemInterface(abc.ABC):
         """Generate the HTML version of this item"""
         raise NotImplementedError()
 
-    def sub_items(self):
-        """Return a list of all sub items that a composer item contains (e.g. a rowStack or colStack),
-        as well as itself.
-        Most items will return a list of just themselves here by default."""
+
+    def sub_items(self) -> list['ComposerItemInterface']:
+        """
+        Return a list of all sub items that a composer item contains (e.g. a rowStack or colStack), as well as itself.
+        Most items will return a list of just themselves here by default.
+        """
         return [self]
+
+    @staticmethod
+    def collect_sub_items(item: 'ComposerItemInterface') -> list['ComposerItemInterface']:
+        """
+        Recursively collect all sub-items from a composer item tree.
+        Returns a flat list of all items (including the root).
+        """
+        items = [item]
+        if hasattr(item, 'sub_items'):
+            for sub in item.sub_items():
+                if sub is not item:
+                    items.extend(ComposerItemInterface.collect_sub_items(sub))
+        return items
 
 
 class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
@@ -474,45 +489,65 @@ class Footer(ComposerItemInterface):
 
         return template.render({"year": datetime.now().year})
 
+
 class RowStack(ComposerItemInterface):
-    """A RowStack composer item"""
-
-    def __init__(self, rowStack: List[ComposerItemInterface]) -> None:
+    """
+    A RowStack composer item. Contains a list of child composer items.
+    """
+    def __init__(self, rowStack: list[ComposerItemInterface]) -> None:
         super().__init__()
-        self.rowStack = rowStack
+        if not isinstance(rowStack, list):
+            raise ValueError("rowStack must be a list of ComposerItemInterface")
+        self.rowStack: list[ComposerItemInterface] = rowStack
 
-    def to_text(self):
-        return "\n".join([row.to_text() for row in self.rowStack])
+    def _stack_items(self) -> list['ComposerItemInterface']:
+        return self.rowStack
 
-    def to_html(self):
+    def to_text(self) -> str:
+        return "\n".join([row.to_text() for row in self._stack_items()])
+
+    def to_html(self) -> str:
         template = get_template("componentsV2/rowStack.html")
+        return template.render({"rowStack": [row.to_html() for row in self._stack_items()]})
 
-        return template.render({"rowStack": [row.to_html() for row in self.rowStack]})
+    def sub_items(self) -> list['ComposerItemInterface']:
+        subitems = [self]
+        for row in self._stack_items():
+            if hasattr(row, 'sub_items'):
+                subitems.extend(row.sub_items())
+            else:
+                subitems.append(row)
+        return subitems
 
-    # Export and flatten the RowStack's sub items
-    def sub_items(self):
-        return [self] + [item for row in self.rowStack for item in row.sub_items()]
 
 class ColStack(ComposerItemInterface):
-    """A ColStack composer item.
-    Takes in a list of items to put in a row,
-        along with their associated widths as a float, in %."""
-
-    def __init__(self, colStack: List[tuple[ComposerItemInterface, float]]) -> None:
+    """
+    A ColStack composer item. Contains a list of (item, width) tuples.
+    """
+    def __init__(self, colStack: list[tuple[ComposerItemInterface, float]]) -> None:
         super().__init__()
-        self.colStack = colStack
+        if not isinstance(colStack, list):
+            raise ValueError("colStack must be a list of (ComposerItemInterface, float) tuples")
+        self.colStack: list[tuple[ComposerItemInterface, float]] = colStack
 
-    def to_text(self):
-        return "\n".join([col.to_text() for (col, _) in self.colStack if col.to_text()])
+    def _stack_items(self) -> list['ComposerItemInterface']:
+        return [col for (col, _) in self.colStack]
 
-    def to_html(self):
+    def to_text(self) -> str:
+        return "\n".join([col.to_text() for col in self._stack_items() if col.to_text()])
+
+    def to_html(self) -> str:
         template = get_template("componentsV2/colStack.html")
-
         return template.render({"colStack": [(col.to_html(), width) for (col, width) in self.colStack]})
 
-    # Export and flatten the RowStack's sub items
-    def sub_items(self):
-        return [self] + [item for (col, _) in self.colStack for item in col.sub_items()]
+    def sub_items(self) -> list['ComposerItemInterface']:
+        subitems = [self]
+        for col in self._stack_items():
+            if hasattr(col, 'sub_items'):
+                subitems.extend(col.sub_items())
+            else:
+                subitems.append(col)
+        return subitems
 
 
 class Spacer(ComposerItemInterface):
@@ -557,7 +592,7 @@ class TimingsBlock(ComposerItemInterface):
         performance (Performance): The performance object containing the timings.
     """
 
-    latecomerDisclamer = "To limit disturbance to audiences and artists, we cannot guarantee that latecomers will be admitted to the performance. Latecomer policies are at the discretion of the production's Front of House team, who reserve the right to refuse entry to any person at their discretion."
+    latecomerDisclaimer = "To limit disturbance to audiences and artists, we cannot guarantee that latecomers will be admitted to the performance. Latecomer policies are at the discretion of the production's Front of House team, who reserve the right to refuse entry to any person at their discretion."
 
     def __init__(self, performance) -> None:
         super().__init__()
@@ -568,14 +603,14 @@ class TimingsBlock(ComposerItemInterface):
             performance.venue.address.timezone).strftime('%A, %d %B %Y at %H:%M (%Z)')
 
     def to_text(self):
-        return f"\nTimings:\n\nDoors Open: {self.doors}\nPerformance Starts: {self.start}\n\n{self.latecomerDisclamer}"
+        return f"\nTimings:\n\nDoors Open: {self.doors}\nPerformance Starts: {self.start}\n\n{self.latecomerDisclaimer}"
 
     def _stack_items(self):
         return [
             Heading(subsubtitle="Timings", titleIcon="clock"),
             ListItem(title="Doors Open:", message=f"{self.doors}", titleIcon="door-open"),
             ListItem(title="Performance Starts:", message=f"{self.start}", titleIcon="play"),
-            ListItem(message=self.latecomerDisclamer),
+            ListItem(message=self.latecomerDisclaimer),
         ]
 
     def to_html(self):
@@ -673,9 +708,10 @@ class MailComposer(ComposerItemsContainer):
 
         # Prepare the footer for the buttons
         buttons = []
-        for item in [item for row in content for item in row.sub_items()]:
-            if item.__class__ == Button:
-                buttons.append(ButtonHelpText(item.href, item.text))
+        for row in content:
+            for item in ComposerItemInterface.collect_sub_items(row):
+                if isinstance(item, Button):
+                    buttons.append(ButtonHelpText(item.href, item.text))
 
         mail = (MailComposer().rowStack([
                         Logo(),
@@ -691,7 +727,7 @@ class MailComposer(ComposerItemsContainer):
         """Create an email that is text only. Takes in just a title and message.
         If htmlSafe == True, then this string will parse any given HTML; be careful,
         as if used improperly, this may open up scripting attacks."""
-        return MailComposer.blank([Box(Paragraph(title, message, htmlSafe), bgCol="white")])
+        return MailComposer.blank([Box(Heading(title, message, htmlSafe), bgCol="white")])
 
     def get_complete_items(self):
         """Get the email body items (including any signature/signoff)"""
