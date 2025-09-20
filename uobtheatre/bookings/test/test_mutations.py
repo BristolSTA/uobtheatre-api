@@ -2,7 +2,8 @@
 
 
 from datetime import timedelta
-from unittest.mock import patch
+from unittest import mock
+from unittest.mock import PropertyMock, patch
 
 import pytest
 from django.utils import timezone
@@ -28,7 +29,11 @@ from uobtheatre.discounts.test.factories import (
 )
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
-from uobtheatre.payments.test.factories import TransactionFactory
+from uobtheatre.payments.test.factories import (
+    TransactionFactory,
+    mock_payment_method,
+    mock_refund_method,
+)
 from uobtheatre.payments.transaction_providers import SquareOnline, SquarePOS
 from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.models import User
@@ -1610,7 +1615,7 @@ def test_pay_booking_square_error(mock_square, gql_client):
                 "errors": [
                     {
                         "__typename": "NonFieldError",
-                        "message": "There was an issue processing your payment (MY_CODE)",
+                        "message": "There was an issue processing your request (MY_CODE)",
                         "code": "400",
                     }
                 ],

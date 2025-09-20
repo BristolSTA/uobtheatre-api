@@ -188,7 +188,7 @@ class SquareException(GQLException):
             (
                 error.detail
                 if error.category in passthrough_error_categories
-                else "There was an issue processing your payment (%s)" % error.code
+                else "There was an issue processing your request (%s)" % error.code
             )
             if error
             else api_error.body

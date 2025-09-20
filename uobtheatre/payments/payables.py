@@ -8,6 +8,7 @@ from django.db import models
 from django.db.models import Count, Q, Sum
 from django.db.models.functions.comparison import Coalesce
 from django.db.models.query import QuerySet
+from django.utils import timezone
 from django_celery_results.models import TaskResult
 
 from uobtheatre.payments.emails import payable_refund_initiated_email
@@ -92,6 +93,18 @@ class Payable(BaseModel):  # type: ignore
         User, on_delete=models.RESTRICT, related_name="created_bookings"
     )
 
+    # Stores who refunded the booking, and when
+    refunder = models.ForeignKey(
+        User,
+        on_delete=models.RESTRICT,
+        related_name="refunded_bookings",
+        null=True,
+        blank=True,
+    )
+    refunded_at = models.DateTimeField(null=True, blank=True)
+    refund_reason = models.TextField(null=True, blank=True)
+    refund_support_ticket = models.TextField(null=True, blank=True)
+
     objects = PayableManager()
 
     @property
@@ -170,6 +183,8 @@ class Payable(BaseModel):  # type: ignore
         send_admin_email=True,
         preserve_provider_fees=True,
         preserve_app_fees=False,
+        refund_reason=None,
+        refund_support_ticket=None,
     ):
         """
         Refund the all the payments in the payable.
@@ -186,12 +201,18 @@ class Payable(BaseModel):  # type: ignore
             preserve_app_fees (bool): If true the refund is reduced by the amount required to cover the payment's app_fee
                 i.e. the refund is reduced by the amount required to cover our fees (the various misc_costs, such as the theatre improvement levy).
                 If both preserve_provider_fees and preserve_app_fees are true, the refund is reduced by the larger of the two fees.
+            refund_reason (str): The reason for the refund.
+            refund_support_ticket (str): The support ticket number for the refund.
         """
         if error := self.validate_cant_be_refunded():  # type: ignore
             raise error  # pylint: disable=raising-bad-type
 
         # Set the status to REFUND_PROCESSING
         self.status = Payable.Status.REFUND_PROCESSING
+        self.refunder = authorizing_user
+        self.refunded_at = timezone.now()
+        self.refund_reason = refund_reason
+        self.refund_support_ticket = refund_support_ticket
         self.save()
 
         for payment in self.transactions.filter(type=Transaction.Type.PAYMENT).all():  # type: ignore

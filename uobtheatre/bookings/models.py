@@ -243,6 +243,7 @@ class Booking(TimeStampedMixin, Payable):
                 name="one_in_progress_booking_per_user_per_performance",
             )
         ]
+        permissions = (("refund_booking", "Can refund booking"),)
 
     reference = models.CharField(
         default=create_short_uuid, editable=False, max_length=12, unique=True

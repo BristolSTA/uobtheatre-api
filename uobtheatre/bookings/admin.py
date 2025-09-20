@@ -86,7 +86,16 @@ class BookingAdmin(DangerousAdminConfirmMixin, admin.ModelAdmin):
     """
 
     list_filter = (StatusFilter,)
-    readonly_fields = ("subtotal", "total", "is_refunded", "is_locked")
+    readonly_fields = (
+        "subtotal",
+        "total",
+        "is_refunded",
+        "is_locked",
+        "refunder",
+        "refunded_at",
+        "refund_reason",
+        "refund_support_ticket",
+    )
     list_display = ("reference", "status", "get_performance_name")
     search_fields = [
         "reference",
