@@ -134,6 +134,8 @@ class SiteMessageNode(DjangoObjectType):
             "dismissal_policy",
             "event_duration",
             "to_display",
+            "display_location",
+            "title",
         )
 
 

@@ -23,6 +23,10 @@ class SiteMessageFactory(factory.django.DjangoModelFactory):
     dismissal_policy = factory.Faker(
         "random_element", elements=[x[0] for x in Message.Policy.choices]
     )
+    display_location = factory.Faker(
+        "random_element", elements=[x[0] for x in Message.DisplayLocation.choices]
+    )
+    title = factory.Faker("sentence", nb_words=3)
 
     class Meta:
         model = Message
