@@ -1054,6 +1054,7 @@ type VenueNode implements Node {
   internalCapacity: Int!
   description: String
   accessibilityInfo: String
+  accessibilityShort: String
   email: String
   website: String
   address: AddressNode!

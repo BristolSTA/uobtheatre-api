@@ -26,5 +26,5 @@ class ModifyAccessibility(Ability):
         # Must be paid, and the user must own the booking or be able to box office for the performance of the booking
         return obj.status == Payable.Status.PAID and (
             obj.user.id == user.id
-            or user.has_perm("productions.boxoffice", obj.performance.production)
+            or user.has_perm("productions.modify_booking_accessibility", obj.performance.production)
         )
