@@ -344,11 +344,20 @@ class BookingNode(DjangoObjectType):
     expired = graphene.Boolean(required=True)
     sales_breakdown = graphene.Field(SalesBreakdownNode)
 
+    can_modify_accessibility = graphene.Boolean(
+        description="Whether the user can modify the accessibility information of this booking"
+    )
+
     def resolve_price_breakdown(self, _):
         return self
 
     def resolve_expired(self, _):
         return self.is_reservation_expired
+    
+    def resolve_can_modify_accessibility(self, info):
+        from uobtheatre.bookings.abilities import ModifyAccessibility
+
+        return ModifyAccessibility.user_has_for(info.context.user, self)
 
     @classmethod
     def get_queryset(cls, queryset, info):
