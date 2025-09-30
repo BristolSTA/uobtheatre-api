@@ -1,3 +1,5 @@
+from django.utils import timezone
+
 from uobtheatre.payments.payables import Payable
 from uobtheatre.users.abilities import Ability
 
@@ -27,4 +29,4 @@ class ModifyAccessibility(Ability):
         return obj.status == Payable.Status.PAID and (
             obj.user.id == user.id
             or user.has_perm("productions.modify_booking_accessibility", obj.performance.production)
-        )
+        ) and (obj.performance.start > timezone.now())  # Can't change accessibility info for past performances
