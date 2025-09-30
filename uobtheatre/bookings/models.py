@@ -213,9 +213,13 @@ class BookingQuerySet(PayableQuerySet):
             QuerySet: the filtered queryset
         """
         if bool_val:
-            return self.exclude(Q(accessibility_info__isnull=True) | Q(accessibility_info=""))
-        else:
-            return self.filter(Q(accessibility_info__isnull=True) | Q(accessibility_info=""))
+            return self.exclude(
+                Q(accessibility_info__isnull=True) | Q(accessibility_info="")
+            )
+
+        return self.filter(
+            Q(accessibility_info__isnull=True) | Q(accessibility_info="")
+        )
 
 
 def generate_expires_at():

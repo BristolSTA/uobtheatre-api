@@ -353,7 +353,7 @@ class BookingNode(DjangoObjectType):
 
     def resolve_expired(self, _):
         return self.is_reservation_expired
-    
+
     def resolve_can_modify_accessibility(self, info):
         from uobtheatre.bookings.abilities import ModifyAccessibility
 

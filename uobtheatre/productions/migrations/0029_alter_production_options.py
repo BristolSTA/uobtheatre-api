@@ -6,12 +6,29 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('productions', '0028_alter_production_options'),
+        ("productions", "0028_alter_production_options"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='production',
-            options={'ordering': ['id'], 'permissions': (('boxoffice', 'Can use box office for production'), ('sales', 'Can view sales for production'), ('force_change_production', 'Can change production once live'), ('view_bookings', 'Can inspect bookings and users for this production'), ('approve_production', 'Can approve production'), ('comp_tickets', 'Can issue complimentary tickets'), ('modify_booking_accessibility', 'Can modify accessibility info for all bookings for this production'))},
+            name="production",
+            options={
+                "ordering": ["id"],
+                "permissions": (
+                    ("boxoffice", "Can use box office for production"),
+                    ("sales", "Can view sales for production"),
+                    ("force_change_production", "Can change production once live"),
+                    (
+                        "view_bookings",
+                        "Can inspect bookings and users for this production",
+                    ),
+                    ("approve_production", "Can approve production"),
+                    ("comp_tickets", "Can issue complimentary tickets"),
+                    (
+                        "modify_booking_accessibility",
+                        "Can modify accessibility info for all bookings for this production",
+                    ),
+                ),
+            },
         ),
     ]

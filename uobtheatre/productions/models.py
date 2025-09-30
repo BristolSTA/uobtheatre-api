@@ -1053,7 +1053,10 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
             ("view_bookings", "Can inspect bookings and users for this production"),
             ("approve_production", "Can approve production"),
             ("comp_tickets", "Can issue complimentary tickets"),
-            ("modify_booking_accessibility", "Can modify accessibility info for all bookings for this production"),
+            (
+                "modify_booking_accessibility",
+                "Can modify accessibility info for all bookings for this production",
+            ),
         )
 
     class PermissionsMeta:
