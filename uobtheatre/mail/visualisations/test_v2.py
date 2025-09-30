@@ -137,6 +137,10 @@ def test_booking_conf_new():
         ),
 
         Box(
+            VenueBlock(booking.performance.venue)
+        ),
+
+        Box(
             BookingBlock(booking)
         ),
 

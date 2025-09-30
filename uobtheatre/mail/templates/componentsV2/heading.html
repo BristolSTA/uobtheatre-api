@@ -5,8 +5,8 @@
         <h1>
           <span>
             {% if titleIcon %}
-              <svg class="icon" viewBox="0 0 512 512">
-                  <path d="{{ titleIcon }}"/>
+              <svg class="icon" viewBox="{{ titleIcon.size }}">
+                  <path d="{{ titleIcon.path }}"/>
               </svg>
             {% endif %}
             {% if htmlSafe %}
@@ -21,8 +21,8 @@
         <h2>
           <span>
             {% if titleIcon %}
-              <svg class="icon" viewBox="0 0 512 512">
-                  <path d="{{ titleIcon }}"/>
+              <svg class="icon" viewBox="{{ titleIcon.size }}">
+                  <path d="{{ titleIcon.path }}"/>
               </svg>
             {% endif %}
             {% if html %}
@@ -37,8 +37,8 @@
         <h3>
           <span>
             {% if titleIcon %}
-              <svg class="icon" viewBox="0 0 512 512">
-                  <path d="{{ titleIcon }}"/>
+              <svg class="icon" viewBox="{{ titleIcon.size }}">
+                  <path d="{{ titleIcon.path }}"/>
               </svg>
             {% endif %}
             {% if html %}
@@ -53,8 +53,8 @@
         <p>
           <span>
             {% if messageIcon %}
-              <svg class="icon" viewBox="0 0 512 512">
-                  <path d="{{ messageIcon }}"/>
+              <svg class="icon" viewBox="{{ messageIcon.size }}">
+                  <path d="{{ messageIcon.path }}"/>
               </svg>
             {% endif %}
             {% if htmlSafe %}
