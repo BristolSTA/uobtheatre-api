@@ -1113,6 +1113,77 @@ def test_booking_filter_has_accessibility_info(gql_client, has_accessibility_inf
 
 
 @pytest.mark.django_db
+@pytest.mark.parametrize(
+    "has_permission, own_booking, in_future, expected_success, can_see_ticket",
+    [
+        (False, False, False, False, False),
+        (False, False, True, False, False),
+        (True, False, False, False, True),
+        (False, True, False, False, True),
+        (True, False, True, True, True),
+        (False, True, True, True, True),
+        (True, True, False, False, True),
+    ],
+)
+def test_can_modify_accessibility_info(
+    gql_client, has_permission, own_booking, in_future, expected_success, can_see_ticket
+):  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    gql_client.login()
+    now = timezone.now()
+    performance = PerformanceFactory(
+        start=(
+            now + datetime.timedelta(days=2)
+            if in_future
+            else now - datetime.timedelta(days=2)
+        ),
+        end=(
+            now + datetime.timedelta(days=3)
+            if in_future
+            else now - datetime.timedelta(days=1)
+        ),
+    )
+    booking = BookingFactory(
+        performance=performance,
+        user=gql_client.user if own_booking else UserFactory(),
+    )
+
+    if has_permission:
+        assign_perm(
+            "productions.modify_booking_accessibility",
+            gql_client.user,
+            booking.performance.production,
+        )
+        assign_perm(
+            "productions.view_bookings", gql_client.user, booking.performance.production
+        )
+
+    request_query = """
+        {
+          bookings(id: "%s") {
+            edges {
+              node {
+                canModifyAccessibility
+              }
+            }
+          }
+        }
+        """
+
+    response = gql_client.execute(
+        request_query % to_global_id("BookingNode", booking.id)
+    )
+
+    if can_see_ticket:
+        assert len(response["data"]["bookings"]["edges"]) == 1
+        assert (
+            response["data"]["bookings"]["edges"][0]["node"]["canModifyAccessibility"]
+            == expected_success
+        )
+    else:
+        assert len(response["data"]["bookings"]["edges"]) == 0
+
+
+@pytest.mark.django_db
 def test_booking_filter_active(gql_client):
     now = timezone.now()
 

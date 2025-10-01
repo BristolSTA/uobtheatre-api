@@ -789,7 +789,7 @@ def test_assignable_permissions(
         assert response["data"]["production"]["assignablePermissions"] is None
         return
 
-    assert len(response["data"]["production"]["assignablePermissions"]) == 10
+    assert len(response["data"]["production"]["assignablePermissions"]) == 11
 
     assert (
         len(
