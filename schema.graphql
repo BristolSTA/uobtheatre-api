@@ -338,7 +338,7 @@ enum MessageDismissalPolicy {
 
 enum MessageDisplayLocation {
   BANNER
-  LANDING_MODAL
+  SITEWIDE_MODAL
   BOOKING_MODAL
   PRODUCTION_CREATION_MODAL
 }
@@ -852,7 +852,7 @@ type SiteMessageNode implements Node {
   type: MessageType!
   dismissalPolicy: MessageDismissalPolicy!
   displayLocation: MessageDisplayLocation!
-  title: String!
+  title: String
   eventDuration: Int
   toDisplay: Boolean
 }
