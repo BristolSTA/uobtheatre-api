@@ -2,6 +2,7 @@ import abc
 import codecs
 from datetime import datetime
 from typing import List, Optional, Sequence, Union, overload
+from urllib.parse import quote_plus
 
 import qrcode
 import qrcode.image.svg
@@ -235,6 +236,18 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
         A compound item that contains information about accessibility."""
         self.items.append(AccessibilityBlock())
         return self
+    
+    def venue_block(self, venue):
+        """A VenueBlock composer item.
+        A compound item that contains information about a venue."""
+        self.items.append(VenueBlock(venue))
+        return self
+
+    def payment_block(self, payment):
+        """A PaymentBlock composer item.
+        A compound item that contains information about a payment, such as the amount, date, and method."""
+        self.items.append(PaymentBlock(payment))
+        return self
 
     def append(self, item):
         self.items.append(item)
@@ -369,10 +382,10 @@ class ListItem(ComposerItemInterface):
     Args:
         title (str): The title of the list item
         message (str): The message of the list item
-    title_icon (str): The icon to use for the title, from the icons dict
-    message_icon (str): The icon to use for the message, from the icons dict
+        title_icon (str): The icon to use for the title, from the icons dict
+        message_icon (str): The icon to use for the message, from the icons dict
         inline (bool): Whether to display the title and message on the same line or not (default: False)
-    html_safe (bool): Whether to parse the message as HTML or not (default: False)
+        html_safe (bool): Whether to parse the message as HTML or not (default: False)
     """
 
     def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
@@ -896,6 +909,7 @@ class VenueBlock(ComposerItemInterface):
         ]
         address_str = ", ".join(address_parts)
 
+        # Main venue information
         items = [
             Heading(subsubtitle="Venue Information", title_icon="city"),
             ListItem(
@@ -909,14 +923,27 @@ class VenueBlock(ComposerItemInterface):
                 title_icon="compass",
             ),
         ]
-        if getattr(self.venue, "what3words", None):
+        # Append What3Words if available
+        if getattr(self.venue.address, "what3words", None):
             items.append(
                 ListItem(
                     title="What3Words:",
-                    message=self.venue.what3words,
+                    message="<a href='https://what3words.com/{}' target='_blank'>{}</a>".format(
+                        self.venue.address.what3words[3:], # what3words.com URLs omit the leading "///"
+                        self.venue.address.what3words
+                    ),
                     title_icon="compass",
+                    html_safe=True,
                 )
             )
+        # Always append an 'open in google maps' button
+        maps_query = self.venue.name + (
+            f", {self.venue.address.street}, {self.venue.address.city}"
+            if self.venue.address and self.venue.address.street and self.venue.address.city
+            else "")
+        maps_url = "https://maps.google.com/?q={}".format(quote_plus(maps_query))
+        items.append(Button(maps_url, "Open in Google Maps"))
+
         return items
 
     def to_html(self):
@@ -929,6 +956,37 @@ class VenueBlock(ComposerItemInterface):
         if getattr(self.venue, "what3words", None):
             text += f"What3Words: {self.venue.what3words}\n"
         return text.strip()
+
+
+class PaymentBlock(ComposerItemInterface):
+    """
+    A PaymentBlock composer item.
+
+    Provides a standard layout for payment information.
+
+    Args:
+        payment (Payment): The payment object containing the details.
+    """
+
+    def __init__(self, payment) -> None:
+        super().__init__()
+        self.payment = payment
+
+    def to_text(self):
+        return f"\nPayment Information:\n\nAmount: £{self.payment.value}\nMethod: {self.payment.provider.description}"
+
+    def _stack_items(self):
+        return [
+            Heading(subsubtitle="Payment Information", title_icon="trolley"),
+
+            ListItem(message=f"{self.payment.value_currency} paid", message_icon="money"),
+
+            ListItem(
+                message=f"{self.payment.provider.description}{(' - ID ' + self.payment.provider_transaction_id) if self.payment.provider_transaction_id else '' }", message_icon="card"),
+        ]
+
+    def to_html(self):
+        return RowStack(self._stack_items()).to_html()
 
 
 class MailComposer(ComposerItemsContainer):

@@ -145,14 +145,7 @@ def test_booking_conf_new():
         ),
 
         BoxCols([
-            RowStack([
-                Heading(subsubtitle="Payment Information", title_icon="trolley"),
-
-                ListItem(message=f"{payment.value_currency} paid", message_icon="money"),
-
-                ListItem(
-                    message=f"{payment.provider.description}{(' - ID ' + payment.provider_transaction_id) if payment.provider_transaction_id else '' }", message_icon="card"),
-            ]),
+            PaymentBlock(payment),
 
             AccessibilityBlock()
         ]),
