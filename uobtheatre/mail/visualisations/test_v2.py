@@ -12,9 +12,11 @@ from uobtheatre.productions.test.factories import ProductionFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.utils.lang import pluralize
 
+from faker import Faker
+
 root = "./uobtheatre/mail/visualisations/v2/"
 
-mountainImage = "https://media.gettyimages.com/id/1211045588/photo/beautiful-winter-mountain-landscape-with-snow-and-glacier-lake.jpg?b=1&s=1024x1024&w=gi&k=20&c=gjiSUA2OVP3s8zJkmJDsBL2V80Hprvjdv5ZdEkV3VuE="
+testTrashImage = "https://uobtheatre-api-media.s3.amazonaws.com/media/featuredImage_63661587-ae96-4602-9b9b-e513b1fa360f.jpg"
 
 
 def write_files(mail, filename):
@@ -70,7 +72,7 @@ def _test_booking_conf():
             title="Your booking to %s has been confirmed!" % booking.performance.production.name
         ),
 
-        Image(src=mountainImage),
+        Image(src=testTrashImage),
 
         Paragraph(
 
@@ -115,22 +117,15 @@ def test_booking_conf_new():
 
     tickets = [TicketFactory(booking=booking) for _ in range(5)]
 
-    doors = booking.performance.doors_open.astimezone(
-        booking.performance.venue.address.timezone).strftime('%A, %d %B %Y at %H:%M (%Z)')
-    start = booking.performance.start.astimezone(
-        booking.performance.venue.address.timezone).strftime('%A, %d %B %Y at %H:%M (%Z)')
-
-
-
     test_mail = MailComposer.blank([
 
         Heading(
             title="Your booking to %s has been confirmed!" % booking.performance.production.name
         ),
 
-        Image(src=mountainImage),
+        Image(src=testTrashImage),
 
-    Heading(subtitle="About Your Booking", title_icon="bookmark"),
+        Heading(subtitle="About Your Booking", title_icon="bookmark"),
         
         Box(
             TimingsBlock(booking.performance)
@@ -155,3 +150,143 @@ def test_booking_conf_new():
     )
 
     write_files(test_mail, "booking_conf_new")
+
+@pytest.mark.django_db
+def test_production_approved_email():
+    user = UserFactory()
+    production = ProductionFactory()
+
+    test_mail = MailComposer.blank([
+
+        Heading(
+            title=f"Your production '{production.name}' has been approved!",
+            title_icon="square-check"
+        ),
+
+        Image(src=testTrashImage),
+
+        Greeting(user=user),
+
+        Paragraph(
+            message=f"Congratulations! Your production '{production.name}' has been approved. You're on the cusp of going live!"
+        ),
+
+        Paragraph(
+            message="Now your production is approved, you <b>cannot</b> make any changes to the production details or listing without it being reviewed again. If you need to make any changes, please contact us at <a href='mailto:support@uobtheatre.com'>support@uobtheatre.com</a>.",
+            html_safe=True
+        ),
+
+        Box(
+            RowStack([
+                Heading(
+                    subsubtitle="You should now:",
+                    title_icon="rocket"
+                ),
+                ListItem(
+                    title="Triple Check Your Production Details",
+                    title_icon="play",
+                    message="Make sure all the details are correct, and that your listing looks great. It's easy to fix things now, but once your production is live, things get more difficult!"
+                ),
+                ListItem(
+                    title="Edit Permissions",
+                    title_icon="play",
+                    message="If your show is being put on with an STA crew, you won't need to worry about this, but if you're working at an external venue make sure you've given the right people access to manage your production and operate your box office."
+                ),
+                ListItem(
+                    title="Create Complimentary Bookings",
+                    title_icon="play",
+                    message="As soon as you make your production live, anybody can book a ticket. If you want to guarantee tickets for certain people, you should create complimentary bookings for them now."
+                ),
+                ListItem(
+                    title="And Make Your Production Live!",
+                    title_icon="play",
+                ),
+
+                Button(f"/administration/productions/{production.slug}",
+                    "Go To Production Control Panel")
+            ])
+        ),
+
+        Closer()
+    ])
+
+    write_files(test_mail, "production_approved_email")
+
+@pytest.mark.django_db
+def test_production_needs_changes_email():
+    user = UserFactory()
+    production = ProductionFactory()
+
+    fake = Faker()
+    message = fake.sentence(nb_words=20)
+
+    test_mail = MailComposer.blank([
+
+        Heading(
+            title=f"Your production '{production.name}' needs some changes",
+            title_icon="alert-triangle"
+        ),
+
+        Image(src=testTrashImage),
+
+        Greeting(user=user),
+
+        Paragraph(
+            message=f"We have reviewed your production '{production.name}', and some changes need to be made before we can approve it."
+        ),
+
+        Paragraph(
+            message="Please review the comments below, and make the required changes. Once you're done, you can resubmit your production for review.",
+        ),
+
+        # Note to self: we should make message mandatory when submitting a review
+        Box(
+            RowStack([
+                Heading(
+                    subsubtitle="Review Comments:",
+                    title_icon="comments"
+                ),
+                ListItem(
+                    message=message
+                )
+            ])
+        ),
+
+        Paragraph(
+            message="If you need any help, please contact us at <a href='mailto:support@uobtheatre.com'>support@uobtheatre.com</a>",
+            html_safe=True
+        ),
+
+        Closer()
+    ])
+
+    write_files(test_mail, "production_needs_changes_email")
+
+
+@pytest.mark.django_db
+def test_production_ready_for_review_email():
+    user = UserFactory()
+    production = ProductionFactory()
+
+    test_mail = MailComposer.blank([
+
+        Heading(
+            title=f"'{production.name}' is ready for review",
+            title_icon="rocket"
+        ),
+
+        Image(src=testTrashImage),
+        
+        Greeting(user=user),
+
+        Paragraph(
+            message=f"'{production.name}' has been submitted for review. Please head to the admin control panel, verify the production's details and listing, and either approve or reject."
+        ),
+
+        Button(f"/administration/productions/{production.slug}",
+            "Go To Production Control Panel"),
+
+        Closer()
+    ])
+
+    write_files(test_mail, "production_ready_for_review_email")

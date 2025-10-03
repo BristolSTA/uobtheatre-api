@@ -33,7 +33,7 @@
 
     /* Utility classes */
     .pad {
-        padding: 10px;
+        padding: 8px;
     }
 
     .pad-sml {
@@ -103,17 +103,9 @@
         font-weight: bold;
     }
 
-    h4 {
-        line-height: inherit;
-        font-size: 16px;
-        color: #000000;
-        margin: 0;
-        font-weight: bold;
-    }
-
     p {
         line-height: inherit;
-        font-size: 14px;
+        font-size: 16px;
         color: #000000;
         margin: 0;
     }
@@ -280,7 +272,7 @@
 /* Mobile styles - screens smaller than 640px */
 @media (max-width: 640px) {
     .pad {
-        padding: 8px;
+        padding: 6px;
     }
     
     .pad-sml {
@@ -356,5 +348,9 @@
     .desktop_hide table {
         display: table !important;
         max-height: none !important;
+    }
+
+    .box {
+        padding: 5px;
     }
 }

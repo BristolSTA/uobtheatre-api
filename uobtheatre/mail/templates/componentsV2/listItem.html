@@ -1,30 +1,33 @@
 <table class="full-width" border="0" cellspacing="0" cellpadding="0">
     <tr>
-        <td class="list-item {% if inline %}list-item-inline{% endif %}">
+        <td class="list-item">
             {% if title %}
-                <span class="list-item-title">
-                    {% if titleIcon %}
-                        <svg class="icon" viewBox="{{ titleIcon.size }}">
-                            <path d="{{ titleIcon.path }}"/>
-                        </svg>
-                    {% endif %}
-                    {{ title }}
-                </span>
+            <span class="list-item-title">
+                {% if titleIcon %}
+                <svg class="icon" viewBox="{{ titleIcon.size }}">
+                    <path d="{{ titleIcon.path }}"/>
+                </svg>
+                {% endif %}
+                {{ title }}
+            </span>
             {% endif %}
             
             {% if message %}
-                <span class="list-item-message">
-                    {% if messageIcon %}
-                        <svg class="icon" viewBox="{{ messageIcon.size }}">
-                            <path d="{{ messageIcon.path }}"/>
-                        </svg>
-                    {% endif %}
-                    {% if htmlSafe %}
-                    {{ message|safe }}
-                    {% else %}
-                    {{ message }}
-                    {% endif %}
-                </span>
+            {% if title and not inline %}
+                <br>
+            {% endif %}
+            <span class="list-item-message">
+                {% if messageIcon %}
+                <svg class="icon" viewBox="{{ messageIcon.size }}">
+                    <path d="{{ messageIcon.path }}"/>
+                </svg>
+                {% endif %}
+                {% if htmlSafe %}
+                {{ message|safe }}
+                {% else %}
+                {{ message }}
+                {% endif %}
+            </span>
             {% endif %}
         </td>
     </tr>
