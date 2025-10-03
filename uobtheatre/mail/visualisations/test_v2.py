@@ -276,7 +276,7 @@ def test_production_ready_for_review_email():
         ),
 
         Image(src=testTrashImage),
-        
+
         Greeting(user=user),
 
         Paragraph(
@@ -290,3 +290,53 @@ def test_production_ready_for_review_email():
     ])
 
     write_files(test_mail, "production_ready_for_review_email")
+
+@pytest.mark.django_db
+def test_mass_email_admin_notification_email():
+    user = UserFactory()
+    production = ProductionFactory()
+
+    mass_email = MailComposer.blank([
+
+        Heading(
+            title=f"'{production.name}' is ready for review",
+            title_icon="rocket"
+        ),
+
+        Image(src=testTrashImage),
+
+        Greeting(user=user),
+
+        Paragraph(
+            message=f"'{production.name}' has been submitted for review. Please head to the admin control panel, verify the production's details and listing, and either approve or reject."
+        ),
+
+        Button(f"/administration/productions/{production.slug}",
+            "Go To Production Control Panel"),
+
+        Closer()
+    ]).to_html()
+
+    test_mail = MailComposer.blank([
+
+        Heading(
+            title=f"New Mass Email Sent",
+            title_icon="envelope"
+        ),
+
+        Greeting(user=user),
+
+        # Replace number with {len(django_emails)} when implementing
+        Paragraph(
+            message=f"The following mass email was sent 22 times:"
+        ),
+
+        Box(
+            HTMLBlock(mass_email),
+            bgCol="#2B303A"
+        ),
+
+        Closer()
+    ])
+
+    write_files(test_mail, "mass_email_admin_notification_email")

@@ -351,6 +351,19 @@ class Paragraph(ComposerItemInterface):
         return template.render({"message": self.message, "htmlSafe": self.html_safe})
 
 
+class HTMLBlock(ComposerItemInterface):
+    """A raw HTML block composer item"""
+
+    def __init__(self, html: str) -> None:
+        super().__init__()
+        self.html = html
+
+    def to_text(self):
+        return strip_tags(self.html)
+
+    def to_html(self):
+        return self.html
+
 class Heading(ComposerItemInterface):
     """
     A Heading composer item.
