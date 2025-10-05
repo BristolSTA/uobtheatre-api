@@ -36621,23 +36621,6 @@
   }
 },
 {
-  "model": "users.user",
-  "pk": "2d98330c-650a-46d1-bc29-bea56f3c26ba",
-  "fields": {
-    "password": "!MZfgS69uH7MX30o8H2tsu8jPcVPD9yAuFHbgggCc",
-    "last_login": null,
-    "is_superuser": false,
-    "first_name": "",
-    "last_name": "",
-    "is_staff": false,
-    "is_active": true,
-    "date_joined": "2025-10-05T15:58:55.497Z",
-    "email": "AnonymousUser",
-    "groups": [],
-    "user_permissions": []
-  }
-},
-{
   "model": "venues.venue",
   "pk": 1,
   "fields": {
