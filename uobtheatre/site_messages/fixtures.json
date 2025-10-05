@@ -5,9 +5,9 @@
         "fields": {
             "message": "There will be some maintenance tomorrow.",
             "active": true,
-            "display_start": "2024-09-01T04:00:00+0000",
-            "event_start": "2024-09-02T08:00:00+0000",
-            "event_end": "2024-09-02T16:00:00+0000",
+            "display_start": "2034-09-01T04:00:00+0000",
+            "event_start": "2034-09-02T08:00:00+0000",
+            "event_end": "2034-09-02T16:00:00+0000",
             "creator": 1,
             "type": "INFORMATION",
             "dismissal_policy": "BANNED"
@@ -19,9 +19,9 @@
         "fields": {
             "message": "This is a test warning!",
             "active": true,
-            "display_start": "2024-11-11T12:00:00+0000",
-            "event_start": "2024-11-11T12:00:00+0000",
-            "event_end": "2024-11-12T12:00:00+0000",
+            "display_start": "2034-11-11T12:00:00+0000",
+            "event_start": "2034-11-11T12:00:00+0000",
+            "event_end": "2034-11-12T12:00:00+0000",
             "indefinite_override": true,
             "creator": 1,
             "type": "WARNING",
@@ -34,9 +34,9 @@
         "fields": {
             "message": "This is a test alert, enjoy!",
             "active": true,
-            "display_start": "2024-12-24T12:00:00+0000",
-            "event_start": "2024-12-01T12:00:00+0000",
-            "event_end": "2024-12-02T12:00:00+0000",
+            "display_start": "2034-12-24T12:00:00+0000",
+            "event_start": "2034-12-01T12:00:00+0000",
+            "event_end": "2034-12-02T12:00:00+0000",
             "creator": 1,
             "type": "ALERT"
         }
