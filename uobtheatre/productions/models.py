@@ -812,7 +812,7 @@ class ProductionQuerySet(QuerySet):
         ).values_list("id", flat=True)
 
         # Productions the user has tickets for that are within the last week or the future
-        productions_user_has_tickets = []
+        productions_user_has_tickets: QuerySet[Any] = self.none()
         if user.is_authenticated:
             one_week_ago = timezone.now() - datetime.timedelta(days=7)
             productions_user_has_tickets = self.filter(
