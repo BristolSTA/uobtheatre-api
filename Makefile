@@ -54,7 +54,7 @@ down: ## Down
 	docker compose down
 
 dump: ## dumps databse objects into fixture
-	$(COMMAND_PREFIX) python manage.py dumpdata users images addresses venues societies productions discounts bookings payments --indent 2 > db.json
+	$(COMMAND_PREFIX) python manage.py dumpdata addresses bookings discounts finance images payments productions site_messages societies users venues --indent 2 > db.json
 
 migrations: ## Make the migrations
 	$(COMMAND_PREFIX) python manage.py makemigrations
@@ -88,10 +88,10 @@ seed: ## Seed the db with some example data
 		uobtheatre/finance/fixtures.json \
 		uobtheatre/site_messages/fixtures.json
 
-seed-testfixtures: ## Seed the data for e2e testing
+seed-testfixtures: ## Seed the data for e2e testing (with the same data as the example data)
 	$(COMMAND_PREFIX) python manage.py loaddata db.json
 
-superuser: ## Seed the db with admin superuser
+seed-users: ## Seed the db with only the users, including the admin superusers
 	$(COMMAND_PREFIX) python manage.py loaddata uobtheatre/users/fixtures.json
 
 psql: ## Connect to db
