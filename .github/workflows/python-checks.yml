@@ -163,7 +163,9 @@ jobs:
     - name: Check example fixture data can still be loaded 🔄
       run: |
         ./manage.py migrate
-        ./manage.py loaddata uobtheatre/images/fixtures.json uobtheatre/addresses/fixtures.json obtheatre/users/fixtures.json \
+        ./manage.py loaddata uobtheatre/images/fixtures.json \
+        uobtheatre/addresses/fixtures.json \
+        uobtheatre/users/fixtures.json \
         uobtheatre/societies/fixtures.json \
         uobtheatre/venues/fixtures.json \
         uobtheatre/discounts/fixtures.json \
