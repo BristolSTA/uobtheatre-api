@@ -1,55 +1,410 @@
 [
-    {
-        "model": "venues.venue",
-        "pk": 1,
-        "fields": {
-            "created_at": "2030-11-11T12:04:32+0000",
-            "updated_at": "2030-11-11T12:24:32+0000",
-            "name": "The Winston Theatre",
-            "internal_capacity": 209,
-            "address": 1,
-            "publicly_listed": true,
-            "slug": "winston-theatre",
-            "image": 1,
-            "email": "support@uobtheatre.com",
-            "website": "https://uobtheatre.com"
-        }
-    },
-    {
-        "model": "venues.venue",
-        "pk": 2,
-        "fields": {
-            "created_at": "2030-11-11T12:04:32+0000",
-            "updated_at": "2030-11-11T12:24:32+0000",
-            "name": "The Pegg Theatre",
-            "internal_capacity": 80,
-            "address": 2,
-            "publicly_listed": true,
-            "slug": "pegg-theatre",
-            "image": 1
-        }
-
-    },
-    {
-        "model": "venues.venue",
-        "pk": 3,
-        "fields": {
-            "created_at": "2030-11-11T12:04:32+0000",
-            "updated_at": "2030-11-11T12:24:32+0000",
-            "name": "The Anson Rooms",
-            "internal_capacity": 1000,
-            "address": 1,
-            "slug": "anson-rooms",
-            "image": 1
-        }
-    },
-    {
-        "model": "venues.seatgroup",
-        "pk": 1,
-        "fields": {
-            "name": "Generic seating",
-            "venue": 1,
-            "capacity": 204
-        }
+  {
+    "model": "venues.venue",
+    "pk": 1,
+    "fields": {
+      "created_at": "2035-01-07T10:00:00+0000",
+      "updated_at": "2035-01-07T10:30:00+0000",
+      "name": "Winston Theatre",
+      "internal_capacity": 200,
+      "description": "Winston Theatre is a versatile performance venue with modern facilities.",
+      "accessibility_info": "Wheelchair access available; hearing loop installed.",
+      "email": "bookings@winstontheatre.com",
+      "website": "https://winstontheatre.com",
+      "address": 1,
+      "image": 17,
+      "publicly_listed": false,
+      "slug": "winston-theatre"
     }
+  },
+  {
+    "model": "venues.venue",
+    "pk": 2,
+    "fields": {
+      "created_at": "2035-01-09T10:00:00+0000",
+      "updated_at": "2035-01-09T10:30:00+0000",
+      "name": "Pegg Studio",
+      "internal_capacity": 250,
+      "description": "Pegg Studio is a versatile performance venue with modern facilities.",
+      "accessibility_info": "Wheelchair access available; hearing loop installed.",
+      "email": "bookings@peggstudio.com",
+      "website": "https://peggstudio.com",
+      "address": 2,
+      "image": 18,
+      "publicly_listed": true,
+      "slug": "pegg-studio"
+    }
+  },
+  {
+    "model": "venues.venue",
+    "pk": 3,
+    "fields": {
+      "created_at": "2035-01-11T10:00:00+0000",
+      "updated_at": "2035-01-11T10:30:00+0000",
+      "name": "Anson Rooms",
+      "internal_capacity": 300,
+      "description": "Anson Rooms is a versatile performance venue with modern facilities.",
+      "accessibility_info": "Wheelchair access available; hearing loop installed.",
+      "email": "bookings@ansonrooms.com",
+      "website": "https://ansonrooms.com",
+      "address": 3,
+      "image": 19,
+      "publicly_listed": false,
+      "slug": "anson-rooms"
+    }
+  },
+  {
+    "model": "venues.venue",
+    "pk": 4,
+    "fields": {
+      "created_at": "2035-01-13T10:00:00+0000",
+      "updated_at": "2035-01-13T10:30:00+0000",
+      "name": "Richmond Hall",
+      "internal_capacity": 350,
+      "description": "Richmond Hall is a versatile performance venue with modern facilities.",
+      "accessibility_info": "Wheelchair access available; hearing loop installed.",
+      "email": "bookings@richmondhall.com",
+      "website": "https://richmondhall.com",
+      "address": 4,
+      "image": 20,
+      "publicly_listed": true,
+      "slug": "richmond-hall"
+    }
+  },
+  {
+    "model": "venues.venue",
+    "pk": 5,
+    "fields": {
+      "created_at": "2035-01-15T10:00:00+0000",
+      "updated_at": "2035-01-15T10:30:00+0000",
+      "name": "Harbourside Playhouse",
+      "internal_capacity": 400,
+      "description": "Harbourside Playhouse is a versatile performance venue with modern facilities.",
+      "accessibility_info": "Wheelchair access available; hearing loop installed.",
+      "email": "bookings@harboursideplayhouse.com",
+      "website": "https://harboursideplayhouse.com",
+      "address": 5,
+      "image": 21,
+      "publicly_listed": false,
+      "slug": "harbourside-playhouse"
+    }
+  },
+  {
+    "model": "venues.venue",
+    "pk": 6,
+    "fields": {
+      "created_at": "2035-01-17T10:00:00+0000",
+      "updated_at": "2035-01-17T10:30:00+0000",
+      "name": "Clifton Pavilion",
+      "internal_capacity": 450,
+      "description": "Clifton Pavilion is a versatile performance venue with modern facilities.",
+      "accessibility_info": "Wheelchair access available; hearing loop installed.",
+      "email": "bookings@cliftonpavilion.com",
+      "website": "https://cliftonpavilion.com",
+      "address": 6,
+      "image": 22,
+      "publicly_listed": true,
+      "slug": "clifton-pavilion"
+    }
+  },
+  {
+    "model": "venues.venue",
+    "pk": 7,
+    "fields": {
+      "created_at": "2035-01-19T10:00:00+0000",
+      "updated_at": "2035-01-19T10:30:00+0000",
+      "name": "Beacon Arts Centre",
+      "internal_capacity": 500,
+      "description": "Beacon Arts Centre is a versatile performance venue with modern facilities.",
+      "accessibility_info": "Wheelchair access available; hearing loop installed.",
+      "email": "bookings@beaconartscentre.com",
+      "website": "https://beaconartscentre.com",
+      "address": 7,
+      "image": 23,
+      "publicly_listed": false,
+      "slug": "beacon-arts-centre"
+    }
+  },
+  {
+    "model": "venues.venue",
+    "pk": 8,
+    "fields": {
+      "created_at": "2035-01-21T10:00:00+0000",
+      "updated_at": "2035-01-21T10:30:00+0000",
+      "name": "Willow Studio",
+      "internal_capacity": 550,
+      "description": "Willow Studio is a versatile performance venue with modern facilities.",
+      "accessibility_info": "Wheelchair access available; hearing loop installed.",
+      "email": "bookings@willowstudio.com",
+      "website": "https://willowstudio.com",
+      "address": 8,
+      "image": 24,
+      "publicly_listed": true,
+      "slug": "willow-studio"
+    }
+  },
+  {
+    "model": "venues.seatgroup",
+    "pk": 1,
+    "fields": {
+      "name": "Winston Theatre Section A",
+      "description": "Section A seating at Winston Theatre.",
+      "venue": 1,
+      "capacity": 80,
+      "is_internal": true
+    }
+  },
+  {
+    "model": "venues.seatgroup",
+    "pk": 2,
+    "fields": {
+      "name": "Winston Theatre Section B",
+      "description": "Section B seating at Winston Theatre.",
+      "venue": 1,
+      "capacity": 120,
+      "is_internal": true
+    }
+  },
+  {
+    "model": "venues.seatgroup",
+    "pk": 3,
+    "fields": {
+      "name": "Winston Theatre Section C",
+      "description": "Section C seating at Winston Theatre.",
+      "venue": 1,
+      "capacity": 160,
+      "is_internal": false
+    }
+  },
+  {
+    "model": "venues.seatgroup",
+    "pk": 4,
+    "fields": {
+      "name": "Pegg Studio Section A",
+      "description": "Section A seating at Pegg Studio.",
+      "venue": 2,
+      "capacity": 80,
+      "is_internal": true
+    }
+  },
+  {
+    "model": "venues.seatgroup",
+    "pk": 5,
+    "fields": {
+      "name": "Pegg Studio Section B",
+      "description": "Section B seating at Pegg Studio.",
+      "venue": 2,
+      "capacity": 120,
+      "is_internal": true
+    }
+  },
+  {
+    "model": "venues.seatgroup",
+    "pk": 6,
+    "fields": {
+      "name": "Pegg Studio Section C",
+      "description": "Section C seating at Pegg Studio.",
+      "venue": 2,
+      "capacity": 160,
+      "is_internal": false
+    }
+  },
+  {
+    "model": "venues.seatgroup",
+    "pk": 7,
+    "fields": {
+      "name": "Anson Rooms Section A",
+      "description": "Section A seating at Anson Rooms.",
+      "venue": 3,
+      "capacity": 80,
+      "is_internal": true
+    }
+  },
+  {
+    "model": "venues.seatgroup",
+    "pk": 8,
+    "fields": {
+      "name": "Anson Rooms Section B",
+      "description": "Section B seating at Anson Rooms.",
+      "venue": 3,
+      "capacity": 120,
+      "is_internal": true
+    }
+  },
+  {
+    "model": "venues.seatgroup",
+    "pk": 9,
+    "fields": {
+      "name": "Anson Rooms Section C",
+      "description": "Section C seating at Anson Rooms.",
+      "venue": 3,
+      "capacity": 160,
+      "is_internal": false
+    }
+  },
+  {
+    "model": "venues.seatgroup",
+    "pk": 10,
+    "fields": {
+      "name": "Richmond Hall Section A",
+      "description": "Section A seating at Richmond Hall.",
+      "venue": 4,
+      "capacity": 80,
+      "is_internal": true
+    }
+  },
+  {
+    "model": "venues.seatgroup",
+    "pk": 11,
+    "fields": {
+      "name": "Richmond Hall Section B",
+      "description": "Section B seating at Richmond Hall.",
+      "venue": 4,
+      "capacity": 120,
+      "is_internal": true
+    }
+  },
+  {
+    "model": "venues.seatgroup",
+    "pk": 12,
+    "fields": {
+      "name": "Richmond Hall Section C",
+      "description": "Section C seating at Richmond Hall.",
+      "venue": 4,
+      "capacity": 160,
+      "is_internal": false
+    }
+  },
+  {
+    "model": "venues.seatgroup",
+    "pk": 13,
+    "fields": {
+      "name": "Harbourside Playhouse Section A",
+      "description": "Section A seating at Harbourside Playhouse.",
+      "venue": 5,
+      "capacity": 80,
+      "is_internal": true
+    }
+  },
+  {
+    "model": "venues.seatgroup",
+    "pk": 14,
+    "fields": {
+      "name": "Harbourside Playhouse Section B",
+      "description": "Section B seating at Harbourside Playhouse.",
+      "venue": 5,
+      "capacity": 120,
+      "is_internal": true
+    }
+  },
+  {
+    "model": "venues.seatgroup",
+    "pk": 15,
+    "fields": {
+      "name": "Harbourside Playhouse Section C",
+      "description": "Section C seating at Harbourside Playhouse.",
+      "venue": 5,
+      "capacity": 160,
+      "is_internal": false
+    }
+  },
+  {
+    "model": "venues.seatgroup",
+    "pk": 16,
+    "fields": {
+      "name": "Clifton Pavilion Section A",
+      "description": "Section A seating at Clifton Pavilion.",
+      "venue": 6,
+      "capacity": 80,
+      "is_internal": true
+    }
+  },
+  {
+    "model": "venues.seatgroup",
+    "pk": 17,
+    "fields": {
+      "name": "Clifton Pavilion Section B",
+      "description": "Section B seating at Clifton Pavilion.",
+      "venue": 6,
+      "capacity": 120,
+      "is_internal": true
+    }
+  },
+  {
+    "model": "venues.seatgroup",
+    "pk": 18,
+    "fields": {
+      "name": "Clifton Pavilion Section C",
+      "description": "Section C seating at Clifton Pavilion.",
+      "venue": 6,
+      "capacity": 160,
+      "is_internal": false
+    }
+  },
+  {
+    "model": "venues.seatgroup",
+    "pk": 19,
+    "fields": {
+      "name": "Beacon Arts Centre Section A",
+      "description": "Section A seating at Beacon Arts Centre.",
+      "venue": 7,
+      "capacity": 80,
+      "is_internal": true
+    }
+  },
+  {
+    "model": "venues.seatgroup",
+    "pk": 20,
+    "fields": {
+      "name": "Beacon Arts Centre Section B",
+      "description": "Section B seating at Beacon Arts Centre.",
+      "venue": 7,
+      "capacity": 120,
+      "is_internal": true
+    }
+  },
+  {
+    "model": "venues.seatgroup",
+    "pk": 21,
+    "fields": {
+      "name": "Beacon Arts Centre Section C",
+      "description": "Section C seating at Beacon Arts Centre.",
+      "venue": 7,
+      "capacity": 160,
+      "is_internal": false
+    }
+  },
+  {
+    "model": "venues.seatgroup",
+    "pk": 22,
+    "fields": {
+      "name": "Willow Studio Section A",
+      "description": "Section A seating at Willow Studio.",
+      "venue": 8,
+      "capacity": 80,
+      "is_internal": true
+    }
+  },
+  {
+    "model": "venues.seatgroup",
+    "pk": 23,
+    "fields": {
+      "name": "Willow Studio Section B",
+      "description": "Section B seating at Willow Studio.",
+      "venue": 8,
+      "capacity": 120,
+      "is_internal": true
+    }
+  },
+  {
+    "model": "venues.seatgroup",
+    "pk": 24,
+    "fields": {
+      "name": "Willow Studio Section C",
+      "description": "Section C seating at Willow Studio.",
+      "venue": 8,
+      "capacity": 160,
+      "is_internal": false
+    }
+  }
 ]
