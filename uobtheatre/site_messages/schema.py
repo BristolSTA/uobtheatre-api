@@ -4,6 +4,7 @@ from django.db.models.query_utils import Q
 from graphene import relay
 from graphene_django import DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
+from django.utils import timezone
 
 from uobtheatre.site_messages.models import Message
 from uobtheatre.utils.filters import FilterSet
@@ -87,6 +88,8 @@ class SiteMessageFilterSet(FilterSet):
     end__gte = django_filters.DateTimeFilter(method="end_filter")
     end__lte = django_filters.DateTimeFilter(method="end_filter")
 
+    to_display = django_filters.BooleanFilter(method="to_display_filter")
+
     @classmethod
     def display_start_filter(cls, query_set, value, date=None):
         return query_set.annotate_display().filter(**{value: date})
@@ -98,6 +101,21 @@ class SiteMessageFilterSet(FilterSet):
     @classmethod
     def end_filter(cls, query_set, value, date=None):
         return query_set.annotate_end().filter(**{value: date})
+    
+    def to_display_filter(self, queryset, _, value):
+        """
+            Because django does not support querying properties, if you edit this method, please also
+            edit the to_display property in site_messages/models.py.
+        """
+        return queryset.filter(
+            Q(active=True)
+            & Q(display_start__lte=timezone.now())
+            & (Q(event_end__gte=timezone.now()) | Q(indefinite_override=True))
+        ) if value else queryset.exclude(
+            Q(active=True)
+            & Q(display_start__lte=timezone.now())
+            & (Q(event_end__gte=timezone.now()) | Q(indefinite_override=True))
+        )
 
     class Meta:
         model = Message

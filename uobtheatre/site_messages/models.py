@@ -161,6 +161,9 @@ class Message(BaseModel):
         Messages are displayed if they are active, either the display_start is in the past or null,
         and the event_end is in the future or the indefinite_override is set.
 
+        Because django does not support querying properties, if you edit this method, please also
+        edit the to_display_filter method in site_messages/schema.py.
+
         Returns:
             bool: Whether the message should be displayed.
         """
