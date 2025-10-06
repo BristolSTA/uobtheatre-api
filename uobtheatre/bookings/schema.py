@@ -345,7 +345,8 @@ class BookingNode(DjangoObjectType):
     sales_breakdown = graphene.Field(SalesBreakdownNode)
 
     can_modify_accessibility = graphene.Boolean(
-        description="Whether the user can modify the accessibility information of this booking"
+        description="Whether the user can modify the accessibility information of this booking",
+        required=True,
     )
 
     def resolve_price_breakdown(self, _):
