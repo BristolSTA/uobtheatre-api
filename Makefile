@@ -91,9 +91,6 @@ seed: ## Seed the db with some example data
 		uobtheatre/finance/fixtures.json \
 		uobtheatre/site_messages/fixtures.json
 
-seed-testfixtures: ## Seed the data for e2e testing (with the same data as the example data)
-	$(COMMAND_PREFIX) python manage.py loaddata db.json
-
 seed-users: ## Seed the db with only the users, including the admin superusers
 	$(COMMAND_PREFIX) python manage.py loaddata uobtheatre/users/fixtures.json
 

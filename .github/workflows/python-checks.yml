@@ -177,13 +177,6 @@ jobs:
       env:
         DATABASE_URL: postgresql://postgres:postgres@0.0.0.0:5432/uobtheatre_api
 
-    - name: Check e2e fixture data can still be loaded 🔄
-      run: |
-        ./manage.py flush --no-input
-        ./manage.py loaddata db.json
-      env:
-        DATABASE_URL: postgresql://postgres:postgres@0.0.0.0:5432/uobtheatre_api
-
   schema:
     runs-on: ubuntu-latest
     steps:
