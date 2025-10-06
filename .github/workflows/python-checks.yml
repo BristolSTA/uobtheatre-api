@@ -180,8 +180,9 @@ jobs:
     # Stop and remove the db_service container, then start a new one for e2e fixtures
     - name: Restart PostgreSQL service for e2e fixtures
       run: |
-        docker stop $(docker ps -q --filter "name=db_service") || true
-        docker rm $(docker ps -a -q --filter "name=db_service") || true
+        db_container=$(docker ps -q --filter "name=postgres")
+        docker stop $db_container
+        docker rm $db_container
         docker run -d --name db_service \
           -e POSTGRES_USER=postgres \
           -e POSTGRES_DB=uobtheatre_api \
