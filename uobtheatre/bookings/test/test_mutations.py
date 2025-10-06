@@ -2832,12 +2832,35 @@ def test_accessibility_mutation(existing_info, new_info, gql_client):
 
 
 @pytest.mark.django_db
-def test_acessibility_mutation_box_office_perms(gql_client):
+@pytest.mark.parametrize(
+    "permission, is_user, expected_success, expected_error",
+    [
+        (None, True, True, None),
+        (
+            None,
+            False,
+            False,
+            "You do not have permission to modify the accessibility information for this booking",
+        ),
+        (
+            "productions.boxoffice",
+            False,
+            False,
+            "You do not have permission to modify the accessibility information for this booking",
+        ),
+        ("productions.modify_booking_accessibility", False, True, None),
+    ],
+)
+def test_accessibility_mutation_permissions(
+    gql_client, permission, is_user, expected_success, expected_error
+):
     gql_client.login()
     booking = BookingFactory()
-    assign_perm(
-        "productions.boxoffice", gql_client.user, booking.performance.production
-    )
+    if permission:
+        assign_perm(permission, gql_client.user, booking.performance.production)
+    if is_user:
+        booking.user = gql_client.user
+        booking.save()
 
     request_query = """
         mutation {
@@ -2863,43 +2886,15 @@ def test_acessibility_mutation_box_office_perms(gql_client):
 
     response = gql_client.execute(request_query)
 
-    assert response["data"]["updateBookingAccessibilityInfo"]["success"] is True
-
-
-@pytest.mark.django_db
-def test_accessibility_mutation_unauthorized_user(gql_client):
-    gql_client.login()
-    booking = BookingFactory()
-
-    request_query = """
-        mutation {
-            updateBookingAccessibilityInfo(
-                bookingId: "%s"
-                accessibilityInfo: "I need a wheelchair space"
-            ) {
-                success
-                errors {
-                    __typename
-                    ... on NonFieldError {
-                        message
-                    }
-                    ... on FieldError {
-                        message
-                    }
-                }
-            }
-        }
-    """ % (
-        to_global_id("BookingNode", booking.id)
-    )
-
-    response = gql_client.execute(request_query)
-
-    assert response["data"]["updateBookingAccessibilityInfo"]["success"] is False
     assert (
-        response["data"]["updateBookingAccessibilityInfo"]["errors"][0]["message"]
-        == "You do not have permission to modify the accessibility information for this booking"
+        response["data"]["updateBookingAccessibilityInfo"]["success"]
+        is expected_success
     )
+    if not expected_success:
+        assert (
+            response["data"]["updateBookingAccessibilityInfo"]["errors"][0]["message"]
+            == expected_error
+        )
 
 
 @pytest.mark.django_db
@@ -2936,5 +2931,5 @@ def test_past_production_accessibility_denied(gql_client):
     assert response["data"]["updateBookingAccessibilityInfo"]["success"] is False
     assert (
         response["data"]["updateBookingAccessibilityInfo"]["errors"][0]["message"]
-        == "Accessibility information can only be updated for future performances"
+        == "You do not have permission to modify the accessibility information for this booking"
     )

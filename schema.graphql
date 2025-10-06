@@ -56,6 +56,7 @@ type BookingNode implements Node {
   transactions(offset: Int, before: String, after: String, first: Int, last: Int, type: String, provider: String, createdAt: DateTime, id: ID): TransactionNodeConnection
   expired: Boolean!
   salesBreakdown: SalesBreakdownNode
+  canModifyAccessibility: Boolean!
 }
 
 type BookingNodeConnection {
@@ -1054,6 +1055,7 @@ type VenueNode implements Node {
   internalCapacity: Int!
   description: String
   accessibilityInfo: String
+  accessibilityShort: String
   email: String
   website: String
   address: AddressNode!
