@@ -177,9 +177,34 @@ jobs:
       env:
         DATABASE_URL: postgresql://postgres:postgres@0.0.0.0:5432/uobtheatre_api
 
+    # Stop and remove the db_service container, then start a new one for e2e fixtures
+    - name: Restart PostgreSQL service for e2e fixtures
+      run: |
+        docker stop $(docker ps -q --filter "name=db_service") || true
+        docker rm $(docker ps -a -q --filter "name=db_service") || true
+        docker run -d --name db_service \
+          -e POSTGRES_USER=postgres \
+          -e POSTGRES_DB=uobtheatre_api \
+          -e POSTGRES_PASSWORD=postgres \
+          -p 5432:5432 \
+          --health-cmd="pg_isready" \
+          --health-interval=10s \
+          --health-timeout=5s \
+          --health-retries=5 \
+          postgres
+        # Wait for the new container to be healthy
+        for i in {1..10}; do
+          if docker exec db_service pg_isready; then
+          echo "Postgres is ready!"
+          break
+          fi
+          echo "Waiting for postgres..."
+          sleep 5
+        done
+
     - name: Check e2e fixture data can still be loaded 🔄
       run: |
-        ./manage.py flush --no-input
+        ./manage.py migrate
         ./manage.py loaddata db.json
       env:
         DATABASE_URL: postgresql://postgres:postgres@0.0.0.0:5432/uobtheatre_api
