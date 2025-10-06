@@ -280,6 +280,7 @@ def test_site_message_time_filters(
         for i in expected_outputs
     ]
 
+
 @pytest.mark.django_db
 def test_site_message_to_display_filter(gql_client):
     current_time = timezone.now().replace(microsecond=0, second=0)
@@ -342,6 +343,6 @@ def test_site_message_to_display_filter(gql_client):
 
     assert len(response["data"]["siteMessages"]["edges"]) == 3
     assert response["data"]["siteMessages"]["edges"] == [
-        { "node": {"id": to_global_id("SiteMessageNode", msg.id)}}
+        {"node": {"id": to_global_id("SiteMessageNode", msg.id)}}
         for msg in [msg1, msg2, msg3]
     ]
