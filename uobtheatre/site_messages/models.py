@@ -4,6 +4,7 @@ from django.db import models
 from django.db.models import F
 from django.db.models.query import QuerySet
 from django.utils import timezone
+from django_tiptap.fields import TipTapTextField
 
 from uobtheatre.users.models import User
 from uobtheatre.utils.models import BaseModel
@@ -34,13 +35,13 @@ class Message(BaseModel):
 
     objects = MessageManager()
 
-    message = models.TextField(
+    message = TipTapTextField(
         help_text="The message displayed in the body of the banner."
-    )  # The message displayed in the body of the banner.
+    )
     active = models.BooleanField(
         default=True,
         help_text="Whether the message is active. Inactive messages will not be displayed, even if display_start is in the past.",
-    )  # Whether the message is active. Inactive messages will not be displayed, even if display_start is in the past.
+    )
 
     # Overrides the event_end time to be indefinite. If True,
     # the message will be displayed without a Date/Time/Duration if
@@ -55,13 +56,13 @@ class Message(BaseModel):
     display_start = models.DateTimeField(
         null=True,
         help_text="When the message should start being displayed on the website. If null, the message will be displayed immediately.",
-    )  # When the message should start being displayed on the website. If null, the message will be displayed immediately.
+    )
     event_start = models.DateTimeField(
         help_text="When the banner shows the event will begin (date and time)."
-    )  # When the banner shows the event will begin (date and time)
+    )
     event_end = models.DateTimeField(
         help_text="When the event will end. Used both to calculate duration and to know when to stop displaying the message."
-    )  # When the event will end. Used both to calculate duration and to know when to stop displaying the message.
+    )
 
     # The user that created the message
     creator = models.ForeignKey(
@@ -105,7 +106,7 @@ class Message(BaseModel):
         max_length=7,
         choices=Policy.choices,
         default=Policy.DEFAULT,
-        help_text="The policy for a message's dismissal. By default messages are dismissable, and this choice is stored in the cache until the event is over. Single-Session Only messages can be dismissed, but dismissal is not cached. Prevented messages cannot be dismissed by the user.",
+        help_text="The policy for a message's dismissal. By default messages are dismissible, and once a message has been dismissed by a user, it will never reappear for them. Single-Session Only messages can be dismissed, but will reappear whenever the page is loaded. Prevented messages cannot be dismissed by the user: if used for a modal, this will essentially shut down that function (or the whole site, for a sitewide modal).",
     )
 
     class DisplayLocation(models.TextChoices):
@@ -115,10 +116,10 @@ class Message(BaseModel):
             "BANNER",
             "Banner",
         )  # Message is displayed in a banner at the top of the page
-        LANDING_MODAL = (
-            "LANDING_MODAL",
-            "Landing Modal",
-        )  # Message is displayed in a modal on the landing page
+        SITEWIDE_MODAL = (
+            "SITEWIDE_MODAL",
+            "Sitewide Modal",
+        )  # Message is displayed sitewide
         BOOKING_MODAL = (
             "BOOKING_MODAL",
             "Booking Modal",
@@ -132,13 +133,14 @@ class Message(BaseModel):
         max_length=25,
         choices=DisplayLocation.choices,
         default=DisplayLocation.BANNER,
-        help_text="The location on the site where the message should be displayed. Banner messages are displayed in a banner at the top of the page. Landing Modal messages are displayed in a modal on the landing page. Booking Modal messages are displayed in a modal on the booking page. Production Creation/Edit Modal messages are displayed in a modal on the production creation and editing page.",
+        help_text="The location on the site where the message should be displayed. Banner messages are displayed in a banner at the top of the page. Sitewide Modal messages are displayed across the entire website. Booking Modal messages are displayed in a modal on the booking page. Production Creation/Edit Modal messages are displayed in a modal on the production creation and editing page.",
     )
 
     title = models.CharField(
         max_length=255,
-        default="Site Message",
-        help_text="A title for the message. Displayed prominently in modals, but not in banners.",
+        null=True,
+        blank=True,
+        help_text="A title for the message. Displayed prominently in modals. If used in a banner, it will override the default title based on message type (e.g. Urgent Future Alert).",
     )
 
     @property

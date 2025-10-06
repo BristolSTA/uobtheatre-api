@@ -68,6 +68,9 @@ merge-migrations: ## Merge conflicting migrations
 migrate: ## Do the migrations
 	$(COMMAND_PREFIX) python manage.py migrate
 
+show-migrations: ## Show the migrations
+	$(COMMAND_PREFIX) python manage.py showmigrations
+
 collect-static:
 	$(COMMAND_PREFIX) python manage.py collectstatic
 

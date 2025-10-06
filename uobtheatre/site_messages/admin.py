@@ -8,7 +8,6 @@ class MessageAdmin(admin.ModelAdmin):
 
     list_display = (
         "title",
-        "message",
         "active",
         "display_start",
         "event_start",

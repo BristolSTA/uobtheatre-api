@@ -35635,6 +35635,57 @@
   }
 },
 {
+  "model": "site_messages.message",
+  "pk": 7,
+  "fields": {
+    "message": "System notice 7: planned activity and alerts (sitewide).",
+    "active": true,
+    "indefinite_override": false,
+    "display_start": "2035-04-22T10:00:00Z",
+    "event_start": "2035-04-24T10:00:00Z",
+    "event_end": "2035-04-25T10:00:00Z",
+    "creator": "00000000-0000-0000-0000-000000000007",
+    "type": "WARNING",
+    "dismissal_policy": "DEFAULT",
+    "display_location": "SITEWIDE_MODAL",
+    "title": "Sitewide Message"
+  }
+},
+{
+  "model": "site_messages.message",
+  "pk": 8,
+  "fields": {
+    "message": "System notice 8: planned activity and alerts (booking).",
+    "active": true,
+    "indefinite_override": false,
+    "display_start": "2035-04-23T10:00:00Z",
+    "event_start": "2035-04-25T10:00:00Z",
+    "event_end": "2035-04-26T10:00:00Z",
+    "creator": "00000000-0000-0000-0000-000000000008",
+    "type": "ALERT",
+    "dismissal_policy": "SINGLE",
+    "display_location": "BOOKING_MODAL",
+    "title": "Booking Message"
+  }
+},
+{
+  "model": "site_messages.message",
+  "pk": 9,
+  "fields": {
+    "message": "System notice 9: planned activity and alerts (production).",
+    "active": false,
+    "indefinite_override": true,
+    "display_start": "2035-04-24T10:00:00Z",
+    "event_start": "2035-04-26T10:00:00Z",
+    "event_end": "2035-04-27T10:00:00Z",
+    "creator": "00000000-0000-0000-0000-000000000009",
+    "type": "INFORMATION",
+    "dismissal_policy": "SINGLE",
+    "display_location": "PRODUCTION_CREATION_MODAL",
+    "title": "Production Message"
+  }
+},
+{
   "model": "societies.society",
   "pk": 1,
   "fields": {
