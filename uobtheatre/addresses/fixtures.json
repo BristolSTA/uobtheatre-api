@@ -4,24 +4,167 @@
         "pk": 1,
         "fields": {
             "street": "Queens Road",
-            "building_name": "Bristol SU Richmond Building",
-            "building_number": "105",
+            "building_name": "Building A",
+            "building_number": "50",
             "city": "Bristol",
-            "postcode": "BS1 1AE",
-            "what3words": "tells.leaps.event",
-            "latitude": 51.02,
-            "longitude": -0.1
+            "postcode": "BS00 10AB",
+            "what3words": "word0.phrase0.place0",
+            "latitude": 51.45,
+            "longitude": -2.6
         }
     },
     {
         "model": "addresses.address",
         "pk": 2,
         "fields": {
-            "street": "Queens Road",
-            "building_name": "Bristol SU Richmond Building",
-            "building_number": "105",
-            "city": "Bristol",
-            "postcode": "BS1 1AE"
+            "street": "Park Street",
+            "building_name": "Building B",
+            "building_number": "51",
+            "city": "Bath",
+            "postcode": "BS01 11AB",
+            "what3words": "word1.phrase1.place1",
+            "latitude": 51.46,
+            "longitude": -2.5900000000000003
+        }
+    },
+    {
+        "model": "addresses.address",
+        "pk": 3,
+        "fields": {
+            "street": "Harbour Walk",
+            "building_name": "Building C",
+            "building_number": "52",
+            "city": "Cardiff",
+            "postcode": "BS02 12AB",
+            "what3words": "word2.phrase2.place2",
+            "latitude": 51.470000000000006,
+            "longitude": -2.58
+        }
+    },
+    {
+        "model": "addresses.address",
+        "pk": 4,
+        "fields": {
+            "street": "King's Avenue",
+            "building_name": "Building D",
+            "building_number": "53",
+            "city": "Exeter",
+            "postcode": "BS03 13AB",
+            "what3words": "word3.phrase3.place3",
+            "latitude": 51.480000000000004,
+            "longitude": -2.5700000000000003
+        }
+    },
+    {
+        "model": "addresses.address",
+        "pk": 5,
+        "fields": {
+            "street": "Oak Lane",
+            "building_name": "Building E",
+            "building_number": "54",
+            "city": "Oxford",
+            "postcode": "BS04 14AB",
+            "what3words": "word4.phrase4.place4",
+            "latitude": 51.49,
+            "longitude": -2.56
+        }
+    },
+    {
+        "model": "addresses.address",
+        "pk": 6,
+        "fields": {
+            "street": "Silver Street",
+            "building_name": "Building F",
+            "building_number": "55",
+            "city": "Cambridge",
+            "postcode": "BS05 15AB",
+            "what3words": "word5.phrase5.place5",
+            "latitude": 51.5,
+            "longitude": -2.5500000000000003
+        }
+    },
+    {
+        "model": "addresses.address",
+        "pk": 7,
+        "fields": {
+            "street": "Elm Crescent",
+            "building_name": "Building G",
+            "building_number": "56",
+            "city": "Manchester",
+            "postcode": "BS06 16AB",
+            "what3words": "word6.phrase6.place6",
+            "latitude": 51.510000000000005,
+            "longitude": -2.54
+        }
+    },
+    {
+        "model": "addresses.address",
+        "pk": 8,
+        "fields": {
+            "street": "Summer Hill",
+            "building_name": "Building H",
+            "building_number": "57",
+            "city": "London",
+            "postcode": "BS07 17AB",
+            "what3words": "word7.phrase7.place7",
+            "latitude": 51.52,
+            "longitude": -2.5300000000000002
+        }
+    },
+    {
+        "model": "addresses.address",
+        "pk": 9,
+        "fields": {
+            "street": "Station Road",
+            "building_name": "Building I",
+            "building_number": "58",
+            "city": "Liverpool",
+            "postcode": "BS08 18AB",
+            "what3words": "word8.phrase8.place8",
+            "latitude": 51.53,
+            "longitude": -2.52
+        }
+    },
+    {
+        "model": "addresses.address",
+        "pk": 10,
+        "fields": {
+            "street": "Riverbank Way",
+            "building_name": "Building J",
+            "building_number": "59",
+            "city": "Birmingham",
+            "postcode": "BS09 19AB",
+            "what3words": "word9.phrase9.place9",
+            "latitude": 51.540000000000006,
+            "longitude": -2.5100000000000002
+        }
+    },
+    {
+        "model": "addresses.address",
+        "pk": 11,
+        "fields": {
+            "street": "Cathedral Close",
+            "building_name": "Building K",
+            "building_number": "60",
+            "city": "Leeds",
+            "postcode": "BS10 20AB",
+            "what3words": "word10.phrase10.place10",
+            "latitude": 51.550000000000004,
+            "longitude": -2.5
+        }
+    },
+    {
+        "model": "addresses.address",
+        "pk": 12,
+        "fields": {
+            "street": "Festival Square",
+            "building_name": "Building L",
+            "building_number": "61",
+            "city": "Sheffield",
+            "postcode": "BS11 21AB",
+            "what3words": "word11.phrase11.place11",
+            "latitude": 51.56,
+            "longitude": -2.49
         }
     }
 ]

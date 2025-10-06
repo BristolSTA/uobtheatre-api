@@ -110,7 +110,7 @@ venv.bak/
 # media
 !media/
 media/*
-!media/e2eImages/
+!media/seedImages/
 
 # MacOS
 .DS_Store

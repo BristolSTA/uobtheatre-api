@@ -1,140 +1,3274 @@
 [
   {
-    "model": "productions.ContentWarning",
+    "model": "productions.contentwarning",
     "pk": 1,
     "fields": {
-      "short_description": "Strobe"
+      "short_description": "Strobe lighting",
+      "long_description": "This production features strobe lighting at various points."
     }
   },
   {
-    "model": "productions.ContentWarning",
+    "model": "productions.contentwarning",
     "pk": 2,
     "fields": {
-      "short_description": "Pyro"
+      "short_description": "Loud noises",
+      "long_description": "This production features loud noises at various points."
     }
   },
   {
-    "model": "productions.production",
-    "pk": 1,
-    "fields": {
-      "created_at": "2020-11-11T12:04:32+0000",
-      "updated_at": "2020-11-11T12:24:32+0000",
-      "name": "Example show",
-      "subtitle": "This is an example show",
-      "description": "The description of the example show",
-      "society": 1,
-      "content_warnings": [
-        1
-      ],
-      "status": "COMPLETE",
-      "slug": "example-show"
-    }
-  },
-  {
-    "model": "productions.production",
-    "pk": 2,
-    "fields": {
-      "created_at": "2020-11-11T12:04:32+0000",
-      "updated_at": "2020-11-11T12:24:32+0000",
-      "name": "Example show 2",
-      "subtitle": "This is an example show",
-      "description": "The description of the example show",
-      "society": 1,
-      "content_warnings": [
-        1
-      ],
-      "status": "PUBLISHED",
-      "slug": "example-show-2"
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 1,
-    "fields": {
-      "created_at": "2020-11-11T12:04:32+0000",
-      "updated_at": "2020-11-11T12:24:32+0000",
-      "production": 1,
-      "venue": 1,
-      "doors_open": "2040-11-11T12:04:32+0000",
-      "start": "2040-11-11T12:24:32+0000",
-      "end": "2040-11-11T14:24:32+0000",
-      "disabled": true
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 2,
-    "fields": {
-      "created_at": "2020-11-11T12:04:32+0000",
-      "updated_at": "2020-11-11T12:24:32+0000",
-      "production": 1,
-      "venue": 1,
-      "doors_open": "2040-11-12T12:04:32+0000",
-      "start": "2040-11-12T12:24:32+0000",
-      "end": "2040-11-12T14:24:32+0000",
-      "disabled": false
-    }
-  },
-  {
-    "model": "productions.performance",
+    "model": "productions.contentwarning",
     "pk": 3,
     "fields": {
-      "created_at": "2020-11-11T12:04:32+0000",
-      "updated_at": "2020-11-11T12:24:32+0000",
-      "production": 1,
-      "venue": 2,
-      "doors_open": "2040-11-13T12:04:32+0000",
-      "start": "2040-11-13T12:24:32+0000",
-      "end": "2040-11-13T14:22:32+0000",
-      "disabled": false
+      "short_description": "Strong language",
+      "long_description": "This production features strong language at various points."
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.contentwarning",
     "pk": 4,
     "fields": {
-      "created_at": "2020-11-11T12:04:32+0000",
-      "updated_at": "2020-11-11T12:24:32+0000",
-      "production": 2,
-      "venue": 1,
-      "doors_open": "2040-11-11T12:04:32+0000",
-      "start": "2040-12-11T12:24:32+0000",
-      "end": "2040-12-11T14:24:32+0000",
-      "disabled": true
+      "short_description": "Adult themes",
+      "long_description": "This production features adult themes at various points."
+    }
+  },
+  {
+    "model": "productions.contentwarning",
+    "pk": 5,
+    "fields": {
+      "short_description": "Smoke effects",
+      "long_description": "This production features smoke effects at various points."
+    }
+  },
+  {
+    "model": "productions.contentwarning",
+    "pk": 6,
+    "fields": {
+      "short_description": "Audience interaction",
+      "long_description": "This production features audience interaction at various points."
+    }
+  },
+  {
+    "model": "productions.contentwarning",
+    "pk": 7,
+    "fields": {
+      "short_description": "Moving lights",
+      "long_description": "This production features moving lights at various points."
+    }
+  },
+  {
+    "model": "productions.contentwarning",
+    "pk": 8,
+    "fields": {
+      "short_description": "Flash photography",
+      "long_description": "This production features flash photography at various points."
     }
   },
   {
     "model": "productions.crewrole",
     "pk": 1,
     "fields": {
-      "name": "CLX"
+      "name": "Lighting Designer",
+      "department": "lighting"
     }
   },
   {
-    "model": "productions.crewmember",
-    "pk": 1,
+    "model": "productions.crewrole",
+    "pk": 2,
     "fields": {
-      "name": "Alex",
-      "role": 1,
-      "production": 1
+      "name": "Sound Operator",
+      "department": "sound"
     }
   },
   {
-    "model": "productions.productionteammember",
+    "model": "productions.crewrole",
+    "pk": 3,
+    "fields": {
+      "name": "Stage Manager",
+      "department": "stage_management"
+    }
+  },
+  {
+    "model": "productions.crewrole",
+    "pk": 4,
+    "fields": {
+      "name": "Pyrotechnics Lead",
+      "department": "pryo"
+    }
+  },
+  {
+    "model": "productions.crewrole",
+    "pk": 5,
+    "fields": {
+      "name": "Set Designer",
+      "department": "set"
+    }
+  },
+  {
+    "model": "productions.crewrole",
+    "pk": 6,
+    "fields": {
+      "name": "AV Technician",
+      "department": "av"
+    }
+  },
+  {
+    "model": "productions.production",
     "pk": 1,
     "fields": {
-      "name": "James",
-      "role": "director",
-      "production": 1
+      "created_at": "2035-01-02T10:00:00+0000",
+      "updated_at": "2035-01-02T10:20:00+0000",
+      "name": "Aurora Nights",
+      "subtitle": "An original production titled Aurora Nights",
+      "description": "Aurora Nights brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Aurora Nights live.",
+      "society": 1,
+      "poster_image": 25,
+      "featured_image": 26,
+      "cover_image": 27,
+      "status": "PUBLISHED",
+      "slug": "aurora-nights",
+      "contact_email": "auroranights@productions.org",
+      "content_warnings": [
+        1,
+        2
+      ]
+    }
+  },
+  {
+    "model": "productions.production",
+    "pk": 2,
+    "fields": {
+      "created_at": "2023-11-05T10:00:00+0000",
+      "updated_at": "2024-01-05T09:30:00+0000",
+      "name": "City of Echoes",
+      "subtitle": "An original production titled City of Echoes",
+      "description": "City of Echoes brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience City of Echoes live.",
+      "society": 2,
+      "poster_image": 28,
+      "featured_image": 29,
+      "cover_image": 30,
+      "status": "COMPLETE",
+      "slug": "city-of-echoes",
+      "contact_email": "cityofechoes@productions.org",
+      "content_warnings": [
+        2,
+        3
+      ]
+    }
+  },
+  {
+    "model": "productions.production",
+    "pk": 3,
+    "fields": {
+      "created_at": "2035-01-04T10:00:00+0000",
+      "updated_at": "2035-01-04T10:20:00+0000",
+      "name": "Whispers in the Wings",
+      "subtitle": "An original production titled Whispers in the Wings",
+      "description": "Whispers in the Wings brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Whispers in the Wings live.",
+      "society": 3,
+      "poster_image": 31,
+      "featured_image": 32,
+      "cover_image": 33,
+      "status": "APPROVED",
+      "slug": "whispers-in-the-wings",
+      "contact_email": "whispersinthewings@productions.org",
+      "content_warnings": [
+        3,
+        4
+      ]
+    }
+  },
+  {
+    "model": "productions.production",
+    "pk": 4,
+    "fields": {
+      "created_at": "2035-01-05T10:00:00+0000",
+      "updated_at": "2035-01-05T10:20:00+0000",
+      "name": "Rhythm of the Tide",
+      "subtitle": "An original production titled Rhythm of the Tide",
+      "description": "Rhythm of the Tide brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Rhythm of the Tide live.",
+      "society": 4,
+      "poster_image": 34,
+      "featured_image": 35,
+      "cover_image": 36,
+      "status": "PENDING",
+      "slug": "rhythm-of-the-tide",
+      "contact_email": "rhythmofthetide@productions.org",
+      "content_warnings": [
+        4,
+        5
+      ]
+    }
+  },
+  {
+    "model": "productions.production",
+    "pk": 5,
+    "fields": {
+      "created_at": "2023-12-01T10:00:00+0000",
+      "updated_at": "2024-03-01T12:00:00+0000",
+      "name": "Midnight Masquerade",
+      "subtitle": "An original production titled Midnight Masquerade",
+      "description": "Midnight Masquerade brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Midnight Masquerade live.",
+      "society": 5,
+      "poster_image": 37,
+      "featured_image": 38,
+      "cover_image": 39,
+      "status": "COMPLETE",
+      "slug": "midnight-masquerade",
+      "contact_email": "midnightmasquerade@productions.org",
+      "content_warnings": [
+        5,
+        6
+      ]
+    }
+  },
+  {
+    "model": "productions.production",
+    "pk": 6,
+    "fields": {
+      "created_at": "2035-01-07T10:00:00+0000",
+      "updated_at": "2035-01-07T10:20:00+0000",
+      "name": "Fragments of Light",
+      "subtitle": "An original production titled Fragments of Light",
+      "description": "Fragments of Light brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Fragments of Light live.",
+      "society": 6,
+      "poster_image": 40,
+      "featured_image": 41,
+      "cover_image": 42,
+      "status": "PUBLISHED",
+      "slug": "fragments-of-light",
+      "contact_email": "fragmentsoflight@productions.org",
+      "content_warnings": [
+        6,
+        7
+      ]
+    }
+  },
+  {
+    "model": "productions.production",
+    "pk": 7,
+    "fields": {
+      "created_at": "2035-01-08T10:00:00+0000",
+      "updated_at": "2035-01-08T10:20:00+0000",
+      "name": "Electric Bloom",
+      "subtitle": "An original production titled Electric Bloom",
+      "description": "Electric Bloom brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Electric Bloom live.",
+      "society": 7,
+      "poster_image": 43,
+      "featured_image": 44,
+      "cover_image": 45,
+      "status": "PUBLISHED",
+      "slug": "electric-bloom",
+      "contact_email": "electricbloom@productions.org",
+      "content_warnings": [
+        7,
+        8
+      ]
+    }
+  },
+  {
+    "model": "productions.production",
+    "pk": 8,
+    "fields": {
+      "created_at": "2035-01-09T10:00:00+0000",
+      "updated_at": "2035-01-09T10:20:00+0000",
+      "name": "The Clockmaker's Tale",
+      "subtitle": "An original production titled The Clockmaker's Tale",
+      "description": "The Clockmaker's Tale brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience The Clockmaker's Tale live.",
+      "society": 8,
+      "poster_image": 46,
+      "featured_image": 47,
+      "cover_image": 48,
+      "status": "DRAFT",
+      "slug": "the-clockmaker-s-tale",
+      "contact_email": "theclockmakerstale@productions.org",
+      "content_warnings": [
+        8,
+        1
+      ]
+    }
+  },
+  {
+    "model": "productions.production",
+    "pk": 9,
+    "fields": {
+      "created_at": "2024-01-02T09:00:00+0000",
+      "updated_at": "2024-04-01T12:30:00+0000",
+      "name": "Starfall Serenade",
+      "subtitle": "An original production titled Starfall Serenade",
+      "description": "Starfall Serenade brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Starfall Serenade live.",
+      "society": 1,
+      "poster_image": 49,
+      "featured_image": 50,
+      "cover_image": 51,
+      "status": "COMPLETE",
+      "slug": "starfall-serenade",
+      "contact_email": "starfallserenade@productions.org",
+      "content_warnings": [
+        1,
+        2
+      ]
+    }
+  },
+  {
+    "model": "productions.production",
+    "pk": 10,
+    "fields": {
+      "created_at": "2035-01-11T10:00:00+0000",
+      "updated_at": "2035-01-11T10:20:00+0000",
+      "name": "Echoes of Tomorrow",
+      "subtitle": "An original production titled Echoes of Tomorrow",
+      "description": "Echoes of Tomorrow brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Echoes of Tomorrow live.",
+      "society": 2,
+      "poster_image": 52,
+      "featured_image": 53,
+      "cover_image": 54,
+      "status": "PUBLISHED",
+      "slug": "echoes-of-tomorrow",
+      "contact_email": "echoesoftomorrow@productions.org",
+      "content_warnings": [
+        2,
+        3
+      ]
+    }
+  },
+  {
+    "model": "productions.production",
+    "pk": 11,
+    "fields": {
+      "created_at": "2023-10-15T09:00:00+0000",
+      "updated_at": "2024-05-01T11:00:00+0000",
+      "name": "Velvet Horizon",
+      "subtitle": "An original production titled Velvet Horizon",
+      "description": "Velvet Horizon brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Velvet Horizon live.",
+      "society": 3,
+      "poster_image": 55,
+      "featured_image": 56,
+      "cover_image": 57,
+      "status": "COMPLETE",
+      "slug": "velvet-horizon",
+      "contact_email": "velvethorizon@productions.org",
+      "content_warnings": [
+        3,
+        4
+      ]
+    }
+  },
+  {
+    "model": "productions.production",
+    "pk": 12,
+    "fields": {
+      "created_at": "2023-09-01T08:30:00+0000",
+      "updated_at": "2024-02-10T09:45:00+0000",
+      "name": "Harbour Lights",
+      "subtitle": "An original production titled Harbour Lights",
+      "description": "Harbour Lights brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Harbour Lights live.",
+      "society": 4,
+      "poster_image": 58,
+      "featured_image": 59,
+      "cover_image": 60,
+      "status": "COMPLETE",
+      "slug": "harbour-lights",
+      "contact_email": "harbourlights@productions.org",
+      "content_warnings": [
+        4,
+        5
+      ]
+    }
+  },
+  {
+    "model": "productions.production",
+    "pk": 13,
+    "fields": {
+      "created_at": "2035-01-14T10:00:00+0000",
+      "updated_at": "2035-01-14T10:20:00+0000",
+      "name": "Gilded Reverie",
+      "subtitle": "An original production titled Gilded Reverie",
+      "description": "Gilded Reverie brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Gilded Reverie live.",
+      "society": 5,
+      "poster_image": 61,
+      "featured_image": 62,
+      "cover_image": 63,
+      "status": "PUBLISHED",
+      "slug": "gilded-reverie",
+      "contact_email": "gildedreverie@productions.org",
+      "content_warnings": [
+        5,
+        6
+      ]
+    }
+  },
+  {
+    "model": "productions.production",
+    "pk": 14,
+    "fields": {
+      "created_at": "2023-08-20T10:00:00+0000",
+      "updated_at": "2023-10-20T10:30:00+0000",
+      "name": "Luminous Skies",
+      "subtitle": "An original production titled Luminous Skies",
+      "description": "Luminous Skies brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Luminous Skies live.",
+      "society": 6,
+      "poster_image": 64,
+      "featured_image": 65,
+      "cover_image": 66,
+      "status": "COMPLETE",
+      "slug": "luminous-skies",
+      "contact_email": "luminousskies@productions.org",
+      "content_warnings": [
+        6,
+        7
+      ]
+    }
+  },
+  {
+    "model": "productions.production",
+    "pk": 15,
+    "fields": {
+      "created_at": "2023-07-01T09:00:00+0000",
+      "updated_at": "2024-07-05T10:00:00+0000",
+      "name": "Emberline Ballad",
+      "subtitle": "An original production titled Emberline Ballad",
+      "description": "Emberline Ballad brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Emberline Ballad live.",
+      "society": 7,
+      "poster_image": 67,
+      "featured_image": 68,
+      "cover_image": 69,
+      "status": "COMPLETE",
+      "slug": "emberline-ballad",
+      "contact_email": "emberlineballad@productions.org",
+      "content_warnings": [
+        7,
+        8
+      ]
+    }
+  },
+  {
+    "model": "productions.production",
+    "pk": 16,
+    "fields": {
+      "created_at": "2023-09-15T09:00:00+0000",
+      "updated_at": "2023-11-20T13:00:00+0000",
+      "name": "Quantum Waltz",
+      "subtitle": "An original production titled Quantum Waltz",
+      "description": "Quantum Waltz brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Quantum Waltz live.",
+      "society": 8,
+      "poster_image": 70,
+      "featured_image": 71,
+      "cover_image": 72,
+      "status": "COMPLETE",
+      "slug": "quantum-waltz",
+      "contact_email": "quantumwaltz@productions.org",
+      "content_warnings": [
+        8,
+        1
+      ]
+    }
+  },
+  {
+    "model": "productions.production",
+    "pk": 17,
+    "fields": {
+      "created_at": "2035-01-18T10:00:00+0000",
+      "updated_at": "2035-01-18T10:20:00+0000",
+      "name": "Moonlit Paradox",
+      "subtitle": "An original production titled Moonlit Paradox",
+      "description": "Moonlit Paradox brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Moonlit Paradox live.",
+      "society": 1,
+      "poster_image": 73,
+      "featured_image": 74,
+      "cover_image": 75,
+      "status": "DRAFT",
+      "slug": "moonlit-paradox",
+      "contact_email": "moonlitparadox@productions.org",
+      "content_warnings": [
+        1,
+        2
+      ]
+    }
+  },
+  {
+    "model": "productions.production",
+    "pk": 18,
+    "fields": {
+      "created_at": "2035-01-19T10:00:00+0000",
+      "updated_at": "2035-01-19T10:20:00+0000",
+      "name": "Prism Dreams",
+      "subtitle": "An original production titled Prism Dreams",
+      "description": "Prism Dreams brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Prism Dreams live.",
+      "society": 2,
+      "poster_image": 76,
+      "featured_image": 77,
+      "cover_image": 78,
+      "status": "PUBLISHED",
+      "slug": "prism-dreams",
+      "contact_email": "prismdreams@productions.org",
+      "content_warnings": [
+        2,
+        3
+      ]
+    }
+  },
+  {
+    "model": "productions.production",
+    "pk": 19,
+    "fields": {
+      "created_at": "2035-01-20T10:00:00+0000",
+      "updated_at": "2035-01-20T10:20:00+0000",
+      "name": "Celestial Ruse",
+      "subtitle": "An original production titled Celestial Ruse",
+      "description": "Celestial Ruse brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Celestial Ruse live.",
+      "society": 3,
+      "poster_image": 79,
+      "featured_image": 80,
+      "cover_image": 81,
+      "status": "PENDING",
+      "slug": "celestial-ruse",
+      "contact_email": "celestialruse@productions.org",
+      "content_warnings": [
+        3,
+        4
+      ]
+    }
+  },
+  {
+    "model": "productions.production",
+    "pk": 20,
+    "fields": {
+      "created_at": "2035-01-21T10:00:00+0000",
+      "updated_at": "2035-01-21T10:20:00+0000",
+      "name": "Emberfall Chronicles",
+      "subtitle": "An original production titled Emberfall Chronicles",
+      "description": "Emberfall Chronicles brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Emberfall Chronicles live.",
+      "society": 4,
+      "poster_image": 82,
+      "featured_image": 83,
+      "cover_image": 84,
+      "status": "CLOSED",
+      "slug": "emberfall-chronicles",
+      "contact_email": "emberfallchronicles@productions.org",
+      "content_warnings": [
+        4,
+        5
+      ]
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 1,
+    "fields": {
+      "created_at": "2035-01-02T10:00:00+0000",
+      "updated_at": "2035-01-02T10:30:00+0000",
+      "production": 1,
+      "venue": 1,
+      "doors_open": "2035-05-04T18:15:00+0000",
+      "start": "2035-05-04T19:00:00+0000",
+      "end": "2035-05-04T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 1 of Aurora Nights.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 2,
+    "fields": {
+      "created_at": "2035-01-03T10:00:00+0000",
+      "updated_at": "2035-01-03T10:30:00+0000",
+      "production": 1,
+      "venue": 1,
+      "doors_open": "2035-05-07T18:15:00+0000",
+      "start": "2035-05-07T19:00:00+0000",
+      "end": "2035-05-07T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Aurora Nights.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 3,
+    "fields": {
+      "created_at": "2035-01-04T10:00:00+0000",
+      "updated_at": "2035-01-04T10:30:00+0000",
+      "production": 1,
+      "venue": 1,
+      "doors_open": "2035-05-10T18:15:00+0000",
+      "start": "2035-05-10T19:00:00+0000",
+      "end": "2035-05-10T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Aurora Nights.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 4,
+    "fields": {
+      "created_at": "2035-01-05T10:00:00+0000",
+      "updated_at": "2035-01-05T10:30:00+0000",
+      "production": 1,
+      "venue": 1,
+      "doors_open": "2035-05-13T18:15:00+0000",
+      "start": "2035-05-13T19:00:00+0000",
+      "end": "2035-05-13T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 4 of Aurora Nights.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 5,
+    "fields": {
+      "created_at": "2035-01-03T10:00:00+0000",
+      "updated_at": "2035-01-03T10:30:00+0000",
+      "production": 2,
+      "venue": 2,
+      "doors_open": "2024-01-10T18:15:00+0000",
+      "start": "2024-01-10T19:00:00+0000",
+      "end": "2024-01-10T21:15:00+0000",
+      "disabled": true,
+      "description": "Performance 1 of City of Echoes.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 6,
+    "fields": {
+      "created_at": "2035-01-04T10:00:00+0000",
+      "updated_at": "2035-01-04T10:30:00+0000",
+      "production": 2,
+      "venue": 2,
+      "doors_open": "2024-01-11T13:15:00+0000",
+      "start": "2024-01-11T14:00:00+0000",
+      "end": "2024-01-11T16:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of City of Echoes.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 7,
+    "fields": {
+      "created_at": "2035-01-05T10:00:00+0000",
+      "updated_at": "2035-01-05T10:30:00+0000",
+      "production": 2,
+      "venue": 2,
+      "doors_open": "2024-01-12T18:45:00+0000",
+      "start": "2024-01-12T19:30:00+0000",
+      "end": "2024-01-12T21:45:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of City of Echoes.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 8,
+    "fields": {
+      "created_at": "2035-01-04T10:00:00+0000",
+      "updated_at": "2035-01-04T10:30:00+0000",
+      "production": 3,
+      "venue": 3,
+      "doors_open": "2034-02-10T18:15:00+0000",
+      "start": "2034-02-10T19:00:00+0000",
+      "end": "2034-02-10T21:15:00+0000",
+      "disabled": true,
+      "description": "Performance 1 of Whispers in the Wings.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 9,
+    "fields": {
+      "created_at": "2035-01-05T10:00:00+0000",
+      "updated_at": "2035-01-05T10:30:00+0000",
+      "production": 3,
+      "venue": 3,
+      "doors_open": "2034-02-13T18:15:00+0000",
+      "start": "2034-02-13T19:00:00+0000",
+      "end": "2034-02-13T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Whispers in the Wings.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 10,
+    "fields": {
+      "created_at": "2035-01-06T10:00:00+0000",
+      "updated_at": "2035-01-06T10:30:00+0000",
+      "production": 3,
+      "venue": 3,
+      "doors_open": "2034-02-16T18:15:00+0000",
+      "start": "2034-02-16T19:00:00+0000",
+      "end": "2034-02-16T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Whispers in the Wings.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 11,
+    "fields": {
+      "created_at": "2035-01-07T10:00:00+0000",
+      "updated_at": "2035-01-07T10:30:00+0000",
+      "production": 3,
+      "venue": 3,
+      "doors_open": "2034-02-19T18:15:00+0000",
+      "start": "2034-02-19T19:00:00+0000",
+      "end": "2034-02-19T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 4 of Whispers in the Wings.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 12,
+    "fields": {
+      "created_at": "2035-01-08T10:00:00+0000",
+      "updated_at": "2035-01-08T10:30:00+0000",
+      "production": 3,
+      "venue": 3,
+      "doors_open": "2034-02-22T18:15:00+0000",
+      "start": "2034-02-22T19:00:00+0000",
+      "end": "2034-02-22T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 5 of Whispers in the Wings.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 13,
+    "fields": {
+      "created_at": "2035-01-05T10:00:00+0000",
+      "updated_at": "2035-01-05T10:30:00+0000",
+      "production": 4,
+      "venue": 4,
+      "doors_open": "2034-02-13T18:15:00+0000",
+      "start": "2034-02-13T19:00:00+0000",
+      "end": "2034-02-13T21:15:00+0000",
+      "disabled": true,
+      "description": "Performance 1 of Rhythm of the Tide.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 14,
+    "fields": {
+      "created_at": "2035-01-06T10:00:00+0000",
+      "updated_at": "2035-01-06T10:30:00+0000",
+      "production": 4,
+      "venue": 4,
+      "doors_open": "2034-02-16T18:15:00+0000",
+      "start": "2034-02-16T19:00:00+0000",
+      "end": "2034-02-16T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Rhythm of the Tide.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 15,
+    "fields": {
+      "created_at": "2035-01-07T10:00:00+0000",
+      "updated_at": "2035-01-07T10:30:00+0000",
+      "production": 4,
+      "venue": 4,
+      "doors_open": "2034-02-19T18:15:00+0000",
+      "start": "2034-02-19T19:00:00+0000",
+      "end": "2034-02-19T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Rhythm of the Tide.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 16,
+    "fields": {
+      "created_at": "2035-01-06T10:00:00+0000",
+      "updated_at": "2035-01-06T10:30:00+0000",
+      "production": 5,
+      "venue": 5,
+      "doors_open": "2024-03-20T18:15:00+0000",
+      "start": "2024-03-20T19:00:00+0000",
+      "end": "2024-03-20T21:15:00+0000",
+      "disabled": true,
+      "description": "Performance 1 of Midnight Masquerade.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 17,
+    "fields": {
+      "created_at": "2035-01-07T10:00:00+0000",
+      "updated_at": "2035-01-07T10:30:00+0000",
+      "production": 5,
+      "venue": 5,
+      "doors_open": "2024-03-22T18:15:00+0000",
+      "start": "2024-03-22T19:00:00+0000",
+      "end": "2024-03-22T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Midnight Masquerade.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 18,
+    "fields": {
+      "created_at": "2035-01-08T10:00:00+0000",
+      "updated_at": "2035-01-08T10:30:00+0000",
+      "production": 5,
+      "venue": 5,
+      "doors_open": "2024-03-23T13:15:00+0000",
+      "start": "2024-03-23T14:00:00+0000",
+      "end": "2024-03-23T16:15:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Midnight Masquerade.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 19,
+    "fields": {
+      "created_at": "2035-01-09T10:00:00+0000",
+      "updated_at": "2035-01-09T10:30:00+0000",
+      "production": 5,
+      "venue": 5,
+      "doors_open": "2024-03-24T18:45:00+0000",
+      "start": "2024-03-24T19:30:00+0000",
+      "end": "2024-03-24T21:45:00+0000",
+      "disabled": false,
+      "description": "Performance 4 of Midnight Masquerade.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 20,
+    "fields": {
+      "created_at": "2035-01-07T10:00:00+0000",
+      "updated_at": "2035-01-07T10:30:00+0000",
+      "production": 6,
+      "venue": 6,
+      "doors_open": "2035-05-19T18:15:00+0000",
+      "start": "2035-05-19T19:00:00+0000",
+      "end": "2035-05-19T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 1 of Fragments of Light.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 21,
+    "fields": {
+      "created_at": "2035-01-08T10:00:00+0000",
+      "updated_at": "2035-01-08T10:30:00+0000",
+      "production": 6,
+      "venue": 6,
+      "doors_open": "2035-05-22T18:15:00+0000",
+      "start": "2035-05-22T19:00:00+0000",
+      "end": "2035-05-22T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Fragments of Light.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 22,
+    "fields": {
+      "created_at": "2035-01-09T10:00:00+0000",
+      "updated_at": "2035-01-09T10:30:00+0000",
+      "production": 6,
+      "venue": 6,
+      "doors_open": "2035-05-25T18:15:00+0000",
+      "start": "2035-05-25T19:00:00+0000",
+      "end": "2035-05-25T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Fragments of Light.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 23,
+    "fields": {
+      "created_at": "2035-01-08T10:00:00+0000",
+      "updated_at": "2035-01-08T10:30:00+0000",
+      "production": 7,
+      "venue": 7,
+      "doors_open": "2035-05-22T18:15:00+0000",
+      "start": "2035-05-22T19:00:00+0000",
+      "end": "2035-05-22T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 1 of Electric Bloom.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 24,
+    "fields": {
+      "created_at": "2035-01-09T10:00:00+0000",
+      "updated_at": "2035-01-09T10:30:00+0000",
+      "production": 7,
+      "venue": 2,
+      "doors_open": "2035-05-25T18:15:00+0000",
+      "start": "2035-05-25T19:00:00+0000",
+      "end": "2035-05-25T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Electric Bloom.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 25,
+    "fields": {
+      "created_at": "2035-01-10T10:00:00+0000",
+      "updated_at": "2035-01-10T10:30:00+0000",
+      "production": 7,
+      "venue": 7,
+      "doors_open": "2035-05-28T18:15:00+0000",
+      "start": "2035-05-28T19:00:00+0000",
+      "end": "2035-05-28T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Electric Bloom.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 26,
+    "fields": {
+      "created_at": "2035-01-11T10:00:00+0000",
+      "updated_at": "2035-01-11T10:30:00+0000",
+      "production": 7,
+      "venue": 2,
+      "doors_open": "2035-05-31T18:15:00+0000",
+      "start": "2035-05-31T19:00:00+0000",
+      "end": "2035-05-31T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 4 of Electric Bloom.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 27,
+    "fields": {
+      "created_at": "2035-01-12T10:00:00+0000",
+      "updated_at": "2035-01-12T10:30:00+0000",
+      "production": 7,
+      "venue": 7,
+      "doors_open": "2035-06-03T18:15:00+0000",
+      "start": "2035-06-03T19:00:00+0000",
+      "end": "2035-06-03T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 5 of Electric Bloom.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 28,
+    "fields": {
+      "created_at": "2035-01-09T10:00:00+0000",
+      "updated_at": "2035-01-09T10:30:00+0000",
+      "production": 8,
+      "venue": 8,
+      "doors_open": "2034-02-25T18:15:00+0000",
+      "start": "2034-02-25T19:00:00+0000",
+      "end": "2034-02-25T21:15:00+0000",
+      "disabled": true,
+      "description": "Performance 1 of The Clockmaker's Tale.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 29,
+    "fields": {
+      "created_at": "2035-01-10T10:00:00+0000",
+      "updated_at": "2035-01-10T10:30:00+0000",
+      "production": 8,
+      "venue": 8,
+      "doors_open": "2034-02-28T18:15:00+0000",
+      "start": "2034-02-28T19:00:00+0000",
+      "end": "2034-02-28T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of The Clockmaker's Tale.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 30,
+    "fields": {
+      "created_at": "2035-01-11T10:00:00+0000",
+      "updated_at": "2035-01-11T10:30:00+0000",
+      "production": 8,
+      "venue": 8,
+      "doors_open": "2034-03-03T18:15:00+0000",
+      "start": "2034-03-03T19:00:00+0000",
+      "end": "2034-03-03T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of The Clockmaker's Tale.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 31,
+    "fields": {
+      "created_at": "2035-01-12T10:00:00+0000",
+      "updated_at": "2035-01-12T10:30:00+0000",
+      "production": 8,
+      "venue": 8,
+      "doors_open": "2034-03-06T18:15:00+0000",
+      "start": "2034-03-06T19:00:00+0000",
+      "end": "2034-03-06T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 4 of The Clockmaker's Tale.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 32,
+    "fields": {
+      "created_at": "2035-01-10T10:00:00+0000",
+      "updated_at": "2035-01-10T10:30:00+0000",
+      "production": 9,
+      "venue": 1,
+      "doors_open": "2024-04-05T18:15:00+0000",
+      "start": "2024-04-05T19:00:00+0000",
+      "end": "2024-04-05T21:15:00+0000",
+      "disabled": true,
+      "description": "Performance 1 of Starfall Serenade.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 33,
+    "fields": {
+      "created_at": "2035-01-11T10:00:00+0000",
+      "updated_at": "2035-01-11T10:30:00+0000",
+      "production": 9,
+      "venue": 1,
+      "doors_open": "2024-04-06T13:15:00+0000",
+      "start": "2024-04-06T14:00:00+0000",
+      "end": "2024-04-06T16:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Starfall Serenade.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 34,
+    "fields": {
+      "created_at": "2035-01-12T10:00:00+0000",
+      "updated_at": "2035-01-12T10:30:00+0000",
+      "production": 9,
+      "venue": 1,
+      "doors_open": "2024-04-07T18:45:00+0000",
+      "start": "2024-04-07T19:30:00+0000",
+      "end": "2024-04-07T21:45:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Starfall Serenade.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 35,
+    "fields": {
+      "created_at": "2035-01-11T10:00:00+0000",
+      "updated_at": "2035-01-11T10:30:00+0000",
+      "production": 10,
+      "venue": 2,
+      "doors_open": "2035-05-31T18:15:00+0000",
+      "start": "2035-05-31T19:00:00+0000",
+      "end": "2035-05-31T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 1 of Echoes of Tomorrow.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 36,
+    "fields": {
+      "created_at": "2035-01-12T10:00:00+0000",
+      "updated_at": "2035-01-12T10:30:00+0000",
+      "production": 10,
+      "venue": 6,
+      "doors_open": "2035-06-03T18:15:00+0000",
+      "start": "2035-06-03T19:00:00+0000",
+      "end": "2035-06-03T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Echoes of Tomorrow.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 37,
+    "fields": {
+      "created_at": "2035-01-13T10:00:00+0000",
+      "updated_at": "2035-01-13T10:30:00+0000",
+      "production": 10,
+      "venue": 2,
+      "doors_open": "2035-06-06T18:15:00+0000",
+      "start": "2035-06-06T19:00:00+0000",
+      "end": "2035-06-06T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Echoes of Tomorrow.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 38,
+    "fields": {
+      "created_at": "2035-01-14T10:00:00+0000",
+      "updated_at": "2035-01-14T10:30:00+0000",
+      "production": 10,
+      "venue": 6,
+      "doors_open": "2035-06-09T18:15:00+0000",
+      "start": "2035-06-09T19:00:00+0000",
+      "end": "2035-06-09T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 4 of Echoes of Tomorrow.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 39,
+    "fields": {
+      "created_at": "2035-01-12T10:00:00+0000",
+      "updated_at": "2035-01-12T10:30:00+0000",
+      "production": 11,
+      "venue": 3,
+      "doors_open": "2024-05-15T18:15:00+0000",
+      "start": "2024-05-15T19:00:00+0000",
+      "end": "2024-05-15T21:15:00+0000",
+      "disabled": true,
+      "description": "Performance 1 of Velvet Horizon.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 40,
+    "fields": {
+      "created_at": "2035-01-13T10:00:00+0000",
+      "updated_at": "2035-01-13T10:30:00+0000",
+      "production": 11,
+      "venue": 3,
+      "doors_open": "2024-05-16T13:15:00+0000",
+      "start": "2024-05-16T14:00:00+0000",
+      "end": "2024-05-16T16:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Velvet Horizon.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 41,
+    "fields": {
+      "created_at": "2035-01-14T10:00:00+0000",
+      "updated_at": "2035-01-14T10:30:00+0000",
+      "production": 11,
+      "venue": 3,
+      "doors_open": "2024-05-17T18:45:00+0000",
+      "start": "2024-05-17T19:30:00+0000",
+      "end": "2024-05-17T21:45:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Velvet Horizon.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 42,
+    "fields": {
+      "created_at": "2035-01-13T10:00:00+0000",
+      "updated_at": "2035-01-13T10:30:00+0000",
+      "production": 12,
+      "venue": 4,
+      "doors_open": "2024-02-02T18:15:00+0000",
+      "start": "2024-02-02T19:00:00+0000",
+      "end": "2024-02-02T21:15:00+0000",
+      "disabled": true,
+      "description": "Performance 1 of Harbour Lights.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 43,
+    "fields": {
+      "created_at": "2035-01-14T10:00:00+0000",
+      "updated_at": "2035-01-14T10:30:00+0000",
+      "production": 12,
+      "venue": 4,
+      "doors_open": "2024-02-03T13:15:00+0000",
+      "start": "2024-02-03T14:00:00+0000",
+      "end": "2024-02-03T16:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Harbour Lights.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 44,
+    "fields": {
+      "created_at": "2035-01-15T10:00:00+0000",
+      "updated_at": "2035-01-15T10:30:00+0000",
+      "production": 12,
+      "venue": 4,
+      "doors_open": "2024-02-03T18:45:00+0000",
+      "start": "2024-02-03T19:30:00+0000",
+      "end": "2024-02-03T21:45:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Harbour Lights.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 45,
+    "fields": {
+      "created_at": "2035-01-16T10:00:00+0000",
+      "updated_at": "2035-01-16T10:30:00+0000",
+      "production": 12,
+      "venue": 4,
+      "doors_open": "2024-02-04T17:15:00+0000",
+      "start": "2024-02-04T18:00:00+0000",
+      "end": "2024-02-04T20:15:00+0000",
+      "disabled": false,
+      "description": "Performance 4 of Harbour Lights.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 46,
+    "fields": {
+      "created_at": "2035-01-14T10:00:00+0000",
+      "updated_at": "2035-01-14T10:30:00+0000",
+      "production": 13,
+      "venue": 5,
+      "doors_open": "2035-06-09T18:15:00+0000",
+      "start": "2035-06-09T19:00:00+0000",
+      "end": "2035-06-09T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 1 of Gilded Reverie.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 47,
+    "fields": {
+      "created_at": "2035-01-15T10:00:00+0000",
+      "updated_at": "2035-01-15T10:30:00+0000",
+      "production": 13,
+      "venue": 5,
+      "doors_open": "2035-06-12T18:15:00+0000",
+      "start": "2035-06-12T19:00:00+0000",
+      "end": "2035-06-12T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Gilded Reverie.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 48,
+    "fields": {
+      "created_at": "2035-01-16T10:00:00+0000",
+      "updated_at": "2035-01-16T10:30:00+0000",
+      "production": 13,
+      "venue": 5,
+      "doors_open": "2035-06-15T18:15:00+0000",
+      "start": "2035-06-15T19:00:00+0000",
+      "end": "2035-06-15T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Gilded Reverie.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 49,
+    "fields": {
+      "created_at": "2035-01-15T10:00:00+0000",
+      "updated_at": "2035-01-15T10:30:00+0000",
+      "production": 14,
+      "venue": 6,
+      "doors_open": "2023-10-10T18:15:00+0000",
+      "start": "2023-10-10T19:00:00+0000",
+      "end": "2023-10-10T21:15:00+0000",
+      "disabled": true,
+      "description": "Performance 1 of Luminous Skies.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 50,
+    "fields": {
+      "created_at": "2035-01-16T10:00:00+0000",
+      "updated_at": "2035-01-16T10:30:00+0000",
+      "production": 14,
+      "venue": 6,
+      "doors_open": "2023-10-11T13:15:00+0000",
+      "start": "2023-10-11T14:00:00+0000",
+      "end": "2023-10-11T16:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Luminous Skies.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 51,
+    "fields": {
+      "created_at": "2035-01-17T10:00:00+0000",
+      "updated_at": "2035-01-17T10:30:00+0000",
+      "production": 14,
+      "venue": 6,
+      "doors_open": "2023-10-12T18:45:00+0000",
+      "start": "2023-10-12T19:30:00+0000",
+      "end": "2023-10-12T21:45:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Luminous Skies.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 52,
+    "fields": {
+      "created_at": "2035-01-18T10:00:00+0000",
+      "updated_at": "2035-01-18T10:30:00+0000",
+      "production": 14,
+      "venue": 6,
+      "doors_open": "2023-10-13T17:45:00+0000",
+      "start": "2023-10-13T18:30:00+0000",
+      "end": "2023-10-13T20:45:00+0000",
+      "disabled": false,
+      "description": "Performance 4 of Luminous Skies.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 53,
+    "fields": {
+      "created_at": "2035-01-16T10:00:00+0000",
+      "updated_at": "2035-01-16T10:30:00+0000",
+      "production": 15,
+      "venue": 7,
+      "doors_open": "2024-07-01T18:15:00+0000",
+      "start": "2024-07-01T19:00:00+0000",
+      "end": "2024-07-01T21:15:00+0000",
+      "disabled": true,
+      "description": "Performance 1 of Emberline Ballad.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 54,
+    "fields": {
+      "created_at": "2035-01-17T10:00:00+0000",
+      "updated_at": "2035-01-17T10:30:00+0000",
+      "production": 15,
+      "venue": 7,
+      "doors_open": "2024-07-02T13:15:00+0000",
+      "start": "2024-07-02T14:00:00+0000",
+      "end": "2024-07-02T16:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Emberline Ballad.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 55,
+    "fields": {
+      "created_at": "2035-01-18T10:00:00+0000",
+      "updated_at": "2035-01-18T10:30:00+0000",
+      "production": 15,
+      "venue": 7,
+      "doors_open": "2024-07-03T18:45:00+0000",
+      "start": "2024-07-03T19:30:00+0000",
+      "end": "2024-07-03T21:45:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Emberline Ballad.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 56,
+    "fields": {
+      "created_at": "2035-01-17T10:00:00+0000",
+      "updated_at": "2035-01-17T10:30:00+0000",
+      "production": 16,
+      "venue": 8,
+      "doors_open": "2023-11-15T18:15:00+0000",
+      "start": "2023-11-15T19:00:00+0000",
+      "end": "2023-11-15T21:15:00+0000",
+      "disabled": true,
+      "description": "Performance 1 of Quantum Waltz.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 57,
+    "fields": {
+      "created_at": "2035-01-18T10:00:00+0000",
+      "updated_at": "2035-01-18T10:30:00+0000",
+      "production": 16,
+      "venue": 8,
+      "doors_open": "2023-11-16T13:15:00+0000",
+      "start": "2023-11-16T14:00:00+0000",
+      "end": "2023-11-16T16:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Quantum Waltz.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 58,
+    "fields": {
+      "created_at": "2035-01-19T10:00:00+0000",
+      "updated_at": "2035-01-19T10:30:00+0000",
+      "production": 16,
+      "venue": 8,
+      "doors_open": "2023-11-17T18:45:00+0000",
+      "start": "2023-11-17T19:30:00+0000",
+      "end": "2023-11-17T21:45:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Quantum Waltz.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 59,
+    "fields": {
+      "created_at": "2035-01-20T10:00:00+0000",
+      "updated_at": "2035-01-20T10:30:00+0000",
+      "production": 16,
+      "venue": 8,
+      "doors_open": "2023-11-18T17:15:00+0000",
+      "start": "2023-11-18T18:00:00+0000",
+      "end": "2023-11-18T20:15:00+0000",
+      "disabled": false,
+      "description": "Performance 4 of Quantum Waltz.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 60,
+    "fields": {
+      "created_at": "2035-01-21T10:00:00+0000",
+      "updated_at": "2035-01-21T10:30:00+0000",
+      "production": 16,
+      "venue": 8,
+      "doors_open": "2023-11-19T18:15:00+0000",
+      "start": "2023-11-19T19:00:00+0000",
+      "end": "2023-11-19T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 5 of Quantum Waltz.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 61,
+    "fields": {
+      "created_at": "2035-01-18T10:00:00+0000",
+      "updated_at": "2035-01-18T10:30:00+0000",
+      "production": 17,
+      "venue": 3,
+      "doors_open": "2034-03-24T18:15:00+0000",
+      "start": "2034-03-24T19:00:00+0000",
+      "end": "2034-03-24T21:15:00+0000",
+      "disabled": true,
+      "description": "Performance 1 of Moonlit Paradox.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 62,
+    "fields": {
+      "created_at": "2035-01-19T10:00:00+0000",
+      "updated_at": "2035-01-19T10:30:00+0000",
+      "production": 17,
+      "venue": 3,
+      "doors_open": "2034-03-27T18:15:00+0000",
+      "start": "2034-03-27T19:00:00+0000",
+      "end": "2034-03-27T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Moonlit Paradox.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 63,
+    "fields": {
+      "created_at": "2035-01-20T10:00:00+0000",
+      "updated_at": "2035-01-20T10:30:00+0000",
+      "production": 17,
+      "venue": 3,
+      "doors_open": "2034-03-30T18:15:00+0000",
+      "start": "2034-03-30T19:00:00+0000",
+      "end": "2034-03-30T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Moonlit Paradox.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 64,
+    "fields": {
+      "created_at": "2035-01-19T10:00:00+0000",
+      "updated_at": "2035-01-19T10:30:00+0000",
+      "production": 18,
+      "venue": 2,
+      "doors_open": "2035-06-24T18:15:00+0000",
+      "start": "2035-06-24T19:00:00+0000",
+      "end": "2035-06-24T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 1 of Prism Dreams.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 65,
+    "fields": {
+      "created_at": "2035-01-20T10:00:00+0000",
+      "updated_at": "2035-01-20T10:30:00+0000",
+      "production": 18,
+      "venue": 5,
+      "doors_open": "2035-06-27T18:15:00+0000",
+      "start": "2035-06-27T19:00:00+0000",
+      "end": "2035-06-27T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Prism Dreams.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 66,
+    "fields": {
+      "created_at": "2035-01-21T10:00:00+0000",
+      "updated_at": "2035-01-21T10:30:00+0000",
+      "production": 18,
+      "venue": 8,
+      "doors_open": "2035-06-30T18:15:00+0000",
+      "start": "2035-06-30T19:00:00+0000",
+      "end": "2035-06-30T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Prism Dreams.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 67,
+    "fields": {
+      "created_at": "2035-01-22T10:00:00+0000",
+      "updated_at": "2035-01-22T10:30:00+0000",
+      "production": 18,
+      "venue": 2,
+      "doors_open": "2035-07-03T18:15:00+0000",
+      "start": "2035-07-03T19:00:00+0000",
+      "end": "2035-07-03T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 4 of Prism Dreams.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 68,
+    "fields": {
+      "created_at": "2035-01-23T10:00:00+0000",
+      "updated_at": "2035-01-23T10:30:00+0000",
+      "production": 18,
+      "venue": 5,
+      "doors_open": "2035-07-06T18:15:00+0000",
+      "start": "2035-07-06T19:00:00+0000",
+      "end": "2035-07-06T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 5 of Prism Dreams.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 69,
+    "fields": {
+      "created_at": "2035-01-20T10:00:00+0000",
+      "updated_at": "2035-01-20T10:30:00+0000",
+      "production": 19,
+      "venue": 4,
+      "doors_open": "2034-03-30T18:15:00+0000",
+      "start": "2034-03-30T19:00:00+0000",
+      "end": "2034-03-30T21:15:00+0000",
+      "disabled": true,
+      "description": "Performance 1 of Celestial Ruse.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 70,
+    "fields": {
+      "created_at": "2035-01-21T10:00:00+0000",
+      "updated_at": "2035-01-21T10:30:00+0000",
+      "production": 19,
+      "venue": 4,
+      "doors_open": "2034-04-02T18:15:00+0000",
+      "start": "2034-04-02T19:00:00+0000",
+      "end": "2034-04-02T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Celestial Ruse.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 71,
+    "fields": {
+      "created_at": "2035-01-22T10:00:00+0000",
+      "updated_at": "2035-01-22T10:30:00+0000",
+      "production": 19,
+      "venue": 4,
+      "doors_open": "2034-04-05T18:15:00+0000",
+      "start": "2034-04-05T19:00:00+0000",
+      "end": "2034-04-05T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Celestial Ruse.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 72,
+    "fields": {
+      "created_at": "2035-01-21T10:00:00+0000",
+      "updated_at": "2035-01-21T10:30:00+0000",
+      "production": 20,
+      "venue": 1,
+      "doors_open": "2034-04-02T18:15:00+0000",
+      "start": "2034-04-02T19:00:00+0000",
+      "end": "2034-04-02T21:15:00+0000",
+      "disabled": true,
+      "description": "Performance 1 of Emberfall Chronicles.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 73,
+    "fields": {
+      "created_at": "2035-01-22T10:00:00+0000",
+      "updated_at": "2035-01-22T10:30:00+0000",
+      "production": 20,
+      "venue": 1,
+      "doors_open": "2034-04-05T18:15:00+0000",
+      "start": "2034-04-05T19:00:00+0000",
+      "end": "2034-04-05T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Emberfall Chronicles.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 74,
+    "fields": {
+      "created_at": "2035-01-23T10:00:00+0000",
+      "updated_at": "2035-01-23T10:30:00+0000",
+      "production": 20,
+      "venue": 1,
+      "doors_open": "2034-04-08T18:15:00+0000",
+      "start": "2034-04-08T19:00:00+0000",
+      "end": "2034-04-08T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Emberfall Chronicles.",
+      "extra_information": "Doors open 45 minutes before start."
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 75,
+    "fields": {
+      "created_at": "2035-01-24T10:00:00+0000",
+      "updated_at": "2035-01-24T10:30:00+0000",
+      "production": 20,
+      "venue": 1,
+      "doors_open": "2034-04-11T18:15:00+0000",
+      "start": "2034-04-11T19:00:00+0000",
+      "end": "2034-04-11T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 4 of Emberfall Chronicles.",
+      "extra_information": "Doors open 45 minutes before start."
     }
   },
   {
     "model": "productions.castmember",
     "pk": 1,
     "fields": {
-      "name": "Tom",
-      "role": "Peter pan",
+      "name": "Aurora Nights Cast 1",
+      "role": "Role 1",
+      "production": 1,
+      "profile_picture": 85
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 2,
+    "fields": {
+      "name": "Aurora Nights Cast 2",
+      "role": "Role 2",
+      "production": 1,
+      "profile_picture": 86
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 3,
+    "fields": {
+      "name": "Aurora Nights Cast 3",
+      "role": "Role 3",
+      "production": 1,
+      "profile_picture": 87
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 4,
+    "fields": {
+      "name": "City of Echoes Cast 1",
+      "role": "Role 1",
+      "production": 2,
+      "profile_picture": 88
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 5,
+    "fields": {
+      "name": "City of Echoes Cast 2",
+      "role": "Role 2",
+      "production": 2,
+      "profile_picture": 89
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 6,
+    "fields": {
+      "name": "City of Echoes Cast 3",
+      "role": "Role 3",
+      "production": 2,
+      "profile_picture": 90
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 7,
+    "fields": {
+      "name": "Whispers in the Wings Cast 1",
+      "role": "Role 1",
+      "production": 3,
+      "profile_picture": 91
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 8,
+    "fields": {
+      "name": "Whispers in the Wings Cast 2",
+      "role": "Role 2",
+      "production": 3,
+      "profile_picture": 92
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 9,
+    "fields": {
+      "name": "Whispers in the Wings Cast 3",
+      "role": "Role 3",
+      "production": 3,
+      "profile_picture": 93
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 10,
+    "fields": {
+      "name": "Rhythm of the Tide Cast 1",
+      "role": "Role 1",
+      "production": 4,
+      "profile_picture": 94
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 11,
+    "fields": {
+      "name": "Rhythm of the Tide Cast 2",
+      "role": "Role 2",
+      "production": 4,
+      "profile_picture": 95
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 12,
+    "fields": {
+      "name": "Rhythm of the Tide Cast 3",
+      "role": "Role 3",
+      "production": 4,
+      "profile_picture": 96
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 13,
+    "fields": {
+      "name": "Midnight Masquerade Cast 1",
+      "role": "Role 1",
+      "production": 5,
+      "profile_picture": 97
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 14,
+    "fields": {
+      "name": "Midnight Masquerade Cast 2",
+      "role": "Role 2",
+      "production": 5,
+      "profile_picture": 98
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 15,
+    "fields": {
+      "name": "Midnight Masquerade Cast 3",
+      "role": "Role 3",
+      "production": 5,
+      "profile_picture": 99
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 16,
+    "fields": {
+      "name": "Fragments of Light Cast 1",
+      "role": "Role 1",
+      "production": 6,
+      "profile_picture": 100
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 17,
+    "fields": {
+      "name": "Fragments of Light Cast 2",
+      "role": "Role 2",
+      "production": 6,
+      "profile_picture": 101
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 18,
+    "fields": {
+      "name": "Fragments of Light Cast 3",
+      "role": "Role 3",
+      "production": 6,
+      "profile_picture": 102
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 19,
+    "fields": {
+      "name": "Electric Bloom Cast 1",
+      "role": "Role 1",
+      "production": 7,
+      "profile_picture": 103
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 20,
+    "fields": {
+      "name": "Electric Bloom Cast 2",
+      "role": "Role 2",
+      "production": 7,
+      "profile_picture": 104
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 21,
+    "fields": {
+      "name": "Electric Bloom Cast 3",
+      "role": "Role 3",
+      "production": 7,
+      "profile_picture": 105
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 22,
+    "fields": {
+      "name": "The Clockmaker's Tale Cast 1",
+      "role": "Role 1",
+      "production": 8,
+      "profile_picture": 106
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 23,
+    "fields": {
+      "name": "The Clockmaker's Tale Cast 2",
+      "role": "Role 2",
+      "production": 8,
+      "profile_picture": 107
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 24,
+    "fields": {
+      "name": "The Clockmaker's Tale Cast 3",
+      "role": "Role 3",
+      "production": 8,
+      "profile_picture": 108
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 25,
+    "fields": {
+      "name": "Starfall Serenade Cast 1",
+      "role": "Role 1",
+      "production": 9,
+      "profile_picture": 109
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 26,
+    "fields": {
+      "name": "Starfall Serenade Cast 2",
+      "role": "Role 2",
+      "production": 9,
+      "profile_picture": 110
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 27,
+    "fields": {
+      "name": "Starfall Serenade Cast 3",
+      "role": "Role 3",
+      "production": 9,
+      "profile_picture": 111
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 28,
+    "fields": {
+      "name": "Echoes of Tomorrow Cast 1",
+      "role": "Role 1",
+      "production": 10,
+      "profile_picture": 112
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 29,
+    "fields": {
+      "name": "Echoes of Tomorrow Cast 2",
+      "role": "Role 2",
+      "production": 10,
+      "profile_picture": 113
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 30,
+    "fields": {
+      "name": "Echoes of Tomorrow Cast 3",
+      "role": "Role 3",
+      "production": 10,
+      "profile_picture": 114
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 31,
+    "fields": {
+      "name": "Velvet Horizon Cast 1",
+      "role": "Role 1",
+      "production": 11,
+      "profile_picture": 115
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 32,
+    "fields": {
+      "name": "Velvet Horizon Cast 2",
+      "role": "Role 2",
+      "production": 11,
+      "profile_picture": 116
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 33,
+    "fields": {
+      "name": "Velvet Horizon Cast 3",
+      "role": "Role 3",
+      "production": 11,
+      "profile_picture": 117
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 34,
+    "fields": {
+      "name": "Harbour Lights Cast 1",
+      "role": "Role 1",
+      "production": 12,
+      "profile_picture": 118
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 35,
+    "fields": {
+      "name": "Harbour Lights Cast 2",
+      "role": "Role 2",
+      "production": 12,
+      "profile_picture": 119
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 36,
+    "fields": {
+      "name": "Harbour Lights Cast 3",
+      "role": "Role 3",
+      "production": 12,
+      "profile_picture": 120
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 37,
+    "fields": {
+      "name": "Gilded Reverie Cast 1",
+      "role": "Role 1",
+      "production": 13,
+      "profile_picture": 121
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 38,
+    "fields": {
+      "name": "Gilded Reverie Cast 2",
+      "role": "Role 2",
+      "production": 13,
+      "profile_picture": 122
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 39,
+    "fields": {
+      "name": "Gilded Reverie Cast 3",
+      "role": "Role 3",
+      "production": 13,
+      "profile_picture": 123
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 40,
+    "fields": {
+      "name": "Luminous Skies Cast 1",
+      "role": "Role 1",
+      "production": 14,
+      "profile_picture": 124
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 41,
+    "fields": {
+      "name": "Luminous Skies Cast 2",
+      "role": "Role 2",
+      "production": 14,
+      "profile_picture": 125
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 42,
+    "fields": {
+      "name": "Luminous Skies Cast 3",
+      "role": "Role 3",
+      "production": 14,
+      "profile_picture": 126
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 43,
+    "fields": {
+      "name": "Emberline Ballad Cast 1",
+      "role": "Role 1",
+      "production": 15,
+      "profile_picture": 127
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 44,
+    "fields": {
+      "name": "Emberline Ballad Cast 2",
+      "role": "Role 2",
+      "production": 15,
+      "profile_picture": 128
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 45,
+    "fields": {
+      "name": "Emberline Ballad Cast 3",
+      "role": "Role 3",
+      "production": 15,
+      "profile_picture": 129
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 46,
+    "fields": {
+      "name": "Quantum Waltz Cast 1",
+      "role": "Role 1",
+      "production": 16,
+      "profile_picture": 130
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 47,
+    "fields": {
+      "name": "Quantum Waltz Cast 2",
+      "role": "Role 2",
+      "production": 16,
+      "profile_picture": 131
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 48,
+    "fields": {
+      "name": "Quantum Waltz Cast 3",
+      "role": "Role 3",
+      "production": 16,
+      "profile_picture": 132
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 49,
+    "fields": {
+      "name": "Moonlit Paradox Cast 1",
+      "role": "Role 1",
+      "production": 17,
+      "profile_picture": 133
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 50,
+    "fields": {
+      "name": "Moonlit Paradox Cast 2",
+      "role": "Role 2",
+      "production": 17,
+      "profile_picture": 134
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 51,
+    "fields": {
+      "name": "Moonlit Paradox Cast 3",
+      "role": "Role 3",
+      "production": 17,
+      "profile_picture": 135
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 52,
+    "fields": {
+      "name": "Prism Dreams Cast 1",
+      "role": "Role 1",
+      "production": 18,
+      "profile_picture": 136
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 53,
+    "fields": {
+      "name": "Prism Dreams Cast 2",
+      "role": "Role 2",
+      "production": 18,
+      "profile_picture": 137
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 54,
+    "fields": {
+      "name": "Prism Dreams Cast 3",
+      "role": "Role 3",
+      "production": 18,
+      "profile_picture": 138
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 55,
+    "fields": {
+      "name": "Celestial Ruse Cast 1",
+      "role": "Role 1",
+      "production": 19,
+      "profile_picture": 139
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 56,
+    "fields": {
+      "name": "Celestial Ruse Cast 2",
+      "role": "Role 2",
+      "production": 19,
+      "profile_picture": 140
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 57,
+    "fields": {
+      "name": "Celestial Ruse Cast 3",
+      "role": "Role 3",
+      "production": 19,
+      "profile_picture": 141
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 58,
+    "fields": {
+      "name": "Emberfall Chronicles Cast 1",
+      "role": "Role 1",
+      "production": 20,
+      "profile_picture": 142
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 59,
+    "fields": {
+      "name": "Emberfall Chronicles Cast 2",
+      "role": "Role 2",
+      "production": 20,
+      "profile_picture": 143
+    }
+  },
+  {
+    "model": "productions.castmember",
+    "pk": 60,
+    "fields": {
+      "name": "Emberfall Chronicles Cast 3",
+      "role": "Role 3",
+      "production": 20,
+      "profile_picture": 144
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 1,
+    "fields": {
+      "name": "Aurora Nights Crew 1",
+      "role": 1,
       "production": 1
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 2,
+    "fields": {
+      "name": "Aurora Nights Crew 2",
+      "role": 2,
+      "production": 1
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 3,
+    "fields": {
+      "name": "Aurora Nights Crew 3",
+      "role": 3,
+      "production": 1
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 4,
+    "fields": {
+      "name": "City of Echoes Crew 1",
+      "role": 1,
+      "production": 2
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 5,
+    "fields": {
+      "name": "City of Echoes Crew 2",
+      "role": 2,
+      "production": 2
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 6,
+    "fields": {
+      "name": "City of Echoes Crew 3",
+      "role": 3,
+      "production": 2
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 7,
+    "fields": {
+      "name": "Whispers in the Wings Crew 1",
+      "role": 1,
+      "production": 3
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 8,
+    "fields": {
+      "name": "Whispers in the Wings Crew 2",
+      "role": 2,
+      "production": 3
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 9,
+    "fields": {
+      "name": "Whispers in the Wings Crew 3",
+      "role": 3,
+      "production": 3
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 10,
+    "fields": {
+      "name": "Rhythm of the Tide Crew 1",
+      "role": 1,
+      "production": 4
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 11,
+    "fields": {
+      "name": "Rhythm of the Tide Crew 2",
+      "role": 2,
+      "production": 4
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 12,
+    "fields": {
+      "name": "Rhythm of the Tide Crew 3",
+      "role": 3,
+      "production": 4
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 13,
+    "fields": {
+      "name": "Midnight Masquerade Crew 1",
+      "role": 1,
+      "production": 5
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 14,
+    "fields": {
+      "name": "Midnight Masquerade Crew 2",
+      "role": 2,
+      "production": 5
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 15,
+    "fields": {
+      "name": "Midnight Masquerade Crew 3",
+      "role": 3,
+      "production": 5
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 16,
+    "fields": {
+      "name": "Fragments of Light Crew 1",
+      "role": 1,
+      "production": 6
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 17,
+    "fields": {
+      "name": "Fragments of Light Crew 2",
+      "role": 2,
+      "production": 6
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 18,
+    "fields": {
+      "name": "Fragments of Light Crew 3",
+      "role": 3,
+      "production": 6
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 19,
+    "fields": {
+      "name": "Electric Bloom Crew 1",
+      "role": 1,
+      "production": 7
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 20,
+    "fields": {
+      "name": "Electric Bloom Crew 2",
+      "role": 2,
+      "production": 7
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 21,
+    "fields": {
+      "name": "Electric Bloom Crew 3",
+      "role": 3,
+      "production": 7
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 22,
+    "fields": {
+      "name": "The Clockmaker's Tale Crew 1",
+      "role": 1,
+      "production": 8
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 23,
+    "fields": {
+      "name": "The Clockmaker's Tale Crew 2",
+      "role": 2,
+      "production": 8
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 24,
+    "fields": {
+      "name": "The Clockmaker's Tale Crew 3",
+      "role": 3,
+      "production": 8
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 25,
+    "fields": {
+      "name": "Starfall Serenade Crew 1",
+      "role": 1,
+      "production": 9
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 26,
+    "fields": {
+      "name": "Starfall Serenade Crew 2",
+      "role": 2,
+      "production": 9
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 27,
+    "fields": {
+      "name": "Starfall Serenade Crew 3",
+      "role": 3,
+      "production": 9
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 28,
+    "fields": {
+      "name": "Echoes of Tomorrow Crew 1",
+      "role": 1,
+      "production": 10
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 29,
+    "fields": {
+      "name": "Echoes of Tomorrow Crew 2",
+      "role": 2,
+      "production": 10
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 30,
+    "fields": {
+      "name": "Echoes of Tomorrow Crew 3",
+      "role": 3,
+      "production": 10
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 31,
+    "fields": {
+      "name": "Velvet Horizon Crew 1",
+      "role": 1,
+      "production": 11
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 32,
+    "fields": {
+      "name": "Velvet Horizon Crew 2",
+      "role": 2,
+      "production": 11
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 33,
+    "fields": {
+      "name": "Velvet Horizon Crew 3",
+      "role": 3,
+      "production": 11
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 34,
+    "fields": {
+      "name": "Harbour Lights Crew 1",
+      "role": 1,
+      "production": 12
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 35,
+    "fields": {
+      "name": "Harbour Lights Crew 2",
+      "role": 2,
+      "production": 12
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 36,
+    "fields": {
+      "name": "Harbour Lights Crew 3",
+      "role": 3,
+      "production": 12
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 37,
+    "fields": {
+      "name": "Gilded Reverie Crew 1",
+      "role": 1,
+      "production": 13
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 38,
+    "fields": {
+      "name": "Gilded Reverie Crew 2",
+      "role": 2,
+      "production": 13
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 39,
+    "fields": {
+      "name": "Gilded Reverie Crew 3",
+      "role": 3,
+      "production": 13
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 40,
+    "fields": {
+      "name": "Luminous Skies Crew 1",
+      "role": 1,
+      "production": 14
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 41,
+    "fields": {
+      "name": "Luminous Skies Crew 2",
+      "role": 2,
+      "production": 14
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 42,
+    "fields": {
+      "name": "Luminous Skies Crew 3",
+      "role": 3,
+      "production": 14
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 43,
+    "fields": {
+      "name": "Emberline Ballad Crew 1",
+      "role": 1,
+      "production": 15
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 44,
+    "fields": {
+      "name": "Emberline Ballad Crew 2",
+      "role": 2,
+      "production": 15
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 45,
+    "fields": {
+      "name": "Emberline Ballad Crew 3",
+      "role": 3,
+      "production": 15
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 46,
+    "fields": {
+      "name": "Quantum Waltz Crew 1",
+      "role": 1,
+      "production": 16
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 47,
+    "fields": {
+      "name": "Quantum Waltz Crew 2",
+      "role": 2,
+      "production": 16
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 48,
+    "fields": {
+      "name": "Quantum Waltz Crew 3",
+      "role": 3,
+      "production": 16
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 49,
+    "fields": {
+      "name": "Moonlit Paradox Crew 1",
+      "role": 1,
+      "production": 17
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 50,
+    "fields": {
+      "name": "Moonlit Paradox Crew 2",
+      "role": 2,
+      "production": 17
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 51,
+    "fields": {
+      "name": "Moonlit Paradox Crew 3",
+      "role": 3,
+      "production": 17
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 52,
+    "fields": {
+      "name": "Prism Dreams Crew 1",
+      "role": 1,
+      "production": 18
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 53,
+    "fields": {
+      "name": "Prism Dreams Crew 2",
+      "role": 2,
+      "production": 18
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 54,
+    "fields": {
+      "name": "Prism Dreams Crew 3",
+      "role": 3,
+      "production": 18
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 55,
+    "fields": {
+      "name": "Celestial Ruse Crew 1",
+      "role": 1,
+      "production": 19
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 56,
+    "fields": {
+      "name": "Celestial Ruse Crew 2",
+      "role": 2,
+      "production": 19
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 57,
+    "fields": {
+      "name": "Celestial Ruse Crew 3",
+      "role": 3,
+      "production": 19
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 58,
+    "fields": {
+      "name": "Emberfall Chronicles Crew 1",
+      "role": 1,
+      "production": 20
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 59,
+    "fields": {
+      "name": "Emberfall Chronicles Crew 2",
+      "role": 2,
+      "production": 20
+    }
+  },
+  {
+    "model": "productions.crewmember",
+    "pk": 60,
+    "fields": {
+      "name": "Emberfall Chronicles Crew 3",
+      "role": 3,
+      "production": 20
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 1,
+    "fields": {
+      "name": "Aurora Nights Director",
+      "role": "Director",
+      "production": 1
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 2,
+    "fields": {
+      "name": "Aurora Nights Producer",
+      "role": "Producer",
+      "production": 1
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 3,
+    "fields": {
+      "name": "City of Echoes Director",
+      "role": "Director",
+      "production": 2
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 4,
+    "fields": {
+      "name": "City of Echoes Producer",
+      "role": "Producer",
+      "production": 2
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 5,
+    "fields": {
+      "name": "Whispers in the Wings Director",
+      "role": "Director",
+      "production": 3
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 6,
+    "fields": {
+      "name": "Whispers in the Wings Producer",
+      "role": "Producer",
+      "production": 3
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 7,
+    "fields": {
+      "name": "Rhythm of the Tide Director",
+      "role": "Director",
+      "production": 4
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 8,
+    "fields": {
+      "name": "Rhythm of the Tide Producer",
+      "role": "Producer",
+      "production": 4
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 9,
+    "fields": {
+      "name": "Midnight Masquerade Director",
+      "role": "Director",
+      "production": 5
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 10,
+    "fields": {
+      "name": "Midnight Masquerade Producer",
+      "role": "Producer",
+      "production": 5
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 11,
+    "fields": {
+      "name": "Fragments of Light Director",
+      "role": "Director",
+      "production": 6
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 12,
+    "fields": {
+      "name": "Fragments of Light Producer",
+      "role": "Producer",
+      "production": 6
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 13,
+    "fields": {
+      "name": "Electric Bloom Director",
+      "role": "Director",
+      "production": 7
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 14,
+    "fields": {
+      "name": "Electric Bloom Producer",
+      "role": "Producer",
+      "production": 7
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 15,
+    "fields": {
+      "name": "The Clockmaker's Tale Director",
+      "role": "Director",
+      "production": 8
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 16,
+    "fields": {
+      "name": "The Clockmaker's Tale Producer",
+      "role": "Producer",
+      "production": 8
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 17,
+    "fields": {
+      "name": "Starfall Serenade Director",
+      "role": "Director",
+      "production": 9
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 18,
+    "fields": {
+      "name": "Starfall Serenade Producer",
+      "role": "Producer",
+      "production": 9
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 19,
+    "fields": {
+      "name": "Echoes of Tomorrow Director",
+      "role": "Director",
+      "production": 10
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 20,
+    "fields": {
+      "name": "Echoes of Tomorrow Producer",
+      "role": "Producer",
+      "production": 10
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 21,
+    "fields": {
+      "name": "Velvet Horizon Director",
+      "role": "Director",
+      "production": 11
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 22,
+    "fields": {
+      "name": "Velvet Horizon Producer",
+      "role": "Producer",
+      "production": 11
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 23,
+    "fields": {
+      "name": "Harbour Lights Director",
+      "role": "Director",
+      "production": 12
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 24,
+    "fields": {
+      "name": "Harbour Lights Producer",
+      "role": "Producer",
+      "production": 12
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 25,
+    "fields": {
+      "name": "Gilded Reverie Director",
+      "role": "Director",
+      "production": 13
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 26,
+    "fields": {
+      "name": "Gilded Reverie Producer",
+      "role": "Producer",
+      "production": 13
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 27,
+    "fields": {
+      "name": "Luminous Skies Director",
+      "role": "Director",
+      "production": 14
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 28,
+    "fields": {
+      "name": "Luminous Skies Producer",
+      "role": "Producer",
+      "production": 14
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 29,
+    "fields": {
+      "name": "Emberline Ballad Director",
+      "role": "Director",
+      "production": 15
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 30,
+    "fields": {
+      "name": "Emberline Ballad Producer",
+      "role": "Producer",
+      "production": 15
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 31,
+    "fields": {
+      "name": "Quantum Waltz Director",
+      "role": "Director",
+      "production": 16
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 32,
+    "fields": {
+      "name": "Quantum Waltz Producer",
+      "role": "Producer",
+      "production": 16
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 33,
+    "fields": {
+      "name": "Moonlit Paradox Director",
+      "role": "Director",
+      "production": 17
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 34,
+    "fields": {
+      "name": "Moonlit Paradox Producer",
+      "role": "Producer",
+      "production": 17
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 35,
+    "fields": {
+      "name": "Prism Dreams Director",
+      "role": "Director",
+      "production": 18
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 36,
+    "fields": {
+      "name": "Prism Dreams Producer",
+      "role": "Producer",
+      "production": 18
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 37,
+    "fields": {
+      "name": "Celestial Ruse Director",
+      "role": "Director",
+      "production": 19
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 38,
+    "fields": {
+      "name": "Celestial Ruse Producer",
+      "role": "Producer",
+      "production": 19
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 39,
+    "fields": {
+      "name": "Emberfall Chronicles Director",
+      "role": "Director",
+      "production": 20
+    }
+  },
+  {
+    "model": "productions.productionteammember",
+    "pk": 40,
+    "fields": {
+      "name": "Emberfall Chronicles Producer",
+      "role": "Producer",
+      "production": 20
     }
   },
   {
@@ -143,8 +3277,1498 @@
     "fields": {
       "seat_group": 1,
       "performance": 1,
-      "price": 1000,
-      "capacity": 100
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 2,
+    "fields": {
+      "seat_group": 2,
+      "performance": 1,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 3,
+    "fields": {
+      "seat_group": 1,
+      "performance": 2,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 4,
+    "fields": {
+      "seat_group": 2,
+      "performance": 2,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 5,
+    "fields": {
+      "seat_group": 1,
+      "performance": 3,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 6,
+    "fields": {
+      "seat_group": 2,
+      "performance": 3,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 7,
+    "fields": {
+      "seat_group": 1,
+      "performance": 4,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 8,
+    "fields": {
+      "seat_group": 2,
+      "performance": 4,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 9,
+    "fields": {
+      "seat_group": 4,
+      "performance": 5,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 10,
+    "fields": {
+      "seat_group": 5,
+      "performance": 5,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 11,
+    "fields": {
+      "seat_group": 4,
+      "performance": 6,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 12,
+    "fields": {
+      "seat_group": 5,
+      "performance": 6,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 13,
+    "fields": {
+      "seat_group": 4,
+      "performance": 7,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 14,
+    "fields": {
+      "seat_group": 5,
+      "performance": 7,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 15,
+    "fields": {
+      "seat_group": 7,
+      "performance": 8,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 16,
+    "fields": {
+      "seat_group": 8,
+      "performance": 8,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 17,
+    "fields": {
+      "seat_group": 7,
+      "performance": 9,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 18,
+    "fields": {
+      "seat_group": 8,
+      "performance": 9,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 19,
+    "fields": {
+      "seat_group": 7,
+      "performance": 10,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 20,
+    "fields": {
+      "seat_group": 8,
+      "performance": 10,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 21,
+    "fields": {
+      "seat_group": 7,
+      "performance": 11,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 22,
+    "fields": {
+      "seat_group": 8,
+      "performance": 11,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 23,
+    "fields": {
+      "seat_group": 7,
+      "performance": 12,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 24,
+    "fields": {
+      "seat_group": 8,
+      "performance": 12,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 25,
+    "fields": {
+      "seat_group": 10,
+      "performance": 13,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 26,
+    "fields": {
+      "seat_group": 11,
+      "performance": 13,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 27,
+    "fields": {
+      "seat_group": 10,
+      "performance": 14,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 28,
+    "fields": {
+      "seat_group": 11,
+      "performance": 14,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 29,
+    "fields": {
+      "seat_group": 10,
+      "performance": 15,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 30,
+    "fields": {
+      "seat_group": 11,
+      "performance": 15,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 31,
+    "fields": {
+      "seat_group": 13,
+      "performance": 16,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 32,
+    "fields": {
+      "seat_group": 14,
+      "performance": 16,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 33,
+    "fields": {
+      "seat_group": 13,
+      "performance": 17,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 34,
+    "fields": {
+      "seat_group": 14,
+      "performance": 17,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 35,
+    "fields": {
+      "seat_group": 13,
+      "performance": 18,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 36,
+    "fields": {
+      "seat_group": 14,
+      "performance": 18,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 37,
+    "fields": {
+      "seat_group": 13,
+      "performance": 19,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 38,
+    "fields": {
+      "seat_group": 14,
+      "performance": 19,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 39,
+    "fields": {
+      "seat_group": 16,
+      "performance": 20,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 40,
+    "fields": {
+      "seat_group": 17,
+      "performance": 20,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 41,
+    "fields": {
+      "seat_group": 16,
+      "performance": 21,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 42,
+    "fields": {
+      "seat_group": 17,
+      "performance": 21,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 43,
+    "fields": {
+      "seat_group": 16,
+      "performance": 22,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 44,
+    "fields": {
+      "seat_group": 17,
+      "performance": 22,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 45,
+    "fields": {
+      "seat_group": 19,
+      "performance": 23,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 46,
+    "fields": {
+      "seat_group": 20,
+      "performance": 23,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 47,
+    "fields": {
+      "seat_group": 4,
+      "performance": 24,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 48,
+    "fields": {
+      "seat_group": 5,
+      "performance": 24,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 49,
+    "fields": {
+      "seat_group": 19,
+      "performance": 25,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 50,
+    "fields": {
+      "seat_group": 20,
+      "performance": 25,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 51,
+    "fields": {
+      "seat_group": 4,
+      "performance": 26,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 52,
+    "fields": {
+      "seat_group": 5,
+      "performance": 26,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 53,
+    "fields": {
+      "seat_group": 19,
+      "performance": 27,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 54,
+    "fields": {
+      "seat_group": 20,
+      "performance": 27,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 55,
+    "fields": {
+      "seat_group": 22,
+      "performance": 28,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 56,
+    "fields": {
+      "seat_group": 23,
+      "performance": 28,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 57,
+    "fields": {
+      "seat_group": 22,
+      "performance": 29,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 58,
+    "fields": {
+      "seat_group": 23,
+      "performance": 29,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 59,
+    "fields": {
+      "seat_group": 22,
+      "performance": 30,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 60,
+    "fields": {
+      "seat_group": 23,
+      "performance": 30,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 61,
+    "fields": {
+      "seat_group": 22,
+      "performance": 31,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 62,
+    "fields": {
+      "seat_group": 23,
+      "performance": 31,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 63,
+    "fields": {
+      "seat_group": 1,
+      "performance": 32,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 64,
+    "fields": {
+      "seat_group": 2,
+      "performance": 32,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 65,
+    "fields": {
+      "seat_group": 1,
+      "performance": 33,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 66,
+    "fields": {
+      "seat_group": 2,
+      "performance": 33,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 67,
+    "fields": {
+      "seat_group": 1,
+      "performance": 34,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 68,
+    "fields": {
+      "seat_group": 2,
+      "performance": 34,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 69,
+    "fields": {
+      "seat_group": 4,
+      "performance": 35,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 70,
+    "fields": {
+      "seat_group": 5,
+      "performance": 35,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 71,
+    "fields": {
+      "seat_group": 16,
+      "performance": 36,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 72,
+    "fields": {
+      "seat_group": 17,
+      "performance": 36,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 73,
+    "fields": {
+      "seat_group": 4,
+      "performance": 37,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 74,
+    "fields": {
+      "seat_group": 5,
+      "performance": 37,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 75,
+    "fields": {
+      "seat_group": 16,
+      "performance": 38,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 76,
+    "fields": {
+      "seat_group": 17,
+      "performance": 38,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 77,
+    "fields": {
+      "seat_group": 7,
+      "performance": 39,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 78,
+    "fields": {
+      "seat_group": 8,
+      "performance": 39,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 79,
+    "fields": {
+      "seat_group": 7,
+      "performance": 40,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 80,
+    "fields": {
+      "seat_group": 8,
+      "performance": 40,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 81,
+    "fields": {
+      "seat_group": 7,
+      "performance": 41,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 82,
+    "fields": {
+      "seat_group": 8,
+      "performance": 41,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 83,
+    "fields": {
+      "seat_group": 10,
+      "performance": 42,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 84,
+    "fields": {
+      "seat_group": 11,
+      "performance": 42,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 85,
+    "fields": {
+      "seat_group": 10,
+      "performance": 43,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 86,
+    "fields": {
+      "seat_group": 11,
+      "performance": 43,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 87,
+    "fields": {
+      "seat_group": 10,
+      "performance": 44,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 88,
+    "fields": {
+      "seat_group": 11,
+      "performance": 44,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 89,
+    "fields": {
+      "seat_group": 10,
+      "performance": 45,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 90,
+    "fields": {
+      "seat_group": 11,
+      "performance": 45,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 91,
+    "fields": {
+      "seat_group": 13,
+      "performance": 46,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 92,
+    "fields": {
+      "seat_group": 14,
+      "performance": 46,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 93,
+    "fields": {
+      "seat_group": 13,
+      "performance": 47,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 94,
+    "fields": {
+      "seat_group": 14,
+      "performance": 47,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 95,
+    "fields": {
+      "seat_group": 13,
+      "performance": 48,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 96,
+    "fields": {
+      "seat_group": 14,
+      "performance": 48,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 97,
+    "fields": {
+      "seat_group": 16,
+      "performance": 49,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 98,
+    "fields": {
+      "seat_group": 17,
+      "performance": 49,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 99,
+    "fields": {
+      "seat_group": 16,
+      "performance": 50,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 100,
+    "fields": {
+      "seat_group": 17,
+      "performance": 50,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 101,
+    "fields": {
+      "seat_group": 16,
+      "performance": 51,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 102,
+    "fields": {
+      "seat_group": 17,
+      "performance": 51,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 103,
+    "fields": {
+      "seat_group": 16,
+      "performance": 52,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 104,
+    "fields": {
+      "seat_group": 17,
+      "performance": 52,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 105,
+    "fields": {
+      "seat_group": 19,
+      "performance": 53,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 106,
+    "fields": {
+      "seat_group": 20,
+      "performance": 53,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 107,
+    "fields": {
+      "seat_group": 19,
+      "performance": 54,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 108,
+    "fields": {
+      "seat_group": 20,
+      "performance": 54,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 109,
+    "fields": {
+      "seat_group": 19,
+      "performance": 55,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 110,
+    "fields": {
+      "seat_group": 20,
+      "performance": 55,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 111,
+    "fields": {
+      "seat_group": 22,
+      "performance": 56,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 112,
+    "fields": {
+      "seat_group": 23,
+      "performance": 56,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 113,
+    "fields": {
+      "seat_group": 22,
+      "performance": 57,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 114,
+    "fields": {
+      "seat_group": 23,
+      "performance": 57,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 115,
+    "fields": {
+      "seat_group": 22,
+      "performance": 58,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 116,
+    "fields": {
+      "seat_group": 23,
+      "performance": 58,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 117,
+    "fields": {
+      "seat_group": 22,
+      "performance": 59,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 118,
+    "fields": {
+      "seat_group": 23,
+      "performance": 59,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 119,
+    "fields": {
+      "seat_group": 22,
+      "performance": 60,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 120,
+    "fields": {
+      "seat_group": 23,
+      "performance": 60,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 121,
+    "fields": {
+      "seat_group": 7,
+      "performance": 61,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 122,
+    "fields": {
+      "seat_group": 8,
+      "performance": 61,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 123,
+    "fields": {
+      "seat_group": 7,
+      "performance": 62,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 124,
+    "fields": {
+      "seat_group": 8,
+      "performance": 62,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 125,
+    "fields": {
+      "seat_group": 7,
+      "performance": 63,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 126,
+    "fields": {
+      "seat_group": 8,
+      "performance": 63,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 127,
+    "fields": {
+      "seat_group": 4,
+      "performance": 64,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 128,
+    "fields": {
+      "seat_group": 5,
+      "performance": 64,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 129,
+    "fields": {
+      "seat_group": 13,
+      "performance": 65,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 130,
+    "fields": {
+      "seat_group": 14,
+      "performance": 65,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 131,
+    "fields": {
+      "seat_group": 22,
+      "performance": 66,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 132,
+    "fields": {
+      "seat_group": 23,
+      "performance": 66,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 133,
+    "fields": {
+      "seat_group": 4,
+      "performance": 67,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 134,
+    "fields": {
+      "seat_group": 5,
+      "performance": 67,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 135,
+    "fields": {
+      "seat_group": 13,
+      "performance": 68,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 136,
+    "fields": {
+      "seat_group": 14,
+      "performance": 68,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 137,
+    "fields": {
+      "seat_group": 10,
+      "performance": 69,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 138,
+    "fields": {
+      "seat_group": 11,
+      "performance": 69,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 139,
+    "fields": {
+      "seat_group": 10,
+      "performance": 70,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 140,
+    "fields": {
+      "seat_group": 11,
+      "performance": 70,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 141,
+    "fields": {
+      "seat_group": 10,
+      "performance": 71,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 142,
+    "fields": {
+      "seat_group": 11,
+      "performance": 71,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 143,
+    "fields": {
+      "seat_group": 1,
+      "performance": 72,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 144,
+    "fields": {
+      "seat_group": 2,
+      "performance": 72,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 145,
+    "fields": {
+      "seat_group": 1,
+      "performance": 73,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 146,
+    "fields": {
+      "seat_group": 2,
+      "performance": 73,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 147,
+    "fields": {
+      "seat_group": 1,
+      "performance": 74,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 148,
+    "fields": {
+      "seat_group": 2,
+      "performance": 74,
+      "price": 2000,
+      "capacity": 8
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 149,
+    "fields": {
+      "seat_group": 1,
+      "performance": 75,
+      "price": 1400,
+      "capacity": 12
+    }
+  },
+  {
+    "model": "productions.performanceseatgroup",
+    "pk": 150,
+    "fields": {
+      "seat_group": 2,
+      "performance": 75,
+      "price": 2000,
+      "capacity": 8
     }
   }
 ]
