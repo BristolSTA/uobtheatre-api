@@ -819,8 +819,6 @@ class ProductionQuerySet(QuerySet):
                 performances__bookings__user=user,
                 performances__start__gte=one_week_ago,
             ).values_list("id", flat=True)
-        else:
-            productions_user_has_tickets = []
 
         return self.filter(
             ~Q(status__in=Production.Status.PRIVATE_STATUSES)
