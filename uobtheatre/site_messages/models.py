@@ -106,7 +106,7 @@ class Message(BaseModel):
         max_length=7,
         choices=Policy.choices,
         default=Policy.DEFAULT,
-        help_text="The policy for a message's dismissal. By default messages are dismissable, and this choice is stored in the cache until the event is over. Single-Session Only messages can be dismissed, but dismissal is not cached. Prevented messages cannot be dismissed by the user: if used for a modal, this will essentially shut down that function (or the whole site, for a sitewide modal).",
+        help_text="The policy for a message's dismissal. By default messages are dismissible, and once a message has been dismissed by a user, it will never reappear for them. Single-Session Only messages can be dismissed, but will reappear whenever the page is loaded. Prevented messages cannot be dismissed by the user: if used for a modal, this will essentially shut down that function (or the whole site, for a sitewide modal).",
     )
 
     class DisplayLocation(models.TextChoices):
@@ -133,7 +133,7 @@ class Message(BaseModel):
         max_length=25,
         choices=DisplayLocation.choices,
         default=DisplayLocation.BANNER,
-        help_text="The location on the site where the message should be displayed. Banner messages are displayed in a banner at the top of the page. Landing Modal messages are displayed in a modal on the landing page. Booking Modal messages are displayed in a modal on the booking page. Production Creation/Edit Modal messages are displayed in a modal on the production creation and editing page.",
+        help_text="The location on the site where the message should be displayed. Banner messages are displayed in a banner at the top of the page. Sitewide Modal messages are displayed across the entire website. Booking Modal messages are displayed in a modal on the booking page. Production Creation/Edit Modal messages are displayed in a modal on the production creation and editing page.",
     )
 
     title = models.CharField(
