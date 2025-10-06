@@ -32,13 +32,14 @@ class SiteMessageFactory(factory.django.DjangoModelFactory):
         model = Message
 
 
-def create_site_message(display_start, event_start, event_end, message_id):
+def create_site_message(display_start, event_start, event_end, message_id, indefinite_override=False, active=True):
     """Create a site message with given timing information to test ordering
     Args:
         display_start (datetime)
         event_start (datetime)
         event_end (datetime)
         message_id (int)
+        indefinite_override (bool): Whether the message should ignore the event_end time and continue to display indefinitely.
 
     Returns:
         message: The generated Site Message.
@@ -48,5 +49,7 @@ def create_site_message(display_start, event_start, event_end, message_id):
         event_start=event_start,
         event_end=event_end,
         id=message_id,
+        indefinite_override=indefinite_override,
+        active=active,
     )
     return message

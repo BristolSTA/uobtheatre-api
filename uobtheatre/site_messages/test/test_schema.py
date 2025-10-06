@@ -279,3 +279,69 @@ def test_site_message_time_filters(
         {"node": {"id": to_global_id("SiteMessageNode", messages[i].id)}}
         for i in expected_outputs
     ]
+
+@pytest.mark.django_db
+def test_site_message_to_display_filter(gql_client):
+    current_time = timezone.now().replace(microsecond=0, second=0)
+
+    # Messages that should be displayed
+    msg1 = create_site_message(  # Active, within event time
+        display_start=current_time - datetime.timedelta(days=2),
+        event_start=current_time - datetime.timedelta(days=1),
+        event_end=current_time + datetime.timedelta(days=1),
+        message_id=1,
+    )
+    msg2 = create_site_message(  # Active, indefinite override
+        display_start=current_time - datetime.timedelta(days=10),
+        event_start=current_time - datetime.timedelta(days=5),
+        event_end=current_time - datetime.timedelta(days=1),
+        indefinite_override=True,
+        message_id=2,
+    )
+    msg3 = create_site_message(  # Active, display start in past, event end in future
+        display_start=current_time - datetime.timedelta(days=1),
+        event_start=current_time + datetime.timedelta(days=1),
+        event_end=current_time + datetime.timedelta(days=5),
+        message_id=3,
+    )
+
+    # Messages that should not be displayed
+    create_site_message(  # Inactive
+        display_start=current_time - datetime.timedelta(days=2),
+        event_start=current_time - datetime.timedelta(days=1),
+        event_end=current_time + datetime.timedelta(days=1),
+        active=False,
+        message_id=4,
+    )
+    create_site_message(  # Active, display start in future
+        display_start=current_time + datetime.timedelta(days=1),
+        event_start=current_time + datetime.timedelta(days=2),
+        event_end=current_time + datetime.timedelta(days=5),
+        message_id=5,
+    )
+    create_site_message(  # Active, event end in past, no indefinite override
+        display_start=current_time - datetime.timedelta(days=10),
+        event_start=current_time - datetime.timedelta(days=5),
+        event_end=current_time - datetime.timedelta(days=1),
+        message_id=6,
+    )
+
+    request = """
+        {
+          siteMessages(toDisplay: true) {
+            edges {
+              node {
+                id
+              }
+            }
+          }
+        }
+        """
+
+    response = gql_client.execute(request)
+
+    assert len(response["data"]["siteMessages"]["edges"]) == 3
+    assert response["data"]["siteMessages"]["edges"] == [
+        { "node": {"id": to_global_id("SiteMessageNode", msg.id)}}
+        for msg in [msg1, msg2, msg3]
+    ]

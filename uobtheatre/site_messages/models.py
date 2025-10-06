@@ -55,7 +55,7 @@ class Message(BaseModel):
 
     display_start = models.DateTimeField(
         default=timezone.now,
-        help_text="When the message should start being displayed on the website. Used to schedule messages in advance, and to determine whether the message should be displayed."
+        help_text="When the message should start being displayed on the website. Used to schedule messages in advance, and to determine whether the message should be displayed.",
     )
     event_start = models.DateTimeField(
         help_text="When the event will start. Used both to calculate duration, and displayed when in banner display location."

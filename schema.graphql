@@ -846,7 +846,7 @@ type SiteMessageNode implements Node {
   message: String!
   active: Boolean!
   indefiniteOverride: Boolean!
-  displayStart: DateTime
+  displayStart: DateTime!
   eventStart: DateTime!
   eventEnd: DateTime!
   creator: ExtendedUserNode
