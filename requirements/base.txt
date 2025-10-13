@@ -52,8 +52,7 @@ graphene-django==2.15.0
 
 #=== Auth ===#
 
-django-allauth==0.50.0
-django-graphql-auth==0.3.16
+django-graphene-auth==1.1.1 # this directly replaces django-graphql-auth, and is still being maintained
 # These are apparently a package deal atm so we need both
 django-graphql-jwt==0.3.0
 PyJWT==1.7.0
