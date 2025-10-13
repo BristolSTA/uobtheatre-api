@@ -3,3 +3,6 @@
 USE_DOCKER=yes
 IPYTHONDIR=/app/.ipython
 DJANGO_SETTINGS_MODULE=config.settings.local
+
+# Show Django deprecation warnings
+PYTHONWARNINGS=always
