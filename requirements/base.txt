@@ -60,7 +60,7 @@ pydantic==2.12.1
 
 #=== Payments ===#
 
-squareup==42.0.0.20250416
+squareup==43.1.2.20250924
 
 #=== Logging ===#
 
