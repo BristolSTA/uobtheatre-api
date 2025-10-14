@@ -2,7 +2,7 @@
 -r base.txt
 
 # hooks
-pre-commit == 3.8.0
+pre-commit == 4.3.0
 
 # formatting
 black == 25.9.0 # Code formatting
