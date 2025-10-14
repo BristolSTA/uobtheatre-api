@@ -54,14 +54,14 @@ class Message(BaseModel):
     )
 
     display_start = models.DateTimeField(
-        null=True,
-        help_text="When the message should start being displayed on the website. If null, the message will be displayed immediately.",
+        default=timezone.now,
+        help_text="When the message should start being displayed on the website. Used to schedule messages in advance, and to determine whether the message should be displayed.",
     )
     event_start = models.DateTimeField(
-        help_text="When the banner shows the event will begin (date and time)."
+        help_text="When the event will start. Used both to calculate duration, and displayed when in banner display location."
     )
     event_end = models.DateTimeField(
-        help_text="When the event will end. Used both to calculate duration and to know when to stop displaying the message."
+        help_text="When the event will end. Used both to calculate duration, which is displayed when in banner display location, and to determine whether the message should be displayed."
     )
 
     # The user that created the message
@@ -160,6 +160,9 @@ class Message(BaseModel):
 
         Messages are displayed if they are active, either the display_start is in the past or null,
         and the event_end is in the future or the indefinite_override is set.
+
+        Because django does not support querying properties, if you edit this method, please also
+        edit the to_display_filter method in site_messages/schema.py.
 
         Returns:
             bool: Whether the message should be displayed.
