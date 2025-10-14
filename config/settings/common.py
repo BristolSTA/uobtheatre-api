@@ -1,8 +1,5 @@
 import os
 from datetime import timedelta
-from distutils.util import (  # TODO: Replace with supported version # pylint: disable=deprecated-module,fixme
-    strtobool,
-)
 from os.path import join
 from typing import List
 
@@ -164,7 +161,10 @@ TEMPLATES = [
 
 # Set DEBUG to False as a default for safety
 # https://docs.djangoproject.com/en/dev/ref/settings/#debug
-DEBUG = strtobool(env("DJANGO_DEBUG", default="no"))
+if env("DJANGO_DEBUG", default="no").lower() in ("y", "yes", "on", "1", "true", "t"):
+  DEBUG = True
+else:
+  DEBUG = False
 
 # Password Validation
 # https://docs.djangoproject.com/en/2.0/topics/auth/passwords/#module-django.contrib.auth.password_validation

@@ -23,7 +23,7 @@ This will:
 
 # Prerequisites (Local dev)
 
-- Python 3.10
+- Python 3.12
 - [docker](https://docs.docker.com/get-docker/)
 - [docker compose](https://docs.docker.com/compose/install/)
 
