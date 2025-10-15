@@ -2,6 +2,7 @@ import uuid
 
 import factory
 from django.contrib.auth.models import Group
+from uobtheatre.users.models import User
 
 
 class GroupFactory(factory.django.DjangoModelFactory):
@@ -13,8 +14,9 @@ class GroupFactory(factory.django.DjangoModelFactory):
 
 class UserFactory(factory.django.DjangoModelFactory):
     class Meta:
-        model = "users.User"
+        model = User
         django_get_or_create = ("email",)
+        skip_postgeneration_save=True
 
     id = factory.LazyFunction(uuid.uuid4)
     password = factory.Faker(
@@ -37,3 +39,5 @@ class UserFactory(factory.django.DjangoModelFactory):
         if extracted:
             for group in extracted:
                 self.groups.add(group)
+                group.save()
+                self.save()

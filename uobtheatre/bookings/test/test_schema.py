@@ -569,7 +569,7 @@ def test_discounts_node(gql_client):
 def test_booking_in_progress(gql_client):
     """
     We will often want to get an "in_progress" booking for a given booking and user.
-        bookings(performance: "UGVyZm9ybWFuY2VOb2RlOjE=", status: "IN_PROGRESS")
+        bookings(performance: "UGVyZm9ybWFuY2VOb2RlOjE=", status: IN_PROGRESS)
     """
     user = UserFactory()
     performance = PerformanceFactory(id=1)
@@ -587,7 +587,7 @@ def test_booking_in_progress(gql_client):
     request_query = """
     {
       me {
-        bookings(performance: "UGVyZm9ybWFuY2VOb2RlOjE=", status: "IN_PROGRESS") {
+        bookings(performance: "UGVyZm9ybWFuY2VOb2RlOjE=", status: IN_PROGRESS) {
           edges {
             node {
               id

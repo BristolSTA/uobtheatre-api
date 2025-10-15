@@ -4,7 +4,7 @@ Setups a few overrides for use throughout package
 
 from django.core.exceptions import EmptyResultSet
 from django.db.models.sql import datastructures
-from graphql_auth import bases
+from dga.graphql_auth import bases
 
 from uobtheatre.utils.exceptions import AuthOutput
 
@@ -13,4 +13,4 @@ from uobtheatre.utils.exceptions import AuthOutput
 datastructures.EmptyResultSet = EmptyResultSet  # type: ignore
 
 # Override graphql_auth Output with our own custom output
-bases.Output = AuthOutput
+bases.SuccessErrorsOutput = AuthOutput

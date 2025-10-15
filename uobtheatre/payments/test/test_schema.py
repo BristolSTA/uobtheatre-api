@@ -108,6 +108,7 @@ def test_list_devices(gql_client, mock_square):
     assign_perm("productions.boxoffice", gql_client.user)
 
     mock_response = SyncPager(
+        response=None,
         has_next=False,
         items=[
             DeviceCode(
@@ -188,6 +189,7 @@ def test_list_devices_without_boxoffice_permissions(gql_client, mock_square):
     """
 
     mock_response = SyncPager(
+        response=None,
         has_next=False,
         items=[
             DeviceCode(
@@ -231,6 +233,7 @@ def test_list_devices_empty_response(gql_client, mock_square):
     assign_perm("productions.boxoffice", gql_client.user)
 
     mock_response = SyncPager(
+        response=None,
         has_next=False,
         items=[],
         get_next=None,
@@ -280,6 +283,7 @@ def test_filter_list_devices(
     assign_perm("productions.boxoffice", gql_client.user)
 
     mock_response = SyncPager(
+        response=None,
         has_next=False,
         items=[],
         get_next=None,

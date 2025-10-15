@@ -26,8 +26,8 @@ INSTALLED_APPS = (
     "django.contrib.staticfiles",
     "django.contrib.sites",
     # Third party apps
-    # Authentiaction
-    "graphql_auth",  # Graphql authentication (user setup)
+    # Authentication
+    "dga.graphql_auth",
     "graphql_jwt.refresh_token.apps.RefreshTokenConfig",
     ##
     "django_filters",  # for filtering rest endpoints
@@ -187,7 +187,7 @@ AUTH_PASSWORD_VALIDATORS = [
 SITE_ID = 1
 
 AUTHENTICATION_BACKENDS = [
-    "graphql_auth.backends.GraphQLAuthBackend",
+    "dga.graphql_auth.backends.GraphQLAuthBackend",
     "guardian.backends.ObjectPermissionBackend",
     "django.contrib.auth.backends.ModelBackend",
 ]
@@ -293,16 +293,16 @@ GRAPHQL_AUTH = {
 
 GRAPHQL_JWT = {
     "JWT_ALLOW_ANY_CLASSES": [
-        "graphql_auth.mutations.Register",
-        "graphql_auth.mutations.VerifyAccount",
-        "graphql_auth.mutations.ResendActivationEmail",
-        "graphql_auth.mutations.SendPasswordResetEmail",
-        "graphql_auth.mutations.PasswordReset",
-        "graphql_auth.mutations.ObtainJSONWebToken",
-        "graphql_auth.mutations.VerifyToken",
-        "graphql_auth.mutations.RefreshToken",
-        "graphql_auth.mutations.RevokeToken",
-        "graphql_auth.mutations.VerifySecondaryEmail",
+        "dga.graphql_auth.mutations.Register",
+        "dga.graphql_auth.mutations.VerifyAccount",
+        "dga.graphql_auth.mutations.ResendActivationEmail",
+        "dga.graphql_auth.mutations.SendPasswordResetEmail",
+        "dga.graphql_auth.mutations.PasswordReset",
+        "dga.graphql_auth.mutations.ObtainJSONWebToken",
+        "dga.graphql_auth.mutations.VerifyToken",
+        "dga.graphql_auth.mutations.RefreshToken",
+        "dga.graphql_auth.mutations.RevokeToken",
+        "dga.graphql_auth.mutations.VerifySecondaryEmail",
     ],
     "JWT_VERIFY_EXPIRATION": True,
     "JWT_LONG_RUNNING_REFRESH_TOKEN": True,

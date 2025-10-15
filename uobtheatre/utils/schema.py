@@ -7,7 +7,7 @@ from django.forms.models import ModelChoiceField
 from graphene.types.mutation import MutationOptions
 from graphene_django import DjangoObjectType
 from graphene_django.forms.mutation import DjangoModelFormMutation
-from graphql.language.ast import IntValue, StringValue
+from graphql.language.ast import IntValueNode, StringValueNode
 from graphql_relay.node.node import from_global_id
 from guardian.shortcuts import (
     assign,
@@ -280,7 +280,7 @@ class IdInputField(graphene.ID):
         Given the global id provided in the mutation (directly as an argument)
         covert it to the local integer id.
         """
-        if isinstance(input_id, (StringValue, IntValue)):
+        if isinstance(input_id, (StringValueNode, IntValueNode)):
             return from_global_id(input_id.value)[1]
         return None
 

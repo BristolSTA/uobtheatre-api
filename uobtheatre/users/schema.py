@@ -1,12 +1,12 @@
 import graphene
-from graphql_auth import mutations, schema
+from dga.graphql_auth import mutations, queries
 from graphql_relay.node.node import to_global_id
 
 from uobtheatre.users.models import User
 from uobtheatre.users.turnstile import validate
 
 
-class ExtendedUserNode(schema.UserNode):
+class ExtendedUserNode(queries.UserNode):
     """
     Extends user node to add additional properties.
     """
