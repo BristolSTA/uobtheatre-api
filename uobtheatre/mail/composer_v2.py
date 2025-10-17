@@ -252,16 +252,22 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
         self.items.append(BookingBlock(booking))
         return self
 
-    def accessibility_block(self):
-        """An AccessibilityBlock composer item.
-        A compound item that contains information about accessibility."""
-        self.items.append(AccessibilityBlock())
+    def venue_accessibility_block(self, venue):
+        """ VenueAccessibilityBlock composer item.
+        A compound item that contains information about venue accessibility."""
+        self.items.append(VenueAccessibilityBlock(venue))
         return self
     
     def venue_block(self, venue):
         """A VenueBlock composer item.
         A compound item that contains information about a venue."""
         self.items.append(VenueBlock(venue))
+        return self
+    
+    def booking_accessibility_block(self, booking):
+        """A BookingAccessibilityBlock composer item.
+        A compound item that contains information about booking accessibility."""
+        self.items.append(BookingAccessibilityBlock(booking))
         return self
 
     def payment_block(self, payment):
@@ -901,25 +907,49 @@ class BookingBlock(ComposerItemInterface):
         return subitems
 
 
-class AccessibilityBlock(ComposerItemInterface):
+class VenueAccessibilityBlock(ComposerItemInterface):
     """
-    An AccessibilityBlock composer item.
+    A VenueAccessibilityBlock composer item. Displays truncated venue accessibility information, and a link for more details.
+
+    Args:
+        venue (Venue): The venue object containing the accessibility details.
     """
 
-    accessibilityMessage = "If you have any accessibility concerns, or otherwise need help, please contact <a href='mailto:support@uobtheatre.com'>support@uobtheatre.com</a>."
+    fallbackMessage = "If you have any accessibility concerns, or otherwise need help, please contact <a href='mailto:support@uobtheatre.com'>support@uobtheatre.com</a>."
+
+    def __init__(self, venue) -> None:
+        super().__init__()
+        self.venue = venue
+        accessibility_message_raw = (
+            self.venue.accessibility_short
+            or self.venue.accessibility_info
+            or self.fallbackMessage
+        )
+        self.accessibility_message = strip_tags(accessibility_message_raw)
+        if len(self.accessibility_message) > 200:
+            self.accessibility_message = self.accessibility_message[:200] + "..."
 
     def to_text(self):
         return (
-            f"\nAccessibility Information:\n\n{strip_tags(self.accessibilityMessage)}"
+            f"\nAccessibility Information:\n\n{strip_tags(self.accessibility_message)}"
         )
 
     def _stack_items(self):
-        return [
+        
+        stack = [
             Heading(
-                subsubtitle="Accessibility Information", title_icon="accessibility"
+                subsubtitle="Venue Accessibility", title_icon="accessibility"
             ),
-            ListItem(message=self.accessibilityMessage, html_safe=True),
+            ListItem(message=self.accessibility_message, html_safe=True),
         ]
+        if self.venue.accessibility_info:
+            stack.append(
+                Button(
+                    f"/venue/{self.venue.slug}/accessibility",
+                    "View Further Information",
+                )
+            )
+        return stack
 
     def to_html(self):
         return RowStack(self._stack_items()).to_html()
@@ -1013,6 +1043,47 @@ class VenueBlock(ComposerItemInterface):
         if getattr(self.venue, "what3words", None):
             text += f"What3Words: {self.venue.what3words}\n"
         return text.strip()
+    
+    def sub_items(self):
+        subitems = [self]
+        for item in self._stack_items():
+            if hasattr(item, "sub_items"):
+                subitems.extend(item.sub_items())
+            else:
+                subitems.append(item)
+        return subitems
+    
+
+class BookingAccessibilityBlock(ComposerItemInterface):
+    """
+    A BookingAccessibilityBlock composer item.
+
+    Provides quick information about booking accessibility.
+
+    Args:
+        booking (Booking): The booking object containing the details.
+    """
+
+    bookingAccessibilityInfo = "This information has been passed to the venue and/or production team, who may follow up with you if required. UOB Theatre is not responsible for this; this is the responsibility of the venue and production team, and it is not always possible to accommodate all requests. However, if your attendance depends on specific accessibility requirements to be met and you have not heard from the venue or production team in advance of 48 hours before the performance, we can try to follow up directly if you contact <a href='mailto:support@uobtheatre.com'>support@uobtheatre.com</a>."
+
+    def __init__(self, booking) -> None:
+        super().__init__()
+        self.booking = booking
+
+    def to_text(self):
+        return f"\nBooking Accessibility Information:\n\n{strip_tags(self.booking.accessibility_info)}"
+
+    def _stack_items(self):
+        return [
+            Heading(subsubtitle="Booking Accessibility Information", title_icon="accessibility"),
+
+            ListItem(title="You have provided the following accessibility information:", message=self.booking.accessibility_info, title_icon="info-circle"),
+
+            ListItem(message=self.bookingAccessibilityInfo, html_safe=True),
+        ]
+
+    def to_html(self):
+        return RowStack(self._stack_items()).to_html()
 
 
 class PaymentBlock(ComposerItemInterface):

@@ -117,8 +117,7 @@ def test_booking_conf_new():
 
     tickets = [TicketFactory(booking=booking) for _ in range(5)]
 
-    test_mail = MailComposer.blank([
-
+    stack = [
         Heading(
             title="Your booking to %s has been confirmed!" % booking.performance.production.name
         ),
@@ -142,12 +141,20 @@ def test_booking_conf_new():
         BoxCols([
             PaymentBlock(payment),
 
-            AccessibilityBlock()
+            VenueAccessibilityBlock(booking.performance.venue)
         ]),
-
-        TicketCodes(booking.reference, [ticket.id for ticket in tickets])
     ]
+    if booking.accessibility_info:
+        stack.append(
+            Box(
+                BookingAccessibilityBlock(booking)
+            )
+        )
+    stack.append(
+        TicketCodes(booking.reference, [ticket.id for ticket in tickets])
     )
+
+    test_mail = MailComposer.blank(stack)
 
     write_files(test_mail, "booking_conf_new")
 

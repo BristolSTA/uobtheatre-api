@@ -13,6 +13,8 @@ class VenueFactory(factory.django.DjangoModelFactory):
     internal_capacity = factory.Faker("pyint")
     address = factory.SubFactory(AddressFactory)
     image = factory.SubFactory(ImageFactory)
+    accessibility_info = factory.Faker("paragraph", nb_sentences=3)
+    accessibility_short = factory.Faker("sentence", nb_words=15)
 
     class Meta:
         model = Venue
