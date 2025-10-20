@@ -9,7 +9,7 @@
       "event_start": "2035-04-18T10:00:00+0000",
       "event_end": "2035-04-19T10:00:00+0000",
       "indefinite_override": false,
-      "creator": 1,
+      "user": 1,
       "type": "WARNING",
       "dismissal_policy": "BANNED"
     }
@@ -24,7 +24,7 @@
       "event_start": "2035-04-19T10:00:00+0000",
       "event_end": "2035-04-20T10:00:00+0000",
       "indefinite_override": false,
-      "creator": 2,
+      "user": 2,
       "type": "ALERT",
       "dismissal_policy": "SINGLE"
     }
@@ -39,7 +39,7 @@
       "event_start": "2035-04-20T10:00:00+0000",
       "event_end": "2035-04-21T10:00:00+0000",
       "indefinite_override": true,
-      "creator": 3,
+      "user": 3,
       "type": "INFORMATION",
       "dismissal_policy": "ALWAYS"
     }
@@ -54,7 +54,7 @@
       "event_start": "2035-04-21T10:00:00+0000",
       "event_end": "2035-04-22T10:00:00+0000",
       "indefinite_override": false,
-      "creator": 4,
+      "user": 4,
       "type": "WARNING",
       "dismissal_policy": "BANNED"
     }
@@ -69,7 +69,7 @@
       "event_start": "2035-04-22T10:00:00+0000",
       "event_end": "2035-04-23T10:00:00+0000",
       "indefinite_override": false,
-      "creator": 5,
+      "user": 5,
       "type": "ALERT",
       "dismissal_policy": "SINGLE"
     }
@@ -84,7 +84,7 @@
       "event_start": "2035-04-23T10:00:00+0000",
       "event_end": "2035-04-24T10:00:00+0000",
       "indefinite_override": true,
-      "creator": 6,
+      "user": 6,
       "type": "INFORMATION",
       "dismissal_policy": "ALWAYS"
     }
@@ -99,7 +99,7 @@
       "display_start": "2035-04-22T10:00:00Z",
       "event_start": "2035-04-24T10:00:00Z",
       "event_end": "2035-04-25T10:00:00Z",
-      "creator": "00000000-0000-0000-0000-000000000007",
+      "user": "00000000-0000-0000-0000-000000000007",
       "type": "WARNING",
       "dismissal_policy": "DEFAULT",
       "display_location": "SITEWIDE_MODAL",
@@ -116,7 +116,7 @@
       "display_start": "2035-04-23T10:00:00Z",
       "event_start": "2035-04-25T10:00:00Z",
       "event_end": "2035-04-26T10:00:00Z",
-      "creator": "00000000-0000-0000-0000-000000000008",
+      "user": "00000000-0000-0000-0000-000000000008",
       "type": "ALERT",
       "dismissal_policy": "SINGLE",
       "display_location": "BOOKING_MODAL",
@@ -133,7 +133,7 @@
       "display_start": "2035-04-24T10:00:00Z",
       "event_start": "2035-04-26T10:00:00Z",
       "event_end": "2035-04-27T10:00:00Z",
-      "creator": "00000000-0000-0000-0000-000000000009",
+      "user": "00000000-0000-0000-0000-000000000009",
       "type": "INFORMATION",
       "dismissal_policy": "SINGLE",
       "display_location": "PRODUCTION_CREATION_MODAL",
