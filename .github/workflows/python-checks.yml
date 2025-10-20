@@ -28,10 +28,6 @@ jobs:
           - 5432:5432
 
     steps:
-    # Collect the dga submodule
-    - name: Initialise dga submodule
-      uses: snickerbockers/submodules-init@v4
-      
     # Set up cache for pip packages
     - name: Cache pip packages 📦
       uses: actions/cache@v4
@@ -43,6 +39,8 @@ jobs:
 
     - name: Checkout 🛎
       uses: actions/checkout@master
+      with:
+        submodules: "recursive"
 
     # Setup python
     - name: Setup python 3.12 env 🏗
@@ -86,6 +84,8 @@ jobs:
 
     - name: Checkout 🛎
       uses: actions/checkout@master
+      with:
+        submodules: "recursive"
 
     # Setup python
     - name: Setup python 3.12 env 🏗
@@ -149,6 +149,8 @@ jobs:
 
     - name: Checkout 🛎
       uses: actions/checkout@master
+      with:
+        submodules: "recursive"
 
     # Setup python
     - name: Setup python 3.12 env 🏗
@@ -195,6 +197,8 @@ jobs:
 
     - name: Checkout 🛎
       uses: actions/checkout@master
+      with:
+        submodules: "recursive"
 
     # Setup python
     - name: Setup python 3.12 env 🏗
