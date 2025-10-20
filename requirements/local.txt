@@ -5,25 +5,25 @@
 pre-commit >= 2.11.0
 
 # formatting
-black >= 22.3.0 # Code formatting
-isort >= 5.10.1 # Import sorting
-pylint >= 3.3.1 # Linting
+black==25.9.0 # Code formatting
+isort==7.0.0 # Import sorting
+pylint==4.0.1 # Linting
 
 # mypy stuff
-mypy == 1.15.0 # Type checking
-django-stubs >= 5.1.0
+mypy==1.15.0 # Type checking
+django-stubs==5.2.7
 types-python-dateutil==2.9.0.20241206
 types-requests==2.32.0.20250306
 
 # testing
-pytest >= 6.2.2
-pytest-sugar >= 0.9.4
-pytest-cov >= 2.11.1
-pytest-django >= 0.2.0
-pytest-factoryboy >= 2.1.0
-coveralls >= 3.0.1
+pytest==8.4.2
+pytest-sugar==1.1.1
+pytest-cov==7.0.0
+pytest-django==4.11.1
+pytest-factoryboy==2.8.1
+coveralls==4.0.1
 factory-boy==3.3.3
-faker==37.11.0; python_version >= '3.6'
+faker==37.11.0; python_version >= '3.12'
 
 # Autocompletion in text editors
-jedi==0.19.2; python_version >= '3.6'
+jedi==0.19.2; python_version >= '3.12'

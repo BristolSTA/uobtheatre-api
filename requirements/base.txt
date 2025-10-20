@@ -1,63 +1,60 @@
 #=== Tools ===#
 
 # Generate slugs
-django-autoslug
+django-autoslug==1.9.9
 
 # generates short UUID's for booking reference
-shortuuid
+shortuuid==1.0.13
 
 # Filtering
-django-filter
+django-filter==25.2
 
 # Something to do with images
-Pillow
+pillow==12.0.0
 
 # Cors
-django-cors-headers
+django-cors-headers==4.9.0
 
 # Admin confirmation messages
-django-admin-confirm
+django-admin-confirm==1.0.1
 
-# TODO check if required
-django-configurations
+django-configurations==2.5.1
 
 # Django config
-django-environ  # https://github.com/joke2k/django-environ
+django-environ==0.12.0  # https://github.com/joke2k/django-environ
 
 # Spreadsheet generation
-xlsxwriter
+xlsxwriter==3.2.9
 
 # Text formatting
-html2text
+html2text==2025.4.15
 
 #=== Database ===#
 
-psycopg2  # https://github.com/psycopg/psycopg2
+psycopg2==2.9.11  # https://github.com/psycopg/psycopg2
 
 #=== Django core ===#
 
-django==4.2.25
+django==5.2.7
 
 #=== Django Extras ===#
 
-django-guardian  # https://github.com/django-guardian/django-guardian
-django_tiptap  # https://github.com/django-tiptap/django_tiptap
-djangorestframework  # https://www.django-rest-framework.org
-django-nonrelated-inlines
+django-guardian==3.2.0  # https://github.com/django-guardian/django-guardian
+django_tiptap==0.0.18  # https://github.com/django-tiptap/django_tiptap
+djangorestframework==3.16.1  # https://www.django-rest-framework.org
+django-nonrelated-inlines==0.2
 
 #=== GQL core ===#
 
-graphene
-graphene-django
-graphql-core
+graphene==3.4.3
+graphene-django==3.2.3
+graphql-core==3.2.6
 
 #=== Auth ===#
 
-#django-graphene-auth # Replaced by the submodule
-# These are apparently a package deal atm so we need both
-django-graphql-jwt
-PyJWT
-pydantic
+django-graphql-jwt==0.4.0
+PyJWT==2.10.1
+pydantic==2.12.3
 
 #=== Payments ===#
 
@@ -65,18 +62,18 @@ squareup==42.0.0.20250416
 
 #=== Logging ===#
 
-sentry-sdk
-whitenoise  # https://github.com/evansd/whitenoise
+sentry-sdk==2.42.0
+whitenoise==6.11.0  # https://github.com/evansd/whitenoise
 
 #=== Email ===#
-django-anymail[amazon_ses]  # https://github.com/anymail/django-anymail
-django-inlinecss-redux
+django-anymail[amazon_ses]==13.1  # https://github.com/anymail/django-anymail
+django-inlinecss-redux==0.4.0
 
 #=== Timezones ===#
-timezonefinder
-pytz
-types-pytz
+timezonefinder==8.1.0
+pytz==2025.2
+types-pytz==2025.2.0.20250809
 
 #=== Task Queue ===#
-django-celery-results
-redis
+django-celery-results==2.6.0
+redis==6.4.0
