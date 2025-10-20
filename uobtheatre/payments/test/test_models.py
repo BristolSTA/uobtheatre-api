@@ -65,7 +65,6 @@ def test_transaction_type_filters():
     payment_1 = TransactionFactory(type=Transaction.Type.PAYMENT)
     refund_1 = TransactionFactory(type=Transaction.Type.REFUND)
 
-
     assertQuerySetEqual(Transaction.objects.payments(), [payment_1])
     assertQuerySetEqual(Transaction.objects.refunds(), [refund_1])
 
