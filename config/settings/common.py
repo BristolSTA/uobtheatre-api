@@ -162,9 +162,9 @@ TEMPLATES = [
 # Set DEBUG to False as a default for safety
 # https://docs.djangoproject.com/en/dev/ref/settings/#debug
 if env("DJANGO_DEBUG", default="no").lower() in ("y", "yes", "on", "1", "true", "t"):
-  DEBUG = True
+    DEBUG = True
 else:
-  DEBUG = False
+    DEBUG = False
 
 # Password Validation
 # https://docs.djangoproject.com/en/2.0/topics/auth/passwords/#module-django.contrib.auth.password_validation

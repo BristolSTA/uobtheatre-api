@@ -2,9 +2,9 @@ from unittest.mock import patch
 
 import pytest
 from django.test import override_settings
-from dga.graphql_auth.models import UserStatus
 from graphql_relay.node.node import to_global_id
 
+from dga.graphql_auth.models import UserStatus
 from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.users.abilities import OpenAdmin, OpenBoxoffice
 from uobtheatre.users.test.factories import UserFactory

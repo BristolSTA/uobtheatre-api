@@ -82,6 +82,8 @@ class Discount(models.Model):
         Raises:
             ValidationError: If a discount with the same requirements exists.
         """
+        # Can't compare this to something if it's not saved
+        super().save()
 
         super().validate_unique(*args, **kwargs)
 

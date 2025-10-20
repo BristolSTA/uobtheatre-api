@@ -1,7 +1,7 @@
 import graphene
-from dga.graphql_auth import mutations, queries
 from graphql_relay.node.node import to_global_id
 
+from dga.graphql_auth import mutations, queries
 from uobtheatre.users.models import User
 from uobtheatre.users.turnstile import validate
 

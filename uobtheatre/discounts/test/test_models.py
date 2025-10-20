@@ -79,6 +79,6 @@ def test_discount_with_requirements_and_performances(
 @pytest.mark.django_db
 def test_discount_without_exclusion_unique_requirement():
     DiscountFactory()
-    dis_2 = Discount()
+    dis_2 = DiscountFactory()
 
     dis_2.validate_unique()

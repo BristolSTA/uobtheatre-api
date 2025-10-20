@@ -35,6 +35,9 @@ def test_tickets_schema(gql_client):
     for ticket in tickets:
         ticket.check_in(user=UserFactory())
 
+    for ticket in tickets:
+        ticket.save()
+
     request_query = """
         {
           performances {
@@ -94,7 +97,7 @@ def test_tickets_schema(gql_client):
                                                     "checkedInBy": {
                                                         "id": to_global_id(
                                                             "UserNode",
-                                                            ticket.checked_in_by.id,
+                                                            ticket.checked_in_user.id,
                                                         )
                                                     },
                                                     "seatGroup": {

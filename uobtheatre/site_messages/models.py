@@ -65,7 +65,7 @@ class Message(BaseModel):
     )
 
     # The user that created the message
-    creator = models.ForeignKey(
+    user = models.ForeignKey(
         User, null=True, on_delete=models.SET_NULL, related_name="created_site_messages"
     )
 

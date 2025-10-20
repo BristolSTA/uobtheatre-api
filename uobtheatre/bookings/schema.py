@@ -7,13 +7,13 @@ from django_filters import OrderingFilter
 from graphene import relay
 from graphene_django import DjangoListField, DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
-from graphql_relay.node.node import from_global_id
 
 from uobtheatre.bookings.models import Booking, MiscCost, Ticket
 from uobtheatre.productions.models import Performance
 from uobtheatre.productions.schema import SalesBreakdownNode
 from uobtheatre.users.schema import ExtendedUserNode
 from uobtheatre.utils.filters import FilterSet
+from uobtheatre.utils.schema import from_global_id
 
 
 class MiscCostFilter(FilterSet):
@@ -41,6 +41,7 @@ class MiscCostNode(DjangoObjectType):
 
 class TicketNode(DjangoObjectType):
     checked_in = graphene.Boolean()
+    checked_in_by = graphene.Field(ExtendedUserNode)
 
     def resolve_checked_in_by(self, info):
         if not info.context.user.has_perm(
@@ -48,7 +49,7 @@ class TicketNode(DjangoObjectType):
             self.booking.performance.production,
         ):
             return None
-        return self.checked_in_by
+        return self.checked_in_user
 
     @classmethod
     def get_queryset(cls, queryset, info):
@@ -65,6 +66,7 @@ class TicketNode(DjangoObjectType):
     class Meta:
         model = Ticket
         interfaces = (relay.Node,)
+        fields = "__all__"
 
 
 class PriceBreakdownTicketNode(graphene.ObjectType):
@@ -376,6 +378,7 @@ class BookingNode(DjangoObjectType):
         model = Booking
         filterset_class = BookingFilter
         interfaces = (relay.Node,)
+        fields = "__all__"
 
 
 class Query(graphene.ObjectType):

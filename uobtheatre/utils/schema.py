@@ -8,7 +8,8 @@ from graphene.types.mutation import MutationOptions
 from graphene_django import DjangoObjectType
 from graphene_django.forms.mutation import DjangoModelFormMutation
 from graphql.language.ast import IntValueNode, StringValueNode
-from graphql_relay.node.node import from_global_id
+from graphql_relay.node.node import ResolvedGlobalId
+from graphql_relay.utils import unbase64
 from guardian.shortcuts import (
     assign,
     assign_perm,
@@ -123,7 +124,8 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
 
     @classmethod
     def mutate(cls, root, info, **inputs):
-        """In order to account for having a possible mix of global and local IDs, override the mutate function so that id input items are parsed from global ids"""
+        """In order to account for having a possible mix of global and local
+        IDs, override the mutate function so that id input items are parsed from global ids"""
         input_items = inputs["input"]
 
         # If an ID is passed as top level input, convert from global to local
@@ -492,3 +494,15 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
             remove_perm(permission, user, model_instance)
 
         return cls()
+
+
+# The graphql_relay package's from_global_id is broken, so we have to replace it with this
+def from_global_id(global_id: str) -> ResolvedGlobalId:
+    """
+    Takes the "global ID" created by to_global_id,
+    and returns the type name and ID used to create it.
+    """
+    unbased_id = unbase64(global_id)
+    if ":" not in unbased_id:
+        return ResolvedGlobalId("", global_id)
+    return ResolvedGlobalId(*unbased_id.split(":", 1))

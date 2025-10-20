@@ -663,7 +663,7 @@ class Ticket(BaseModel):
     seat = models.ForeignKey(Seat, on_delete=models.RESTRICT, null=True, blank=True)
 
     checked_in_at = models.DateTimeField(null=True, blank=True)
-    checked_in_by = models.ForeignKey(
+    checked_in_user = models.ForeignKey(
         User,
         on_delete=models.RESTRICT,
         related_name="tickets_checked_in_by_user",
@@ -726,7 +726,7 @@ class Ticket(BaseModel):
             )
 
         self.checked_in_at = timezone.now()
-        self.checked_in_by = user
+        self.checked_in_user = user
         self.save()
 
     def uncheck_in(self):
@@ -739,7 +739,7 @@ class Ticket(BaseModel):
             )
 
         self.checked_in_at = None
-        self.checked_in_by = None
+        self.checked_in_user = None
         self.save()
 
     def __str__(self):

@@ -808,7 +808,10 @@ class ProductionQuerySet(QuerySet):
         """
         # Productions the user has explicit permissions to view
         productions_user_can_view_admin = get_objects_for_user(
-            user, ["view_production", "approve_production"], self, any_perm=True
+            user,
+            ["view_production", "approve_production", "change_production"],
+            self,
+            any_perm=True,
         ).values_list("id", flat=True)
 
         # Productions the user has tickets for that are within the last week or the future

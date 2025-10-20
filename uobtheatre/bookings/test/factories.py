@@ -56,7 +56,7 @@ class TicketFactory(factory.django.DjangoModelFactory):
         "uobtheatre.discounts.test.factories.ConcessionTypeFactory"
     )
 
-    checked_in_by = None
+    checked_in_user = None
     checked_in_at = None
 
     class Meta:
@@ -64,7 +64,7 @@ class TicketFactory(factory.django.DjangoModelFactory):
 
     class Params:
         set_checked_in = factory.Trait(
-            checked_in_by=factory.SubFactory(UserFactory),
+            checked_in_user=factory.SubFactory(UserFactory),
             checked_in_at=timezone.now(),
         )
 

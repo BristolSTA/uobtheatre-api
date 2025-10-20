@@ -12,7 +12,7 @@ type Query {
     displayStart: DateTime
     eventStart: DateTime
     eventEnd: DateTime
-    creator: String
+    user: String
     type: SiteMessagesMessageTypeChoices
     dismissalPolicy: SiteMessagesMessageDismissalPolicyChoices
     displayLocation: SiteMessagesMessageDisplayLocationChoices
@@ -223,7 +223,6 @@ type SiteMessageNode implements Node {
   When the event will end. Used both to calculate duration, which is displayed when in banner display location, and to determine whether the message should be displayed.
   """
   eventEnd: DateTime!
-  creator: ExtendedUserNode
 
   """
   The type of message, which informs how it is displayed. Maintenance messages are displayed in yellow if upcoming, red if ongoing. Information messages are displayed in yellow information text. Alert messages are displayed in red text.
@@ -246,6 +245,7 @@ type SiteMessageNode implements Node {
   title: String
   eventDuration: Int
   toDisplay: Boolean
+  creator: ExtendedUserNode
 }
 
 """An object with an ID"""
@@ -260,6 +260,45 @@ value as specified by
 [iso8601](https://en.wikipedia.org/wiki/ISO_8601).
 """
 scalar DateTime
+
+"""An enumeration."""
+enum SiteMessagesMessageTypeChoices {
+  """Maintenance"""
+  MAINTENANCE
+
+  """Information"""
+  INFORMATION
+
+  """Alert"""
+  ALERT
+}
+
+"""An enumeration."""
+enum SiteMessagesMessageDismissalPolicyChoices {
+  """Dismissable (Default)"""
+  DEFAULT
+
+  """Single-Session Only"""
+  SINGLE
+
+  """Prevented"""
+  BANNED
+}
+
+"""An enumeration."""
+enum SiteMessagesMessageDisplayLocationChoices {
+  """Banner"""
+  BANNER
+
+  """Sitewide Modal"""
+  SITEWIDE_MODAL
+
+  """Booking Modal"""
+  BOOKING_MODAL
+
+  """Production Creation/Edit Modal"""
+  PRODUCTION_CREATION_MODAL
+}
 
 """Extends user node to add additional properties."""
 type ExtendedUserNode {
@@ -376,7 +415,7 @@ type ExtendedUserNode {
     displayStart: DateTime
     eventStart: DateTime
     eventEnd: DateTime
-    creator: String
+    user: String
     type: SiteMessagesMessageTypeChoices
     dismissalPolicy: SiteMessagesMessageDismissalPolicyChoices
     displayLocation: SiteMessagesMessageDisplayLocationChoices
@@ -1125,8 +1164,9 @@ type TicketNode implements Node {
   concessionType: ConcessionTypeNode!
   seat: SeatNode
   checkedInAt: DateTime
-  checkedInBy: ExtendedUserNode
+  checkedInUser: ExtendedUserNode
   checkedIn: Boolean
+  checkedInBy: ExtendedUserNode
 }
 
 type SeatNode implements Node {
@@ -1246,45 +1286,6 @@ enum PaymentsTransactionProviderNameChoices {
 }
 
 union PayObjectUnion = BookingNode
-
-"""An enumeration."""
-enum SiteMessagesMessageTypeChoices {
-  """Maintenance"""
-  MAINTENANCE
-
-  """Information"""
-  INFORMATION
-
-  """Alert"""
-  ALERT
-}
-
-"""An enumeration."""
-enum SiteMessagesMessageDismissalPolicyChoices {
-  """Dismissable (Default)"""
-  DEFAULT
-
-  """Single-Session Only"""
-  SINGLE
-
-  """Prevented"""
-  BANNED
-}
-
-"""An enumeration."""
-enum SiteMessagesMessageDisplayLocationChoices {
-  """Banner"""
-  BANNER
-
-  """Sitewide Modal"""
-  SITEWIDE_MODAL
-
-  """Booking Modal"""
-  BOOKING_MODAL
-
-  """Production Creation/Edit Modal"""
-  PRODUCTION_CREATION_MODAL
-}
 
 """
 Input field used for global ID in mutation.
@@ -2191,7 +2192,7 @@ type UserNode implements Node {
     displayStart: DateTime
     eventStart: DateTime
     eventEnd: DateTime
-    creator: String
+    user: String
     type: SiteMessagesMessageTypeChoices
     dismissalPolicy: SiteMessagesMessageDismissalPolicyChoices
     displayLocation: SiteMessagesMessageDisplayLocationChoices

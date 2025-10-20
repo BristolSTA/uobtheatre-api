@@ -5,7 +5,7 @@ import math
 import pytest
 import pytz
 from django.utils import timezone
-from graphql_relay.node.node import from_global_id, to_global_id
+from graphql_relay.node.node import to_global_id
 from guardian.shortcuts import assign_perm
 
 from uobtheatre.bookings.test.factories import (
@@ -30,6 +30,7 @@ from uobtheatre.productions.test.factories import (
     create_production,
 )
 from uobtheatre.users.test.factories import UserFactory
+from uobtheatre.utils.schema import from_global_id
 from uobtheatre.venues.test.factories import VenueFactory
 
 ###

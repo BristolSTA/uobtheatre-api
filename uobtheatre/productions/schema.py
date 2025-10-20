@@ -33,30 +33,35 @@ class CrewRoleNode(DjangoObjectType):
     class Meta:
         model = CrewRole
         interfaces = (relay.Node,)
+        fields = "__all__"
 
 
 class CastMemberNode(DjangoObjectType):
     class Meta:
         model = CastMember
         interfaces = (relay.Node,)
+        fields = "__all__"
 
 
 class ProductionTeamMemberNode(DjangoObjectType):
     class Meta:
         model = ProductionTeamMember
         interfaces = (relay.Node,)
+        fields = "__all__"
 
 
 class CrewMemberNode(DjangoObjectType):
     class Meta:
         model = CrewMember
         interfaces = (relay.Node,)
+        fields = "__all__"
 
 
 class ProductionContentWarningNode(DjangoObjectType):
     class Meta:
         model = ProductionContentWarning
         interfaces = (relay.Node,)
+        fields = "__all__"
 
 
 class ContentWarningNode(DjangoObjectType):

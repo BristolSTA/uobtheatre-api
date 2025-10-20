@@ -21,7 +21,7 @@ class classproperty:  # pylint: disable=invalid-name
 
 class BaseModel(models.Model):
     """
-    Base model for all UOB models. TODO actually use this
+    Base model for all UOB models.
     """
 
     @property

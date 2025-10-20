@@ -89,6 +89,7 @@ def test_permissions_mixin_resolve_permissions_with_get_perms(info):
             pass
 
         class Meta:
+            fields = "__all__"
             model = Production
 
     schema = TestModelSchema()
