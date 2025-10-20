@@ -147,7 +147,7 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
                         ]
                     else:
                         input_items[key] = from_global_id(form[key].value())[1]
-                except ValueError: # pragma: no cover
+                except ValueError:  # pragma: no cover
                     # This is just to stop errors breaking everything, but this does literally nothing
                     pass
         return super().mutate(root, info, **input_items)
