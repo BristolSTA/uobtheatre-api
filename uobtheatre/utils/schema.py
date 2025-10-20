@@ -125,7 +125,8 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
     @classmethod
     def mutate(cls, root, info, **inputs):
         """In order to account for having a possible mix of global and local
-        IDs, override the mutate function so that id input items are parsed from global ids"""
+        IDs, override the mutate function so that id input items are parsed from global ids
+        """
         input_items = inputs["input"]
 
         # If an ID is passed as top level input, convert from global to local

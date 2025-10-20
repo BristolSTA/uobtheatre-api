@@ -80,7 +80,6 @@ class BookingForm(MutationForm):
             # If no exisiting user on booking, set it to be the creator (current user)
             self.instance.user = self.user
 
-
         # If no performance has been associated so far, do that from the clean data
         if not self.instance.performance_id:
             self.instance.performance_id = cleaned_data.get("performance").id
