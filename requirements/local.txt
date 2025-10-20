@@ -5,9 +5,9 @@
 pre-commit == 3.8.0
 
 # formatting
-black==25.9.0 # Code formatting
-isort==7.0.0 # Import sorting
-pylint==4.0.1 # Linting
+black == 25.9.0 # Code formatting
+isort == 5.11.2 # Import sorting
+pylint == 3.3.9 # Linting
 
 # mypy stuff
 mypy==1.15.0 # Type checking
