@@ -343,7 +343,7 @@ class Transaction(TimeStampedMixin, BaseModel):
                 "This refund would result in a negative refund amount"
             )
 
-        refund_provider.refund(self, custom_refund_amount=refund_amount)
+        refund_provider.refund(self, custom_refund_amount=refund_amount)  # type: ignore
 
     class Meta:
         ordering = ["-created_at"]
