@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 
 import pytest
-from pytest_django.asserts import assertQuerysetEqual
+from pytest_django.asserts import assertQuerySetEqual
 
 from uobtheatre.productions.forms import PerformanceForm, ProductionForm
 from uobtheatre.productions.models import ProductionContentWarning
@@ -33,7 +33,7 @@ def test_production_form_empty_warnings_list():
     warning = ContentWarningFactory()
     ProductionContentWarning.objects.create(warning=warning, production=production)
 
-    assertQuerysetEqual(production.content_warnings.all(), [warning])
+    assertQuerySetEqual(production.content_warnings.all(), [warning])
 
     form = ProductionForm(
         data={
@@ -44,14 +44,14 @@ def test_production_form_empty_warnings_list():
     )
 
     form.save()
-    assertQuerysetEqual(production.content_warnings.all(), [])
+    assertQuerySetEqual(production.content_warnings.all(), [])
 
 
 @pytest.mark.django_db
 def test_production_form_null_warnings():
     pivot = ProductionContentWarningFactory()
 
-    assertQuerysetEqual(pivot.production.content_warnings.all(), [pivot.warning])
+    assertQuerySetEqual(pivot.production.content_warnings.all(), [pivot.warning])
 
     form = ProductionForm(
         data={
@@ -62,7 +62,7 @@ def test_production_form_null_warnings():
     )
 
     form.save()
-    assertQuerysetEqual(pivot.production.content_warnings.all(), [pivot.warning])
+    assertQuerySetEqual(pivot.production.content_warnings.all(), [pivot.warning])
 
 
 @pytest.mark.django_db

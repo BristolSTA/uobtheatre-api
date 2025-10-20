@@ -8,7 +8,7 @@ import pytest
 from dateutil import parser
 from django.utils import timezone
 from guardian.shortcuts import assign_perm
-from pytest_django.asserts import assertQuerysetEqual
+from pytest_django.asserts import assertQuerySetEqual
 
 from uobtheatre.bookings.models import Ticket
 from uobtheatre.bookings.test.factories import (
@@ -317,8 +317,8 @@ def test_production_venues():
     PerformanceFactory(production=production, venue=venue_1)
     PerformanceFactory(production=production, venue=venue_2)
 
-    assertQuerysetEqual(production.venues.all(), [venue_1, venue_1, venue_2])
-    assertQuerysetEqual(production.venues.distinct().all(), [venue_1, venue_2])
+    assertQuerySetEqual(production.venues.all(), [venue_1, venue_1, venue_2])
+    assertQuerySetEqual(production.venues.distinct().all(), [venue_1, venue_2])
 
 
 ###
@@ -1337,10 +1337,10 @@ def test_performance_queryset_bookings():
     booking_1 = BookingFactory(performance=performance)
     booking_2 = BookingFactory()  # Booking not in the performance
 
-    assertQuerysetEqual(
+    assertQuerySetEqual(
         Performance.objects.bookings(), [booking_1, booking_2], ordered=False
     )
-    assertQuerysetEqual(
+    assertQuerySetEqual(
         Performance.objects.filter(pk=performance.pk).bookings(), [booking_1]
     )
 
@@ -1353,12 +1353,12 @@ def test_performance_queryset_transactions():
     )
     transaction_2 = TransactionFactory()  # Transaction not in the performance
 
-    assertQuerysetEqual(
+    assertQuerySetEqual(
         Performance.objects.transactions().all(),
         [transaction_1, transaction_2],
         ordered=False,
     )
-    assertQuerysetEqual(
+    assertQuerySetEqual(
         Performance.objects.filter(pk=performance.pk).transactions().all(),
         [transaction_1],
     )
@@ -1369,12 +1369,12 @@ def test_production_queryset_performances():
     performance_1 = PerformanceFactory()
     performance_2 = PerformanceFactory()
 
-    assertQuerysetEqual(
+    assertQuerySetEqual(
         Production.objects.performances().all(),
         [performance_1, performance_2],
         ordered=False,
     )
-    assertQuerysetEqual(
+    assertQuerySetEqual(
         Production.objects.filter(pk=performance_1.production.pk).performances().all(),
         [performance_1],
     )
@@ -1385,12 +1385,12 @@ def test_production_queryset_transactions():
     transaction_1 = TransactionFactory()
     transaction_2 = TransactionFactory()
 
-    assertQuerysetEqual(
+    assertQuerySetEqual(
         Production.objects.transactions().all(),
         [transaction_1, transaction_2],
         ordered=False,
     )
-    assertQuerysetEqual(
+    assertQuerySetEqual(
         Production.objects.filter(pk=transaction_1.pay_object.performance.production.pk)
         .transactions()
         .all(),
@@ -1423,7 +1423,7 @@ def test_performances_booked_users():
         pay_object=BookingFactory(performance=performance_2, user=booking_1.user),
     )
 
-    assertQuerysetEqual(
+    assertQuerySetEqual(
         Performance.objects.filter(
             pk__in=[performance_1.pk, performance_2.pk]
         ).booked_users(),
