@@ -88,9 +88,10 @@ class AssignedUsersMixin:
                 user=user,
                 assigned_permissions=permissions,
             )
+            # Mypy doesn't love the typing of perms in general, and it can't be fixed as this comes from an external package
             for (user, permissions) in get_users_with_perms(
-                self, attach_perms=True, with_group_users=False
-            ).items()
+                self, attach_perms=True, with_group_users=False  # type: ignore
+            ).items()  # type: ignore
         ]
 
     def resolve_assignable_permissions(self, info):

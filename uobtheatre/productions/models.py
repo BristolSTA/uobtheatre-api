@@ -178,7 +178,7 @@ class PerformanceQuerySet(QuerySet):
 
     def where_can_view_tickets_and_bookings(self, user: "User"):
         """Filter performances where the user is allowed to view tickets and bookings"""
-        productions_with_perm = get_objects_for_user(
+        productions_with_perm: QuerySet[Production] = get_objects_for_user(
             user,
             ["productions.boxoffice", "productions.view_bookings"],
             accept_global_perms=True,
@@ -201,7 +201,7 @@ class PerformanceQuerySet(QuerySet):
         Returns:
             QuerySet: The filtered queryset
         """
-        production_with_perm = get_objects_for_user(
+        production_with_perm: QuerySet[Production] = get_objects_for_user(
             user, "productions.boxoffice", accept_global_perms=True, with_superuser=True
         )
         if has_permission:

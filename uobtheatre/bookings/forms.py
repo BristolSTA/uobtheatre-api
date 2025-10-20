@@ -82,7 +82,9 @@ class BookingForm(MutationForm):
 
         # If no performance has been associated so far, do that from the clean data
         if not self.instance.performance_id:
-            self.instance.performance_id = cleaned_data.get("performance").id
+            perf = cleaned_data.get("performance")
+            if perf is not None:
+                self.instance.performance_id = perf.id
 
         self.save()
         ## Check tickets

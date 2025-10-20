@@ -16,10 +16,6 @@ export TEST_PATH
 TEST=$(if $(test),-k '$(test)',)
 export TEST
 
-## Defines the path of the dga (auth) submodule, to be ignored during linting
-DGA=dga
-export DGA
-
 ifneq (,$(findstring a,  $(MAKEFLAGS)))
   VERBOSE=1
   export VERBOSE
@@ -122,10 +118,10 @@ coverage-nr: ## Generate test coverage report from last test run
 	$(COMMAND_PREFIX) coverage html
 
 black: ## Run black linter
-	$(COMMAND_PREFIX) black . --exclude=$(DGA)
+	$(COMMAND_PREFIX) black .
 
 isort: ## Run isort to sort imports
-	$(COMMAND_PREFIX) isort . --skip $(DGA)
+	$(COMMAND_PREFIX) isort .
 
 pylint: ## Run pylint to check uobtheatre code
 	$(COMMAND_PREFIX) pylint uobtheatre

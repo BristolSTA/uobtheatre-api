@@ -13,4 +13,4 @@ from uobtheatre.utils.exceptions import AuthOutput
 datastructures.EmptyResultSet = EmptyResultSet  # type: ignore
 
 # Override graphql_auth Output with our own custom output
-bases.SuccessErrorsOutput = AuthOutput
+bases.SuccessErrorsOutput = AuthOutput  # type: ignore

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from uobtheatre.mail.composer import MailComposer
 from uobtheatre.productions.models import Performance, Production
@@ -6,7 +6,7 @@ from uobtheatre.users.models import User
 from uobtheatre.utils.lang import pluralize
 
 
-def send_production_approved_email(user: User, production: Production):
+def send_production_approved_email(user: Any, production: Production):
     """Send a production approval email"""
     mail = MailComposer()
     mail.greeting(user).line(
@@ -22,7 +22,7 @@ def send_production_approved_email(user: User, production: Production):
 
 
 def send_production_needs_changes_email(
-    user: User, production: Production, message: Optional[str] = None
+    user: Any, production: Production, message: Optional[str] = None
 ):
     """Send a production needs change email"""
     mail = MailComposer()

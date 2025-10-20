@@ -60,7 +60,9 @@ def test_boxoffice_permissions_object_level(
     assert not user.has_perm("productions.boxoffice", production)
     assert not user.has_perm("productions.boxoffice", production2)
 
-    assign_perm("boxoffice", user, production)
+    # MyPy doesn't understand how factory instantiation works!
+    assign_perm("boxoffice", user, production)  # type: ignore
+
     assert user.has_perm("boxoffice", production)
     assert not user.has_perm("boxoffice", production2)
 
