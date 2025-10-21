@@ -6,7 +6,7 @@ pre-commit == 4.3.0
 
 # formatting
 black == 25.9.0 # Code formatting
-isort == 5.11.2 # Import sorting
+isort == 6.1.0 # Import sorting
 pylint == 3.3.9 # Linting
 
 # mypy stuff
