@@ -23,7 +23,7 @@ pytest-django == 4.11.1
 pytest-factoryboy == 2.8.1
 coveralls == 4.0.1
 factory-boy==3.3.3
-faker==37.1.0; python_version >= '3.6'
+faker==37.11.0; python_version >= '3.6'
 
 # Unsure
 jedi==0.19.2; python_version >= '3.6'
