@@ -162,11 +162,28 @@ class CrewMember(models.Model):
 class RelaxedCategory(models.Model):
     """Categories of adaptations for relaxed/sensory friendly etc. performances."""
 
-    short_description = models.CharField(max_length=255)
-    long_description = models.TextField(null=True, blank=True)
-    help_text = models.TextField(null=True, blank=True)
-    default_relaxed = models.BooleanField(default=False)
-    default_sensory_friendly = models.BooleanField(default=False)
+    short_description = models.CharField(
+        max_length=255,
+        help_text="Short description of the category, displayed in the categories display as the 'title' of each category.",
+    )
+    long_description = models.TextField(
+        null=True,
+        blank=True,
+        help_text="Long description of the category only shown one the user expands the category in the categories list.",
+    )
+    help_text = models.TextField(
+        null=True,
+        blank=True,
+        help_text="Any additional information that helps the production team to decide whether to select this category – only shown on the admin panel.",
+    )
+    default_relaxed = models.BooleanField(
+        default=False,
+        help_text="Whether this category is part of the 'Relaxed Performance' default selections.",
+    )
+    default_sensory_friendly = models.BooleanField(
+        default=False,
+        help_text="Whether this category is part of the 'Sensory Friendly Performance' default selections.",
+    )
 
 
 class PerformanceQuerySet(QuerySet):
@@ -317,8 +334,16 @@ class Performance(
     description = models.TextField(null=True, blank=True)
     extra_information = models.TextField(null=True, blank=True)
 
-    is_relaxed = models.BooleanField(default=False)
-    relaxed_name = models.CharField(max_length=255, null=True, blank=True)
+    is_relaxed = models.BooleanField(
+        default=False,
+        help_text="Whether this performance will be displayed as being relaxed/adapted in some way, enables the 'Relaxed', 'Sensory Friendly' etc. labels on performance tiles.",
+    )
+    relaxed_name = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text="The type of performance that this will be if the 'is relaxed' field is true, e.g. 'Relaxed' or 'Sensory Friendly'",
+    )
     relaxed_categories = models.ManyToManyField(RelaxedCategory, blank=True)
 
     disabled = models.BooleanField(default=True)
