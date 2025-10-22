@@ -47,7 +47,7 @@ class PerformanceFactory(factory.django.DjangoModelFactory):
     disabled = False
     production = factory.SubFactory(ProductionFactory)
     venue = factory.SubFactory(VenueFactory)
-    is_relaxed = True
+    is_relaxed = factory.Faker("boolean")
     relaxed_name = factory.Faker("sentence", nb_words=1)
 
     class Meta:
