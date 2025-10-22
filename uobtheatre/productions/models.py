@@ -826,7 +826,7 @@ class ProductionQuerySet(QuerySet):
         ).values_list("id", flat=True)
 
         # Productions the user has tickets for that are within the last week or the future
-        productions_user_has_tickets = []
+        productions_user_has_tickets: QuerySet[Any] = self.none()
         if user.is_authenticated:
             one_week_ago = timezone.now() - datetime.timedelta(days=7)
             productions_user_has_tickets = self.filter(
@@ -1067,6 +1067,10 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
             ("view_bookings", "Can inspect bookings and users for this production"),
             ("approve_production", "Can approve production"),
             ("comp_tickets", "Can issue complimentary tickets"),
+            (
+                "modify_booking_accessibility",
+                "Can modify accessibility info for all bookings for this production",
+            ),
         )
 
     class PermissionsMeta:
@@ -1078,4 +1082,5 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
             "sales": ("change_production", "force_change_production"),
             "comp_tickets": ("change_production", "force_change_production"),
             "approve_production": ("approve_production"),
+            "modify_booking_accessibility": ("modify_booking_accessibility"),
         }

@@ -51,7 +51,7 @@ class SetProductionStatus(AuthRequiredMixin, SafeMutation):
 
     @classmethod
     # pylint: disable=arguments-differ
-    def authorize_request(cls, _, info, production_id, status, **__):
+    def authorize_request(cls, root, info, production_id, status, **__):  # type: ignore[override]
         update_status = status
         production = Production.objects.get(id=production_id)
         user = info.context.user
@@ -258,7 +258,7 @@ class DeletePerformanceMutation(ModelDeletionMutation):
     """Mutation to delete a performance"""
 
     @classmethod
-    def authorize_request(cls, _, info, **inputs):
+    def authorize_request(cls, root, info, **inputs):
         instance = cls.get_instance(inputs["id"])
         if not EditProduction.user_has_for(info.context.user, instance.production):
             raise AuthorizationException
@@ -293,7 +293,7 @@ class DeletePerformanceSeatGroupMutation(ModelDeletionMutation):
     """Mutation to delete a performance seat group"""
 
     @classmethod
-    def authorize_request(cls, _, info, **inputs):
+    def authorize_request(cls, root, info, **inputs):
         instance = cls.get_instance(inputs["id"])
         return EditProduction.user_has_for(
             info.context.user,

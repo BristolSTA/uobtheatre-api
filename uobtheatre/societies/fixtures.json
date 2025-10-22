@@ -1,41 +1,130 @@
 [
-    {
-        "model": "societies.society",
-        "pk": 1,
-        "fields": {
-          "created_at": "2020-11-11T12:04:32+0000",
-          "updated_at": "2020-11-11T12:24:32+0000",
-          "name": "STA",
-          "description": "tech",
-          "logo": 1,
-          "banner": 1,
-          "slug": "sta"
-        }
-    },
-    {
-        "model": "societies.society",
-        "pk": 2,
-        "fields": {
-          "created_at": "2020-11-11T12:04:32+0000",
-          "updated_at": "2020-11-11T12:24:32+0000",
-          "name": "MTB",
-          "description": "musical theatre",
-          "logo": 1,
-          "banner": 1,
-          "slug": "mtb"
-        }
-    },
-    {
-        "model": "societies.society",
-        "pk": 3,
-        "fields": {
-          "created_at": "2020-11-11T12:04:32+0000",
-          "updated_at": "2020-11-11T12:24:32+0000",
-          "name": "Dramsoc",
-          "description": "drama",
-          "logo": 1,
-          "banner": 1,
-          "slug": "dramsoc"
-        }
+  {
+    "model": "societies.society",
+    "pk": 1,
+    "fields": {
+      "created_at": "2035-01-06T10:00:00+0000",
+      "updated_at": "2035-01-06T10:15:00+0000",
+      "name": "Stage Technicians Alliance",
+      "description": "Stage Technicians Alliance puts on innovative productions across campus.",
+      "logo": 1,
+      "banner": 2,
+      "slug": "stage-technicians-alliance",
+      "website": "https://stagetechniciansalliance.org",
+      "contact": "contact@stagetechniciansalliance.org",
+      "su_status": true
     }
+  },
+  {
+    "model": "societies.society",
+    "pk": 2,
+    "fields": {
+      "created_at": "2035-01-07T10:00:00+0000",
+      "updated_at": "2035-01-07T10:15:00+0000",
+      "name": "Musical Theatre Bristol",
+      "description": "Musical Theatre Bristol puts on innovative productions across campus.",
+      "logo": 3,
+      "banner": 4,
+      "slug": "musical-theatre-bristol",
+      "website": "https://musicaltheatrebristol.org",
+      "contact": "contact@musicaltheatrebristol.org",
+      "su_status": false
+    }
+  },
+  {
+    "model": "societies.society",
+    "pk": 3,
+    "fields": {
+      "created_at": "2035-01-08T10:00:00+0000",
+      "updated_at": "2035-01-08T10:15:00+0000",
+      "name": "Drama Society",
+      "description": "Drama Society puts on innovative productions across campus.",
+      "logo": 5,
+      "banner": 6,
+      "slug": "drama-society",
+      "website": "https://dramasociety.org",
+      "contact": "contact@dramasociety.org",
+      "su_status": true
+    }
+  },
+  {
+    "model": "societies.society",
+    "pk": 4,
+    "fields": {
+      "created_at": "2035-01-09T10:00:00+0000",
+      "updated_at": "2035-01-09T10:15:00+0000",
+      "name": "Improv Collective",
+      "description": "Improv Collective puts on innovative productions across campus.",
+      "logo": 7,
+      "banner": 8,
+      "slug": "improv-collective",
+      "website": "https://improvcollective.org",
+      "contact": "contact@improvcollective.org",
+      "su_status": false
+    }
+  },
+  {
+    "model": "societies.society",
+    "pk": 5,
+    "fields": {
+      "created_at": "2035-01-10T10:00:00+0000",
+      "updated_at": "2035-01-10T10:15:00+0000",
+      "name": "Opera Ensemble",
+      "description": "Opera Ensemble puts on innovative productions across campus.",
+      "logo": 9,
+      "banner": 10,
+      "slug": "opera-ensemble",
+      "website": "https://operaensemble.org",
+      "contact": "contact@operaensemble.org",
+      "su_status": true
+    }
+  },
+  {
+    "model": "societies.society",
+    "pk": 6,
+    "fields": {
+      "created_at": "2035-01-11T10:00:00+0000",
+      "updated_at": "2035-01-11T10:15:00+0000",
+      "name": "Dance Fusion",
+      "description": "Dance Fusion puts on innovative productions across campus.",
+      "logo": 11,
+      "banner": 12,
+      "slug": "dance-fusion",
+      "website": "https://dancefusion.org",
+      "contact": "contact@dancefusion.org",
+      "su_status": false
+    }
+  },
+  {
+    "model": "societies.society",
+    "pk": 7,
+    "fields": {
+      "created_at": "2035-01-12T10:00:00+0000",
+      "updated_at": "2035-01-12T10:15:00+0000",
+      "name": "Shakespeare Company",
+      "description": "Shakespeare Company puts on innovative productions across campus.",
+      "logo": 13,
+      "banner": 14,
+      "slug": "shakespeare-company",
+      "website": "https://shakespearecompany.org",
+      "contact": "contact@shakespearecompany.org",
+      "su_status": true
+    }
+  },
+  {
+    "model": "societies.society",
+    "pk": 8,
+    "fields": {
+      "created_at": "2035-01-13T10:00:00+0000",
+      "updated_at": "2035-01-13T10:15:00+0000",
+      "name": "Comedy Troupe",
+      "description": "Comedy Troupe puts on innovative productions across campus.",
+      "logo": 15,
+      "banner": 16,
+      "slug": "comedy-troupe",
+      "website": "https://comedytroupe.org",
+      "contact": "contact@comedytroupe.org",
+      "su_status": false
+    }
+  }
 ]

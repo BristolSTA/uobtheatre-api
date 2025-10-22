@@ -1,44 +1,143 @@
 [
-    { 
-        "model": "site_messages.message",
-        "pk": 1,
-        "fields": {
-            "message": "There will be some maintenance tomorrow.",
-            "active": true,
-            "display_start": "2024-09-01T04:00:00+0000",
-            "event_start": "2024-09-02T08:00:00+0000",
-            "event_end": "2024-09-02T16:00:00+0000",
-            "creator": 1,
-            "type": "INFORMATION",
-            "dismissal_policy": "BANNED"
-        }
-    },
-    {
-        "model": "site_messages.message",
-        "pk": 2,
-        "fields": {
-            "message": "This is a test warning!",
-            "active": true,
-            "display_start": "2024-11-11T12:00:00+0000",
-            "event_start": "2024-11-11T12:00:00+0000",
-            "event_end": "2024-11-12T12:00:00+0000",
-            "indefinite_override": true,
-            "creator": 1,
-            "type": "WARNING",
-            "dismissal_policy": "SINGLE"
-        }
-    },
-    {
-        "model": "site_messages.message",
-        "pk": 3,
-        "fields": {
-            "message": "This is a test alert, enjoy!",
-            "active": true,
-            "display_start": "2024-12-24T12:00:00+0000",
-            "event_start": "2024-12-01T12:00:00+0000",
-            "event_end": "2024-12-02T12:00:00+0000",
-            "creator": 1,
-            "type": "ALERT"
-        }
+  {
+    "model": "site_messages.message",
+    "pk": 1,
+    "fields": {
+      "message": "System notice 1: planned activity and alerts.",
+      "active": true,
+      "display_start": "2035-04-16T10:00:00+0000",
+      "event_start": "2035-04-18T10:00:00+0000",
+      "event_end": "2035-04-19T10:00:00+0000",
+      "indefinite_override": false,
+      "creator": 1,
+      "type": "WARNING",
+      "dismissal_policy": "BANNED"
     }
+  },
+  {
+    "model": "site_messages.message",
+    "pk": 2,
+    "fields": {
+      "message": "System notice 2: planned activity and alerts.",
+      "active": false,
+      "display_start": "2035-04-17T10:00:00+0000",
+      "event_start": "2035-04-19T10:00:00+0000",
+      "event_end": "2035-04-20T10:00:00+0000",
+      "indefinite_override": false,
+      "creator": 2,
+      "type": "ALERT",
+      "dismissal_policy": "SINGLE"
+    }
+  },
+  {
+    "model": "site_messages.message",
+    "pk": 3,
+    "fields": {
+      "message": "System notice 3: <b>planned activity and alerts.</b>",
+      "active": true,
+      "display_start": "2035-04-18T10:00:00+0000",
+      "event_start": "2035-04-20T10:00:00+0000",
+      "event_end": "2035-04-21T10:00:00+0000",
+      "indefinite_override": true,
+      "creator": 3,
+      "type": "INFORMATION",
+      "dismissal_policy": "ALWAYS"
+    }
+  },
+  {
+    "model": "site_messages.message",
+    "pk": 4,
+    "fields": {
+      "message": "System notice 4: planned activity and alerts.",
+      "active": false,
+      "display_start": "2035-04-19T10:00:00+0000",
+      "event_start": "2035-04-21T10:00:00+0000",
+      "event_end": "2035-04-22T10:00:00+0000",
+      "indefinite_override": false,
+      "creator": 4,
+      "type": "WARNING",
+      "dismissal_policy": "BANNED"
+    }
+  },
+  {
+    "model": "site_messages.message",
+    "pk": 5,
+    "fields": {
+      "message": "System notice 5: planned activity and alerts.",
+      "active": true,
+      "display_start": "2035-04-20T10:00:00+0000",
+      "event_start": "2035-04-22T10:00:00+0000",
+      "event_end": "2035-04-23T10:00:00+0000",
+      "indefinite_override": false,
+      "creator": 5,
+      "type": "ALERT",
+      "dismissal_policy": "SINGLE"
+    }
+  },
+  {
+    "model": "site_messages.message",
+    "pk": 6,
+    "fields": {
+      "message": "System notice 6: planned activity and alerts.",
+      "active": false,
+      "display_start": "2035-04-21T10:00:00+0000",
+      "event_start": "2035-04-23T10:00:00+0000",
+      "event_end": "2035-04-24T10:00:00+0000",
+      "indefinite_override": true,
+      "creator": 6,
+      "type": "INFORMATION",
+      "dismissal_policy": "ALWAYS"
+    }
+  },
+  {
+    "model": "site_messages.message",
+    "pk": 7,
+    "fields": {
+      "message": "System notice 7: planned activity and alerts (sitewide).",
+      "active": true,
+      "indefinite_override": false,
+      "display_start": "2035-04-22T10:00:00Z",
+      "event_start": "2035-04-24T10:00:00Z",
+      "event_end": "2035-04-25T10:00:00Z",
+      "creator": "00000000-0000-0000-0000-000000000007",
+      "type": "WARNING",
+      "dismissal_policy": "DEFAULT",
+      "display_location": "SITEWIDE_MODAL",
+      "title": "Sitewide Message"
+    }
+  },
+  {
+    "model": "site_messages.message",
+    "pk": 8,
+    "fields": {
+      "message": "System notice 8: planned activity and alerts (booking).",
+      "active": true,
+      "indefinite_override": false,
+      "display_start": "2035-04-23T10:00:00Z",
+      "event_start": "2035-04-25T10:00:00Z",
+      "event_end": "2035-04-26T10:00:00Z",
+      "creator": "00000000-0000-0000-0000-000000000008",
+      "type": "ALERT",
+      "dismissal_policy": "SINGLE",
+      "display_location": "BOOKING_MODAL",
+      "title": "Booking Message"
+    }
+  },
+  {
+    "model": "site_messages.message",
+    "pk": 9,
+    "fields": {
+      "message": "System notice 9: planned activity and alerts (production).",
+      "active": false,
+      "indefinite_override": true,
+      "display_start": "2035-04-24T10:00:00Z",
+      "event_start": "2035-04-26T10:00:00Z",
+      "event_end": "2035-04-27T10:00:00Z",
+      "creator": "00000000-0000-0000-0000-000000000009",
+      "type": "INFORMATION",
+      "dismissal_policy": "SINGLE",
+      "display_location": "PRODUCTION_CREATION_MODAL",
+      "title": "Production Message"
+    }
+  }
 ]
