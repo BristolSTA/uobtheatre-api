@@ -32,7 +32,8 @@ class Venue(TimeStampedMixin, BaseModel):
     name = models.CharField(max_length=255)
     internal_capacity = models.PositiveSmallIntegerField()
     description = TipTapTextField(null=True, blank=True)
-    accessibility_info = models.TextField(null=True, blank=True)
+    accessibility_info = TipTapTextField(null=True, blank=True)
+    accessibility_short = models.CharField(max_length=255, null=True, blank=True)
     email = models.EmailField(
         null=True,
         blank=True,

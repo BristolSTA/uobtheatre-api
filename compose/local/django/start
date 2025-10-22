@@ -13,7 +13,18 @@ python manage.py collectstatic --noinput
 # Seed the db
 if [[ $* == *--seed-e2e ]]
 then
-   python manage.py loaddata db.json
+   python manage.py loaddata \
+      uobtheatre/images/fixtures.json \
+      uobtheatre/addresses/fixtures.json \
+      uobtheatre/users/fixtures.json \
+      uobtheatre/societies/fixtures.json \
+      uobtheatre/venues/fixtures.json \
+      uobtheatre/discounts/fixtures.json \
+      uobtheatre/productions/fixtures.json \
+      uobtheatre/bookings/fixtures.json \
+      uobtheatre/payments/fixtures.json \
+      uobtheatre/finance/fixtures.json \
+      uobtheatre/site_messages/fixtures.json
 fi
 
 # Seed the db if not already seeded
@@ -24,7 +35,18 @@ then
       echo "Skipping seeding as users in db"
    else
       echo "Seeding DB"
-      python manage.py loaddata db.json
+      python manage.py loaddata \
+         uobtheatre/images/fixtures.json \
+         uobtheatre/addresses/fixtures.json \
+         uobtheatre/users/fixtures.json \
+         uobtheatre/societies/fixtures.json \
+         uobtheatre/venues/fixtures.json \
+         uobtheatre/discounts/fixtures.json \
+         uobtheatre/productions/fixtures.json \
+         uobtheatre/bookings/fixtures.json \
+         uobtheatre/payments/fixtures.json \
+         uobtheatre/finance/fixtures.json \
+         uobtheatre/site_messages/fixtures.json
    fi
 fi
 

@@ -141,24 +141,18 @@ class UpdateBookingAccessibilityInfo(AuthRequiredMixin, SafeMutation):
         accessibility_info = graphene.String()
 
     @classmethod
-    def authorize_request(cls, _, info, **inputs):
+    def authorize_request(cls, root, info, **inputs):
         booking = Booking.objects.get(id=inputs["booking_id"])
         if not ModifyAccessibility.user_has_for(info.context.user, booking):
             raise AuthorizationException(
                 message="You do not have permission to modify the accessibility information for this booking",
             )
-        return super().authorize_request(_, info, **inputs)
+        return super().authorize_request(root, info, **inputs)
 
     @classmethod
     def resolve_mutation(cls, _, info, booking_id, accessibility_info):
         booking = Booking.objects.get(id=booking_id)
         previous_accessibility_info = booking.accessibility_info
-
-        # Check the booking is in the future, otherwise return error
-        if booking.performance.start and booking.performance.start < timezone.now():
-            raise GQLException(
-                message="Accessibility information can only be updated for future performances"
-            )
 
         booking.previous_accessibility_info = previous_accessibility_info
         booking.accessibility_info_updated_at = timezone.now()
@@ -190,7 +184,7 @@ class DeleteBooking(ModelDeletionMutation):
     """
 
     @classmethod
-    def authorize_request(cls, _, info, **inputs):
+    def authorize_request(cls, root, info, **inputs):
         booking = cls.get_instance(inputs["id"])
         if not booking.status == Payable.Status.IN_PROGRESS:
             raise GQLException(
@@ -202,7 +196,7 @@ class DeleteBooking(ModelDeletionMutation):
             raise GQLException(
                 "This booking cannot be deleted as it has transactions associated with it"
             )
-        return super().authorize_request(_, info, **inputs)
+        return super().authorize_request(root, info, **inputs)
 
     class Meta:
         ability = ModifyBooking

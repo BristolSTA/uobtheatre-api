@@ -1,7 +1,7 @@
 ARG PYTHON_VERSION=3.10
 
 # define an alias for the specfic python version used in this file.
-FROM mcr.microsoft.com/vscode/devcontainers/python:${PYTHON_VERSION} AS python
+FROM python:${PYTHON_VERSION} AS python
 
 # Python build stage
 FROM python AS python-build-stage
@@ -29,9 +29,9 @@ FROM python AS python-run-stage
 ARG BUILD_ENVIRONMENT=local
 ARG APP_HOME=/app/uobtheatre-api
 
-ENV PYTHONUNBUFFERED 1
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV BUILD_ENV ${BUILD_ENVIRONMENT}
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV BUILD_ENV=${BUILD_ENVIRONMENT}
 
 WORKDIR ${APP_HOME}
 
