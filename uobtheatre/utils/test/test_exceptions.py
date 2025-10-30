@@ -155,11 +155,11 @@ def test_square_exception():
     )
     assert len(exception.resolve()) == 1
     compare_gql_objects(
-        exception.resolve()[0], NonFieldError(message="Some phrase", code=400)
+        exception.resolve()[0], NonFieldError(message="There was an issue processing your payment (SOMETHING_WRONG)", code=400)
     )
 
 
-def test_square_exception_with_payment_method_error():
+def test_square_exception_with_payment_method_error_no_detail():
     exception = SquareException(
         ApiError(
             status_code=400,
@@ -168,7 +168,6 @@ def test_square_exception_with_payment_method_error():
                     {
                         "category": "PAYMENT_METHOD_ERROR",
                         "code": "SOMETHING_WRONG",
-                        "detail": "Detailed error message",
                     }
                 ]
             },
@@ -177,7 +176,85 @@ def test_square_exception_with_payment_method_error():
     assert len(exception.resolve()) == 1
     compare_gql_objects(
         exception.resolve()[0],
-        NonFieldError(message="Detailed error message", code=400),
+        NonFieldError(
+            message="There was an issue processing your payment (SOMETHING_WRONG)",
+            code=400,
+        ),
+    )
+
+
+@pytest.mark.parametrize(
+    "error_code, expected_message",
+    [
+        (
+            "ADDRESS_VERIFICATION_FAILURE",
+            "The card issuer declined the request because the postal code is invalid.",
+        ),
+        (
+            "CARD_EXPIRED",
+            "The card issuer declined the request because the card is expired.",
+        ),
+        (
+            "CVV_FAILURE",
+            "The card issuer declined the request because the CVV value is invalid.",
+        ),
+        (
+            "EXPIRATION_FAILURE",
+            "The card expiration date is either invalid or indicates that the card is expired.",
+        ),
+        (
+            "GENERIC_DECLINE",
+            "Square received a decline without any additional information. If the payment information seems correct, contact your card issuer to ask for more information.",
+        ),
+        (
+            "INSUFFICIENT_FUNDS",
+            "The funding source has insufficient funds to cover the payment.",
+        ),
+        (
+            "INVALID_EXPIRATION",
+            "The expiration date for the payment card is invalid. For example, it indicates a date in the past.",
+        ),
+        (
+            "INVALID_CARD",
+            "The credit card cannot be validated based on the provided details.",
+        ),
+        ("INVALID_PHONE_NUMBER", "The provided phone number is invalid."),
+        (
+            "INVALID_PIN",
+            "The card issuer declined the request because the PIN is invalid.",
+        ),
+        (
+            "PAN_FAILURE",
+            "The specified card number is invalid. For example, it is of incorrect length or is incorrectly formatted.",
+        ),
+        (
+            "TRANSACTION_LIMIT",
+            "The card issuer has determined the payment amount is either too high or too low.",
+        ),
+        (
+            "BAD_EXPIRATION",
+            "The card expiration date is either missing or incorrectly formatted.",
+        ),
+        (
+            "CARD_DECLINED_VERIFICATION_REQUIRED",
+            "The payment card was declined with a request for additional verification.",
+        ),
+        (
+            "CHIP_INSERTION_REQUIRED",
+            "The card issuer requires the card to be inserted into a chip reader.",
+        ),
+    ],
+)
+def test_square_exception_user_readable_message(error_code, expected_message):
+    exception = SquareException(
+        ApiError(
+            status_code=400,
+            body={"errors": [{"category": "PAYMENT_METHOD_ERROR", "code": error_code}]},
+        )
+    )
+    assert len(exception.resolve()) == 1
+    compare_gql_objects(
+        exception.resolve()[0], NonFieldError(message=expected_message, code=400)
     )
 
 

@@ -246,13 +246,14 @@ class SquareException(GQLException):
             "TRANSACTION_LIMIT": "The card issuer has determined the payment amount is either too high or too low.",
             "BAD_EXPIRATION": "The card expiration date is either missing or incorrectly formatted.",
             "CARD_DECLINED_VERIFICATION_REQUIRED": "The payment card was declined with a request for additional verification.",
-            "CHIP_INSERTION_REQUIRED": "The card issuer requires the card to be inserted into a chip reader."
+            "CHIP_INSERTION_REQUIRED": "The card issuer requires the card to be inserted into a chip reader.",
         }
 
-        def get_user_readable_error_message(error: Error) -> str:
-            if error.code in passthrough_error_categories:
-                return user_readable_error_details.get(error.code, "There was an issue processing your payment (%s)" % error.detail)
-            return error.detail
+        def get_user_readable_error_message(error_code: Optional[str]) -> str:
+            return user_readable_error_details.get(
+                str(error_code),
+                "There was an issue processing your payment (%s)" % error_code,
+            )
 
         error = (
             api_error.errors[0]
@@ -261,7 +262,7 @@ class SquareException(GQLException):
         )
         message = (
             (
-                get_user_readable_error_message(error)
+                get_user_readable_error_message(error.code)
                 if error.category in passthrough_error_categories
                 else "There was an issue processing your payment (%s)"
                 % error.code
