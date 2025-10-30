@@ -155,7 +155,11 @@ def test_square_exception():
     )
     assert len(exception.resolve()) == 1
     compare_gql_objects(
-        exception.resolve()[0], NonFieldError(message="There was an issue processing your payment (SOMETHING_WRONG)", code=400)
+        exception.resolve()[0],
+        NonFieldError(
+            message="There was an issue processing your payment (SOMETHING_WRONG)",
+            code=400,
+        ),
     )
 
 
