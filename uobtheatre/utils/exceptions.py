@@ -19,6 +19,7 @@ from graphene.utils.str_converters import to_camel_case
 from graphene_django.types import ErrorType
 from sentry_sdk import capture_exception
 from square.core.api_error import ApiError
+from square.types.error import Error
 
 
 class ExceptionMiddleware:  # pragma: no cover
@@ -229,6 +230,30 @@ class SquareException(GQLException):
         passthrough_error_categories = [
             "PAYMENT_METHOD_ERROR",
         ]
+        # Turn common Square errors into user-friendly messages
+        user_readable_error_details = {
+            "ADDRESS_VERIFICATION_FAILURE": "The card issuer declined the request because the postal code is invalid.",
+            "CARD_EXPIRED": "The card issuer declined the request because the card is expired.",
+            "CVV_FAILURE": "The card issuer declined the request because the CVV value is invalid.",
+            "EXPIRATION_FAILURE": "The card expiration date is either invalid or indicates that the card is expired.",
+            "GENERIC_DECLINE": "Square received a decline without any additional information. If the payment information seems correct, contact your card issuer to ask for more information.",
+            "INSUFFICIENT_FUNDS": "The funding source has insufficient funds to cover the payment.",
+            "INVALID_EXPIRATION": "The expiration date for the payment card is invalid. For example, it indicates a date in the past.",
+            "INVALID_CARD": "The credit card cannot be validated based on the provided details.",
+            "INVALID_PHONE_NUMBER": "The provided phone number is invalid.",
+            "INVALID_PIN": "The card issuer declined the request because the PIN is invalid.",
+            "PAN_FAILURE": "The specified card number is invalid. For example, it is of incorrect length or is incorrectly formatted.",
+            "TRANSACTION_LIMIT": "The card issuer has determined the payment amount is either too high or too low.",
+            "BAD_EXPIRATION": "The card expiration date is either missing or incorrectly formatted.",
+            "CARD_DECLINED_VERIFICATION_REQUIRED": "The payment card was declined with a request for additional verification.",
+            "CHIP_INSERTION_REQUIRED": "The card issuer requires the card to be inserted into a chip reader."
+        }
+
+        def get_user_readable_error_message(error: Error) -> str:
+            if error.code in passthrough_error_categories:
+                return user_readable_error_details.get(error.code, "There was an issue processing your payment (%s)" % error.detail)
+            return error.detail
+
         error = (
             api_error.errors[0]
             if api_error.errors and len(api_error.errors)
@@ -236,7 +261,7 @@ class SquareException(GQLException):
         )
         message = (
             (
-                error.detail
+                get_user_readable_error_message(error)
                 if error.category in passthrough_error_categories
                 else "There was an issue processing your payment (%s)"
                 % error.code
