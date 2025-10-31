@@ -27,6 +27,7 @@ from uobtheatre.productions.test.factories import (
     PerformanceFactory,
     ProductionFactory,
     ProductionTeamMemberFactory,
+    RelaxedCategoryFactory,
     create_production,
 )
 from uobtheatre.users.test.factories import UserFactory
@@ -897,6 +898,16 @@ def test_performance_schema(gql_client):
                 }
                 minSeatPrice
                 soldOut
+                isRelaxed
+                relaxedName
+                relaxedCategories {
+                  id
+                  shortDescription
+                  longDescription
+                  helpText
+                  defaultRelaxed
+                  defaultSensoryFriendly
+                }
               }
             }
           }
@@ -943,6 +954,21 @@ def test_performance_schema(gql_client):
                             "minSeatPrice": performance.min_seat_price(),
                             "soldOut": performance.is_sold_out,
                             "isBookable": performance.is_bookable,
+                            "isRelaxed": performance.is_relaxed,
+                            "relaxedName": performance.relaxed_name,
+                            "relaxedCategories": [
+                                {
+                                    "id": to_global_id(
+                                        "RelaxedCategoryNode", relaxed_category.id
+                                    ),
+                                    "shortDescription": relaxed_category.short_description,
+                                    "longDescription": relaxed_category.long_description,
+                                    "helpText": relaxed_category.help_text,
+                                    "defaultRelaxed": relaxed_category.default_relaxed,
+                                    "defaultSensoryFriendly": relaxed_category.default_sensory_friendly,
+                                }
+                                for relaxed_category in performance.relaxed_categories.all()
+                            ],
                         }
                     }
                     for performance in performances
@@ -1405,4 +1431,30 @@ def test_warnings(gql_client):
         {"node": {"shortDescription": "Beware of the children"}},
         {"node": {"shortDescription": "Pyrotechnics go bang"}},
         {"node": {"shortDescription": "Strobe do be flickering"}},
+    ]
+
+
+@pytest.mark.django_db
+def test_relaxed_categories(gql_client):
+    RelaxedCategoryFactory(short_description="Removed fireworks")
+    RelaxedCategoryFactory(short_description="Sounds not loud")
+    RelaxedCategoryFactory(short_description="Bye bye strobe")
+
+    request = """
+        query {
+            relaxedCategories {
+                edges {
+                    node {
+                        shortDescription
+                    }
+                }
+            }
+        }
+    """
+
+    response = gql_client.execute(request)
+    assert response["data"]["relaxedCategories"]["edges"] == [
+        {"node": {"shortDescription": "Removed fireworks"}},
+        {"node": {"shortDescription": "Sounds not loud"}},
+        {"node": {"shortDescription": "Bye bye strobe"}},
     ]

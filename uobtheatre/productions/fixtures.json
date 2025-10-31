@@ -64,6 +64,72 @@
     }
   },
   {
+    "model": "productions.relaxedcategory",
+    "pk": 1,
+    "fields": {
+      "short_description": "House Lights Remain On",
+      "long_description": "The venue's house lights will remain on throughout the performance and there will be no moments of full darkness.",
+      "help_text": "",
+      "default_relaxed": true,
+      "default_sensory_friendly": false
+    }
+  },
+  {
+    "model": "productions.relaxedcategory",
+    "pk": 2,
+    "fields": {
+      "short_description": "No Pyrotechnic Effects",
+      "long_description": "All pyrotechnic effects have been removed from this performance.",
+      "help_text": "",
+      "default_relaxed": true,
+      "default_sensory_friendly": true
+    }
+  },
+  {
+    "model": "productions.relaxedcategory",
+    "pk": 3,
+    "fields": {
+      "short_description": "Performer Introductions",
+      "long_description": "Performers will introduce themselves and the characters they play at the beginning of the show.",
+      "help_text": "",
+      "default_relaxed": true,
+      "default_sensory_friendly": false
+    }
+  },
+  {
+    "model": "productions.relaxedcategory",
+    "pk": 4,
+    "fields": {
+      "short_description": "Move Any Time",
+      "long_description": "You're welcome to enter and leave the auditorium at any point or to move around during the performance.",
+      "help_text": "Make sure this is discussed with FOH so they are aware this is happening.",
+      "default_relaxed": false,
+      "default_sensory_friendly": false
+    }
+  },
+  {
+    "model": "productions.relaxedcategory",
+    "pk": 5,
+    "fields": {
+      "short_description": "Sensory Room",
+      "long_description": "A sensory room will be available at all times during the performance. Please speak to the FOH team if you would like to know where this is.",
+      "help_text": "Coordinate this with the venue.",
+      "default_relaxed": true,
+      "default_sensory_friendly": true
+    }
+  },
+  {
+    "model": "productions.relaxedcategory",
+    "pk": 6,
+    "fields": {
+      "short_description": "Sign Language Interpreter",
+      "long_description": "There will be a BSL interpreter present during this performance.",
+      "help_text": "",
+      "default_relaxed": false,
+      "default_sensory_friendly": false
+    }
+  },
+  {
     "model": "productions.crewrole",
     "pk": 1,
     "fields": {
@@ -584,7 +650,14 @@
       "end": "2035-05-04T21:15:00+0000",
       "disabled": false,
       "description": "Performance 1 of Aurora Nights.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": true,
+      "relaxed_name": "Relaxed",
+      "relaxed_categories": [
+        1,
+        2,
+        3
+      ]
     }
   },
   {
@@ -600,7 +673,10 @@
       "end": "2035-05-07T21:15:00+0000",
       "disabled": false,
       "description": "Performance 2 of Aurora Nights.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -616,7 +692,10 @@
       "end": "2035-05-10T21:15:00+0000",
       "disabled": false,
       "description": "Performance 3 of Aurora Nights.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -632,7 +711,10 @@
       "end": "2035-05-13T21:15:00+0000",
       "disabled": false,
       "description": "Performance 4 of Aurora Nights.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -648,7 +730,10 @@
       "end": "2024-01-10T21:15:00+0000",
       "disabled": true,
       "description": "Performance 1 of City of Echoes.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -664,7 +749,10 @@
       "end": "2024-01-11T16:15:00+0000",
       "disabled": false,
       "description": "Performance 2 of City of Echoes.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -680,7 +768,10 @@
       "end": "2024-01-12T21:45:00+0000",
       "disabled": false,
       "description": "Performance 3 of City of Echoes.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -696,7 +787,15 @@
       "end": "2034-02-10T21:15:00+0000",
       "disabled": true,
       "description": "Performance 1 of Whispers in the Wings.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": true,
+      "relaxed_name": "Sensory Friendly",
+      "relaxed_categories": [
+        1,
+        2,
+        3,
+        4
+      ]
     }
   },
   {
@@ -712,7 +811,10 @@
       "end": "2034-02-13T21:15:00+0000",
       "disabled": false,
       "description": "Performance 2 of Whispers in the Wings.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -728,7 +830,10 @@
       "end": "2034-02-16T21:15:00+0000",
       "disabled": false,
       "description": "Performance 3 of Whispers in the Wings.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -744,7 +849,10 @@
       "end": "2034-02-19T21:15:00+0000",
       "disabled": false,
       "description": "Performance 4 of Whispers in the Wings.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -760,7 +868,10 @@
       "end": "2034-02-22T21:15:00+0000",
       "disabled": false,
       "description": "Performance 5 of Whispers in the Wings.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -776,7 +887,13 @@
       "end": "2034-02-13T21:15:00+0000",
       "disabled": true,
       "description": "Performance 1 of Rhythm of the Tide.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": true,
+      "relaxed_name": "Sensory Friendly",
+      "relaxed_categories": [
+        2,
+        4
+      ]
     }
   },
   {
@@ -792,7 +909,10 @@
       "end": "2034-02-16T21:15:00+0000",
       "disabled": false,
       "description": "Performance 2 of Rhythm of the Tide.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -808,7 +928,10 @@
       "end": "2034-02-19T21:15:00+0000",
       "disabled": false,
       "description": "Performance 3 of Rhythm of the Tide.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -824,7 +947,10 @@
       "end": "2024-03-20T21:15:00+0000",
       "disabled": true,
       "description": "Performance 1 of Midnight Masquerade.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -840,7 +966,10 @@
       "end": "2024-03-22T21:15:00+0000",
       "disabled": false,
       "description": "Performance 2 of Midnight Masquerade.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -856,7 +985,10 @@
       "end": "2024-03-23T16:15:00+0000",
       "disabled": false,
       "description": "Performance 3 of Midnight Masquerade.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -872,7 +1004,10 @@
       "end": "2024-03-24T21:45:00+0000",
       "disabled": false,
       "description": "Performance 4 of Midnight Masquerade.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -888,7 +1023,10 @@
       "end": "2035-05-19T21:15:00+0000",
       "disabled": false,
       "description": "Performance 1 of Fragments of Light.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -904,7 +1042,10 @@
       "end": "2035-05-22T21:15:00+0000",
       "disabled": false,
       "description": "Performance 2 of Fragments of Light.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -920,7 +1061,10 @@
       "end": "2035-05-25T21:15:00+0000",
       "disabled": false,
       "description": "Performance 3 of Fragments of Light.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -936,7 +1080,10 @@
       "end": "2035-05-22T21:15:00+0000",
       "disabled": false,
       "description": "Performance 1 of Electric Bloom.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -952,7 +1099,14 @@
       "end": "2035-05-25T21:15:00+0000",
       "disabled": false,
       "description": "Performance 2 of Electric Bloom.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": true,
+      "relaxed_name": "Relaxed",
+      "relaxed_categories": [
+        2,
+        3,
+        6
+      ]
     }
   },
   {
@@ -968,7 +1122,10 @@
       "end": "2035-05-28T21:15:00+0000",
       "disabled": false,
       "description": "Performance 3 of Electric Bloom.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -984,7 +1141,10 @@
       "end": "2035-05-31T21:15:00+0000",
       "disabled": false,
       "description": "Performance 4 of Electric Bloom.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1000,7 +1160,10 @@
       "end": "2035-06-03T21:15:00+0000",
       "disabled": false,
       "description": "Performance 5 of Electric Bloom.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1016,7 +1179,10 @@
       "end": "2034-02-25T21:15:00+0000",
       "disabled": true,
       "description": "Performance 1 of The Clockmaker's Tale.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1032,7 +1198,10 @@
       "end": "2034-02-28T21:15:00+0000",
       "disabled": false,
       "description": "Performance 2 of The Clockmaker's Tale.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1048,7 +1217,10 @@
       "end": "2034-03-03T21:15:00+0000",
       "disabled": false,
       "description": "Performance 3 of The Clockmaker's Tale.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1064,7 +1236,10 @@
       "end": "2034-03-06T21:15:00+0000",
       "disabled": false,
       "description": "Performance 4 of The Clockmaker's Tale.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1080,7 +1255,10 @@
       "end": "2024-04-05T21:15:00+0000",
       "disabled": true,
       "description": "Performance 1 of Starfall Serenade.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1096,7 +1274,10 @@
       "end": "2024-04-06T16:15:00+0000",
       "disabled": false,
       "description": "Performance 2 of Starfall Serenade.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1112,7 +1293,10 @@
       "end": "2024-04-07T21:45:00+0000",
       "disabled": false,
       "description": "Performance 3 of Starfall Serenade.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1128,7 +1312,10 @@
       "end": "2035-05-31T21:15:00+0000",
       "disabled": false,
       "description": "Performance 1 of Echoes of Tomorrow.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1144,7 +1331,10 @@
       "end": "2035-06-03T21:15:00+0000",
       "disabled": false,
       "description": "Performance 2 of Echoes of Tomorrow.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1160,7 +1350,10 @@
       "end": "2035-06-06T21:15:00+0000",
       "disabled": false,
       "description": "Performance 3 of Echoes of Tomorrow.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1176,7 +1369,10 @@
       "end": "2035-06-09T21:15:00+0000",
       "disabled": false,
       "description": "Performance 4 of Echoes of Tomorrow.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1192,7 +1388,10 @@
       "end": "2024-05-15T21:15:00+0000",
       "disabled": true,
       "description": "Performance 1 of Velvet Horizon.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1208,7 +1407,10 @@
       "end": "2024-05-16T16:15:00+0000",
       "disabled": false,
       "description": "Performance 2 of Velvet Horizon.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1224,7 +1426,10 @@
       "end": "2024-05-17T21:45:00+0000",
       "disabled": false,
       "description": "Performance 3 of Velvet Horizon.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1240,7 +1445,10 @@
       "end": "2024-02-02T21:15:00+0000",
       "disabled": true,
       "description": "Performance 1 of Harbour Lights.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1256,7 +1464,10 @@
       "end": "2024-02-03T16:15:00+0000",
       "disabled": false,
       "description": "Performance 2 of Harbour Lights.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1272,7 +1483,10 @@
       "end": "2024-02-03T21:45:00+0000",
       "disabled": false,
       "description": "Performance 3 of Harbour Lights.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1288,7 +1502,10 @@
       "end": "2024-02-04T20:15:00+0000",
       "disabled": false,
       "description": "Performance 4 of Harbour Lights.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1304,7 +1521,10 @@
       "end": "2035-06-09T21:15:00+0000",
       "disabled": false,
       "description": "Performance 1 of Gilded Reverie.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1320,7 +1540,10 @@
       "end": "2035-06-12T21:15:00+0000",
       "disabled": false,
       "description": "Performance 2 of Gilded Reverie.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1336,7 +1559,12 @@
       "end": "2035-06-15T21:15:00+0000",
       "disabled": false,
       "description": "Performance 3 of Gilded Reverie.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": true,
+      "relaxed_name": "Epilepsy Friendly",
+      "relaxed_categories": [
+        2
+      ]
     }
   },
   {
@@ -1352,7 +1580,10 @@
       "end": "2023-10-10T21:15:00+0000",
       "disabled": true,
       "description": "Performance 1 of Luminous Skies.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1368,7 +1599,10 @@
       "end": "2023-10-11T16:15:00+0000",
       "disabled": false,
       "description": "Performance 2 of Luminous Skies.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1384,7 +1618,10 @@
       "end": "2023-10-12T21:45:00+0000",
       "disabled": false,
       "description": "Performance 3 of Luminous Skies.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1400,7 +1637,10 @@
       "end": "2023-10-13T20:45:00+0000",
       "disabled": false,
       "description": "Performance 4 of Luminous Skies.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1416,7 +1656,10 @@
       "end": "2024-07-01T21:15:00+0000",
       "disabled": true,
       "description": "Performance 1 of Emberline Ballad.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1432,7 +1675,10 @@
       "end": "2024-07-02T16:15:00+0000",
       "disabled": false,
       "description": "Performance 2 of Emberline Ballad.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1448,7 +1694,10 @@
       "end": "2024-07-03T21:45:00+0000",
       "disabled": false,
       "description": "Performance 3 of Emberline Ballad.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1464,7 +1713,10 @@
       "end": "2023-11-15T21:15:00+0000",
       "disabled": true,
       "description": "Performance 1 of Quantum Waltz.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1480,7 +1732,10 @@
       "end": "2023-11-16T16:15:00+0000",
       "disabled": false,
       "description": "Performance 2 of Quantum Waltz.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1496,7 +1751,10 @@
       "end": "2023-11-17T21:45:00+0000",
       "disabled": false,
       "description": "Performance 3 of Quantum Waltz.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1512,7 +1770,10 @@
       "end": "2023-11-18T20:15:00+0000",
       "disabled": false,
       "description": "Performance 4 of Quantum Waltz.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1528,7 +1789,10 @@
       "end": "2023-11-19T21:15:00+0000",
       "disabled": false,
       "description": "Performance 5 of Quantum Waltz.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1544,7 +1808,10 @@
       "end": "2034-03-24T21:15:00+0000",
       "disabled": true,
       "description": "Performance 1 of Moonlit Paradox.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1560,7 +1827,10 @@
       "end": "2034-03-27T21:15:00+0000",
       "disabled": false,
       "description": "Performance 2 of Moonlit Paradox.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1576,7 +1846,10 @@
       "end": "2034-03-30T21:15:00+0000",
       "disabled": false,
       "description": "Performance 3 of Moonlit Paradox.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1592,7 +1865,10 @@
       "end": "2035-06-24T21:15:00+0000",
       "disabled": false,
       "description": "Performance 1 of Prism Dreams.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1608,7 +1884,13 @@
       "end": "2035-06-27T21:15:00+0000",
       "disabled": false,
       "description": "Performance 2 of Prism Dreams.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": true,
+      "relaxed_name": "Adapted",
+      "relaxed_categories": [
+        5,
+        6
+      ]
     }
   },
   {
@@ -1624,7 +1906,10 @@
       "end": "2035-06-30T21:15:00+0000",
       "disabled": false,
       "description": "Performance 3 of Prism Dreams.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1640,7 +1925,10 @@
       "end": "2035-07-03T21:15:00+0000",
       "disabled": false,
       "description": "Performance 4 of Prism Dreams.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1656,7 +1944,10 @@
       "end": "2035-07-06T21:15:00+0000",
       "disabled": false,
       "description": "Performance 5 of Prism Dreams.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1672,7 +1963,10 @@
       "end": "2034-03-30T21:15:00+0000",
       "disabled": true,
       "description": "Performance 1 of Celestial Ruse.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1688,7 +1982,10 @@
       "end": "2034-04-02T21:15:00+0000",
       "disabled": false,
       "description": "Performance 2 of Celestial Ruse.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1704,7 +2001,10 @@
       "end": "2034-04-05T21:15:00+0000",
       "disabled": false,
       "description": "Performance 3 of Celestial Ruse.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1720,7 +2020,10 @@
       "end": "2034-04-02T21:15:00+0000",
       "disabled": true,
       "description": "Performance 1 of Emberfall Chronicles.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out."
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1736,7 +2039,10 @@
       "end": "2034-04-05T21:15:00+0000",
       "disabled": false,
       "description": "Performance 2 of Emberfall Chronicles.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1752,7 +2058,10 @@
       "end": "2034-04-08T21:15:00+0000",
       "disabled": false,
       "description": "Performance 3 of Emberfall Chronicles.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
@@ -1768,7 +2077,12 @@
       "end": "2034-04-11T21:15:00+0000",
       "disabled": false,
       "description": "Performance 4 of Emberfall Chronicles.",
-      "extra_information": "Doors open 45 minutes before start."
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": true,
+      "relaxed_name": "Signed",
+      "relaxed_categories": [
+        6
+      ]
     }
   },
   {
