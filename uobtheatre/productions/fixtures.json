@@ -1,66 +1,18 @@
 [
   {
-    "model": "productions.crewrole",
-    "pk": 1,
-    "fields": {
-      "name": "CLX",
-      "department": "misc"
-    }
-  },
-  {
-    "model": "productions.crewrole",
-    "pk": 2,
-    "fields": {
-      "name": "Sound Operator",
-      "department": "sound"
-    }
-  },
-  {
-    "model": "productions.crewrole",
-    "pk": 3,
-    "fields": {
-      "name": "Stage Manager",
-      "department": "stage_management"
-    }
-  },
-  {
-    "model": "productions.crewrole",
-    "pk": 4,
-    "fields": {
-      "name": "Pyrotechnics Lead",
-      "department": "pryo"
-    }
-  },
-  {
-    "model": "productions.crewrole",
-    "pk": 5,
-    "fields": {
-      "name": "Set Designer",
-      "department": "set"
-    }
-  },
-  {
-    "model": "productions.crewrole",
-    "pk": 6,
-    "fields": {
-      "name": "AV Technician",
-      "department": "av"
-    }
-  },
-  {
     "model": "productions.contentwarning",
     "pk": 1,
     "fields": {
-      "short_description": "Strobe",
-      "long_description": null
+      "short_description": "Strobe lighting",
+      "long_description": "This production features strobe lighting at various points."
     }
   },
   {
     "model": "productions.contentwarning",
     "pk": 2,
     "fields": {
-      "short_description": "Pyro",
-      "long_description": null
+      "short_description": "Loud noises",
+      "long_description": "This production features loud noises at various points."
     }
   },
   {
@@ -112,355 +64,2035 @@
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.relaxedcategory",
     "pk": 1,
     "fields": {
-      "production": 1,
-      "warning": 1,
-      "information": null
+      "short_description": "House Lights Remain On",
+      "long_description": "The venue's house lights will remain on throughout the performance and there will be no moments of full darkness.",
+      "help_text": "",
+      "default_relaxed": true,
+      "default_sensory_friendly": false
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.relaxedcategory",
+    "pk": 2,
+    "fields": {
+      "short_description": "No Pyrotechnic Effects",
+      "long_description": "All pyrotechnic effects have been removed from this performance.",
+      "help_text": "",
+      "default_relaxed": true,
+      "default_sensory_friendly": true
+    }
+  },
+  {
+    "model": "productions.relaxedcategory",
+    "pk": 3,
+    "fields": {
+      "short_description": "Performer Introductions",
+      "long_description": "Performers will introduce themselves and the characters they play at the beginning of the show.",
+      "help_text": "",
+      "default_relaxed": true,
+      "default_sensory_friendly": false
+    }
+  },
+  {
+    "model": "productions.relaxedcategory",
+    "pk": 4,
+    "fields": {
+      "short_description": "Move Any Time",
+      "long_description": "You're welcome to enter and leave the auditorium at any point or to move around during the performance.",
+      "help_text": "Make sure this is discussed with FOH so they are aware this is happening.",
+      "default_relaxed": false,
+      "default_sensory_friendly": false
+    }
+  },
+  {
+    "model": "productions.relaxedcategory",
+    "pk": 5,
+    "fields": {
+      "short_description": "Sensory Room",
+      "long_description": "A sensory room will be available at all times during the performance. Please speak to the FOH team if you would like to know where this is.",
+      "help_text": "Coordinate this with the venue.",
+      "default_relaxed": true,
+      "default_sensory_friendly": true
+    }
+  },
+  {
+    "model": "productions.relaxedcategory",
+    "pk": 6,
+    "fields": {
+      "short_description": "Sign Language Interpreter",
+      "long_description": "There will be a BSL interpreter present during this performance.",
+      "help_text": "",
+      "default_relaxed": false,
+      "default_sensory_friendly": false
+    }
+  },
+  {
+    "model": "productions.crewrole",
+    "pk": 1,
+    "fields": {
+      "name": "Lighting Designer",
+      "department": "lighting"
+    }
+  },
+  {
+    "model": "productions.crewrole",
+    "pk": 2,
+    "fields": {
+      "name": "Sound Operator",
+      "department": "sound"
+    }
+  },
+  {
+    "model": "productions.crewrole",
+    "pk": 3,
+    "fields": {
+      "name": "Stage Manager",
+      "department": "stage_management"
+    }
+  },
+  {
+    "model": "productions.crewrole",
+    "pk": 4,
+    "fields": {
+      "name": "Pyrotechnics Lead",
+      "department": "pryo"
+    }
+  },
+  {
+    "model": "productions.crewrole",
+    "pk": 5,
+    "fields": {
+      "name": "Set Designer",
+      "department": "set"
+    }
+  },
+  {
+    "model": "productions.crewrole",
+    "pk": 6,
+    "fields": {
+      "name": "AV Technician",
+      "department": "av"
+    }
+  },
+  {
+    "model": "productions.production",
+    "pk": 1,
+    "fields": {
+      "created_at": "2035-01-02T10:00:00+0000",
+      "updated_at": "2035-01-02T10:20:00+0000",
+      "name": "Aurora Nights",
+      "subtitle": "An original production titled Aurora Nights",
+      "description": "Aurora Nights brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Aurora Nights live.",
+      "society": 1,
+      "poster_image": 25,
+      "featured_image": 26,
+      "cover_image": 27,
+      "status": "PUBLISHED",
+      "slug": "aurora-nights",
+      "contact_email": "auroranights@productions.org",
+      "content_warnings": [
+        1,
+        2
+      ]
+    }
+  },
+  {
+    "model": "productions.production",
+    "pk": 2,
+    "fields": {
+      "created_at": "2023-11-05T10:00:00+0000",
+      "updated_at": "2024-01-05T09:30:00+0000",
+      "name": "City of Echoes",
+      "subtitle": "An original production titled City of Echoes",
+      "description": "City of Echoes brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience City of Echoes live.",
+      "society": 2,
+      "poster_image": 28,
+      "featured_image": 29,
+      "cover_image": 30,
+      "status": "COMPLETE",
+      "slug": "city-of-echoes",
+      "contact_email": "cityofechoes@productions.org",
+      "content_warnings": [
+        2,
+        3
+      ]
+    }
+  },
+  {
+    "model": "productions.production",
+    "pk": 3,
+    "fields": {
+      "created_at": "2035-01-04T10:00:00+0000",
+      "updated_at": "2035-01-04T10:20:00+0000",
+      "name": "Whispers in the Wings",
+      "subtitle": "An original production titled Whispers in the Wings",
+      "description": "Whispers in the Wings brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Whispers in the Wings live.",
+      "society": 3,
+      "poster_image": 31,
+      "featured_image": 32,
+      "cover_image": 33,
+      "status": "APPROVED",
+      "slug": "whispers-in-the-wings",
+      "contact_email": "whispersinthewings@productions.org",
+      "content_warnings": [
+        3,
+        4
+      ]
+    }
+  },
+  {
+    "model": "productions.production",
+    "pk": 4,
+    "fields": {
+      "created_at": "2035-01-05T10:00:00+0000",
+      "updated_at": "2035-01-05T10:20:00+0000",
+      "name": "Rhythm of the Tide",
+      "subtitle": "An original production titled Rhythm of the Tide",
+      "description": "Rhythm of the Tide brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Rhythm of the Tide live.",
+      "society": 4,
+      "poster_image": 34,
+      "featured_image": 35,
+      "cover_image": 36,
+      "status": "PENDING",
+      "slug": "rhythm-of-the-tide",
+      "contact_email": "rhythmofthetide@productions.org",
+      "content_warnings": [
+        4,
+        5
+      ]
+    }
+  },
+  {
+    "model": "productions.production",
+    "pk": 5,
+    "fields": {
+      "created_at": "2023-12-01T10:00:00+0000",
+      "updated_at": "2024-03-01T12:00:00+0000",
+      "name": "Midnight Masquerade",
+      "subtitle": "An original production titled Midnight Masquerade",
+      "description": "Midnight Masquerade brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Midnight Masquerade live.",
+      "society": 5,
+      "poster_image": 37,
+      "featured_image": 38,
+      "cover_image": 39,
+      "status": "COMPLETE",
+      "slug": "midnight-masquerade",
+      "contact_email": "midnightmasquerade@productions.org",
+      "content_warnings": [
+        5,
+        6
+      ]
+    }
+  },
+  {
+    "model": "productions.production",
+    "pk": 6,
+    "fields": {
+      "created_at": "2035-01-07T10:00:00+0000",
+      "updated_at": "2035-01-07T10:20:00+0000",
+      "name": "Fragments of Light",
+      "subtitle": "An original production titled Fragments of Light",
+      "description": "Fragments of Light brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Fragments of Light live.",
+      "society": 6,
+      "poster_image": 40,
+      "featured_image": 41,
+      "cover_image": 42,
+      "status": "PUBLISHED",
+      "slug": "fragments-of-light",
+      "contact_email": "fragmentsoflight@productions.org",
+      "content_warnings": [
+        6,
+        7
+      ]
+    }
+  },
+  {
+    "model": "productions.production",
+    "pk": 7,
+    "fields": {
+      "created_at": "2035-01-08T10:00:00+0000",
+      "updated_at": "2035-01-08T10:20:00+0000",
+      "name": "Electric Bloom",
+      "subtitle": "An original production titled Electric Bloom",
+      "description": "Electric Bloom brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Electric Bloom live.",
+      "society": 7,
+      "poster_image": 43,
+      "featured_image": 44,
+      "cover_image": 45,
+      "status": "PUBLISHED",
+      "slug": "electric-bloom",
+      "contact_email": "electricbloom@productions.org",
+      "content_warnings": [
+        7,
+        8
+      ]
+    }
+  },
+  {
+    "model": "productions.production",
+    "pk": 8,
+    "fields": {
+      "created_at": "2035-01-09T10:00:00+0000",
+      "updated_at": "2035-01-09T10:20:00+0000",
+      "name": "The Clockmaker's Tale",
+      "subtitle": "An original production titled The Clockmaker's Tale",
+      "description": "The Clockmaker's Tale brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience The Clockmaker's Tale live.",
+      "society": 8,
+      "poster_image": 46,
+      "featured_image": 47,
+      "cover_image": 48,
+      "status": "DRAFT",
+      "slug": "the-clockmaker-s-tale",
+      "contact_email": "theclockmakerstale@productions.org",
+      "content_warnings": [
+        8,
+        1
+      ]
+    }
+  },
+  {
+    "model": "productions.production",
     "pk": 9,
     "fields": {
-      "production": 3,
-      "warning": 3,
-      "information": null
+      "created_at": "2024-01-02T09:00:00+0000",
+      "updated_at": "2024-04-01T12:30:00+0000",
+      "name": "Starfall Serenade",
+      "subtitle": "An original production titled Starfall Serenade",
+      "description": "Starfall Serenade brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Starfall Serenade live.",
+      "society": 1,
+      "poster_image": 49,
+      "featured_image": 50,
+      "cover_image": 51,
+      "status": "COMPLETE",
+      "slug": "starfall-serenade",
+      "contact_email": "starfallserenade@productions.org",
+      "content_warnings": [
+        1,
+        2
+      ]
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.production",
     "pk": 10,
     "fields": {
-      "production": 3,
-      "warning": 4,
-      "information": null
+      "created_at": "2035-01-11T10:00:00+0000",
+      "updated_at": "2035-01-11T10:20:00+0000",
+      "name": "Echoes of Tomorrow",
+      "subtitle": "An original production titled Echoes of Tomorrow",
+      "description": "Echoes of Tomorrow brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Echoes of Tomorrow live.",
+      "society": 2,
+      "poster_image": 52,
+      "featured_image": 53,
+      "cover_image": 54,
+      "status": "PUBLISHED",
+      "slug": "echoes-of-tomorrow",
+      "contact_email": "echoesoftomorrow@productions.org",
+      "content_warnings": [
+        2,
+        3
+      ]
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.production",
     "pk": 11,
     "fields": {
-      "production": 4,
-      "warning": 4,
-      "information": null
+      "created_at": "2023-10-15T09:00:00+0000",
+      "updated_at": "2024-05-01T11:00:00+0000",
+      "name": "Velvet Horizon",
+      "subtitle": "An original production titled Velvet Horizon",
+      "description": "Velvet Horizon brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Velvet Horizon live.",
+      "society": 3,
+      "poster_image": 55,
+      "featured_image": 56,
+      "cover_image": 57,
+      "status": "COMPLETE",
+      "slug": "velvet-horizon",
+      "contact_email": "velvethorizon@productions.org",
+      "content_warnings": [
+        3,
+        4
+      ]
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.production",
     "pk": 12,
     "fields": {
-      "production": 4,
-      "warning": 5,
-      "information": null
+      "created_at": "2023-09-01T08:30:00+0000",
+      "updated_at": "2024-02-10T09:45:00+0000",
+      "name": "Harbour Lights",
+      "subtitle": "An original production titled Harbour Lights",
+      "description": "Harbour Lights brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Harbour Lights live.",
+      "society": 4,
+      "poster_image": 58,
+      "featured_image": 59,
+      "cover_image": 60,
+      "status": "COMPLETE",
+      "slug": "harbour-lights",
+      "contact_email": "harbourlights@productions.org",
+      "content_warnings": [
+        4,
+        5
+      ]
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.production",
     "pk": 13,
     "fields": {
-      "production": 5,
-      "warning": 5,
-      "information": null
+      "created_at": "2035-01-14T10:00:00+0000",
+      "updated_at": "2035-01-14T10:20:00+0000",
+      "name": "Gilded Reverie",
+      "subtitle": "An original production titled Gilded Reverie",
+      "description": "Gilded Reverie brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Gilded Reverie live.",
+      "society": 5,
+      "poster_image": 61,
+      "featured_image": 62,
+      "cover_image": 63,
+      "status": "PUBLISHED",
+      "slug": "gilded-reverie",
+      "contact_email": "gildedreverie@productions.org",
+      "content_warnings": [
+        5,
+        6
+      ]
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.production",
     "pk": 14,
     "fields": {
-      "production": 5,
-      "warning": 6,
-      "information": null
+      "created_at": "2023-08-20T10:00:00+0000",
+      "updated_at": "2023-10-20T10:30:00+0000",
+      "name": "Luminous Skies",
+      "subtitle": "An original production titled Luminous Skies",
+      "description": "Luminous Skies brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Luminous Skies live.",
+      "society": 6,
+      "poster_image": 64,
+      "featured_image": 65,
+      "cover_image": 66,
+      "status": "COMPLETE",
+      "slug": "luminous-skies",
+      "contact_email": "luminousskies@productions.org",
+      "content_warnings": [
+        6,
+        7
+      ]
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.production",
     "pk": 15,
     "fields": {
-      "production": 6,
-      "warning": 6,
-      "information": null
+      "created_at": "2023-07-01T09:00:00+0000",
+      "updated_at": "2024-07-05T10:00:00+0000",
+      "name": "Emberline Ballad",
+      "subtitle": "An original production titled Emberline Ballad",
+      "description": "Emberline Ballad brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Emberline Ballad live.",
+      "society": 7,
+      "poster_image": 67,
+      "featured_image": 68,
+      "cover_image": 69,
+      "status": "COMPLETE",
+      "slug": "emberline-ballad",
+      "contact_email": "emberlineballad@productions.org",
+      "content_warnings": [
+        7,
+        8
+      ]
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.production",
     "pk": 16,
     "fields": {
-      "production": 6,
-      "warning": 7,
-      "information": null
+      "created_at": "2023-09-15T09:00:00+0000",
+      "updated_at": "2023-11-20T13:00:00+0000",
+      "name": "Quantum Waltz",
+      "subtitle": "An original production titled Quantum Waltz",
+      "description": "Quantum Waltz brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Quantum Waltz live.",
+      "society": 8,
+      "poster_image": 70,
+      "featured_image": 71,
+      "cover_image": 72,
+      "status": "COMPLETE",
+      "slug": "quantum-waltz",
+      "contact_email": "quantumwaltz@productions.org",
+      "content_warnings": [
+        8,
+        1
+      ]
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.production",
     "pk": 17,
     "fields": {
-      "production": 7,
-      "warning": 8,
-      "information": null
+      "created_at": "2035-01-18T10:00:00+0000",
+      "updated_at": "2035-01-18T10:20:00+0000",
+      "name": "Moonlit Paradox",
+      "subtitle": "An original production titled Moonlit Paradox",
+      "description": "Moonlit Paradox brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Moonlit Paradox live.",
+      "society": 1,
+      "poster_image": 73,
+      "featured_image": 74,
+      "cover_image": 75,
+      "status": "DRAFT",
+      "slug": "moonlit-paradox",
+      "contact_email": "moonlitparadox@productions.org",
+      "content_warnings": [
+        1,
+        2
+      ]
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.production",
     "pk": 18,
     "fields": {
-      "production": 7,
-      "warning": 7,
-      "information": null
+      "created_at": "2035-01-19T10:00:00+0000",
+      "updated_at": "2035-01-19T10:20:00+0000",
+      "name": "Prism Dreams",
+      "subtitle": "An original production titled Prism Dreams",
+      "description": "Prism Dreams brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Prism Dreams live.",
+      "society": 2,
+      "poster_image": 76,
+      "featured_image": 77,
+      "cover_image": 78,
+      "status": "PUBLISHED",
+      "slug": "prism-dreams",
+      "contact_email": "prismdreams@productions.org",
+      "content_warnings": [
+        2,
+        3
+      ]
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.production",
     "pk": 19,
     "fields": {
-      "production": 8,
-      "warning": 8,
-      "information": null
+      "created_at": "2035-01-20T10:00:00+0000",
+      "updated_at": "2035-01-20T10:20:00+0000",
+      "name": "Celestial Ruse",
+      "subtitle": "An original production titled Celestial Ruse",
+      "description": "Celestial Ruse brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Celestial Ruse live.",
+      "society": 3,
+      "poster_image": 79,
+      "featured_image": 80,
+      "cover_image": 81,
+      "status": "PENDING",
+      "slug": "celestial-ruse",
+      "contact_email": "celestialruse@productions.org",
+      "content_warnings": [
+        3,
+        4
+      ]
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.production",
     "pk": 20,
     "fields": {
-      "production": 8,
-      "warning": 1,
-      "information": null
+      "created_at": "2035-01-21T10:00:00+0000",
+      "updated_at": "2035-01-21T10:20:00+0000",
+      "name": "Emberfall Chronicles",
+      "subtitle": "An original production titled Emberfall Chronicles",
+      "description": "Emberfall Chronicles brings a unique story to the stage with immersive staging and bold performances.",
+      "short_description": "Experience Emberfall Chronicles live.",
+      "society": 4,
+      "poster_image": 82,
+      "featured_image": 83,
+      "cover_image": 84,
+      "status": "CLOSED",
+      "slug": "emberfall-chronicles",
+      "contact_email": "emberfallchronicles@productions.org",
+      "content_warnings": [
+        4,
+        5
+      ]
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.performance",
+    "pk": 1,
+    "fields": {
+      "created_at": "2035-01-02T10:00:00+0000",
+      "updated_at": "2035-01-02T10:30:00+0000",
+      "production": 1,
+      "venue": 1,
+      "doors_open": "2035-05-04T18:15:00+0000",
+      "start": "2035-05-04T19:00:00+0000",
+      "end": "2035-05-04T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 1 of Aurora Nights.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": true,
+      "relaxed_name": "Relaxed",
+      "relaxed_categories": [
+        1,
+        2,
+        3
+      ]
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 2,
+    "fields": {
+      "created_at": "2035-01-03T10:00:00+0000",
+      "updated_at": "2035-01-03T10:30:00+0000",
+      "production": 1,
+      "venue": 1,
+      "doors_open": "2035-05-07T18:15:00+0000",
+      "start": "2035-05-07T19:00:00+0000",
+      "end": "2035-05-07T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Aurora Nights.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 3,
+    "fields": {
+      "created_at": "2035-01-04T10:00:00+0000",
+      "updated_at": "2035-01-04T10:30:00+0000",
+      "production": 1,
+      "venue": 1,
+      "doors_open": "2035-05-10T18:15:00+0000",
+      "start": "2035-05-10T19:00:00+0000",
+      "end": "2035-05-10T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Aurora Nights.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 4,
+    "fields": {
+      "created_at": "2035-01-05T10:00:00+0000",
+      "updated_at": "2035-01-05T10:30:00+0000",
+      "production": 1,
+      "venue": 1,
+      "doors_open": "2035-05-13T18:15:00+0000",
+      "start": "2035-05-13T19:00:00+0000",
+      "end": "2035-05-13T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 4 of Aurora Nights.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 5,
+    "fields": {
+      "created_at": "2035-01-03T10:00:00+0000",
+      "updated_at": "2035-01-03T10:30:00+0000",
+      "production": 2,
+      "venue": 2,
+      "doors_open": "2024-01-10T18:15:00+0000",
+      "start": "2024-01-10T19:00:00+0000",
+      "end": "2024-01-10T21:15:00+0000",
+      "disabled": true,
+      "description": "Performance 1 of City of Echoes.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 6,
+    "fields": {
+      "created_at": "2035-01-04T10:00:00+0000",
+      "updated_at": "2035-01-04T10:30:00+0000",
+      "production": 2,
+      "venue": 2,
+      "doors_open": "2024-01-11T13:15:00+0000",
+      "start": "2024-01-11T14:00:00+0000",
+      "end": "2024-01-11T16:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of City of Echoes.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 7,
+    "fields": {
+      "created_at": "2035-01-05T10:00:00+0000",
+      "updated_at": "2035-01-05T10:30:00+0000",
+      "production": 2,
+      "venue": 2,
+      "doors_open": "2024-01-12T18:45:00+0000",
+      "start": "2024-01-12T19:30:00+0000",
+      "end": "2024-01-12T21:45:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of City of Echoes.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 8,
+    "fields": {
+      "created_at": "2035-01-04T10:00:00+0000",
+      "updated_at": "2035-01-04T10:30:00+0000",
+      "production": 3,
+      "venue": 3,
+      "doors_open": "2034-02-10T18:15:00+0000",
+      "start": "2034-02-10T19:00:00+0000",
+      "end": "2034-02-10T21:15:00+0000",
+      "disabled": true,
+      "description": "Performance 1 of Whispers in the Wings.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": true,
+      "relaxed_name": "Sensory Friendly",
+      "relaxed_categories": [
+        1,
+        2,
+        3,
+        4
+      ]
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 9,
+    "fields": {
+      "created_at": "2035-01-05T10:00:00+0000",
+      "updated_at": "2035-01-05T10:30:00+0000",
+      "production": 3,
+      "venue": 3,
+      "doors_open": "2034-02-13T18:15:00+0000",
+      "start": "2034-02-13T19:00:00+0000",
+      "end": "2034-02-13T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Whispers in the Wings.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 10,
+    "fields": {
+      "created_at": "2035-01-06T10:00:00+0000",
+      "updated_at": "2035-01-06T10:30:00+0000",
+      "production": 3,
+      "venue": 3,
+      "doors_open": "2034-02-16T18:15:00+0000",
+      "start": "2034-02-16T19:00:00+0000",
+      "end": "2034-02-16T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Whispers in the Wings.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 11,
+    "fields": {
+      "created_at": "2035-01-07T10:00:00+0000",
+      "updated_at": "2035-01-07T10:30:00+0000",
+      "production": 3,
+      "venue": 3,
+      "doors_open": "2034-02-19T18:15:00+0000",
+      "start": "2034-02-19T19:00:00+0000",
+      "end": "2034-02-19T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 4 of Whispers in the Wings.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 12,
+    "fields": {
+      "created_at": "2035-01-08T10:00:00+0000",
+      "updated_at": "2035-01-08T10:30:00+0000",
+      "production": 3,
+      "venue": 3,
+      "doors_open": "2034-02-22T18:15:00+0000",
+      "start": "2034-02-22T19:00:00+0000",
+      "end": "2034-02-22T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 5 of Whispers in the Wings.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 13,
+    "fields": {
+      "created_at": "2035-01-05T10:00:00+0000",
+      "updated_at": "2035-01-05T10:30:00+0000",
+      "production": 4,
+      "venue": 4,
+      "doors_open": "2034-02-13T18:15:00+0000",
+      "start": "2034-02-13T19:00:00+0000",
+      "end": "2034-02-13T21:15:00+0000",
+      "disabled": true,
+      "description": "Performance 1 of Rhythm of the Tide.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": true,
+      "relaxed_name": "Sensory Friendly",
+      "relaxed_categories": [
+        2,
+        4
+      ]
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 14,
+    "fields": {
+      "created_at": "2035-01-06T10:00:00+0000",
+      "updated_at": "2035-01-06T10:30:00+0000",
+      "production": 4,
+      "venue": 4,
+      "doors_open": "2034-02-16T18:15:00+0000",
+      "start": "2034-02-16T19:00:00+0000",
+      "end": "2034-02-16T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Rhythm of the Tide.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 15,
+    "fields": {
+      "created_at": "2035-01-07T10:00:00+0000",
+      "updated_at": "2035-01-07T10:30:00+0000",
+      "production": 4,
+      "venue": 4,
+      "doors_open": "2034-02-19T18:15:00+0000",
+      "start": "2034-02-19T19:00:00+0000",
+      "end": "2034-02-19T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Rhythm of the Tide.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 16,
+    "fields": {
+      "created_at": "2035-01-06T10:00:00+0000",
+      "updated_at": "2035-01-06T10:30:00+0000",
+      "production": 5,
+      "venue": 5,
+      "doors_open": "2024-03-20T18:15:00+0000",
+      "start": "2024-03-20T19:00:00+0000",
+      "end": "2024-03-20T21:15:00+0000",
+      "disabled": true,
+      "description": "Performance 1 of Midnight Masquerade.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 17,
+    "fields": {
+      "created_at": "2035-01-07T10:00:00+0000",
+      "updated_at": "2035-01-07T10:30:00+0000",
+      "production": 5,
+      "venue": 5,
+      "doors_open": "2024-03-22T18:15:00+0000",
+      "start": "2024-03-22T19:00:00+0000",
+      "end": "2024-03-22T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Midnight Masquerade.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 18,
+    "fields": {
+      "created_at": "2035-01-08T10:00:00+0000",
+      "updated_at": "2035-01-08T10:30:00+0000",
+      "production": 5,
+      "venue": 5,
+      "doors_open": "2024-03-23T13:15:00+0000",
+      "start": "2024-03-23T14:00:00+0000",
+      "end": "2024-03-23T16:15:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Midnight Masquerade.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 19,
+    "fields": {
+      "created_at": "2035-01-09T10:00:00+0000",
+      "updated_at": "2035-01-09T10:30:00+0000",
+      "production": 5,
+      "venue": 5,
+      "doors_open": "2024-03-24T18:45:00+0000",
+      "start": "2024-03-24T19:30:00+0000",
+      "end": "2024-03-24T21:45:00+0000",
+      "disabled": false,
+      "description": "Performance 4 of Midnight Masquerade.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 20,
+    "fields": {
+      "created_at": "2035-01-07T10:00:00+0000",
+      "updated_at": "2035-01-07T10:30:00+0000",
+      "production": 6,
+      "venue": 6,
+      "doors_open": "2035-05-19T18:15:00+0000",
+      "start": "2035-05-19T19:00:00+0000",
+      "end": "2035-05-19T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 1 of Fragments of Light.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
     "pk": 21,
     "fields": {
-      "production": 9,
-      "warning": 1,
-      "information": null
+      "created_at": "2035-01-08T10:00:00+0000",
+      "updated_at": "2035-01-08T10:30:00+0000",
+      "production": 6,
+      "venue": 6,
+      "doors_open": "2035-05-22T18:15:00+0000",
+      "start": "2035-05-22T19:00:00+0000",
+      "end": "2035-05-22T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Fragments of Light.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.performance",
     "pk": 22,
     "fields": {
-      "production": 9,
-      "warning": 2,
-      "information": null
+      "created_at": "2035-01-09T10:00:00+0000",
+      "updated_at": "2035-01-09T10:30:00+0000",
+      "production": 6,
+      "venue": 6,
+      "doors_open": "2035-05-25T18:15:00+0000",
+      "start": "2035-05-25T19:00:00+0000",
+      "end": "2035-05-25T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Fragments of Light.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.performance",
     "pk": 23,
     "fields": {
-      "production": 10,
-      "warning": 2,
-      "information": null
+      "created_at": "2035-01-08T10:00:00+0000",
+      "updated_at": "2035-01-08T10:30:00+0000",
+      "production": 7,
+      "venue": 7,
+      "doors_open": "2035-05-22T18:15:00+0000",
+      "start": "2035-05-22T19:00:00+0000",
+      "end": "2035-05-22T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 1 of Electric Bloom.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.performance",
     "pk": 24,
     "fields": {
-      "production": 10,
-      "warning": 3,
-      "information": null
+      "created_at": "2035-01-09T10:00:00+0000",
+      "updated_at": "2035-01-09T10:30:00+0000",
+      "production": 7,
+      "venue": 2,
+      "doors_open": "2035-05-25T18:15:00+0000",
+      "start": "2035-05-25T19:00:00+0000",
+      "end": "2035-05-25T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Electric Bloom.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": true,
+      "relaxed_name": "Relaxed",
+      "relaxed_categories": [
+        2,
+        3,
+        6
+      ]
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.performance",
     "pk": 25,
     "fields": {
-      "production": 11,
-      "warning": 3,
-      "information": null
+      "created_at": "2035-01-10T10:00:00+0000",
+      "updated_at": "2035-01-10T10:30:00+0000",
+      "production": 7,
+      "venue": 7,
+      "doors_open": "2035-05-28T18:15:00+0000",
+      "start": "2035-05-28T19:00:00+0000",
+      "end": "2035-05-28T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Electric Bloom.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.performance",
     "pk": 26,
     "fields": {
-      "production": 11,
-      "warning": 4,
-      "information": null
+      "created_at": "2035-01-11T10:00:00+0000",
+      "updated_at": "2035-01-11T10:30:00+0000",
+      "production": 7,
+      "venue": 2,
+      "doors_open": "2035-05-31T18:15:00+0000",
+      "start": "2035-05-31T19:00:00+0000",
+      "end": "2035-05-31T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 4 of Electric Bloom.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.performance",
     "pk": 27,
     "fields": {
-      "production": 12,
-      "warning": 4,
-      "information": null
+      "created_at": "2035-01-12T10:00:00+0000",
+      "updated_at": "2035-01-12T10:30:00+0000",
+      "production": 7,
+      "venue": 7,
+      "doors_open": "2035-06-03T18:15:00+0000",
+      "start": "2035-06-03T19:00:00+0000",
+      "end": "2035-06-03T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 5 of Electric Bloom.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.performance",
     "pk": 28,
     "fields": {
-      "production": 12,
-      "warning": 5,
-      "information": null
+      "created_at": "2035-01-09T10:00:00+0000",
+      "updated_at": "2035-01-09T10:30:00+0000",
+      "production": 8,
+      "venue": 8,
+      "doors_open": "2034-02-25T18:15:00+0000",
+      "start": "2034-02-25T19:00:00+0000",
+      "end": "2034-02-25T21:15:00+0000",
+      "disabled": true,
+      "description": "Performance 1 of The Clockmaker's Tale.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.performance",
     "pk": 29,
     "fields": {
-      "production": 13,
-      "warning": 5,
-      "information": null
+      "created_at": "2035-01-10T10:00:00+0000",
+      "updated_at": "2035-01-10T10:30:00+0000",
+      "production": 8,
+      "venue": 8,
+      "doors_open": "2034-02-28T18:15:00+0000",
+      "start": "2034-02-28T19:00:00+0000",
+      "end": "2034-02-28T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of The Clockmaker's Tale.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.performance",
     "pk": 30,
     "fields": {
-      "production": 13,
-      "warning": 6,
-      "information": null
+      "created_at": "2035-01-11T10:00:00+0000",
+      "updated_at": "2035-01-11T10:30:00+0000",
+      "production": 8,
+      "venue": 8,
+      "doors_open": "2034-03-03T18:15:00+0000",
+      "start": "2034-03-03T19:00:00+0000",
+      "end": "2034-03-03T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of The Clockmaker's Tale.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.performance",
     "pk": 31,
     "fields": {
-      "production": 14,
-      "warning": 6,
-      "information": null
+      "created_at": "2035-01-12T10:00:00+0000",
+      "updated_at": "2035-01-12T10:30:00+0000",
+      "production": 8,
+      "venue": 8,
+      "doors_open": "2034-03-06T18:15:00+0000",
+      "start": "2034-03-06T19:00:00+0000",
+      "end": "2034-03-06T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 4 of The Clockmaker's Tale.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.performance",
     "pk": 32,
     "fields": {
-      "production": 14,
-      "warning": 7,
-      "information": null
+      "created_at": "2035-01-10T10:00:00+0000",
+      "updated_at": "2035-01-10T10:30:00+0000",
+      "production": 9,
+      "venue": 1,
+      "doors_open": "2024-04-05T18:15:00+0000",
+      "start": "2024-04-05T19:00:00+0000",
+      "end": "2024-04-05T21:15:00+0000",
+      "disabled": true,
+      "description": "Performance 1 of Starfall Serenade.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.performance",
     "pk": 33,
     "fields": {
-      "production": 15,
-      "warning": 8,
-      "information": null
+      "created_at": "2035-01-11T10:00:00+0000",
+      "updated_at": "2035-01-11T10:30:00+0000",
+      "production": 9,
+      "venue": 1,
+      "doors_open": "2024-04-06T13:15:00+0000",
+      "start": "2024-04-06T14:00:00+0000",
+      "end": "2024-04-06T16:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Starfall Serenade.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.performance",
     "pk": 34,
     "fields": {
-      "production": 15,
-      "warning": 7,
-      "information": null
+      "created_at": "2035-01-12T10:00:00+0000",
+      "updated_at": "2035-01-12T10:30:00+0000",
+      "production": 9,
+      "venue": 1,
+      "doors_open": "2024-04-07T18:45:00+0000",
+      "start": "2024-04-07T19:30:00+0000",
+      "end": "2024-04-07T21:45:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Starfall Serenade.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.performance",
     "pk": 35,
     "fields": {
-      "production": 16,
-      "warning": 8,
-      "information": null
+      "created_at": "2035-01-11T10:00:00+0000",
+      "updated_at": "2035-01-11T10:30:00+0000",
+      "production": 10,
+      "venue": 2,
+      "doors_open": "2035-05-31T18:15:00+0000",
+      "start": "2035-05-31T19:00:00+0000",
+      "end": "2035-05-31T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 1 of Echoes of Tomorrow.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.performance",
     "pk": 36,
     "fields": {
-      "production": 16,
-      "warning": 1,
-      "information": null
+      "created_at": "2035-01-12T10:00:00+0000",
+      "updated_at": "2035-01-12T10:30:00+0000",
+      "production": 10,
+      "venue": 6,
+      "doors_open": "2035-06-03T18:15:00+0000",
+      "start": "2035-06-03T19:00:00+0000",
+      "end": "2035-06-03T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Echoes of Tomorrow.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.performance",
     "pk": 37,
     "fields": {
-      "production": 17,
-      "warning": 1,
-      "information": null
+      "created_at": "2035-01-13T10:00:00+0000",
+      "updated_at": "2035-01-13T10:30:00+0000",
+      "production": 10,
+      "venue": 2,
+      "doors_open": "2035-06-06T18:15:00+0000",
+      "start": "2035-06-06T19:00:00+0000",
+      "end": "2035-06-06T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Echoes of Tomorrow.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.performance",
     "pk": 38,
     "fields": {
-      "production": 17,
-      "warning": 2,
-      "information": null
+      "created_at": "2035-01-14T10:00:00+0000",
+      "updated_at": "2035-01-14T10:30:00+0000",
+      "production": 10,
+      "venue": 6,
+      "doors_open": "2035-06-09T18:15:00+0000",
+      "start": "2035-06-09T19:00:00+0000",
+      "end": "2035-06-09T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 4 of Echoes of Tomorrow.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.performance",
     "pk": 39,
     "fields": {
-      "production": 18,
-      "warning": 2,
-      "information": null
+      "created_at": "2035-01-12T10:00:00+0000",
+      "updated_at": "2035-01-12T10:30:00+0000",
+      "production": 11,
+      "venue": 3,
+      "doors_open": "2024-05-15T18:15:00+0000",
+      "start": "2024-05-15T19:00:00+0000",
+      "end": "2024-05-15T21:15:00+0000",
+      "disabled": true,
+      "description": "Performance 1 of Velvet Horizon.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.performance",
     "pk": 40,
     "fields": {
-      "production": 18,
-      "warning": 3,
-      "information": null
+      "created_at": "2035-01-13T10:00:00+0000",
+      "updated_at": "2035-01-13T10:30:00+0000",
+      "production": 11,
+      "venue": 3,
+      "doors_open": "2024-05-16T13:15:00+0000",
+      "start": "2024-05-16T14:00:00+0000",
+      "end": "2024-05-16T16:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Velvet Horizon.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.performance",
     "pk": 41,
     "fields": {
-      "production": 19,
-      "warning": 3,
-      "information": null
+      "created_at": "2035-01-14T10:00:00+0000",
+      "updated_at": "2035-01-14T10:30:00+0000",
+      "production": 11,
+      "venue": 3,
+      "doors_open": "2024-05-17T18:45:00+0000",
+      "start": "2024-05-17T19:30:00+0000",
+      "end": "2024-05-17T21:45:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Velvet Horizon.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.performance",
     "pk": 42,
     "fields": {
-      "production": 19,
-      "warning": 4,
-      "information": null
+      "created_at": "2035-01-13T10:00:00+0000",
+      "updated_at": "2035-01-13T10:30:00+0000",
+      "production": 12,
+      "venue": 4,
+      "doors_open": "2024-02-02T18:15:00+0000",
+      "start": "2024-02-02T19:00:00+0000",
+      "end": "2024-02-02T21:15:00+0000",
+      "disabled": true,
+      "description": "Performance 1 of Harbour Lights.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.performance",
     "pk": 43,
     "fields": {
-      "production": 20,
-      "warning": 4,
-      "information": null
+      "created_at": "2035-01-14T10:00:00+0000",
+      "updated_at": "2035-01-14T10:30:00+0000",
+      "production": 12,
+      "venue": 4,
+      "doors_open": "2024-02-03T13:15:00+0000",
+      "start": "2024-02-03T14:00:00+0000",
+      "end": "2024-02-03T16:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Harbour Lights.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.performance",
     "pk": 44,
     "fields": {
-      "production": 20,
-      "warning": 5,
-      "information": null
+      "created_at": "2035-01-15T10:00:00+0000",
+      "updated_at": "2035-01-15T10:30:00+0000",
+      "production": 12,
+      "venue": 4,
+      "doors_open": "2024-02-03T18:45:00+0000",
+      "start": "2024-02-03T19:30:00+0000",
+      "end": "2024-02-03T21:45:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Harbour Lights.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
     }
   },
   {
-    "model": "productions.productioncontentwarning",
+    "model": "productions.performance",
     "pk": 45,
     "fields": {
-      "production": 2,
-      "warning": 1,
-      "information": null
+      "created_at": "2035-01-16T10:00:00+0000",
+      "updated_at": "2035-01-16T10:30:00+0000",
+      "production": 12,
+      "venue": 4,
+      "doors_open": "2024-02-04T17:15:00+0000",
+      "start": "2024-02-04T18:00:00+0000",
+      "end": "2024-02-04T20:15:00+0000",
+      "disabled": false,
+      "description": "Performance 4 of Harbour Lights.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 46,
+    "fields": {
+      "created_at": "2035-01-14T10:00:00+0000",
+      "updated_at": "2035-01-14T10:30:00+0000",
+      "production": 13,
+      "venue": 5,
+      "doors_open": "2035-06-09T18:15:00+0000",
+      "start": "2035-06-09T19:00:00+0000",
+      "end": "2035-06-09T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 1 of Gilded Reverie.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 47,
+    "fields": {
+      "created_at": "2035-01-15T10:00:00+0000",
+      "updated_at": "2035-01-15T10:30:00+0000",
+      "production": 13,
+      "venue": 5,
+      "doors_open": "2035-06-12T18:15:00+0000",
+      "start": "2035-06-12T19:00:00+0000",
+      "end": "2035-06-12T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Gilded Reverie.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 48,
+    "fields": {
+      "created_at": "2035-01-16T10:00:00+0000",
+      "updated_at": "2035-01-16T10:30:00+0000",
+      "production": 13,
+      "venue": 5,
+      "doors_open": "2035-06-15T18:15:00+0000",
+      "start": "2035-06-15T19:00:00+0000",
+      "end": "2035-06-15T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Gilded Reverie.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": true,
+      "relaxed_name": "Epilepsy Friendly",
+      "relaxed_categories": [
+        2
+      ]
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 49,
+    "fields": {
+      "created_at": "2035-01-15T10:00:00+0000",
+      "updated_at": "2035-01-15T10:30:00+0000",
+      "production": 14,
+      "venue": 6,
+      "doors_open": "2023-10-10T18:15:00+0000",
+      "start": "2023-10-10T19:00:00+0000",
+      "end": "2023-10-10T21:15:00+0000",
+      "disabled": true,
+      "description": "Performance 1 of Luminous Skies.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 50,
+    "fields": {
+      "created_at": "2035-01-16T10:00:00+0000",
+      "updated_at": "2035-01-16T10:30:00+0000",
+      "production": 14,
+      "venue": 6,
+      "doors_open": "2023-10-11T13:15:00+0000",
+      "start": "2023-10-11T14:00:00+0000",
+      "end": "2023-10-11T16:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Luminous Skies.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 51,
+    "fields": {
+      "created_at": "2035-01-17T10:00:00+0000",
+      "updated_at": "2035-01-17T10:30:00+0000",
+      "production": 14,
+      "venue": 6,
+      "doors_open": "2023-10-12T18:45:00+0000",
+      "start": "2023-10-12T19:30:00+0000",
+      "end": "2023-10-12T21:45:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Luminous Skies.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 52,
+    "fields": {
+      "created_at": "2035-01-18T10:00:00+0000",
+      "updated_at": "2035-01-18T10:30:00+0000",
+      "production": 14,
+      "venue": 6,
+      "doors_open": "2023-10-13T17:45:00+0000",
+      "start": "2023-10-13T18:30:00+0000",
+      "end": "2023-10-13T20:45:00+0000",
+      "disabled": false,
+      "description": "Performance 4 of Luminous Skies.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 53,
+    "fields": {
+      "created_at": "2035-01-16T10:00:00+0000",
+      "updated_at": "2035-01-16T10:30:00+0000",
+      "production": 15,
+      "venue": 7,
+      "doors_open": "2024-07-01T18:15:00+0000",
+      "start": "2024-07-01T19:00:00+0000",
+      "end": "2024-07-01T21:15:00+0000",
+      "disabled": true,
+      "description": "Performance 1 of Emberline Ballad.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 54,
+    "fields": {
+      "created_at": "2035-01-17T10:00:00+0000",
+      "updated_at": "2035-01-17T10:30:00+0000",
+      "production": 15,
+      "venue": 7,
+      "doors_open": "2024-07-02T13:15:00+0000",
+      "start": "2024-07-02T14:00:00+0000",
+      "end": "2024-07-02T16:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Emberline Ballad.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 55,
+    "fields": {
+      "created_at": "2035-01-18T10:00:00+0000",
+      "updated_at": "2035-01-18T10:30:00+0000",
+      "production": 15,
+      "venue": 7,
+      "doors_open": "2024-07-03T18:45:00+0000",
+      "start": "2024-07-03T19:30:00+0000",
+      "end": "2024-07-03T21:45:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Emberline Ballad.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 56,
+    "fields": {
+      "created_at": "2035-01-17T10:00:00+0000",
+      "updated_at": "2035-01-17T10:30:00+0000",
+      "production": 16,
+      "venue": 8,
+      "doors_open": "2023-11-15T18:15:00+0000",
+      "start": "2023-11-15T19:00:00+0000",
+      "end": "2023-11-15T21:15:00+0000",
+      "disabled": true,
+      "description": "Performance 1 of Quantum Waltz.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 57,
+    "fields": {
+      "created_at": "2035-01-18T10:00:00+0000",
+      "updated_at": "2035-01-18T10:30:00+0000",
+      "production": 16,
+      "venue": 8,
+      "doors_open": "2023-11-16T13:15:00+0000",
+      "start": "2023-11-16T14:00:00+0000",
+      "end": "2023-11-16T16:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Quantum Waltz.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 58,
+    "fields": {
+      "created_at": "2035-01-19T10:00:00+0000",
+      "updated_at": "2035-01-19T10:30:00+0000",
+      "production": 16,
+      "venue": 8,
+      "doors_open": "2023-11-17T18:45:00+0000",
+      "start": "2023-11-17T19:30:00+0000",
+      "end": "2023-11-17T21:45:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Quantum Waltz.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 59,
+    "fields": {
+      "created_at": "2035-01-20T10:00:00+0000",
+      "updated_at": "2035-01-20T10:30:00+0000",
+      "production": 16,
+      "venue": 8,
+      "doors_open": "2023-11-18T17:15:00+0000",
+      "start": "2023-11-18T18:00:00+0000",
+      "end": "2023-11-18T20:15:00+0000",
+      "disabled": false,
+      "description": "Performance 4 of Quantum Waltz.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 60,
+    "fields": {
+      "created_at": "2035-01-21T10:00:00+0000",
+      "updated_at": "2035-01-21T10:30:00+0000",
+      "production": 16,
+      "venue": 8,
+      "doors_open": "2023-11-19T18:15:00+0000",
+      "start": "2023-11-19T19:00:00+0000",
+      "end": "2023-11-19T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 5 of Quantum Waltz.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 61,
+    "fields": {
+      "created_at": "2035-01-18T10:00:00+0000",
+      "updated_at": "2035-01-18T10:30:00+0000",
+      "production": 17,
+      "venue": 3,
+      "doors_open": "2034-03-24T18:15:00+0000",
+      "start": "2034-03-24T19:00:00+0000",
+      "end": "2034-03-24T21:15:00+0000",
+      "disabled": true,
+      "description": "Performance 1 of Moonlit Paradox.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 62,
+    "fields": {
+      "created_at": "2035-01-19T10:00:00+0000",
+      "updated_at": "2035-01-19T10:30:00+0000",
+      "production": 17,
+      "venue": 3,
+      "doors_open": "2034-03-27T18:15:00+0000",
+      "start": "2034-03-27T19:00:00+0000",
+      "end": "2034-03-27T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Moonlit Paradox.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 63,
+    "fields": {
+      "created_at": "2035-01-20T10:00:00+0000",
+      "updated_at": "2035-01-20T10:30:00+0000",
+      "production": 17,
+      "venue": 3,
+      "doors_open": "2034-03-30T18:15:00+0000",
+      "start": "2034-03-30T19:00:00+0000",
+      "end": "2034-03-30T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Moonlit Paradox.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 64,
+    "fields": {
+      "created_at": "2035-01-19T10:00:00+0000",
+      "updated_at": "2035-01-19T10:30:00+0000",
+      "production": 18,
+      "venue": 2,
+      "doors_open": "2035-06-24T18:15:00+0000",
+      "start": "2035-06-24T19:00:00+0000",
+      "end": "2035-06-24T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 1 of Prism Dreams.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 65,
+    "fields": {
+      "created_at": "2035-01-20T10:00:00+0000",
+      "updated_at": "2035-01-20T10:30:00+0000",
+      "production": 18,
+      "venue": 5,
+      "doors_open": "2035-06-27T18:15:00+0000",
+      "start": "2035-06-27T19:00:00+0000",
+      "end": "2035-06-27T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Prism Dreams.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": true,
+      "relaxed_name": "Adapted",
+      "relaxed_categories": [
+        5,
+        6
+      ]
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 66,
+    "fields": {
+      "created_at": "2035-01-21T10:00:00+0000",
+      "updated_at": "2035-01-21T10:30:00+0000",
+      "production": 18,
+      "venue": 8,
+      "doors_open": "2035-06-30T18:15:00+0000",
+      "start": "2035-06-30T19:00:00+0000",
+      "end": "2035-06-30T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Prism Dreams.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 67,
+    "fields": {
+      "created_at": "2035-01-22T10:00:00+0000",
+      "updated_at": "2035-01-22T10:30:00+0000",
+      "production": 18,
+      "venue": 2,
+      "doors_open": "2035-07-03T18:15:00+0000",
+      "start": "2035-07-03T19:00:00+0000",
+      "end": "2035-07-03T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 4 of Prism Dreams.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 68,
+    "fields": {
+      "created_at": "2035-01-23T10:00:00+0000",
+      "updated_at": "2035-01-23T10:30:00+0000",
+      "production": 18,
+      "venue": 5,
+      "doors_open": "2035-07-06T18:15:00+0000",
+      "start": "2035-07-06T19:00:00+0000",
+      "end": "2035-07-06T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 5 of Prism Dreams.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 69,
+    "fields": {
+      "created_at": "2035-01-20T10:00:00+0000",
+      "updated_at": "2035-01-20T10:30:00+0000",
+      "production": 19,
+      "venue": 4,
+      "doors_open": "2034-03-30T18:15:00+0000",
+      "start": "2034-03-30T19:00:00+0000",
+      "end": "2034-03-30T21:15:00+0000",
+      "disabled": true,
+      "description": "Performance 1 of Celestial Ruse.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 70,
+    "fields": {
+      "created_at": "2035-01-21T10:00:00+0000",
+      "updated_at": "2035-01-21T10:30:00+0000",
+      "production": 19,
+      "venue": 4,
+      "doors_open": "2034-04-02T18:15:00+0000",
+      "start": "2034-04-02T19:00:00+0000",
+      "end": "2034-04-02T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Celestial Ruse.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 71,
+    "fields": {
+      "created_at": "2035-01-22T10:00:00+0000",
+      "updated_at": "2035-01-22T10:30:00+0000",
+      "production": 19,
+      "venue": 4,
+      "doors_open": "2034-04-05T18:15:00+0000",
+      "start": "2034-04-05T19:00:00+0000",
+      "end": "2034-04-05T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Celestial Ruse.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 72,
+    "fields": {
+      "created_at": "2035-01-21T10:00:00+0000",
+      "updated_at": "2035-01-21T10:30:00+0000",
+      "production": 20,
+      "venue": 1,
+      "doors_open": "2034-04-02T18:15:00+0000",
+      "start": "2034-04-02T19:00:00+0000",
+      "end": "2034-04-02T21:15:00+0000",
+      "disabled": true,
+      "description": "Performance 1 of Emberfall Chronicles.",
+      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 73,
+    "fields": {
+      "created_at": "2035-01-22T10:00:00+0000",
+      "updated_at": "2035-01-22T10:30:00+0000",
+      "production": 20,
+      "venue": 1,
+      "doors_open": "2034-04-05T18:15:00+0000",
+      "start": "2034-04-05T19:00:00+0000",
+      "end": "2034-04-05T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 2 of Emberfall Chronicles.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 74,
+    "fields": {
+      "created_at": "2035-01-23T10:00:00+0000",
+      "updated_at": "2035-01-23T10:30:00+0000",
+      "production": 20,
+      "venue": 1,
+      "doors_open": "2034-04-08T18:15:00+0000",
+      "start": "2034-04-08T19:00:00+0000",
+      "end": "2034-04-08T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 3 of Emberfall Chronicles.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": false,
+      "relaxed_name": null,
+      "relaxed_categories": []
+    }
+  },
+  {
+    "model": "productions.performance",
+    "pk": 75,
+    "fields": {
+      "created_at": "2035-01-24T10:00:00+0000",
+      "updated_at": "2035-01-24T10:30:00+0000",
+      "production": 20,
+      "venue": 1,
+      "doors_open": "2034-04-11T18:15:00+0000",
+      "start": "2034-04-11T19:00:00+0000",
+      "end": "2034-04-11T21:15:00+0000",
+      "disabled": false,
+      "description": "Performance 4 of Emberfall Chronicles.",
+      "extra_information": "Doors open 45 minutes before start.",
+      "is_relaxed": "Signed",
+      "relaxed_name": null,
+      "relaxed_categories": [
+        6
+      ]
     }
   },
   {
     "model": "productions.castmember",
     "pk": 1,
     "fields": {
-      "name": "Tom",
-      "profile_picture": null,
-      "role": "Peter pan",
-      "production": 1
+      "name": "Aurora Nights Cast 1",
+      "role": "Role 1",
+      "production": 1,
+      "profile_picture": 85
     }
   },
   {
@@ -468,9 +2100,9 @@
     "pk": 2,
     "fields": {
       "name": "Aurora Nights Cast 2",
-      "profile_picture": 86,
       "role": "Role 2",
-      "production": 1
+      "production": 1,
+      "profile_picture": 86
     }
   },
   {
@@ -478,9 +2110,9 @@
     "pk": 3,
     "fields": {
       "name": "Aurora Nights Cast 3",
-      "profile_picture": 87,
       "role": "Role 3",
-      "production": 1
+      "production": 1,
+      "profile_picture": 87
     }
   },
   {
@@ -488,9 +2120,9 @@
     "pk": 4,
     "fields": {
       "name": "City of Echoes Cast 1",
-      "profile_picture": 88,
       "role": "Role 1",
-      "production": 2
+      "production": 2,
+      "profile_picture": 88
     }
   },
   {
@@ -498,9 +2130,9 @@
     "pk": 5,
     "fields": {
       "name": "City of Echoes Cast 2",
-      "profile_picture": 89,
       "role": "Role 2",
-      "production": 2
+      "production": 2,
+      "profile_picture": 89
     }
   },
   {
@@ -508,9 +2140,9 @@
     "pk": 6,
     "fields": {
       "name": "City of Echoes Cast 3",
-      "profile_picture": 90,
       "role": "Role 3",
-      "production": 2
+      "production": 2,
+      "profile_picture": 90
     }
   },
   {
@@ -518,9 +2150,9 @@
     "pk": 7,
     "fields": {
       "name": "Whispers in the Wings Cast 1",
-      "profile_picture": 91,
       "role": "Role 1",
-      "production": 3
+      "production": 3,
+      "profile_picture": 91
     }
   },
   {
@@ -528,9 +2160,9 @@
     "pk": 8,
     "fields": {
       "name": "Whispers in the Wings Cast 2",
-      "profile_picture": 92,
       "role": "Role 2",
-      "production": 3
+      "production": 3,
+      "profile_picture": 92
     }
   },
   {
@@ -538,9 +2170,9 @@
     "pk": 9,
     "fields": {
       "name": "Whispers in the Wings Cast 3",
-      "profile_picture": 93,
       "role": "Role 3",
-      "production": 3
+      "production": 3,
+      "profile_picture": 93
     }
   },
   {
@@ -548,9 +2180,9 @@
     "pk": 10,
     "fields": {
       "name": "Rhythm of the Tide Cast 1",
-      "profile_picture": 94,
       "role": "Role 1",
-      "production": 4
+      "production": 4,
+      "profile_picture": 94
     }
   },
   {
@@ -558,9 +2190,9 @@
     "pk": 11,
     "fields": {
       "name": "Rhythm of the Tide Cast 2",
-      "profile_picture": 95,
       "role": "Role 2",
-      "production": 4
+      "production": 4,
+      "profile_picture": 95
     }
   },
   {
@@ -568,9 +2200,9 @@
     "pk": 12,
     "fields": {
       "name": "Rhythm of the Tide Cast 3",
-      "profile_picture": 96,
       "role": "Role 3",
-      "production": 4
+      "production": 4,
+      "profile_picture": 96
     }
   },
   {
@@ -578,9 +2210,9 @@
     "pk": 13,
     "fields": {
       "name": "Midnight Masquerade Cast 1",
-      "profile_picture": 97,
       "role": "Role 1",
-      "production": 5
+      "production": 5,
+      "profile_picture": 97
     }
   },
   {
@@ -588,9 +2220,9 @@
     "pk": 14,
     "fields": {
       "name": "Midnight Masquerade Cast 2",
-      "profile_picture": 98,
       "role": "Role 2",
-      "production": 5
+      "production": 5,
+      "profile_picture": 98
     }
   },
   {
@@ -598,9 +2230,9 @@
     "pk": 15,
     "fields": {
       "name": "Midnight Masquerade Cast 3",
-      "profile_picture": 99,
       "role": "Role 3",
-      "production": 5
+      "production": 5,
+      "profile_picture": 99
     }
   },
   {
@@ -608,9 +2240,9 @@
     "pk": 16,
     "fields": {
       "name": "Fragments of Light Cast 1",
-      "profile_picture": 100,
       "role": "Role 1",
-      "production": 6
+      "production": 6,
+      "profile_picture": 100
     }
   },
   {
@@ -618,9 +2250,9 @@
     "pk": 17,
     "fields": {
       "name": "Fragments of Light Cast 2",
-      "profile_picture": 101,
       "role": "Role 2",
-      "production": 6
+      "production": 6,
+      "profile_picture": 101
     }
   },
   {
@@ -628,9 +2260,9 @@
     "pk": 18,
     "fields": {
       "name": "Fragments of Light Cast 3",
-      "profile_picture": 102,
       "role": "Role 3",
-      "production": 6
+      "production": 6,
+      "profile_picture": 102
     }
   },
   {
@@ -638,9 +2270,9 @@
     "pk": 19,
     "fields": {
       "name": "Electric Bloom Cast 1",
-      "profile_picture": 103,
       "role": "Role 1",
-      "production": 7
+      "production": 7,
+      "profile_picture": 103
     }
   },
   {
@@ -648,9 +2280,9 @@
     "pk": 20,
     "fields": {
       "name": "Electric Bloom Cast 2",
-      "profile_picture": 104,
       "role": "Role 2",
-      "production": 7
+      "production": 7,
+      "profile_picture": 104
     }
   },
   {
@@ -658,9 +2290,9 @@
     "pk": 21,
     "fields": {
       "name": "Electric Bloom Cast 3",
-      "profile_picture": 105,
       "role": "Role 3",
-      "production": 7
+      "production": 7,
+      "profile_picture": 105
     }
   },
   {
@@ -668,9 +2300,9 @@
     "pk": 22,
     "fields": {
       "name": "The Clockmaker's Tale Cast 1",
-      "profile_picture": 106,
       "role": "Role 1",
-      "production": 8
+      "production": 8,
+      "profile_picture": 106
     }
   },
   {
@@ -678,9 +2310,9 @@
     "pk": 23,
     "fields": {
       "name": "The Clockmaker's Tale Cast 2",
-      "profile_picture": 107,
       "role": "Role 2",
-      "production": 8
+      "production": 8,
+      "profile_picture": 107
     }
   },
   {
@@ -688,9 +2320,9 @@
     "pk": 24,
     "fields": {
       "name": "The Clockmaker's Tale Cast 3",
-      "profile_picture": 108,
       "role": "Role 3",
-      "production": 8
+      "production": 8,
+      "profile_picture": 108
     }
   },
   {
@@ -698,9 +2330,9 @@
     "pk": 25,
     "fields": {
       "name": "Starfall Serenade Cast 1",
-      "profile_picture": 109,
       "role": "Role 1",
-      "production": 9
+      "production": 9,
+      "profile_picture": 109
     }
   },
   {
@@ -708,9 +2340,9 @@
     "pk": 26,
     "fields": {
       "name": "Starfall Serenade Cast 2",
-      "profile_picture": 110,
       "role": "Role 2",
-      "production": 9
+      "production": 9,
+      "profile_picture": 110
     }
   },
   {
@@ -718,9 +2350,9 @@
     "pk": 27,
     "fields": {
       "name": "Starfall Serenade Cast 3",
-      "profile_picture": 111,
       "role": "Role 3",
-      "production": 9
+      "production": 9,
+      "profile_picture": 111
     }
   },
   {
@@ -728,9 +2360,9 @@
     "pk": 28,
     "fields": {
       "name": "Echoes of Tomorrow Cast 1",
-      "profile_picture": 112,
       "role": "Role 1",
-      "production": 10
+      "production": 10,
+      "profile_picture": 112
     }
   },
   {
@@ -738,9 +2370,9 @@
     "pk": 29,
     "fields": {
       "name": "Echoes of Tomorrow Cast 2",
-      "profile_picture": 113,
       "role": "Role 2",
-      "production": 10
+      "production": 10,
+      "profile_picture": 113
     }
   },
   {
@@ -748,9 +2380,9 @@
     "pk": 30,
     "fields": {
       "name": "Echoes of Tomorrow Cast 3",
-      "profile_picture": 114,
       "role": "Role 3",
-      "production": 10
+      "production": 10,
+      "profile_picture": 114
     }
   },
   {
@@ -758,9 +2390,9 @@
     "pk": 31,
     "fields": {
       "name": "Velvet Horizon Cast 1",
-      "profile_picture": 115,
       "role": "Role 1",
-      "production": 11
+      "production": 11,
+      "profile_picture": 115
     }
   },
   {
@@ -768,9 +2400,9 @@
     "pk": 32,
     "fields": {
       "name": "Velvet Horizon Cast 2",
-      "profile_picture": 116,
       "role": "Role 2",
-      "production": 11
+      "production": 11,
+      "profile_picture": 116
     }
   },
   {
@@ -778,9 +2410,9 @@
     "pk": 33,
     "fields": {
       "name": "Velvet Horizon Cast 3",
-      "profile_picture": 117,
       "role": "Role 3",
-      "production": 11
+      "production": 11,
+      "profile_picture": 117
     }
   },
   {
@@ -788,9 +2420,9 @@
     "pk": 34,
     "fields": {
       "name": "Harbour Lights Cast 1",
-      "profile_picture": 118,
       "role": "Role 1",
-      "production": 12
+      "production": 12,
+      "profile_picture": 118
     }
   },
   {
@@ -798,9 +2430,9 @@
     "pk": 35,
     "fields": {
       "name": "Harbour Lights Cast 2",
-      "profile_picture": 119,
       "role": "Role 2",
-      "production": 12
+      "production": 12,
+      "profile_picture": 119
     }
   },
   {
@@ -808,9 +2440,9 @@
     "pk": 36,
     "fields": {
       "name": "Harbour Lights Cast 3",
-      "profile_picture": 120,
       "role": "Role 3",
-      "production": 12
+      "production": 12,
+      "profile_picture": 120
     }
   },
   {
@@ -818,9 +2450,9 @@
     "pk": 37,
     "fields": {
       "name": "Gilded Reverie Cast 1",
-      "profile_picture": 121,
       "role": "Role 1",
-      "production": 13
+      "production": 13,
+      "profile_picture": 121
     }
   },
   {
@@ -828,9 +2460,9 @@
     "pk": 38,
     "fields": {
       "name": "Gilded Reverie Cast 2",
-      "profile_picture": 122,
       "role": "Role 2",
-      "production": 13
+      "production": 13,
+      "profile_picture": 122
     }
   },
   {
@@ -838,9 +2470,9 @@
     "pk": 39,
     "fields": {
       "name": "Gilded Reverie Cast 3",
-      "profile_picture": 123,
       "role": "Role 3",
-      "production": 13
+      "production": 13,
+      "profile_picture": 123
     }
   },
   {
@@ -848,9 +2480,9 @@
     "pk": 40,
     "fields": {
       "name": "Luminous Skies Cast 1",
-      "profile_picture": 124,
       "role": "Role 1",
-      "production": 14
+      "production": 14,
+      "profile_picture": 124
     }
   },
   {
@@ -858,9 +2490,9 @@
     "pk": 41,
     "fields": {
       "name": "Luminous Skies Cast 2",
-      "profile_picture": 125,
       "role": "Role 2",
-      "production": 14
+      "production": 14,
+      "profile_picture": 125
     }
   },
   {
@@ -868,9 +2500,9 @@
     "pk": 42,
     "fields": {
       "name": "Luminous Skies Cast 3",
-      "profile_picture": 126,
       "role": "Role 3",
-      "production": 14
+      "production": 14,
+      "profile_picture": 126
     }
   },
   {
@@ -878,9 +2510,9 @@
     "pk": 43,
     "fields": {
       "name": "Emberline Ballad Cast 1",
-      "profile_picture": 127,
       "role": "Role 1",
-      "production": 15
+      "production": 15,
+      "profile_picture": 127
     }
   },
   {
@@ -888,9 +2520,9 @@
     "pk": 44,
     "fields": {
       "name": "Emberline Ballad Cast 2",
-      "profile_picture": 128,
       "role": "Role 2",
-      "production": 15
+      "production": 15,
+      "profile_picture": 128
     }
   },
   {
@@ -898,9 +2530,9 @@
     "pk": 45,
     "fields": {
       "name": "Emberline Ballad Cast 3",
-      "profile_picture": 129,
       "role": "Role 3",
-      "production": 15
+      "production": 15,
+      "profile_picture": 129
     }
   },
   {
@@ -908,9 +2540,9 @@
     "pk": 46,
     "fields": {
       "name": "Quantum Waltz Cast 1",
-      "profile_picture": 130,
       "role": "Role 1",
-      "production": 16
+      "production": 16,
+      "profile_picture": 130
     }
   },
   {
@@ -918,9 +2550,9 @@
     "pk": 47,
     "fields": {
       "name": "Quantum Waltz Cast 2",
-      "profile_picture": 131,
       "role": "Role 2",
-      "production": 16
+      "production": 16,
+      "profile_picture": 131
     }
   },
   {
@@ -928,9 +2560,9 @@
     "pk": 48,
     "fields": {
       "name": "Quantum Waltz Cast 3",
-      "profile_picture": 132,
       "role": "Role 3",
-      "production": 16
+      "production": 16,
+      "profile_picture": 132
     }
   },
   {
@@ -938,9 +2570,9 @@
     "pk": 49,
     "fields": {
       "name": "Moonlit Paradox Cast 1",
-      "profile_picture": 133,
       "role": "Role 1",
-      "production": 17
+      "production": 17,
+      "profile_picture": 133
     }
   },
   {
@@ -948,9 +2580,9 @@
     "pk": 50,
     "fields": {
       "name": "Moonlit Paradox Cast 2",
-      "profile_picture": 134,
       "role": "Role 2",
-      "production": 17
+      "production": 17,
+      "profile_picture": 134
     }
   },
   {
@@ -958,9 +2590,9 @@
     "pk": 51,
     "fields": {
       "name": "Moonlit Paradox Cast 3",
-      "profile_picture": 135,
       "role": "Role 3",
-      "production": 17
+      "production": 17,
+      "profile_picture": 135
     }
   },
   {
@@ -968,9 +2600,9 @@
     "pk": 52,
     "fields": {
       "name": "Prism Dreams Cast 1",
-      "profile_picture": 136,
       "role": "Role 1",
-      "production": 18
+      "production": 18,
+      "profile_picture": 136
     }
   },
   {
@@ -978,9 +2610,9 @@
     "pk": 53,
     "fields": {
       "name": "Prism Dreams Cast 2",
-      "profile_picture": 137,
       "role": "Role 2",
-      "production": 18
+      "production": 18,
+      "profile_picture": 137
     }
   },
   {
@@ -988,9 +2620,9 @@
     "pk": 54,
     "fields": {
       "name": "Prism Dreams Cast 3",
-      "profile_picture": 138,
       "role": "Role 3",
-      "production": 18
+      "production": 18,
+      "profile_picture": 138
     }
   },
   {
@@ -998,9 +2630,9 @@
     "pk": 55,
     "fields": {
       "name": "Celestial Ruse Cast 1",
-      "profile_picture": 139,
       "role": "Role 1",
-      "production": 19
+      "production": 19,
+      "profile_picture": 139
     }
   },
   {
@@ -1008,9 +2640,9 @@
     "pk": 56,
     "fields": {
       "name": "Celestial Ruse Cast 2",
-      "profile_picture": 140,
       "role": "Role 2",
-      "production": 19
+      "production": 19,
+      "profile_picture": 140
     }
   },
   {
@@ -1018,9 +2650,9 @@
     "pk": 57,
     "fields": {
       "name": "Celestial Ruse Cast 3",
-      "profile_picture": 141,
       "role": "Role 3",
-      "production": 19
+      "production": 19,
+      "profile_picture": 141
     }
   },
   {
@@ -1028,9 +2660,9 @@
     "pk": 58,
     "fields": {
       "name": "Emberfall Chronicles Cast 1",
-      "profile_picture": 142,
       "role": "Role 1",
-      "production": 20
+      "production": 20,
+      "profile_picture": 142
     }
   },
   {
@@ -1038,9 +2670,9 @@
     "pk": 59,
     "fields": {
       "name": "Emberfall Chronicles Cast 2",
-      "profile_picture": 143,
       "role": "Role 2",
-      "production": 20
+      "production": 20,
+      "profile_picture": 143
     }
   },
   {
@@ -1048,376 +2680,16 @@
     "pk": 60,
     "fields": {
       "name": "Emberfall Chronicles Cast 3",
-      "profile_picture": 144,
       "role": "Role 3",
-      "production": 20
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 1,
-    "fields": {
-      "name": "James",
-      "role": "director",
-      "production": 1
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 2,
-    "fields": {
-      "name": "Aurora Nights Producer",
-      "role": "Producer",
-      "production": 1
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 3,
-    "fields": {
-      "name": "City of Echoes Director",
-      "role": "Director",
-      "production": 2
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 4,
-    "fields": {
-      "name": "City of Echoes Producer",
-      "role": "Producer",
-      "production": 2
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 5,
-    "fields": {
-      "name": "Whispers in the Wings Director",
-      "role": "Director",
-      "production": 3
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 6,
-    "fields": {
-      "name": "Whispers in the Wings Producer",
-      "role": "Producer",
-      "production": 3
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 7,
-    "fields": {
-      "name": "Rhythm of the Tide Director",
-      "role": "Director",
-      "production": 4
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 8,
-    "fields": {
-      "name": "Rhythm of the Tide Producer",
-      "role": "Producer",
-      "production": 4
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 9,
-    "fields": {
-      "name": "Midnight Masquerade Director",
-      "role": "Director",
-      "production": 5
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 10,
-    "fields": {
-      "name": "Midnight Masquerade Producer",
-      "role": "Producer",
-      "production": 5
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 11,
-    "fields": {
-      "name": "Fragments of Light Director",
-      "role": "Director",
-      "production": 6
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 12,
-    "fields": {
-      "name": "Fragments of Light Producer",
-      "role": "Producer",
-      "production": 6
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 13,
-    "fields": {
-      "name": "Electric Bloom Director",
-      "role": "Director",
-      "production": 7
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 14,
-    "fields": {
-      "name": "Electric Bloom Producer",
-      "role": "Producer",
-      "production": 7
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 15,
-    "fields": {
-      "name": "The Clockmaker's Tale Director",
-      "role": "Director",
-      "production": 8
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 16,
-    "fields": {
-      "name": "The Clockmaker's Tale Producer",
-      "role": "Producer",
-      "production": 8
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 17,
-    "fields": {
-      "name": "Starfall Serenade Director",
-      "role": "Director",
-      "production": 9
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 18,
-    "fields": {
-      "name": "Starfall Serenade Producer",
-      "role": "Producer",
-      "production": 9
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 19,
-    "fields": {
-      "name": "Echoes of Tomorrow Director",
-      "role": "Director",
-      "production": 10
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 20,
-    "fields": {
-      "name": "Echoes of Tomorrow Producer",
-      "role": "Producer",
-      "production": 10
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 21,
-    "fields": {
-      "name": "Velvet Horizon Director",
-      "role": "Director",
-      "production": 11
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 22,
-    "fields": {
-      "name": "Velvet Horizon Producer",
-      "role": "Producer",
-      "production": 11
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 23,
-    "fields": {
-      "name": "Harbour Lights Director",
-      "role": "Director",
-      "production": 12
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 24,
-    "fields": {
-      "name": "Harbour Lights Producer",
-      "role": "Producer",
-      "production": 12
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 25,
-    "fields": {
-      "name": "Gilded Reverie Director",
-      "role": "Director",
-      "production": 13
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 26,
-    "fields": {
-      "name": "Gilded Reverie Producer",
-      "role": "Producer",
-      "production": 13
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 27,
-    "fields": {
-      "name": "Luminous Skies Director",
-      "role": "Director",
-      "production": 14
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 28,
-    "fields": {
-      "name": "Luminous Skies Producer",
-      "role": "Producer",
-      "production": 14
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 29,
-    "fields": {
-      "name": "Emberline Ballad Director",
-      "role": "Director",
-      "production": 15
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 30,
-    "fields": {
-      "name": "Emberline Ballad Producer",
-      "role": "Producer",
-      "production": 15
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 31,
-    "fields": {
-      "name": "Quantum Waltz Director",
-      "role": "Director",
-      "production": 16
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 32,
-    "fields": {
-      "name": "Quantum Waltz Producer",
-      "role": "Producer",
-      "production": 16
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 33,
-    "fields": {
-      "name": "Moonlit Paradox Director",
-      "role": "Director",
-      "production": 17
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 34,
-    "fields": {
-      "name": "Moonlit Paradox Producer",
-      "role": "Producer",
-      "production": 17
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 35,
-    "fields": {
-      "name": "Prism Dreams Director",
-      "role": "Director",
-      "production": 18
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 36,
-    "fields": {
-      "name": "Prism Dreams Producer",
-      "role": "Producer",
-      "production": 18
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 37,
-    "fields": {
-      "name": "Celestial Ruse Director",
-      "role": "Director",
-      "production": 19
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 38,
-    "fields": {
-      "name": "Celestial Ruse Producer",
-      "role": "Producer",
-      "production": 19
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 39,
-    "fields": {
-      "name": "Emberfall Chronicles Director",
-      "role": "Director",
-      "production": 20
-    }
-  },
-  {
-    "model": "productions.productionteammember",
-    "pk": 40,
-    "fields": {
-      "name": "Emberfall Chronicles Producer",
-      "role": "Producer",
-      "production": 20
+      "production": 20,
+      "profile_picture": 144
     }
   },
   {
     "model": "productions.crewmember",
     "pk": 1,
     "fields": {
-      "name": "Alex",
+      "name": "Aurora Nights Crew 1",
       "role": 1,
       "production": 1
     }
@@ -1954,1656 +3226,363 @@
     }
   },
   {
-    "model": "productions.relaxedcategory",
+    "model": "productions.productionteammember",
     "pk": 1,
     "fields": {
-      "short_description": "House Lights Remain On",
-      "long_description": "The venue's house lights will remain on throughout the performance and there will be no moments of full darkness.",
-      "help_text": "",
-      "default_relaxed": true,
-      "default_sensory_friendly": false
+      "name": "Aurora Nights Director",
+      "role": "Director",
+      "production": 1
     }
   },
   {
-    "model": "productions.relaxedcategory",
+    "model": "productions.productionteammember",
     "pk": 2,
     "fields": {
-      "short_description": "No Pyrotechnic Effects",
-      "long_description": "All pyrotechnic effects have been removed from this performance.",
-      "help_text": "",
-      "default_relaxed": true,
-      "default_sensory_friendly": true
+      "name": "Aurora Nights Producer",
+      "role": "Producer",
+      "production": 1
     }
   },
   {
-    "model": "productions.relaxedcategory",
+    "model": "productions.productionteammember",
     "pk": 3,
     "fields": {
-      "short_description": "Performer Introductions",
-      "long_description": "Performers will introduce themselves and the characters they play at the beginning of the show.",
-      "help_text": "",
-      "default_relaxed": true,
-      "default_sensory_friendly": false
+      "name": "City of Echoes Director",
+      "role": "Director",
+      "production": 2
     }
   },
   {
-    "model": "productions.relaxedcategory",
+    "model": "productions.productionteammember",
     "pk": 4,
     "fields": {
-      "short_description": "Move Any Time",
-      "long_description": "You're welcome to enter and leave the auditorium at any point or to move around during the performance.",
-      "help_text": "Make sure this is discussed with FOH so they are aware this is happening.",
-      "default_relaxed": false,
-      "default_sensory_friendly": false
+      "name": "City of Echoes Producer",
+      "role": "Producer",
+      "production": 2
     }
   },
   {
-    "model": "productions.relaxedcategory",
+    "model": "productions.productionteammember",
     "pk": 5,
     "fields": {
-      "short_description": "Sensory Room",
-      "long_description": "A sensory room will be available at all times during the performance. Please speak to the FOH team if you would like to know where this is.",
-      "help_text": "Coordinate this with the venue.",
-      "default_relaxed": true,
-      "default_sensory_friendly": true
+      "name": "Whispers in the Wings Director",
+      "role": "Director",
+      "production": 3
     }
   },
   {
-    "model": "productions.relaxedcategory",
+    "model": "productions.productionteammember",
     "pk": 6,
     "fields": {
-      "short_description": "Sign Language Interpreter",
-      "long_description": "There will be a BSL interpreter present during this performance.",
-      "help_text": "",
-      "default_relaxed": false,
-      "default_sensory_friendly": false
+      "name": "Whispers in the Wings Producer",
+      "role": "Producer",
+      "production": 3
     }
   },
   {
-    "model": "productions.performance",
-    "pk": 1,
-    "fields": {
-      "created_at": "2020-11-11T12:04:32Z",
-      "updated_at": "2020-11-11T12:24:32Z",
-      "production": 1,
-      "venue": 1,
-      "doors_open": "2040-11-11T12:04:32Z",
-      "start": "2040-11-11T12:24:32Z",
-      "end": "2040-11-11T14:24:32Z",
-      "interval_duration_mins": null,
-      "description": null,
-      "extra_information": null,
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": true,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 2,
-    "fields": {
-      "created_at": "2020-11-11T12:04:32Z",
-      "updated_at": "2020-11-11T12:24:32Z",
-      "production": 1,
-      "venue": 1,
-      "doors_open": "2040-11-12T12:04:32Z",
-      "start": "2040-11-12T12:24:32Z",
-      "end": "2040-11-12T14:24:32Z",
-      "interval_duration_mins": null,
-      "description": null,
-      "extra_information": null,
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 3,
-    "fields": {
-      "created_at": "2020-11-11T12:04:32Z",
-      "updated_at": "2020-11-11T12:24:32Z",
-      "production": 1,
-      "venue": 2,
-      "doors_open": "2040-11-13T12:04:32Z",
-      "start": "2040-11-13T12:24:32Z",
-      "end": "2040-11-13T14:22:32Z",
-      "interval_duration_mins": null,
-      "description": null,
-      "extra_information": null,
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 4,
-    "fields": {
-      "created_at": "2020-11-11T12:04:32Z",
-      "updated_at": "2020-11-11T12:24:32Z",
-      "production": 2,
-      "venue": 1,
-      "doors_open": "2040-11-11T12:04:32Z",
-      "start": "2040-12-11T12:24:32Z",
-      "end": "2040-12-11T14:24:32Z",
-      "interval_duration_mins": null,
-      "description": null,
-      "extra_information": null,
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": true,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 5,
-    "fields": {
-      "created_at": "2035-01-03T10:00:00Z",
-      "updated_at": "2035-01-03T10:30:00Z",
-      "production": 2,
-      "venue": 2,
-      "doors_open": "2024-01-10T18:15:00Z",
-      "start": "2024-01-10T19:00:00Z",
-      "end": "2024-01-10T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 1 of City of Echoes.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": true,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 6,
-    "fields": {
-      "created_at": "2035-01-04T10:00:00Z",
-      "updated_at": "2035-01-04T10:30:00Z",
-      "production": 2,
-      "venue": 2,
-      "doors_open": "2024-01-11T13:15:00Z",
-      "start": "2024-01-11T14:00:00Z",
-      "end": "2024-01-11T16:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 2 of City of Echoes.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 7,
     "fields": {
-      "created_at": "2035-01-05T10:00:00Z",
-      "updated_at": "2035-01-05T10:30:00Z",
-      "production": 2,
-      "venue": 2,
-      "doors_open": "2024-01-12T18:45:00Z",
-      "start": "2024-01-12T19:30:00Z",
-      "end": "2024-01-12T21:45:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 3 of City of Echoes.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "Rhythm of the Tide Director",
+      "role": "Director",
+      "production": 4
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 8,
     "fields": {
-      "created_at": "2035-01-04T10:00:00Z",
-      "updated_at": "2025-10-22T22:33:23.124Z",
-      "production": 3,
-      "venue": 3,
-      "doors_open": "2034-02-10T18:15:00Z",
-      "start": "2034-02-10T19:00:00Z",
-      "end": "2034-02-10T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 1 of Whispers in the Wings.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
-      "is_relaxed": true,
-      "relaxed_name": "Sensory Friendly",
-      "disabled": true,
-      "capacity": null,
-      "relaxed_categories": [
-        3,
-        4
-      ]
+      "name": "Rhythm of the Tide Producer",
+      "role": "Producer",
+      "production": 4
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 9,
     "fields": {
-      "created_at": "2035-01-05T10:00:00Z",
-      "updated_at": "2025-10-22T22:35:00.998Z",
-      "production": 3,
-      "venue": 3,
-      "doors_open": "2034-02-13T18:15:00Z",
-      "start": "2034-02-13T19:00:00Z",
-      "end": "2034-02-13T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 2 of Whispers in the Wings.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": true,
-      "relaxed_name": "Signed",
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": [
-        6
-      ]
+      "name": "Midnight Masquerade Director",
+      "role": "Director",
+      "production": 5
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 10,
     "fields": {
-      "created_at": "2035-01-06T10:00:00Z",
-      "updated_at": "2035-01-06T10:30:00Z",
-      "production": 3,
-      "venue": 3,
-      "doors_open": "2034-02-16T18:15:00Z",
-      "start": "2034-02-16T19:00:00Z",
-      "end": "2034-02-16T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 3 of Whispers in the Wings.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "Midnight Masquerade Producer",
+      "role": "Producer",
+      "production": 5
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 11,
     "fields": {
-      "created_at": "2035-01-07T10:00:00Z",
-      "updated_at": "2035-01-07T10:30:00Z",
-      "production": 3,
-      "venue": 3,
-      "doors_open": "2034-02-19T18:15:00Z",
-      "start": "2034-02-19T19:00:00Z",
-      "end": "2034-02-19T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 4 of Whispers in the Wings.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "Fragments of Light Director",
+      "role": "Director",
+      "production": 6
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 12,
     "fields": {
-      "created_at": "2035-01-08T10:00:00Z",
-      "updated_at": "2035-01-08T10:30:00Z",
-      "production": 3,
-      "venue": 3,
-      "doors_open": "2034-02-22T18:15:00Z",
-      "start": "2034-02-22T19:00:00Z",
-      "end": "2034-02-22T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 5 of Whispers in the Wings.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "Fragments of Light Producer",
+      "role": "Producer",
+      "production": 6
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 13,
     "fields": {
-      "created_at": "2035-01-05T10:00:00Z",
-      "updated_at": "2035-01-05T10:30:00Z",
-      "production": 4,
-      "venue": 4,
-      "doors_open": "2034-02-13T18:15:00Z",
-      "start": "2034-02-13T19:00:00Z",
-      "end": "2034-02-13T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 1 of Rhythm of the Tide.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": true,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "Electric Bloom Director",
+      "role": "Director",
+      "production": 7
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 14,
     "fields": {
-      "created_at": "2035-01-06T10:00:00Z",
-      "updated_at": "2035-01-06T10:30:00Z",
-      "production": 4,
-      "venue": 4,
-      "doors_open": "2034-02-16T18:15:00Z",
-      "start": "2034-02-16T19:00:00Z",
-      "end": "2034-02-16T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 2 of Rhythm of the Tide.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "Electric Bloom Producer",
+      "role": "Producer",
+      "production": 7
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 15,
     "fields": {
-      "created_at": "2035-01-07T10:00:00Z",
-      "updated_at": "2035-01-07T10:30:00Z",
-      "production": 4,
-      "venue": 4,
-      "doors_open": "2034-02-19T18:15:00Z",
-      "start": "2034-02-19T19:00:00Z",
-      "end": "2034-02-19T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 3 of Rhythm of the Tide.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "The Clockmaker's Tale Director",
+      "role": "Director",
+      "production": 8
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 16,
     "fields": {
-      "created_at": "2035-01-06T10:00:00Z",
-      "updated_at": "2035-01-06T10:30:00Z",
-      "production": 5,
-      "venue": 5,
-      "doors_open": "2024-03-20T18:15:00Z",
-      "start": "2024-03-20T19:00:00Z",
-      "end": "2024-03-20T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 1 of Midnight Masquerade.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": true,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "The Clockmaker's Tale Producer",
+      "role": "Producer",
+      "production": 8
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 17,
     "fields": {
-      "created_at": "2035-01-07T10:00:00Z",
-      "updated_at": "2035-01-07T10:30:00Z",
-      "production": 5,
-      "venue": 5,
-      "doors_open": "2024-03-22T18:15:00Z",
-      "start": "2024-03-22T19:00:00Z",
-      "end": "2024-03-22T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 2 of Midnight Masquerade.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "Starfall Serenade Director",
+      "role": "Director",
+      "production": 9
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 18,
     "fields": {
-      "created_at": "2035-01-08T10:00:00Z",
-      "updated_at": "2035-01-08T10:30:00Z",
-      "production": 5,
-      "venue": 5,
-      "doors_open": "2024-03-23T13:15:00Z",
-      "start": "2024-03-23T14:00:00Z",
-      "end": "2024-03-23T16:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 3 of Midnight Masquerade.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "Starfall Serenade Producer",
+      "role": "Producer",
+      "production": 9
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 19,
     "fields": {
-      "created_at": "2035-01-09T10:00:00Z",
-      "updated_at": "2035-01-09T10:30:00Z",
-      "production": 5,
-      "venue": 5,
-      "doors_open": "2024-03-24T18:45:00Z",
-      "start": "2024-03-24T19:30:00Z",
-      "end": "2024-03-24T21:45:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 4 of Midnight Masquerade.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "Echoes of Tomorrow Director",
+      "role": "Director",
+      "production": 10
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 20,
     "fields": {
-      "created_at": "2035-01-07T10:00:00Z",
-      "updated_at": "2035-01-07T10:30:00Z",
-      "production": 6,
-      "venue": 6,
-      "doors_open": "2035-05-19T18:15:00Z",
-      "start": "2035-05-19T19:00:00Z",
-      "end": "2035-05-19T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 1 of Fragments of Light.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "Echoes of Tomorrow Producer",
+      "role": "Producer",
+      "production": 10
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 21,
     "fields": {
-      "created_at": "2035-01-08T10:00:00Z",
-      "updated_at": "2035-01-08T10:30:00Z",
-      "production": 6,
-      "venue": 6,
-      "doors_open": "2035-05-22T18:15:00Z",
-      "start": "2035-05-22T19:00:00Z",
-      "end": "2035-05-22T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 2 of Fragments of Light.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "Velvet Horizon Director",
+      "role": "Director",
+      "production": 11
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 22,
     "fields": {
-      "created_at": "2035-01-09T10:00:00Z",
-      "updated_at": "2035-01-09T10:30:00Z",
-      "production": 6,
-      "venue": 6,
-      "doors_open": "2035-05-25T18:15:00Z",
-      "start": "2035-05-25T19:00:00Z",
-      "end": "2035-05-25T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 3 of Fragments of Light.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "Velvet Horizon Producer",
+      "role": "Producer",
+      "production": 11
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 23,
     "fields": {
-      "created_at": "2035-01-08T10:00:00Z",
-      "updated_at": "2035-01-08T10:30:00Z",
-      "production": 7,
-      "venue": 7,
-      "doors_open": "2035-05-22T18:15:00Z",
-      "start": "2035-05-22T19:00:00Z",
-      "end": "2035-05-22T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 1 of Electric Bloom.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "Harbour Lights Director",
+      "role": "Director",
+      "production": 12
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 24,
     "fields": {
-      "created_at": "2035-01-09T10:00:00Z",
-      "updated_at": "2035-01-09T10:30:00Z",
-      "production": 7,
-      "venue": 2,
-      "doors_open": "2035-05-25T18:15:00Z",
-      "start": "2035-05-25T19:00:00Z",
-      "end": "2035-05-25T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 2 of Electric Bloom.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "Harbour Lights Producer",
+      "role": "Producer",
+      "production": 12
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 25,
     "fields": {
-      "created_at": "2035-01-10T10:00:00Z",
-      "updated_at": "2035-01-10T10:30:00Z",
-      "production": 7,
-      "venue": 7,
-      "doors_open": "2035-05-28T18:15:00Z",
-      "start": "2035-05-28T19:00:00Z",
-      "end": "2035-05-28T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 3 of Electric Bloom.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "Gilded Reverie Director",
+      "role": "Director",
+      "production": 13
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 26,
     "fields": {
-      "created_at": "2035-01-11T10:00:00Z",
-      "updated_at": "2035-01-11T10:30:00Z",
-      "production": 7,
-      "venue": 2,
-      "doors_open": "2035-05-31T18:15:00Z",
-      "start": "2035-05-31T19:00:00Z",
-      "end": "2035-05-31T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 4 of Electric Bloom.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "Gilded Reverie Producer",
+      "role": "Producer",
+      "production": 13
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 27,
     "fields": {
-      "created_at": "2035-01-12T10:00:00Z",
-      "updated_at": "2035-01-12T10:30:00Z",
-      "production": 7,
-      "venue": 7,
-      "doors_open": "2035-06-03T18:15:00Z",
-      "start": "2035-06-03T19:00:00Z",
-      "end": "2035-06-03T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 5 of Electric Bloom.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "Luminous Skies Director",
+      "role": "Director",
+      "production": 14
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 28,
     "fields": {
-      "created_at": "2035-01-09T10:00:00Z",
-      "updated_at": "2035-01-09T10:30:00Z",
-      "production": 8,
-      "venue": 8,
-      "doors_open": "2034-02-25T18:15:00Z",
-      "start": "2034-02-25T19:00:00Z",
-      "end": "2034-02-25T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 1 of The Clockmaker's Tale.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": true,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "Luminous Skies Producer",
+      "role": "Producer",
+      "production": 14
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 29,
     "fields": {
-      "created_at": "2035-01-10T10:00:00Z",
-      "updated_at": "2035-01-10T10:30:00Z",
-      "production": 8,
-      "venue": 8,
-      "doors_open": "2034-02-28T18:15:00Z",
-      "start": "2034-02-28T19:00:00Z",
-      "end": "2034-02-28T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 2 of The Clockmaker's Tale.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "Emberline Ballad Director",
+      "role": "Director",
+      "production": 15
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 30,
     "fields": {
-      "created_at": "2035-01-11T10:00:00Z",
-      "updated_at": "2035-01-11T10:30:00Z",
-      "production": 8,
-      "venue": 8,
-      "doors_open": "2034-03-03T18:15:00Z",
-      "start": "2034-03-03T19:00:00Z",
-      "end": "2034-03-03T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 3 of The Clockmaker's Tale.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "Emberline Ballad Producer",
+      "role": "Producer",
+      "production": 15
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 31,
     "fields": {
-      "created_at": "2035-01-12T10:00:00Z",
-      "updated_at": "2035-01-12T10:30:00Z",
-      "production": 8,
-      "venue": 8,
-      "doors_open": "2034-03-06T18:15:00Z",
-      "start": "2034-03-06T19:00:00Z",
-      "end": "2034-03-06T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 4 of The Clockmaker's Tale.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "Quantum Waltz Director",
+      "role": "Director",
+      "production": 16
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 32,
     "fields": {
-      "created_at": "2035-01-10T10:00:00Z",
-      "updated_at": "2035-01-10T10:30:00Z",
-      "production": 9,
-      "venue": 1,
-      "doors_open": "2024-04-05T18:15:00Z",
-      "start": "2024-04-05T19:00:00Z",
-      "end": "2024-04-05T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 1 of Starfall Serenade.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": true,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "Quantum Waltz Producer",
+      "role": "Producer",
+      "production": 16
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 33,
     "fields": {
-      "created_at": "2035-01-11T10:00:00Z",
-      "updated_at": "2035-01-11T10:30:00Z",
-      "production": 9,
-      "venue": 1,
-      "doors_open": "2024-04-06T13:15:00Z",
-      "start": "2024-04-06T14:00:00Z",
-      "end": "2024-04-06T16:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 2 of Starfall Serenade.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "Moonlit Paradox Director",
+      "role": "Director",
+      "production": 17
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 34,
     "fields": {
-      "created_at": "2035-01-12T10:00:00Z",
-      "updated_at": "2035-01-12T10:30:00Z",
-      "production": 9,
-      "venue": 1,
-      "doors_open": "2024-04-07T18:45:00Z",
-      "start": "2024-04-07T19:30:00Z",
-      "end": "2024-04-07T21:45:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 3 of Starfall Serenade.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "Moonlit Paradox Producer",
+      "role": "Producer",
+      "production": 17
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 35,
     "fields": {
-      "created_at": "2035-01-11T10:00:00Z",
-      "updated_at": "2035-01-11T10:30:00Z",
-      "production": 10,
-      "venue": 2,
-      "doors_open": "2035-05-31T18:15:00Z",
-      "start": "2035-05-31T19:00:00Z",
-      "end": "2035-05-31T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 1 of Echoes of Tomorrow.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "Prism Dreams Director",
+      "role": "Director",
+      "production": 18
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 36,
     "fields": {
-      "created_at": "2035-01-12T10:00:00Z",
-      "updated_at": "2035-01-12T10:30:00Z",
-      "production": 10,
-      "venue": 6,
-      "doors_open": "2035-06-03T18:15:00Z",
-      "start": "2035-06-03T19:00:00Z",
-      "end": "2035-06-03T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 2 of Echoes of Tomorrow.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "Prism Dreams Producer",
+      "role": "Producer",
+      "production": 18
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 37,
     "fields": {
-      "created_at": "2035-01-13T10:00:00Z",
-      "updated_at": "2035-01-13T10:30:00Z",
-      "production": 10,
-      "venue": 2,
-      "doors_open": "2035-06-06T18:15:00Z",
-      "start": "2035-06-06T19:00:00Z",
-      "end": "2035-06-06T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 3 of Echoes of Tomorrow.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "Celestial Ruse Director",
+      "role": "Director",
+      "production": 19
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 38,
     "fields": {
-      "created_at": "2035-01-14T10:00:00Z",
-      "updated_at": "2035-01-14T10:30:00Z",
-      "production": 10,
-      "venue": 6,
-      "doors_open": "2035-06-09T18:15:00Z",
-      "start": "2035-06-09T19:00:00Z",
-      "end": "2035-06-09T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 4 of Echoes of Tomorrow.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "Celestial Ruse Producer",
+      "role": "Producer",
+      "production": 19
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 39,
     "fields": {
-      "created_at": "2035-01-12T10:00:00Z",
-      "updated_at": "2035-01-12T10:30:00Z",
-      "production": 11,
-      "venue": 3,
-      "doors_open": "2024-05-15T18:15:00Z",
-      "start": "2024-05-15T19:00:00Z",
-      "end": "2024-05-15T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 1 of Velvet Horizon.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": true,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "Emberfall Chronicles Director",
+      "role": "Director",
+      "production": 20
     }
   },
   {
-    "model": "productions.performance",
+    "model": "productions.productionteammember",
     "pk": 40,
     "fields": {
-      "created_at": "2035-01-13T10:00:00Z",
-      "updated_at": "2035-01-13T10:30:00Z",
-      "production": 11,
-      "venue": 3,
-      "doors_open": "2024-05-16T13:15:00Z",
-      "start": "2024-05-16T14:00:00Z",
-      "end": "2024-05-16T16:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 2 of Velvet Horizon.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 41,
-    "fields": {
-      "created_at": "2035-01-14T10:00:00Z",
-      "updated_at": "2035-01-14T10:30:00Z",
-      "production": 11,
-      "venue": 3,
-      "doors_open": "2024-05-17T18:45:00Z",
-      "start": "2024-05-17T19:30:00Z",
-      "end": "2024-05-17T21:45:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 3 of Velvet Horizon.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 42,
-    "fields": {
-      "created_at": "2035-01-13T10:00:00Z",
-      "updated_at": "2035-01-13T10:30:00Z",
-      "production": 12,
-      "venue": 4,
-      "doors_open": "2024-02-02T18:15:00Z",
-      "start": "2024-02-02T19:00:00Z",
-      "end": "2024-02-02T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 1 of Harbour Lights.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": true,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 43,
-    "fields": {
-      "created_at": "2035-01-14T10:00:00Z",
-      "updated_at": "2035-01-14T10:30:00Z",
-      "production": 12,
-      "venue": 4,
-      "doors_open": "2024-02-03T13:15:00Z",
-      "start": "2024-02-03T14:00:00Z",
-      "end": "2024-02-03T16:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 2 of Harbour Lights.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 44,
-    "fields": {
-      "created_at": "2035-01-15T10:00:00Z",
-      "updated_at": "2035-01-15T10:30:00Z",
-      "production": 12,
-      "venue": 4,
-      "doors_open": "2024-02-03T18:45:00Z",
-      "start": "2024-02-03T19:30:00Z",
-      "end": "2024-02-03T21:45:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 3 of Harbour Lights.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 45,
-    "fields": {
-      "created_at": "2035-01-16T10:00:00Z",
-      "updated_at": "2035-01-16T10:30:00Z",
-      "production": 12,
-      "venue": 4,
-      "doors_open": "2024-02-04T17:15:00Z",
-      "start": "2024-02-04T18:00:00Z",
-      "end": "2024-02-04T20:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 4 of Harbour Lights.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 46,
-    "fields": {
-      "created_at": "2035-01-14T10:00:00Z",
-      "updated_at": "2035-01-14T10:30:00Z",
-      "production": 13,
-      "venue": 5,
-      "doors_open": "2035-06-09T18:15:00Z",
-      "start": "2035-06-09T19:00:00Z",
-      "end": "2035-06-09T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 1 of Gilded Reverie.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 47,
-    "fields": {
-      "created_at": "2035-01-15T10:00:00Z",
-      "updated_at": "2035-01-15T10:30:00Z",
-      "production": 13,
-      "venue": 5,
-      "doors_open": "2035-06-12T18:15:00Z",
-      "start": "2035-06-12T19:00:00Z",
-      "end": "2035-06-12T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 2 of Gilded Reverie.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 48,
-    "fields": {
-      "created_at": "2035-01-16T10:00:00Z",
-      "updated_at": "2035-01-16T10:30:00Z",
-      "production": 13,
-      "venue": 5,
-      "doors_open": "2035-06-15T18:15:00Z",
-      "start": "2035-06-15T19:00:00Z",
-      "end": "2035-06-15T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 3 of Gilded Reverie.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 49,
-    "fields": {
-      "created_at": "2035-01-15T10:00:00Z",
-      "updated_at": "2035-01-15T10:30:00Z",
-      "production": 14,
-      "venue": 6,
-      "doors_open": "2023-10-10T18:15:00Z",
-      "start": "2023-10-10T19:00:00Z",
-      "end": "2023-10-10T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 1 of Luminous Skies.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": true,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 50,
-    "fields": {
-      "created_at": "2035-01-16T10:00:00Z",
-      "updated_at": "2035-01-16T10:30:00Z",
-      "production": 14,
-      "venue": 6,
-      "doors_open": "2023-10-11T13:15:00Z",
-      "start": "2023-10-11T14:00:00Z",
-      "end": "2023-10-11T16:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 2 of Luminous Skies.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 51,
-    "fields": {
-      "created_at": "2035-01-17T10:00:00Z",
-      "updated_at": "2035-01-17T10:30:00Z",
-      "production": 14,
-      "venue": 6,
-      "doors_open": "2023-10-12T18:45:00Z",
-      "start": "2023-10-12T19:30:00Z",
-      "end": "2023-10-12T21:45:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 3 of Luminous Skies.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 52,
-    "fields": {
-      "created_at": "2035-01-18T10:00:00Z",
-      "updated_at": "2035-01-18T10:30:00Z",
-      "production": 14,
-      "venue": 6,
-      "doors_open": "2023-10-13T17:45:00Z",
-      "start": "2023-10-13T18:30:00Z",
-      "end": "2023-10-13T20:45:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 4 of Luminous Skies.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 53,
-    "fields": {
-      "created_at": "2035-01-16T10:00:00Z",
-      "updated_at": "2035-01-16T10:30:00Z",
-      "production": 15,
-      "venue": 7,
-      "doors_open": "2024-07-01T18:15:00Z",
-      "start": "2024-07-01T19:00:00Z",
-      "end": "2024-07-01T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 1 of Emberline Ballad.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": true,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 54,
-    "fields": {
-      "created_at": "2035-01-17T10:00:00Z",
-      "updated_at": "2035-01-17T10:30:00Z",
-      "production": 15,
-      "venue": 7,
-      "doors_open": "2024-07-02T13:15:00Z",
-      "start": "2024-07-02T14:00:00Z",
-      "end": "2024-07-02T16:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 2 of Emberline Ballad.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 55,
-    "fields": {
-      "created_at": "2035-01-18T10:00:00Z",
-      "updated_at": "2035-01-18T10:30:00Z",
-      "production": 15,
-      "venue": 7,
-      "doors_open": "2024-07-03T18:45:00Z",
-      "start": "2024-07-03T19:30:00Z",
-      "end": "2024-07-03T21:45:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 3 of Emberline Ballad.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 56,
-    "fields": {
-      "created_at": "2035-01-17T10:00:00Z",
-      "updated_at": "2035-01-17T10:30:00Z",
-      "production": 16,
-      "venue": 8,
-      "doors_open": "2023-11-15T18:15:00Z",
-      "start": "2023-11-15T19:00:00Z",
-      "end": "2023-11-15T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 1 of Quantum Waltz.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": true,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 57,
-    "fields": {
-      "created_at": "2035-01-18T10:00:00Z",
-      "updated_at": "2035-01-18T10:30:00Z",
-      "production": 16,
-      "venue": 8,
-      "doors_open": "2023-11-16T13:15:00Z",
-      "start": "2023-11-16T14:00:00Z",
-      "end": "2023-11-16T16:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 2 of Quantum Waltz.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 58,
-    "fields": {
-      "created_at": "2035-01-19T10:00:00Z",
-      "updated_at": "2035-01-19T10:30:00Z",
-      "production": 16,
-      "venue": 8,
-      "doors_open": "2023-11-17T18:45:00Z",
-      "start": "2023-11-17T19:30:00Z",
-      "end": "2023-11-17T21:45:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 3 of Quantum Waltz.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 59,
-    "fields": {
-      "created_at": "2035-01-20T10:00:00Z",
-      "updated_at": "2035-01-20T10:30:00Z",
-      "production": 16,
-      "venue": 8,
-      "doors_open": "2023-11-18T17:15:00Z",
-      "start": "2023-11-18T18:00:00Z",
-      "end": "2023-11-18T20:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 4 of Quantum Waltz.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 60,
-    "fields": {
-      "created_at": "2035-01-21T10:00:00Z",
-      "updated_at": "2035-01-21T10:30:00Z",
-      "production": 16,
-      "venue": 8,
-      "doors_open": "2023-11-19T18:15:00Z",
-      "start": "2023-11-19T19:00:00Z",
-      "end": "2023-11-19T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 5 of Quantum Waltz.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 61,
-    "fields": {
-      "created_at": "2035-01-18T10:00:00Z",
-      "updated_at": "2035-01-18T10:30:00Z",
-      "production": 17,
-      "venue": 3,
-      "doors_open": "2034-03-24T18:15:00Z",
-      "start": "2034-03-24T19:00:00Z",
-      "end": "2034-03-24T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 1 of Moonlit Paradox.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": true,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 62,
-    "fields": {
-      "created_at": "2035-01-19T10:00:00Z",
-      "updated_at": "2035-01-19T10:30:00Z",
-      "production": 17,
-      "venue": 3,
-      "doors_open": "2034-03-27T18:15:00Z",
-      "start": "2034-03-27T19:00:00Z",
-      "end": "2034-03-27T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 2 of Moonlit Paradox.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 63,
-    "fields": {
-      "created_at": "2035-01-20T10:00:00Z",
-      "updated_at": "2035-01-20T10:30:00Z",
-      "production": 17,
-      "venue": 3,
-      "doors_open": "2034-03-30T18:15:00Z",
-      "start": "2034-03-30T19:00:00Z",
-      "end": "2034-03-30T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 3 of Moonlit Paradox.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 64,
-    "fields": {
-      "created_at": "2035-01-19T10:00:00Z",
-      "updated_at": "2035-01-19T10:30:00Z",
-      "production": 18,
-      "venue": 2,
-      "doors_open": "2035-06-24T18:15:00Z",
-      "start": "2035-06-24T19:00:00Z",
-      "end": "2035-06-24T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 1 of Prism Dreams.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 65,
-    "fields": {
-      "created_at": "2035-01-20T10:00:00Z",
-      "updated_at": "2035-01-20T10:30:00Z",
-      "production": 18,
-      "venue": 5,
-      "doors_open": "2035-06-27T18:15:00Z",
-      "start": "2035-06-27T19:00:00Z",
-      "end": "2035-06-27T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 2 of Prism Dreams.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 66,
-    "fields": {
-      "created_at": "2035-01-21T10:00:00Z",
-      "updated_at": "2025-10-16T12:21:10.685Z",
-      "production": 18,
-      "venue": 8,
-      "doors_open": "2035-06-30T18:15:00Z",
-      "start": "2035-06-30T19:00:00Z",
-      "end": "2035-06-30T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 3 of Prism Dreams.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": true,
-      "relaxed_name": "Relaxed",
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": [
-        1,
-        3
-      ]
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 67,
-    "fields": {
-      "created_at": "2035-01-22T10:00:00Z",
-      "updated_at": "2035-01-22T10:30:00Z",
-      "production": 18,
-      "venue": 2,
-      "doors_open": "2035-07-03T18:15:00Z",
-      "start": "2035-07-03T19:00:00Z",
-      "end": "2035-07-03T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 4 of Prism Dreams.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 68,
-    "fields": {
-      "created_at": "2035-01-23T10:00:00Z",
-      "updated_at": "2035-01-23T10:30:00Z",
-      "production": 18,
-      "venue": 5,
-      "doors_open": "2035-07-06T18:15:00Z",
-      "start": "2035-07-06T19:00:00Z",
-      "end": "2035-07-06T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 5 of Prism Dreams.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 69,
-    "fields": {
-      "created_at": "2035-01-20T10:00:00Z",
-      "updated_at": "2035-01-20T10:30:00Z",
-      "production": 19,
-      "venue": 4,
-      "doors_open": "2034-03-30T18:15:00Z",
-      "start": "2034-03-30T19:00:00Z",
-      "end": "2034-03-30T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 1 of Celestial Ruse.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": true,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 70,
-    "fields": {
-      "created_at": "2035-01-21T10:00:00Z",
-      "updated_at": "2035-01-21T10:30:00Z",
-      "production": 19,
-      "venue": 4,
-      "doors_open": "2034-04-02T18:15:00Z",
-      "start": "2034-04-02T19:00:00Z",
-      "end": "2034-04-02T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 2 of Celestial Ruse.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 71,
-    "fields": {
-      "created_at": "2035-01-22T10:00:00Z",
-      "updated_at": "2035-01-22T10:30:00Z",
-      "production": 19,
-      "venue": 4,
-      "doors_open": "2034-04-05T18:15:00Z",
-      "start": "2034-04-05T19:00:00Z",
-      "end": "2034-04-05T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 3 of Celestial Ruse.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 72,
-    "fields": {
-      "created_at": "2035-01-21T10:00:00Z",
-      "updated_at": "2035-01-21T10:30:00Z",
-      "production": 20,
-      "venue": 1,
-      "doors_open": "2034-04-02T18:15:00Z",
-      "start": "2034-04-02T19:00:00Z",
-      "end": "2034-04-02T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 1 of Emberfall Chronicles.",
-      "extra_information": "Doors open 45 minutes before start. This performance is sold out.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": true,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 73,
-    "fields": {
-      "created_at": "2035-01-22T10:00:00Z",
-      "updated_at": "2025-10-22T22:32:56.307Z",
-      "production": 20,
-      "venue": 1,
-      "doors_open": "2034-04-05T18:15:00Z",
-      "start": "2034-04-05T19:00:00Z",
-      "end": "2034-04-05T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 2 of Emberfall Chronicles.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": true,
-      "relaxed_name": "Relaxed",
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": [
-        1,
-        2,
-        3
-      ]
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 74,
-    "fields": {
-      "created_at": "2035-01-23T10:00:00Z",
-      "updated_at": "2035-01-23T10:30:00Z",
-      "production": 20,
-      "venue": 1,
-      "doors_open": "2034-04-08T18:15:00Z",
-      "start": "2034-04-08T19:00:00Z",
-      "end": "2034-04-08T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 3 of Emberfall Chronicles.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
-    }
-  },
-  {
-    "model": "productions.performance",
-    "pk": 75,
-    "fields": {
-      "created_at": "2035-01-24T10:00:00Z",
-      "updated_at": "2035-01-24T10:30:00Z",
-      "production": 20,
-      "venue": 1,
-      "doors_open": "2034-04-11T18:15:00Z",
-      "start": "2034-04-11T19:00:00Z",
-      "end": "2034-04-11T21:15:00Z",
-      "interval_duration_mins": null,
-      "description": "Performance 4 of Emberfall Chronicles.",
-      "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": false,
-      "relaxed_name": null,
-      "disabled": false,
-      "capacity": null,
-      "relaxed_categories": []
+      "name": "Emberfall Chronicles Producer",
+      "role": "Producer",
+      "production": 20
     }
   },
   {
@@ -3612,8 +3591,8 @@
     "fields": {
       "seat_group": 1,
       "performance": 1,
-      "price": 1000,
-      "capacity": 100
+      "price": 1400,
+      "capacity": 12
     }
   },
   {
@@ -5104,446 +5083,6 @@
       "performance": 75,
       "price": 2000,
       "capacity": 8
-    }
-  },
-  {
-    "model": "productions.production",
-    "pk": 1,
-    "fields": {
-      "created_at": "2020-11-11T12:04:32Z",
-      "updated_at": "2020-11-11T12:24:32Z",
-      "name": "Example show",
-      "subtitle": "This is an example show",
-      "description": "The description of the example show",
-      "short_description": null,
-      "society": 1,
-      "cover_image": null,
-      "poster_image": null,
-      "featured_image": null,
-      "status": "COMPLETE",
-      "age_rating": null,
-      "facebook_event": null,
-      "contact_email": null,
-      "production_alert": null,
-      "slug": "example-show"
-    }
-  },
-  {
-    "model": "productions.production",
-    "pk": 2,
-    "fields": {
-      "created_at": "2020-11-11T12:04:32Z",
-      "updated_at": "2020-11-11T12:24:32Z",
-      "name": "Example show 2",
-      "subtitle": "This is an example show",
-      "description": "The description of the example show",
-      "short_description": null,
-      "society": 1,
-      "cover_image": null,
-      "poster_image": null,
-      "featured_image": null,
-      "status": "PUBLISHED",
-      "age_rating": null,
-      "facebook_event": null,
-      "contact_email": null,
-      "production_alert": null,
-      "slug": "example-show-2"
-    }
-  },
-  {
-    "model": "productions.production",
-    "pk": 3,
-    "fields": {
-      "created_at": "2035-01-04T10:00:00Z",
-      "updated_at": "2035-01-04T10:20:00Z",
-      "name": "Whispers in the Wings",
-      "subtitle": "An original production titled Whispers in the Wings",
-      "description": "Whispers in the Wings brings a unique story to the stage with immersive staging and bold performances.",
-      "short_description": "Experience Whispers in the Wings live.",
-      "society": 3,
-      "cover_image": 33,
-      "poster_image": 31,
-      "featured_image": 32,
-      "status": "APPROVED",
-      "age_rating": null,
-      "facebook_event": null,
-      "contact_email": "whispersinthewings@productions.org",
-      "production_alert": null,
-      "slug": "whispers-in-the-wings"
-    }
-  },
-  {
-    "model": "productions.production",
-    "pk": 4,
-    "fields": {
-      "created_at": "2035-01-05T10:00:00Z",
-      "updated_at": "2035-01-05T10:20:00Z",
-      "name": "Rhythm of the Tide",
-      "subtitle": "An original production titled Rhythm of the Tide",
-      "description": "Rhythm of the Tide brings a unique story to the stage with immersive staging and bold performances.",
-      "short_description": "Experience Rhythm of the Tide live.",
-      "society": 4,
-      "cover_image": 36,
-      "poster_image": 34,
-      "featured_image": 35,
-      "status": "PENDING",
-      "age_rating": null,
-      "facebook_event": null,
-      "contact_email": "rhythmofthetide@productions.org",
-      "production_alert": null,
-      "slug": "rhythm-of-the-tide"
-    }
-  },
-  {
-    "model": "productions.production",
-    "pk": 5,
-    "fields": {
-      "created_at": "2023-12-01T10:00:00Z",
-      "updated_at": "2024-03-01T12:00:00Z",
-      "name": "Midnight Masquerade",
-      "subtitle": "An original production titled Midnight Masquerade",
-      "description": "Midnight Masquerade brings a unique story to the stage with immersive staging and bold performances.",
-      "short_description": "Experience Midnight Masquerade live.",
-      "society": 5,
-      "cover_image": 39,
-      "poster_image": 37,
-      "featured_image": 38,
-      "status": "COMPLETE",
-      "age_rating": null,
-      "facebook_event": null,
-      "contact_email": "midnightmasquerade@productions.org",
-      "production_alert": null,
-      "slug": "midnight-masquerade"
-    }
-  },
-  {
-    "model": "productions.production",
-    "pk": 6,
-    "fields": {
-      "created_at": "2035-01-07T10:00:00Z",
-      "updated_at": "2035-01-07T10:20:00Z",
-      "name": "Fragments of Light",
-      "subtitle": "An original production titled Fragments of Light",
-      "description": "Fragments of Light brings a unique story to the stage with immersive staging and bold performances.",
-      "short_description": "Experience Fragments of Light live.",
-      "society": 6,
-      "cover_image": 42,
-      "poster_image": 40,
-      "featured_image": 41,
-      "status": "PUBLISHED",
-      "age_rating": null,
-      "facebook_event": null,
-      "contact_email": "fragmentsoflight@productions.org",
-      "production_alert": null,
-      "slug": "fragments-of-light"
-    }
-  },
-  {
-    "model": "productions.production",
-    "pk": 7,
-    "fields": {
-      "created_at": "2035-01-08T10:00:00Z",
-      "updated_at": "2035-01-08T10:20:00Z",
-      "name": "Electric Bloom",
-      "subtitle": "An original production titled Electric Bloom",
-      "description": "Electric Bloom brings a unique story to the stage with immersive staging and bold performances.",
-      "short_description": "Experience Electric Bloom live.",
-      "society": 7,
-      "cover_image": 45,
-      "poster_image": 43,
-      "featured_image": 44,
-      "status": "PUBLISHED",
-      "age_rating": null,
-      "facebook_event": null,
-      "contact_email": "electricbloom@productions.org",
-      "production_alert": null,
-      "slug": "electric-bloom"
-    }
-  },
-  {
-    "model": "productions.production",
-    "pk": 8,
-    "fields": {
-      "created_at": "2035-01-09T10:00:00Z",
-      "updated_at": "2035-01-09T10:20:00Z",
-      "name": "The Clockmaker's Tale",
-      "subtitle": "An original production titled The Clockmaker's Tale",
-      "description": "The Clockmaker's Tale brings a unique story to the stage with immersive staging and bold performances.",
-      "short_description": "Experience The Clockmaker's Tale live.",
-      "society": 8,
-      "cover_image": 48,
-      "poster_image": 46,
-      "featured_image": 47,
-      "status": "DRAFT",
-      "age_rating": null,
-      "facebook_event": null,
-      "contact_email": "theclockmakerstale@productions.org",
-      "production_alert": null,
-      "slug": "the-clockmaker-s-tale"
-    }
-  },
-  {
-    "model": "productions.production",
-    "pk": 9,
-    "fields": {
-      "created_at": "2024-01-02T09:00:00Z",
-      "updated_at": "2024-04-01T12:30:00Z",
-      "name": "Starfall Serenade",
-      "subtitle": "An original production titled Starfall Serenade",
-      "description": "Starfall Serenade brings a unique story to the stage with immersive staging and bold performances.",
-      "short_description": "Experience Starfall Serenade live.",
-      "society": 1,
-      "cover_image": 51,
-      "poster_image": 49,
-      "featured_image": 50,
-      "status": "COMPLETE",
-      "age_rating": null,
-      "facebook_event": null,
-      "contact_email": "starfallserenade@productions.org",
-      "production_alert": null,
-      "slug": "starfall-serenade"
-    }
-  },
-  {
-    "model": "productions.production",
-    "pk": 10,
-    "fields": {
-      "created_at": "2035-01-11T10:00:00Z",
-      "updated_at": "2035-01-11T10:20:00Z",
-      "name": "Echoes of Tomorrow",
-      "subtitle": "An original production titled Echoes of Tomorrow",
-      "description": "Echoes of Tomorrow brings a unique story to the stage with immersive staging and bold performances.",
-      "short_description": "Experience Echoes of Tomorrow live.",
-      "society": 2,
-      "cover_image": 54,
-      "poster_image": 52,
-      "featured_image": 53,
-      "status": "PUBLISHED",
-      "age_rating": null,
-      "facebook_event": null,
-      "contact_email": "echoesoftomorrow@productions.org",
-      "production_alert": null,
-      "slug": "echoes-of-tomorrow"
-    }
-  },
-  {
-    "model": "productions.production",
-    "pk": 11,
-    "fields": {
-      "created_at": "2023-10-15T09:00:00Z",
-      "updated_at": "2024-05-01T11:00:00Z",
-      "name": "Velvet Horizon",
-      "subtitle": "An original production titled Velvet Horizon",
-      "description": "Velvet Horizon brings a unique story to the stage with immersive staging and bold performances.",
-      "short_description": "Experience Velvet Horizon live.",
-      "society": 3,
-      "cover_image": 57,
-      "poster_image": 55,
-      "featured_image": 56,
-      "status": "COMPLETE",
-      "age_rating": null,
-      "facebook_event": null,
-      "contact_email": "velvethorizon@productions.org",
-      "production_alert": null,
-      "slug": "velvet-horizon"
-    }
-  },
-  {
-    "model": "productions.production",
-    "pk": 12,
-    "fields": {
-      "created_at": "2023-09-01T08:30:00Z",
-      "updated_at": "2024-02-10T09:45:00Z",
-      "name": "Harbour Lights",
-      "subtitle": "An original production titled Harbour Lights",
-      "description": "Harbour Lights brings a unique story to the stage with immersive staging and bold performances.",
-      "short_description": "Experience Harbour Lights live.",
-      "society": 4,
-      "cover_image": 60,
-      "poster_image": 58,
-      "featured_image": 59,
-      "status": "COMPLETE",
-      "age_rating": null,
-      "facebook_event": null,
-      "contact_email": "harbourlights@productions.org",
-      "production_alert": null,
-      "slug": "harbour-lights"
-    }
-  },
-  {
-    "model": "productions.production",
-    "pk": 13,
-    "fields": {
-      "created_at": "2035-01-14T10:00:00Z",
-      "updated_at": "2035-01-14T10:20:00Z",
-      "name": "Gilded Reverie",
-      "subtitle": "An original production titled Gilded Reverie",
-      "description": "Gilded Reverie brings a unique story to the stage with immersive staging and bold performances.",
-      "short_description": "Experience Gilded Reverie live.",
-      "society": 5,
-      "cover_image": 63,
-      "poster_image": 61,
-      "featured_image": 62,
-      "status": "PUBLISHED",
-      "age_rating": null,
-      "facebook_event": null,
-      "contact_email": "gildedreverie@productions.org",
-      "production_alert": null,
-      "slug": "gilded-reverie"
-    }
-  },
-  {
-    "model": "productions.production",
-    "pk": 14,
-    "fields": {
-      "created_at": "2023-08-20T10:00:00Z",
-      "updated_at": "2023-10-20T10:30:00Z",
-      "name": "Luminous Skies",
-      "subtitle": "An original production titled Luminous Skies",
-      "description": "Luminous Skies brings a unique story to the stage with immersive staging and bold performances.",
-      "short_description": "Experience Luminous Skies live.",
-      "society": 6,
-      "cover_image": 66,
-      "poster_image": 64,
-      "featured_image": 65,
-      "status": "COMPLETE",
-      "age_rating": null,
-      "facebook_event": null,
-      "contact_email": "luminousskies@productions.org",
-      "production_alert": null,
-      "slug": "luminous-skies"
-    }
-  },
-  {
-    "model": "productions.production",
-    "pk": 15,
-    "fields": {
-      "created_at": "2023-07-01T09:00:00Z",
-      "updated_at": "2024-07-05T10:00:00Z",
-      "name": "Emberline Ballad",
-      "subtitle": "An original production titled Emberline Ballad",
-      "description": "Emberline Ballad brings a unique story to the stage with immersive staging and bold performances.",
-      "short_description": "Experience Emberline Ballad live.",
-      "society": 7,
-      "cover_image": 69,
-      "poster_image": 67,
-      "featured_image": 68,
-      "status": "COMPLETE",
-      "age_rating": null,
-      "facebook_event": null,
-      "contact_email": "emberlineballad@productions.org",
-      "production_alert": null,
-      "slug": "emberline-ballad"
-    }
-  },
-  {
-    "model": "productions.production",
-    "pk": 16,
-    "fields": {
-      "created_at": "2023-09-15T09:00:00Z",
-      "updated_at": "2023-11-20T13:00:00Z",
-      "name": "Quantum Waltz",
-      "subtitle": "An original production titled Quantum Waltz",
-      "description": "Quantum Waltz brings a unique story to the stage with immersive staging and bold performances.",
-      "short_description": "Experience Quantum Waltz live.",
-      "society": 8,
-      "cover_image": 72,
-      "poster_image": 70,
-      "featured_image": 71,
-      "status": "COMPLETE",
-      "age_rating": null,
-      "facebook_event": null,
-      "contact_email": "quantumwaltz@productions.org",
-      "production_alert": null,
-      "slug": "quantum-waltz"
-    }
-  },
-  {
-    "model": "productions.production",
-    "pk": 17,
-    "fields": {
-      "created_at": "2035-01-18T10:00:00Z",
-      "updated_at": "2035-01-18T10:20:00Z",
-      "name": "Moonlit Paradox",
-      "subtitle": "An original production titled Moonlit Paradox",
-      "description": "Moonlit Paradox brings a unique story to the stage with immersive staging and bold performances.",
-      "short_description": "Experience Moonlit Paradox live.",
-      "society": 1,
-      "cover_image": 75,
-      "poster_image": 73,
-      "featured_image": 74,
-      "status": "DRAFT",
-      "age_rating": null,
-      "facebook_event": null,
-      "contact_email": "moonlitparadox@productions.org",
-      "production_alert": null,
-      "slug": "moonlit-paradox"
-    }
-  },
-  {
-    "model": "productions.production",
-    "pk": 18,
-    "fields": {
-      "created_at": "2035-01-19T10:00:00Z",
-      "updated_at": "2035-01-19T10:20:00Z",
-      "name": "Prism Dreams",
-      "subtitle": "An original production titled Prism Dreams",
-      "description": "Prism Dreams brings a unique story to the stage with immersive staging and bold performances.",
-      "short_description": "Experience Prism Dreams live.",
-      "society": 2,
-      "cover_image": 78,
-      "poster_image": 76,
-      "featured_image": 77,
-      "status": "PUBLISHED",
-      "age_rating": null,
-      "facebook_event": null,
-      "contact_email": "prismdreams@productions.org",
-      "production_alert": null,
-      "slug": "prism-dreams"
-    }
-  },
-  {
-    "model": "productions.production",
-    "pk": 19,
-    "fields": {
-      "created_at": "2035-01-20T10:00:00Z",
-      "updated_at": "2035-01-20T10:20:00Z",
-      "name": "Celestial Ruse",
-      "subtitle": "An original production titled Celestial Ruse",
-      "description": "Celestial Ruse brings a unique story to the stage with immersive staging and bold performances.",
-      "short_description": "Experience Celestial Ruse live.",
-      "society": 3,
-      "cover_image": 81,
-      "poster_image": 79,
-      "featured_image": 80,
-      "status": "PENDING",
-      "age_rating": null,
-      "facebook_event": null,
-      "contact_email": "celestialruse@productions.org",
-      "production_alert": null,
-      "slug": "celestial-ruse"
-    }
-  },
-  {
-    "model": "productions.production",
-    "pk": 20,
-    "fields": {
-      "created_at": "2035-01-21T10:00:00Z",
-      "updated_at": "2035-01-21T10:20:00Z",
-      "name": "Emberfall Chronicles",
-      "subtitle": "An original production titled Emberfall Chronicles",
-      "description": "Emberfall Chronicles brings a unique story to the stage with immersive staging and bold performances.",
-      "short_description": "Experience Emberfall Chronicles live.",
-      "society": 4,
-      "cover_image": 84,
-      "poster_image": 82,
-      "featured_image": 83,
-      "status": "CLOSED",
-      "age_rating": null,
-      "facebook_event": null,
-      "contact_email": "emberfallchronicles@productions.org",
-      "production_alert": null,
-      "slug": "emberfall-chronicles"
     }
   }
 ]
