@@ -2078,8 +2078,8 @@
       "disabled": false,
       "description": "Performance 4 of Emberfall Chronicles.",
       "extra_information": "Doors open 45 minutes before start.",
-      "is_relaxed": "Signed",
-      "relaxed_name": null,
+      "is_relaxed": true,
+      "relaxed_name": "Signed",
       "relaxed_categories": [
         6
       ]
