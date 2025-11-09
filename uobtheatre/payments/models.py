@@ -260,12 +260,16 @@ class Transaction(TimeStampedMixin, BaseModel):
 
         return True
 
-    def async_refund(self):
+    def async_refund(self, preserve_provider_fees=True, preserve_app_fees=False):
         """
         Create "refund_payment" task to refund the payment. The task queue the
         refund method.
         """
-        refund_payment.delay(self.pk)
+        refund_payment.delay(
+            self.pk,
+            preserve_provider_fees=preserve_provider_fees,
+            preserve_app_fees=preserve_app_fees,
+        )
 
     def refund(
         self,
@@ -326,7 +330,7 @@ class Transaction(TimeStampedMixin, BaseModel):
                 "This refund would result in a negative refund amount"
             )
 
-        refund_provider.refund(self, custom_refund_amount=refund_amount)
+        refund_provider.refund(self, custom_refund_amount=refund_amount)  # type: ignore
 
     class Meta:
         ordering = ["-created_at"]

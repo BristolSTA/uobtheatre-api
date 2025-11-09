@@ -196,9 +196,15 @@ class Payable(BaseModel):  # type: ignore
 
         for payment in self.transactions.filter(type=Transaction.Type.PAYMENT).all():  # type: ignore
             (
-                payment.async_refund()
+                payment.async_refund(
+                    preserve_provider_fees=preserve_provider_fees,
+                    preserve_app_fees=preserve_app_fees,
+                )
                 if do_async
-                else payment.refund(preserve_provider_fees, preserve_app_fees)
+                else payment.refund(
+                    preserve_provider_fees=preserve_provider_fees,
+                    preserve_app_fees=preserve_app_fees,
+                )
             )
 
         if send_admin_email:

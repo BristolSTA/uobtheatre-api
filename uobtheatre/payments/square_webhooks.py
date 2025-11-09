@@ -8,6 +8,7 @@ from rest_framework.views import APIView
 from square.types.payment import Payment
 from square.types.payment_refund import PaymentRefund
 
+from uobtheatre.bookings.models import Booking
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.transaction_providers import SquarePOS
 from uobtheatre.utils.utils import deep_get
@@ -74,7 +75,7 @@ class SquareWebhooks(APIView):
 
         return None
 
-    def post(self, request, **_):
+    def post(self, request, **_):  # pylint: disable=too-many-return-statements
         """
         Endpoint for square webhooks
         """
@@ -99,7 +100,7 @@ class SquareWebhooks(APIView):
                         == "CANCELED"
                     ):
                         # If we can't find the transaction, and square is telling us it has been cancelled, we don't mind
-                        return Response(status=202)
+                        return Response(status=201)
                     raise exc
 
             elif request_data["type"] == "payment.updated":
@@ -124,10 +125,18 @@ class SquareWebhooks(APIView):
                 square_refund = request_data["data"]["object"]["refund"]
                 refund_data = PaymentRefund(**square_refund)
 
-                Transaction.objects.get(
+                transaction = Transaction.objects.get(
                     provider_transaction_id=request_data["data"]["id"],
                     type=Transaction.Type.REFUND,
-                ).sync_transaction_with_provider(refund_data)
+                )
+
+                transaction.sync_transaction_with_provider(refund_data)
+
+                booking = Booking.objects.get(
+                    transactions__provider_transaction_id=transaction.provider_transaction_id,
+                )
+                booking.status = Booking.Status.REFUNDED
+                booking.save()
             else:
                 return Response(status=202)
         except Transaction.DoesNotExist:
@@ -136,7 +145,7 @@ class SquareWebhooks(APIView):
                 not self.get_object_location_id(request_data["data"]["object"])
                 == settings.SQUARE_SETTINGS["SQUARE_LOCATION"]
             ):
-                return Response(status=202)
+                return Response(status=203)
 
             return Response("Unknown Transaction", status=404)
 

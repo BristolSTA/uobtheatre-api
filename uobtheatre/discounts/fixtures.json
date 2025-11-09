@@ -1,0 +1,205 @@
+[
+  {
+    "model": "discounts.concessiontype",
+    "pk": 1,
+    "fields": {
+      "name": "Standard",
+      "description": "Standard ticket rate."
+    }
+  },
+  {
+    "model": "discounts.concessiontype",
+    "pk": 2,
+    "fields": {
+      "name": "Student",
+      "description": "Student ticket rate."
+    }
+  },
+  {
+    "model": "discounts.concessiontype",
+    "pk": 3,
+    "fields": {
+      "name": "Child",
+      "description": "Child ticket rate."
+    }
+  },
+  {
+    "model": "discounts.concessiontype",
+    "pk": 4,
+    "fields": {
+      "name": "Senior",
+      "description": "Senior ticket rate."
+    }
+  },
+  {
+    "model": "discounts.concessiontype",
+    "pk": 5,
+    "fields": {
+      "name": "Society Member",
+      "description": "Society Member ticket rate."
+    }
+  },
+  {
+    "model": "discounts.concessiontype",
+    "pk": 6,
+    "fields": {
+      "name": "Accessible Companion",
+      "description": "Accessible Companion ticket rate."
+    }
+  },
+  {
+    "model": "discounts.discount",
+    "pk": 1,
+    "fields": {
+      "name": "Student Saver",
+      "percentage": 0.1,
+      "performances": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        24,
+        26,
+        32,
+        33,
+        34,
+        35,
+        37,
+        64,
+        67,
+        72,
+        73,
+        74,
+        75
+      ],
+      "seat_group": 1
+    }
+  },
+  {
+    "model": "discounts.discount",
+    "pk": 2,
+    "fields": {
+      "name": "Twilight Duo",
+      "percentage": 0.15,
+      "performances": [
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        61,
+        62,
+        63,
+        69,
+        70,
+        71
+      ],
+      "seat_group": 7
+    }
+  },
+  {
+    "model": "discounts.discount",
+    "pk": 3,
+    "fields": {
+      "name": "Weekend Trio",
+      "percentage": 0.2,
+      "performances": [
+        16,
+        17,
+        18,
+        19,
+        20,
+        21,
+        22,
+        36,
+        38,
+        46,
+        47,
+        48,
+        49,
+        50,
+        51,
+        52,
+        65,
+        68
+      ],
+      "seat_group": 13
+    }
+  },
+  {
+    "model": "discounts.discount",
+    "pk": 4,
+    "fields": {
+      "name": "Companion Care",
+      "percentage": 0.25,
+      "performances": [
+        23,
+        25,
+        27,
+        28,
+        29,
+        30,
+        31,
+        53,
+        54,
+        55,
+        56,
+        57,
+        58,
+        59,
+        60,
+        66
+      ],
+      "seat_group": 19
+    }
+  },
+  {
+    "model": "discounts.discountrequirement",
+    "pk": 1,
+    "fields": {
+      "number": 1,
+      "discount": 1,
+      "concession_type": 2
+    }
+  },
+  {
+    "model": "discounts.discountrequirement",
+    "pk": 2,
+    "fields": {
+      "number": 1,
+      "discount": 2,
+      "concession_type": 3
+    }
+  },
+  {
+    "model": "discounts.discountrequirement",
+    "pk": 3,
+    "fields": {
+      "number": 1,
+      "discount": 3,
+      "concession_type": 4
+    }
+  },
+  {
+    "model": "discounts.discountrequirement",
+    "pk": 4,
+    "fields": {
+      "number": 1,
+      "discount": 4,
+      "concession_type": 6
+    }
+  }
+]
