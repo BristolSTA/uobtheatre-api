@@ -170,7 +170,7 @@ class UpdateBookingAccessibilityInfo(AuthRequiredMixin, SafeMutation):
             booking_emails.send_booking_accessibility_info_email(booking)
         elif previous_accessibility_info and (
             accessibility_info != previous_accessibility_info
-        ) and len(accessibility_info.strip()) > 4::
+        ) and len(accessibility_info.strip()) > 4:
             booking_emails.send_booking_accessibility_updated_email(booking)
 
         return cls(success=True)
