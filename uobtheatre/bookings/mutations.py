@@ -166,7 +166,8 @@ class UpdateBookingAccessibilityInfo(AuthRequiredMixin, SafeMutation):
 
         if previous_accessibility_info and not accessibility_info:
             booking_emails.send_booking_accessibility_removed_email(booking)
-        elif accessibility_info and not previous_accessibility_info and len(accessibility_info.strip()) > 4:
+        elif (accessibility_info and not previous_accessibility_info 
+            and len(accessibility_info.strip()) > 4):
             booking_emails.send_booking_accessibility_info_email(booking)
         elif previous_accessibility_info and (
             accessibility_info != previous_accessibility_info
