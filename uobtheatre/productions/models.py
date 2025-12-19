@@ -906,6 +906,9 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
     society = models.ForeignKey(
         Society, on_delete=models.SET_NULL, null=True, related_name="productions"
     )
+    supporting_societies = models.ManyToManyField(
+        Society, related_name="supporting_productions"
+    )
 
     cover_image = models.ForeignKey(
         Image,
