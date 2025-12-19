@@ -4,6 +4,7 @@ from graphene_django import DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
 
 from uobtheatre.images.schema import ImageNode  # noqa
+from uobtheatre.productions.models import Production
 from uobtheatre.societies.models import Society
 from uobtheatre.users.abilities import PermissionsMixin
 from uobtheatre.utils.filters import FilterSet
@@ -36,6 +37,13 @@ class SocietyNode(PermissionsMixin, DjangoObjectType):
             "permissions",
             "su_status",
         )
+
+    def resolve_productions(self, info):
+        own_productions = Production.objects.filter(society=self.id).exclude(
+            supporting_societies=self.id
+        )
+        supporting_productions = Production.objects.filter(supporting_societies=self.id)
+        return own_productions | supporting_productions
 
 
 class Query(graphene.ObjectType):
