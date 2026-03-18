@@ -107,7 +107,7 @@ if env("DATABASE_URL", default=None):  # ignore:
 else:
     DATABASES = {
         "default": {
-            "ENGINE": "django.db.backends.postgresql_psycopg2",
+            "ENGINE": "django.db.backends.postgresql",
             "NAME": env("POSTGRES_DB", default="postgres"),
             "USER": env("POSTGRES_USER", default="postgres"),
             "PASSWORD": env("POSTGRES_PASSWORD", default="postgres"),
@@ -129,12 +129,11 @@ LANGUAGE_CODE = "en-us"
 # If you set this to False, Django will make some optimizations so as not
 # to load the internationalization machinery.
 USE_I18N = False
-USE_L10N = True
 USE_TZ = True
 LOGIN_REDIRECT_URL = "/"
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.0/howto/static-files/
+# https://docs.djangoproject.com/en/5.2/howto/static-files/
 STATIC_ROOT = os.path.normpath(join(BASE_DIR, "staticfiles"))
 STATICFILES_DIRS: List[str] = [os.path.normpath(join(BASE_DIR, "static"))]
 STATIC_URL = "static/"
@@ -178,7 +177,7 @@ else:
     DEBUG = False
 
 # Password Validation
-# https://docs.djangoproject.com/en/2.0/topics/auth/passwords/#module-django.contrib.auth.password_validation
+# https://docs.djangoproject.com/en/5.2/topics/auth/passwords/#module-django.contrib.auth.password_validation
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",

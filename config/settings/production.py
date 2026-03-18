@@ -11,28 +11,42 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 # Site
-# https://docs.djangoproject.com/en/2.0/ref/settings/#allowed-hosts
+# https://docs.djangoproject.com/en/5.2/ref/settings/#allowed-hosts
 INSTALLED_APPS += ("gunicorn",)  # type: ignore
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/2.0/howto/static-files/
+# https://docs.djangoproject.com/en/5.2/howto/static-files/
 # http://django-storages.readthedocs.org/en/latest/index.html
 INSTALLED_APPS += ("storages",)  # type: ignore
-DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
 AWS_STORAGE_BUCKET_NAME = os.getenv("AWS_STORAGE_BUCKET_NAME")
 AWS_DEFAULT_ACL = "public-read"
-AWS_AUTO_CREATE_BUCKET = True
-AWS_QUERYSTRING_AUTH = False
 MEDIA_URL = f"https://s3.amazonaws.com/{AWS_STORAGE_BUCKET_NAME}/"
 
-STATICFILES_LOCATION = "static"
-STATICFILES_STORAGE = "uobtheatre.storages.StaticStorage"
-
-MEDIAFILES_LOCATION = "media"
-DEFAULT_FILE_STORAGE = "uobtheatre.storages.MediaStorage"
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        "OPTIONS": {
+            "access_key": AWS_ACCESS_KEY_ID,
+            "secret_key": AWS_SECRET_ACCESS_KEY,
+            "bucket_name": AWS_STORAGE_BUCKET_NAME,
+            "default_acl": AWS_DEFAULT_ACL,
+            "location": "media",
+        },
+    },
+    "staticfiles": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+        "OPTIONS": {
+            "access_key": AWS_ACCESS_KEY_ID,
+            "secret_key": AWS_SECRET_ACCESS_KEY,
+            "bucket_name": AWS_STORAGE_BUCKET_NAME,
+            "default_acl": AWS_DEFAULT_ACL,
+            "location": "static",
+        },
+    },
+}
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
