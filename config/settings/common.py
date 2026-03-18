@@ -134,10 +134,10 @@ USE_TZ = True
 LOGIN_REDIRECT_URL = "/"
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/2.0/howto/static-files/
+# https://docs.djangoproject.com/en/5.0/howto/static-files/
 STATIC_ROOT = os.path.normpath(join(BASE_DIR, "staticfiles"))
 STATICFILES_DIRS: List[str] = [os.path.normpath(join(BASE_DIR, "static"))]
-STATIC_URL = "/static/"
+STATIC_URL = "static/"
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
