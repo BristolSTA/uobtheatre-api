@@ -1,7 +1,6 @@
 # pylint: skip-file
 
 import os
-from distutils.util import strtobool
 
 from .common import *
 
@@ -62,7 +61,8 @@ AWS_HEADERS = {
 
 EMAIL_BACKEND = (
     "anymail.backends.amazon_ses.EmailBackend"
-    if strtobool(env("EMAIL_ENABLED", default="yes"))
+    if env("EMAIL_ENABLED", default="no").lower()
+    in ("yes", "y", "on", "true", "t", "1")
     else "django.core.mail.backends.console.EmailBackend"
 )
 
