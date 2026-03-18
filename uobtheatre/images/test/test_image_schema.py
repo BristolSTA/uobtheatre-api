@@ -7,8 +7,7 @@ from uobtheatre.images.test.factories import ImageFactory
 @pytest.mark.django_db
 def test_image_schema(gql_client):
     image = ImageFactory()
-    response = gql_client.execute(
-        """
+    response = gql_client.execute("""
         {
           images {
             id
@@ -16,8 +15,7 @@ def test_image_schema(gql_client):
             altText
           }
         }
-        """
-    )
+        """)
 
     assert response == {
         "data": {

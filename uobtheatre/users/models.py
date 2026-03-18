@@ -56,9 +56,15 @@ class User(AbilitiesMixin, AbstractUser, BaseModel):
             bool: Whether the user has permission to access the object/model.
         """
         if not "." in perm and obj:
-            perm = obj._meta.app_label + "." + perm  # pylint: disable=protected-access
+            perm = (
+                obj._meta.app_label  # pylint: disable=protected-access
+                + "."
+                + perm
+            )
 
-        return super().has_perm(perm) or (super().has_perm(perm, obj) if obj else False)
+        return super().has_perm(perm) or (
+            super().has_perm(perm, obj) if obj else False
+        )
 
     def assign_perm(self, perm: str, obj=None):
         return assign_perm(perm, self, obj)
@@ -69,7 +75,9 @@ class User(AbilitiesMixin, AbstractUser, BaseModel):
         """
         return get_objects_for_user(self, permissions, any_perm=True)
 
-    def has_any_objects_with_perms(self, permissions: Union[str, list[str]]) -> bool:
+    def has_any_objects_with_perms(
+        self, permissions: Union[str, list[str]]
+    ) -> bool:
         """
         Given a list of permissions (or a single permission) returns if the
         user has this permission globally or for any objects.
@@ -96,4 +104,6 @@ class User(AbilitiesMixin, AbstractUser, BaseModel):
     def global_perms(self):
         if self.is_superuser:
             return Permission.objects.all()
-        return self.user_permissions.all() | Permission.objects.filter(group__user=self)
+        return self.user_permissions.all() | Permission.objects.filter(
+            group__user=self
+        )

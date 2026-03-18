@@ -32,7 +32,11 @@ from uobtheatre.productions.exceptions import (
     InvalidSeatGroupException,
     NotEnoughCapacityException,
 )
-from uobtheatre.productions.models import Performance, PerformanceSeatGroup, Production
+from uobtheatre.productions.models import (
+    Performance,
+    PerformanceSeatGroup,
+    Production,
+)
 from uobtheatre.productions.test.factories import (
     CastMemberFactory,
     ContentWarningFactory,
@@ -95,7 +99,9 @@ def test_production_duration():
         second=10,
         tzinfo=timezone.get_current_timezone(),
     )
-    performance_short = PerformanceFactory(start=start, end=end, production=production)
+    performance_short = PerformanceFactory(
+        start=start, end=end, production=production
+    )
 
     assert production.duration == performance_short.duration
 
@@ -248,7 +254,9 @@ def test_production_min_price():
     performances = [PerformanceFactory() for i in range(3)]
 
     for i in range(3):
-        PerformanceSeatingFactory(performance=performances[i], price=10 * (i + 1))
+        PerformanceSeatingFactory(
+            performance=performances[i], price=10 * (i + 1)
+        )
 
     production.performances.set(performances)
 
@@ -594,7 +602,10 @@ def test_performance_total_capacity(
     ],
 )
 def test_performance_capacity_remaining(
-    total_performance_capacity, seat_groups_capacities_remaining, sold_tickets, expected
+    total_performance_capacity,
+    seat_groups_capacities_remaining,
+    sold_tickets,
+    expected,
 ):
     performance = PerformanceFactory()
     for _ in seat_groups_capacities_remaining:
@@ -608,7 +619,9 @@ def test_performance_capacity_remaining(
         "seat_group_capacity_remaining",
         side_effect=seat_groups_capacities_remaining,
     ), patch.object(
-        performance, "total_tickets_sold_or_reserved", return_value=sold_tickets
+        performance,
+        "total_tickets_sold_or_reserved",
+        return_value=sold_tickets,
     ):
         assert performance.capacity_remaining == expected
 
@@ -645,9 +658,15 @@ def test_performance_seat_group_capacity_remaining(
             seat_group_sold_tickets if seat_group else total_sold_tickets
         ),
     ) as total_tickets_sold_or_reserved_mock:
-        assert performance.seat_group_capacity_remaining(seat_group) == expected
-        total_seat_group_capacity_mock.assert_called_once_with(seat_group=seat_group)
-        total_tickets_sold_or_reserved_mock.assert_any_call(seat_group=seat_group)
+        assert (
+            performance.seat_group_capacity_remaining(seat_group) == expected
+        )
+        total_seat_group_capacity_mock.assert_called_once_with(
+            seat_group=seat_group
+        )
+        total_tickets_sold_or_reserved_mock.assert_any_call(
+            seat_group=seat_group
+        )
 
 
 @pytest.mark.django_db
@@ -695,7 +714,9 @@ def test_performance_min_price_with_single_discounts():
     child = ConcessionTypeFactory(name="child")
 
     null_discount = DiscountFactory(percentage=0, name="adult")
-    DiscountRequirementFactory(discount=null_discount, number=1, concession_type=adult)
+    DiscountRequirementFactory(
+        discount=null_discount, number=1, concession_type=adult
+    )
 
     single_discount = DiscountFactory(percentage=0.27, name="child")
     DiscountRequirementFactory(
@@ -827,7 +848,9 @@ def test_performance_min_price_with_single_discounts():
         ),
     ],
 )
-def test_performance_validate_tickets(seat_groups, performance_capacity, is_valid):
+def test_performance_validate_tickets(
+    seat_groups, performance_capacity, is_valid
+):
     performance = PerformanceFactory(capacity=performance_capacity)
     requirement = DiscountRequirementFactory()
     requirement.discount.performances.set([performance])
@@ -868,7 +891,9 @@ def test_performance_validate_tickets(seat_groups, performance_capacity, is_vali
         tickets_to_delete.extend(
             [
                 Ticket(seat_group=performance_seat_group.seat_group)
-                for i in range(seat_group.get("number_of_tickets_to_delete", 0))
+                for i in range(
+                    seat_group.get("number_of_tickets_to_delete", 0)
+                )
             ]
         )
 
@@ -878,7 +903,9 @@ def test_performance_validate_tickets(seat_groups, performance_capacity, is_vali
                 tickets_to_book, deleted_tickets=tickets_to_delete
             )
     else:
-        performance.validate_tickets(tickets_to_book, deleted_tickets=tickets_to_delete)
+        performance.validate_tickets(
+            tickets_to_book, deleted_tickets=tickets_to_delete
+        )
 
 
 @pytest.mark.django_db
@@ -933,7 +960,9 @@ def test_performance_validate_tickets_concession_type_not_in_performance():
     # But then try and book a seat group that is not assigned to the performance
     tickets = [
         Ticket(
-            seat_group=psg.seat_group, booking=booking, concession_type=concession_type
+            seat_group=psg.seat_group,
+            booking=booking,
+            concession_type=concession_type,
         )
     ]
 
@@ -1062,7 +1091,11 @@ def test_qs_has_boxoffice_permission():
         == has_perm_performances
     )
     assert (
-        list(Performance.objects.has_boxoffice_permission(user, has_permission=False))
+        list(
+            Performance.objects.has_boxoffice_permission(
+                user, has_permission=False
+            )
+        )
         == not_has_perm_performances
     )
 
@@ -1252,7 +1285,9 @@ def test_sales_breakdown_with_blank_fees():
     performance = PerformanceFactory()
     booking = BookingFactory(performance=performance)
 
-    TransactionFactory(pay_object=booking, value=200, provider_fee=0, app_fee=0)
+    TransactionFactory(
+        pay_object=booking, value=200, provider_fee=0, app_fee=0
+    )
 
     assert performance.sales_breakdown() == {
         "app_fee": 0,
@@ -1318,14 +1353,18 @@ def test_performance_refund_bookings(disabled, fails):
     "preserve_provider_fees, preserve_app_fees",
     [(True, True), (False, False), (True, False), (False, True)],
 )
-def test_performance_refund_bookings_options(preserve_provider_fees, preserve_app_fees):
+def test_performance_refund_bookings_options(
+    preserve_provider_fees, preserve_app_fees
+):
     performance = PerformanceFactory(id=1, disabled=True)
     user = UserFactory(id=123)
 
     with patch(
         "uobtheatre.productions.tasks.refund_performance.delay",
     ) as refund_task_mock:
-        performance.refund_bookings(user, preserve_provider_fees, preserve_app_fees)
+        performance.refund_bookings(
+            user, preserve_provider_fees, preserve_app_fees
+        )
         refund_task_mock.assert_called_once_with(
             1, 123, preserve_provider_fees, preserve_app_fees
         )
@@ -1375,7 +1414,9 @@ def test_production_queryset_performances():
         ordered=False,
     )
     assertQuerySetEqual(
-        Production.objects.filter(pk=performance_1.production.pk).performances().all(),
+        Production.objects.filter(pk=performance_1.production.pk)
+        .performances()
+        .all(),
         [performance_1],
     )
 
@@ -1391,7 +1432,9 @@ def test_production_queryset_transactions():
         ordered=False,
     )
     assertQuerySetEqual(
-        Production.objects.filter(pk=transaction_1.pay_object.performance.production.pk)
+        Production.objects.filter(
+            pk=transaction_1.pay_object.performance.production.pk
+        )
         .transactions()
         .all(),
         [transaction_1],
@@ -1414,13 +1457,17 @@ def test_performances_booked_users():
     TransactionFactory(value=-2, pay_object=booking_3)
 
     # Not included as in progress
-    BookingFactory(performance=performance_1, status=Payable.Status.IN_PROGRESS)
+    BookingFactory(
+        performance=performance_1, status=Payable.Status.IN_PROGRESS
+    )
 
     # Make another booking for the same user and assert it only shows up once
     performance_2 = PerformanceFactory()
     TransactionFactory(
         value=2,
-        pay_object=BookingFactory(performance=performance_2, user=booking_1.user),
+        pay_object=BookingFactory(
+            performance=performance_2, user=booking_1.user
+        ),
     )
 
     assertQuerySetEqual(

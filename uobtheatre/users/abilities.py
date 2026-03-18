@@ -133,7 +133,9 @@ class PermissionsMixin(DjangoObjectType):
             )
             + list(
                 Permission.objects.filter(
-                    group__id__in=info.context.user.groups.values_list("id", flat=True),
+                    group__id__in=info.context.user.groups.values_list(
+                        "id", flat=True
+                    ),
                     content_type=ContentType.objects.get_for_model(self),
                 ).all()
             )

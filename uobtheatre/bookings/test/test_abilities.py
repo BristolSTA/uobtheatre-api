@@ -18,7 +18,9 @@ from uobtheatre.users.test.factories import UserFactory
         (Payable.Status.CANCELLED, True, True, False),
     ),
 )
-def test_modify_booking_has_for_obj(status, same_user, with_boxoffice_perm, expected):
+def test_modify_booking_has_for_obj(
+    status, same_user, with_boxoffice_perm, expected
+):
     booking_user = UserFactory()
     booking_obj = BookingFactory(status=status, user=booking_user)
 

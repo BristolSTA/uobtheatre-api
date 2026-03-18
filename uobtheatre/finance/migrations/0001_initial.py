@@ -55,7 +55,9 @@ class Migration(migrations.Migration):
                 ),
             ],
             options={
-                "permissions": (("create_transfer", "Create a transfer entry"),),
+                "permissions": (
+                    ("create_transfer", "Create a transfer entry"),
+                ),
             },
         ),
     ]

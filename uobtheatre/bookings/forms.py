@@ -37,9 +37,13 @@ class TicketInputType(graphene.InputObjectType):
             return Ticket.objects.get(id=self.id)
         return Ticket(
             seat_group=SeatGroup.objects.get(id=self.seat_group_id),
-            concession_type=ConcessionType.objects.get(id=self.concession_type_id),
+            concession_type=ConcessionType.objects.get(
+                id=self.concession_type_id
+            ),
             seat=(
-                Seat.objects.get(id=self.seat_id) if self.seat_id is not None else None
+                Seat.objects.get(id=self.seat_id)
+                if self.seat_id is not None
+                else None
             ),
         )
 
@@ -121,13 +125,16 @@ class BookingForm(MutationForm):
 
         if max_tickets and total_number_of_tickets > max_tickets:
             raise ValidationError(
-                {"tickets": f"You may only book a maximum of {max_tickets} tickets"}
+                {
+                    "tickets": f"You may only book a maximum of {max_tickets} tickets"
+                }
             )
 
         # Check the capacity of the performance and its seat_groups
         try:
             cleaned_data.get("performance").validate_tickets(
-                self.cleaned_data["add_tickets"], self.cleaned_data["delete_tickets"]
+                self.cleaned_data["add_tickets"],
+                self.cleaned_data["delete_tickets"],
             )
         except GQLException as err:
             raise ValidationError({"tickets": err.message}) from err
@@ -162,4 +169,8 @@ class BookingForm(MutationForm):
 
     class Meta:
         model = Booking
-        fields = ("performance", "admin_discount_percentage", "accessibility_info")
+        fields = (
+            "performance",
+            "admin_discount_percentage",
+            "accessibility_info",
+        )

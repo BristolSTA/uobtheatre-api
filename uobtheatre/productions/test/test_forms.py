@@ -24,14 +24,18 @@ def test_production_form_invalid_warning_id():
         instance=production,
     )
 
-    assert form.errors == {"contentWarnings": ["A warning with ID 1234 does not exist"]}
+    assert form.errors == {
+        "contentWarnings": ["A warning with ID 1234 does not exist"]
+    }
 
 
 @pytest.mark.django_db
 def test_production_form_empty_warnings_list():
     production = ProductionFactory()
     warning = ContentWarningFactory()
-    ProductionContentWarning.objects.create(warning=warning, production=production)
+    ProductionContentWarning.objects.create(
+        warning=warning, production=production
+    )
 
     assertQuerySetEqual(production.content_warnings.all(), [warning])
 
@@ -51,7 +55,9 @@ def test_production_form_empty_warnings_list():
 def test_production_form_null_warnings():
     pivot = ProductionContentWarningFactory()
 
-    assertQuerySetEqual(pivot.production.content_warnings.all(), [pivot.warning])
+    assertQuerySetEqual(
+        pivot.production.content_warnings.all(), [pivot.warning]
+    )
 
     form = ProductionForm(
         data={
@@ -62,7 +68,9 @@ def test_production_form_null_warnings():
     )
 
     form.save()
-    assertQuerySetEqual(pivot.production.content_warnings.all(), [pivot.warning])
+    assertQuerySetEqual(
+        pivot.production.content_warnings.all(), [pivot.warning]
+    )
 
 
 @pytest.mark.django_db
@@ -139,7 +147,8 @@ def test_performance_interval_length(
         data={
             "start": datetime(2020, 1, 2, 0, 0, 0).isoformat(),
             "end": (
-                datetime(2020, 1, 2, 0, 0, 0) + timedelta(minutes=performance_duration)
+                datetime(2020, 1, 2, 0, 0, 0)
+                + timedelta(minutes=performance_duration)
             ).isoformat(),
             "interval_duration_mins": interval_length,
             "doors_open": datetime(2020, 1, 1, 0, 0, 0).isoformat(),

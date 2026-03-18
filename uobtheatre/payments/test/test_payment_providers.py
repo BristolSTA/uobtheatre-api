@@ -50,23 +50,29 @@ def test_payment_method_all():
 
 
 def test_transaction_method_all():
-    assert TransactionProvider.__all__ == [  # pylint: disable=comparison-with-callable
-        Cash,
-        Card,
-        SquarePOS,
-        SquareOnline,
-        ManualCardRefund,
-        SquareRefund,
-    ]
+    assert (  # pylint: disable=comparison-with-callable
+        TransactionProvider.__all__
+        == [
+            Cash,
+            Card,
+            SquarePOS,
+            SquareOnline,
+            ManualCardRefund,
+            SquareRefund,
+        ]
+    )
 
 
 def test_payment_method_choice():
-    assert PaymentProvider.choices == [  # pylint: disable=comparison-with-callable
-        ("CASH", "CASH"),
-        ("CARD", "CARD"),
-        ("SQUARE_POS", "SQUARE_POS"),
-        ("SQUARE_ONLINE", "SQUARE_ONLINE"),
-    ]
+    assert (  # pylint: disable=comparison-with-callable
+        PaymentProvider.choices
+        == [
+            ("CASH", "CASH"),
+            ("CARD", "CARD"),
+            ("SQUARE_POS", "SQUARE_POS"),
+            ("SQUARE_ONLINE", "SQUARE_ONLINE"),
+        ]
+    )
 
 
 @pytest.mark.parametrize(
@@ -86,7 +92,9 @@ def test_get_provider_transaction_id(payment_id, raises_exception):
         with pytest.raises(PaymentException):
             TransactionProvider.get_payment_provider_id(payment)
     else:
-        assert TransactionProvider.get_payment_provider_id(payment) == payment_id
+        assert (
+            TransactionProvider.get_payment_provider_id(payment) == payment_id
+        )
 
 
 @pytest.mark.parametrize(
@@ -162,7 +170,9 @@ def test_square_online_pay_success(mock_square, with_sca_token):
         }
     )
 
-    with mock_square(SquareOnline.client.payments, "create", mock_response) as mock:
+    with mock_square(
+        SquareOnline.client.payments, "create", mock_response
+    ) as mock:
         booking = BookingFactory(reference="abcd")
         payment_method = SquareOnline(
             "nonce", "key", "verify_token" if with_sca_token else None
@@ -379,7 +389,9 @@ def test_square_online_sync_payment(mock_square):
         payment={
             "id": "abc",
             "status": "COMPLETED",
-            "processing_fee": [{"amount_money": {"amount": -10, "currency": "GBP"}}],
+            "processing_fee": [
+                {"amount_money": {"amount": -10, "currency": "GBP"}}
+            ],
         }
     )
 
@@ -403,7 +415,9 @@ def test_square_online_sync_payment_no_status(mock_square):
     mock_response = GetPaymentResponse(
         payment={
             "id": "abc",
-            "processing_fee": [{"amount_money": {"amount": -10, "currency": "GBP"}}],
+            "processing_fee": [
+                {"amount_money": {"amount": -10, "currency": "GBP"}}
+            ],
         }
     )
 
@@ -770,7 +784,9 @@ def test_square_pos_sync_payment(
         "get_payment",
         return_value=Payment(
             status="COMPLETED",
-            processing_fee=[{"amount_money": {"amount": -10, "currency": "GBP"}}],
+            processing_fee=[
+                {"amount_money": {"amount": -10, "currency": "GBP"}}
+            ],
         ),
     ) as get_payment_mock:
         payment.sync_transaction_with_provider()
@@ -821,7 +837,9 @@ def test_square_pos_sync_multiple_payment_ids():
         "get_payment",
         return_value=Payment(
             status="COMPLETED",
-            processing_fee=[{"amount_money": {"amount": -10, "currency": "GBP"}}],
+            processing_fee=[
+                {"amount_money": {"amount": -10, "currency": "GBP"}}
+            ],
         ),
     ) as get_payment_mock:
         payment.sync_transaction_with_provider()
@@ -963,7 +981,9 @@ def test_square_pos_sync_no_payment_id():
         "get_payment",
         return_value=Payment(
             status="COMPLETED",
-            processing_fee=[{"amount_money": {"amount": -10, "currency": "GBP"}}],
+            processing_fee=[
+                {"amount_money": {"amount": -10, "currency": "GBP"}}
+            ],
         ),
     ) as get_payment_mock:
         payment.sync_transaction_with_provider()
@@ -1011,7 +1031,9 @@ def test_square_pos_sync_no_terminal_id():
         "get_payment",
         return_value=Payment(
             status="COMPLETED",
-            processing_fee=[{"amount_money": {"amount": -10, "currency": "GBP"}}],
+            processing_fee=[
+                {"amount_money": {"amount": -10, "currency": "GBP"}}
+            ],
         ),
     ):
         with pytest.raises(PaymentException):
@@ -1069,7 +1091,9 @@ def test_square_get_payment(mock_square):
         payment={
             "id": "abc",
             "status": "COMPLETED",
-            "processing_fee": [{"amount_money": {"amount": -10, "currency": "GBP"}}],
+            "processing_fee": [
+                {"amount_money": {"amount": -10, "currency": "GBP"}}
+            ],
         }
     )
 
@@ -1077,7 +1101,9 @@ def test_square_get_payment(mock_square):
         assert SquareOnline.get_payment("abc") == Payment(
             id="abc",
             status="COMPLETED",
-            processing_fee=[{"amount_money": {"amount": -10, "currency": "GBP"}}],
+            processing_fee=[
+                {"amount_money": {"amount": -10, "currency": "GBP"}}
+            ],
         )
 
 

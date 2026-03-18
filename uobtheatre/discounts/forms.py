@@ -1,4 +1,8 @@
-from uobtheatre.discounts.models import ConcessionType, Discount, DiscountRequirement
+from uobtheatre.discounts.models import (
+    ConcessionType,
+    Discount,
+    DiscountRequirement,
+)
 from uobtheatre.utils.forms import MutationForm, ValidationError
 
 

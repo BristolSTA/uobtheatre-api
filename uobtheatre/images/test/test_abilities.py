@@ -17,10 +17,14 @@ from uobtheatre.users.test.factories import UserFactory
         (True, True, True),
     ],
 )
-def test_image_upload_ability(can_add_production, can_edit_production, expected):
+def test_image_upload_ability(
+    can_add_production, can_edit_production, expected
+):
     user = UserFactory()
 
     with patch.object(
         AddProduction, "user_has", return_value=can_add_production
-    ), patch.object(EditProduction, "user_has", return_value=can_edit_production):
+    ), patch.object(
+        EditProduction, "user_has", return_value=can_edit_production
+    ):
         assert UploadImage.user_has(user) is expected

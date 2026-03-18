@@ -9,7 +9,10 @@ from uobtheatre.images.test.factories import ImageFactory
 from uobtheatre.payments import transaction_providers
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.test.factories import TransactionFactory
-from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
+from uobtheatre.productions.test.factories import (
+    PerformanceFactory,
+    ProductionFactory,
+)
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.venues.test.factories import AddressFactory, VenueFactory
 
@@ -19,14 +22,20 @@ CONF_CLOSER = "Please remember that accessibility information is sensitive and s
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "with_payment, provider_transaction_id, with_image",
-    [(True, "SQUARE_PAYMENT_ID", True), (True, None, False), (False, None, True)],
+    [
+        (True, "SQUARE_PAYMENT_ID", True),
+        (True, None, False),
+        (False, None, True),
+    ],
 )
 def test_send_confirmation_email(
     mailoutbox, with_payment, provider_transaction_id, with_image
 ):
     image = ImageFactory() if with_image else None
     production = ProductionFactory(name="Legally Ginger", featured_image=image)
-    venue = VenueFactory(address=AddressFactory(latitude=51.4, longitude=-2.61))
+    venue = VenueFactory(
+        address=AddressFactory(latitude=51.4, longitude=-2.61)
+    )
     performance = PerformanceFactory(
         venue=venue,
         doors_open=datetime.datetime(
@@ -72,10 +81,14 @@ def test_send_confirmation_email(
     assert email.subject == "Your booking is confirmed!"
     assert "View Booking (https://example.com/user/booking/abc" in email.body
     assert (
-        "View Tickets (https://example.com%s" % booking.web_tickets_path in email.body
+        "View Tickets (https://example.com%s" % booking.web_tickets_path
+        in email.body
     )
     assert "Legally Ginger" in email.body
-    assert "opens at 04 November 2021 18:15 GMT for a 19:15 GMT start" in email.body
+    assert (
+        "opens at 04 November 2021 18:15 GMT for a 19:15 GMT start"
+        in email.body
+    )
     if with_payment:
         assert "Payment Information" in email.body
         assert "10.00 GBP" in email.body
@@ -91,7 +104,9 @@ def test_send_confirmation_email(
 @pytest.mark.django_db
 def test_send_confirmation_email_for_anonymous(mailoutbox):
     production = ProductionFactory(name="Legally Ginger")
-    venue = VenueFactory(address=AddressFactory(latitude=51.4, longitude=-2.61))
+    venue = VenueFactory(
+        address=AddressFactory(latitude=51.4, longitude=-2.61)
+    )
     performance = PerformanceFactory(
         doors_open=datetime.datetime(
             day=20,
@@ -123,12 +138,18 @@ def test_send_confirmation_email_for_anonymous(mailoutbox):
     assert len(mailoutbox) == 1
     email = mailoutbox[0]
     assert email.subject == "Your booking is confirmed!"
-    assert "View Booking (https://example.com/user/booking/abc" not in email.body
     assert (
-        "View Tickets (https://example.com%s" % booking.web_tickets_path in email.body
+        "View Booking (https://example.com/user/booking/abc" not in email.body
+    )
+    assert (
+        "View Tickets (https://example.com%s" % booking.web_tickets_path
+        in email.body
     )
     assert "Legally Ginger" in email.body
-    assert "opens at 20 October 2021 19:15 BST for a 20:15 BST start" in email.body
+    assert (
+        "opens at 20 October 2021 19:15 BST for a 20:15 BST start"
+        in email.body
+    )
     assert "reference (abc)" in email.body
 
 
@@ -153,7 +174,8 @@ def test_send_booking_accessibility_info_email(mailoutbox):
     assert mailoutbox[1].to == ["user1@example.org"]
     mail = mailoutbox[0]
     assert (
-        mail.subject == f"Accessibility alert for {booking.performance.production.name}"
+        mail.subject
+        == f"Accessibility alert for {booking.performance.production.name}"
     )
     assert "Some details about accessibility concerns" not in mail.body
     assert "added" in mail.body
@@ -180,7 +202,8 @@ def test_send_booking_accessibility_removed_info_email(mailoutbox):
     assert mailoutbox[1].to == ["user1@example.org"]
     mail = mailoutbox[0]
     assert (
-        mail.subject == f"Accessibility alert for {booking.performance.production.name}"
+        mail.subject
+        == f"Accessibility alert for {booking.performance.production.name}"
     )
     assert previous_accessibility_info not in mail.body
     assert "removed" in mail.body
@@ -209,7 +232,8 @@ def test_send_booking_accessibility_updated_info_email(mailoutbox):
     assert mailoutbox[1].to == ["user1@example.org"]
     mail = mailoutbox[0]
     assert (
-        mail.subject == f"Accessibility alert for {booking.performance.production.name}"
+        mail.subject
+        == f"Accessibility alert for {booking.performance.production.name}"
     )
     assert "Some further details about accessibility concerns" not in mail.body
     assert previous_accessibility_info not in mail.body

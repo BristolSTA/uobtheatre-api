@@ -48,7 +48,8 @@ def test_payment_url():
         provider_name=SquareOnline.name, provider_transaction_id="abc"
     )
     assert (
-        payment.url() == "https://squareupsandbox.com/dashboard/sales/transactions/abc"
+        payment.url()
+        == "https://squareupsandbox.com/dashboard/sales/transactions/abc"
     )
 
 
@@ -92,7 +93,9 @@ def test_update_payment_from_square(mock_square):
         }
     )
 
-    with mock_square(SquareOnline.client.payments, "get", response=mock_response):
+    with mock_square(
+        SquareOnline.client.payments, "get", response=mock_response
+    ):
         payment.sync_transaction_with_provider()
 
     payment.refresh_from_db()
@@ -114,7 +117,9 @@ def test_update_payment_from_square_no_provider_id(mock_square):
 
 @pytest.mark.django_db
 def test_update_payment_from_square_no_processing_fee(mock_square):
-    payment = TransactionFactory(provider_fee=None, provider_transaction_id="abc")
+    payment = TransactionFactory(
+        provider_fee=None, provider_transaction_id="abc"
+    )
 
     mock_response = GetPaymentResponse(
         payment={
@@ -191,7 +196,8 @@ def test_cant_be_refunded_when_not_completed(status):
     with pytest.raises(CantBeRefundedException) as exception:
         transaction.can_be_refunded(raises=True)
     assert (
-        exception.value.message == f"A {status.label.lower()} payment can't be refunded"
+        exception.value.message
+        == f"A {status.label.lower()} payment can't be refunded"
     )
 
 
@@ -228,7 +234,9 @@ def test_cant_be_refunded_when_invalid_refund_provider():
             exception.value.message
             == "Cannot use refund provider refund_provider_name with a payment_provider_name payment"
         )
-        payment_method.is_valid_refund_provider.assert_called_with(refund_provider)
+        payment_method.is_valid_refund_provider.assert_called_with(
+            refund_provider
+        )
 
 
 @pytest.mark.django_db
@@ -243,7 +251,9 @@ def test_can_be_refunded_when_valid_refund_provider():
     ):
         payment_method.is_valid_refund_provider = MagicMock(return_value=True)
         transaction.can_be_refunded(refund_provider, raises=True)
-        payment_method.is_valid_refund_provider.assert_called_with(refund_provider)
+        payment_method.is_valid_refund_provider.assert_called_with(
+            refund_provider
+        )
 
 
 @pytest.mark.django_db
@@ -273,7 +283,10 @@ def test_cant_be_refunded_if_provider_not_refundable():
         assert transaction.can_be_refunded() is False
         with pytest.raises(CantBeRefundedException) as exception:
             transaction.can_be_refunded(raises=True)
-        assert exception.value.message == "A SQUARE_ONLINE payment can't be refunded"
+        assert (
+            exception.value.message
+            == "A SQUARE_ONLINE payment can't be refunded"
+        )
 
 
 @pytest.mark.django_db
@@ -292,7 +305,9 @@ def test_can_be_refunded():
 
     with mock.patch(
         "uobtheatre.payments.models.Transaction.provider",
-        new_callable=PropertyMock(return_value=mock_payment_method(is_refundable=True)),
+        new_callable=PropertyMock(
+            return_value=mock_payment_method(is_refundable=True)
+        ),
     ):
         assert transaction.can_be_refunded() is True
         assert transaction.can_be_refunded(raises=True) is True
@@ -317,7 +332,9 @@ def test_refund_payment_with_provider():
             is_refundable=True,
             automatic_refund_provider=default_refund_method,
         )
-        payment.refund(refund_provider=refund_method, preserve_provider_fees=False)
+        payment.refund(
+            refund_provider=refund_method, preserve_provider_fees=False
+        )
 
         # Assert we check it can be refunded
         can_be_refunded_mock.assert_called_once_with(
@@ -325,7 +342,9 @@ def test_refund_payment_with_provider():
         )
 
         # Assert the refund method on the correct provider is called
-        refund_method.refund.assert_called_once_with(payment, custom_refund_amount=None)
+        refund_method.refund.assert_called_once_with(
+            payment, custom_refund_amount=None
+        )
         default_refund_method.refund.assert_not_called()
 
 
@@ -346,8 +365,12 @@ def test_refund_payment_with_default_provider():
         payment.refund(preserve_provider_fees=False)
 
         # Assert we check it can be refunded
-        can_be_refunded_mock.assert_called_once_with(refund_provider=None, raises=True)
-        refund_method.refund.assert_called_once_with(payment, custom_refund_amount=None)
+        can_be_refunded_mock.assert_called_once_with(
+            refund_provider=None, raises=True
+        )
+        refund_method.refund.assert_called_once_with(
+            payment, custom_refund_amount=None
+        )
 
 
 @pytest.mark.django_db
@@ -356,7 +379,9 @@ def test_refund_payment_with_no_auto_refund_method():
     with mock.patch(
         "uobtheatre.payments.models.Transaction.provider",
         new_callable=PropertyMock,
-    ) as p_mock, mock.patch.object(payment, "can_be_refunded", return_value=True):
+    ) as p_mock, mock.patch.object(
+        payment, "can_be_refunded", return_value=True
+    ):
         p_mock.return_value = mock_payment_method(
             is_refundable=True, automatic_refund_provider=None
         )
@@ -364,7 +389,10 @@ def test_refund_payment_with_no_auto_refund_method():
         with pytest.raises(CantBeRefundedException) as exc:
             payment.refund()
 
-        assert exc.value.message == "A abc payment cannot be automatically refunded"
+        assert (
+            exc.value.message
+            == "A abc payment cannot be automatically refunded"
+        )
 
 
 @pytest.mark.django_db
@@ -386,7 +414,9 @@ def test_refund_payment_with_provider_preserve_provider_fees():
             is_refundable=True,
             automatic_refund_provider=default_refund_method,
         )
-        payment.refund(refund_provider=refund_method, preserve_provider_fees=True)
+        payment.refund(
+            refund_provider=refund_method, preserve_provider_fees=True
+        )
 
         # Assert we check it can be refunded
         can_be_refunded_mock.assert_called_once_with(

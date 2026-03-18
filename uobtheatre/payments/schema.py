@@ -105,7 +105,9 @@ class Query(graphene.ObjectType):
             return None
 
         if include_all or payment_provider == SquarePOS.name:
-            status = None if paired is None else "PAIRED" if paired else "UNPAIRED"
+            status = (
+                None if paired is None else "PAIRED" if paired else "UNPAIRED"
+            )
 
             devices.extend(
                 [

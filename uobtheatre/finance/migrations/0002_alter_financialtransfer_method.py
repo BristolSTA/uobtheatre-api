@@ -14,7 +14,8 @@ class Migration(migrations.Migration):
             model_name="financialtransfer",
             name="method",
             field=models.CharField(
-                choices=[("INTERNAL", "Internal"), ("BACS", "BACS")], max_length=40
+                choices=[("INTERNAL", "Internal"), ("BACS", "BACS")],
+                max_length=40,
             ),
         ),
     ]

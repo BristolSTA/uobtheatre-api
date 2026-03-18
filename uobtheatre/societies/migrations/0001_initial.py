@@ -32,7 +32,10 @@ class Migration(migrations.Migration):
                 (
                     "slug",
                     autoslug.fields.AutoSlugField(
-                        blank=True, editable=False, populate_from="name", unique=True
+                        blank=True,
+                        editable=False,
+                        populate_from="name",
+                        unique=True,
                     ),
                 ),
                 (

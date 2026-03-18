@@ -32,7 +32,9 @@ class ExceptionMiddleware:  # pragma: no cover
         capture_exception(exc)
         raise exc
 
-    def resolve(self, next, root, info, **kwargs):  # pylint: disable=redefined-builtin
+    def resolve(
+        self, next, root, info, **kwargs
+    ):  # pylint: disable=redefined-builtin
         return next(root, info, **kwargs)
 
 
@@ -92,7 +94,9 @@ class AuthOutput(MutationResult):
             ]
             return non_field_errors + field_errors
 
-        raise Exception("Internal error")  # pylint: disable=broad-exception-raised
+        raise Exception(  # pylint: disable=broad-exception-raised
+            "Internal error"
+        )
 
 
 class MutationException(Exception):
@@ -140,7 +144,9 @@ class GQLExceptions(MutationException):
     Many GQL errors
     """
 
-    def __init__(self, exceptions: Optional[Iterable[MutationException]] = None):
+    def __init__(
+        self, exceptions: Optional[Iterable[MutationException]] = None
+    ):
         super().__init__()
         self.exceptions = list(exceptions) if exceptions else []
 
@@ -182,13 +188,16 @@ class SquareException(GQLException):
             "PAYMENT_METHOD_ERROR",
         ]
         error = (
-            api_error.errors[0] if api_error.errors and len(api_error.errors) else None
+            api_error.errors[0]
+            if api_error.errors and len(api_error.errors)
+            else None
         )
         message = (
             (
                 error.detail
                 if error.category in passthrough_error_categories
-                else "There was an issue processing your payment (%s)" % error.code
+                else "There was an issue processing your payment (%s)"
+                % error.code
             )
             if error
             else api_error.body
@@ -208,8 +217,14 @@ class BadRequestException(GQLException):
 
 
 class AuthorizationException(GQLException):
+    """
+    An exception for when a user is authenticated but doesn't have permission
+    """
+
     def __init__(
-        self, message="You are not authorized to perform this action", field=None
+        self,
+        message="You are not authorized to perform this action",
+        field=None,
     ):
         super().__init__(message=message, code=403, field=field)
 

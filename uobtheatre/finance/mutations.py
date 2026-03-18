@@ -21,7 +21,9 @@ class RecordFinancialTransfer(AuthRequiredMixin, SafeMutation):
         society_id = IdInputField(required=True)
         value = graphene.Int(required=True)
         method = graphene.Argument(
-            graphene.Enum("TransferMethodEnum", FinancialTransfer.Method.choices),
+            graphene.Enum(
+                "TransferMethodEnum", FinancialTransfer.Method.choices
+            ),
             required=True,
         )
         reason = graphene.String(required=False)

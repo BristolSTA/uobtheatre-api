@@ -95,7 +95,9 @@ class GenerateReport(AuthRequiredMixin, SafeMutation):
                 )
             # And that end time is after start time
             if end_time <= start_time:
-                raise GQLException(message="The end time must be after the start time")
+                raise GQLException(
+                    message="The end time must be after the start time"
+                )
             options.append({"name": "start_time", "value": str(start_time)})
             options.append({"name": "end_time", "value": str(end_time)})
 
@@ -106,7 +108,9 @@ class GenerateReport(AuthRequiredMixin, SafeMutation):
         matching_report["cls"].authorize_user(info.context.user, options)  # type: ignore
 
         # Generate signature to authorize user to access
-        signature = generate_report_download_signature(info.context.user, name, options)
+        signature = generate_report_download_signature(
+            info.context.user, name, options
+        )
         try:
             download_uri = reverse(
                 str(matching_report["uri"]),
@@ -118,7 +122,10 @@ class GenerateReport(AuthRequiredMixin, SafeMutation):
             )
 
         return GenerateReport(
-            download_uri=settings.BASE_URL + download_uri + "?signature=" + signature,
+            download_uri=settings.BASE_URL
+            + download_uri
+            + "?signature="
+            + signature,
             report=matching_report["cls"](options),  # type: ignore
         )
 

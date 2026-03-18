@@ -6,7 +6,11 @@ from django.contrib.contenttypes.models import ContentType
 
 from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.payments.exceptions import CantBeRefundedException
-from uobtheatre.payments.tasks import RefundTask, refund_payable, refund_payment
+from uobtheatre.payments.tasks import (
+    RefundTask,
+    refund_payable,
+    refund_payment,
+)
 from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.productions.test.factories import ProductionFactory
 from uobtheatre.users.test.factories import UserFactory
@@ -31,13 +35,17 @@ def test_base_refund_task_on_failure(exception, makes_skipped):
         super_mock.assert_not_called()
     else:
         update_state_mock.assert_not_called()
-        super_mock.assert_called_once_with(exception, "1234", tuple(), {}, None)
+        super_mock.assert_called_once_with(
+            exception, "1234", tuple(), {}, None
+        )
 
 
 @pytest.mark.django_db
 def test_refund_payment_task():
     transaction = TransactionFactory(id=123)
-    with patch("uobtheatre.payments.models.Transaction.refund", autospec=True) as mock:
+    with patch(
+        "uobtheatre.payments.models.Transaction.refund", autospec=True
+    ) as mock:
         refund_payment(123)
     mock.assert_called_once_with(
         transaction, preserve_provider_fees=True, preserve_app_fees=False
@@ -57,7 +65,9 @@ def test_refund_payment_task():
 def test_refund_payable_task(preserve_provider_fees, preserve_app_fees):
     booking = BookingFactory(id=123)
     auth_user = UserFactory()
-    with patch("uobtheatre.bookings.models.Booking.refund", autospec=True) as mock:
+    with patch(
+        "uobtheatre.bookings.models.Booking.refund", autospec=True
+    ) as mock:
         refund_payable(
             123,
             booking.content_type.pk,

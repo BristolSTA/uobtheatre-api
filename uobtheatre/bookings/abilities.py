@@ -14,7 +14,9 @@ class ModifyBooking(Ability):
         # Must be in progress, and the user must own the booking or be able to box office for the performance of the booking
         return obj.status == Payable.Status.IN_PROGRESS and (
             obj.user.id == user.id
-            or user.has_perm("productions.boxoffice", obj.performance.production)
+            or user.has_perm(
+                "productions.boxoffice", obj.performance.production
+            )
         )
 
 

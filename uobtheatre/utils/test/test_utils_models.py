@@ -51,7 +51,9 @@ def test_base_clone():
     ],
 )
 def test_base_name(model_type, expected_name):
-    assert model_type._node_name == expected_name  # pylint: disable=protected-access
+    assert (  # pylint: disable=protected-access
+        model_type._node_name == expected_name
+    )
 
 
 @pytest.mark.django_db

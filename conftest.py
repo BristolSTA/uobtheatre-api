@@ -31,7 +31,9 @@ class AuthenticateableGQLClient(GQLClient):
     Graphql client which can be logged in and out.
     """
 
-    def __init__(self, schema, format_error=None, user=None, **execute_options):
+    def __init__(
+        self, schema, format_error=None, user=None, **execute_options
+    ):
         self.request_factory = RequestFactory().get("/")
         self.request_factory.user = user if user else AnonymousUser()
         super().__init__(schema, format_error, **execute_options)
@@ -58,7 +60,9 @@ class AuthenticateableGQLClient(GQLClient):
 
     def execute(self, query, variable_values=None):
         return super().execute(
-            query, context_value=self.request_factory, variable_values=variable_values
+            query,
+            context_value=self.request_factory,
+            variable_values=variable_values,
         )
 
 

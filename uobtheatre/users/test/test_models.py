@@ -126,9 +126,24 @@ def test_user_get_global_permissions_superuser():
 @pytest.mark.parametrize(
     "global_perms,object_perms,query_perms,expected",
     [
-        (["productions.approve_production"], [], ["productions.add_production"], False),
-        (["productions.approve_production"], [], "productions.add_production", False),
-        (["productions.approve_production"], [], "societies.add_production", False),
+        (
+            ["productions.approve_production"],
+            [],
+            ["productions.add_production"],
+            False,
+        ),
+        (
+            ["productions.approve_production"],
+            [],
+            "productions.add_production",
+            False,
+        ),
+        (
+            ["productions.approve_production"],
+            [],
+            "societies.add_production",
+            False,
+        ),
         (["societies.add_production"], [], "societies.add_production", True),
         (
             ["productions.approve_production"],
@@ -148,8 +163,18 @@ def test_user_get_global_permissions_superuser():
             ["productions.approve_production", "productions.add_production"],
             True,
         ),
-        ([], ["productions.add_production"], ["productions.approve_production"], False),
-        ([], ["productions.add_production"], ["productions.add_production"], True),
+        (
+            [],
+            ["productions.add_production"],
+            ["productions.approve_production"],
+            False,
+        ),
+        (
+            [],
+            ["productions.add_production"],
+            ["productions.add_production"],
+            True,
+        ),
         (
             [],
             ["productions.add_production"],

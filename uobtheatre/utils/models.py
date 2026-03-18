@@ -80,7 +80,9 @@ class PermissionableModel(models.Model):
         """Returns a list of PermissionNodes, with details of name, description and whether the user provided is able to assign this permission"""
         from uobtheatre.utils.schema import PermissionNode
 
-        assignable_permissions = self.PermissionsMeta.schema_assignable_permissions
+        assignable_permissions = (
+            self.PermissionsMeta.schema_assignable_permissions
+        )
 
         available_perms = Permission.objects.filter(
             content_type=ContentType.objects.get_for_model(self),
@@ -93,7 +95,9 @@ class PermissionableModel(models.Model):
                 user_can_assign=(
                     any(
                         user.has_perm(permission, self)
-                        for permission in assignable_permissions[permission.codename]
+                        for permission in assignable_permissions[
+                            permission.codename
+                        ]
                     )
                     if permission.codename in assignable_permissions
                     else False

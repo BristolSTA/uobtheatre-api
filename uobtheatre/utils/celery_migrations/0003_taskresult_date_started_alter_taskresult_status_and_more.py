@@ -33,7 +33,8 @@ class Migration(migrations.Migration):
         migrations.AddIndex(
             model_name="taskresult",
             index=models.Index(
-                fields=["periodic_task_name"], name="django_cele_periodi_1993cf_idx"
+                fields=["periodic_task_name"],
+                name="django_cele_periodi_1993cf_idx",
             ),
         ),
     ]

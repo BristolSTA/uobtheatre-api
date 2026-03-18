@@ -48,7 +48,9 @@ class TurnstileMixin(graphene.Mutation):
 
     @classmethod
     def Field(cls, *args, **kwargs):
-        cls._meta.arguments.update({"turnstile_token": graphene.String(required=True)})
+        cls._meta.arguments.update(
+            {"turnstile_token": graphene.String(required=True)}
+        )
         return super().Field(*args, **kwargs)
 
     @classmethod
@@ -93,12 +95,16 @@ class AuthMutation(graphene.ObjectType):
     resend_activation_email = mutations.ResendActivationEmail.Field()
     send_password_reset_email = mutations.SendPasswordResetEmail.Field()
     password_reset = mutations.PasswordReset.Field()
-    password_set = mutations.PasswordSet.Field()  # For passwordless registration
+    password_set = (
+        mutations.PasswordSet.Field()
+    )  # For passwordless registration
     password_change = mutations.PasswordChange.Field()
     update_account = mutations.UpdateAccount.Field()
     archive_account = mutations.ArchiveAccount.Field()
     delete_account = mutations.DeleteAccount.Field()
-    send_secondary_email_activation = mutations.SendSecondaryEmailActivation.Field()
+    send_secondary_email_activation = (
+        mutations.SendSecondaryEmailActivation.Field()
+    )
     verify_secondary_email = mutations.VerifySecondaryEmail.Field()
     swap_emails = mutations.SwapEmails.Field()
     remove_secondary_email = mutations.RemoveSecondaryEmail.Field()

@@ -144,7 +144,10 @@ class CrewMember(models.Model):
 
     name = models.CharField(max_length=255)
     role = models.ForeignKey(
-        CrewRole, null=True, on_delete=models.SET_NULL, related_name="crew_members"
+        CrewRole,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="crew_members",
     )
     production = models.ForeignKey(
         "productions.Production",
@@ -229,7 +232,10 @@ class PerformanceQuerySet(QuerySet):
             QuerySet: The filtered queryset
         """
         production_with_perm: QuerySet[Production] = get_objects_for_user(
-            user, "productions.boxoffice", accept_global_perms=True, with_superuser=True
+            user,
+            "productions.boxoffice",
+            accept_global_perms=True,
+            with_superuser=True,
         )
         if has_permission:
             return self.filter(production__in=production_with_perm)
@@ -328,7 +334,9 @@ class Performance(
     start = models.DateTimeField(null=True)
     end = models.DateTimeField(null=True)
     interval_duration_mins = models.IntegerField(
-        null=True, blank=True, validators=[MinValueValidator(1), MaxValueValidator(120)]
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(120)],
     )
 
     description = models.TextField(null=True, blank=True)
@@ -453,7 +461,9 @@ class Performance(
             int: The remaining capacity of the show (or SeatGroup if provided)
         """
         seat_groups_remaining_capacity = sum(
-            self.seat_group_capacity_remaining(performance_seat_group.seat_group)
+            self.seat_group_capacity_remaining(
+                performance_seat_group.seat_group
+            )
             for performance_seat_group in self.performance_seat_groups.all()
         )
 
@@ -625,12 +635,14 @@ class Performance(
             int: The price of the cheapest seat in the performance
             (includes discounted seat options).
         """
-        max_discount_percentage = max(self.single_discounts_map.values(), default=0)
+        max_discount_percentage = max(
+            self.single_discounts_map.values(), default=0
+        )
 
         if (
-            min_seat_price := self.performance_seat_groups.aggregate(Min("price"))[
-                "price__min"
-            ]
+            min_seat_price := self.performance_seat_groups.aggregate(
+                Min("price")
+            )["price__min"]
         ) is not None:
             return math.ceil((1 - max_discount_percentage) * min_seat_price)
         return None
@@ -783,7 +795,10 @@ class Performance(
             raise CantBeRefundedException(f"{self} is not set to disabled")
 
         refund_performance.delay(
-            self.pk, authorizing_user.id, preserve_provider_fees, preserve_app_fees
+            self.pk,
+            authorizing_user.id,
+            preserve_provider_fees,
+            preserve_app_fees,
         )
 
     def __str__(self):
@@ -811,7 +826,9 @@ class PerformanceSeatGroup(models.Model):
 
     seat_group = models.ForeignKey(SeatGroup, on_delete=models.RESTRICT)
     performance = models.ForeignKey(
-        Performance, on_delete=models.RESTRICT, related_name="performance_seat_groups"
+        Performance,
+        on_delete=models.RESTRICT,
+        related_name="performance_seat_groups",
     )
     price = models.PositiveIntegerField()
     capacity = models.PositiveSmallIntegerField(blank=True)
@@ -886,7 +903,9 @@ class ProductionQuerySet(QuerySet):
 ProductionManager = models.Manager.from_queryset(ProductionQuerySet)
 
 
-class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseModel):
+class Production(
+    TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseModel
+):
     """The model for a production.
 
     A production is a show (like the 2 weeks things) and can have many
@@ -907,7 +926,10 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
     venues = models.ManyToManyField(Venue, through=Performance, editable=False)
 
     society = models.ForeignKey(
-        Society, on_delete=models.SET_NULL, null=True, related_name="productions"
+        Society,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="productions",
     )
 
     cover_image = models.ForeignKey(
@@ -949,7 +971,10 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
         """The overall status of the production"""
 
         DRAFT = "DRAFT", "Draft"  # Production is in draft
-        PENDING = "PENDING", "Pending"  # Produciton is pending publication/review
+        PENDING = (
+            "PENDING",
+            "Pending",
+        )  # Produciton is pending publication/review
         APPROVED = (
             "APPROVED",
             "Approved",
@@ -987,7 +1012,9 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
 
     production_alert = models.TextField(null=True, blank=True)
 
-    slug = AutoSlugField(populate_from="name", unique=True, blank=True, editable=True)
+    slug = AutoSlugField(
+        populate_from="name", unique=True, blank=True, editable=True
+    )
 
     def __str__(self):
         return str(self.name)
@@ -1011,7 +1038,9 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
         Returns:
             bool: If the booking can be booked.
         """
-        return any(performance.is_bookable for performance in self.performances.all())
+        return any(
+            performance.is_bookable for performance in self.performances.all()
+        )
 
     def end_date(self):
         """When the last Performance of the Production ends.
@@ -1069,14 +1098,16 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
     def total_capacity(self) -> int:
         """The total number of tickets which can be sold across all performances"""
         return sum(
-            performance.total_capacity for performance in self.performances.all()
+            performance.total_capacity
+            for performance in self.performances.all()
         )
 
     @property
     def total_tickets_sold(self) -> int:
         """The total number of tickets sold across all performances"""
         return sum(
-            performance.total_tickets_sold() for performance in self.performances.all()
+            performance.total_tickets_sold()
+            for performance in self.performances.all()
         )
 
     def sales_breakdown(self, breakdowns: Optional[list[str]] = None):
@@ -1092,7 +1123,10 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
             ("boxoffice", "Can use box office for production"),
             ("sales", "Can view sales for production"),
             ("force_change_production", "Can change production once live"),
-            ("view_bookings", "Can inspect bookings and users for this production"),
+            (
+                "view_bookings",
+                "Can inspect bookings and users for this production",
+            ),
             ("approve_production", "Can approve production"),
             ("comp_tickets", "Can issue complimentary tickets"),
             (
@@ -1104,9 +1138,15 @@ class Production(TimeStampedMixin, PermissionableModel, AbilitiesMixin, BaseMode
     class PermissionsMeta:
         schema_assignable_permissions = {
             "boxoffice": ("change_production", "force_change_production"),
-            "view_production": ("change_production", "force_change_production"),
+            "view_production": (
+                "change_production",
+                "force_change_production",
+            ),
             "view_bookings": ("change_production", "force_change_production"),
-            "change_production": ("change_production", "force_change_production"),
+            "change_production": (
+                "change_production",
+                "force_change_production",
+            ),
             "sales": ("change_production", "force_change_production"),
             "comp_tickets": ("change_production", "force_change_production"),
             "approve_production": ("approve_production"),

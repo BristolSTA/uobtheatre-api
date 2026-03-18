@@ -1,6 +1,10 @@
 from django.contrib import admin
 
-from uobtheatre.discounts.models import ConcessionType, Discount, DiscountRequirement
+from uobtheatre.discounts.models import (
+    ConcessionType,
+    Discount,
+    DiscountRequirement,
+)
 
 admin.site.register(ConcessionType)
 
