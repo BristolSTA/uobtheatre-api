@@ -51,7 +51,9 @@ class BookingMutation(SafeFormMutation, AuthRequiredMixin):
     def authorize_request(cls, root, info, **inputs):
         super().authorize_request(root, info, **inputs)
 
-        new_performance = cls.get_python_value(root, info, inputs, "performance")
+        new_performance = cls.get_python_value(
+            root, info, inputs, "performance"
+        )
         current_instance = cls.get_object_instance(root, info, **inputs)
 
         target_performance = new_performance or current_instance.performance
@@ -83,7 +85,8 @@ class BookingMutation(SafeFormMutation, AuthRequiredMixin):
                 (
                     "admin_discount_percentage" in inputs
                     and info.context.user.has_perm(
-                        "productions.comp_tickets", target_performance.production
+                        "productions.comp_tickets",
+                        target_performance.production,
                     )
                 )  # The ticket is a comp ticket and the user has the permission to issue it
                 or (
@@ -103,7 +106,9 @@ class BookingMutation(SafeFormMutation, AuthRequiredMixin):
     def authorize_performance(cls, info, target_performance):
         """Authorize the performance given"""
         # Check performance is bookable
-        if not BookForPerformance.user_has_for(info.context.user, target_performance):
+        if not BookForPerformance.user_has_for(
+            info.context.user, target_performance
+        ):
             raise NotBookableException(
                 message="You do not have permission to book for this performance",
             )
@@ -286,7 +291,9 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
 
         # Booking must have at least one ticket
         if booking.tickets.count() == 0:
-            raise GQLException(message="The booking must have at least one ticket")
+            raise GQLException(
+                message="The booking must have at least one ticket"
+            )
 
         # If the booking is free, we don't care about the payment provider. Otherwise, we do
         if booking.total == 0:
@@ -354,7 +361,9 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
         GQLExceptions: If at least one ticket check in was unsuccessful
     """
 
-    performance = graphene.Field("uobtheatre.productions.schema.PerformanceNode")
+    performance = graphene.Field(
+        "uobtheatre.productions.schema.PerformanceNode"
+    )
     booking = graphene.Field(BookingNode)
 
     class Arguments:
@@ -363,7 +372,9 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
         tickets = graphene.List(TicketIDInput, required=True)
 
     @classmethod
-    def resolve_mutation(cls, _, info, booking_reference, tickets, performance):
+    def resolve_mutation(
+        cls, _, info, booking_reference, tickets, performance
+    ):
         performance = Performance.objects.get(id=performance)
         booking = Booking.objects.get(reference=booking_reference)
 
@@ -407,12 +418,16 @@ class CheckInBooking(AuthRequiredMixin, SafeMutation):
                 ]
             )
 
-        tickets_checked_in = [ticket for ticket in ticket_objects if ticket.checked_in]
+        tickets_checked_in = [
+            ticket for ticket in ticket_objects if ticket.checked_in
+        ]
 
         if tickets_checked_in:
             raise GQLExceptions(
                 exceptions=[
-                    GQLException(message=f"Ticket {ticket.id} is already checked in")
+                    GQLException(
+                        message=f"Ticket {ticket.id} is already checked in"
+                    )
                     for ticket in tickets_checked_in
                 ]
             )
@@ -442,7 +457,9 @@ class UnCheckInBooking(AuthRequiredMixin, SafeMutation):
         GQLException: If the un-check in was unsuccessful
     """
 
-    performance = graphene.Field("uobtheatre.productions.schema.PerformanceNode")
+    performance = graphene.Field(
+        "uobtheatre.productions.schema.PerformanceNode"
+    )
     booking = graphene.Field(BookingNode)
 
     class Arguments:
@@ -451,7 +468,9 @@ class UnCheckInBooking(AuthRequiredMixin, SafeMutation):
         tickets = graphene.List(TicketIDInput, required=True)
 
     @classmethod
-    def resolve_mutation(cls, _, info, booking_reference, tickets, performance):
+    def resolve_mutation(
+        cls, _, info, booking_reference, tickets, performance
+    ):
         performance = Performance.objects.get(id=performance)
         booking = Booking.objects.get(reference=booking_reference)
 
@@ -489,7 +508,9 @@ class UnCheckInBooking(AuthRequiredMixin, SafeMutation):
                 ]
             )
 
-        tickets_checked_in = [ticket for ticket in ticket_objects if ticket.checked_in]
+        tickets_checked_in = [
+            ticket for ticket in ticket_objects if ticket.checked_in
+        ]
 
         if not tickets_checked_in:
             raise BadRequestException(

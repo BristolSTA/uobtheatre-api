@@ -42,7 +42,15 @@ class UserAdmin(DjangoUserAdmin):
     add_fieldsets = (
         (
             "Personal info",
-            {"fields": ("first_name", "last_name", "email", "password1", "password2")},
+            {
+                "fields": (
+                    "first_name",
+                    "last_name",
+                    "email",
+                    "password1",
+                    "password2",
+                )
+            },
         ),
         ("Important dates", {"fields": ("last_login", "date_joined")}),
         (

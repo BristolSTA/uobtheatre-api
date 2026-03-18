@@ -22,7 +22,10 @@ from uobtheatre.discounts.test.factories import (
     DiscountRequirementFactory,
 )
 from uobtheatre.payments.payables import Payable
-from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
+from uobtheatre.productions.test.factories import (
+    PerformanceFactory,
+    ProductionFactory,
+)
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory
 
@@ -73,7 +76,9 @@ def test_tickets_schema(gql_client):
         """
 
     assign_perm(
-        "productions.boxoffice", gql_client.user, booking.performance.production
+        "productions.boxoffice",
+        gql_client.user,
+        booking.performance.production,
     )
 
     response = gql_client.execute(request_query)
@@ -136,7 +141,10 @@ def test_tickets_schema(gql_client):
     gql_client.logout()
     response = gql_client.execute(request_query)
     assert (
-        response["data"]["performances"]["edges"][0]["node"]["bookings"]["edges"] == []
+        response["data"]["performances"]["edges"][0]["node"]["bookings"][
+            "edges"
+        ]
+        == []
     )
 
 
@@ -173,18 +181,20 @@ def test_ticket_checked_in_by_perm(gql_client):
       """
     response = gql_client.execute(request)
     assert (
-        response["data"]["performances"]["edges"][0]["node"]["bookings"]["edges"][0][
-            "node"
-        ]["tickets"][0]["checkedInBy"]
+        response["data"]["performances"]["edges"][0]["node"]["bookings"][
+            "edges"
+        ][0]["node"]["tickets"][0]["checkedInBy"]
         is None
     )
 
     assign_perm("productions.boxoffice", user, booking.performance.production)
 
     response = gql_client.execute(request)
-    assert response["data"]["performances"]["edges"][0]["node"]["bookings"]["edges"][0][
-        "node"
-    ]["tickets"][0]["checkedInBy"] == {"id": to_global_id("UserNode", check_in_user.id)}
+    assert response["data"]["performances"]["edges"][0]["node"]["bookings"][
+        "edges"
+    ][0]["node"]["tickets"][0]["checkedInBy"] == {
+        "id": to_global_id("UserNode", check_in_user.id)
+    }
 
 
 @pytest.mark.django_db
@@ -246,18 +256,25 @@ def test_bookings_schema(gql_client):
                                 "createdAt": booking.created_at.isoformat(),
                                 "updatedAt": booking.updated_at.isoformat(),
                                 "tickets": [
-                                    {"id": to_global_id("TicketNode", ticket.id)}
+                                    {
+                                        "id": to_global_id(
+                                            "TicketNode", ticket.id
+                                        )
+                                    }
                                     for ticket in tickets
                                 ],
                                 "reference": str(booking.reference),
                                 "performance": {
                                     "id": to_global_id(
-                                        "PerformanceNode", booking.performance.id
+                                        "PerformanceNode",
+                                        booking.performance.id,
                                     )
                                 },
                                 "status": "IN_PROGRESS",
                                 "user": {
-                                    "id": to_global_id("UserNode", booking.user.id)
+                                    "id": to_global_id(
+                                        "UserNode", booking.user.id
+                                    )
                                 },
                                 "salesBreakdown": {
                                     "totalPayments": booking.sales_breakdown.total_payments,
@@ -280,7 +297,9 @@ def test_bookings_schema(gql_client):
 )
 def test_booking_expires_at(gql_client, expired):
     gql_client.login()
-    booking = BookingFactory(status=Payable.Status.IN_PROGRESS, user=gql_client.user)
+    booking = BookingFactory(
+        status=Payable.Status.IN_PROGRESS, user=gql_client.user
+    )
     if expired:
         booking.expires_at = timezone.now() - datetime.timedelta(minutes=30)
         booking.save()
@@ -305,13 +324,19 @@ def test_booking_expires_at(gql_client, expired):
     )
 
     assert (
-        response["data"]["me"]["bookings"]["edges"][0]["node"]["expiresAt"] is not None
+        response["data"]["me"]["bookings"]["edges"][0]["node"]["expiresAt"]
+        is not None
     )
-    assert response["data"]["me"]["bookings"]["edges"][0]["node"]["expired"] is expired
+    assert (
+        response["data"]["me"]["bookings"]["edges"][0]["node"]["expired"]
+        is expired
+    )
 
 
 @pytest.mark.django_db
-def test_bookings_price_break_down(gql_client):  # pylint: disable=too-many-locals
+def test_bookings_price_break_down(
+    gql_client,
+):  # pylint: disable=too-many-locals
     booking = BookingFactory()
 
     # Create 3 tickets with the same seat group and concession type
@@ -322,7 +347,9 @@ def test_bookings_price_break_down(gql_client):  # pylint: disable=too-many-loca
     concession_type_1 = ConcessionTypeFactory()
     _ = [
         TicketFactory(
-            seat_group=seat_group_1, concession_type=concession_type_1, booking=booking
+            seat_group=seat_group_1,
+            concession_type=concession_type_1,
+            booking=booking,
         )
         for _ in range(3)
     ]
@@ -331,7 +358,9 @@ def test_bookings_price_break_down(gql_client):  # pylint: disable=too-many-loca
     concession_type_2 = ConcessionTypeFactory()
     _ = [
         TicketFactory(
-            seat_group=seat_group_1, concession_type=concession_type_2, booking=booking
+            seat_group=seat_group_1,
+            concession_type=concession_type_2,
+            booking=booking,
         )
         for _ in range(2)
     ]
@@ -343,7 +372,9 @@ def test_bookings_price_break_down(gql_client):  # pylint: disable=too-many-loca
     )
     _ = [
         TicketFactory(
-            seat_group=seat_group_2, concession_type=concession_type_1, booking=booking
+            seat_group=seat_group_2,
+            concession_type=concession_type_1,
+            booking=booking,
         )
         for _ in range(2)
     ]
@@ -427,9 +458,9 @@ def test_bookings_price_break_down(gql_client):  # pylint: disable=too-many-loca
     client.user = booking.user
     response = client.execute(request_query)
 
-    response_booking_price_break_down = response["data"]["me"]["bookings"]["edges"][0][
-        "node"
-    ]["priceBreakdown"]
+    response_booking_price_break_down = response["data"]["me"]["bookings"][
+        "edges"
+    ][0]["node"]["priceBreakdown"]
     assert response_booking_price_break_down.pop("tickets") == [
         {
             "ticketPrice": ticket_group["price"],
@@ -451,7 +482,10 @@ def test_bookings_price_break_down(gql_client):  # pylint: disable=too-many-loca
         for ticket_group in expected_ticket_groups
     ]
 
-    assert response_booking_price_break_down.pop("miscCosts") == misc_cost_expected
+    assert (
+        response_booking_price_break_down.pop("miscCosts")
+        == misc_cost_expected
+    )
 
     assert response_booking_price_break_down == {
         "ticketsPrice": booking.tickets_price(),
@@ -475,8 +509,7 @@ def test_discounts_node(gql_client):
         DiscountRequirementFactory(discount=discount, number=1),
     ]
 
-    response = gql_client.execute(
-        """
+    response = gql_client.execute("""
         {
           performances {
             edges {
@@ -507,8 +540,7 @@ def test_discounts_node(gql_client):
             }
           }
         }
-        """
-    )
+        """)
     assert response == {
         "data": {
             "performances": {
@@ -578,7 +610,9 @@ def test_booking_in_progress(gql_client):
     performance = PerformanceFactory(id=1)
     # Create some completed bookings for the same performance
     _ = [
-        BookingFactory(user=user, performance=performance, status=Payable.Status.PAID)
+        BookingFactory(
+            user=user, performance=performance, status=Payable.Status.PAID
+        )
         for i in range(10)
     ]
     # Create some bookings for dfferent performances
@@ -635,8 +669,7 @@ def test_booking_expired(gql_client, expired):
         user=gql_client.user, status=Payable.Status.IN_PROGRESS
     )
 
-    request = (
-        """
+    request = """
       {
         me {
           bookings(expired: %s) {
@@ -648,14 +681,15 @@ def test_booking_expired(gql_client, expired):
           }
         }
       }
-    """
-        % str(expired).lower()
-    )
+    """ % str(expired).lower()
 
     response = gql_client.execute(request)
     assert len(response["data"]["me"]["bookings"]["edges"]) == 1
-    assert response["data"]["me"]["bookings"]["edges"][0]["node"]["id"] == to_global_id(
-        "BookingNode", expired_booking.id if expired else not_expired_booking.id
+    assert response["data"]["me"]["bookings"]["edges"][0]["node"][
+        "id"
+    ] == to_global_id(
+        "BookingNode",
+        expired_booking.id if expired else not_expired_booking.id,
     )
 
 
@@ -727,7 +761,11 @@ def test_bookings_auth(gql_client):
     # When we are logged in expect 1 booking
     response = gql_client.execute(request_query)
     assert (
-        len(response["data"]["performances"]["edges"][0]["node"]["bookings"]["edges"])
+        len(
+            response["data"]["performances"]["edges"][0]["node"]["bookings"][
+                "edges"
+            ]
+        )
         == 1
     )
 
@@ -735,14 +773,20 @@ def test_bookings_auth(gql_client):
     gql_client.logout()
     response = gql_client.execute(request_query)
     assert (
-        response["data"]["performances"]["edges"][0]["node"]["bookings"]["edges"] == []
+        response["data"]["performances"]["edges"][0]["node"]["bookings"][
+            "edges"
+        ]
+        == []
     )
 
     # When we are logged in as a different user expect 0 booking
     user2 = UserFactory()
     gql_client.user = user2
     assert (
-        response["data"]["performances"]["edges"][0]["node"]["bookings"]["edges"] == []
+        response["data"]["performances"]["edges"][0]["node"]["bookings"][
+            "edges"
+        ]
+        == []
     )
 
 
@@ -759,7 +803,9 @@ def test_bookings_auth(gql_client):
         ("james alex", [1, 2]),
     ],
 )
-def test_bookings_search(search_phrase, expected_filtered_bookings, gql_client):
+def test_bookings_search(
+    search_phrase, expected_filtered_bookings, gql_client
+):
     user_1 = UserFactory(
         first_name="James", last_name="Elgar", email="jameselgar@email.com"
     )
@@ -769,8 +815,7 @@ def test_bookings_search(search_phrase, expected_filtered_bookings, gql_client):
     BookingFactory(id=1, user=user_1, reference="abc123")
     BookingFactory(id=2, user=user_2, reference="abcdef")
 
-    request = (
-        """
+    request = """
         query {
             bookings(search:"%s") {
         	  edges {
@@ -780,9 +825,7 @@ def test_bookings_search(search_phrase, expected_filtered_bookings, gql_client):
         	  }
         	}
         }
-    """
-        % search_phrase
-    )
+    """ % search_phrase
 
     boxoffice_perm = Permission.objects.get(codename="boxoffice")
     gql_client.login().user.user_permissions.add(boxoffice_perm)
@@ -830,8 +873,7 @@ def test_bookings_slug_filter(slug, expected_filtered_bookings, gql_client):
     BookingFactory(id=4, performance=performance_3)  # slug: teeth
     BookingFactory(id=5, performance=performance_4)  # slug: teeth-test
 
-    request = (
-        """
+    request = """
             query {
                 bookings(productionSlug:"%s") {
                   edges {
@@ -841,9 +883,7 @@ def test_bookings_slug_filter(slug, expected_filtered_bookings, gql_client):
                   }
                 }
             }
-        """
-        % slug
-    )
+        """ % slug
 
     boxoffice_perm = Permission.objects.get(codename="boxoffice")
     gql_client.login().user.user_permissions.add(boxoffice_perm)
@@ -885,8 +925,7 @@ def test_bookings_performance_id(
     BookingFactory(id=2, performance=performance_2)  # id: 20
     BookingFactory(id=3, performance=performance_2)  # id: 20
 
-    request = (
-        """
+    request = """
             query {
                 bookings(performanceId:"%s") {
                   edges {
@@ -896,9 +935,7 @@ def test_bookings_performance_id(
                   }
                 }
             }
-        """
-        % performance_id
-    )
+        """ % performance_id
 
     boxoffice_perm = Permission.objects.get(codename="boxoffice")
     gql_client.login().user.user_permissions.add(boxoffice_perm)
@@ -944,8 +981,7 @@ def test_bookings_productions_search(
     BookingFactory(id=2, performance=PerformanceFactory(production=prod2))
     BookingFactory(id=3, performance=PerformanceFactory(production=prod3))
 
-    request = (
-        """
+    request = """
             query {
                 bookings(productionSearch:"%s") {
                   edges {
@@ -955,9 +991,7 @@ def test_bookings_productions_search(
                   }
                 }
             }
-        """
-        % search_phrase
-    )
+        """ % search_phrase
 
     boxoffice_perm = Permission.objects.get(codename="boxoffice")
     gql_client.login().user.user_permissions.add(boxoffice_perm)
@@ -1005,18 +1039,18 @@ def test_bookings_qs(gql_client):
     """
 
     response = gql_client.execute(request)
-    assert {node["node"]["id"] for node in response["data"]["bookings"]["edges"]} == {
-        to_global_id("BookingNode", booking_id) for booking_id in [1, 3]
-    }
+    assert {
+        node["node"]["id"] for node in response["data"]["bookings"]["edges"]
+    } == {to_global_id("BookingNode", booking_id) for booking_id in [1, 3]}
 
     # If the user is a superuser they should be able to access all bookngs
     gql_client.user.is_superuser = True
     gql_client.user.save()
 
     response = gql_client.execute(request)
-    assert {node["node"]["id"] for node in response["data"]["bookings"]["edges"]} == {
-        to_global_id("BookingNode", booking_id) for booking_id in [1, 2, 3]
-    }
+    assert {
+        node["node"]["id"] for node in response["data"]["bookings"]["edges"]
+    } == {to_global_id("BookingNode", booking_id) for booking_id in [1, 2, 3]}
 
 
 @pytest.mark.django_db
@@ -1079,7 +1113,9 @@ def test_booking_filter_checked_in(gql_client):
     "has_accessibility_info",
     [False, True],
 )
-def test_booking_filter_has_accessibility_info(gql_client, has_accessibility_info):
+def test_booking_filter_has_accessibility_info(
+    gql_client, has_accessibility_info
+):
     gql_client.login()
     booking = BookingFactory(user=gql_client.user)
     # Make sure blank strings are treated as no info
@@ -1106,7 +1142,9 @@ def test_booking_filter_has_accessibility_info(gql_client, has_accessibility_inf
     if has_accessibility_info:
         assert len(true_response["data"]["bookings"]["edges"]) == 1
         assert (
-            true_response["data"]["bookings"]["edges"][0]["node"]["accessibilityInfo"]
+            true_response["data"]["bookings"]["edges"][0]["node"][
+                "accessibilityInfo"
+            ]
             == "This is some accessibility info"
         )
         assert len(false_response["data"]["bookings"]["edges"]) == 1
@@ -1129,7 +1167,12 @@ def test_booking_filter_has_accessibility_info(gql_client, has_accessibility_inf
     ],
 )
 def test_can_modify_accessibility_info(
-    gql_client, has_permission, own_booking, in_future, expected_success, can_see_ticket
+    gql_client,
+    has_permission,
+    own_booking,
+    in_future,
+    expected_success,
+    can_see_ticket,
 ):  # pylint: disable=too-many-arguments,too-many-positional-arguments
     gql_client.login()
     now = timezone.now()
@@ -1157,7 +1200,9 @@ def test_can_modify_accessibility_info(
             booking.performance.production,
         )
         assign_perm(
-            "productions.view_bookings", gql_client.user, booking.performance.production
+            "productions.view_bookings",
+            gql_client.user,
+            booking.performance.production,
         )
 
     request_query = """
@@ -1179,7 +1224,9 @@ def test_can_modify_accessibility_info(
     if can_see_ticket:
         assert len(response["data"]["bookings"]["edges"]) == 1
         assert (
-            response["data"]["bookings"]["edges"][0]["node"]["canModifyAccessibility"]
+            response["data"]["bookings"]["edges"][0]["node"][
+                "canModifyAccessibility"
+            ]
             == expected_success
         )
     else:
@@ -1202,7 +1249,9 @@ def test_booking_filter_active(gql_client):
     booking_future = BookingFactory(
         user=gql_client.login().user, performance=performance_future
     )
-    booking_past = BookingFactory(user=gql_client.user, performance=performance_past)
+    booking_past = BookingFactory(
+        user=gql_client.user, performance=performance_past
+    )
 
     true_expected_set = {booking_future.reference}
     false_expected_set = {booking_past.reference}
@@ -1297,20 +1346,28 @@ def test_booking_order_start(gql_client):
     now = timezone.now()
 
     # First
-    performance_soonest = PerformanceFactory(start=now + datetime.timedelta(days=2))
+    performance_soonest = PerformanceFactory(
+        start=now + datetime.timedelta(days=2)
+    )
     booking_soonest = BookingFactory(
         user=gql_client.login().user, performance=performance_soonest
     )
 
     # Second
-    performance_middle = PerformanceFactory(start=now + datetime.timedelta(days=6))
+    performance_middle = PerformanceFactory(
+        start=now + datetime.timedelta(days=6)
+    )
     booking_middle = BookingFactory(
         user=gql_client.user, performance=performance_middle
     )
 
     # Last
-    performance_last = PerformanceFactory(start=now + datetime.timedelta(days=24))
-    booking_last = BookingFactory(user=gql_client.user, performance=performance_last)
+    performance_last = PerformanceFactory(
+        start=now + datetime.timedelta(days=24)
+    )
+    booking_last = BookingFactory(
+        user=gql_client.user, performance=performance_last
+    )
 
     desc_expected_list = [
         booking_soonest.reference,
@@ -1360,7 +1417,9 @@ def test_booking_order_start(gql_client):
         (True, True),
     ],
 )
-def test_ticket_node_queryset_with_anonymous_user(info, logged_in, expected_includes):
+def test_ticket_node_queryset_with_anonymous_user(
+    info, logged_in, expected_includes
+):
     ticket = TicketFactory(
         booking=BookingFactory(user=info.context.user)
     )  # Belongs to user

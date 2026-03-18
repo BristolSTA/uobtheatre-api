@@ -1,6 +1,10 @@
 import factory
 
-from uobtheatre.discounts.models import ConcessionType, Discount, DiscountRequirement
+from uobtheatre.discounts.models import (
+    ConcessionType,
+    Discount,
+    DiscountRequirement,
+)
 
 
 class DiscountFactory(factory.django.DjangoModelFactory):
@@ -21,7 +25,9 @@ class ConcessionTypeFactory(factory.django.DjangoModelFactory):
 class DiscountRequirementFactory(factory.django.DjangoModelFactory):
     number = 1
     concession_type = factory.SubFactory(ConcessionTypeFactory)
-    discount = factory.SubFactory("uobtheatre.discounts.test.factories.DiscountFactory")
+    discount = factory.SubFactory(
+        "uobtheatre.discounts.test.factories.DiscountFactory"
+    )
 
     class Meta:
         model = DiscountRequirement

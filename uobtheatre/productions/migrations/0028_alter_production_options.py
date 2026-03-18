@@ -17,7 +17,10 @@ class Migration(migrations.Migration):
                 "permissions": (
                     ("boxoffice", "Can use box office for production"),
                     ("sales", "Can view sales for production"),
-                    ("force_change_production", "Can change production once live"),
+                    (
+                        "force_change_production",
+                        "Can change production once live",
+                    ),
                     (
                         "view_bookings",
                         "Can inspect bookings and users for this production",

@@ -71,7 +71,9 @@ class MiscCost(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(null=True, blank=True)
     percentage = models.FloatField(
-        null=True, blank=True, validators=[MaxValueValidator(1), MinValueValidator(0)]
+        null=True,
+        blank=True,
+        validators=[MaxValueValidator(1), MinValueValidator(0)],
     )
     value = models.FloatField(null=True, blank=True)
 
@@ -195,10 +197,12 @@ class BookingQuerySet(PayableQuerySet):
         """
         if bool_val:
             return self.filter(
-                status=Payable.Status.IN_PROGRESS, expires_at__lt=timezone.now()
+                status=Payable.Status.IN_PROGRESS,
+                expires_at__lt=timezone.now(),
             )
         return self.filter(
-            ~Q(status=Payable.Status.IN_PROGRESS) | Q(expires_at__gt=timezone.now())
+            ~Q(status=Payable.Status.IN_PROGRESS)
+            | Q(expires_at__gt=timezone.now())
         )
 
     def has_accessibility_info(self, bool_val=True) -> QuerySet:
@@ -301,7 +305,9 @@ class Booking(TimeStampedMixin, Payable):
             booking_concessions[ticket.concession_type] += 1
         return booking_concessions
 
-    def is_valid_discount_combination(self, discounts: DiscountCombination) -> bool:
+    def is_valid_discount_combination(
+        self, discounts: DiscountCombination
+    ) -> bool:
         """Check if a provided discount combination is valid
 
         A discount combination is valid if the booking has enough of each
@@ -337,7 +343,9 @@ class Booking(TimeStampedMixin, Payable):
                 list(self.performance.discounts.all()),
                 self.tickets.count(),
             )
-            if self.is_valid_discount_combination(DiscountCombination(discounts))
+            if self.is_valid_discount_combination(
+                DiscountCombination(discounts)
+            )
         ]
 
     def get_price(self) -> int:
@@ -361,7 +369,9 @@ class Booking(TimeStampedMixin, Payable):
             int: Price of the Booking with single discounts.
         """
         return sum(
-            ticket.discounted_price(single_discounts_map=self.single_discounts_map)
+            ticket.discounted_price(
+                single_discounts_map=self.single_discounts_map
+            )
             for ticket in self.tickets.all()
         )
 
@@ -443,10 +453,14 @@ class Booking(TimeStampedMixin, Payable):
             int: price of the booking with discounts applied in penies
         """
         if self.performance.has_group_discounts:
-            discounted_price = self.get_best_discount_combination_with_price()[1]
+            discounted_price = self.get_best_discount_combination_with_price()[
+                1
+            ]
         else:
             discounted_price = self.tickets_price()
-        return math.ceil(discounted_price * (1 - self.admin_discount_percentage))
+        return math.ceil(
+            discounted_price * (1 - self.admin_discount_percentage)
+        )
 
     def get_best_discount_combination_with_price(
         self,
@@ -554,7 +568,9 @@ class Booking(TimeStampedMixin, Payable):
             (len(self.tickets.all()) + len(add_tickets) - len(delete_tickets)),
         )
 
-    def pay(self, payment_method: "PaymentProvider") -> Optional["Transaction"]:
+    def pay(
+        self, payment_method: "PaymentProvider"
+    ) -> Optional["Transaction"]:
         if self.is_reservation_expired:
             raise CantBePaidForException(
                 message="This booking has expired. Please create a new booking"
@@ -582,20 +598,22 @@ class Booking(TimeStampedMixin, Payable):
     def web_tickets_path(self):
         """Generates the path to the public tickets display page on the frontend for this booking"""
         params = {
-            "performanceID": to_global_id("PerformanceNode", self.performance.id),
+            "performanceID": to_global_id(
+                "PerformanceNode", self.performance.id
+            ),
             "ticketID": [
                 to_global_id("TicketNode", id)
                 for id in self.tickets.values_list("id", flat=True)
             ],
         }
-        return f"/user/booking/{self.reference}/tickets?" + urlencode(params, True)
+        return f"/user/booking/{self.reference}/tickets?" + urlencode(
+            params, True
+        )
 
     @property
     def is_reservation_expired(self):
         """Returns whether the booking is considered expired"""
-        return filter_passes_on_model(
-            self, lambda qs: qs.expired()  # type:ignore
-        )
+        return filter_passes_on_model(self, lambda qs: qs.expired())  # type: ignore
 
     def validate_cant_be_refunded(self) -> Optional[CantBeRefundedException]:
         if error := super().validate_cant_be_refunded():
@@ -660,7 +678,9 @@ class Ticket(BaseModel):
         on_delete=models.RESTRICT,
         related_name="seat_bookings",
     )
-    seat = models.ForeignKey(Seat, on_delete=models.RESTRICT, null=True, blank=True)
+    seat = models.ForeignKey(
+        Seat, on_delete=models.RESTRICT, null=True, blank=True
+    )
 
     checked_in_at = models.DateTimeField(null=True, blank=True)
     checked_in_user = models.ForeignKey(
@@ -686,8 +706,10 @@ class Ticket(BaseModel):
         if single_discounts_map is None:
             single_discounts_map = self.booking.single_discounts_map
 
-        performance_seat_group = self.booking.performance.performance_seat_groups.get(
-            seat_group=self.seat_group
+        performance_seat_group = (
+            self.booking.performance.performance_seat_groups.get(
+                seat_group=self.seat_group
+            )
         )
         price = performance_seat_group.price if performance_seat_group else 0
 

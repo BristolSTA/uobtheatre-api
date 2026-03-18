@@ -46,7 +46,9 @@ def get_concession_map(
             in concession_requirements.keys()  # pylint: disable=consider-iterating-dictionary
         ):
             concession_requirements[requirement.concession_type] = 0
-        concession_requirements[requirement.concession_type] += requirement.number
+        concession_requirements[
+            requirement.concession_type
+        ] += requirement.number
     return concession_requirements
 
 
@@ -101,7 +103,8 @@ class Discount(models.Model):
             and (
                 self.pk
                 and len(self.performances.all()) > 0
-                and len(discount.performances.all() & self.performances.all()) > 0
+                and len(discount.performances.all() & self.performances.all())
+                > 0
             )
         ]
 
@@ -126,7 +129,10 @@ class Discount(models.Model):
         Returns:
             bool: If the booking is a single discount
         """
-        return sum(requirement.number for requirement in self.requirements.all()) == 1
+        return (
+            sum(requirement.number for requirement in self.requirements.all())
+            == 1
+        )
 
     def get_concession_map(
         self,
@@ -168,7 +174,9 @@ class DiscountRequirement(models.Model):
         Discount, on_delete=models.CASCADE, related_name="requirements"
     )
     concession_type = models.ForeignKey(
-        ConcessionType, on_delete=models.CASCADE, related_name="discount_requirements"
+        ConcessionType,
+        on_delete=models.CASCADE,
+        related_name="discount_requirements",
     )
 
 

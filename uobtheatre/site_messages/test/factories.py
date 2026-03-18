@@ -15,7 +15,9 @@ class SiteMessageFactory(factory.django.DjangoModelFactory):
     event_start = factory.Faker(
         "future_datetime", tzinfo=timezone.get_current_timezone()
     )
-    event_end = factory.Faker("future_datetime", tzinfo=timezone.get_current_timezone())
+    event_end = factory.Faker(
+        "future_datetime", tzinfo=timezone.get_current_timezone()
+    )
     user = factory.SubFactory(UserFactory)
     type = factory.Faker(
         "random_element", elements=[x[0] for x in Message.Type.choices]
@@ -24,7 +26,8 @@ class SiteMessageFactory(factory.django.DjangoModelFactory):
         "random_element", elements=[x[0] for x in Message.Policy.choices]
     )
     display_location = factory.Faker(
-        "random_element", elements=[x[0] for x in Message.DisplayLocation.choices]
+        "random_element",
+        elements=[x[0] for x in Message.DisplayLocation.choices],
     )
     title = factory.Faker("sentence", nb_words=3)
 

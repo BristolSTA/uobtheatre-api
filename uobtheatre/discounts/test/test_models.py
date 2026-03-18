@@ -53,7 +53,9 @@ def test_discount_with_requirements_and_performances(
     dis_1 = DiscountFactory()
     dis_2 = DiscountFactory()
     dis_1.performances.set([performance_1])
-    dis_2.performances.set([performance_1 if same_performance else performance_2])
+    dis_2.performances.set(
+        [performance_1 if same_performance else performance_2]
+    )
 
     dis_1.requirements.set(
         [

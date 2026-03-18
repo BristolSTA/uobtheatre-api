@@ -66,7 +66,10 @@ class Message(BaseModel):
 
     # The user that created the message
     user = models.ForeignKey(
-        User, null=True, on_delete=models.SET_NULL, related_name="created_site_messages"
+        User,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="created_site_messages",
     )
 
     class Type(models.TextChoices):
@@ -80,7 +83,10 @@ class Message(BaseModel):
             "INFORMATION",
             "Information",
         )  # Message is information (displayed in yellow information text)
-        ALERT = "ALERT", "Alert"  # Message is an urgent alert (displayed in red text)
+        ALERT = (
+            "ALERT",
+            "Alert",
+        )  # Message is an urgent alert (displayed in red text)
 
     type = models.CharField(
         max_length=11,
@@ -169,7 +175,9 @@ class Message(BaseModel):
         """
         return (
             self.active
-            and (not (self.display_start) or self.display_start < timezone.now())
+            and (
+                not (self.display_start) or self.display_start < timezone.now()
+            )
             and (self.indefinite_override or self.event_end > timezone.now())
         )
 

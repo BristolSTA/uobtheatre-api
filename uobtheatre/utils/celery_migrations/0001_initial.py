@@ -265,11 +265,15 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name="taskresult",
-            index=models.Index(fields=["status"], name="django_cele_status_9b6201_idx"),
+            index=models.Index(
+                fields=["status"], name="django_cele_status_9b6201_idx"
+            ),
         ),
         migrations.AddIndex(
             model_name="taskresult",
-            index=models.Index(fields=["worker"], name="django_cele_worker_d54dd8_idx"),
+            index=models.Index(
+                fields=["worker"], name="django_cele_worker_d54dd8_idx"
+            ),
         ),
         migrations.AddIndex(
             model_name="taskresult",

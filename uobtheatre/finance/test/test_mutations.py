@@ -38,8 +38,7 @@ def test_record_transfer_fails_without_permission(gql_client):
 
     society = SocietyFactory()
 
-    response = gql_client.execute(
-        """
+    response = gql_client.execute("""
         mutation {
             recordFinancialTransfer(societyId: "%s", value: 1050, method: INTERNAL) {
                 success
@@ -53,9 +52,7 @@ def test_record_transfer_fails_without_permission(gql_client):
                 }
             }
         }
-        """
-        % to_global_id("SocietyNode", society.id)
-    )
+        """ % to_global_id("SocietyNode", society.id))
     assert response["data"]["recordFinancialTransfer"]["success"] is False
     assert (
         response["data"]["recordFinancialTransfer"]["errors"][0]["message"]
@@ -68,8 +65,7 @@ def test_record_transfer_fails_without_permission(gql_client):
 def test_record_transfer_fails_with_invalid_society(gql_client):
     gql_client.login().user.assign_perm("finance.create_transfer")
 
-    response = gql_client.execute(
-        """
+    response = gql_client.execute("""
         mutation {
             recordFinancialTransfer(societyId: "%s", value: 1050, method: INTERNAL) {
                 success
@@ -83,9 +79,7 @@ def test_record_transfer_fails_with_invalid_society(gql_client):
                 }
             }
         }
-        """
-        % to_global_id("SocietyNode", "1")
-    )
+        """ % to_global_id("SocietyNode", "1"))
     assert response["data"]["recordFinancialTransfer"]["success"] is False
     assert (
         response["data"]["recordFinancialTransfer"]["errors"][0]["message"]

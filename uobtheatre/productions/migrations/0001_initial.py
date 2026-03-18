@@ -105,11 +105,17 @@ class Migration(migrations.Migration):
                 ("subtitle", models.CharField(max_length=255, null=True)),
                 ("description", models.TextField(null=True)),
                 ("age_rating", models.SmallIntegerField(null=True)),
-                ("facebook_event", models.CharField(max_length=255, null=True)),
+                (
+                    "facebook_event",
+                    models.CharField(max_length=255, null=True),
+                ),
                 (
                     "slug",
                     autoslug.fields.AutoSlugField(
-                        blank=True, editable=False, populate_from="name", unique=True
+                        blank=True,
+                        editable=False,
+                        populate_from="name",
+                        unique=True,
                     ),
                 ),
                 (
@@ -238,7 +244,8 @@ class Migration(migrations.Migration):
             model_name="performance",
             name="seat_groups",
             field=models.ManyToManyField(
-                through="productions.PerformanceSeatGroup", to="venues.SeatGroup"
+                through="productions.PerformanceSeatGroup",
+                to="venues.SeatGroup",
             ),
         ),
         migrations.AddField(

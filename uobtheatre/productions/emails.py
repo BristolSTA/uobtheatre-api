@@ -78,7 +78,8 @@ def performances_refunded_email(
         )
         .line(
             ", ".join(
-                f"{performance.pk} | {str(performance)}" for performance in performances
+                f"{performance.pk} | {str(performance)}"
+                for performance in performances
             )
         )
         .line(

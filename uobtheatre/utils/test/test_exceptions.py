@@ -22,10 +22,12 @@ from uobtheatre.utils.exceptions import (
 
 def compare_gql_objects(object1, object2):
     """Compares two graphene objects to ensure they are equal"""
-    assert type(object1) == type(object2)  # pylint: disable=unidiomatic-typecheck
+    assert type(object1) == type(
+        object2
+    )  # pylint: disable=unidiomatic-typecheck
 
-    assert (
-        object1._meta.fields == object2._meta.fields  # pylint: disable=protected-access
+    assert (  # pylint: disable=protected-access
+        object1._meta.fields == object2._meta.fields
     )
     for field in object1._meta.fields:  # pylint: disable=protected-access
         assert getattr(object1, field) == getattr(object2, field)
@@ -48,7 +50,9 @@ def test_auth_error_handling_no_error():
 @pytest.mark.django_db
 def test_safe_mutation_throws_unknown_exception():
     class SomeMutation(SafeMutation):
-        def resolve_mutation(cls, info, **inputs):  # pylint: disable=no-self-argument
+        def resolve_mutation(
+            cls, info, **inputs
+        ):  # pylint: disable=no-self-argument
             # pylint: disable=broad-exception-raised
             raise Exception("Some exception")
 
@@ -71,7 +75,8 @@ def test_gql_non_field_exception():
     exception = GQLException("Some exception", 500)
     assert len(exception.resolve()) == 1
     compare_gql_objects(
-        exception.resolve()[0], NonFieldError(message="Some exception", code=500)
+        exception.resolve()[0],
+        NonFieldError(message="Some exception", code=500),
     )
 
 
@@ -95,7 +100,9 @@ def test_gql_exceptions():
     exception = GQLExceptions()
     assert not exception.has_exceptions()
 
-    exception.add_exception(GQLException("Some exception", code=400, field="booking"))
+    exception.add_exception(
+        GQLException("Some exception", code=400, field="booking")
+    )
 
     assert exception.has_exceptions()
     compare_gql_objects(
@@ -231,19 +238,23 @@ def test_form_exceptions(form_errors, expected_resolve_output):
         (
             AuthorizationException(),
             GQLException(
-                message="You are not authorized to perform this action", code=403
+                message="You are not authorized to perform this action",
+                code=403,
             ),
             True,
         ),
         (
             AuthorizationException(),
-            GQLException(message="You are not authorized to perform this action"),
+            GQLException(
+                message="You are not authorized to perform this action"
+            ),
             False,
         ),
         (
             AuthorizationException(),
             GQLException(
-                message="You are not authorized to perform this action", code=401
+                message="You are not authorized to perform this action",
+                code=401,
             ),
             False,
         ),

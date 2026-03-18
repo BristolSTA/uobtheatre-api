@@ -4,13 +4,20 @@ from django.db.models.aggregates import Sum
 from graphene import relay
 from graphene_django import DjangoListField, DjangoObjectType
 
-from uobtheatre.discounts.abilities import CreateConcessionType, ModifyConcessionType
+from uobtheatre.discounts.abilities import (
+    CreateConcessionType,
+    ModifyConcessionType,
+)
 from uobtheatre.discounts.forms import (
     ConcessionTypeForm,
     DiscountForm,
     DiscountRequirementForm,
 )
-from uobtheatre.discounts.models import ConcessionType, Discount, DiscountRequirement
+from uobtheatre.discounts.models import (
+    ConcessionType,
+    Discount,
+    DiscountRequirement,
+)
 from uobtheatre.productions.abilities import EditProduction
 from uobtheatre.utils.exceptions import AuthorizationException
 from uobtheatre.utils.filters import FilterSet
@@ -95,7 +102,9 @@ class DiscountMutation(SafeFormMutation, AuthRequiredMixin):
 
         # If we are editing an exisiting discount, add the performances currently associated with that discount
         if instance:
-            performances += instance.performances.prefetch_related("production").all()
+            performances += instance.performances.prefetch_related(
+                "production"
+            ).all()
 
         # Authorize user on all of the performance's productions
         for performance in performances or []:
@@ -116,7 +125,9 @@ class DeleteDiscountMutation(ModelDeletionMutation):
     @classmethod
     def authorize_request(cls, root, info, **inputs):
         discount = cls.get_instance(inputs["id"])
-        for performance in discount.performances.prefetch_related("production").all():
+        for performance in discount.performances.prefetch_related(
+            "production"
+        ).all():
             if not EditProduction.user_has_for(
                 info.context.user, performance.production
             ):
@@ -131,7 +142,9 @@ class DiscountRequirementMutation(SafeFormMutation, AuthRequiredMixin):
 
     @classmethod
     def authorize_request(cls, root, info, **inputs):
-        new_discount = cls.get_python_value(root, info, inputs, "discount") or None
+        new_discount = (
+            cls.get_python_value(root, info, inputs, "discount") or None
+        )
 
         instance = cls.get_object_instance(root, info, **inputs)
 
@@ -139,7 +152,9 @@ class DiscountRequirementMutation(SafeFormMutation, AuthRequiredMixin):
         all_performances = []
         if instance:
             all_performances.extend(
-                instance.discount.performances.prefetch_related("production").all()
+                instance.discount.performances.prefetch_related(
+                    "production"
+                ).all()
             )
         if new_discount:
             all_performances.extend(

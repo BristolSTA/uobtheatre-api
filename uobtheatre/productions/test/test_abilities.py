@@ -9,7 +9,10 @@ from uobtheatre.productions.abilities import (
     EditProduction,
 )
 from uobtheatre.productions.models import Production
-from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
+from uobtheatre.productions.test.factories import (
+    PerformanceFactory,
+    ProductionFactory,
+)
 from uobtheatre.societies.test.factories import SocietyFactory
 from uobtheatre.users.test.factories import UserFactory
 
@@ -56,11 +59,21 @@ def test_add_production(
         ([], ["productions.approve_production"], "PUBLISHED", False, False),
         ([], ["productions.force_change_production"], "DRAFT", False, True),
         ([], ["productions.force_change_production"], "PENDING", False, True),
-        ([], ["productions.force_change_production"], "PUBLISHED", False, True),
+        (
+            [],
+            ["productions.force_change_production"],
+            "PUBLISHED",
+            False,
+            True,
+        ),
     ],
 )
 def test_edit_production_objects(
-    obj_permissions, global_permissions, status, is_superuser, expected_user_has
+    obj_permissions,
+    global_permissions,
+    status,
+    is_superuser,
+    expected_user_has,
 ):
     user = UserFactory(is_superuser=is_superuser)
     production = ProductionFactory(status=status)
@@ -91,30 +104,60 @@ def test_book_for_performance_any():
         (Production.Status.CLOSED, [], [], False),
         (Production.Status.COMPLETE, [], [], False),
         # Make sure global & specific production change perms don't elevate permissions
-        (Production.Status.PENDING, [], ["productions.change_production"], False),
-        (Production.Status.APPROVED, [], ["productions.change_production"], False),
+        (
+            Production.Status.PENDING,
+            [],
+            ["productions.change_production"],
+            False,
+        ),
+        (
+            Production.Status.APPROVED,
+            [],
+            ["productions.change_production"],
+            False,
+        ),
         (
             Production.Status.APPROVED,
             [],
             ["productions.force_change_production"],
             False,
         ),
-        (Production.Status.PUBLISHED, [], ["productions.change_production"], True),
+        (
+            Production.Status.PUBLISHED,
+            [],
+            ["productions.change_production"],
+            True,
+        ),
         (
             Production.Status.PUBLISHED,
             [],
             ["productions.force_change_production"],
             True,
         ),
-        (Production.Status.PENDING, ["productions.change_production"], [], False),
-        (Production.Status.APPROVED, ["productions.change_production"], [], False),
+        (
+            Production.Status.PENDING,
+            ["productions.change_production"],
+            [],
+            False,
+        ),
+        (
+            Production.Status.APPROVED,
+            ["productions.change_production"],
+            [],
+            False,
+        ),
         (
             Production.Status.APPROVED,
             ["productions.force_change_production"],
             [],
             False,
         ),
-        (Production.Status.PUBLISHED, ["productions.change_production"], [], True),
+        (
+            Production.Status.PUBLISHED,
+            ["productions.change_production"],
+            [],
+            True,
+        ),
         (
             Production.Status.PUBLISHED,
             ["productions.force_change_production"],

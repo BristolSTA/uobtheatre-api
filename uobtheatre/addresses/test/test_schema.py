@@ -8,8 +8,7 @@ from uobtheatre.venues.test.factories import VenueFactory
 def test_address_schema(gql_client):
     venues = [VenueFactory() for i in range(3)]
 
-    response = gql_client.execute(
-        """
+    response = gql_client.execute("""
         {
           venues {
             edges {
@@ -30,8 +29,7 @@ def test_address_schema(gql_client):
             }
           }
         }
-        """
-    )
+        """)
 
     assert response == {
         "data": {
@@ -41,7 +39,9 @@ def test_address_schema(gql_client):
                         "node": {
                             "id": to_global_id("VenueNode", venue.id),
                             "address": {
-                                "id": to_global_id("AddressNode", venue.address.id),
+                                "id": to_global_id(
+                                    "AddressNode", venue.address.id
+                                ),
                                 "buildingName": venue.address.building_name,
                                 "buildingNumber": venue.address.building_number,
                                 "street": venue.address.street,

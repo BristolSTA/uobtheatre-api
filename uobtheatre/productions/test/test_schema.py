@@ -42,7 +42,9 @@ from uobtheatre.venues.test.factories import VenueFactory
 @pytest.mark.django_db
 def test_productions_schema(gql_client):
     production = ProductionFactory()
-    performances = [PerformanceFactory(production=production) for i in range(2)]
+    performances = [
+        PerformanceFactory(production=production) for i in range(2)
+    ]
 
     warnings = [
         ContentWarningFactory(short_description="A"),
@@ -57,8 +59,7 @@ def test_productions_schema(gql_client):
         ProductionTeamMemberFactory(production=production) for i in range(10)
     ]
 
-    response = gql_client.execute(
-        """
+    response = gql_client.execute("""
         {
 	  productions {
             edges {
@@ -135,8 +136,7 @@ def test_productions_schema(gql_client):
             }
           }
         }
-        """
-    )
+        """)
     assert response == {
         "data": {
             "productions": {
@@ -146,13 +146,17 @@ def test_productions_schema(gql_client):
                             "createdAt": production.created_at.isoformat(),
                             "updatedAt": production.updated_at.isoformat(),
                             "ageRating": production.age_rating,
-                            "coverImage": {"url": production.cover_image.file.url},
+                            "coverImage": {
+                                "url": production.cover_image.file.url
+                            },
                             "description": production.description,
                             "facebookEvent": production.facebook_event,
                             "featuredImage": {
                                 "url": production.featured_image.file.url,
                             },
-                            "id": to_global_id("ProductionNode", production.id),
+                            "id": to_global_id(
+                                "ProductionNode", production.id
+                            ),
                             "isBookable": production.is_bookable(),
                             "name": production.name,
                             "posterImage": {
@@ -165,7 +169,8 @@ def test_productions_schema(gql_client):
                                     {
                                         "node": {
                                             "id": to_global_id(
-                                                "PerformanceNode", performance.id
+                                                "PerformanceNode",
+                                                performance.id,
                                             )
                                         }
                                     }
@@ -183,7 +188,9 @@ def test_productions_schema(gql_client):
                                     ),
                                     "name": cast_member.name,
                                     "profilePicture": (
-                                        {"url": cast_member.profile_picture.file.url}
+                                        {
+                                            "url": cast_member.profile_picture.file.url
+                                        }
                                         if cast_member.profile_picture
                                         else None
                                     ),
@@ -298,7 +305,9 @@ def test_productions_filter(factories, requests, gql_client):
     for request in requests:
         filter_args, expected_number = request
 
-        query_string = "{ productions(" + filter_args + ") { edges { node { id } } } }"
+        query_string = (
+            "{ productions(" + filter_args + ") { edges { node { id } } } }"
+        )
         response = gql_client.execute(query_string)
 
         assert len(response["data"]["productions"]["edges"]) == expected_number
@@ -314,7 +323,10 @@ def test_productions_filter(factories, requests, gql_client):
         (f'id: "{to_global_id("ProductionNode", 2)}"', 2),
         (f'id: "{to_global_id("ProductionNode", 3)}"', None),
         (f'id: "{to_global_id("ProductionNode", 1)}" slug: "example-show"', 1),
-        (f'id: "{to_global_id("ProductionNode", 1)}" slug: "not-a-thing"', None),
+        (
+            f'id: "{to_global_id("ProductionNode", 1)}" slug: "not-a-thing"',
+            None,
+        ),
         (None, None),
     ],
 )
@@ -329,7 +341,9 @@ def test_resolve_production(gql_client, query_args, expected_production):
         }
       }
     """
-    response = gql_client.execute(request % (f"({query_args})" if query_args else ""))
+    response = gql_client.execute(
+        request % (f"({query_args})" if query_args else "")
+    )
 
     if expected_production is not None:
         assert response["data"]["production"]["id"] == to_global_id(
@@ -383,7 +397,8 @@ def test_upcoming_productions(gql_client):
     response = gql_client.execute(request % current_time.isoformat())
     assert response["data"]["productions"] == {
         "edges": [
-            {"node": {"end": productions[i].end_date().isoformat()}} for i in range(6)
+            {"node": {"end": productions[i].end_date().isoformat()}}
+            for i in range(6)
         ]
     }
 
@@ -438,7 +453,8 @@ def test_productions_orderby(order_by, expected_order, gql_client):
     # Ask for nothing and check you get nothing
     response = gql_client.execute(request % order_by)
     assert response["data"]["productions"]["edges"] == [
-        {"node": {"end": productions[i].end_date().isoformat()}} for i in expected_order
+        {"node": {"end": productions[i].end_date().isoformat()}}
+        for i in expected_order
     ]
 
 
@@ -452,7 +468,9 @@ def test_productions_orderby(order_by, expected_order, gql_client):
         ("end_Lte", 2, [0, 1]),
     ],
 )
-def test_production_time_filters(filter_name, value_days, expected_outputs, gql_client):
+def test_production_time_filters(
+    filter_name, value_days, expected_outputs, gql_client
+):
     current_time = timezone.now().replace(microsecond=0, second=0)
 
     productions = [
@@ -533,15 +551,21 @@ def test_production_search_filter(gql_client, query, results):
     assert len(response["data"]["productions"]["edges"]) == len(results)
 
     for result in results:
-        assert {"node": {"name": result}} in response["data"]["productions"]["edges"]
+        assert {"node": {"name": result}} in response["data"]["productions"][
+            "edges"
+        ]
 
 
 @pytest.mark.django_db
 def test_productions_are_shown_with_permission(gql_client):
     _ = [ProductionFactory() for _ in range(3)]
-    draft_production = ProductionFactory(status=Production.Status.DRAFT, slug="my-show")
+    draft_production = ProductionFactory(
+        status=Production.Status.DRAFT, slug="my-show"
+    )
     assign_perm(
-        "productions.view_production", gql_client.login().user, draft_production
+        "productions.view_production",
+        gql_client.login().user,
+        draft_production,
     )
 
     request = """
@@ -567,8 +591,12 @@ def test_productions_are_shown_with_permission(gql_client):
 @pytest.mark.django_db
 def test_production_and_performance_sales_breakdowns(gql_client):
     performance = PerformanceFactory()
-    booking = BookingFactory(performance=performance, status=Payable.Status.IN_PROGRESS)
-    perf_seat_group = PerformanceSeatingFactory(performance=performance, price=100)
+    booking = BookingFactory(
+        performance=performance, status=Payable.Status.IN_PROGRESS
+    )
+    perf_seat_group = PerformanceSeatingFactory(
+        performance=performance, price=100
+    )
     TicketFactory(booking=booking, seat_group=perf_seat_group.seat_group)
     TransactionFactory(
         pay_object=booking, value=booking.total, app_fee=0, provider_fee=0
@@ -613,11 +641,14 @@ def test_production_and_performance_sales_breakdowns(gql_client):
     response = gql_client.execute(
         request % to_global_id("ProductionNode", performance.production.id)
     )
-    assert response["data"]["productions"]["edges"][0]["node"]["salesBreakdown"] is None
     assert (
-        response["data"]["productions"]["edges"][0]["node"]["performances"]["edges"][0][
-            "node"
-        ]["salesBreakdown"]
+        response["data"]["productions"]["edges"][0]["node"]["salesBreakdown"]
+        is None
+    )
+    assert (
+        response["data"]["productions"]["edges"][0]["node"]["performances"][
+            "edges"
+        ][0]["node"]["salesBreakdown"]
         is None
     )
 
@@ -626,7 +657,9 @@ def test_production_and_performance_sales_breakdowns(gql_client):
     response = gql_client.execute(
         request % to_global_id("ProductionNode", performance.production.id)
     )
-    assert response["data"]["productions"]["edges"][0]["node"]["salesBreakdown"] == {
+    assert response["data"]["productions"]["edges"][0]["node"][
+        "salesBreakdown"
+    ] == {
         "appPaymentValue": 0,
         "providerPaymentValue": 0,
         "societyRevenue": 100,
@@ -634,9 +667,9 @@ def test_production_and_performance_sales_breakdowns(gql_client):
         "totalCardPayments": 100,
         "totalPayments": 100,
     }
-    assert response["data"]["productions"]["edges"][0]["node"]["performances"]["edges"][
-        0
-    ]["node"]["salesBreakdown"] == {
+    assert response["data"]["productions"]["edges"][0]["node"]["performances"][
+        "edges"
+    ][0]["node"]["salesBreakdown"] == {
         "appPaymentValue": 0,
         "providerPaymentValue": 0,
         "societyRevenue": 100,
@@ -677,8 +710,14 @@ def test_production_totals(gql_client):
     response = gql_client.login(user=UserFactory(is_superuser=True)).execute(
         request % to_global_id("ProductionNode", perf_1.production.id)
     )
-    assert response["data"]["productions"]["edges"][0]["node"]["totalCapacity"] == 240
-    assert response["data"]["productions"]["edges"][0]["node"]["totalTicketsSold"] == 1
+    assert (
+        response["data"]["productions"]["edges"][0]["node"]["totalCapacity"]
+        == 240
+    )
+    assert (
+        response["data"]["productions"]["edges"][0]["node"]["totalTicketsSold"]
+        == 1
+    )
 
 
 @pytest.mark.django_db
@@ -692,7 +731,9 @@ def test_production_totals(gql_client):
         (True, [[], ["change_production"], ["boxoffice"]], [1, 2]),
     ],
 )
-def test_production_assigned_users(gql_client, with_perm, users, expected_users):
+def test_production_assigned_users(
+    gql_client, with_perm, users, expected_users
+):
     production = ProductionFactory(slug="my-production")
     request = """
         query {
@@ -797,7 +838,9 @@ def test_assignable_permissions(
         len(
             [
                 perm
-                for perm in response["data"]["production"]["assignablePermissions"]
+                for perm in response["data"]["production"][
+                    "assignablePermissions"
+                ]
                 if perm["userCanAssign"]
             ]
         )
@@ -863,8 +906,7 @@ def test_performance_schema(gql_client):
         for _ in range(1)
     ]
 
-    response = gql_client.execute(
-        """
+    response = gql_client.execute("""
         {
 	  performances {
             edges {
@@ -913,8 +955,7 @@ def test_performance_schema(gql_client):
             }
           }
         }
-        """
-    )
+        """)
 
     assert response == {
         "data": {
@@ -930,7 +971,9 @@ def test_performance_schema(gql_client):
                             "discounts": {
                                 "edges": [
                                     {
-                                        "id": to_global_id("DiscountNode", discount.id),
+                                        "id": to_global_id(
+                                            "DiscountNode", discount.id
+                                        ),
                                     }
                                     for discount in performance.discounts.all()
                                 ]
@@ -939,7 +982,9 @@ def test_performance_schema(gql_client):
                             "durationMins": 24 * 60,  # 1 day
                             "end": "2020-01-02T01:00:00+00:00",
                             "extraInformation": performance.extra_information,
-                            "id": to_global_id("PerformanceNode", performance.id),
+                            "id": to_global_id(
+                                "PerformanceNode", performance.id
+                            ),
                             "isOnline": False,
                             "isInperson": True,
                             "production": {
@@ -950,7 +995,9 @@ def test_performance_schema(gql_client):
                             "start": "2020-01-01T01:00:00+00:00",
                             "capacityRemaining": performance.capacity_remaining,
                             "venue": {
-                                "id": to_global_id("VenueNode", performance.venue.id)
+                                "id": to_global_id(
+                                    "VenueNode", performance.venue.id
+                                )
                             },
                             "minSeatPrice": performance.min_seat_price(),
                             "soldOut": performance.is_sold_out,
@@ -960,7 +1007,8 @@ def test_performance_schema(gql_client):
                             "relaxedCategories": [
                                 {
                                     "id": to_global_id(
-                                        "RelaxedCategoryNode", relaxed_category.id
+                                        "RelaxedCategoryNode",
+                                        relaxed_category.id,
                                     ),
                                     "shortDescription": relaxed_category.short_description,
                                     "longDescription": relaxed_category.long_description,
@@ -1000,9 +1048,7 @@ def test_performance_blocked_attributes(gql_client, attribute, is_obj):
               }
             }
         }
-        """ % (
-        attribute if not is_obj else "%s {id}" % attribute
-    )
+        """ % (attribute if not is_obj else "%s {id}" % attribute)
 
     response = gql_client.execute(query_string)
     assert (
@@ -1035,8 +1081,7 @@ def test_ticket_breakdown(gql_client):
         set_checked_in=False,
     )
 
-    response = gql_client.execute(
-        """
+    response = gql_client.execute("""
         {
             performance(id: "%s") {
                 ticketsBreakdown {
@@ -1048,9 +1093,7 @@ def test_ticket_breakdown(gql_client):
                 }
             }
         }
-        """
-        % to_global_id("PerformanceNode", performance.id)
-    )
+        """ % to_global_id("PerformanceNode", performance.id))
     assert response == {
         "data": {
             "performance": {
@@ -1072,18 +1115,26 @@ def test_tickets_breakdown(gql_client, with_perms):
     performance = PerformanceFactory()
 
     # Create some seat groups for this performance
-    performance_seat_group_1 = PerformanceSeatingFactory(performance=performance)
-    performance_seat_group_2 = PerformanceSeatingFactory(performance=performance)
+    performance_seat_group_1 = PerformanceSeatingFactory(
+        performance=performance
+    )
+    performance_seat_group_2 = PerformanceSeatingFactory(
+        performance=performance
+    )
 
     # Create a discount
     discount_1 = DiscountFactory(name="Family", percentage=0.2)
     discount_1.performances.set([performance])
-    discount_requirement_1 = DiscountRequirementFactory(discount=discount_1, number=1)
+    discount_requirement_1 = DiscountRequirementFactory(
+        discount=discount_1, number=1
+    )
 
     # Create a different
     discount_2 = DiscountFactory(name="Family 2", percentage=0.3)
     discount_2.performances.set([performance])
-    discount_requirement_2 = DiscountRequirementFactory(discount=discount_2, number=1)
+    discount_requirement_2 = DiscountRequirementFactory(
+        discount=discount_2, number=1
+    )
 
     # Create booking
 
@@ -1098,10 +1149,11 @@ def test_tickets_breakdown(gql_client, with_perms):
     ]
 
     if with_perms:
-        gql_client.login().user.assign_perm("view_production", performance.production)
+        gql_client.login().user.assign_perm(
+            "view_production", performance.production
+        )
 
-    response = gql_client.execute(
-        """
+    response = gql_client.execute("""
         {
           performances {
             edges {
@@ -1124,8 +1176,7 @@ def test_tickets_breakdown(gql_client, with_perms):
             }
           }
         }
-        """
-    )
+        """)
 
     assert response == {
         "data": {
@@ -1135,7 +1186,9 @@ def test_tickets_breakdown(gql_client, with_perms):
                         "node": {
                             "ticketOptions": [
                                 {
-                                    "numberTicketsSold": None if not with_perms else 10,
+                                    "numberTicketsSold": (
+                                        None if not with_perms else 10
+                                    ),
                                     "capacityRemaining": performance.seat_group_capacity_remaining(
                                         performance_seat_group_1.seat_group
                                     ),
@@ -1148,12 +1201,14 @@ def test_tickets_breakdown(gql_client, with_perms):
                                                 ),
                                             },
                                             "price": math.ceil(
-                                                0.8 * performance_seat_group_1.price
+                                                0.8
+                                                * performance_seat_group_1.price
                                             ),
                                             "pricePounds": "%.2f"
                                             % (
                                                 math.ceil(
-                                                    0.8 * performance_seat_group_1.price
+                                                    0.8
+                                                    * performance_seat_group_1.price
                                                 )
                                                 / 100
                                             ),
@@ -1166,12 +1221,14 @@ def test_tickets_breakdown(gql_client, with_perms):
                                                 ),
                                             },
                                             "price": math.ceil(
-                                                0.7 * performance_seat_group_1.price
+                                                0.7
+                                                * performance_seat_group_1.price
                                             ),
                                             "pricePounds": "%.2f"
                                             % (
                                                 math.ceil(
-                                                    0.7 * performance_seat_group_1.price
+                                                    0.7
+                                                    * performance_seat_group_1.price
                                                 )
                                                 / 100
                                             ),
@@ -1185,7 +1242,9 @@ def test_tickets_breakdown(gql_client, with_perms):
                                     },
                                 },
                                 {
-                                    "numberTicketsSold": None if not with_perms else 0,
+                                    "numberTicketsSold": (
+                                        None if not with_perms else 0
+                                    ),
                                     "capacityRemaining": performance.seat_group_capacity_remaining(
                                         performance_seat_group_2.seat_group
                                     ),
@@ -1198,12 +1257,14 @@ def test_tickets_breakdown(gql_client, with_perms):
                                                 ),
                                             },
                                             "price": math.ceil(
-                                                0.8 * performance_seat_group_2.price
+                                                0.8
+                                                * performance_seat_group_2.price
                                             ),
                                             "pricePounds": "%.2f"
                                             % (
                                                 math.ceil(
-                                                    0.8 * performance_seat_group_2.price
+                                                    0.8
+                                                    * performance_seat_group_2.price
                                                 )
                                                 / 100
                                             ),
@@ -1216,12 +1277,14 @@ def test_tickets_breakdown(gql_client, with_perms):
                                                 ),
                                             },
                                             "price": math.ceil(
-                                                0.7 * performance_seat_group_2.price
+                                                0.7
+                                                * performance_seat_group_2.price
                                             ),
                                             "pricePounds": "%.2f"
                                             % (
                                                 math.ceil(
-                                                    0.7 * performance_seat_group_2.price
+                                                    0.7
+                                                    * performance_seat_group_2.price
                                                 )
                                                 / 100
                                             ),
@@ -1264,7 +1327,9 @@ def test_performance_single_id(gql_client):
         request % to_global_id("PerformanceNode", performances[0].id)
     )
     assert response["data"] == {
-        "performance": {"id": to_global_id("PerformanceNode", performances[0].id)}
+        "performance": {
+            "id": to_global_id("PerformanceNode", performances[0].id)
+        }
     }
 
 
@@ -1328,9 +1393,7 @@ def test_performances_are_shown_with_permission(gql_client):
               start
           }
         }
-        """ % to_global_id(
-        "PerformanceNode", draft_performance.id
-    )
+        """ % to_global_id("PerformanceNode", draft_performance.id)
     response = gql_client.execute(request)
 
     assert len(response["data"]["performances"]["edges"]) == 4

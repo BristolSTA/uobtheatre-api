@@ -15,7 +15,9 @@ class Migration(migrations.Migration):
             model_name="society",
             name="members",
             field=models.ManyToManyField(
-                blank=True, related_name="societies", to=settings.AUTH_USER_MODEL
+                blank=True,
+                related_name="societies",
+                to=settings.AUTH_USER_MODEL,
             ),
         ),
     ]

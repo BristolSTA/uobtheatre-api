@@ -41,7 +41,9 @@ class Address(models.Model):
         # Check that the what3words address is valid (starts with /// and has 3 words separated by dots)
         if self.what3words:
             if not self.what3words.startswith("///"):
-                raise ValidationError("The what3words address must start with '///'.")
+                raise ValidationError(
+                    "The what3words address must start with '///'."
+                )
             if len(self.what3words.split(".")) != 3:
                 raise ValidationError(
                     "The what3words address must contain 3 words separated by dots."

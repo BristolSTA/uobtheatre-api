@@ -21,8 +21,7 @@ def test_user_schema(gql_client):
     irrelevant_user = UserFactory()
     _ = [BookingFactory(user=irrelevant_user) for i in range(4)]
 
-    response = gql_client.execute(
-        """
+    response = gql_client.execute("""
         {
 	      me {
             firstName
@@ -38,8 +37,7 @@ def test_user_schema(gql_client):
             }
           }
         }
-        """
-    )
+        """)
 
     assert list(user.bookings.all()) == bookings
     assert response == {
@@ -51,7 +49,11 @@ def test_user_schema(gql_client):
                 "id": to_global_id("UserNode", user.id),
                 "bookings": {
                     "edges": [
-                        {"node": {"id": to_global_id("BookingNode", booking.id)}}
+                        {
+                            "node": {
+                                "id": to_global_id("BookingNode", booking.id)
+                            }
+                        }
                         for booking in bookings
                     ]
                 },
@@ -63,15 +65,13 @@ def test_user_schema(gql_client):
 @pytest.mark.django_db
 def test_user_schema_unauthenticated(gql_client):
     gql_client.logout()
-    response = gql_client.execute(
-        """
+    response = gql_client.execute("""
         {
 	  me {
             email
           }
         }
-        """
-    )
+        """)
 
     assert response == {"data": {"me": None}}
 
@@ -80,8 +80,7 @@ def test_user_schema_unauthenticated(gql_client):
 @pytest.mark.django_db
 def test_user_field_error(gql_client):
     UserFactory()
-    response = gql_client.execute(
-        """
+    response = gql_client.execute("""
         mutation {
           register(
             email: "test@email.com"
@@ -106,8 +105,7 @@ def test_user_field_error(gql_client):
             }
           }
         }
-        """
-    )
+        """)
 
     assert response == {
         "data": {
@@ -130,8 +128,7 @@ def test_user_field_error(gql_client):
 @pytest.mark.django_db
 def test_turnstile_rejection(gql_client):
     UserFactory()
-    response = gql_client.execute(
-        """
+    response = gql_client.execute("""
         mutation {
           register(
             email: "test@email.com"
@@ -156,8 +153,7 @@ def test_turnstile_rejection(gql_client):
             }
           }
         }
-        """
-    )
+        """)
 
     assert response == {
         "data": {
@@ -178,8 +174,7 @@ def test_turnstile_rejection(gql_client):
 
 @pytest.mark.django_db
 def test_user_wrong_credentials(gql_client):
-    response = gql_client.execute(
-        """
+    response = gql_client.execute("""
         mutation {
           login(email:"fakeaccount@email.com", password:"strongpassword"){
             token
@@ -197,8 +192,7 @@ def test_user_wrong_credentials(gql_client):
             }
           }
         }
-        """
-    )
+        """)
     assert response == {
         "data": {
             "login": {
@@ -219,8 +213,7 @@ def test_user_wrong_credentials(gql_client):
 @pytest.mark.django_db
 def test_user_register(gql_client):
     # Create an account
-    response = gql_client.execute(
-        """
+    response = gql_client.execute("""
         mutation {
           register(
             email: "test@email.com"
@@ -233,8 +226,7 @@ def test_user_register(gql_client):
             success
           }
         }
-        """
-    )
+        """)
 
     login_query = """
         mutation {
@@ -284,7 +276,10 @@ def test_user_register(gql_client):
     )
 
     # Check the token is valid
-    assert isinstance(response_data["token"], str) and len(response_data["token"]) > 150
+    assert (
+        isinstance(response_data["token"], str)
+        and len(response_data["token"]) > 150
+    )
     assert (
         isinstance(response_data["refreshToken"], str)
         and len(response_data["refreshToken"]) > 30
@@ -313,15 +308,13 @@ def test_user_schema_abilities(
     ) as mock_open_boxoffice, patch.object(
         OpenAdmin, "user_has", return_value=user_can_open_admin
     ) as mock_open_admin:
-        response = gql_client.execute(
-            """
+        response = gql_client.execute("""
             {
 	          me {
                 permissions
               }
             }
-            """
-        )
+            """)
 
     mock_open_boxoffice.assert_called_once_with(gql_client.user)
     mock_open_admin.assert_called_once_with(gql_client.user)

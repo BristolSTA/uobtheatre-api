@@ -7,7 +7,9 @@ import environ
 from square.environment import SquareEnvironment
 
 env = environ.Env()
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+BASE_DIR = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
 
 # Take environment variables from .env file
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
@@ -74,7 +76,9 @@ MIDDLEWARE = (
 # This overrides the location of the django_celery_results. This allows us to
 # override the migrations. This is because we add an additional status in
 # config/__init__.py
-MIGRATION_MODULES = {"django_celery_results": "uobtheatre.utils.celery_migrations"}
+MIGRATION_MODULES = {
+    "django_celery_results": "uobtheatre.utils.celery_migrations"
+}
 
 ALLOWED_HOSTS = ["*"]
 ROOT_URLCONF = "uobtheatre.urls"
@@ -161,7 +165,14 @@ TEMPLATES = [
 
 # Set DEBUG to False as a default for safety
 # https://docs.djangoproject.com/en/dev/ref/settings/#debug
-if env("DJANGO_DEBUG", default="no").lower() in ("y", "yes", "on", "1", "true", "t"):
+if env("DJANGO_DEBUG", default="no").lower() in (
+    "y",
+    "yes",
+    "on",
+    "1",
+    "true",
+    "t",
+):
     DEBUG = True
 else:
     DEBUG = False
@@ -261,9 +272,17 @@ LOGGING = {
             "level": "INFO",
             "propagate": True,
         },
-        "uobtheatre": {"handlers": ["file"], "level": "INFO", "propagate": True},
+        "uobtheatre": {
+            "handlers": ["file"],
+            "level": "INFO",
+            "propagate": True,
+        },
         "psycopg2": {"handlers": ["file"], "level": "INFO", "propagate": True},
-        "celery": {"handlers": ["console"], "level": "DEBUG", "propagate": True},
+        "celery": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": True,
+        },
     },
 }
 

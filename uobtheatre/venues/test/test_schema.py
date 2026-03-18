@@ -9,14 +9,14 @@ from uobtheatre.venues.test.factories import SeatGroupFactory, VenueFactory
 def test_venues_schema(gql_client):
     venues = [VenueFactory() for i in range(3)]
     venue_performances = [
-        [PerformanceFactory(venue=venue) for i in range(10)] for venue in venues
+        [PerformanceFactory(venue=venue) for i in range(10)]
+        for venue in venues
     ]
     venue_seat_groups = [
         [SeatGroupFactory(venue=venue) for i in range(10)] for venue in venues
     ]
 
-    response = gql_client.execute(
-        """
+    response = gql_client.execute("""
         {
           venues {
             edges {
@@ -62,8 +62,7 @@ def test_venues_schema(gql_client):
             }
           }
         }
-        """
-    )
+        """)
 
     assert response == {
         "data": {
@@ -76,7 +75,9 @@ def test_venues_schema(gql_client):
                             "updatedAt": venue.updated_at.isoformat(),
                             "name": venue.name,
                             "address": {
-                                "id": to_global_id("AddressNode", venue.address.id),
+                                "id": to_global_id(
+                                    "AddressNode", venue.address.id
+                                ),
                             },
                             "internalCapacity": venue.internal_capacity,
                             "description": venue.description,
@@ -102,11 +103,14 @@ def test_venues_schema(gql_client):
                                     {
                                         "node": {
                                             "id": to_global_id(
-                                                "PerformanceNode", performance.id
+                                                "PerformanceNode",
+                                                performance.id,
                                             )
                                         }
                                     }
-                                    for performance in venue_performances[index]
+                                    for performance in venue_performances[
+                                        index
+                                    ]
                                 ]
                             },
                             "productions": {

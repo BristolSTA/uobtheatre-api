@@ -77,9 +77,15 @@ class SiteMessageFilterSet(FilterSet):
     __lte is shorthand for less than or equal to
     """
 
-    display_start = django_filters.DateTimeFilter(method="display_start_filter")
-    display_start__gte = django_filters.DateTimeFilter(method="display_start_filter")
-    display_start__lte = django_filters.DateTimeFilter(method="display_start_filter")
+    display_start = django_filters.DateTimeFilter(
+        method="display_start_filter"
+    )
+    display_start__gte = django_filters.DateTimeFilter(
+        method="display_start_filter"
+    )
+    display_start__lte = django_filters.DateTimeFilter(
+        method="display_start_filter"
+    )
 
     start = django_filters.DateTimeFilter(method="start_filter")
     start__gte = django_filters.DateTimeFilter(method="start_filter")
@@ -112,13 +118,19 @@ class SiteMessageFilterSet(FilterSet):
             queryset.filter(
                 Q(active=True)
                 & Q(display_start__lte=timezone.now())
-                & (Q(event_end__gte=timezone.now()) | Q(indefinite_override=True))
+                & (
+                    Q(event_end__gte=timezone.now())
+                    | Q(indefinite_override=True)
+                )
             )
             if value
             else queryset.exclude(
                 Q(active=True)
                 & Q(display_start__lte=timezone.now())
-                & (Q(event_end__gte=timezone.now()) | Q(indefinite_override=True))
+                & (
+                    Q(event_end__gte=timezone.now())
+                    | Q(indefinite_override=True)
+                )
             )
         )
 

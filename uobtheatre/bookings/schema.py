@@ -73,7 +73,9 @@ class PriceBreakdownTicketNode(graphene.ObjectType):
     ticket_price = graphene.Int(required=True)
     number = graphene.Int(required=True)
     seat_group = graphene.Field("uobtheatre.venues.schema.SeatGroupNode")
-    concession_type = graphene.Field("uobtheatre.discounts.schema.ConcessionTypeNode")
+    concession_type = graphene.Field(
+        "uobtheatre.discounts.schema.ConcessionTypeNode"
+    )
     total_price = graphene.Int(required=True)
 
     def resolve_total_price(self, _):
@@ -194,9 +196,13 @@ class BookingByMethodOrderingFilter(OrderingFilter):
         """
 
         if value and "checked_in" in value:
-            return query_set.annotate_checked_in_proportion().order_by("-proportion")
+            return query_set.annotate_checked_in_proportion().order_by(
+                "-proportion"
+            )
         if value and "-checked_in" in value:
-            return query_set.annotate_checked_in_proportion().order_by("proportion")
+            return query_set.annotate_checked_in_proportion().order_by(
+                "proportion"
+            )
 
         if value and "start" in value:
             return query_set.order_by("performance__start")
@@ -221,7 +227,9 @@ class BookingFilter(FilterSet):
         choices=Booking.Status.choices, field_name="status"
     )
 
-    search = django_filters.CharFilter(method="search_bookings", label="Search")
+    search = django_filters.CharFilter(
+        method="search_bookings", label="Search"
+    )
 
     production_search = django_filters.CharFilter(
         method="production_search_bookings", label="Production Search"

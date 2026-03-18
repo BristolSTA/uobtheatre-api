@@ -2,7 +2,10 @@ from django.http.response import HttpResponse
 from django.utils.decorators import decorator_from_middleware_with_args
 
 from uobtheatre.reports.exceptions import InvalidReportSignature
-from uobtheatre.reports.utils import ExcelReport, validate_report_download_signature
+from uobtheatre.reports.utils import (
+    ExcelReport,
+    validate_report_download_signature,
+)
 from uobtheatre.users.models import User
 
 from . import reports
@@ -18,7 +21,9 @@ class ValidSignatureMiddleware:
     def process_request(self, request):
         """Before request proccessed hook"""
         try:
-            obj = validate_report_download_signature(request.GET.get("signature"))
+            obj = validate_report_download_signature(
+                request.GET.get("signature")
+            )
             if obj["report"] != self.report_name:
                 raise InvalidReportSignature()
             return None

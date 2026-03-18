@@ -1,6 +1,9 @@
 import pytest
 
-from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
+from uobtheatre.productions.test.factories import (
+    PerformanceFactory,
+    ProductionFactory,
+)
 from uobtheatre.venues.test.factories import SeatGroupFactory, VenueFactory
 
 

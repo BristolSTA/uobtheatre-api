@@ -143,7 +143,8 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
                     # If this is a multiple model choice field, convert every ID in the list to a local ID
                     if isinstance(form[key].value(), List):
                         input_items[key] = [
-                            from_global_id(item)[1] for item in input_items[key]
+                            from_global_id(item)[1]
+                            for item in input_items[key]
                         ]
                     else:
                         input_items[key] = from_global_id(form[key].value())[1]
@@ -253,7 +254,9 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
         response = super().mutate_and_get_payload(root, info, **inputs)
 
         if response.errors:
-            return cls(errors=FormExceptions(response.errors).resolve(), success=False)
+            return cls(
+                errors=FormExceptions(response.errors).resolve(), success=False
+            )
 
         cls.on_success(info, response, cls.is_creation(**inputs))
         if cls.is_creation(**inputs):
@@ -264,7 +267,13 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
 
 
 class UserPermissionFilterMixin(django_filters.FilterSet):
-    user_has_permission = django_filters.CharFilter(method="user_has_permission_filter")
+    """
+    A filter mixin to filter querysets based on user permissions. Adds a user_has_permission filter which takes a permission string and filters the queryset to only include objects for which the user has that permission.
+    """
+
+    user_has_permission = django_filters.CharFilter(
+        method="user_has_permission_filter"
+    )
 
     def user_has_permission_filter(self, query_set, _, permission=None):
         return get_objects_for_user(self.request.user, permission, query_set)
@@ -404,7 +413,9 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
         return User.objects.filter(email=email).first()
 
     @classmethod
-    def permissions_delta(cls, pk, executing_user, target_user, requested_permissions):
+    def permissions_delta(
+        cls, pk, executing_user, target_user, requested_permissions
+    ):
         """Calcualte the permissions delta"""
         instance = cls.instance(pk)
         available_permissions = [
@@ -416,12 +427,16 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
             get_user_perms(target_user, instance)
         ).intersection(available_permissions)
 
-        permissions_to_remove = current_user_permissions - set(requested_permissions)
+        permissions_to_remove = current_user_permissions - set(
+            requested_permissions
+        )
         permissions_to_add = set(requested_permissions).intersection(
             available_permissions
         ) - set(current_user_permissions)
 
-        permissions_delta = set(permissions_to_add) | set(permissions_to_remove)
+        permissions_delta = set(permissions_to_add) | set(
+            permissions_to_remove
+        )
 
         return (permissions_to_add, permissions_to_remove, permissions_delta)
 
@@ -442,7 +457,11 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
 
         for permission in inputs["permissions"]:
             if not next(
-                (node for node in available_permissions if node.name == permission),
+                (
+                    node
+                    for node in available_permissions
+                    if node.name == permission
+                ),
                 None,
             ):
                 raise GQLException(
@@ -469,7 +488,9 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
         )[2]:
             # Try and get permission node for permission
             permission_node = [
-                node for node in available_permissions if node.name == permission
+                node
+                for node in available_permissions
+                if node.name == permission
             ][0]
 
             if not permission_node or not permission_node.user_can_assign:
@@ -486,7 +507,7 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
 
         user = cls.subject_user(user_email)
 
-        (permissions_to_add, permissions_to_remove, _) = cls.permissions_delta(
+        permissions_to_add, permissions_to_remove, _ = cls.permissions_delta(
             id, info.context.user, user, permissions
         )
 

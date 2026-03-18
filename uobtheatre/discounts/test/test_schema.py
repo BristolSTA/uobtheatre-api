@@ -23,7 +23,9 @@ def test_discount_filter_group(filter_value):
     single_discount = DiscountFactory()
     DiscountRequirementFactory(discount=single_discount, number=1)
 
-    result_qs = DiscountFilter().filter_group(Discount.objects, None, filter_value)
+    result_qs = DiscountFilter().filter_group(
+        Discount.objects, None, filter_value
+    )
 
     if filter_value:
         assert group_discount in list(result_qs.all())

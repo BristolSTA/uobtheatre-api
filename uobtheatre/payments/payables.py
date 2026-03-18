@@ -32,7 +32,9 @@ class PayableQuerySet(QuerySet):
         return self.annotate(transaction_count=Count("transactions"))
 
     def annotate_transaction_value(self) -> QuerySet:
-        return self.annotate(transaction_totals=Coalesce(Sum("transactions__value"), 0))
+        return self.annotate(
+            transaction_totals=Coalesce(Sum("transactions__value"), 0)
+        )
 
     def locked(self) -> QuerySet:
         """A payable is locked if it has any pending transactions"""
@@ -82,7 +84,9 @@ class Payable(BaseModel):  # type: ignore
         default=Status.IN_PROGRESS,
     )
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bookings")
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="bookings"
+    )
 
     # Stores who created the booking
     # For regular bookings this will be the user
@@ -217,7 +221,9 @@ class Payable(BaseModel):  # type: ignore
             else:
                 refund_type = "Full"
             # Send an email to the admins
-            mail = payable_refund_initiated_email(authorizing_user, [self], refund_type)
+            mail = payable_refund_initiated_email(
+                authorizing_user, [self], refund_type
+            )
             mail_admins(
                 f"{refund_type.title()} {self.__class__.__name__} Refunds Initiated",
                 mail.to_plain_text(),
@@ -235,7 +241,11 @@ class Payable(BaseModel):  # type: ignore
             (int): total price of the payable in penies
         """
         # If the subtotal is 0 then do not apply the misc costs
-        return math.ceil(self.subtotal + self.misc_costs_value) if self.subtotal else 0
+        return (
+            math.ceil(self.subtotal + self.misc_costs_value)
+            if self.subtotal
+            else 0
+        )
 
     @property
     @abc.abstractmethod
@@ -257,7 +267,9 @@ class Payable(BaseModel):  # type: ignore
         """The total platform fee, in pence, for this payable"""
         raise NotImplementedError
 
-    def pay(self, payment_method: "PaymentProvider") -> Optional["Transaction"]:
+    def pay(
+        self, payment_method: "PaymentProvider"
+    ) -> Optional["Transaction"]:
         """
         Pay for payable using provided payment method.
 

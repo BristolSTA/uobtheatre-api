@@ -146,7 +146,9 @@ class ProductionFilter(FilterSet, UserPermissionFilterMixin):
     end__gte = django_filters.DateTimeFilter(method="end_filter")
     end__lte = django_filters.DateTimeFilter(method="end_filter")
 
-    search = django_filters.CharFilter(method="search_productions", label="Search")
+    search = django_filters.CharFilter(
+        method="search_productions", label="Search"
+    )
 
     @classmethod
     def start_filter(cls, query_set, value, date=None):
@@ -356,7 +358,9 @@ class PerformanceNode(DjangoObjectType):
     relaxed_categories = graphene.List(RelaxedCategoryNode)
     sold_out = graphene.Boolean(required=True)
     is_bookable = graphene.Boolean(required=True)
-    tickets_breakdown = graphene.Field(PerformanceTicketsBreakdown, required=True)
+    tickets_breakdown = graphene.Field(
+        PerformanceTicketsBreakdown, required=True
+    )
     sales_breakdown = graphene.Field(SalesBreakdownNode)
 
     def resolve_ticket_options(self, info):
@@ -437,7 +441,9 @@ class Query(graphene.ObjectType):
     )
     performance = relay.Node.Field(PerformanceNode)
 
-    def resolve_production(self, info, **args):  # pylint: disable=redefined-builtin
+    def resolve_production(
+        self, info, **args
+    ):  # pylint: disable=redefined-builtin
         if all(arg is None for arg in args.values()):
             return None
         try:

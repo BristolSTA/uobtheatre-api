@@ -27,7 +27,10 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("row", models.CharField(blank=True, max_length=5, null=True)),
-                ("number", models.CharField(blank=True, max_length=5, null=True)),
+                (
+                    "number",
+                    models.CharField(blank=True, max_length=5, null=True),
+                ),
             ],
         ),
         migrations.CreateModel(
@@ -51,7 +54,10 @@ class Migration(migrations.Migration):
                 (
                     "slug",
                     autoslug.fields.AutoSlugField(
-                        blank=True, editable=False, populate_from="name", unique=True
+                        blank=True,
+                        editable=False,
+                        populate_from="name",
+                        unique=True,
                     ),
                 ),
                 (

@@ -11,8 +11,15 @@ from uobtheatre.bookings.test.factories import (
     TicketFactory,
 )
 from uobtheatre.images.test.factories import ImageFactory
-from uobtheatre.productions.models import Performance, PerformanceSeatGroup, Production
-from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
+from uobtheatre.productions.models import (
+    Performance,
+    PerformanceSeatGroup,
+    Production,
+)
+from uobtheatre.productions.test.factories import (
+    PerformanceFactory,
+    ProductionFactory,
+)
 from uobtheatre.societies.test.factories import SocietyFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.venues.test.factories import SeatGroupFactory, VenueFactory
@@ -68,16 +75,13 @@ def test_total_production_creation_workflow(gql_client):
     production_gid = response["data"]["production"]["production"]["id"]
 
     # Step 1b: Check it won't let us submit for review
-    request = (
-        """
+    request = """
         mutation {
             setProductionStatus(productionId: "%s", status: PENDING) {
                 success
             }
         }
-    """
-        % production_gid
-    )
+    """ % production_gid
 
     response = gql_client.execute(request)
 
@@ -123,21 +127,22 @@ def test_total_production_creation_workflow(gql_client):
                     success
                 }
             }
-        """ % to_global_id(
-            "PerformanceNode", performance.id
-        )
+        """ % to_global_id("PerformanceNode", performance.id)
         response = gql_client.execute(request)
         assert response["data"]["deletePerformance"]["success"] is True
 
-    performance_gid = to_global_id("PerformanceNode", Performance.objects.first().id)
+    performance_gid = to_global_id(
+        "PerformanceNode", Performance.objects.first().id
+    )
 
     # Step 3: Query available seat groups, and set seat groups
     venue = VenueFactory()
-    seat_group_1 = SeatGroupFactory(name="Best Seats", venue=venue, capacity=100)
+    seat_group_1 = SeatGroupFactory(
+        name="Best Seats", venue=venue, capacity=100
+    )
     seat_group_2 = SeatGroupFactory(name="Meh Seats", venue=venue, capacity=50)
 
-    request = (
-        """
+    request = """
         query {
             venue(slug: "%s") {
                 seatGroups {
@@ -149,9 +154,7 @@ def test_total_production_creation_workflow(gql_client):
                 }
             }
         }
-    """
-        % venue.slug
-    )
+    """ % venue.slug
 
     response = gql_client.execute(request)
     assert response["data"]["venue"]["seatGroups"]["edges"] == [
@@ -188,8 +191,7 @@ def test_total_production_creation_workflow(gql_client):
 
     for discount in discounts_to_make:
         # 4.1 Create concession
-        request = (
-            """
+        request = """
             mutation {
                 concessionType(input: {
                     name: "%s"
@@ -200,13 +202,13 @@ def test_total_production_creation_workflow(gql_client):
                     }
                 }
             }
-        """
-            % discount[0]
-        )
+        """ % discount[0]
 
         response = gql_client.execute(request)
         assert response["data"]["concessionType"]["success"] is True
-        concession_type_gid = response["data"]["concessionType"]["concessionType"]["id"]
+        concession_type_gid = response["data"]["concessionType"][
+            "concessionType"
+        ]["id"]
 
         # 4.2 Create discount
         request = """
@@ -269,9 +271,7 @@ def test_total_production_creation_workflow(gql_client):
                     success
                 }
             }
-    """ % (
-        production_gid,
-    )
+    """ % (production_gid,)
 
     response = gql_client.execute(request)
     assert response["data"]["productionPermissions"]["success"] is True
@@ -293,9 +293,7 @@ def test_total_production_creation_workflow(gql_client):
                     }
                 }
             }
-    """ % (
-        production_gid,
-    )
+    """ % (production_gid,)
 
     response = gql_client.execute(request)
     assert response["data"]["productionPermissions"]["success"] is False
@@ -307,8 +305,7 @@ def test_total_production_creation_workflow(gql_client):
     ]
 
     # Step 6: Check it will let us submit for review
-    request = (
-        """
+    request = """
         mutation {
             setProductionStatus(productionId: "%s", status: PENDING) {
                 success
@@ -323,9 +320,7 @@ def test_total_production_creation_workflow(gql_client):
                 }
             }
         }
-    """
-        % production_gid
-    )
+    """ % production_gid
 
     response = gql_client.execute(request)
     assert response["data"]["setProductionStatus"]["success"] is True
@@ -338,7 +333,9 @@ def test_correct_capacities(gql_client):
     sg_all_capacity = venue_capacity  # 207
     seat_group_all = SeatGroupFactory(venue=venue, capacity=sg_all_capacity)
     sg_small_capacity = 50
-    seat_group_small = SeatGroupFactory(venue=venue, capacity=sg_small_capacity)
+    seat_group_small = SeatGroupFactory(
+        venue=venue, capacity=sg_small_capacity
+    )
     sg_best_capacity = 157
     seat_group_best = SeatGroupFactory(venue=venue, capacity=sg_best_capacity)
     production = ProductionFactory()
@@ -348,7 +345,9 @@ def test_correct_capacities(gql_client):
         performance=perf_1, seat_group=seat_group_all, capacity=sg_all_capacity
     )
     PerformanceSeatingFactory(
-        performance=perf_1, seat_group=seat_group_small, capacity=sg_small_capacity
+        performance=perf_1,
+        seat_group=seat_group_small,
+        capacity=sg_small_capacity,
     )
     PerformanceSeatingFactory(
         performance=perf_1, seat_group=seat_group_best, capacity=147
@@ -363,7 +362,9 @@ def test_correct_capacities(gql_client):
         performance=perf_2, seat_group=seat_group_all, capacity=sg_all_capacity
     )
     PerformanceSeatingFactory(
-        performance=perf_2, seat_group=seat_group_small, capacity=sg_small_capacity
+        performance=perf_2,
+        seat_group=seat_group_small,
+        capacity=sg_small_capacity,
     )
     PerformanceSeatingFactory(
         performance=perf_2, seat_group=seat_group_best, capacity=147
@@ -388,8 +389,7 @@ def test_correct_capacities(gql_client):
     TicketFactory(booking=booking2, seat_group=seat_group_all)
     TicketFactory(booking=booking2, seat_group=seat_group_best)
 
-    request = (
-        """
+    request = """
         query {
             production(slug: "%s") {
                 totalCapacity
@@ -413,9 +413,7 @@ def test_correct_capacities(gql_client):
                 }
             }
         }
-    """
-        % production.slug
-    )
+    """ % production.slug
 
     response = gql_client.execute(request)
 
@@ -455,7 +453,8 @@ def test_correct_capacities(gql_client):
                         "ticketOptions": [
                             {
                                 "capacity": sg_all_capacity,
-                                "capacityRemaining": performance_limit_capacity - 2,
+                                "capacityRemaining": performance_limit_capacity
+                                - 2,
                             },
                             {
                                 "capacity": sg_small_capacity,
