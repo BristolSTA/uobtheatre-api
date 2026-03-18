@@ -890,7 +890,7 @@ def test_ticket_check_in():
 
     assert ticket_unchecked.checked_in
     assert ticket_unchecked.checked_in_at == mock_ticket_check_in_time
-    assert ticket_unchecked.checked_in_by == user
+    assert ticket_unchecked.checked_in_user == user
 
 
 @pytest.mark.django_db
@@ -914,7 +914,7 @@ def test_ticket_uncheck_in():
     ticket_checked.uncheck_in()
     assert not ticket_checked.checked_in
     assert Ticket.objects.first().checked_in_at is None
-    assert ticket_checked.checked_in_by is None
+    assert ticket_checked.checked_in_user is None
 
 
 @pytest.mark.django_db

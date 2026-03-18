@@ -35,6 +35,9 @@ def test_tickets_schema(gql_client):
     for ticket in tickets:
         ticket.check_in(user=UserFactory())
 
+    for ticket in tickets:
+        ticket.save()
+
     request_query = """
         {
           performances {
@@ -94,7 +97,7 @@ def test_tickets_schema(gql_client):
                                                     "checkedInBy": {
                                                         "id": to_global_id(
                                                             "UserNode",
-                                                            ticket.checked_in_by.id,
+                                                            ticket.checked_in_user.id,
                                                         )
                                                     },
                                                     "seatGroup": {
@@ -569,7 +572,7 @@ def test_discounts_node(gql_client):
 def test_booking_in_progress(gql_client):
     """
     We will often want to get an "in_progress" booking for a given booking and user.
-        bookings(performance: "UGVyZm9ybWFuY2VOb2RlOjE=", status: "IN_PROGRESS")
+        bookings(performance: "UGVyZm9ybWFuY2VOb2RlOjE=", status: IN_PROGRESS)
     """
     user = UserFactory()
     performance = PerformanceFactory(id=1)
@@ -587,7 +590,7 @@ def test_booking_in_progress(gql_client):
     request_query = """
     {
       me {
-        bookings(performance: "UGVyZm9ybWFuY2VOb2RlOjE=", status: "IN_PROGRESS") {
+        bookings(performance: "UGVyZm9ybWFuY2VOb2RlOjE=", status: IN_PROGRESS) {
           edges {
             node {
               id

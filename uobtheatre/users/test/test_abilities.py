@@ -85,10 +85,16 @@ def test_open_admin(permissions, is_superuser, expected_user_has):
 @pytest.mark.django_db
 def test_permissions_mixin_resolve_permissions_with_get_perms(info):
     class TestModelSchema(PermissionsMixin):
+        """Generates a class to test the model schema
+        Args:
+            PermissionsMixin (_type_): _description_
+        """
+
         def get_perms(self, _):
             pass
 
         class Meta:
+            fields = "__all__"
             model = Production
 
     schema = TestModelSchema()

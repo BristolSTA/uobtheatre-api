@@ -3,14 +3,13 @@ from abc import ABC
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Union
 
-from graphql_relay.node.node import from_global_id
-
 from uobtheatre.bookings.models import Booking
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.users.models import User
 from uobtheatre.utils.exceptions import AuthorizationException, GQLException
+from uobtheatre.utils.schema import from_global_id
 
 
 def get_option(options: List[Dict[str, str]], name: str, default=None):

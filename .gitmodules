@@ -1,0 +1,3 @@
+[submodule "django-graphene-auth"]
+	path = dga
+	url = git@github.com:zst-c/django-graphene-auth.git

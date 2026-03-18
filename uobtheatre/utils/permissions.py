@@ -22,7 +22,8 @@ def get_users_with_perm(permission: str, obj: Model):
         Q(groups__permissions__in=[perm]) | Q(user_permissions__in=[perm])
     )
 
-    return get_users_with_perms(
+    # Mypy doesn't love the typing of these perms functions, but they can't be modified as they come from an external package
+    return get_users_with_perms(  # type: ignore[union-attr]
         obj,
         with_superusers=True,
         only_with_perms_in=[codename],

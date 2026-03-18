@@ -575,6 +575,7 @@ def test_square_pos_list_devices_success(mock_square):
             ),
         ],
         get_next=None,
+        response=None,
     )
 
     with mock_square(

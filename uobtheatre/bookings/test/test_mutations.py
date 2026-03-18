@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import pytest
 from django.utils import timezone
-from graphql_relay.node.node import from_global_id, to_global_id
+from graphql_relay.node.node import to_global_id
 from guardian.shortcuts import assign_perm
 from square.types.create_payment_response import CreatePaymentResponse
 from square.types.create_terminal_checkout_response import (
@@ -34,6 +34,7 @@ from uobtheatre.productions.test.factories import PerformanceFactory
 from uobtheatre.users.models import User
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.utils.exceptions import GQLException
+from uobtheatre.utils.schema import from_global_id
 from uobtheatre.utils.test_utils import ticket_dict_list_dict_gen, ticket_list_dict_gen
 from uobtheatre.venues.test.factories import SeatFactory, SeatGroupFactory
 
@@ -274,7 +275,12 @@ def test_create_booking_with_too_many_tickets(gql_client, with_boxoffice_perms):
             success
             errors {{
               __typename
+              ... on NonFieldError {{
+                code
+                message
+              }}
               ... on FieldError {{
+                code
                 message
               }}
             }}
@@ -2390,7 +2396,7 @@ def test_check_in_booking(
         for ticket in check_in_tickets:
             ticket.refresh_from_db()
             assert ticket.checked_in
-            assert ticket.checked_in_by == gql_client.user
+            assert ticket.checked_in_user == gql_client.user
     elif booking_obj.get("performance_id") == performance_id:
         # The instance where there are tickets that don't belong to the booking
         assert len(response["data"]["checkInBooking"]["errors"]) == len(

@@ -1,7 +1,7 @@
 from unittest.mock import PropertyMock, patch
 
 import pytest
-from pytest_django.asserts import assertQuerysetEqual
+from pytest_django.asserts import assertQuerySetEqual
 
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import BookingFactory
@@ -45,8 +45,8 @@ def test_payable_query_set():
     booking_3 = BookingFactory()  # A completed and paid for booking. Shouldn't show up
     TransactionFactory(pay_object=booking_3, status=Transaction.Status.COMPLETED)
 
-    assertQuerysetEqual(Booking.objects.locked(), [booking_1])
-    assertQuerysetEqual(Booking.objects.refunded(), [booking_2])
+    assertQuerySetEqual(Booking.objects.locked(), [booking_1])
+    assertQuerySetEqual(Booking.objects.refunded(), [booking_2])
 
 
 @pytest.mark.django_db
@@ -393,7 +393,7 @@ def test_payable_associated_tasks():
         task_args=f'"({payable.id}, {payable.content_type.id}, abc)"',
     )
 
-    assertQuerysetEqual(payable.associated_tasks, [related_task, related_payment_task])
+    assertQuerySetEqual(payable.associated_tasks, [related_task, related_payment_task])
 
 
 @pytest.mark.django_db
@@ -404,7 +404,7 @@ def test_annotate_transaction_count(count):
         TransactionFactory(type=Transaction.Type.PAYMENT, pay_object=payable)
         for _ in range(count)
     ]
-    assertQuerysetEqual(
+    assertQuerySetEqual(
         payable.qs.annotate_transaction_count().values_list(
             "transaction_count", flat=True
         ),
@@ -415,7 +415,7 @@ def test_annotate_transaction_count(count):
 @pytest.mark.django_db
 def test_annotate_transaction_value():
     payable = BookingFactory()
-    assertQuerysetEqual(
+    assertQuerySetEqual(
         payable.qs.annotate_transaction_value().values_list(
             "transaction_totals", flat=True
         ),
@@ -426,7 +426,7 @@ def test_annotate_transaction_value():
     TransactionFactory(value=-20, pay_object=payable)
     TransactionFactory(value=50, pay_object=payable)
 
-    assertQuerysetEqual(
+    assertQuerySetEqual(
         payable.qs.annotate_transaction_value().values_list(
             "transaction_totals", flat=True
         ),
@@ -454,12 +454,12 @@ def test_queryset_refunded():
     TransactionFactory(value=2, pay_object=payable4)
     TransactionFactory(value=-3, pay_object=payable4)
 
-    assertQuerysetEqual(
+    assertQuerySetEqual(
         Booking.objects.refunded(),
         [payable1],
     )
 
-    assertQuerysetEqual(
+    assertQuerySetEqual(
         Booking.objects.refunded(bool_val=False),
         [payable2, payable3, payable4],
         ordered=False,

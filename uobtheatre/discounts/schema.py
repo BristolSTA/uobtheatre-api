@@ -32,6 +32,7 @@ class DiscountRequirementNode(DjangoObjectType):
     class Meta:
         model = DiscountRequirement
         interfaces = (relay.Node,)
+        fields = "__all__"
 
 
 class DiscountFilter(FilterSet):
@@ -66,6 +67,7 @@ class DiscountNode(DjangoObjectType):
         model = Discount
         interfaces = (relay.Node,)
         filterset_class = DiscountFilter
+        fields = "__all__"
 
 
 class ConcessionTypeMutation(SafeFormMutation, AuthRequiredMixin):

@@ -16,7 +16,7 @@ class SiteMessageFactory(factory.django.DjangoModelFactory):
         "future_datetime", tzinfo=timezone.get_current_timezone()
     )
     event_end = factory.Faker("future_datetime", tzinfo=timezone.get_current_timezone())
-    creator = factory.SubFactory(UserFactory)
+    user = factory.SubFactory(UserFactory)
     type = factory.Faker(
         "random_element", elements=[x[0] for x in Message.Type.choices]
     )

@@ -41,7 +41,20 @@ class TransactionQuerySet(QuerySet):
             for breakdown in SalesBreakdown.Enums
             if breakdowns is None or breakdown in breakdowns
         }
-        return self.aggregate(**annotations)
+
+        # app_fee is an aggregate, so it has to be dealt with separately
+        proc_app = "app_fee" in annotations.keys()
+
+        if proc_app:
+            app_fee = annotations["app_fee"]
+            del annotations["app_fee"]
+
+        annotations = self.aggregate(**annotations)
+
+        if proc_app:
+            annotations["app_fee"] = self.aggregate(output=app_fee)["output"]
+
+        return annotations
 
     def get_sales_breakdown(self, breakdown: "SalesBreakdown.Enums"):
         # NOTE: Calling aggregate on an empty queryset gives None so the

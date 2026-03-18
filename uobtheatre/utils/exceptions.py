@@ -33,7 +33,7 @@ class ExceptionMiddleware:  # pragma: no cover
         raise exc
 
     def resolve(self, next, root, info, **kwargs):  # pylint: disable=redefined-builtin
-        return next(root, info, **kwargs).catch(self.on_error)
+        return next(root, info, **kwargs)
 
 
 class NonFieldError(graphene.ObjectType):

@@ -104,7 +104,7 @@ test: ## Run unit tests in docker container
 	$(COMMAND_PREFIX) pytest -k "not system_test" --cov uobtheatre --cov-fail-under 100 --cov-report term-missing $(TEST_PATH) $(TEST)
 
 test-v: ## Run verbose unit tests in docker container, use test_path to specify a test file/directory, app to specify a module and test to specify specific tests to be run.
-	$(COMMAND_PREFIX) coverage run -m pytest -k "not system_test" -s -vv $(TEST_PATH) $(TEST)
+	$(COMMAND_PREFIX) pytest -k "not system_test" -vv $(TEST_PATH) $(TEST)
 
 test-system: ## Run system tests in docker container
 	$(COMMAND_PREFIX) pytest --cov uobtheatre -m "system_test"

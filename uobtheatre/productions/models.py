@@ -205,7 +205,7 @@ class PerformanceQuerySet(QuerySet):
 
     def where_can_view_tickets_and_bookings(self, user: "User"):
         """Filter performances where the user is allowed to view tickets and bookings"""
-        productions_with_perm = get_objects_for_user(
+        productions_with_perm: QuerySet[Production] = get_objects_for_user(
             user,
             ["productions.boxoffice", "productions.view_bookings"],
             accept_global_perms=True,
@@ -228,7 +228,7 @@ class PerformanceQuerySet(QuerySet):
         Returns:
             QuerySet: The filtered queryset
         """
-        production_with_perm = get_objects_for_user(
+        production_with_perm: QuerySet[Production] = get_objects_for_user(
             user, "productions.boxoffice", accept_global_perms=True, with_superuser=True
         )
         if has_permission:
@@ -847,7 +847,10 @@ class ProductionQuerySet(QuerySet):
         """
         # Productions the user has explicit permissions to view
         productions_user_can_view_admin = get_objects_for_user(
-            user, ["view_production", "approve_production"], self, any_perm=True
+            user,
+            ["view_production", "approve_production", "change_production"],
+            self,
+            any_perm=True,
         ).values_list("id", flat=True)
 
         # Productions the user has tickets for that are within the last week or the future

@@ -250,6 +250,9 @@ class PayBooking(AuthRequiredMixin, SafeMutation):
         verify_token=None,
         **kwargs,
     ):
+        # Strip the class name off the enum for the PaymentProvider
+        payment_provider = str(payment_provider).split(".", 1)[-1]
+
         # Get the performance and if it doesn't exist throw an error
         booking = Booking.objects.get(id=kwargs["id"])
 

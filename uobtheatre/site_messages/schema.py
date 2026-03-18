@@ -7,6 +7,7 @@ from graphene_django import DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
 
 from uobtheatre.site_messages.models import Message
+from uobtheatre.users.schema import ExtendedUserNode
 from uobtheatre.utils.filters import FilterSet
 from uobtheatre.utils.schema import IdInputField
 
@@ -133,11 +134,16 @@ class SiteMessageNode(DjangoObjectType):
 
     to_display = graphene.Boolean()
 
+    creator = graphene.Field(ExtendedUserNode)
+
     def resolve_event_duration(self, info):
         return self.duration.total_seconds() // 60
 
     def resolve_to_display(self, info):
         return self.to_display
+
+    def resolve_creator(self, info):
+        return self.user
 
     class Meta:
         model = Message

@@ -23,7 +23,7 @@ This will:
 
 # Prerequisites (Local dev)
 
-- Python 3.10
+- Python 3.12
 - [docker](https://docs.docker.com/get-docker/)
 - [docker compose](https://docs.docker.com/compose/install/)
 
@@ -31,7 +31,7 @@ This will:
 ## Visual Studio Dev Container
 
 This repository has support for users of VS Code. If you use VS Code and have Docker and the "Remote Containers" extension installed, you can get started in under 5 minutes:
-* Clone this repository somewhere on your computer (If using WSL, this should be inside your WSL environment)
+* Clone this repository somewhere on your computer (If using WSL, this should be inside your WSL environment). **Remember to clone with submodules**!
 * Either: a) open the folder through VS Code or b) navgiate to the folder in a CLI and type `code .`
 * If you have the correct extensions installed, you will see a popup on the bottom right asking if you would like to open in a remote container. Click this, and sit back!
 

@@ -1,7 +1,7 @@
 import pytest
 from django.contrib.auth.models import Group, Permission
 from guardian.shortcuts import assign_perm
-from pytest_django.asserts import assertQuerysetEqual
+from pytest_django.asserts import assertQuerySetEqual
 
 from conftest import AuthenticateableGQLClient
 from uobtheatre.productions.test.factories import ProductionFactory
@@ -60,7 +60,9 @@ def test_boxoffice_permissions_object_level(
     assert not user.has_perm("productions.boxoffice", production)
     assert not user.has_perm("productions.boxoffice", production2)
 
-    assign_perm("boxoffice", user, production)
+    # MyPy doesn't understand how factory instantiation works!
+    assign_perm("boxoffice", user, production)  # type: ignore
+
     assert user.has_perm("boxoffice", production)
     assert not user.has_perm("boxoffice", production2)
 
@@ -117,7 +119,7 @@ def test_user_get_global_permissions():
 @pytest.mark.django_db
 def test_user_get_global_permissions_superuser():
     user = UserFactory(is_superuser=True)
-    assertQuerysetEqual(user.global_perms, Permission.objects.all())
+    assertQuerySetEqual(user.global_perms, Permission.objects.all())
 
 
 @pytest.mark.django_db

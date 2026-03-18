@@ -1,4 +1,5 @@
-from typing import Sized, Union
+from collections.abc import Sized
+from typing import Union
 
 
 def pluralize(word, items: Union[Sized, int], plural_word=None, suffix="s"):

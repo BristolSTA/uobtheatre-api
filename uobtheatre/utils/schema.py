@@ -7,8 +7,9 @@ from django.forms.models import ModelChoiceField
 from graphene.types.mutation import MutationOptions
 from graphene_django import DjangoObjectType
 from graphene_django.forms.mutation import DjangoModelFormMutation
-from graphql.language.ast import IntValue, StringValue
-from graphql_relay.node.node import from_global_id
+from graphql.language.ast import IntValueNode, StringValueNode
+from graphql_relay.node.node import ResolvedGlobalId
+from graphql_relay.utils import unbase64
 from guardian.shortcuts import (
     assign,
     assign_perm,
@@ -87,9 +88,10 @@ class AssignedUsersMixin:
                 user=user,
                 assigned_permissions=permissions,
             )
+            # Mypy doesn't love the typing of perms in general, and it can't be fixed as this comes from an external package
             for (user, permissions) in get_users_with_perms(
-                self, attach_perms=True, with_group_users=False
-            ).items()
+                self, attach_perms=True, with_group_users=False  # type: ignore
+            ).items()  # type: ignore
         ]
 
     def resolve_assignable_permissions(self, info):
@@ -123,7 +125,9 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
 
     @classmethod
     def mutate(cls, root, info, **inputs):
-        """In order to account for having a possible mix of global and local IDs, override the mutate function so that id input items are parsed from global ids"""
+        """In order to account for having a possible mix of global and local
+        IDs, override the mutate function so that id input items are parsed from global ids
+        """
         input_items = inputs["input"]
 
         # If an ID is passed as top level input, convert from global to local
@@ -143,7 +147,8 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
                         ]
                     else:
                         input_items[key] = from_global_id(form[key].value())[1]
-                except ValueError:
+                except ValueError:  # pragma: no cover
+                    # This is just to stop errors breaking everything, but this does literally nothing
                     pass
         return super().mutate(root, info, **input_items)
 
@@ -280,7 +285,7 @@ class IdInputField(graphene.ID):
         Given the global id provided in the mutation (directly as an argument)
         covert it to the local integer id.
         """
-        if isinstance(input_id, (StringValue, IntValue)):
+        if isinstance(input_id, (StringValueNode, IntValueNode)):
             return from_global_id(input_id.value)[1]
         return None
 
@@ -492,3 +497,15 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
             remove_perm(permission, user, model_instance)
 
         return cls()
+
+
+# The graphql_relay package's from_global_id is broken, so we have to replace it with this
+def from_global_id(global_id: str) -> ResolvedGlobalId:
+    """
+    Takes the "global ID" created by to_global_id,
+    and returns the type name and ID used to create it.
+    """
+    unbased_id = unbase64(global_id)
+    if ":" not in unbased_id:
+        return ResolvedGlobalId("", global_id)
+    return ResolvedGlobalId(*unbased_id.split(":", 1))
