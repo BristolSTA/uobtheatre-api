@@ -165,7 +165,9 @@ pr: ## Runs everything required for a pr
 	make lint
 	make test
 
-build:
+build: ## Rebuilds the docker images, use this after making changes to the Dockerfile or requirements
+	git submodule sync --recursive
+	git submodule update --init --recursive
 	docker compose build api celery
 
 django-shell: ## Open django shell

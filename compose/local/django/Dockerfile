@@ -67,6 +67,9 @@ RUN chmod +x /start
 # copy application code to WORKDIR
 COPY . ${APP_HOME}
 
+# test to ensure the submodule has been loaded
+RUN test -f ${APP_HOME}/dga/setup.py
+
 # Exposes port 8000 to the outside world
 EXPOSE 8000
 
