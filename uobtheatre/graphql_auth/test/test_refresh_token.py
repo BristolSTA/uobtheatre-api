@@ -17,7 +17,10 @@ class RefreshTokenCommonTestCase(CommonTestCase):
 
     def setUp(self):
         self.user = self.create_user(
-            email="foo@email.com", username="foo", verified=True, archived=False
+            email="foo@email.com",
+            username="foo",
+            verified=True,
+            archived=False,
         )
 
     def _test_refresh_token(self):
@@ -76,9 +79,7 @@ class RefreshTokenTestCase(RefreshTokenCommonTestCase):
             tokenAuth(email: "foo@email.com", password: "%s" )
                 { refreshToken }
         }
-        """ % (
-            self.default_password
-        )
+        """ % (self.default_password)
 
     def get_refresh_token_query(self, token):
         return """
@@ -86,9 +87,7 @@ class RefreshTokenTestCase(RefreshTokenCommonTestCase):
             refreshToken(refreshToken: "%s" )
                 { token, refreshToken, refreshExpiresIn, payload, success, errors }
             }
-        """ % (
-            token
-        )
+        """ % (token)
 
 
 class RefreshTokenRelayTestCase(RefreshTokenCommonTestCase):
@@ -101,9 +100,7 @@ class RefreshTokenRelayTestCase(RefreshTokenCommonTestCase):
             relayTokenAuth(input:{ email: "foo@email.com", password: "%s"  })
                 { refreshToken  }
         }
-        """ % (
-            self.default_password
-        )
+        """ % (self.default_password)
 
     def get_refresh_token_query(self, token):
         return """
@@ -111,6 +108,4 @@ class RefreshTokenRelayTestCase(RefreshTokenCommonTestCase):
             relayRefreshToken(input: {refreshToken: "%s"} )
                 { token, refreshToken, refreshExpiresIn, payload, success, errors  }
         }
-        """ % (
-            token
-        )
+        """ % (token)

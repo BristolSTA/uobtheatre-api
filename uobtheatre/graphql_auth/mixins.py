@@ -27,13 +27,22 @@ from .exceptions import (
     UserNotVerifiedError,
     WrongUsageError,
 )
-from .forms import EmailForm, PasswordLessRegisterForm, RegisterForm, UpdateAccountForm
+from .forms import (
+    EmailForm,
+    PasswordLessRegisterForm,
+    RegisterForm,
+    UpdateAccountForm,
+)
 from .models import UserStatus
 from .queries import UserNode
 from .settings import graphql_auth_settings as app_settings
 from .shortcuts import async_email_func, get_user_by_email, get_user_to_login
 from .signals import user_registered, user_verified
-from .utils import get_token_payload, revoke_user_refresh_token, using_refresh_tokens
+from .utils import (
+    get_token_payload,
+    revoke_user_refresh_token,
+    using_refresh_tokens,
+)
 
 UserModel = get_user_model()
 
@@ -111,7 +120,10 @@ class RegisterMixin(SuccessErrorsOutput):
 
                     if app_settings.ALLOW_LOGIN_NOT_VERIFIED:
                         payload = cls.login_on_register(
-                            root, info, password=kwargs.get("password1"), **kwargs
+                            root,
+                            info,
+                            password=kwargs.get("password1"),
+                            **kwargs
                         )
                         return_value = {}
                         for field in cls._meta.fields:  # type: ignore
@@ -129,7 +141,9 @@ class RegisterMixin(SuccessErrorsOutput):
                 errors=Messages.EMAIL_IN_USE,
             )
         except SMTPException:
-            return cls(success=False, errors=Messages.FAILED_SENDING_ACTIVATION_EMAIL)
+            return cls(
+                success=False, errors=Messages.FAILED_SENDING_ACTIVATION_EMAIL
+            )
 
 
 class VerifyAccountMixin(SuccessErrorsOutput):
@@ -262,7 +276,9 @@ class SendPasswordResetEmailMixin(SuccessErrorsOutput):
                 async_email_func(user.status.resend_activation_email, (info,))  # type: ignore
             else:
                 user.status.resend_activation_email(info)  # type: ignore
-            return cls(success=False, errors=Messages.NOT_VERIFIED_PASSWORD_RESET)
+            return cls(
+                success=False, errors=Messages.NOT_VERIFIED_PASSWORD_RESET
+            )
         except SMTPException:
             return cls(success=False, errors=Messages.EMAIL_FAIL)
 
@@ -423,7 +439,11 @@ class ObtainJSONWebTokenMixin(SuccessErrorsOutput):
                 return cls.parent_resolve(root, info, **final_kwargs)  # type: ignore
             else:
                 raise UserNotVerifiedError
-        except (JSONWebTokenError, ObjectDoesNotExist, InvalidCredentialsError):
+        except (
+            JSONWebTokenError,
+            ObjectDoesNotExist,
+            InvalidCredentialsError,
+        ):
             return cls(success=False, errors=Messages.INVALID_CREDENTIALS)
         except UserNotVerifiedError:
             return cls(success=False, errors=Messages.NOT_VERIFIED)
@@ -578,7 +598,8 @@ class SendSecondaryEmailActivationMixin(SuccessErrorsOutput):
                 user = info.context.user
                 if async_email_func:
                     async_email_func(
-                        user.status.send_secondary_email_activation, (info, email)
+                        user.status.send_secondary_email_activation,
+                        (info, email),
                     )
                 else:
                     user.status.send_secondary_email_activation(info, email)

@@ -28,7 +28,10 @@ from .utils import normalize_fields
 
 
 class Register(
-    RelayMutationMixin, DynamicInputMixin, RegisterMixin, graphene.ClientIDMutation
+    RelayMutationMixin,
+    DynamicInputMixin,
+    RegisterMixin,
+    graphene.ClientIDMutation,
 ):
     _required_inputs = normalize_fields(
         app_settings.REGISTER_MUTATION_FIELDS,
@@ -43,7 +46,10 @@ class Register(
 
 
 class VerifyAccount(
-    RelayMutationMixin, DynamicInputMixin, VerifyAccountMixin, graphene.ClientIDMutation
+    RelayMutationMixin,
+    DynamicInputMixin,
+    VerifyAccountMixin,
+    graphene.ClientIDMutation,
 ):
     _required_inputs = ["token"]
     __doc__ = VerifyAccountMixin.__doc__
@@ -90,7 +96,10 @@ class VerifySecondaryEmail(
 
 
 class SwapEmails(
-    RelayMutationMixin, DynamicInputMixin, SwapEmailsMixin, graphene.ClientIDMutation
+    RelayMutationMixin,
+    DynamicInputMixin,
+    SwapEmailsMixin,
+    graphene.ClientIDMutation,
 ):
     _required_inputs = ["password"]
     __doc__ = SwapEmailsMixin.__doc__
@@ -107,21 +116,29 @@ class RemoveSecondaryEmail(
 
 
 class PasswordSet(
-    RelayMutationMixin, DynamicInputMixin, PasswordSetMixin, graphene.ClientIDMutation
+    RelayMutationMixin,
+    DynamicInputMixin,
+    PasswordSetMixin,
+    graphene.ClientIDMutation,
 ):
     _required_inputs = ["token", "new_password1", "new_password2"]
     __doc__ = PasswordSetMixin.__doc__
 
 
 class PasswordReset(
-    RelayMutationMixin, DynamicInputMixin, PasswordResetMixin, graphene.ClientIDMutation
+    RelayMutationMixin,
+    DynamicInputMixin,
+    PasswordResetMixin,
+    graphene.ClientIDMutation,
 ):
     _required_inputs = ["token", "new_password1", "new_password2"]
     __doc__ = PasswordResetMixin.__doc__
 
 
 class ObtainJSONWebToken(
-    RelayMutationMixin, ObtainJSONWebTokenMixin, graphql_jwt.relay.JSONWebTokenMutation
+    RelayMutationMixin,
+    ObtainJSONWebTokenMixin,
+    graphql_jwt.relay.JSONWebTokenMutation,
 ):
     __doc__ = ObtainJSONWebTokenMixin.__doc__
 
@@ -135,7 +152,9 @@ class ObtainJSONWebToken(
                 {field: graphene.InputField(graphene.String)}
             )
         if not jwt_settings.JWT_HIDE_TOKEN_FIELDS:
-            cls._meta.fields["token"] = graphene.Field(graphene.String, required=False)
+            cls._meta.fields["token"] = graphene.Field(
+                graphene.String, required=False
+            )
             if jwt_settings.JWT_LONG_RUNNING_REFRESH_TOKEN:
                 cls._meta.fields["refresh_token"] = graphene.Field(
                     graphene.String, required=False
@@ -154,7 +173,10 @@ class ArchiveAccount(
 
 
 class DeleteAccount(
-    RelayMutationMixin, DeleteAccountMixin, DynamicInputMixin, graphene.ClientIDMutation
+    RelayMutationMixin,
+    DeleteAccountMixin,
+    DynamicInputMixin,
+    graphene.ClientIDMutation,
 ):
     _required_inputs = ["password"]
     __doc__ = DeleteAccountMixin.__doc__
@@ -171,14 +193,19 @@ class PasswordChange(
 
 
 class UpdateAccount(
-    RelayMutationMixin, DynamicInputMixin, UpdateAccountMixin, graphene.ClientIDMutation
+    RelayMutationMixin,
+    DynamicInputMixin,
+    UpdateAccountMixin,
+    graphene.ClientIDMutation,
 ):
     _inputs = app_settings.UPDATE_MUTATION_FIELDS
     __doc__ = UpdateAccountMixin.__doc__
 
 
 class VerifyToken(
-    RelayMutationMixin, VerifyOrRefreshOrRevokeTokenMixin, graphql_jwt.relay.Verify
+    RelayMutationMixin,
+    VerifyOrRefreshOrRevokeTokenMixin,
+    graphql_jwt.relay.Verify,
 ):
     payload = GenericScalar(required=False)
     __doc__ = VerifyOrRefreshOrRevokeTokenMixin.__doc__
@@ -188,7 +215,9 @@ class VerifyToken(
 
 
 class RefreshToken(
-    RelayMutationMixin, VerifyOrRefreshOrRevokeTokenMixin, graphql_jwt.relay.Refresh
+    RelayMutationMixin,
+    VerifyOrRefreshOrRevokeTokenMixin,
+    graphql_jwt.relay.Refresh,
 ):
     refresh_expires_in = graphene.Int()
     payload = GenericScalar(required=False)
@@ -200,7 +229,9 @@ class RefreshToken(
     @classmethod
     def Field(cls, *args, **kwargs):
         if not jwt_settings.JWT_HIDE_TOKEN_FIELDS:
-            cls._meta.fields["token"] = graphene.Field(graphene.String, required=False)
+            cls._meta.fields["token"] = graphene.Field(
+                graphene.String, required=False
+            )
 
             if jwt_settings.JWT_LONG_RUNNING_REFRESH_TOKEN:
                 cls._meta.fields["refresh_token"] = graphene.Field(
@@ -211,7 +242,9 @@ class RefreshToken(
 
 
 class RevokeToken(
-    RelayMutationMixin, VerifyOrRefreshOrRevokeTokenMixin, graphql_jwt.relay.Revoke
+    RelayMutationMixin,
+    VerifyOrRefreshOrRevokeTokenMixin,
+    graphql_jwt.relay.Revoke,
 ):
     revoked = graphene.Int(required=False)
     __doc__ = VerifyOrRefreshOrRevokeTokenMixin.__doc__

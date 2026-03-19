@@ -2,6 +2,7 @@ from smtplib import SMTPException
 from unittest import mock
 
 from django.core import mail
+
 from uobtheatre.graphql_auth.common_testcase import CommonTestCase
 from uobtheatre.graphql_auth.constants import Messages
 
@@ -88,12 +89,12 @@ class SendPasswordResetEmailTestCase(SendPasswordResetEmailCommonTestCase):
                 sendPasswordResetEmail(email: "%s")
                     { success, errors }
                 }
-        """ % (
-            email
-        )
+        """ % (email)
 
 
-class SendPasswordResetEmailRelayTestCase(SendPasswordResetEmailCommonTestCase):
+class SendPasswordResetEmailRelayTestCase(
+    SendPasswordResetEmailCommonTestCase
+):
     RESPONSE_RESULT_KEY = "relaySendPasswordResetEmail"
 
     def get_query(self, email):
@@ -102,6 +103,4 @@ class SendPasswordResetEmailRelayTestCase(SendPasswordResetEmailCommonTestCase):
                 relaySendPasswordResetEmail(input:{ email: "%s"})
                     { success, errors }
                 }
-        """ % (
-            email
-        )
+        """ % (email)

@@ -47,7 +47,9 @@ def get_user_to_login(**kwargs):
         )
     else:
         user = (
-            UserModel._default_manager.select_related("status").filter(**kwargs).first()
+            UserModel._default_manager.select_related("status")
+            .filter(**kwargs)
+            .first()
         )
     if user:
         return user

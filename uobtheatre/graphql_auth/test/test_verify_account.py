@@ -45,7 +45,9 @@ class VerifyAccountCommonTestCase(CommonTestCase):
     def _test_expired_token(self):
         token = get_token(self.user2, "activation")
         with self.settings(
-            GRAPHQL_AUTH={"EXPIRATION_ACTIVATION_TOKEN": timedelta(seconds=0.0000001)}
+            GRAPHQL_AUTH={
+                "EXPIRATION_ACTIVATION_TOKEN": timedelta(seconds=0.0000001)
+            }
         ):
             response = self.query(self.verify_query(token))
         self.assertResponseNoErrors(response)
@@ -78,9 +80,7 @@ class VerifyAccountTestCase(VerifyAccountCommonTestCase):
             verifyAccount(token: "%s")
                 { success, errors }
             }
-        """ % (
-            token
-        )
+        """ % (token)
 
 
 class VerifyAccountRelayTestCase(VerifyAccountCommonTestCase):
@@ -92,6 +92,4 @@ class VerifyAccountRelayTestCase(VerifyAccountCommonTestCase):
             relayVerifyAccount(input:{ token: "%s"})
                 { success, errors }
         }
-        """ % (
-            token
-        )
+        """ % (token)

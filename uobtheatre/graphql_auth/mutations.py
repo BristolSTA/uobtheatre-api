@@ -27,7 +27,9 @@ from .settings import graphql_auth_settings as app_settings
 from .utils import normalize_fields
 
 
-class Register(MutationMixin, DynamicArgsMixin, RegisterMixin, graphene.Mutation):
+class Register(
+    MutationMixin, DynamicArgsMixin, RegisterMixin, graphene.Mutation
+):
     _required_args = normalize_fields(
         app_settings.REGISTER_MUTATION_FIELDS,
         (
@@ -48,14 +50,20 @@ class VerifyAccount(
 
 
 class ResendActivationEmail(
-    MutationMixin, DynamicArgsMixin, ResendActivationEmailMixin, graphene.Mutation
+    MutationMixin,
+    DynamicArgsMixin,
+    ResendActivationEmailMixin,
+    graphene.Mutation,
 ):
     _required_args = ["email"]
     __doc__ = ResendActivationEmailMixin.__doc__
 
 
 class SendPasswordResetEmail(
-    MutationMixin, DynamicArgsMixin, SendPasswordResetEmailMixin, graphene.Mutation
+    MutationMixin,
+    DynamicArgsMixin,
+    SendPasswordResetEmailMixin,
+    graphene.Mutation,
 ):
     _required_args = ["email"]
     __doc__ = SendPasswordResetEmailMixin.__doc__
@@ -72,25 +80,35 @@ class SendSecondaryEmailActivation(
 
 
 class VerifySecondaryEmail(
-    MutationMixin, DynamicArgsMixin, VerifySecondaryEmailMixin, graphene.Mutation
+    MutationMixin,
+    DynamicArgsMixin,
+    VerifySecondaryEmailMixin,
+    graphene.Mutation,
 ):
     _required_args = ["token"]
     __doc__ = VerifySecondaryEmailMixin.__doc__
 
 
-class SwapEmails(MutationMixin, DynamicArgsMixin, SwapEmailsMixin, graphene.Mutation):
+class SwapEmails(
+    MutationMixin, DynamicArgsMixin, SwapEmailsMixin, graphene.Mutation
+):
     _required_args = ["password"]
     __doc__ = SwapEmailsMixin.__doc__
 
 
 class RemoveSecondaryEmail(
-    MutationMixin, DynamicArgsMixin, RemoveSecondaryEmailMixin, graphene.Mutation
+    MutationMixin,
+    DynamicArgsMixin,
+    RemoveSecondaryEmailMixin,
+    graphene.Mutation,
 ):
     _required_args = ["password"]
     __doc__ = RemoveSecondaryEmailMixin.__doc__
 
 
-class PasswordSet(MutationMixin, PasswordSetMixin, DynamicArgsMixin, graphene.Mutation):
+class PasswordSet(
+    MutationMixin, PasswordSetMixin, DynamicArgsMixin, graphene.Mutation
+):
     _required_args = ["token", "new_password1", "new_password2"]
     __doc__ = PasswordSetMixin.__doc__
 
@@ -109,11 +127,15 @@ class ObtainJSONWebToken(
 
     @classmethod
     def Field(cls, *args, **kwargs):
-        cls._meta.arguments.update({"password": graphene.String(required=True)})
+        cls._meta.arguments.update(
+            {"password": graphene.String(required=True)}
+        )
         for field in app_settings.LOGIN_ALLOWED_FIELDS:
             cls._meta.arguments.update({field: graphene.String()})
         if not jwt_settings.JWT_HIDE_TOKEN_FIELDS:
-            cls._meta.fields["token"] = graphene.Field(graphene.String, required=False)
+            cls._meta.fields["token"] = graphene.Field(
+                graphene.String, required=False
+            )
             if jwt_settings.JWT_LONG_RUNNING_REFRESH_TOKEN:
                 cls._meta.fields["refresh_token"] = graphene.Field(
                     graphene.String, required=False
@@ -149,7 +171,9 @@ class UpdateAccount(
     __doc__ = UpdateAccountMixin.__doc__
 
 
-class VerifyToken(MutationMixin, VerifyOrRefreshOrRevokeTokenMixin, graphql_jwt.Verify):
+class VerifyToken(
+    MutationMixin, VerifyOrRefreshOrRevokeTokenMixin, graphql_jwt.Verify
+):
     payload = GenericScalar(required=False)
     __doc__ = VerifyOrRefreshOrRevokeTokenMixin.__doc__
 
@@ -164,7 +188,9 @@ class RefreshToken(
     @classmethod
     def Field(cls, *args, **kwargs):
         if not jwt_settings.JWT_HIDE_TOKEN_FIELDS:
-            cls._meta.fields["token"] = graphene.Field(graphene.String, required=False)
+            cls._meta.fields["token"] = graphene.Field(
+                graphene.String, required=False
+            )
 
             if jwt_settings.JWT_LONG_RUNNING_REFRESH_TOKEN:
                 cls._meta.fields["refresh_token"] = graphene.Field(
@@ -174,6 +200,8 @@ class RefreshToken(
         return super(JSONWebTokenMixin, cls).Field(*args, **kwargs)  # type: ignore
 
 
-class RevokeToken(MutationMixin, VerifyOrRefreshOrRevokeTokenMixin, graphql_jwt.Revoke):
+class RevokeToken(
+    MutationMixin, VerifyOrRefreshOrRevokeTokenMixin, graphql_jwt.Revoke
+):
     revoked = graphene.Int(required=False)
     __doc__ = VerifyOrRefreshOrRevokeTokenMixin.__doc__

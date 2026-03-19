@@ -8,7 +8,10 @@ from uobtheatre.graphql_auth.utils import get_token
 class PasswordSetCommonTestCase(CommonTestCase):
     def setUp(self):
         self.user1 = self.create_user(
-            email="gaa@email.com", username="gaa", verified=True, archived=False
+            email="gaa@email.com",
+            username="gaa",
+            verified=True,
+            archived=False,
         )
         self.user1_old_pass = self.user1.password
 
@@ -78,7 +81,9 @@ class PasswordSetCommonTestCase(CommonTestCase):
         token = get_token(self.user1, "password_set")
         query = self.get_query(token)
         with self.settings(
-            GRAPHQL_AUTH={"EXPIRATION_PASSWORD_SET_TOKEN": timedelta(seconds=0.0000001)}
+            GRAPHQL_AUTH={
+                "EXPIRATION_PASSWORD_SET_TOKEN": timedelta(seconds=0.0000001)
+            }
         ):
             response = self.query(query)
         self.assertResponseNoErrors(response)
@@ -101,9 +106,7 @@ class PasswordSetTestCase(PasswordSetCommonTestCase):
             )
             { refreshToken }
         }
-        """ % (
-            self.default_password,
-        )
+        """ % (self.default_password,)
 
     def get_query(
         self, token, new_password1="new_password", new_password2="new_password"
@@ -138,9 +141,7 @@ class PasswordSetRelayTestCase(PasswordSetCommonTestCase):
                 )
                 { success, refreshToken }
             }
-            """ % (
-            self.default_password,
-        )
+            """ % (self.default_password,)
 
     def get_query(
         self, token, new_password1="new_password", new_password2="new_password"

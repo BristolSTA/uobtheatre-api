@@ -16,7 +16,9 @@ class PasswordChangeCommonTestCase(CommonTestCase):
     def get_login_query(self):
         raise NotImplementedError
 
-    def get_query(self, new_password1="new_password", new_password2="new_password"):
+    def get_query(
+        self, new_password1="new_password", new_password2="new_password"
+    ):
         raise NotImplementedError
 
     def _test_password_change(self):
@@ -108,7 +110,9 @@ class PasswordChangeTestCase(PasswordChangeCommonTestCase):
             self.default_password,
         )
 
-    def get_query(self, new_password1="new_password", new_password2="new_password"):
+    def get_query(
+        self, new_password1="new_password", new_password2="new_password"
+    ):
         return """
         mutation {
             passwordChange(
@@ -145,7 +149,9 @@ class PasswordChangeRelayTestCase(PasswordChangeCommonTestCase):
             self.default_password,
         )
 
-    def get_query(self, new_password1="new_password", new_password2="new_password"):
+    def get_query(
+        self, new_password1="new_password", new_password2="new_password"
+    ):
         return """
             mutation {
                 relayPasswordChange(

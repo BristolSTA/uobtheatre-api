@@ -2,6 +2,7 @@ from smtplib import SMTPException
 from unittest import mock
 
 from django.core import mail
+
 from uobtheatre.graphql_auth.common_testcase import CommonTestCase
 from uobtheatre.graphql_auth.constants import Messages
 
@@ -40,7 +41,10 @@ class SendSecondaryEmailActivationCommonTestCase(CommonTestCase):
         response = self.query(self.get_query(self.user1.email))  # type: ignore
         result = self.get_response_result(response)
         self.assertFalse(result["success"])
-        self.assertEqual(result["errors"], Messages.EMAIL_IN_USE)
+        self.assertEqual(
+            result["errors"],
+            {"email": [Messages.EMAIL_IN_USE[0]["email"]]},
+        )
         self.assertEqual(len(mail.outbox), 0)
 
     def _test_valid_email(self):
@@ -60,7 +64,9 @@ class SendSecondaryEmailActivationCommonTestCase(CommonTestCase):
         response = self.query(self.get_query(new_email, "wrong-password"))
         result = self.get_response_result(response)
         self.assertFalse(result["success"])
-        self.assertEqual(result["errors"], {"password": Messages.INVALID_PASSWORD})
+        self.assertEqual(
+            result["errors"], {"password": Messages.INVALID_PASSWORD}
+        )
         self.assertEqual(len(mail.outbox), 0)
 
     def _test_with_unauthenticated_user(self):
@@ -68,7 +74,9 @@ class SendSecondaryEmailActivationCommonTestCase(CommonTestCase):
         response = self.query(self.get_query(new_email))
         self.assertResponseHasErrors(response)
         error = self.get_response_errors(response)[0]
-        self.assertEqual(error[0]["message"], Messages.UNAUTHENTICATED[0]["message"])
+        self.assertEqual(
+            error[0]["message"], Messages.UNAUTHENTICATED[0]["message"]
+        )
         self.assertEqual(error["extensions"], Messages.UNAUTHENTICATED)
 
     @mock.patch(
@@ -85,7 +93,9 @@ class SendSecondaryEmailActivationCommonTestCase(CommonTestCase):
         self.assertEqual(len(mail.outbox), 0)
 
 
-class SendSecondaryEmailActivationTestCase(SendSecondaryEmailActivationCommonTestCase):
+class SendSecondaryEmailActivationTestCase(
+    SendSecondaryEmailActivationCommonTestCase
+):
     RESPONSE_RESULT_KEY = "sendSecondaryEmailActivation"
 
     def get_query(self, email, password=None) -> str:

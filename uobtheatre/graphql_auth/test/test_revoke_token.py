@@ -9,7 +9,9 @@ class RevokeTokenCommonTestCase(CommonTestCase):
     LOGIN_QUERY_RESPONSE_RESULT_KEY: str
 
     def setUp(self):
-        self.user1 = self.create_user(email="foo@email.com", username="foo_username")
+        self.user1 = self.create_user(
+            email="foo@email.com", username="foo_username"
+        )
 
     def get_login_query(self) -> str:
         raise NotImplementedError
@@ -31,7 +33,8 @@ class RevokeTokenCommonTestCase(CommonTestCase):
         self.assertTrue(result["success"])
         self.assertIsNone(result["errors"])
         self.assertEqual(
-            datetime.fromtimestamp(result["revoked"]).date(), datetime.today().date()
+            datetime.fromtimestamp(result["revoked"]).date(),
+            datetime.today().date(),
         )
 
     def _test_successfully_with_expired_token(self):
@@ -51,7 +54,8 @@ class RevokeTokenCommonTestCase(CommonTestCase):
         self.assertTrue(result["success"])
         self.assertIsNone(result["errors"])
         self.assertEqual(
-            datetime.fromtimestamp(result["revoked"]).date(), datetime.today().date()
+            datetime.fromtimestamp(result["revoked"]).date(),
+            datetime.today().date(),
         )
 
     def _test_invalid_token(self):
@@ -74,9 +78,7 @@ class RevokeTokenTestCase(RevokeTokenCommonTestCase):
             tokenAuth(email: "foo@email.com", password: "%s" )
                 { refreshToken  }
         }
-        """ % (
-            self.default_password
-        )
+        """ % (self.default_password)
 
     def get_revoke_query(self, token):
         return """
@@ -84,9 +86,7 @@ class RevokeTokenTestCase(RevokeTokenCommonTestCase):
             revokeToken(refreshToken: "%s" )
                 { revoked, success, errors  }
         }
-        """ % (
-            token
-        )
+        """ % (token)
 
 
 class RevokeTokenRelayTestCase(RevokeTokenCommonTestCase):
@@ -99,9 +99,7 @@ class RevokeTokenRelayTestCase(RevokeTokenCommonTestCase):
             relayTokenAuth(input:{ email: "foo@email.com", password: "%s"  })
                 { refreshToken  }
             }
-        """ % (
-            self.default_password
-        )
+        """ % (self.default_password)
 
     def get_revoke_query(self, token):
         return """
@@ -109,6 +107,4 @@ class RevokeTokenRelayTestCase(RevokeTokenCommonTestCase):
             relayRevokeToken(input: {refreshToken: "%s"} )
                 { revoked, success, errors  }
         }
-        """ % (
-            token
-        )
+        """ % (token)

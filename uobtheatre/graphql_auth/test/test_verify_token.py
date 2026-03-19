@@ -36,7 +36,9 @@ class VerifyTokenCommonTestCase(CommonTestCase):
 
     def _test_expired_token(self):
         query = self.get_login_query()
-        with self.settings(GRAPHQL_JWT={"JWT_EXPIRATION_DELTA": timedelta(seconds=-1)}):
+        with self.settings(
+            GRAPHQL_JWT={"JWT_EXPIRATION_DELTA": timedelta(seconds=-1)}
+        ):
             response = self.query(query)
         result = json.loads(response.content.decode())["data"][
             self.LOGIN_QUERY_RESPONSE_RESULT_KEY
@@ -79,9 +81,7 @@ class VerifyTokenTestCase(VerifyTokenCommonTestCase):
             verifyToken(token: "%s")
                 { payload, success, errors }
         }
-        """ % (
-            token
-        )
+        """ % (token)
 
 
 class VerifyTokenRelayTestCase(VerifyTokenCommonTestCase):
@@ -105,6 +105,4 @@ class VerifyTokenRelayTestCase(VerifyTokenCommonTestCase):
             relayVerifyToken(input: {token: "%s"})
                 { payload, success, errors }
         }
-        """ % (
-            token
-        )
+        """ % (token)

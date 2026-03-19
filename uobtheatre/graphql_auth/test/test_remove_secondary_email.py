@@ -29,7 +29,9 @@ class RemoveSecondaryEmailCommonTestCase(CommonTestCase):
         response = self.query(self.get_query("wrong_password"))
         result = self.get_response_result(response)
         self.assertFalse(result["success"])
-        self.assertEqual(result["errors"], {"password": Messages.INVALID_PASSWORD})
+        self.assertEqual(
+            result["errors"], {"password": Messages.INVALID_PASSWORD}
+        )
         self.user.refresh_from_db()
         self.assertIsNotNone(self.user.status.secondary_email)  # type: ignore
 
@@ -55,9 +57,7 @@ class RemoveSecondaryEmailTestCase(RemoveSecondaryEmailCommonTestCase):
             removeSecondaryEmail(password: "%s")
                 { success, errors }
             }
-        """ % (
-            password or self.default_password
-        )
+        """ % (password or self.default_password)
 
 
 class RemoveSecondaryEmailRelayTestCase(RemoveSecondaryEmailCommonTestCase):
@@ -69,6 +69,4 @@ class RemoveSecondaryEmailRelayTestCase(RemoveSecondaryEmailCommonTestCase):
             relayRemoveSecondaryEmail(input:{ password: "%s"})
                 { success, errors }
             }
-        """ % (
-            password or self.default_password
-        )
+        """ % (password or self.default_password)

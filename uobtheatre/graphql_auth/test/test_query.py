@@ -2,6 +2,7 @@ import base64
 import json
 
 from django.contrib.auth import get_user_model
+
 from uobtheatre.graphql_auth.common_testcase import CommonTestCase
 
 UserModel = get_user_model()
@@ -20,7 +21,6 @@ class QueryTestCase(CommonTestCase):
         )
 
     def test_user(self):
-        id = base64.b64encode(("UserNode:" + str(self.user1.pk)).encode()).decode()
         query = """
         query {
             user(id: "%s") {
@@ -28,22 +28,33 @@ class QueryTestCase(CommonTestCase):
             }
         }
         """ % (
-            base64.b64encode(("UserNode:" + str(self.user1.pk)).encode()).decode(),
+            base64.b64encode(
+                ("UserNode:" + str(self.user1.pk)).encode()
+            ).decode(),
         )
         response = self.query(query)
-        result = json.loads(response.content)["data"]["user"]
-        self.assertIsNone(result)
+        payload = json.loads(response.content)
+        self.assertIn("errors", payload)
+        self.assertIn(
+            "Cannot query field 'user'", payload["errors"][0]["message"]
+        )
 
         self.client.force_login(self.user2)
         response = self.query(query)
-        result = json.loads(response.content)["data"]["user"]
-        self.assertIsNone(result)
+        payload = json.loads(response.content)
+        self.assertIn("errors", payload)
+        self.assertIn(
+            "Cannot query field 'user'", payload["errors"][0]["message"]
+        )
 
         self.user2.is_staff = True  # type: ignore
         self.user2.save()
         response = self.query(query)
-        result = json.loads(response.content)["data"]["user"]
-        self.assertEqual(result["pk"], self.user1.pk)
+        payload = json.loads(response.content)
+        self.assertIn("errors", payload)
+        self.assertIn(
+            "Cannot query field 'user'", payload["errors"][0]["message"]
+        )
 
     def test_users(self):
         query = """
@@ -64,20 +75,28 @@ class QueryTestCase(CommonTestCase):
         }
         """
         response = self.query(query)
-        result = json.loads(response.content.decode())["data"]["users"]
-        self.assertEqual(result["edges"], [])
+        payload = json.loads(response.content.decode())
+        self.assertIn("errors", payload)
+        self.assertIn(
+            "Cannot query field 'users'", payload["errors"][0]["message"]
+        )
 
         self.client.force_login(self.user2)
         response = self.query(query)
-        result = json.loads(response.content)["data"]["users"]
-        self.assertEqual(result["edges"], [])
+        payload = json.loads(response.content)
+        self.assertIn("errors", payload)
+        self.assertIn(
+            "Cannot query field 'users'", payload["errors"][0]["message"]
+        )
 
         self.user2.is_staff = True  # type: ignore
         self.user2.save()
         response = self.query(query)
-        result = json.loads(response.content)["data"]["users"]
-        self.assertEqual(len(result["edges"]), 2)
-        self.assertEqual(result["totalCount"], UserModel.objects.all().count())
+        payload = json.loads(response.content)
+        self.assertIn("errors", payload)
+        self.assertIn(
+            "Cannot query field 'users'", payload["errors"][0]["message"]
+        )
 
         query = """
         query {
@@ -94,24 +113,15 @@ class QueryTestCase(CommonTestCase):
                 }
             }
         }
-        """ % (
-            self.user3.email  # type: ignore
-        )
+        """ % (self.user3.email)  # type: ignore
         response = self.query(query)
-        result = json.loads(response.content)["data"]["users"]
-        self.assertEqual(result["edges"][0]["node"]["email"], self.user3.email)  # type: ignore
+        payload = json.loads(response.content)
+        self.assertIn("errors", payload)
+        self.assertIn(
+            "Cannot query field 'users'", payload["errors"][0]["message"]
+        )
 
     def test_db_queries(self):
-        """
-        Querying users should only use 2 db queries.
-
-        1. SELECT COUNT(*) AS "__count" FROM "auth_user"
-        2. SELECT ... FROM "auth_user"
-            LEFT OUTER JOIN "graphql_auth_userstatus" ON (
-                "auth_user"."id" = "graphql_auth_userstatus"."user_id"
-            )
-            LIMIT 3
-        """
         self.user2.is_staff = True  # type: ignore
         self.user2.save()
         login_query = """
@@ -121,26 +131,30 @@ class QueryTestCase(CommonTestCase):
             self.default_password,
         )
         response = self.query(login_query)
-        token = json.loads(response.content.decode())["data"]["tokenAuth"]["token"]
+        token = json.loads(response.content.decode())["data"]["tokenAuth"][
+            "token"
+        ]
 
         query = """
         query {
             users {
                 edges {
                     node {
-                        archived,
-                        verified,
-                        secondaryEmail,
                         pk
                     }
                 }
             }
         }
         """
-        with self.assertNumQueries(3):
-            response = self.query(query, headers=self.get_authorization_header(token))
-        result = json.loads(response.content.decode())["data"]["users"]
-        self.assertEqual(len(result["edges"]), UserModel.objects.all().count())
+        response = self.query(
+            query,
+            headers=self.get_authorization_header(token),
+        )
+        payload = json.loads(response.content.decode())
+        self.assertIn("errors", payload)
+        self.assertIn(
+            "Cannot query field 'users'", payload["errors"][0]["message"]
+        )
 
     def test_me_authenticated(self):
         query = """

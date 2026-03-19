@@ -27,7 +27,9 @@ class UserStatus(models.Model):
     """
 
     user = models.OneToOneField(
-        django_settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="status"
+        django_settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="status",
     )
     verified = models.BooleanField(default=False)
     archived = models.BooleanField(default=False)
@@ -37,7 +39,9 @@ class UserStatus(models.Model):
         return "%s - status" % (self.user)
 
     def send(self, subject, template, context, recipient_list=None):
-        _subject = render_to_string(subject, context).replace("\n", " ").strip()
+        _subject = (
+            render_to_string(subject, context).replace("\n", " ").strip()
+        )
         html_message = render_to_string(template, context)
         message = strip_tags(html_message)
 
@@ -86,7 +90,9 @@ class UserStatus(models.Model):
 
     def send_password_set_email(self, info, *args, **kwargs):
         email_context = self.get_email_context(
-            info, app_settings.PASSWORD_SET_PATH_ON_EMAIL, TokenAction.PASSWORD_SET
+            info,
+            app_settings.PASSWORD_SET_PATH_ON_EMAIL,
+            TokenAction.PASSWORD_SET,
         )
         template = app_settings.EMAIL_TEMPLATE_PASSWORD_SET
         subject = app_settings.EMAIL_SUBJECT_PASSWORD_SET
@@ -94,7 +100,9 @@ class UserStatus(models.Model):
 
     def send_password_reset_email(self, info, *args, **kwargs):
         email_context = self.get_email_context(
-            info, app_settings.PASSWORD_RESET_PATH_ON_EMAIL, TokenAction.PASSWORD_RESET
+            info,
+            app_settings.PASSWORD_RESET_PATH_ON_EMAIL,
+            TokenAction.PASSWORD_RESET,
         )
         template = app_settings.EMAIL_TEMPLATE_PASSWORD_RESET
         subject = app_settings.EMAIL_SUBJECT_PASSWORD_RESET
@@ -111,7 +119,9 @@ class UserStatus(models.Model):
         )
         template = app_settings.EMAIL_TEMPLATE_SECONDARY_EMAIL_ACTIVATION
         subject = app_settings.EMAIL_SUBJECT_SECONDARY_EMAIL_ACTIVATION
-        return self.send(subject, template, email_context, recipient_list=[email])
+        return self.send(
+            subject, template, email_context, recipient_list=[email]
+        )
 
     @classmethod
     def email_is_free(cls, email) -> bool:
@@ -128,7 +138,9 @@ class UserStatus(models.Model):
     @classmethod
     def verify(cls, token):
         payload = get_token_payload(
-            token, TokenAction.ACTIVATION, app_settings.EXPIRATION_ACTIVATION_TOKEN
+            token,
+            TokenAction.ACTIVATION,
+            app_settings.EXPIRATION_ACTIVATION_TOKEN,
         )
         user = UserModel._default_manager.get(**payload)
         user_status = cls.objects.get(user=user)

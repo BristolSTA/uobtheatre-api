@@ -5,13 +5,22 @@ from uobtheatre.graphql_auth.constants import Messages
 class UpdateAccountCommonTestCase(CommonTestCase):
     def setUp(self):
         self.user1 = self.create_user(
-            email="foo@email.com", username="foo", verified=False, first_name="foo"
+            email="foo@email.com",
+            username="foo",
+            verified=False,
+            first_name="foo",
         )
         self.user2 = self.create_user(
-            email="bar@email.com", username="bar", verified=True, first_name="bar"
+            email="bar@email.com",
+            username="bar",
+            verified=True,
+            first_name="bar",
         )
         self.user3 = self.create_user(
-            email="gaa@email.com", username="gaa", verified=True, first_name="gaa"
+            email="gaa@email.com",
+            username="gaa",
+            verified=True,
+            first_name="gaa",
         )
 
     def get_query(self, first_name="firstname"):
@@ -21,7 +30,9 @@ class UpdateAccountCommonTestCase(CommonTestCase):
         response = self.query(self.get_query())
         self.assertResponseHasErrors(response)
         error = self.get_response_errors(response)[0]
-        self.assertEqual(error[0]["message"], Messages.UNAUTHENTICATED[0]["message"])
+        self.assertEqual(
+            error[0]["message"], Messages.UNAUTHENTICATED[0]["message"]
+        )
         self.assertEqual(error["extensions"], Messages.UNAUTHENTICATED)
 
     def _test_update_account_not_verified(self):
@@ -62,9 +73,7 @@ class UpdateAccountTestCase(UpdateAccountCommonTestCase):
             updateAccount(firstName: "%s")
                 { success, errors }
         }
-        """ % (
-            first_name
-        )
+        """ % (first_name)
 
 
 class UpdateAccountRelayTestCase(UpdateAccountCommonTestCase):
@@ -76,6 +85,4 @@ class UpdateAccountRelayTestCase(UpdateAccountCommonTestCase):
             relayUpdateAccount(input:{ firstName: "%s" })
                 { success, errors }
         }
-        """ % (
-            first_name
-        )
+        """ % (first_name)

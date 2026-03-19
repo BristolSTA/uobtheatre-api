@@ -1,6 +1,7 @@
 import json
 
 from django.core.exceptions import ObjectDoesNotExist
+
 from uobtheatre.graphql_auth.common_testcase import CommonTestCase
 from uobtheatre.graphql_auth.constants import Messages
 
@@ -25,7 +26,9 @@ class DeleteAccountCommonTestCase(CommonTestCase):
         response = self.query(query)
         self.assertResponseHasErrors(response)
         error = self.get_response_errors(response)[0]
-        self.assertEqual(error[0]["message"], Messages.UNAUTHENTICATED[0]["message"])
+        self.assertEqual(
+            error[0]["message"], Messages.UNAUTHENTICATED[0]["message"]
+        )
         self.assertEqual(error["extensions"], Messages.UNAUTHENTICATED)
 
     def _test_invalid_password(self):
@@ -35,7 +38,9 @@ class DeleteAccountCommonTestCase(CommonTestCase):
         self.assertResponseNoErrors(response)
         result = self.get_response_result(response)
         self.assertFalse(result["success"])
-        self.assertEqual(result["errors"], {"password": Messages.INVALID_PASSWORD})
+        self.assertEqual(
+            result["errors"], {"password": Messages.INVALID_PASSWORD}
+        )
 
     def _test_revoke_refresh_tokens_on_delete_account(self):
         response = self.query(self.get_login_query(self.user2))
@@ -50,7 +55,8 @@ class DeleteAccountCommonTestCase(CommonTestCase):
         self.assertEqual(self.user2.is_active, True)
         with self.assertNumQueries(4):
             response = self.query(
-                self.get_query(), headers=self.get_authorization_header(tokens["token"])
+                self.get_query(),
+                headers=self.get_authorization_header(tokens["token"]),
             )
         self.assertResponseNoErrors(response)
         result = self.get_response_result(response)
@@ -107,9 +113,7 @@ class DeleteAccountTestCase(DeleteAccountCommonTestCase):
                 success, errors
               }
             }
-        """ % (
-            password or self.default_password,
-        )
+        """ % (password or self.default_password,)
 
 
 class DeleteAccountRelayTestCase(DeleteAccountCommonTestCase):
@@ -138,6 +142,4 @@ class DeleteAccountRelayTestCase(DeleteAccountCommonTestCase):
             relayDeleteAccount(input: { password: "%s"})
                 { success, errors }
         }
-        """ % (
-            password or self.default_password,
-        )
+        """ % (password or self.default_password,)

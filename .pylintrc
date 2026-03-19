@@ -10,11 +10,15 @@ fail-under=10
 
 # Add files or directories to the blacklist. They should be base names, not
 # paths.
-ignore=migrations,celery_migrations,dga
+ignore=migrations,celery_migrations,dga,graphql_auth
 
 # Add files or directories matching the regex patterns to the blacklist. The
 # regex matches against base names, not paths.
 ignore-patterns=
+
+# Exclude integrated legacy graphql_auth package from pylint while keeping
+# lint active for non-legacy project modules.
+ignore-paths=
 
 # Python code to execute, usually for sys.path manipulation such as
 # pygtk.require().

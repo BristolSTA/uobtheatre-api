@@ -71,7 +71,8 @@ class DynamicArgsMixin:
                 cls._meta.arguments.update(  # type: ignore
                     {
                         key: graphene.Argument(
-                            getattr(graphene, cls._required_args[key]), required=True
+                            getattr(graphene, cls._required_args[key]),
+                            required=True,
                         )
                     }
                 )
@@ -100,7 +101,11 @@ class DynamicInputMixin:
         if isinstance(cls._inputs, dict):
             for key in cls._inputs:
                 cls._meta.arguments["input"]._meta.fields.update(  # type: ignore
-                    {key: graphene.InputField(getattr(graphene, cls._inputs[key]))}
+                    {
+                        key: graphene.InputField(
+                            getattr(graphene, cls._inputs[key])
+                        )
+                    }
                 )
         elif isinstance(cls._inputs, list):
             for key in cls._inputs:
@@ -111,7 +116,8 @@ class DynamicInputMixin:
                 cls._meta.arguments["input"]._meta.fields.update(  # type: ignore
                     {
                         key: graphene.InputField(
-                            getattr(graphene, cls._required_inputs[key]), required=True
+                            getattr(graphene, cls._required_inputs[key]),
+                            required=True,
                         )
                     }
                 )

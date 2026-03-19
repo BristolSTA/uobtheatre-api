@@ -36,7 +36,9 @@ DEFAULTS = {
     "EXPIRATION_SECONDARY_EMAIL_ACTIVATION_TOKEN": timedelta(hours=1),
     "EXPIRATION_PASSWORD_SET_TOKEN": timedelta(hours=1),
     # email stuff
-    "EMAIL_FROM": getattr(django_settings, "DEFAULT_FROM_EMAIL", "test@email.com"),
+    "EMAIL_FROM": getattr(
+        django_settings, "DEFAULT_FROM_EMAIL", "test@email.com"
+    ),
     "SEND_ACTIVATION_EMAIL": True,
     # client: example.com/activate/token
     "ACTIVATION_PATH_ON_EMAIL": "activate",
@@ -120,7 +122,8 @@ class GraphQLAuthSettings(object):
             return self._is_declared_async_email
         except AttributeError:
             self._is_declared_async_email = bool(
-                self.EMAIL_ASYNC_TASK and isinstance(self.EMAIL_ASYNC_TASK, str)
+                self.EMAIL_ASYNC_TASK
+                and isinstance(self.EMAIL_ASYNC_TASK, str)
             )
             return self._is_declared_async_email
 

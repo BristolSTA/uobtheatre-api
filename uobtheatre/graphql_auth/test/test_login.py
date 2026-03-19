@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+
 from uobtheatre.graphql_auth.common_testcase import CommonTestCase
 from uobtheatre.graphql_auth.constants import Messages
 

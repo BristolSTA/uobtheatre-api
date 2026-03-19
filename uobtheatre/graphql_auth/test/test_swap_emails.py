@@ -48,9 +48,7 @@ class SwapEmailsTestCase(SwapEmailsCommonTestCase):
             swapEmails(password: "%s")
                 { success, errors }
             }
-        """ % (
-            password or self.default_password
-        )
+        """ % (password or self.default_password)
 
 
 class SwapEmailsRelayTestCase(SwapEmailsCommonTestCase):
@@ -62,6 +60,4 @@ class SwapEmailsRelayTestCase(SwapEmailsCommonTestCase):
             relaySwapEmails(input:{ password: "%s"})
                 { success, errors }
         }
-        """ % (
-            password or self.default_password
-        )
+        """ % (password or self.default_password)

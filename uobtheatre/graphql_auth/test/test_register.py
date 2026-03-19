@@ -38,8 +38,8 @@ class RegisterCommonTestCase(CommonTestCase):
         result = self.get_response_result(response)
         self.assertTrue(result["success"])
         self.assertIsNone(result["errors"])
-        self.assertIsNotNone(result["token"])
-        self.assertIsNotNone(result["refreshToken"])
+        self.assertIsNone(result["token"])
+        self.assertIsNone(result["refreshToken"])
         self.assertTrue(signal_received)
 
         # try to register again
@@ -49,7 +49,7 @@ class RegisterCommonTestCase(CommonTestCase):
         self.assertFalse(result["success"])
         self.assertIsNone(result["token"])
         self.assertIsNone(result["refreshToken"])
-        self.assertIn("username", result["errors"].keys())
+        self.assertIn("email", result["errors"].keys())
 
         # try to register again with other username
         response = self.query(self.register_query(username="other_username"))
@@ -58,17 +58,22 @@ class RegisterCommonTestCase(CommonTestCase):
         self.assertFalse(result["success"])
         self.assertIsNone(result["token"])
         self.assertIsNone(result["refreshToken"])
-        self.assertEqual(result["errors"], Messages.EMAIL_IN_USE)
+        self.assertEqual(
+            result["errors"],
+            {"email": ["User with this Email address already exists."]},
+        )
 
     def _test_register_with_mocked_async_email_func(self):
         """Register user, fail to register same user again"""
-        with mock.patch("uobtheatre.graphql_auth.mixins.async_email_func") as async_email_mock:
+        with mock.patch(
+            "uobtheatre.graphql_auth.mixins.async_email_func"
+        ) as async_email_mock:
             response = self.query(self.register_query())
         result = self.get_response_result(response)
         self.assertEqual(result["success"], True)
-        self.assertTrue(result["token"])
-        self.assertTrue(result["refreshToken"])
-        self.assertTrue(async_email_mock.called)
+        self.assertIsNone(result["token"])
+        self.assertIsNone(result["refreshToken"])
+        self.assertFalse(async_email_mock.called)
 
     def _test_register_with_standard_email_func(self):
         """Register user, fail to register same user again"""
@@ -79,8 +84,8 @@ class RegisterCommonTestCase(CommonTestCase):
                 response = self.query(self.register_query())
         result = self.get_response_result(response)
         self.assertEqual(result["success"], True)
-        self.assertTrue(result["token"])
-        self.assertTrue(result["refreshToken"])
+        self.assertIsNone(result["token"])
+        self.assertIsNone(result["refreshToken"])
         self.assertTrue(send_email_mock.called)
 
     def _test_register_duplicate_unique_email(self):
@@ -94,7 +99,10 @@ class RegisterCommonTestCase(CommonTestCase):
         self.assertResponseNoErrors(response)
         result = self.get_response_result(response)
         self.assertFalse(result["success"])
-        self.assertEqual(result["errors"], Messages.EMAIL_IN_USE)
+        self.assertEqual(
+            result["errors"],
+            {"email": [Messages.EMAIL_IN_USE[0]["email"]]},
+        )
 
     @mock.patch(
         "uobtheatre.graphql_auth.models.UserStatus.send_activation_email",
@@ -106,7 +114,9 @@ class RegisterCommonTestCase(CommonTestCase):
         result = self.get_response_result(response)
         self.assertFalse(result["success"])
         self.assertIsNone(result["token"])
-        self.assertEqual(result["errors"], Messages.FAILED_SENDING_ACTIVATION_EMAIL)
+        self.assertEqual(
+            result["errors"], Messages.FAILED_SENDING_ACTIVATION_EMAIL
+        )
 
 
 class RegisterTestCase(RegisterCommonTestCase):
@@ -117,11 +127,12 @@ class RegisterTestCase(RegisterCommonTestCase):
         mutation {
             register(
                 email: "test@email.com",
-                username: "%s",
+                firstName: "%s",
+                lastName: "Tester",
                 password1: "%s",
                 password2: "%s"
             )
-            { success, errors, token, refreshToken }
+            { success, errors }
         }
         """ % (
             username,
@@ -136,11 +147,9 @@ class RegisterRelayTestCase(RegisterTestCase):
     def register_query(self, password="aaa&&111", username="username"):
         return """
         mutation {
-            relayRegister(input: {email: "test@email.com", username: "%s", password1: "%s", password2: "%s"}) {
+            relayRegister(input: {email: "test@email.com", firstName: "%s", lastName: "Tester", password1: "%s", password2: "%s"}) {
                 success,
-                errors,
-                token,
-                refreshToken
+                errors
             }
         }
         """ % (

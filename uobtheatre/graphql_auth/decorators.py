@@ -51,15 +51,15 @@ def password_confirmation_required(fn):
             )
             password = kwargs[field_name]
         except Exception:
-            raise WrongUsageError(
-                """
+            raise WrongUsageError("""
                 @password_confirmation is supposed to be used on
                 mutations with 'password' or 'old_password' field required.
-                """
-            )
+                """)
         user = info.context.user
         if user.check_password(password):
             return fn(cls, root, info, **kwargs)
-        return cls(success=False, errors={field_name: Messages.INVALID_PASSWORD})
+        return cls(
+            success=False, errors={field_name: Messages.INVALID_PASSWORD}
+        )
 
     return wrapper

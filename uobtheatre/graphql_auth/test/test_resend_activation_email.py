@@ -2,6 +2,7 @@ from smtplib import SMTPException
 from unittest import mock
 
 from django.core import mail
+
 from uobtheatre.graphql_auth.common_testcase import CommonTestCase
 from uobtheatre.graphql_auth.constants import Messages
 
@@ -78,9 +79,7 @@ class ResendActivationEmailTestCase(ResendActivationEmailCommonTestCase):
                 resendActivationEmail(email: "%s")
                     { success, errors }
             }
-            """ % (
-            email
-        )
+            """ % (email)
 
 
 class ResendActivationEmailRelayTestCase(ResendActivationEmailCommonTestCase):
@@ -92,6 +91,4 @@ class ResendActivationEmailRelayTestCase(ResendActivationEmailCommonTestCase):
                 relayResendActivationEmail(input:{ email: "%s"})
                     { success, errors }
             }
-        """ % (
-            email
-        )
+        """ % (email)

@@ -1,6 +1,10 @@
 from django import forms
 from django.contrib.auth import get_user_model
-from django.contrib.auth.forms import UserChangeForm, UserCreationForm, UsernameField
+from django.contrib.auth.forms import (
+    UserChangeForm,
+    UserCreationForm,
+    UsernameField,
+)
 
 from .settings import graphql_auth_settings as app_settings
 from .utils import flat_dict

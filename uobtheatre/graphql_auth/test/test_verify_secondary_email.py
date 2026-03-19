@@ -43,7 +43,10 @@ class VerifySecondaryEmailCommonTestCase(CommonTestCase):
         self.assertResponseNoErrors(response)
         result = self.get_response_result(response)
         self.assertFalse(result["success"])
-        self.assertEqual(result["errors"], Messages.EMAIL_IN_USE)
+        self.assertEqual(
+            result["errors"],
+            {"email": [Messages.EMAIL_IN_USE[0]["email"]]},
+        )
 
 
 class VerifySecondaryEmailCase(VerifySecondaryEmailCommonTestCase):
@@ -55,9 +58,7 @@ class VerifySecondaryEmailCase(VerifySecondaryEmailCommonTestCase):
             verifySecondaryEmail(token: "%s")
                 { success, errors }
             }
-        """ % (
-            token
-        )
+        """ % (token)
 
 
 class VerifySecondaryEmailRelayTestCase(VerifySecondaryEmailCommonTestCase):
@@ -69,6 +70,4 @@ class VerifySecondaryEmailRelayTestCase(VerifySecondaryEmailCommonTestCase):
         relayVerifySecondaryEmail(input:{ token: "%s"})
             { success, errors }
         }
-        """ % (
-            token
-        )
+        """ % (token)

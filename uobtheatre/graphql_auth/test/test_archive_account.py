@@ -26,7 +26,9 @@ class ArchiveAccountCommonTestCase(CommonTestCase):
         response = self.query(self.archive_account_query())
         self.assertResponseHasErrors(response)
         error = self.get_response_errors(response)[0]
-        self.assertEqual(error[0]["message"], Messages.UNAUTHENTICATED[0]["message"])
+        self.assertEqual(
+            error[0]["message"], Messages.UNAUTHENTICATED[0]["message"]
+        )
         self.assertEqual(error["extensions"], Messages.UNAUTHENTICATED)
 
     def _test_invalid_password(self):
@@ -39,7 +41,9 @@ class ArchiveAccountCommonTestCase(CommonTestCase):
         self.assertResponseNoErrors(response)
         result = self.get_response_result(response)
         self.assertFalse(result["success"])
-        self.assertEqual(result["errors"]["password"], Messages.INVALID_PASSWORD)
+        self.assertEqual(
+            result["errors"]["password"], Messages.INVALID_PASSWORD
+        )
 
     def _test_valid_password(self):
         """
@@ -104,9 +108,7 @@ class ArchiveAccountTestCase(ArchiveAccountCommonTestCase):
             )
             { refreshToken }
         }
-        """ % (
-            self.default_password,
-        )
+        """ % (self.default_password,)
 
     def archive_account_query(self, password=None):
         return """
@@ -115,9 +117,7 @@ class ArchiveAccountTestCase(ArchiveAccountCommonTestCase):
                 success, errors
               }
             }
-        """ % (
-            password or self.default_password,
-        )
+        """ % (password or self.default_password,)
 
 
 class ArchiveAccountRelayTestCase(ArchiveAccountCommonTestCase):
@@ -134,9 +134,7 @@ class ArchiveAccountRelayTestCase(ArchiveAccountCommonTestCase):
             )
             { refreshToken }
         }
-        """ % (
-            self.default_password,
-        )
+        """ % (self.default_password,)
 
     def archive_account_query(self, password=None):
         return """
@@ -145,6 +143,4 @@ class ArchiveAccountRelayTestCase(ArchiveAccountCommonTestCase):
                 success, errors
               }
             }
-        """ % (
-            password or self.default_password,
-        )
+        """ % (password or self.default_password,)

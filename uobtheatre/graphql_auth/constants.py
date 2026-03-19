@@ -2,14 +2,20 @@ from django.utils.translation import gettext as _
 
 
 class Messages:
-    INVALID_PASSWORD = [{"message": _("Invalid password."), "code": "invalid_password"}]
-    UNAUTHENTICATED = [{"message": _("Unauthenticated."), "code": "unauthenticated"}]
+    INVALID_PASSWORD = [
+        {"message": _("Invalid password."), "code": "invalid_password"}
+    ]
+    UNAUTHENTICATED = [
+        {"message": _("Unauthenticated."), "code": "unauthenticated"}
+    ]
     INVALID_TOKEN = [{"message": _("Invalid token."), "code": "invalid_token"}]
     EXPIRED_TOKEN = [{"message": _("Expired token."), "code": "expired_token"}]
     ALREADY_VERIFIED = [
         {"message": _("Account already verified."), "code": "already_verified"}
     ]
-    EMAIL_FAIL = [{"message": _("Failed to send email."), "code": "email_fail"}]
+    EMAIL_FAIL = [
+        {"message": _("Failed to send email."), "code": "email_fail"}
+    ]
     INVALID_CREDENTIALS = [
         {
             "message": _("Please, enter valid credentials."),
@@ -28,7 +34,10 @@ class Messages:
         }
     ]
     EMAIL_IN_USE = [
-        {"email": _("A user with that email already exists."), "code": "email_in_use"}
+        {
+            "email": _("A user with that email already exists."),
+            "code": "email_in_use",
+        }
     ]
     SECONDARY_EMAIL_REQUIRED = [
         {
@@ -50,12 +59,17 @@ class Messages:
     ]
     FAILED_SENDING_ACTIVATION_EMAIL = [
         {
-            "message": _("User account created but could not send activation email."),
+            "message": _(
+                "User account created but could not send activation email."
+            ),
             "code": "send_activation_email_failed",
         }
     ]
     FAILED_PASSWORD_CHANGE = [
-        {"message": _("Password change failed."), "code": "password_change_failed"}
+        {
+            "message": _("Password change failed."),
+            "code": "password_change_failed",
+        }
     ]
     INVALID_EMAIL_ADDRESS = [
         {"message": _("Invalid email address."), "code": "invalid_email"}
