@@ -1,5 +1,7 @@
 import graphene
 
+from uobtheatre.utils.exceptions import AuthOutput
+
 from .shortcuts import OutputErrorType
 
 
@@ -11,7 +13,7 @@ class ErrorsOutput:
     errors = graphene.Field(OutputErrorType)
 
 
-class SuccessErrorsOutput(SuccessOutput, ErrorsOutput):
+class SuccessErrorsOutput(AuthOutput):
     pass
 
 
