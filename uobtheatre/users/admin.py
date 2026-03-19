@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 
-from dga.graphql_auth.models import UserStatus
+from uobtheatre.graphql_auth.models import UserStatus
 
 from .models import User
 

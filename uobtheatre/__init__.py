@@ -5,7 +5,7 @@ Setups a few overrides for use throughout package
 from django.core.exceptions import EmptyResultSet
 from django.db.models.sql import datastructures
 
-from dga.graphql_auth import bases
+from uobtheatre.graphql_auth import bases
 from uobtheatre.utils.exceptions import AuthOutput
 
 # A disgusting but necessary hacky fix, once this issue is resolved we can
