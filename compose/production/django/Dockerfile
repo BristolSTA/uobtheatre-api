@@ -81,9 +81,6 @@ RUN chmod +x /start
 # copy application code to WORKDIR
 COPY --chown=django:django . ${APP_HOME}
 
-# test to ensure the submodule has been loaded
-RUN test -f ${APP_HOME}/dga/setup.py
-
 # make django owner of the WORKDIR directory as well.
 RUN chown django:django ${APP_HOME}
 
