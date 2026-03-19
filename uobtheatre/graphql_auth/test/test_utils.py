@@ -188,3 +188,31 @@ def test_get_user_by_natural_key_returns_user_with_status_selected():
     assert found is not None
     assert found.id == user.id
     assert found.status is not None
+
+
+def test_get_token_handles_pk_username_and_get_classes_no_filter():
+    class UsernameWithPk:
+        pk = 42
+
+    class DummyUser:
+        USERNAME_FIELD = "email"
+        email = "example@example.com"
+
+        def get_username(self):
+            return UsernameWithPk()
+
+    token = get_token(DummyUser(), TokenAction.ACTIVATION)
+    payload = get_token_payload(token, TokenAction.ACTIVATION)
+    assert payload["email"] == 42
+
+    module = types.ModuleType("temp_module")
+
+    class Alpha:
+        pass
+
+    module.Alpha = Alpha
+    classes = get_classes(module)
+    assert ("Alpha", Alpha) in classes
+
+    imported_classes = get_classes("uobtheatre.graphql_auth.utils")
+    assert any(name == "TokenScopeError" for name, _ in imported_classes)

@@ -1,6 +1,7 @@
 import pytest
 
 from uobtheatre.graphql_auth.settings import (
+    GraphQLAuthSettings,
     graphql_auth_settings,
     reload_graphql_auth_settings,
 )
@@ -47,3 +48,13 @@ def test_graphql_auth_settings_async_email_flag(reset_graphql_auth_settings):
         value={"EMAIL_ASYNC_TASK": True},
     )
     assert graphql_auth_settings.is_async_email is False
+
+
+def test_settings_constructor_accepts_explicit_user_settings():
+    settings = GraphQLAuthSettings(
+        user_settings={"ALLOW_LOGIN_NOT_VERIFIED": False},
+        defaults={"ALLOW_LOGIN_NOT_VERIFIED": True},
+    )
+
+    assert settings._user_settings["ALLOW_LOGIN_NOT_VERIFIED"] is False
+    assert settings.ALLOW_LOGIN_NOT_VERIFIED is False

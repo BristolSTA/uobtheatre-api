@@ -1,9 +1,14 @@
 import base64
 import json
+from types import SimpleNamespace
+from unittest import mock
 
+import pytest
 from django.contrib.auth import get_user_model
 
 from uobtheatre.graphql_auth.common_testcase import CommonTestCase
+from uobtheatre.graphql_auth.queries import MeQuery, UserNode, UserQuery
+from uobtheatre.users.test.factories import UserFactory
 
 UserModel = get_user_model()
 
@@ -181,3 +186,39 @@ class QueryTestCase(CommonTestCase):
         response = self.query(query)
         result = json.loads(response.content.decode())["data"]["me"]
         self.assertIsNone(result)
+
+
+@pytest.mark.django_db
+def test_query_resolvers_cover_staff_and_anonymous_paths():
+    staff_user = UserFactory(is_staff=True)
+    regular_user = UserFactory(is_staff=False)
+
+    info_staff = SimpleNamespace(context=SimpleNamespace(user=staff_user))
+    info_regular = SimpleNamespace(context=SimpleNamespace(user=regular_user))
+    anonymous_user = SimpleNamespace(is_authenticated=False, is_staff=False)
+    info_anon = SimpleNamespace(context=SimpleNamespace(user=anonymous_user))
+
+    with mock.patch(
+        "graphene_django.types.DjangoObjectType.get_node",
+        return_value="node",
+    ):
+        assert UserNode.get_node(info_staff, 1) == "node"
+    assert UserNode.get_node(info_regular, 1) is None
+
+    queryset = UserNode.get_queryset(
+        UserFactory._meta.model.objects.all(), info_staff
+    )
+    assert queryset is not None
+
+    assert UserNode.resolve_pk(staff_user, info_staff) == staff_user.pk
+    assert UserNode.resolve_archived(staff_user, info_staff) is False
+    assert UserNode.resolve_verified(staff_user, info_staff) is False
+    assert UserNode.resolve_secondary_email(staff_user, info_staff) is None
+
+    query = UserQuery()
+    assert query.resolve_users(info_staff).count() >= 1
+    assert query.resolve_users(info_regular).count() == 0
+
+    me_query = MeQuery()
+    assert me_query.resolve_me(info_staff).id == staff_user.id
+    assert me_query.resolve_me(info_anon) is None

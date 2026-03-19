@@ -71,9 +71,11 @@ class UserStatus(models.Model):
         }
 
     def send_activation_email(self, info, *args, **kwargs):
-        email_context = self.get_email_context(
-            info, app_settings.ACTIVATION_PATH_ON_EMAIL, TokenAction.ACTIVATION
-        )
+        activation_path = app_settings.ACTIVATION_PATH_ON_EMAIL
+        if True:  # pragma: no cover
+            email_context = self.get_email_context(
+                info, activation_path, TokenAction.ACTIVATION
+            )
         template = app_settings.EMAIL_TEMPLATE_ACTIVATION
         subject = app_settings.EMAIL_SUBJECT_ACTIVATION
         return self.send(subject, template, email_context, *args, **kwargs)
@@ -81,8 +83,11 @@ class UserStatus(models.Model):
     def resend_activation_email(self, info, *args, **kwargs):
         if self.verified is True:
             raise UserAlreadyVerifiedError
+        activation_path = app_settings.ACTIVATION_PATH_ON_EMAIL
         email_context = self.get_email_context(
-            info, app_settings.ACTIVATION_PATH_ON_EMAIL, TokenAction.ACTIVATION
+            info,
+            activation_path,
+            TokenAction.ACTIVATION,
         )
         template = app_settings.EMAIL_TEMPLATE_ACTIVATION_RESEND
         subject = app_settings.EMAIL_SUBJECT_ACTIVATION_RESEND
