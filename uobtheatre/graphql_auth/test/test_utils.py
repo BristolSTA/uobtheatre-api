@@ -114,6 +114,16 @@ def test_camelize_form_errors_renames_non_field_errors():
     assert result["firstName"] == ["Required"]
 
 
+def test_camelize_form_errors_without_non_field_key():
+    errors = {
+        "email": ["Already in use"],
+    }
+
+    result = camelize_form_errors(errors)
+
+    assert result["email"] == ["Already in use"]
+
+
 @pytest.mark.parametrize(
     "graphql_jwt, installed_apps, expected",
     [

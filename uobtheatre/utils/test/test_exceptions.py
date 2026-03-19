@@ -47,6 +47,33 @@ def test_auth_error_handling_no_error():
     assert auth_handling.resolve_errors(None) is None
 
 
+def test_auth_error_handling_list_with_non_dict_entry():
+    auth_handling = AuthOutput()
+    auth_handling.errors = ["plain error"]
+
+    errors = auth_handling.resolve_errors(None)
+
+    assert len(errors) == 1
+    assert isinstance(errors[0], NonFieldError)
+    assert errors[0].message == "plain error"
+
+
+def test_auth_error_handling_dict_non_field_errors_key():
+    auth_handling = AuthOutput()
+    auth_handling.errors = {
+        "nonFieldErrors": [
+            {"message": "problem", "code": "bad_input"},
+        ]
+    }
+
+    errors = auth_handling.resolve_errors(None)
+
+    assert len(errors) == 1
+    assert isinstance(errors[0], NonFieldError)
+    assert errors[0].message == "problem"
+    assert errors[0].code == "bad_input"
+
+
 @pytest.mark.django_db
 def test_safe_mutation_throws_unknown_exception():
     class SomeMutation(SafeMutation):
