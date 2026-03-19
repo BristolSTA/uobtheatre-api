@@ -72,7 +72,7 @@ class RegisterMixin(SuccessErrorsOutput):
     if app_settings.ALLOW_LOGIN_NOT_VERIFIED:
         token = graphene.Field(graphene.String)
         if using_refresh_tokens():
-            refresh_token = graphene.Field(graphene.String) # pragma: no cover
+            refresh_token = graphene.Field(graphene.String)  # pragma: no cover
 
     form = (
         PasswordLessRegisterForm

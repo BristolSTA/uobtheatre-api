@@ -1,10 +1,11 @@
-import pytest
 from types import SimpleNamespace
 from unittest import mock
 
+import pytest
+
+from uobtheatre.graphql_auth.constants import TokenAction
 from uobtheatre.graphql_auth.exceptions import WrongUsageError
 from uobtheatre.graphql_auth.models import UserStatus
-from uobtheatre.graphql_auth.constants import TokenAction
 from uobtheatre.users.test.factories import UserFactory
 
 
