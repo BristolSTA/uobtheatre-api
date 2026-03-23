@@ -107,7 +107,7 @@ class MiscCost(models.Model):
         constraints = [
             models.CheckConstraint(
                 name="percentage_or_value_must_be_set_on_misc_cost",
-                check=(
+                condition=(
                     models.Q(
                         percentage__isnull=True,
                         value__isnull=False,

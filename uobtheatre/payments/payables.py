@@ -320,7 +320,7 @@ class Payable(BaseModel):  # type: ignore
         """Get tasks associated with this payable"""
         payable_tasks = TaskResult.objects.filter(
             task_name="uobtheatre.payments.tasks.refund_payable",
-            task_args__iregex=f"\({self.pk}, {self.content_type.pk}",  # pylint: disable=anomalous-backslash-in-string
+            task_args__iregex=f"\\({self.pk}, {self.content_type.pk}",
         )
         payment_tasks = self.transactions.associated_tasks()
         return payable_tasks | payment_tasks

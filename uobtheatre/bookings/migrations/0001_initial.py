@@ -135,7 +135,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="misccost",
             constraint=models.CheckConstraint(
-                check=models.Q(
+                condition=models.Q(
                     models.Q(
                         ("percentage__isnull", True), ("value__isnull", False)
                     ),
