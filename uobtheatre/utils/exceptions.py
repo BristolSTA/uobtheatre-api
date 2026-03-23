@@ -77,21 +77,63 @@ class AuthOutput(MutationResult):
             return None
 
         if isinstance(self.errors, list):
-            non_field_errors = [
-                NonFieldError(error["message"], code=error["code"])
-                for error in self.errors  # pylint: disable=E1133
-            ]
-            return non_field_errors
+            parsed_errors = []
+            for error in self.errors:  # pylint: disable=E1133
+                if not isinstance(error, dict):
+                    parsed_errors.append(NonFieldError(str(error), code=None))
+                    continue
+
+                field_names = [
+                    key
+                    for key in error.keys()
+                    if key not in {"message", "code"}
+                ]
+                message = error.get("message")
+                if not message and field_names:
+                    message = error.get(field_names[0])
+
+                if field_names:
+                    parsed_errors.append(
+                        FieldError(
+                            message,
+                            field=field_names[0],
+                            code=error.get("code"),
+                        )
+                    )
+                else:
+                    parsed_errors.append(
+                        NonFieldError(message, code=error.get("code"))
+                    )
+
+            return parsed_errors
         if isinstance(self.errors, dict):
             non_field_errors = [
                 NonFieldError(error.message, code=error.code)
                 for error in self.errors.pop("field_errors", [])
             ]
-            field_errors = [
-                FieldError(error["message"], field=field, code=error["code"])
-                for field, errors in self.errors.items()
-                for error in errors
-            ]
+            field_errors = []
+            for field, errors in self.errors.items():
+                for error in errors:
+                    message = error.get("message") or next(
+                        (
+                            value
+                            for key, value in error.items()
+                            if key != "code"
+                        ),
+                        None,
+                    )
+                    if field == "nonFieldErrors":
+                        non_field_errors.append(
+                            NonFieldError(message, code=error.get("code"))
+                        )
+                    else:
+                        field_errors.append(
+                            FieldError(
+                                message,
+                                field=field,
+                                code=error.get("code"),
+                            )
+                        )
             return non_field_errors + field_errors
 
         raise Exception(  # pylint: disable=broad-exception-raised

@@ -273,10 +273,20 @@ def test_production_min_price_no_perfs():
 @pytest.mark.django_db
 def test_production_total_capacity():
     prod = ProductionFactory()
-    perf_1 = PerformanceFactory(production=prod, capacity=100)
+    venue_1 = VenueFactory(internal_capacity=1000)
+    perf_1 = PerformanceFactory(
+        production=prod,
+        venue=venue_1,
+        capacity=100,
+    )
     PerformanceSeatingFactory(performance=perf_1, capacity=1000)
 
-    perf_2 = PerformanceFactory(production=prod, capacity=150)
+    venue_2 = VenueFactory(internal_capacity=1000)
+    perf_2 = PerformanceFactory(
+        production=prod,
+        venue=venue_2,
+        capacity=150,
+    )
     PerformanceSeatingFactory(performance=perf_2, capacity=140)
     perf_1.production.refresh_from_db()
 

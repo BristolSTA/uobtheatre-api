@@ -92,7 +92,7 @@ class TransactionQuerySet(QuerySet):
         pks_regex = "|".join(map(str, pks))
         return TaskResult.objects.filter(
             task_name="uobtheatre.payments.tasks.refund_payment",
-            task_args__iregex=f"\(({pks_regex}),\)",  # pylint: disable=anomalous-backslash-in-string
+            task_args__iregex=f"\\(({pks_regex}),\\)",
         )
 
 

@@ -29,7 +29,7 @@ INSTALLED_APPS = (
     "django.contrib.sites",
     # Third party apps
     # Authentication
-    "dga.graphql_auth",
+    "uobtheatre.graphql_auth",
     "graphql_jwt.refresh_token.apps.RefreshTokenConfig",
     ##
     "django_filters",  # for filtering rest endpoints
@@ -197,7 +197,7 @@ AUTH_PASSWORD_VALIDATORS = [
 SITE_ID = 1
 
 AUTHENTICATION_BACKENDS = [
-    "dga.graphql_auth.backends.GraphQLAuthBackend",
+    "uobtheatre.graphql_auth.backends.GraphQLAuthBackend",
     "guardian.backends.ObjectPermissionBackend",
     "django.contrib.auth.backends.ModelBackend",
 ]
@@ -311,16 +311,16 @@ GRAPHQL_AUTH = {
 
 GRAPHQL_JWT = {
     "JWT_ALLOW_ANY_CLASSES": [
-        "dga.graphql_auth.mutations.Register",
-        "dga.graphql_auth.mutations.VerifyAccount",
-        "dga.graphql_auth.mutations.ResendActivationEmail",
-        "dga.graphql_auth.mutations.SendPasswordResetEmail",
-        "dga.graphql_auth.mutations.PasswordReset",
-        "dga.graphql_auth.mutations.ObtainJSONWebToken",
-        "dga.graphql_auth.mutations.VerifyToken",
-        "dga.graphql_auth.mutations.RefreshToken",
-        "dga.graphql_auth.mutations.RevokeToken",
-        "dga.graphql_auth.mutations.VerifySecondaryEmail",
+        "uobtheatre.graphql_auth.mutations.Register",
+        "uobtheatre.graphql_auth.mutations.VerifyAccount",
+        "uobtheatre.graphql_auth.mutations.ResendActivationEmail",
+        "uobtheatre.graphql_auth.mutations.SendPasswordResetEmail",
+        "uobtheatre.graphql_auth.mutations.PasswordReset",
+        "uobtheatre.graphql_auth.mutations.ObtainJSONWebToken",
+        "uobtheatre.graphql_auth.mutations.VerifyToken",
+        "uobtheatre.graphql_auth.mutations.RefreshToken",
+        "uobtheatre.graphql_auth.mutations.RevokeToken",
+        "uobtheatre.graphql_auth.mutations.VerifySecondaryEmail",
     ],
     "JWT_VERIFY_EXPIRATION": True,
     "JWT_LONG_RUNNING_REFRESH_TOKEN": True,
