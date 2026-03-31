@@ -1,4 +1,4 @@
-name: Production Build, Push & Deploy
+name: Production/Staging Build, Push & Deploy
 
 # Pushes a new image to the main registry for pushes to the dev or main branch
 # Then logs in to the respective server and deploys the new image
@@ -9,7 +9,7 @@ on:
     branches: [dev, main]
 
 env:
-  IMAGE_NAME: "${{ github.ref == 'refs/heads/main' && 'api' || 'api-dev' }}"
+  IMAGE_NAME: "${{ github.ref == 'refs/heads/main' && 'api' || 'api-staging' }}"
   IMAGE_OWNER: bristolsta
 
   BUILD_FILE: "${{ github.ref == 'refs/heads/main' && 'compose/production/django/Dockerfile' || 'compose/local/django/Dockerfile' }}"
