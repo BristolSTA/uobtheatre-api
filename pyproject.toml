@@ -34,6 +34,31 @@ python_files = ["tests.py", "test_*.py", "*_tests.py"]
 testpaths = ["uobtheatre"]
 markers = ["square_integration: Marks tests as using integration with Square", "system_test: Mark tests as being system tests"]
 
+# pytest coverage
+
+[tool.coverage.run]
+branch = true
+omit =[
+  "*migrations*",
+  "*urls*",
+  "*test*",
+  "*admin*",
+  "./manage.py",
+  "./uobtheatre-api/config/*",
+  "./uobtheatre-api/wsgi.py",
+  "__init__.py",
+  "./uobtheatre/management/*",
+  "./uobtheatre/storages.py"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "raise NotImplementedError",
+  "if TYPE_CHECKING",
+  "pass"
+]
+
 # mypy
 
 [tool.mypy]

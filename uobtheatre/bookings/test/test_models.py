@@ -964,7 +964,9 @@ def test_ticket_check_in():
     """
     Test ticket check in method
     """
-    mock_ticket_check_in_time = datetime.datetime(2020, 1, 2, 23, 45)
+    mock_ticket_check_in_time = datetime.datetime(
+        2020, 1, 2, 23, 45, tzinfo=pytz.UTC
+    )
     user = UserFactory()
 
     ticket_unchecked = TicketFactory(set_checked_in=False)
