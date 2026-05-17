@@ -192,19 +192,19 @@ def test_square_exception_with_payment_method_error_no_detail():
     [
         (
             "ADDRESS_VERIFICATION_FAILURE",
-            "The card issuer declined the request because the postal code is invalid.",
+            "Your card details appear to be incorrect. Please check your details and try again.",
         ),
         (
             "CARD_EXPIRED",
-            "The card issuer declined the request because the card is expired.",
+            "Your card details appear to be incorrect. Please check your details and try again.",
         ),
         (
             "CVV_FAILURE",
-            "The card issuer declined the request because the CVV value is invalid.",
+            "Your card details appear to be incorrect. Please check your details and try again.",
         ),
         (
             "EXPIRATION_FAILURE",
-            "The card expiration date is either invalid or indicates that the card is expired.",
+            "Your card details appear to be incorrect. Please check your details and try again.",
         ),
         (
             "GENERIC_DECLINE",
@@ -216,20 +216,20 @@ def test_square_exception_with_payment_method_error_no_detail():
         ),
         (
             "INVALID_EXPIRATION",
-            "The expiration date for the payment card is invalid. For example, it indicates a date in the past.",
+            "Your card details appear to be incorrect. Please check your details and try again.",
         ),
         (
             "INVALID_CARD",
-            "The credit card cannot be validated based on the provided details.",
+            "Your card details appear to be incorrect. Please check your details and try again.",
         ),
         ("INVALID_PHONE_NUMBER", "The provided phone number is invalid."),
         (
             "INVALID_PIN",
-            "The card issuer declined the request because the PIN is invalid.",
+            "Your card details appear to be incorrect. Please check your details and try again.",
         ),
         (
             "PAN_FAILURE",
-            "The specified card number is invalid. For example, it is of incorrect length or is incorrectly formatted.",
+            "Your card details appear to be incorrect. Please check your details and try again.",
         ),
         (
             "TRANSACTION_LIMIT",
@@ -237,15 +237,15 @@ def test_square_exception_with_payment_method_error_no_detail():
         ),
         (
             "BAD_EXPIRATION",
-            "The card expiration date is either missing or incorrectly formatted.",
+            "Your card details appear to be incorrect. Please check your details and try again.",
         ),
         (
             "CARD_DECLINED_VERIFICATION_REQUIRED",
-            "The payment card was declined with a request for additional verification.",
+            "The payment card was declined with a request for additional verification Square cannot process.",
         ),
         (
             "CHIP_INSERTION_REQUIRED",
-            "The card issuer requires the card to be inserted into a chip reader.",
+            "The card issuer requires the card to be inserted into a chip reader, which Square cannot process.",
         ),
     ],
 )
@@ -253,12 +253,17 @@ def test_square_exception_user_readable_message(error_code, expected_message):
     exception = SquareException(
         ApiError(
             status_code=400,
-            body={"errors": [{"category": "PAYMENT_METHOD_ERROR", "code": error_code}]},
+            body={
+                "errors": [
+                    {"category": "PAYMENT_METHOD_ERROR", "code": error_code}
+                ]
+            },
         )
     )
     assert len(exception.resolve()) == 1
     compare_gql_objects(
-        exception.resolve()[0], NonFieldError(message=expected_message, code=400)
+        exception.resolve()[0],
+        NonFieldError(message=expected_message, code=400),
     )
 
 
