@@ -1,4 +1,4 @@
-name: Production Build, Push & Deploy
+name: Production/Staging Build, Push & Deploy
 
 # Pushes a new image to the main registry for pushes to the dev or main branch
 # Then logs in to the respective server and deploys the new image
@@ -9,8 +9,10 @@ on:
     branches: [dev, main]
 
 env:
-  IMAGE_NAME: api
+  IMAGE_NAME: "${{ github.ref == 'refs/heads/main' && 'api' || 'api-staging' }}"
   IMAGE_OWNER: bristolsta
+
+  BUILD_FILE: "${{ github.ref == 'refs/heads/main' && 'compose/production/django/Dockerfile' || 'compose/local/django/Dockerfile' }}"
 
   API_SERVICE_NAME: "${{ github.ref == 'refs/heads/main' && 'uobtheatre-api' || 'uobtheatre-api-staging' }}"
   AUX_SERVICE_NAMES: "${{ github.ref == 'refs/heads/main' && 'uobtheatre-api-celery-worker' || 'uobtheatre-api-staging-celery-worker' }}"
@@ -36,7 +38,7 @@ jobs:
           submodules: 'recursive'
 
       - name: Build image
-        run: docker build . --file compose/production/django/Dockerfile --tag ghcr.io/$IMAGE_OWNER/$IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}"
+        run: docker build . --file $BUILD_FILE --tag ghcr.io/$IMAGE_OWNER/$IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}"
 
       - name: Log into registry
         # This is where you will update the PAT to GITHUB_TOKEN

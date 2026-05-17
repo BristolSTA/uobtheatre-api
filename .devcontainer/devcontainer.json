@@ -14,7 +14,6 @@
 				"python.formatting.blackPath": "/usr/local/bin/black",
 				"python.formatting.yapfPath": "/usr/local/bin/yapf",
 				"python.linting.banditPath": "/usr/local/bin/bandit",
-				"python.linting.flake8Path": "/usr/local/bin/flake8",
 				"python.linting.mypyPath": "/usr/local/bin/mypy",
 				"python.linting.pycodestylePath": "/usr/local/bin/pycodestyle",
 				"python.linting.pydocstylePath": "/usr/local/bin/pydocstyle",

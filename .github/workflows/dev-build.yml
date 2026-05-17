@@ -1,4 +1,4 @@
-name: Local (Dev) Build & Push
+name: Local Development Build & Push
 
 # Pushes a new image to the dev registry on every push to the dev branch (or manually triggered on a branch)
 # The local/dev image is for frontend development: It is the one uobtheatre-web pulls when running locally
