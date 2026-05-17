@@ -325,3 +325,101 @@ def test_mass_email_admin_notification_email():
     )
 
     write_files(test_mail, "mass_email_admin_notification_email")
+
+
+@pytest.mark.django_db
+def test_booking_accessibility_info_email():
+
+    booking = BookingFactory()
+
+    test_mail = MailComposer.blank(
+        [
+            Heading(
+                title=f"Accessibility Alert for {booking.performance.production.name}",
+                title_icon="accessibility",
+            ),
+            Image(src=testTrashImage),
+            Paragraph(
+                message=f"A patron has <strong>added</strong> accessibility information for the <strong>{booking.performance.start.strftime('%d/%m/%Y %I:%M %p')}</strong> showing of <strong>{booking.performance.production.name}</strong>.",
+                html_safe=True,
+            ),
+            Paragraph(
+                message=f"Please review the booking to see what information has been updated and if any action is required. Ensure you liase with your venue and front of house teams about this: do not assume that they are aware of this change. Please contact the patron directly if you need to discuss this information with them."
+            ),
+            Paragraph(
+                message="<strong>Remember that accessibility information is sensitive and should be treated with care.</strong> Only those who need to know should be informed of this information.",
+                html_safe=True,
+            ),
+            Button(
+                f"/administration/productions/{booking.performance.production.slug}/bookings/{booking.reference}",
+                "View Booking Details",
+            ),
+        ]
+    )
+
+    write_files(test_mail, "booking_accessibility_info_email")
+
+
+@pytest.mark.django_db
+def test_booking_accessibility_removed_email():
+
+    booking = BookingFactory()
+
+    test_mail = MailComposer.blank(
+        [
+            Heading(
+                title=f"Accessibility Alert for {booking.performance.production.name}",
+                title_icon="accessibility",
+            ),
+            Image(src=testTrashImage),
+            Paragraph(
+                message=f"A patron has <strong>removed</strong> their accessibility information for the <strong>{booking.performance.start.strftime('%d/%m/%Y %I:%M %p')}</strong> showing of <strong>{booking.performance.production.name}</strong>.",
+                html_safe=True,
+            ),
+            Paragraph(
+                message=f"Please review the booking to see if any action is required. Ensure you liase with your venue and front of house teams about this: do not assume that they are aware of this change. Please contact the patron directly if you need to discuss this information with them."
+            ),
+            Paragraph(
+                message="<strong>Remember that accessibility information is sensitive and should be treated with care.</strong> Only those who need to know should be informed of this information.",
+                html_safe=True,
+            ),
+            Button(
+                f"/administration/productions/{booking.performance.production.slug}/bookings/{booking.reference}",
+                "View Booking Details",
+            ),
+        ]
+    )
+
+    write_files(test_mail, "booking_accessibility_removed_email")
+
+@pytest.mark.django_db
+def test_booking_accessibility_updated_email():
+    
+    booking = BookingFactory()
+
+    test_mail = MailComposer.blank(
+        [
+            Heading(
+                title=f"Accessibility Alert for {booking.performance.production.name}",
+                title_icon="accessibility",
+            ),
+            Image(src=testTrashImage),
+            Paragraph(
+                message=f"A patron has <strong>updated</strong> their accessibility information for the <strong>{booking.performance.start.strftime('%d/%m/%Y %I:%M %p')}</strong> showing of <strong>{booking.performance.production.name}</strong>.",
+                html_safe=True,
+            ),
+            Paragraph(
+                message=f"Please review the booking to see what information has been updated and if any action is required. Ensure you liase with your venue and front of house teams about this: do not assume that they are aware of this change. Please contact the patron directly if you need to discuss this information with them."
+            ),
+            Paragraph(
+                message="<strong>Remember that accessibility information is sensitive and should be treated with care.</strong> Only those who need to know should be informed of this information.",
+                html_safe=True,
+            ),
+            Button(
+                f"/administration/productions/{booking.performance.production.slug}/bookings/{booking.reference}",
+                "View Booking Details",
+            ),
+        ]
+    )
+
+    write_files(test_mail, "booking_accessibility_updated_email")
