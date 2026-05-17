@@ -65,7 +65,9 @@ def test_heading():
 
 
 def test_list_item():
-    item = ListItem(title="T", message="M", title_icon="clock", message_icon="search")
+    item = ListItem(
+        title="T", message="M", title_icon="clock", message_icon="search"
+    )
     assert item.to_text() == "T: M"
     assert "T" in item.to_html() and "M" in item.to_html()
 
@@ -114,7 +116,9 @@ def test_ticket_codes():
 def test_logo_footer():
     logo = Logo()
     assert "UOB Theatre" in logo.to_text()
-    assert "site_url" in logo.to_html() or "uobtheatre" in logo.to_html().lower()
+    assert (
+        "site_url" in logo.to_html() or "uobtheatre" in logo.to_html().lower()
+    )
     footer = Footer()
     assert "Copyright" in footer.to_text()
     assert str(datetime.now().year) in footer.to_html()
@@ -142,9 +146,9 @@ def test_timings_block():
 
     perf = PerformanceFactory()
     tb = TimingsBlock(perf)
-    doors_str = perf.doors_open.astimezone(perf.venue.address.timezone).strftime(
-        "%A, %d %B %Y at %H:%M (%Z)"
-    )
+    doors_str = perf.doors_open.astimezone(
+        perf.venue.address.timezone
+    ).strftime("%A, %d %B %Y at %H:%M (%Z)")
     start_str = perf.start.astimezone(perf.venue.address.timezone).strftime(
         "%A, %d %B %Y at %H:%M (%Z)"
     )
@@ -238,5 +242,8 @@ def test_sub_items_recursive():
     row = RowStack([col])
     all_items = ComposerItemInterface.collect_sub_items(row)
     assert (
-        para in all_items and btn in all_items and col in all_items and row in all_items
+        para in all_items
+        and btn in all_items
+        and col in all_items
+        and row in all_items
     )

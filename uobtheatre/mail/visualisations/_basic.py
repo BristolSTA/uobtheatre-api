@@ -20,7 +20,9 @@ mountainImage = "https://media.gettyimages.com/id/1211045588/photo/beautiful-win
 def write_files(mail, filename):
     # Write both the .html and the .txt files for the html and plaintext visualisations
     for extension in [".html", ".txt"]:
-        content = mail.to_html() if extension == ".html" else mail.to_plain_text()
+        content = (
+            mail.to_html() if extension == ".html" else mail.to_plain_text()
+        )
 
         # Delete the existing file if it already exists
         if not os.path.exists(root + filename + extension):
@@ -29,6 +31,7 @@ def write_files(mail, filename):
         else:
             with open(root + filename + extension, "w") as f:
                 f.write(content)
+
 
 @pytest.mark.django_db
 def test_simple_email():
@@ -58,7 +61,8 @@ def test_booking_confirmation_email():
     booking = BookingFactory()
 
     composer.line(
-        "Your booking to %s has been confirmed!" % booking.performance.production.name
+        "Your booking to %s has been confirmed!"
+        % booking.performance.production.name
     )
 
     if booking.performance.production.featured_image:
@@ -137,7 +141,8 @@ def test_payable_refund_initiated_email():
         )
         .line(
             ", ".join(
-                f"{model.__class__.__name__} {model} ({model.pk})" for model in models
+                f"{model.__class__.__name__} {model} ({model.pk})"
+                for model in models
             )
         )
         .line(

@@ -4,6 +4,7 @@ import os
 
 import factory
 import pytest
+from faker import Faker
 
 from uobtheatre.bookings.test.factories import BookingFactory, TicketFactory
 from uobtheatre.mail.composer_v2 import *
@@ -11,8 +12,6 @@ from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.productions.test.factories import ProductionFactory
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.utils.lang import pluralize
-
-from faker import Faker
 
 root = "./uobtheatre/mail/visualisations/v2/"
 
@@ -22,7 +21,9 @@ testTrashImage = "https://uobtheatre-api-media.s3.amazonaws.com/media/featuredIm
 def write_files(mail, filename):
     # Write both the .html and the .txt files for the html and plaintext visualisations
     for extension in [".html", ".txt"]:
-        content = mail.to_html() if extension == ".html" else mail.to_plain_text()
+        content = (
+            mail.to_html() if extension == ".html" else mail.to_plain_text()
+        )
 
         # Delete the existing file if it already exists
         if not os.path.exists(root + filename + extension):
@@ -36,17 +37,24 @@ def write_files(mail, filename):
 @pytest.mark.django_db
 def _test_simple_email():
 
-    test_mail = (
-        MailComposer.blank([Box(
-            Paragraph("This is a test title", "This is a test message that's actually longer than you would expect it to be because it's important for the sake of testing that we have a really long message here that spans multiple lines."),
-            bgCol="#ffffff"),
+    test_mail = MailComposer.blank(
+        [
             Box(
-            Paragraph(title="This is a new test title"),
-            bgCol="#ffffff"),
+                Paragraph(
+                    "This is a test title",
+                    "This is a test message that's actually longer than you would expect it to be because it's important for the sake of testing that we have a really long message here that spans multiple lines.",
+                ),
+                bgCol="#ffffff",
+            ),
+            Box(Paragraph(title="This is a new test title"), bgCol="#ffffff"),
             Box(
-            Paragraph(message="This is a new test message that's actually longer than you would expect it to be because it's important for the sake of testing that we have a really long message here that spans multiple lines."),
-            bgCol="#ffffff")]
-        ))
+                Paragraph(
+                    message="This is a new test message that's actually longer than you would expect it to be because it's important for the sake of testing that we have a really long message here that spans multiple lines."
+                ),
+                bgCol="#ffffff",
+            ),
+        ]
+    )
 
     write_files(test_mail, "simple_email")
 
@@ -55,7 +63,10 @@ def _test_simple_email():
 def _test_text_only():
 
     test_mail = MailComposer.text_only(
-        "This is a test title", "<b>This</b> is a test message that's actually longer than you would expect it to be because it's important for the sake of testing that we have a really long message here that spans multiple lines.", True)
+        "This is a test title",
+        "<b>This</b> is a test message that's actually longer than you would expect it to be because it's important for the sake of testing that we have a really long message here that spans multiple lines.",
+        True,
+    )
 
     write_files(test_mail, "text_only")
 
@@ -66,41 +77,43 @@ def _test_booking_conf():
     booking = BookingFactory()
     payment = TransactionFactory()
 
-    test_mail = MailComposer.blank([
-
-        Paragraph(
-            title="Your booking to %s has been confirmed!" % booking.performance.production.name
-        ),
-
-        Image(src=testTrashImage),
-
-        Paragraph(
-
-            message="This event opens at %s for a %s start. Please bring your tickets (printed or on your phone) or your booking reference (<strong>%s</strong>)."
-            if booking.user.status.verified  # type: ignore
-            else "This event opens at %s for a %s start. Please bring your booking reference (<strong>%s</strong>)."
-
-            % (
-                booking.performance.doors_open.astimezone(  # type: ignore
-                    booking.performance.venue.address.timezone  # type: ignore
-                ).strftime("%d %B %Y %H:%M %Z"),
-                booking.performance.start.astimezone(  # type: ignore
-                    booking.performance.venue.address.timezone  # type: ignore
-                ).strftime("%H:%M %Z"),
-                booking.reference,
-            ), htmlSafe=True
-        ),
-
-        Button(booking.web_tickets_path, "View Tickets"),
-
-        Button("/user/booking/%s" % booking.reference, "View Booking"),
-
-        Paragraph(title="Payment Information", message=f"{payment.value_currency} paid ({payment.provider.description}{' - ID ' + payment.provider_transaction_id if payment.provider_transaction_id else '' })"
-                  ),
-
-        Paragraph(
-            message="If you have any accessability concerns, or otherwise need help, please contact <a href='mailto:support@uobtheatre.com'>support@uobtheatre.com</a>.", htmlSafe=True
-        )]
+    test_mail = MailComposer.blank(
+        [
+            Paragraph(
+                title="Your booking to %s has been confirmed!"
+                % booking.performance.production.name
+            ),
+            Image(src=testTrashImage),
+            Paragraph(
+                message=(
+                    "This event opens at %s for a %s start. Please bring your tickets (printed or on your phone) or your booking reference (<strong>%s</strong>)."
+                    if booking.user.status.verified  # type: ignore
+                    else "This event opens at %s for a %s start. Please bring your booking reference (<strong>%s</strong>)."
+                    % (
+                        booking.performance.doors_open.astimezone(  # type: ignore
+                            booking.performance.venue.address.timezone  # type: ignore
+                        ).strftime(
+                            "%d %B %Y %H:%M %Z"
+                        ),
+                        booking.performance.start.astimezone(  # type: ignore
+                            booking.performance.venue.address.timezone  # type: ignore
+                        ).strftime("%H:%M %Z"),
+                        booking.reference,
+                    )
+                ),
+                htmlSafe=True,
+            ),
+            Button(booking.web_tickets_path, "View Tickets"),
+            Button("/user/booking/%s" % booking.reference, "View Booking"),
+            Paragraph(
+                title="Payment Information",
+                message=f"{payment.value_currency} paid ({payment.provider.description}{' - ID ' + payment.provider_transaction_id if payment.provider_transaction_id else '' })",
+            ),
+            Paragraph(
+                message="If you have any accessability concerns, or otherwise need help, please contact <a href='mailto:support@uobtheatre.com'>support@uobtheatre.com</a>.",
+                htmlSafe=True,
+            ),
+        ]
     )
 
     write_files(test_mail, "booking_conf")
@@ -119,37 +132,23 @@ def test_booking_conf_new():
 
     stack = [
         Heading(
-            title="Your booking to %s has been confirmed!" % booking.performance.production.name
+            title="Your booking to %s has been confirmed!"
+            % booking.performance.production.name
         ),
-
         Image(src=testTrashImage),
-
         Heading(subtitle="About Your Booking", title_icon="bookmark"),
-        
-        Box(
-            TimingsBlock(booking.performance)
+        Box(TimingsBlock(booking.performance)),
+        Box(VenueBlock(booking.performance.venue)),
+        Box(BookingBlock(booking)),
+        BoxCols(
+            [
+                PaymentBlock(payment),
+                VenueAccessibilityBlock(booking.performance.venue),
+            ]
         ),
-
-        Box(
-            VenueBlock(booking.performance.venue)
-        ),
-
-        Box(
-            BookingBlock(booking)
-        ),
-
-        BoxCols([
-            PaymentBlock(payment),
-
-            VenueAccessibilityBlock(booking.performance.venue)
-        ]),
     ]
     if booking.accessibility_info:
-        stack.append(
-            Box(
-                BookingAccessibilityBlock(booking)
-            )
-        )
+        stack.append(Box(BookingAccessibilityBlock(booking)))
     stack.append(
         TicketCodes(booking.reference, [ticket.id for ticket in tickets])
     )
@@ -158,66 +157,65 @@ def test_booking_conf_new():
 
     write_files(test_mail, "booking_conf_new")
 
+
 @pytest.mark.django_db
 def test_production_approved_email():
     user = UserFactory()
     production = ProductionFactory()
 
-    test_mail = MailComposer.blank([
-
-        Heading(
-            title=f"Your production '{production.name}' has been approved!",
-            title_icon="square-check"
-        ),
-
-        Image(src=testTrashImage),
-
-        Greeting(user=user),
-
-        Paragraph(
-            message=f"Congratulations! Your production '{production.name}' has been approved. You're on the cusp of going live!"
-        ),
-
-        Paragraph(
-            message="Now your production is approved, you <b>cannot</b> make any changes to the production details or listing without it being reviewed again. If you need to make any changes, please contact us at <a href='mailto:support@uobtheatre.com'>support@uobtheatre.com</a>.",
-            html_safe=True
-        ),
-
-        Box(
-            RowStack([
-                Heading(
-                    subsubtitle="You should now:",
-                    title_icon="rocket"
-                ),
-                ListItem(
-                    title="Triple Check Your Production Details",
-                    title_icon="play",
-                    message="Make sure all the details are correct, and that your listing looks great. It's easy to fix things now, but once your production is live, things get more difficult!"
-                ),
-                ListItem(
-                    title="Edit Permissions",
-                    title_icon="play",
-                    message="If your show is being put on with an STA crew, you won't need to worry about this, but if you're working at an external venue make sure you've given the right people access to manage your production and operate your box office."
-                ),
-                ListItem(
-                    title="Create Complimentary Bookings",
-                    title_icon="play",
-                    message="As soon as you make your production live, anybody can book a ticket. If you want to guarantee tickets for certain people, you should create complimentary bookings for them now."
-                ),
-                ListItem(
-                    title="And Make Your Production Live!",
-                    title_icon="play",
-                ),
-
-                Button(f"/administration/productions/{production.slug}",
-                    "Go To Production Control Panel")
-            ])
-        ),
-
-        Closer()
-    ])
+    test_mail = MailComposer.blank(
+        [
+            Heading(
+                title=f"Your production '{production.name}' has been approved!",
+                title_icon="square-check",
+            ),
+            Image(src=testTrashImage),
+            Greeting(user=user),
+            Paragraph(
+                message=f"Congratulations! Your production '{production.name}' has been approved. You're on the cusp of going live!"
+            ),
+            Paragraph(
+                message="Now your production is approved, you <b>cannot</b> make any changes to the production details or listing without it being reviewed again. If you need to make any changes, please contact us at <a href='mailto:support@uobtheatre.com'>support@uobtheatre.com</a>.",
+                html_safe=True,
+            ),
+            Box(
+                RowStack(
+                    [
+                        Heading(
+                            subsubtitle="You should now:", title_icon="rocket"
+                        ),
+                        ListItem(
+                            title="Triple Check Your Production Details",
+                            title_icon="play",
+                            message="Make sure all the details are correct, and that your listing looks great. It's easy to fix things now, but once your production is live, things get more difficult!",
+                        ),
+                        ListItem(
+                            title="Edit Permissions",
+                            title_icon="play",
+                            message="If your show is being put on with an STA crew, you won't need to worry about this, but if you're working at an external venue make sure you've given the right people access to manage your production and operate your box office.",
+                        ),
+                        ListItem(
+                            title="Create Complimentary Bookings",
+                            title_icon="play",
+                            message="As soon as you make your production live, anybody can book a ticket. If you want to guarantee tickets for certain people, you should create complimentary bookings for them now.",
+                        ),
+                        ListItem(
+                            title="And Make Your Production Live!",
+                            title_icon="play",
+                        ),
+                        Button(
+                            f"/administration/productions/{production.slug}",
+                            "Go To Production Control Panel",
+                        ),
+                    ]
+                )
+            ),
+            Closer(),
+        ]
+    )
 
     write_files(test_mail, "production_approved_email")
+
 
 @pytest.mark.django_db
 def test_production_needs_changes_email():
@@ -227,45 +225,39 @@ def test_production_needs_changes_email():
     fake = Faker()
     message = fake.sentence(nb_words=20)
 
-    test_mail = MailComposer.blank([
-
-        Heading(
-            title=f"Your production '{production.name}' needs some changes",
-            title_icon="alert-triangle"
-        ),
-
-        Image(src=testTrashImage),
-
-        Greeting(user=user),
-
-        Paragraph(
-            message=f"We have reviewed your production '{production.name}', and some changes need to be made before we can approve it."
-        ),
-
-        Paragraph(
-            message="Please review the comments below, and make the required changes. Once you're done, you can resubmit your production for review.",
-        ),
-
-        # Note to self: we should make message mandatory when submitting a review
-        Box(
-            RowStack([
-                Heading(
-                    subsubtitle="Review Comments:",
-                    title_icon="comments"
-                ),
-                ListItem(
-                    message=message
+    test_mail = MailComposer.blank(
+        [
+            Heading(
+                title=f"Your production '{production.name}' needs some changes",
+                title_icon="alert-triangle",
+            ),
+            Image(src=testTrashImage),
+            Greeting(user=user),
+            Paragraph(
+                message=f"We have reviewed your production '{production.name}', and some changes need to be made before we can approve it."
+            ),
+            Paragraph(
+                message="Please review the comments below, and make the required changes. Once you're done, you can resubmit your production for review.",
+            ),
+            # Note to self: we should make message mandatory when submitting a review
+            Box(
+                RowStack(
+                    [
+                        Heading(
+                            subsubtitle="Review Comments:",
+                            title_icon="comments",
+                        ),
+                        ListItem(message=message),
+                    ]
                 )
-            ])
-        ),
-
-        Paragraph(
-            message="If you need any help, please contact us at <a href='mailto:support@uobtheatre.com'>support@uobtheatre.com</a>",
-            html_safe=True
-        ),
-
-        Closer()
-    ])
+            ),
+            Paragraph(
+                message="If you need any help, please contact us at <a href='mailto:support@uobtheatre.com'>support@uobtheatre.com</a>",
+                html_safe=True,
+            ),
+            Closer(),
+        ]
+    )
 
     write_files(test_mail, "production_needs_changes_email")
 
@@ -275,75 +267,61 @@ def test_production_ready_for_review_email():
     user = UserFactory()
     production = ProductionFactory()
 
-    test_mail = MailComposer.blank([
-
-        Heading(
-            title=f"'{production.name}' is ready for review",
-            title_icon="rocket"
-        ),
-
-        Image(src=testTrashImage),
-
-        Greeting(user=user),
-
-        Paragraph(
-            message=f"'{production.name}' has been submitted for review. Please head to the admin control panel, verify the production's details and listing, and either approve or reject."
-        ),
-
-        Button(f"/administration/productions/{production.slug}",
-            "Go To Production Control Panel"),
-
-        Closer()
-    ])
+    test_mail = MailComposer.blank(
+        [
+            Heading(
+                title=f"'{production.name}' is ready for review",
+                title_icon="rocket",
+            ),
+            Image(src=testTrashImage),
+            Greeting(user=user),
+            Paragraph(
+                message=f"'{production.name}' has been submitted for review. Please head to the admin control panel, verify the production's details and listing, and either approve or reject."
+            ),
+            Button(
+                f"/administration/productions/{production.slug}",
+                "Go To Production Control Panel",
+            ),
+            Closer(),
+        ]
+    )
 
     write_files(test_mail, "production_ready_for_review_email")
+
 
 @pytest.mark.django_db
 def test_mass_email_admin_notification_email():
     user = UserFactory()
     production = ProductionFactory()
 
-    mass_email = MailComposer.blank([
+    mass_email = MailComposer.blank(
+        [
+            Heading(
+                title=f"'{production.name}' is ready for review",
+                title_icon="rocket",
+            ),
+            Image(src=testTrashImage),
+            Greeting(user=user),
+            Paragraph(
+                message=f"'{production.name}' has been submitted for review. Please head to the admin control panel, verify the production's details and listing, and either approve or reject."
+            ),
+            Button(
+                f"/administration/productions/{production.slug}",
+                "Go To Production Control Panel",
+            ),
+            Closer(),
+        ]
+    ).to_html()
 
-        Heading(
-            title=f"'{production.name}' is ready for review",
-            title_icon="rocket"
-        ),
-
-        Image(src=testTrashImage),
-
-        Greeting(user=user),
-
-        Paragraph(
-            message=f"'{production.name}' has been submitted for review. Please head to the admin control panel, verify the production's details and listing, and either approve or reject."
-        ),
-
-        Button(f"/administration/productions/{production.slug}",
-            "Go To Production Control Panel"),
-
-        Closer()
-    ]).to_html()
-
-    test_mail = MailComposer.blank([
-
-        Heading(
-            title=f"New Mass Email Sent",
-            title_icon="envelope"
-        ),
-
-        Greeting(user=user),
-
-        # Replace number with {len(django_emails)} when implementing
-        Paragraph(
-            message=f"The following mass email was sent 22 times:"
-        ),
-
-        Box(
-            HTMLBlock(mass_email),
-            bgCol="#2B303A"
-        ),
-
-        Closer()
-    ])
+    test_mail = MailComposer.blank(
+        [
+            Heading(title=f"New Mass Email Sent", title_icon="envelope"),
+            Greeting(user=user),
+            # Replace number with {len(django_emails)} when implementing
+            Paragraph(message=f"The following mass email was sent 22 times:"),
+            Box(HTMLBlock(mass_email), bgCol="#2B303A"),
+            Closer(),
+        ]
+    )
 
     write_files(test_mail, "mass_email_admin_notification_email")

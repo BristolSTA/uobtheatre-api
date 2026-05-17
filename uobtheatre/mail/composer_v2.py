@@ -77,20 +77,20 @@ icons = {
     },
     "square-check": {
         "size": "0 0 448 512",
-        "path": "M384 32c35.3 0 64 28.7 64 64l0 320c0 35.3-28.7 64-64 64L64 480c-35.3 0-64-28.7-64-64L0 96C0 60.7 28.7 32 64 32l320 0zM342 145.7c-10.7-7.8-25.7-5.4-33.5 5.3L189.1 315.2 137 263.1c-9.4-9.4-24.6-9.4-33.9 0s-9.4 24.6 0 33.9l72 72c5 5 11.9 7.5 18.8 7s13.4-4.1 17.5-9.8L347.3 179.2c7.8-10.7 5.4-25.7-5.3-33.5z"
+        "path": "M384 32c35.3 0 64 28.7 64 64l0 320c0 35.3-28.7 64-64 64L64 480c-35.3 0-64-28.7-64-64L0 96C0 60.7 28.7 32 64 32l320 0zM342 145.7c-10.7-7.8-25.7-5.4-33.5 5.3L189.1 315.2 137 263.1c-9.4-9.4-24.6-9.4-33.9 0s-9.4 24.6 0 33.9l72 72c5 5 11.9 7.5 18.8 7s13.4-4.1 17.5-9.8L347.3 179.2c7.8-10.7 5.4-25.7-5.3-33.5z",
     },
     "rocket": {
         "size": "0 0 512 512",
-        "path": "M128 320L24.5 320c-24.9 0-40.2-27.1-27.4-48.5L50 183.3C58.7 168.8 74.3 160 91.2 160l95 0c76.1-128.9 189.6-135.4 265.5-124.3 12.8 1.9 22.8 11.9 24.6 24.6 11.1 75.9 4.6 189.4-124.3 265.5l0 95c0 16.9-8.8 32.5-23.3 41.2l-88.2 52.9c-21.3 12.8-48.5-2.6-48.5-27.4L192 384c0-35.3-28.7-64-64-64l-.1 0zM400 160a48 48 0 1 0 -96 0 48 48 0 1 0 96 0z"
+        "path": "M128 320L24.5 320c-24.9 0-40.2-27.1-27.4-48.5L50 183.3C58.7 168.8 74.3 160 91.2 160l95 0c76.1-128.9 189.6-135.4 265.5-124.3 12.8 1.9 22.8 11.9 24.6 24.6 11.1 75.9 4.6 189.4-124.3 265.5l0 95c0 16.9-8.8 32.5-23.3 41.2l-88.2 52.9c-21.3 12.8-48.5-2.6-48.5-27.4L192 384c0-35.3-28.7-64-64-64l-.1 0zM400 160a48 48 0 1 0 -96 0 48 48 0 1 0 96 0z",
     },
     "alert-triangle": {
         "size": "0 0 512 512",
-        "path": "M256 0c14.7 0 28.2 8.1 35.2 21l216 400c6.7 12.4 6.4 27.4-.8 39.5S486.1 480 472 480L40 480c-14.1 0-27.2-7.4-34.4-19.5s-7.5-27.1-.8-39.5l216-400c7-12.9 20.5-21 35.2-21zm0 352a32 32 0 1 0 0 64 32 32 0 1 0 0-64zm0-192c-18.2 0-32.7 15.5-31.4 33.7l7.4 104c.9 12.5 11.4 22.3 23.9 22.3 12.6 0 23-9.7 23.9-22.3l7.4-104c1.3-18.2-13.1-33.7-31.4-33.7z"
+        "path": "M256 0c14.7 0 28.2 8.1 35.2 21l216 400c6.7 12.4 6.4 27.4-.8 39.5S486.1 480 472 480L40 480c-14.1 0-27.2-7.4-34.4-19.5s-7.5-27.1-.8-39.5l216-400c7-12.9 20.5-21 35.2-21zm0 352a32 32 0 1 0 0 64 32 32 0 1 0 0-64zm0-192c-18.2 0-32.7 15.5-31.4 33.7l7.4 104c.9 12.5 11.4 22.3 23.9 22.3 12.6 0 23-9.7 23.9-22.3l7.4-104c1.3-18.2-13.1-33.7-31.4-33.7z",
     },
     "comments": {
         "size": "0 0 576 512",
-        "path": "M384 144c0 97.2-86 176-192 176-26.7 0-52.1-5-75.2-14L35.2 349.2c-9.3 4.9-20.7 3.2-28.2-4.2s-9.2-18.9-4.2-28.2l35.6-67.2C14.3 220.2 0 183.6 0 144 0 46.8 86-32 192-32S384 46.8 384 144zm0 368c-94.1 0-172.4-62.1-188.8-144 120-1.5 224.3-86.9 235.8-202.7 83.3 19.2 145 88.3 145 170.7 0 39.6-14.3 76.2-38.4 105.6l35.6 67.2c4.9 9.3 3.2 20.7-4.2 28.2s-18.9 9.2-28.2 4.2L459.2 498c-23.1 9-48.5 14-75.2 14z"
-    }
+        "path": "M384 144c0 97.2-86 176-192 176-26.7 0-52.1-5-75.2-14L35.2 349.2c-9.3 4.9-20.7 3.2-28.2-4.2s-9.2-18.9-4.2-28.2l35.6-67.2C14.3 220.2 0 183.6 0 144 0 46.8 86-32 192-32S384 46.8 384 144zm0 368c-94.1 0-172.4-62.1-188.8-144 120-1.5 224.3-86.9 235.8-202.7 83.3 19.2 145 88.3 145 170.7 0 39.6-14.3 76.2-38.4 105.6l35.6 67.2c4.9 9.3 3.2 20.7-4.2 28.2s-18.9 9.2-28.2 4.2L459.2 498c-23.1 9-48.5 14-75.2 14z",
+    },
 }
 
 
@@ -145,7 +145,12 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
         return self
 
     def heading(
-        self, title: str, message: str, title_icon: str, message_icon: str, html: bool
+        self,
+        title: str,
+        message: str,
+        title_icon: str,
+        message_icon: str,
+        html: bool,
     ):  # pylint: disable=too-many-arguments, too-many-positional-arguments
         """A heading composer item"""
         self.items.append(
@@ -209,7 +214,9 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
         """A Box composer item, used for holding arbitrary content with
         a background of an image or solid colour"""
         # Ensure argument order and names are correct for Box
-        self.items.append(Box(content=content, bg_url=bg_url, bg_col=bg_col, mb=mb))
+        self.items.append(
+            Box(content=content, bg_url=bg_url, bg_col=bg_col, mb=mb)
+        )
         return self
 
     def row_stack(self, row_stack: Sequence[ComposerItemInterface]):
@@ -217,7 +224,9 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
         self.items.append(RowStack(list(row_stack)))
         return self
 
-    def col_stack(self, col_stack: Sequence[tuple[ComposerItemInterface, float]]):
+    def col_stack(
+        self, col_stack: Sequence[tuple[ComposerItemInterface, float]]
+    ):
         """A ColStack composer item.
         Takes in a list of items to put in a row,
         along with their associated widths as a string, in %.
@@ -253,26 +262,28 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
         return self
 
     def venue_accessibility_block(self, venue):
-        """ VenueAccessibilityBlock composer item.
+        """VenueAccessibilityBlock composer item.
         A compound item that contains information about venue accessibility."""
         self.items.append(VenueAccessibilityBlock(venue))
         return self
-    
+
     def venue_block(self, venue):
         """A VenueBlock composer item.
         A compound item that contains information about a venue."""
         self.items.append(VenueBlock(venue))
         return self
-    
+
     def booking_accessibility_block(self, booking):
         """A BookingAccessibilityBlock composer item.
-        A compound item that contains information about booking accessibility."""
+        A compound item that contains information about booking accessibility.
+        """
         self.items.append(BookingAccessibilityBlock(booking))
         return self
 
     def payment_block(self, payment):
         """A PaymentBlock composer item.
-        A compound item that contains information about a payment, such as the amount, date, and method."""
+        A compound item that contains information about a payment, such as the amount, date, and method.
+        """
         self.items.append(PaymentBlock(payment))
         return self
 
@@ -292,7 +303,9 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
 
     def to_html(self) -> str:
         """Generate the HTML version of this item"""
-        return """{}""".format("\n".join([item.to_html() or "" for item in self.items]))
+        return """{}""".format(
+            "\n".join([item.to_html() or "" for item in self.items])
+        )
 
 
 class Greeting(ComposerItemInterface):
@@ -319,7 +332,7 @@ class Greeting(ComposerItemInterface):
     def to_html(self):
         template = get_template("componentsV2/paragraph.html")
         return template.render({"message": self.opener})
-    
+
 
 class Closer(ComposerItemInterface):
     """
@@ -335,15 +348,16 @@ class Closer(ComposerItemInterface):
 
     def to_html(self):
         return Paragraph(
-            message="Regards,<br>The UOB Theatre Team",
-            html_safe=True
+            message="Regards,<br>The UOB Theatre Team", html_safe=True
         ).to_html()
 
 
 class Paragraph(ComposerItemInterface):
     """A Heading composer item"""
 
-    def __init__(self, message: str = "", *, title: str = "", html_safe: bool = False) -> None:
+    def __init__(
+        self, message: str = "", *, title: str = "", html_safe: bool = False
+    ) -> None:
         super().__init__()
         self.message = message or title
         self.html_safe = html_safe
@@ -354,7 +368,9 @@ class Paragraph(ComposerItemInterface):
     def to_html(self):
         template = get_template("componentsV2/paragraph.html")
 
-        return template.render({"message": self.message, "htmlSafe": self.html_safe})
+        return template.render(
+            {"message": self.message, "htmlSafe": self.html_safe}
+        )
 
 
 class HTMLBlock(ComposerItemInterface):
@@ -370,6 +386,7 @@ class HTMLBlock(ComposerItemInterface):
     def to_html(self):
         return self.html
 
+
 class Heading(ComposerItemInterface):
     """
     A Heading composer item.
@@ -382,7 +399,8 @@ class Heading(ComposerItemInterface):
         message (str): The message displayed without padding below the heading
     title_icon (str): The icon to use for the title, from the icons dict
     message_icon (str): The icon to use for the message, from the icons dict
-    html_safe (bool): Whether to parse the message as HTML or not (default: False)"""
+    html_safe (bool): Whether to parse the message as HTML or not (default: False)
+    """
 
     def __init__(  # pylint: disable=too-many-arguments, too-many-positional-arguments
         self,
@@ -403,7 +421,9 @@ class Heading(ComposerItemInterface):
         self.message = message
         self.html_safe = html_safe
         self.title_icon = icons[title_icon] if title_icon in icons else ""
-        self.message_icon = icons[message_icon] if message_icon in icons else ""
+        self.message_icon = (
+            icons[message_icon] if message_icon in icons else ""
+        )
 
     def to_text(self):
         text = ""
@@ -460,7 +480,9 @@ class ListItem(ComposerItemInterface):
         self.title = title
         self.message = message
         self.title_icon = icons[title_icon] if title_icon in icons else ""
-        self.message_icon = icons[message_icon] if message_icon in icons else ""
+        self.message_icon = (
+            icons[message_icon] if message_icon in icons else ""
+        )
         self.inline = inline
         self.html_safe = html_safe
 
@@ -584,7 +606,12 @@ class Image(ComposerItemInterface):
         template = get_template("componentsV2/image.html")
 
         return template.render(
-            {"alt": self.alt, "href": self.href, "src": self.src, "title": self.title}
+            {
+                "alt": self.alt,
+                "href": self.href,
+                "src": self.src,
+                "title": self.title,
+            }
         )
 
 
@@ -676,7 +703,11 @@ class TicketCodes(ComposerItemInterface):
 
         # Generate a pretty ticket element
         content = RowStack(
-            [Heading(subtitle=f"Your Ticket{self.plural}", title_icon="ticket")]
+            [
+                Heading(
+                    subtitle=f"Your Ticket{self.plural}", title_icon="ticket"
+                )
+            ]
             + qr_content
         )
 
@@ -749,7 +780,9 @@ class ColStack(ComposerItemInterface):
     ) -> None:
         super().__init__()
         # Accept any sequence and normalize to list for internal storage
-        self.col_stack: list[tuple[ComposerItemInterface, float]] = list(col_stack)
+        self.col_stack: list[tuple[ComposerItemInterface, float]] = list(
+            col_stack
+        )
 
     def _stack_items(self) -> list["ComposerItemInterface"]:
         return [col for (col, _) in self.col_stack]
@@ -762,7 +795,11 @@ class ColStack(ComposerItemInterface):
     def to_html(self) -> str:
         template = get_template("componentsV2/colStack.html")
         return template.render(
-            {"colStack": [(col.to_html(), width) for (col, width) in self.col_stack]}
+            {
+                "colStack": [
+                    (col.to_html(), width) for (col, width) in self.col_stack
+                ]
+            }
         )
 
     def sub_items(self) -> list["ComposerItemInterface"]:
@@ -833,10 +870,16 @@ class TimingsBlock(ComposerItemInterface):
         return [
             Heading(subsubtitle="Timings", title_icon="clock"),
             ListItem(
-                title="Doors Open:", message=f"{self.doors}", title_icon="door-open", inline=True
+                title="Doors Open:",
+                message=f"{self.doors}",
+                title_icon="door-open",
+                inline=True,
             ),
             ListItem(
-                title="Performance Starts:", message=f"{self.start}", title_icon="play", inline=True
+                title="Performance Starts:",
+                message=f"{self.start}",
+                title_icon="play",
+                inline=True,
             ),
             ListItem(message=self.latecomerDisclaimer),
         ]
@@ -883,10 +926,14 @@ class BookingBlock(ComposerItemInterface):
             ListItem(message=self.bookingInfo, html_safe=True),
             ColStack(
                 [
-                    (Button(self.booking.web_tickets_path, "View Tickets"), 50),
+                    (
+                        Button(self.booking.web_tickets_path, "View Tickets"),
+                        50,
+                    ),
                     (
                         Button(
-                            f"/user/booking/{self.booking.reference}", "View Booking"
+                            f"/user/booking/{self.booking.reference}",
+                            "View Booking",
                         ),
                         50,
                     ),
@@ -927,15 +974,15 @@ class VenueAccessibilityBlock(ComposerItemInterface):
         )
         self.accessibility_message = strip_tags(accessibility_message_raw)
         if len(self.accessibility_message) > 200:
-            self.accessibility_message = self.accessibility_message[:200] + "..."
+            self.accessibility_message = (
+                self.accessibility_message[:200] + "..."
+            )
 
     def to_text(self):
-        return (
-            f"\nAccessibility Information:\n\n{strip_tags(self.accessibility_message)}"
-        )
+        return f"\nAccessibility Information:\n\n{strip_tags(self.accessibility_message)}"
 
     def _stack_items(self):
-        
+
         stack = [
             Heading(
                 subsubtitle="Venue Accessibility", title_icon="accessibility"
@@ -983,11 +1030,11 @@ class VenueBlock(ComposerItemInterface):
         address_parts = [
             part
             for part in [
-            getattr(self.venue.address, "building_name", None),
-            getattr(self.venue.address, "building_number", None),
-            getattr(self.venue.address, "street", None),
-            getattr(self.venue.address, "city", None),
-            getattr(self.venue.address, "postcode", None),
+                getattr(self.venue.address, "building_name", None),
+                getattr(self.venue.address, "building_number", None),
+                getattr(self.venue.address, "street", None),
+                getattr(self.venue.address, "city", None),
+                getattr(self.venue.address, "postcode", None),
             ]
             if part and str(part).strip()
         ]
@@ -1015,8 +1062,10 @@ class VenueBlock(ComposerItemInterface):
                 ListItem(
                     title="What3Words:",
                     message="<a href='https://what3words.com/{}' target='_blank'>{}</a>".format(
-                        self.venue.address.what3words[3:], # what3words.com URLs omit the leading "///"
-                        self.venue.address.what3words
+                        self.venue.address.what3words[
+                            3:
+                        ],  # what3words.com URLs omit the leading "///"
+                        self.venue.address.what3words,
                     ),
                     title_icon="compass",
                     html_safe=True,
@@ -1026,9 +1075,14 @@ class VenueBlock(ComposerItemInterface):
         # Always append an 'open in google maps' button
         maps_query = self.venue.name + (
             f", {self.venue.address.street}, {self.venue.address.city}"
-            if self.venue.address and self.venue.address.street and self.venue.address.city
-            else "")
-        maps_url = "https://maps.google.com/?q={}".format(quote_plus(maps_query))
+            if self.venue.address
+            and self.venue.address.street
+            and self.venue.address.city
+            else ""
+        )
+        maps_url = "https://maps.google.com/?q={}".format(
+            quote_plus(maps_query)
+        )
         items.append(Button(maps_url, "Open in Google Maps"))
 
         return items
@@ -1043,7 +1097,7 @@ class VenueBlock(ComposerItemInterface):
         if getattr(self.venue, "what3words", None):
             text += f"What3Words: {self.venue.what3words}\n"
         return text.strip()
-    
+
     def sub_items(self):
         subitems = [self]
         for item in self._stack_items():
@@ -1052,7 +1106,7 @@ class VenueBlock(ComposerItemInterface):
             else:
                 subitems.append(item)
         return subitems
-    
+
 
 class BookingAccessibilityBlock(ComposerItemInterface):
     """
@@ -1075,10 +1129,15 @@ class BookingAccessibilityBlock(ComposerItemInterface):
 
     def _stack_items(self):
         return [
-            Heading(subsubtitle="Booking Accessibility Information", title_icon="accessibility"),
-
-            ListItem(title="You have provided the following accessibility information:", message=self.booking.accessibility_info, title_icon="info-circle"),
-
+            Heading(
+                subsubtitle="Booking Accessibility Information",
+                title_icon="accessibility",
+            ),
+            ListItem(
+                title="You have provided the following accessibility information:",
+                message=self.booking.accessibility_info,
+                title_icon="info-circle",
+            ),
             ListItem(message=self.bookingAccessibilityInfo, html_safe=True),
         ]
 
@@ -1106,11 +1165,14 @@ class PaymentBlock(ComposerItemInterface):
     def _stack_items(self):
         return [
             Heading(subsubtitle="Payment Information", title_icon="trolley"),
-
-            ListItem(message=f"{self.payment.value_currency} paid", message_icon="money"),
-
             ListItem(
-                message=f"{self.payment.provider.description}{(' - ID ' + self.payment.provider_transaction_id) if self.payment.provider_transaction_id else '' }", message_icon="card"),
+                message=f"{self.payment.value_currency} paid",
+                message_icon="money",
+            ),
+            ListItem(
+                message=f"{self.payment.provider.description}{(' - ID ' + self.payment.provider_transaction_id) if self.payment.provider_transaction_id else '' }",
+                message_icon="card",
+            ),
         ]
 
     def to_html(self):
@@ -1168,14 +1230,20 @@ class MailComposer(ComposerItemsContainer):
         """Generate the plain text version of the email"""
         return """{}""".format(
             "\n\n".join(
-                [item.to_text() for item in self.get_complete_items() if item.to_text()]
+                [
+                    item.to_text()
+                    for item in self.get_complete_items()
+                    if item.to_text()
+                ]
             )
         )
 
     def to_html(self):
         """Generate the HTML version of the email"""
         content = """{}""".format(
-            "\n".join([item.to_html() or "" for item in self.get_complete_items()])
+            "\n".join(
+                [item.to_html() or "" for item in self.get_complete_items()]
+            )
         )
 
         email = get_template("new_base.html").render(
@@ -1188,7 +1256,10 @@ class MailComposer(ComposerItemsContainer):
 
     def get_email(self, subject, to_email):
         msg = EmailMultiAlternatives(
-            subject, self.to_plain_text(), settings.DEFAULT_FROM_EMAIL, [to_email]
+            subject,
+            self.to_plain_text(),
+            settings.DEFAULT_FROM_EMAIL,
+            [to_email],
         )
         msg.attach_alternative(self.to_html(), "text/html")
         return msg
@@ -1199,7 +1270,9 @@ class MailComposer(ComposerItemsContainer):
         msg.send()
 
     def sub_items(self):
-        return [subItem for child in self.items for subItem in child.sub_items()]
+        return [
+            subItem for child in self.items for subItem in child.sub_items()
+        ]
 
 
 class MassMailComposer:
