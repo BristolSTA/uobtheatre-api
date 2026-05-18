@@ -476,7 +476,7 @@ class Performance(
             seat_groups_remaining_capacity,
             self.total_capacity - self.total_tickets_sold_or_reserved(),
         )
-    
+
     @property
     def capacity_remaining_excluding_drafts(self):
         """Remaining capacity of the Performance, excluding draft bookings.
@@ -489,12 +489,15 @@ class Performance(
             The sum of the remaining capacities of all the seat groups is not
             necessarily equal to that of the Performance (the performance may
             be less).
-            
+
         Returns:
-            int: The remaining capacity of the show (or SeatGroup if provided)"""
+            int: The remaining capacity of the show (or SeatGroup if provided)
+        """
 
         seat_groups_remaining_capacity = sum(
-            self.total_seat_group_capacity(seat_group=performance_seat_group.seat_group)
+            self.total_seat_group_capacity(
+                seat_group=performance_seat_group.seat_group
+            )
             - self.total_tickets_sold_or_reserved(
                 seat_group=performance_seat_group.seat_group
             )
@@ -504,10 +507,9 @@ class Performance(
         # The number of tickets remaining is the number of tickets left in the seat groups or the total capacity left for the performance - which ever is lower
         return min(
             seat_groups_remaining_capacity,
-            self.total_capacity - self.total_tickets_sold(),  # Exclude draft bookings here
+            self.total_capacity
+            - self.total_tickets_sold(),  # Exclude draft bookings here
         )
-        
-            
 
     @property
     def total_capacity(self) -> int:
@@ -693,7 +695,7 @@ class Performance(
             bool: if the performance is sold out.
         """
         return self.capacity_remaining == 0
-    
+
     @property
     def is_truly_sold_out(self) -> bool:
         """If the performance is truly sold out.

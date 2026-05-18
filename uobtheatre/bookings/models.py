@@ -586,7 +586,7 @@ class Booking(TimeStampedMixin, Payable):
         super().complete()
 
         booking_emails.send_booking_confirmation_email(self, payment)
-        
+
         if (
             self.accessibility_info
             and len(self.accessibility_info.strip()) > 4

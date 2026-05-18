@@ -7,7 +7,6 @@ from django.template.loader import get_template
 
 from uobtheatre.mail.composer_v2 import (
     QR,
-    VenueAccessibilityBlock,
     BookingAccessibilityBlock,
     BookingBlock,
     Box,
@@ -28,6 +27,7 @@ from uobtheatre.mail.composer_v2 import (
     Spacer,
     TicketCodes,
     TimingsBlock,
+    VenueAccessibilityBlock,
 )
 from uobtheatre.users.test.factories import UserFactory
 

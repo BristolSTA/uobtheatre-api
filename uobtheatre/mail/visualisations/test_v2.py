@@ -354,7 +354,7 @@ def test_booking_accessibility_info_email():
                 f"/administration/productions/{booking.performance.production.slug}/bookings/{booking.reference}",
                 "View Booking Details",
             ),
-            Closer()
+            Closer(),
         ]
     )
 
@@ -388,15 +388,16 @@ def test_booking_accessibility_removed_email():
                 f"/administration/productions/{booking.performance.production.slug}/bookings/{booking.reference}",
                 "View Booking Details",
             ),
-            Closer()
+            Closer(),
         ]
     )
 
     write_files(test_mail, "booking_accessibility_removed_email")
 
+
 @pytest.mark.django_db
 def test_booking_accessibility_updated_email():
-    
+
     booking = BookingFactory()
 
     test_mail = MailComposer.blank(
@@ -421,11 +422,12 @@ def test_booking_accessibility_updated_email():
                 f"/administration/productions/{booking.performance.production.slug}/bookings/{booking.reference}",
                 "View Booking Details",
             ),
-            Closer()
+            Closer(),
         ]
     )
 
     write_files(test_mail, "booking_accessibility_updated_email")
+
 
 @pytest.mark.django_db
 def test_email_activation_email():
@@ -453,11 +455,12 @@ def test_email_activation_email():
                 f"{path}/{token}",
                 "Activate Account",
             ),
-            Closer()
+            Closer(),
         ]
     )
 
     write_files(test_mail, "account_activation_email")
+
 
 @pytest.mark.django_db
 def test_password_reset_email():
@@ -484,11 +487,12 @@ def test_password_reset_email():
                 f"{path}/{token}",
                 "Reset Password",
             ),
-            Closer()
+            Closer(),
         ]
     )
 
     write_files(test_mail, "password_reset_email")
+
 
 @pytest.mark.django_db
 def test_performance_sold_out_email():
@@ -509,11 +513,12 @@ def test_performance_sold_out_email():
             Paragraph(
                 message=f"Break a leg!",
             ),
-            Closer()
+            Closer(),
         ]
     )
 
     write_files(test_mail, "performance_sold_out_email")
+
 
 @pytest.mark.django_db
 def test_notify_admins_of_comp_booking_email():
@@ -545,7 +550,7 @@ def test_notify_admins_of_comp_booking_email():
                 f"/administration/productions/{booking.performance.production.slug}/bookings/{booking.reference}",
                 "View Booking Details",
             ),
-            Closer()
+            Closer(),
         ]
     )
 
