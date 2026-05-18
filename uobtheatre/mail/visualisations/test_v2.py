@@ -489,3 +489,64 @@ def test_password_reset_email():
     )
 
     write_files(test_mail, "password_reset_email")
+
+@pytest.mark.django_db
+def test_performance_sold_out_email():
+
+    booking = BookingFactory()
+
+    test_mail = MailComposer.blank(
+        [
+            Heading(
+                title=f"Performance Sold Out: {booking.performance.production.name}",
+                title_icon="rocket",
+            ),
+            Image(src=testTrashImage),
+            Paragraph(
+                message=f"The performance of <strong>{booking.performance.production.name}</strong> on <strong>{booking.performance.start.strftime('%d/%m/%Y %I:%M %p')}</strong> is now sold out. Congratulations!",
+                html_safe=True,
+            ),
+            Paragraph(
+                message=f"Break a leg!",
+            ),
+            Closer()
+        ]
+    )
+
+    write_files(test_mail, "performance_sold_out_email")
+
+@pytest.mark.django_db
+def test_notify_admins_of_comp_booking_email():
+
+    booking = BookingFactory()
+
+    authorising_user = UserFactory()
+
+    test_mail = MailComposer.blank(
+        [
+            Heading(
+                title=f"Comp Booking Made: {booking.performance.production.name}",
+                title_icon="ticket",
+            ),
+            Image(src=testTrashImage),
+            Paragraph(
+                message=f"A comp booking has been made for <strong>{booking.performance.production.name}</strong> on <strong>{booking.performance.start.strftime('%d/%m/%Y %I:%M %p')}</strong>.",
+                html_safe=True,
+            ),
+            Paragraph(
+                message=f"This booking was authorised by <strong>{authorising_user.first_name} {authorising_user.last_name}</strong> (<em>{authorising_user.email}</em>).",
+                html_safe=True,
+            ),
+            Paragraph(
+                message=f"If there are any issues, or the booking was made in error, please contact <a href='mailto:support@uobtheatre.com'>support@uobtheatre.com</a>.",
+                html_safe=True,
+            ),
+            Button(
+                f"/administration/productions/{booking.performance.production.slug}/bookings/{booking.reference}",
+                "View Booking Details",
+            ),
+            Closer()
+        ]
+    )
+
+    write_files(test_mail, "comp_booking_made_email")

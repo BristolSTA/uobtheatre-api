@@ -158,6 +158,13 @@ class SetProductionStatus(AuthRequiredMixin, SafeMutation):
                 send_production_needs_changes_email(user, production, message)
 
         elif (
+            status == Production.Status.PUBLISHED
+            and previous_status == Production.Status.APPROVED
+        ):
+            # TODO: Send an email to involved users notifying them the production is live
+            pass
+
+        elif (
             status == Production.Status.COMPLETE
             and previous_status == Production.Status.CLOSED
         ):

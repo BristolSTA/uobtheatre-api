@@ -445,6 +445,10 @@ class Performance(
             ),  # The capacity remaining for the local seat group capacity
         )
 
+    def seat_group_sold_excluding_drafts(self, seat_group: SeatGroup):
+        """Get the number of tickets sold on a seat group, excluding draft bookings"""
+        return self.tickets.sold().filter(seat_group=seat_group).count()  # type: ignore
+
     @property
     def capacity_remaining(self):
         """Remaining capacity of the Performance.
@@ -472,6 +476,38 @@ class Performance(
             seat_groups_remaining_capacity,
             self.total_capacity - self.total_tickets_sold_or_reserved(),
         )
+    
+    @property
+    def capacity_remaining_excluding_drafts(self):
+        """Remaining capacity of the Performance, excluding draft bookings.
+
+        The is the total number of seats (Tickets) which can be booked for this
+        performance when factoring in existing Bookings, but excluding any
+        draft bookings.
+
+        Note:
+            The sum of the remaining capacities of all the seat groups is not
+            necessarily equal to that of the Performance (the performance may
+            be less).
+            
+        Returns:
+            int: The remaining capacity of the show (or SeatGroup if provided)"""
+
+        seat_groups_remaining_capacity = sum(
+            self.total_seat_group_capacity(seat_group=performance_seat_group.seat_group)
+            - self.total_tickets_sold_or_reserved(
+                seat_group=performance_seat_group.seat_group
+            )
+            for performance_seat_group in self.performance_seat_groups.all()
+        )
+
+        # The number of tickets remaining is the number of tickets left in the seat groups or the total capacity left for the performance - which ever is lower
+        return min(
+            seat_groups_remaining_capacity,
+            self.total_capacity - self.total_tickets_sold(),  # Exclude draft bookings here
+        )
+        
+            
 
     @property
     def total_capacity(self) -> int:
@@ -649,12 +685,25 @@ class Performance(
 
     @property
     def is_sold_out(self) -> bool:
-        """If the performance is sold out
+        """If the performance is sold out.
+
+        This INCLUDES any draft bookings.
 
         Returns:
-            bool: if the performance is soldout.
+            bool: if the performance is sold out.
         """
         return self.capacity_remaining == 0
+    
+    @property
+    def is_truly_sold_out(self) -> bool:
+        """If the performance is truly sold out.
+
+        This EXCLUDES any draft bookings.
+
+        Returns:
+            bool: if the performance is sold out, excluding draft bookings.
+        """
+        return self.capacity_remaining_excluding_drafts == 0
 
     @property
     def is_bookable(self) -> bool:

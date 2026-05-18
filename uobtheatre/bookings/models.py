@@ -586,11 +586,21 @@ class Booking(TimeStampedMixin, Payable):
         super().complete()
 
         booking_emails.send_booking_confirmation_email(self, payment)
+        
         if (
             self.accessibility_info
             and len(self.accessibility_info.strip()) > 4
         ):
             booking_emails.send_booking_accessibility_info_email(self)
+
+        if self.performance.is_truly_sold_out:
+            # TODO: Send an email to involved party if the performance is now sold out
+            pass
+
+        if self.admin_discount_percentage == 1:
+            # TODO: Send an email to involved party if the booking is a comp
+            # Should actually make this a comp booking mutation, to ensure the user responsible can be passed down and included in the email.
+            pass
 
     def clone(self):
         clone = super().clone()
