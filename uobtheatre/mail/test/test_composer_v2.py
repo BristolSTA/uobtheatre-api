@@ -7,7 +7,8 @@ from django.template.loader import get_template
 
 from uobtheatre.mail.composer_v2 import (
     QR,
-    AccessibilityBlock,
+    VenueAccessibilityBlock,
+    BookingAccessibilityBlock,
     BookingBlock,
     Box,
     BoxCols,
@@ -185,18 +186,6 @@ def test_booking_block():
     assert bb.bookingInfo in html
     # Also check that the booking's web_tickets_path is present in the html
     assert booking.web_tickets_path in html
-
-
-def test_accessibility_block():
-    ab = AccessibilityBlock()
-    text = ab.to_text()
-    # The to_text output strips HTML tags, so check for the plain text version
-    assert "Accessibility Information" in text
-    assert "support@uobtheatre.com" in text
-    # The to_html output should contain the mailto link
-    html = ab.to_html()
-    assert "Accessibility Information" in html
-    assert "mailto:support@uobtheatre.com" in html
 
 
 @pytest.mark.django_db

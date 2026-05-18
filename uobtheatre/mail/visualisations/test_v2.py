@@ -354,6 +354,7 @@ def test_booking_accessibility_info_email():
                 f"/administration/productions/{booking.performance.production.slug}/bookings/{booking.reference}",
                 "View Booking Details",
             ),
+            Closer()
         ]
     )
 
@@ -387,6 +388,7 @@ def test_booking_accessibility_removed_email():
                 f"/administration/productions/{booking.performance.production.slug}/bookings/{booking.reference}",
                 "View Booking Details",
             ),
+            Closer()
         ]
     )
 
@@ -419,7 +421,71 @@ def test_booking_accessibility_updated_email():
                 f"/administration/productions/{booking.performance.production.slug}/bookings/{booking.reference}",
                 "View Booking Details",
             ),
+            Closer()
         ]
     )
 
     write_files(test_mail, "booking_accessibility_updated_email")
+
+@pytest.mark.django_db
+def test_email_activation_email():
+
+    user = UserFactory()
+
+    path = "/login/activate"
+    token = "token"
+
+    test_mail = MailComposer.blank(
+        [
+            Heading(
+                title=f"Activate Your Account",
+                title_icon="square-check",
+            ),
+            Greeting(user=user),
+            Paragraph(
+                message=f"Welcome to UOB Theatre! Please click the button below to activate your account and get started."
+            ),
+            Paragraph(
+                message="If you did not create an account, please ignore this email.",
+                html_safe=True,
+            ),
+            Button(
+                f"{path}/{token}",
+                "Activate Account",
+            ),
+            Closer()
+        ]
+    )
+
+    write_files(test_mail, "account_activation_email")
+
+@pytest.mark.django_db
+def test_password_reset_email():
+
+    user = UserFactory()
+
+    path = "/login/forget"
+    token = "token"
+
+    test_mail = MailComposer.blank(
+        [
+            Heading(
+                title=f"Reset Your Password",
+                title_icon="key",
+            ),
+            Greeting(user=user),
+            Paragraph(
+                message=f"We received a request to reset your password. Please click the button below to reset your password."
+            ),
+            Paragraph(
+                message="If you did not request a password reset, please ignore this email.",
+            ),
+            Button(
+                f"{path}/{token}",
+                "Reset Password",
+            ),
+            Closer()
+        ]
+    )
+
+    write_files(test_mail, "password_reset_email")
