@@ -55,9 +55,15 @@ class SetProductionStatus(AuthRequiredMixin, SafeMutation):
 
     @classmethod
     # pylint: disable=arguments-differ
-    def authorize_request(cls, root, info, production_id, status, **__):  # type: ignore[override]
-        update_status = status
-        production = Production.objects.get(id=production_id)
+    def authorize_request(cls, root, info, **inputs):
+        update_status = inputs.get("status")
+        production_id = inputs.get("production_id")
+        production = (
+            Production.objects.get(id=int(production_id))
+            if production_id is not None
+            else None
+        )
+        assert production is not None
         user = info.context.user
 
         # If they have permission to force change then they can change
@@ -150,6 +156,13 @@ class SetProductionStatus(AuthRequiredMixin, SafeMutation):
         ):
             for user in involved_users:
                 send_production_needs_changes_email(user, production, message)
+
+        elif (
+            status == Production.Status.PUBLISHED
+            and previous_status == Production.Status.APPROVED
+        ):
+            # TODO: Send an email to involved users notifying them the production is live
+            pass
 
         elif (
             status == Production.Status.COMPLETE

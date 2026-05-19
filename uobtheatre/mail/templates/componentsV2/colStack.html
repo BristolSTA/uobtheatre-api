@@ -1,0 +1,9 @@
+<table class="full-width col-stack" border="0" cellspacing="0" cellpadding="0">
+    <tr>
+        {% for item, width in colStack %}
+            <td class="col-stack-item" width="{{width}}%">
+                {{ item|safe }}
+            </td>
+        {% endfor %}
+    </tr>
+</table>

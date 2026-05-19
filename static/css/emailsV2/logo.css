@@ -1,0 +1,22 @@
+.header {
+    text-align: center;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.header a {
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    text-decoration: none;
+    font-family: Montserrat, sans-serif;
+}
+
+.header img{
+    margin: 0;
+    vertical-align: middle;
+    width:120px;
+}

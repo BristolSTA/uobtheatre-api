@@ -1,0 +1,70 @@
+<table class="full-width" border="0" cellspacing="0" cellpadding="0">
+  <tr>
+    <td class="pad center">
+      {% if title %}
+        <h1>
+          <span>
+            {% if titleIcon %}
+              <svg class="icon" viewBox="{{ titleIcon.size }}">
+                  <path d="{{ titleIcon.path }}"/>
+              </svg>
+            {% endif %}
+            {% if htmlSafe %}
+              {{title|safe}}
+            {% else %}
+              {{title}}
+            {% endif %}
+          </span>
+        </h1>
+      {% endif %}
+      {% if subtitle %}
+        <h2>
+          <span>
+            {% if titleIcon %}
+              <svg class="icon" viewBox="{{ titleIcon.size }}">
+                  <path d="{{ titleIcon.path }}"/>
+              </svg>
+            {% endif %}
+            {% if html %}
+              {{subtitle|safe}}
+            {% else %}
+              {{subtitle}}
+            {% endif %}
+          </span>
+        </h2>
+      {% endif %}
+      {% if subsubtitle %}
+        <h3>
+          <span>
+            {% if titleIcon %}
+              <svg class="icon" viewBox="{{ titleIcon.size }}">
+                  <path d="{{ titleIcon.path }}"/>
+              </svg>
+            {% endif %}
+            {% if html %}
+              {{subsubtitle|safe}}
+            {% else %}
+              {{subsubtitle}}
+            {% endif %}
+          </span>
+        </h3>
+      {% endif %}
+      {% if message %}
+        <p>
+          <span>
+            {% if messageIcon %}
+              <svg class="icon" viewBox="{{ messageIcon.size }}">
+                  <path d="{{ messageIcon.path }}"/>
+              </svg>
+            {% endif %}
+            {% if htmlSafe %}
+              {{message|safe}}
+            {% else %}
+              {{message}}
+            {% endif %}
+          </span>
+        </p>
+      {% endif %}
+    </td>
+  </tr>
+</table>

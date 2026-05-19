@@ -476,11 +476,11 @@ def test_set_production_status_authorize_request_force_change(
 
     if not has_perm:
         with pytest.raises(AuthorizationException):
-            SetProductionStatus.authorize_request(
+            SetProductionStatus.authorize_request(  # pylint: disable=too-many-function-args
                 None, info, production.id, updated_status
             )
     else:
-        SetProductionStatus.authorize_request(
+        SetProductionStatus.authorize_request(  # pylint: disable=too-many-function-args
             None, info, production.id, updated_status
         )
 

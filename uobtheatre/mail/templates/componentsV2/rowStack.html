@@ -1,0 +1,9 @@
+<table class="row-content stack" align="center" border="0" cellspacing="0" role="presentation" style="mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-radius: 0; color: #000000; margin: 0 auto; width: 100%" class="py">
+  <tbody>
+    {% for row in rowStack %}
+    <tr>
+        <td>{{ row|safe }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

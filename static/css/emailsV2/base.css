@@ -1,0 +1,356 @@
+@media screen {
+    /*
+        Because of the way the email composer functions, non-@media queries are packaged into an element's style directly
+        As a result, styles that are not wrapped in a media query are applied with the highest priority.
+        To get around this, we use a media query that applies to all screens.
+        This way, we can ensure that the styles are applied correctly without being overridden by inline styles.
+    */
+    body {
+        margin: 0;
+        padding: 0;
+        font-family: Montserrat, sans-serif;
+        background-color: #2B303A;
+        align-items: center;
+        justify-content: center;
+        display: flex;
+    }
+
+    body * {
+        box-sizing: border-box;
+    }
+
+    table {
+        table-layout: fixed;
+        border-collapse: collapse;
+        width: 100%;
+    }
+
+    td {
+        padding: 0;
+        margin: 0;
+        vertical-align: top;
+    }
+
+    /* Utility classes */
+    .pad {
+        padding: 8px;
+    }
+
+    .pad-sml {
+        padding: 6px;
+    }
+
+    .pb {
+        padding-bottom: 10px;
+    }
+
+    .py {
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+
+    .mb {
+        margin-bottom: 10px;
+    }
+
+    .center {
+        text-align: center;
+    }
+
+    .left {
+        text-align: left;
+    }
+
+    .right {
+        text-align: right;
+    }
+
+    .container {
+        width: 80%;
+        text-align: center;
+    }
+
+    .full-width {
+        width: 100%;
+    }
+
+    .full-height {
+        height: 100%;
+    }
+
+    /* Typography */
+    h1 {
+        line-height: inherit;
+        font-size: 24px;
+        color: #000000;
+        margin: 0;
+        font-weight: bold;
+    }
+
+    h2 {
+        line-height: inherit;
+        font-size: 21px;
+        color: #000000;
+        margin: 0;
+        font-weight: bold;
+    }
+
+    h3 {
+        line-height: inherit;
+        font-size: 18px;
+        color: #000000;
+        margin: 0;
+        font-weight: bold;
+    }
+
+    p {
+        line-height: inherit;
+        font-size: 16px;
+        color: #000000;
+        margin: 0;
+    }
+
+    sup,
+    sub {
+        font-size: 75%;
+        line-height: 0;
+    }
+
+    /* Links */
+    a {
+        text-decoration: underline;
+        color: blue;
+    }
+
+    /* Buttons */
+    .button {
+        display: inline-block;
+        padding: 12px 24px;
+        background-color: #007BFF;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        font-weight: bold;
+        text-align: center;
+        border: none;
+        cursor: pointer;
+    }
+
+    .button:hover {
+        background-color: #0056b3;
+    }
+
+    .button-container {
+        text-align: center;
+        padding: 10px;
+    }
+
+    /* Images */
+    img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    .logo-img {
+        max-width: 200px;
+        height: auto;
+    }
+
+    /* Icons */
+    .icon {
+        width: 1em;
+        height: 1em;
+        vertical-align: -0.125em;
+        color: #2B303A;
+        fill: currentColor;
+    }
+
+    /* List styles */
+    .list-item {
+        padding: 8px 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    .list-item:last-child {
+        border-bottom: none;
+    }
+
+    .list-item-title {
+        font-weight: bold;
+        color: black;
+    }
+
+    .list-item-message {
+        color: black
+    }
+
+    /* Box styles */
+    .box {
+        padding: 10px;
+        border-radius: 8px;
+        height: 100%;
+    }
+
+    .box-content {
+        width: 100%;
+    }
+
+    /* Footer styles */
+    .footer {
+        padding: 20px;
+    }
+
+    .footer-text {
+        text-align: center;
+        color: #999999;
+        font-size: 12px;
+    }
+
+    /* QR Code styles */
+    .qr-container {
+        text-align: center;
+    }
+
+    .qr-code {
+        border: 1px solid black;
+        width: fit-content;
+        height: fit-content;
+        margin: 0 auto;
+    }
+
+    /* Spacer */
+    .spacer {
+        height: 20px;
+        width: 100%;
+    }
+
+    /* Stack layouts */
+    .row-stack {
+        width: 100%;
+    }
+
+    .col-stack {
+        display: table;
+        width: 100%;
+        height: 100%;
+    }
+
+    .col-stack-item {
+        display: table-cell;
+        vertical-align: top;
+        padding: 10px;
+        padding-top: 0;
+    }
+
+    .col-stack-item:first-child {
+        padding-left: 0;
+    }
+
+    .col-stack-item:last-child {
+        padding-right: 0;
+    }
+
+    /* Responsive visibility */
+    .desktop_hide,
+    .desktop_hide table {
+        display: none;
+        max-height: 0px;
+        overflow: hidden;
+    }
+
+    .mobile_hide {
+        display: block;
+    }
+
+    /* Image blocks */
+    .image_block img + div {
+        display: none;
+    }
+}
+
+/* Mobile styles - screens smaller than 640px */
+@media (max-width: 640px) {
+    .pad {
+        padding: 6px;
+    }
+    
+    .pad-sml {
+        padding: 4px;
+    }
+
+    .pb {
+        padding-bottom: 8px;
+    }
+
+    .py {
+        padding-top: 8px;
+        padding-bottom: 8px;
+    }
+
+    .mb {
+        margin-bottom: 8px;
+    }
+
+    .container {
+        width: 90%;
+    }
+
+    .button {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+
+    .logo-img {
+        max-width: 150px;
+    }
+
+    .col-stack-item {
+        display: block;
+        width: 100%;
+        padding: 0;
+    }
+
+    .icons-inner {
+        text-align: center;
+    }
+
+    .icons-inner td {
+        margin: 0 auto;
+    }
+
+    .image_block div.fullWidth {
+        max-width: 95% !important;
+    }
+
+    .row-content {
+        width: 100% !important;
+    }
+
+    .stack .column {
+        width: 100%;
+        display: block;
+        height: 100%;
+        text-align: center;
+    }
+
+    /* Mobile visibility */
+    .mobile_hide {
+        display: none !important;
+        min-height: 0;
+        max-height: 0;
+        max-width: 0;
+        overflow: hidden;
+        font-size: 0px;
+    }
+
+    .desktop_hide,
+    .desktop_hide table {
+        display: table !important;
+        max-height: none !important;
+    }
+
+    .box {
+        padding: 5px;
+    }
+}

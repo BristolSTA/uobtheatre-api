@@ -1,0 +1,30 @@
+{% load inlinecss %}
+{% inlinecss "css/emailsV2/base.css" %}
+<!DOCTYPE html>
+<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="en">
+
+<head>
+    <title></title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+</head>
+
+<body class="body">
+	<div style="max-width: 900px">
+		<table class="container pad" align="center" border="0" cellspacing="0" role="presentation">
+			<tbody>
+				<tr>
+					<td>
+						{{ content|safe }}
+						{% block content %}
+						{% endblock %}
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</body>
+
+</html>
+{% endinlinecss %}

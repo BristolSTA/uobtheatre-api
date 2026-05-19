@@ -119,3 +119,7 @@ media/*
 .coveralls.yml
 
 bin/
+
+# Mail visualisations
+uobtheatre/mail/visualisations/**/*
+!uobtheatre/mail/visualisations/**/*.py */

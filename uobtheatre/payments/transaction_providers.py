@@ -47,7 +47,8 @@ class TransactionProvider(abc.ABC):
     @classmethod
     @classproperty
     def __all__(cls) -> Sequence[Type["TransactionProvider"]]:
-        return PaymentProvider.__all__ + RefundProvider.__all__  # type: ignore
+        # Combine payment and refund providers into a single sequence
+        return tuple(PaymentProvider.__all__) + tuple(RefundProvider.__all__)  # type: ignore
 
     @classmethod
     @classproperty
@@ -113,11 +114,23 @@ class RefundProvider(TransactionProvider, abc.ABC):
     Abscract class for all refund methods.
     """
 
-    __all__: Sequence[Type["RefundProvider"]] = []  # type: ignore
+    __all__: list[Type["RefundProvider"]] = []  # type: ignore
 
     def __init_subclass__(cls) -> None:
         super().__init_subclass__()
-        cls.__all__ = cls.__all__.append(cls)  # type: ignore #pylint: disable=assignment-from-no-return
+        cls.__all__.append(cls)  # type: ignore
+
+    @abc.abstractmethod
+    def refund(
+        self,
+        payment: "payment_models.Transaction",
+        custom_refund_amount: Optional[int] = None,
+    ) -> None:
+        """Issue a refund for the given payment.
+
+        Implementations must create a negative-value transaction representing the refund
+        (and optionally adjust fees) or raise an appropriate exception on failure.
+        """
 
     @classmethod
     @classproperty
@@ -153,7 +166,7 @@ class PaymentProvider(TransactionProvider, abc.ABC):
     payment method.
     """
 
-    __all__: Sequence[Type["PaymentProvider"]] = []  # type: ignore
+    __all__: list[Type["PaymentProvider"]] = []  # type: ignore
 
     def __init_subclass__(cls) -> None:
         super().__init_subclass__()

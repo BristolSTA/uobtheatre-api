@@ -42,6 +42,11 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
         self.items.append(Line(text))
         return self
 
+    def quote(self, text: str):
+        """A paragraph of text, assigned the CSS 'quote' class. May contain simple HTML, which will be stripped for plain text version"""
+        self.items.append(Quote(text))
+        return self
+
     def action(self, url, text):
         """Create an action button"""
         action = Action(url, text)
@@ -122,6 +127,22 @@ class Line(ComposerItemInterface):
         return "<p>%s</p>" % self.text
 
 
+class Quote(ComposerItemInterface):
+    """A paragraph composer item, styled to look like a quote"""
+
+    def __init__(self, text) -> None:
+        super().__init__()
+        self.text = text
+
+    def to_text(self):
+        return strip_tags(self.text)
+
+    def to_html(self):
+        template = get_template("components/quote.html")
+
+        return template.render({"text": self.text})
+
+
 class Image(ComposerItemInterface):
     """A full-width image composer item"""
 
@@ -192,16 +213,15 @@ class MailComposer(ComposerItemsContainer):
 
     def greeting(self, user: Optional[User] = None):
         """Add a greeting to the email"""
-        self.heading(
-            "Hi %s" % user.first_name.capitalize()
-            if user and user.status.verified  # type: ignore
-            else "Hello"
+        name = (
+            user.first_name.capitalize() if user and user.first_name else None
         )
+        self.heading("Hi %s" % name if name else "Hello")
         return self
 
     def get_complete_items(self):
         """Get the email body items (including any signature/signoff)"""
-        return self.items + [Line("Thanks,"), Line("The UOBTheatre Team")]
+        return self.items + [Line("Thanks,"), Line("The UOB Theatre Team")]
 
     def to_plain_text(self):
         """Generate the plain text version of the email"""

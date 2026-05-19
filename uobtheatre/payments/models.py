@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, cast
 
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -355,7 +355,11 @@ class Transaction(TimeStampedMixin, BaseModel):
                 "This refund would result in a negative refund amount"
             )
 
-        refund_provider.refund(self, custom_refund_amount=refund_amount)  # type: ignore
+        # Ensure type is narrowed for mypy before calling refund
+        assert refund_provider is not None
+        cast(RefundProvider, refund_provider).refund(
+            self, custom_refund_amount=refund_amount
+        )
 
     class Meta:
         ordering = ["-created_at"]
