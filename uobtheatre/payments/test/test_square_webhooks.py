@@ -180,7 +180,7 @@ def test_handle_checkout_webhook(rest_client):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "status,expected_code", [("COMPLETED", 404), ("CANCELED", 202)]
+    "status,expected_code", [("COMPLETED", 404), ("CANCELED", 201)]
 )
 def test_handle_checkout_webhook_with_unknown_transaction(
     status, expected_code, rest_client
@@ -306,7 +306,9 @@ def test_square_webhook_unknown_type(rest_client):
 
 @pytest.mark.django_db
 def test_handle_refund_update_webhook(rest_client):
+    booking = BookingFactory()
     payment = TransactionFactory(
+        pay_object=booking,
         provider_transaction_id="xwo62Kt4WIOAh9LrczZxzbQbIZCZY_RVpsRbbUP3LmklUotq0kfiJnn1jDOqhNHymoqa6iDpd",
         provider_fee=0,
         type=Transaction.Type.REFUND,
@@ -325,6 +327,8 @@ def test_handle_refund_update_webhook(rest_client):
     assert response.status_code == 200
     assert payment.provider_fee == -7
     assert payment.status == Transaction.Status.COMPLETED
+    booking.refresh_from_db()
+    assert payment.pay_object.status == Payable.Status.REFUNDED
 
 
 @pytest.mark.django_db
@@ -351,4 +355,4 @@ def test_handle_valid_but_unknown_transaction_other_location(rest_client):
             HTTP_X_SQUARE_SIGNATURE="signature",
             format="json",
         )
-    assert response.status_code == 202
+    assert response.status_code == 203

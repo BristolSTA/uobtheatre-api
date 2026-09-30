@@ -39,7 +39,9 @@ def test_refund_payment_task():
     transaction = TransactionFactory(id=123)
     with patch("uobtheatre.payments.models.Transaction.refund", autospec=True) as mock:
         refund_payment(123)
-    mock.assert_called_once_with(transaction)
+    mock.assert_called_once_with(
+        transaction, preserve_provider_fees=True, preserve_app_fees=False
+    )
 
 
 @pytest.mark.django_db

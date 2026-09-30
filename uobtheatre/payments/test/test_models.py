@@ -281,7 +281,9 @@ def test_async_refund():
     transaction = TransactionFactory(id=45)
     with patch.object(refund_payment, "delay") as delay_mock:
         transaction.async_refund()
-        delay_mock.assert_called_once_with(45)
+        delay_mock.assert_called_once_with(
+            45, preserve_provider_fees=True, preserve_app_fees=False
+        )
 
 
 @pytest.mark.django_db

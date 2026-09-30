@@ -1,0 +1,80 @@
+[
+  {
+    "model": "finance.financialtransfer",
+    "pk": 1,
+    "fields": {
+      "created_at": "2035-06-05T10:00:00+0000",
+      "updated_at": "2035-06-05T10:20:00+0000",
+      "society": 1,
+      "value": 52500,
+      "user": 3,
+      "method": "BACS",
+      "reason": "Quarterly settlement round 1"
+    }
+  },
+  {
+    "model": "finance.financialtransfer",
+    "pk": 2,
+    "fields": {
+      "created_at": "2035-06-06T10:00:00+0000",
+      "updated_at": "2035-06-06T10:20:00+0000",
+      "society": 2,
+      "value": 55000,
+      "user": 4,
+      "method": "INTERNAL",
+      "reason": "Quarterly settlement round 2"
+    }
+  },
+  {
+    "model": "finance.financialtransfer",
+    "pk": 3,
+    "fields": {
+      "created_at": "2035-06-07T10:00:00+0000",
+      "updated_at": "2035-06-07T10:20:00+0000",
+      "society": 3,
+      "value": 57500,
+      "user": 5,
+      "method": "BACS",
+      "reason": "Quarterly settlement round 3"
+    }
+  },
+  {
+    "model": "finance.financialtransfer",
+    "pk": 4,
+    "fields": {
+      "created_at": "2035-06-08T10:00:00+0000",
+      "updated_at": "2035-06-08T10:20:00+0000",
+      "society": 4,
+      "value": 60000,
+      "user": 6,
+      "method": "INTERNAL",
+      "reason": "Quarterly settlement round 4"
+    }
+  },
+  {
+    "model": "finance.financialtransfer",
+    "pk": 5,
+    "fields": {
+      "created_at": "2035-06-09T10:00:00+0000",
+      "updated_at": "2035-06-09T10:20:00+0000",
+      "society": 5,
+      "value": 62500,
+      "user": 7,
+      "method": "BACS",
+      "reason": "Quarterly settlement round 5"
+    }
+  },
+  {
+    "model": "finance.financialtransfer",
+    "pk": 6,
+    "fields": {
+      "created_at": "2035-06-10T10:00:00+0000",
+      "updated_at": "2035-06-10T10:20:00+0000",
+      "society": 6,
+      "value": 65000,
+      "user": 8,
+      "method": "INTERNAL",
+      "reason": "Quarterly settlement round 6"
+    }
+  }
+]

@@ -1006,11 +1006,11 @@ def test_production_start_and_end_date():
 @pytest.mark.parametrize(
     "performances_start_deltas, is_upcoming",
     [
-        ([timezone.timedelta(days=1), timezone.timedelta(days=-1)], True),
-        ([timezone.timedelta(hours=1), timezone.timedelta(hours=-1)], True),
-        ([timezone.timedelta(days=-1), timezone.timedelta(hours=-1)], False),
-        ([timezone.timedelta(hours=-2), timezone.timedelta(hours=-1)], False),
-        ([timezone.timedelta(hours=2), timezone.timedelta(hours=1)], True),
+        ([timezone.timedelta(days=1), timezone.timedelta(days=-1)], True),  # type: ignore[attr-defined]
+        ([timezone.timedelta(hours=1), timezone.timedelta(hours=-1)], True),  # type: ignore[attr-defined]
+        ([timezone.timedelta(days=-1), timezone.timedelta(hours=-1)], False),  # type: ignore[attr-defined]
+        ([timezone.timedelta(hours=-2), timezone.timedelta(hours=-1)], False),  # type: ignore[attr-defined]
+        ([timezone.timedelta(hours=2), timezone.timedelta(hours=1)], True),  # type: ignore[attr-defined]
     ],
 )
 def test_is_upcoming_production(performances_start_deltas, is_upcoming):

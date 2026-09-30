@@ -2,26 +2,26 @@
 -r base.txt
 
 # hooks
-pre-commit >= 2.11.0
+pre-commit == 3.8.0
 
 # formatting
-black >= 22.3.0 # Code formatting
-isort >= 5.10.1 # Import sorting
-pylint >= 3.3.1 # Linting
+black == 25.9.0 # Code formatting
+isort == 5.11.2 # Import sorting
+pylint == 3.3.9 # Linting
 
 # mypy stuff
-mypy == 1.15.0 # Type checking
-django-stubs >= 5.1.0
+mypy == 1.18.2 # Type checking
+django-stubs == 5.2.7
 types-python-dateutil==2.9.0.20241206
 types-requests==2.32.0.20250306
 
 # testing
-pytest >= 6.2.2
-pytest-sugar >= 0.9.4
-pytest-cov >= 2.11.1
-pytest-django >= 0.2.0
-pytest-factoryboy >= 2.1.0
-coveralls >= 3.0.1
+pytest == 8.2.2
+pytest-sugar == 1.0.0
+pytest-cov == 5.0.0
+pytest-django == 4.9.0
+pytest-factoryboy == 2.7.0
+coveralls == 4.0.1
 factory-boy==3.3.3
 faker==37.1.0; python_version >= '3.6'
 

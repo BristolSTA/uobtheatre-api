@@ -112,7 +112,7 @@ class DeleteDiscountMutation(ModelDeletionMutation):
     """Delete a discount"""
 
     @classmethod
-    def authorize_request(cls, _, info, **inputs):
+    def authorize_request(cls, root, info, **inputs):
         discount = cls.get_instance(inputs["id"])
         for performance in discount.performances.prefetch_related("production").all():
             if not EditProduction.user_has_for(
@@ -161,7 +161,7 @@ class DeleteDiscountRequirementMutation(ModelDeletionMutation):
     """Delete a discount"""
 
     @classmethod
-    def authorize_request(cls, _, info, **inputs):
+    def authorize_request(cls, root, info, **inputs):
         instance = cls.get_instance(inputs["id"])
         for performance in instance.discount.performances.prefetch_related(
             "production"

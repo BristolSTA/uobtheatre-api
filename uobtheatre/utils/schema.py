@@ -329,7 +329,7 @@ class ModelDeletionMutation(AuthRequiredMixin, SafeMutation):
 
     @classmethod
     # pylint: disable=protected-access
-    def authorize_request(cls, _, info, **inputs):
+    def authorize_request(cls, root, info, **inputs):
         """Authorize the request"""
         instance = cls.get_instance(inputs["id"])
         if cls._meta.ability:
