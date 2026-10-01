@@ -26,13 +26,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      packages: write
       contents: read
+      packages: write
 
     steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
+      - uses: actions/checkout@master
 
       - name: Build image
         run: docker build . --file compose/production/django/Dockerfile --tag ghcr.io/$IMAGE_OWNER/$IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}"
@@ -46,6 +44,7 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
+    permissions: {}
     needs: build
     steps:
       - name: Deploy new image

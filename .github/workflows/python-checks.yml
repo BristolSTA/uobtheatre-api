@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main, dev, dependabot/dev ]
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -30,7 +33,7 @@ jobs:
     steps:
     # Set up cache for pip packages
     - name: Cache pip packages 📦
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -39,12 +42,10 @@ jobs:
 
     - name: Checkout 🛎
       uses: actions/checkout@master
-      with:
-        submodules: "recursive"
 
     # Setup python
     - name: Setup python 3.12 env 🏗
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version: "3.12"
 
@@ -72,10 +73,11 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
+
     steps:
     # Set up cache for pip packages
     - name: Cache pip packages 📦
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -84,12 +86,10 @@ jobs:
 
     - name: Checkout 🛎
       uses: actions/checkout@master
-      with:
-        submodules: "recursive"
 
     # Setup python
     - name: Setup python 3.12 env 🏗
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version: "3.12"
 
@@ -140,7 +140,7 @@ jobs:
     steps:
     # Set up cache for pip packages
     - name: Cache pip packages 📦
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -149,12 +149,10 @@ jobs:
 
     - name: Checkout 🛎
       uses: actions/checkout@master
-      with:
-        submodules: "recursive"
 
     # Setup python
     - name: Setup python 3.12 env 🏗
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version: "3.12"
 
@@ -185,10 +183,11 @@ jobs:
 
   schema:
     runs-on: ubuntu-latest
+
     steps:
     # Set up cache for pip packages
     - name: Cache pip packages 📦
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -197,12 +196,10 @@ jobs:
 
     - name: Checkout 🛎
       uses: actions/checkout@master
-      with:
-        submodules: "recursive"
 
     # Setup python
     - name: Setup python 3.12 env 🏗
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version: "3.12"
 
