@@ -35,4 +35,6 @@ class ModifyConcessionType(Ability):
         if not unique_productions_using_it.count() == 1:
             return False
 
-        return EditProduction.user_has_for(user, unique_productions_using_it.first())
+        return EditProduction.user_has_for(
+            user, unique_productions_using_it.first()
+        )

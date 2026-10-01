@@ -7,6 +7,7 @@ from graphene_django import DjangoObjectType
 from graphene_django.filter import DjangoFilterConnectionField
 
 from uobtheatre.site_messages.models import Message
+from uobtheatre.users.schema import ExtendedUserNode
 from uobtheatre.utils.filters import FilterSet
 from uobtheatre.utils.schema import IdInputField
 
@@ -76,9 +77,15 @@ class SiteMessageFilterSet(FilterSet):
     __lte is shorthand for less than or equal to
     """
 
-    display_start = django_filters.DateTimeFilter(method="display_start_filter")
-    display_start__gte = django_filters.DateTimeFilter(method="display_start_filter")
-    display_start__lte = django_filters.DateTimeFilter(method="display_start_filter")
+    display_start = django_filters.DateTimeFilter(
+        method="display_start_filter"
+    )
+    display_start__gte = django_filters.DateTimeFilter(
+        method="display_start_filter"
+    )
+    display_start__lte = django_filters.DateTimeFilter(
+        method="display_start_filter"
+    )
 
     start = django_filters.DateTimeFilter(method="start_filter")
     start__gte = django_filters.DateTimeFilter(method="start_filter")
@@ -111,13 +118,19 @@ class SiteMessageFilterSet(FilterSet):
             queryset.filter(
                 Q(active=True)
                 & Q(display_start__lte=timezone.now())
-                & (Q(event_end__gte=timezone.now()) | Q(indefinite_override=True))
+                & (
+                    Q(event_end__gte=timezone.now())
+                    | Q(indefinite_override=True)
+                )
             )
             if value
             else queryset.exclude(
                 Q(active=True)
                 & Q(display_start__lte=timezone.now())
-                & (Q(event_end__gte=timezone.now()) | Q(indefinite_override=True))
+                & (
+                    Q(event_end__gte=timezone.now())
+                    | Q(indefinite_override=True)
+                )
             )
         )
 
@@ -133,11 +146,16 @@ class SiteMessageNode(DjangoObjectType):
 
     to_display = graphene.Boolean()
 
+    creator = graphene.Field(ExtendedUserNode)
+
     def resolve_event_duration(self, info):
         return self.duration.total_seconds() // 60
 
     def resolve_to_display(self, info):
         return self.to_display
+
+    def resolve_creator(self, info):
+        return self.user
 
     class Meta:
         model = Message

@@ -41,13 +41,31 @@ class TransactionQuerySet(QuerySet):
             for breakdown in SalesBreakdown.Enums
             if breakdowns is None or breakdown in breakdowns
         }
-        return self.aggregate(**annotations)
+
+        # app_fee is an aggregate, so it has to be dealt with separately
+        proc_app = "app_fee" in annotations.keys()
+
+        if proc_app:
+            app_fee = annotations["app_fee"]
+            del annotations["app_fee"]
+
+        annotations = self.aggregate(**annotations)
+
+        if proc_app:
+            annotations["app_fee"] = self.aggregate(output=app_fee)["output"]
+
+        return annotations
 
     def get_sales_breakdown(self, breakdown: "SalesBreakdown.Enums"):
         # NOTE: Calling aggregate on an empty queryset gives None so the
         # Coalesce is not applied this fix works here but still an
         # issue/feature above
-        return self.annotate_sales_breakdown(breakdowns=[breakdown])[breakdown.key] or 0
+        return (
+            self.annotate_sales_breakdown(breakdowns=[breakdown])[
+                breakdown.key
+            ]
+            or 0
+        )
 
     def payments(self):
         return self.filter(type=Transaction.Type.PAYMENT)
@@ -74,7 +92,7 @@ class TransactionQuerySet(QuerySet):
         pks_regex = "|".join(map(str, pks))
         return TaskResult.objects.filter(
             task_name="uobtheatre.payments.tasks.refund_payment",
-            task_args__iregex=f"\(({pks_regex}),\)",  # pylint: disable=anomalous-backslash-in-string
+            task_args__iregex=f"\\(({pks_regex}),\\)",
         )
 
 
@@ -147,7 +165,9 @@ class Transaction(TimeStampedMixin, BaseModel):
         default=Status.COMPLETED,
     )  # type: ignore
 
-    provider_transaction_id = models.CharField(max_length=128, null=True, blank=True)
+    provider_transaction_id = models.CharField(
+        max_length=128, null=True, blank=True
+    )
     provider_name = models.CharField(
         max_length=20, choices=transaction_providers.TransactionProvider.choices  # type: ignore
     )
@@ -249,8 +269,9 @@ class Transaction(TimeStampedMixin, BaseModel):
             return False
 
         # Check that the refund provider (if supplied) is valid for the original provider
-        if refund_provider is not None and not self.provider.is_valid_refund_provider(
-            refund_provider
+        if (
+            refund_provider is not None
+            and not self.provider.is_valid_refund_provider(refund_provider)
         ):
             if raises:
                 raise CantBeRefundedException(
@@ -260,7 +281,9 @@ class Transaction(TimeStampedMixin, BaseModel):
 
         return True
 
-    def async_refund(self, preserve_provider_fees=True, preserve_app_fees=False):
+    def async_refund(
+        self, preserve_provider_fees=True, preserve_app_fees=False
+    ):
         """
         Create "refund_payment" task to refund the payment. The task queue the
         refund method.
@@ -300,7 +323,9 @@ class Transaction(TimeStampedMixin, BaseModel):
 
         if refund_provider is None:
             # If no provider is provided, use the auto refund provider
-            if not (refund_provider := self.provider.automatic_refund_provider):
+            if not (
+                refund_provider := self.provider.automatic_refund_provider
+            ):
                 raise CantBeRefundedException(
                     f"A {self.provider_name} payment cannot be automatically refunded"
                 )
@@ -356,16 +381,22 @@ class SalesBreakdown:
             0,
         )
         NET_TRANSACTIONS = Sum("value")
-        NET_CARD_TRANSACTIONS = Sum("value", filter=~Q(provider_name=Cash.name))
+        NET_CARD_TRANSACTIONS = Sum(
+            "value", filter=~Q(provider_name=Cash.name)
+        )
         TOTAL_PAYMENTS = Sum("value", filter=Q(type=Transaction.Type.PAYMENT))
         TOTAL_CARD_PAYMENTS = Sum(
             "value",
-            filter=(~Q(provider_name=Cash.name) & Q(type=Transaction.Type.PAYMENT)),
+            filter=(
+                ~Q(provider_name=Cash.name) & Q(type=Transaction.Type.PAYMENT)
+            ),
         )
         TOTAL_REFUNDS = Sum("value", filter=Q(type=Transaction.Type.REFUND))
         TOTAL_CARD_REFUNDS = Sum(
             "value",
-            filter=(~Q(provider_name=Cash.name) & Q(type=Transaction.Type.REFUND)),
+            filter=(
+                ~Q(provider_name=Cash.name) & Q(type=Transaction.Type.REFUND)
+            ),
         )
         APP_FEE = Coalesce(Sum("app_fee"), 0)
 
@@ -388,19 +419,25 @@ class SalesBreakdown:
         - This does not include refunds.
         - This does include the square fee.
         """
-        return self.transaction_qs.get_sales_breakdown(self.Enums.TOTAL_PAYMENTS)
+        return self.transaction_qs.get_sales_breakdown(
+            self.Enums.TOTAL_PAYMENTS
+        )
 
     @property
     def net_transactions(self) -> int:
         """The net amount paid by the user for this object. (This includes refunds)"""
-        return self.transaction_qs.get_sales_breakdown(self.Enums.NET_TRANSACTIONS)
+        return self.transaction_qs.get_sales_breakdown(
+            self.Enums.NET_TRANSACTIONS
+        )
 
     @property
     def total_refunds(self) -> int:
         """The negative amounts paid by the user for this object. (i.e. money
         paid back to the user in the form of a refund)
         """
-        return self.transaction_qs.get_sales_breakdown(self.Enums.TOTAL_REFUNDS)
+        return self.transaction_qs.get_sales_breakdown(
+            self.Enums.TOTAL_REFUNDS
+        )
 
     @property
     def provider_payment_value(self) -> int:
@@ -412,12 +449,16 @@ class SalesBreakdown:
     @property
     def app_payment_value(self) -> int:
         """The amount taken by us in paying for this object."""
-        return self.transaction_qs.get_sales_breakdown(self.Enums.APP_PAYMENT_VALUE)
+        return self.transaction_qs.get_sales_breakdown(
+            self.Enums.APP_PAYMENT_VALUE
+        )
 
     @property
     def society_revenue(self) -> int:
         """The revenue for the society for selling this object."""
-        return self.transaction_qs.get_sales_breakdown(self.Enums.SOCIETY_REVENUE)
+        return self.transaction_qs.get_sales_breakdown(
+            self.Enums.SOCIETY_REVENUE
+        )
 
     @property
     def society_transfer_value(self) -> int:

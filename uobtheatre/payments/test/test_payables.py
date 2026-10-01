@@ -1,7 +1,7 @@
 from unittest.mock import PropertyMock, patch
 
 import pytest
-from pytest_django.asserts import assertQuerysetEqual
+from pytest_django.asserts import assertQuerySetEqual
 
 from uobtheatre.bookings.models import Booking
 from uobtheatre.bookings.test.factories import BookingFactory
@@ -12,7 +12,10 @@ from uobtheatre.payments.exceptions import (
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.tasks import refund_payable
-from uobtheatre.payments.test.factories import TransactionFactory, mock_payment_method
+from uobtheatre.payments.test.factories import (
+    TransactionFactory,
+    mock_payment_method,
+)
 from uobtheatre.payments.transaction_providers import (
     Card,
     Cash,
@@ -27,7 +30,9 @@ from uobtheatre.utils.test.factories import TaskResultFactory
 def test_payable_query_set():
     booking_1 = BookingFactory()  # Booking with pending payments - locked
     TransactionFactory(pay_object=booking_1, status=Transaction.Status.PENDING)
-    TransactionFactory(pay_object=booking_1, status=Transaction.Status.COMPLETED)
+    TransactionFactory(
+        pay_object=booking_1, status=Transaction.Status.COMPLETED
+    )
 
     booking_2 = (
         BookingFactory()
@@ -42,11 +47,15 @@ def test_payable_query_set():
         type=Transaction.Type.REFUND,
     )
 
-    booking_3 = BookingFactory()  # A completed and paid for booking. Shouldn't show up
-    TransactionFactory(pay_object=booking_3, status=Transaction.Status.COMPLETED)
+    booking_3 = (
+        BookingFactory()
+    )  # A completed and paid for booking. Shouldn't show up
+    TransactionFactory(
+        pay_object=booking_3, status=Transaction.Status.COMPLETED
+    )
 
-    assertQuerysetEqual(Booking.objects.locked(), [booking_1])
-    assertQuerysetEqual(Booking.objects.refunded(), [booking_2])
+    assertQuerySetEqual(Booking.objects.locked(), [booking_1])
+    assertQuerySetEqual(Booking.objects.refunded(), [booking_2])
 
 
 @pytest.mark.django_db
@@ -86,7 +95,10 @@ def test_payable_total_payments():
     TransactionFactory(pay_object=booking, app_fee=100, value=200)
     TransactionFactory(pay_object=booking, app_fee=150, value=400)
     TransactionFactory(
-        pay_object=booking, app_fee=150, value=300, type=Transaction.Type.REFUND
+        pay_object=booking,
+        app_fee=150,
+        value=300,
+        type=Transaction.Type.REFUND,
     )
 
     assert booking.sales_breakdown.total_payments == 600
@@ -99,7 +111,10 @@ def test_payable_net_transactions():
     TransactionFactory(pay_object=booking, app_fee=100, value=200)
     TransactionFactory(pay_object=booking, app_fee=150, value=400)
     TransactionFactory(
-        pay_object=booking, app_fee=150, value=-300, type=Transaction.Type.REFUND
+        pay_object=booking,
+        app_fee=150,
+        value=-300,
+        type=Transaction.Type.REFUND,
     )
 
     assert booking.sales_breakdown.net_transactions == 300
@@ -116,7 +131,10 @@ def test_society_transfer_value():
         pay_object=booking, app_fee=200, value=600, provider_name=Card.name
     )
     TransactionFactory(
-        pay_object=booking, app_fee=150, value=400, provider_name=SquareOnline.name
+        pay_object=booking,
+        app_fee=150,
+        value=400,
+        provider_name=SquareOnline.name,
     )
 
     assert booking.sales_breakdown.society_transfer_value == 550
@@ -137,7 +155,10 @@ def test_society_transfer_value():
 )
 def test_legacy_is_refunded(payment_values, has_pending, is_refunded):
     # Create some payments for different payobjects
-    [TransactionFactory(status=Transaction.Status.COMPLETED) for _ in range(10)]
+    [
+        TransactionFactory(status=Transaction.Status.COMPLETED)
+        for _ in range(10)
+    ]
 
     pay_object = BookingFactory()
     [
@@ -148,7 +169,9 @@ def test_legacy_is_refunded(payment_values, has_pending, is_refunded):
     ]
 
     if has_pending:
-        TransactionFactory(pay_object=pay_object, status=Transaction.Status.PENDING)
+        TransactionFactory(
+            pay_object=pay_object, status=Transaction.Status.PENDING
+        )
 
     assert pay_object.is_refunded == is_refunded
 
@@ -272,7 +295,11 @@ def test_async_refund(preserve_provider_fees, preserve_app_fees):
             UserFactory(id=3), preserve_provider_fees, preserve_app_fees
         )
         mock.assert_called_once_with(
-            45, booking.content_type.pk, 3, preserve_provider_fees, preserve_app_fees
+            45,
+            booking.content_type.pk,
+            3,
+            preserve_provider_fees,
+            preserve_app_fees,
         )
 
 
@@ -286,7 +313,9 @@ def test_async_refund(preserve_provider_fees, preserve_app_fees):
         (True, True, "Payment provider and website fee-accommodating"),
     ],
 )
-def test_refund(mailoutbox, preserve_provider_fees, preserve_app_fees, refund_type):
+def test_refund(
+    mailoutbox, preserve_provider_fees, preserve_app_fees, refund_type
+):
     user = UserFactory(id=3)
     booking = BookingFactory(id=45)
     TransactionFactory(pay_object=booking)
@@ -330,7 +359,9 @@ def test_payable_refund(mailoutbox, can_be_refunded, send_email, do_async):
     with patch.object(
         Payable,
         "validate_cant_be_refunded",
-        return_value=(CantBeRefundedException if not can_be_refunded else None),
+        return_value=(
+            CantBeRefundedException if not can_be_refunded else None
+        ),
     ), patch(
         "uobtheatre.payments.models.Transaction.refund", autospec=True
     ) as payment_refund, patch(
@@ -363,7 +394,9 @@ def test_payable_refund(mailoutbox, can_be_refunded, send_email, do_async):
 def test_payable_associated_tasks():
     payable = BookingFactory()
     other_payable = BookingFactory()
-    transaction = TransactionFactory(type=Transaction.Type.PAYMENT, pay_object=payable)
+    transaction = TransactionFactory(
+        type=Transaction.Type.PAYMENT, pay_object=payable
+    )
 
     # A related task for the payments
     related_payment_task = TaskResultFactory(
@@ -393,7 +426,9 @@ def test_payable_associated_tasks():
         task_args=f'"({payable.id}, {payable.content_type.id}, abc)"',
     )
 
-    assertQuerysetEqual(payable.associated_tasks, [related_task, related_payment_task])
+    assertQuerySetEqual(
+        payable.associated_tasks, [related_task, related_payment_task]
+    )
 
 
 @pytest.mark.django_db
@@ -404,7 +439,7 @@ def test_annotate_transaction_count(count):
         TransactionFactory(type=Transaction.Type.PAYMENT, pay_object=payable)
         for _ in range(count)
     ]
-    assertQuerysetEqual(
+    assertQuerySetEqual(
         payable.qs.annotate_transaction_count().values_list(
             "transaction_count", flat=True
         ),
@@ -415,7 +450,7 @@ def test_annotate_transaction_count(count):
 @pytest.mark.django_db
 def test_annotate_transaction_value():
     payable = BookingFactory()
-    assertQuerysetEqual(
+    assertQuerySetEqual(
         payable.qs.annotate_transaction_value().values_list(
             "transaction_totals", flat=True
         ),
@@ -426,7 +461,7 @@ def test_annotate_transaction_value():
     TransactionFactory(value=-20, pay_object=payable)
     TransactionFactory(value=50, pay_object=payable)
 
-    assertQuerysetEqual(
+    assertQuerySetEqual(
         payable.qs.annotate_transaction_value().values_list(
             "transaction_totals", flat=True
         ),
@@ -454,12 +489,12 @@ def test_queryset_refunded():
     TransactionFactory(value=2, pay_object=payable4)
     TransactionFactory(value=-3, pay_object=payable4)
 
-    assertQuerysetEqual(
+    assertQuerySetEqual(
         Booking.objects.refunded(),
         [payable1],
     )
 
-    assertQuerysetEqual(
+    assertQuerySetEqual(
         Booking.objects.refunded(bool_val=False),
         [payable2, payable3, payable4],
         ordered=False,
@@ -510,7 +545,9 @@ def test_payable_pay_deletes_pending_payments():
         status=Transaction.Status.COMPLETED, pay_object=booking
     )
 
-    with patch("uobtheatre.payments.models.Transaction.cancel", autospec=True) as mock:
+    with patch(
+        "uobtheatre.payments.models.Transaction.cancel", autospec=True
+    ) as mock:
         booking.pay(payment_method)  # type: ignore
 
     assert booking.status == Payable.Status.PAID
@@ -524,7 +561,8 @@ def test_payable_pay_deletes_pending_payments():
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "misc_cost_value, subtotal, expected_total", [(3, 10, 13), (0, 0, 0), (10, 0, 0)]
+    "misc_cost_value, subtotal, expected_total",
+    [(3, 10, 13), (0, 0, 0), (10, 0, 0)],
 )
 def test_payable_total(misc_cost_value, subtotal, expected_total):
     # pylint: disable=missing-class-docstring, invalid-overridden-method

@@ -1,15 +1,14 @@
-name: Production Build, Push & Deploy
+name: Production/Staging Build, Push & Deploy
 
-# Pushes a new image to the main registry for pushes to the dev or main branch
+# Pushes a new image to the respective registry for pushes to the dev or main branch
 # Then logs in to the respective server and deploys the new image
-# Both dev and main branches are pushed to the same registry, but only the respective instance pulls the new image
 
 on:
   push:
     branches: [dev, main]
 
 env:
-  IMAGE_NAME: api
+  IMAGE_NAME: "${{ github.ref == 'refs/heads/main' && 'api' || 'api-staging' }}"
   IMAGE_OWNER: bristolsta
 
   API_SERVICE_NAME: "${{ github.ref == 'refs/heads/main' && 'uobtheatre-api' || 'uobtheatre-api-staging' }}"
@@ -27,11 +26,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      packages: write
       contents: read
+      packages: write
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@master
 
       - name: Build image
         run: docker build . --file compose/production/django/Dockerfile --tag ghcr.io/$IMAGE_OWNER/$IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}"
@@ -45,6 +44,7 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
+    permissions: {}
     needs: build
     steps:
       - name: Deploy new image

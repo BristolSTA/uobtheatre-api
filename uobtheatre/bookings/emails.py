@@ -17,7 +17,8 @@ def send_booking_confirmation_email(
     composer = MailComposer()
 
     composer.line(
-        "Your booking to %s has been confirmed!" % booking.performance.production.name
+        "Your booking to %s has been confirmed!"
+        % booking.performance.production.name
     )
 
     if booking.performance.production.featured_image:
@@ -64,7 +65,9 @@ def send_booking_accessibility_info_email(
     """Sends an email to the production contact email, and to those with view sales and bookings permissions for a production, notifying them of a booking that has been amde with accessibility information"""
 
     emails_to_notify = [booking.performance.production.contact_email] + list(
-        get_users_with_perm("productions.view_bookings", booking.performance.production)
+        get_users_with_perm(
+            "productions.view_bookings", booking.performance.production
+        )
         .all()
         .values_list("email", flat=True)
     )
@@ -85,7 +88,8 @@ def send_booking_accessibility_info_email(
     )
     for email in emails_to_notify:
         mail.send(
-            f"Accessibility alert for {booking.performance.production.name}", email
+            f"Accessibility alert for {booking.performance.production.name}",
+            email,
         )
 
 
@@ -98,7 +102,9 @@ def send_booking_accessibility_removed_email(
     """
 
     emails_to_notify = [booking.performance.production.contact_email] + list(
-        get_users_with_perm("productions.view_bookings", booking.performance.production)
+        get_users_with_perm(
+            "productions.view_bookings", booking.performance.production
+        )
         .all()
         .values_list("email", flat=True)
     )
@@ -119,7 +125,8 @@ def send_booking_accessibility_removed_email(
     )
     for email in emails_to_notify:
         mail.send(
-            f"Accessibility alert for {booking.performance.production.name}", email
+            f"Accessibility alert for {booking.performance.production.name}",
+            email,
         )
 
 
@@ -132,7 +139,9 @@ def send_booking_accessibility_updated_email(
     """
 
     emails_to_notify = [booking.performance.production.contact_email] + list(
-        get_users_with_perm("productions.view_bookings", booking.performance.production)
+        get_users_with_perm(
+            "productions.view_bookings", booking.performance.production
+        )
         .all()
         .values_list("email", flat=True)
     )
@@ -153,5 +162,6 @@ def send_booking_accessibility_updated_email(
     )
     for email in emails_to_notify:
         mail.send(
-            f"Accessibility alert for {booking.performance.production.name}", email
+            f"Accessibility alert for {booking.performance.production.name}",
+            email,
         )

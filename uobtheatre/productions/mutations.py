@@ -14,7 +14,11 @@ from uobtheatre.productions.forms import (
     PerformanceSeatGroupForm,
     ProductionForm,
 )
-from uobtheatre.productions.models import Performance, PerformanceSeatGroup, Production
+from uobtheatre.productions.models import (
+    Performance,
+    PerformanceSeatGroup,
+    Production,
+)
 from uobtheatre.productions.schema import (
     PerformanceNode,
     PerformanceSeatGroupNode,
@@ -80,7 +84,8 @@ class SetProductionStatus(AuthRequiredMixin, SafeMutation):
 
         # If they have permission to approve they can either approve or reject a pending production
         if (
-            update_status in [Production.Status.APPROVED, Production.Status.DRAFT]
+            update_status
+            in [Production.Status.APPROVED, Production.Status.DRAFT]
             and production.status == Production.Status.PENDING
             and user.has_perm("productions.approve_production", production)
         ):
@@ -112,7 +117,9 @@ class SetProductionStatus(AuthRequiredMixin, SafeMutation):
 
         # If we are setting this production to anything other than draft it must
         # be valid.
-        if status != Production.Status.DRAFT and (error := production.validate()):
+        if status != Production.Status.DRAFT and (
+            error := production.validate()
+        ):
             raise error
 
         production.status = status
@@ -174,7 +181,9 @@ class ProductionMutation(SafeFormMutation, AuthRequiredMixin):
         """Authorise the society parameter if passed"""
         new_society = cls.get_python_value(root, info, inputs, "society")
         current_production = cls.get_object_instance(root, info, **inputs)
-        current_society = current_production.society if current_production else None
+        current_society = (
+            current_production.society if current_production else None
+        )
 
         has_perm_new_society = (
             info.context.user.has_perm("add_production", new_society)
@@ -219,7 +228,9 @@ def authorize_productions(
     # If the performance is current assinged to a production and being move
     # to a different production then we must check the user has permission
     # to edit the performances curent production.
-    if old_production and not EditProduction.user_has_for(user, old_production):
+    if old_production and not EditProduction.user_has_for(
+        user, old_production
+    ):
         raise AuthorizationException(
             f"You do not have permission to move the {object_name} from the current {field}",
             field=field,
@@ -227,7 +238,9 @@ def authorize_productions(
 
     # If the performance is being assigned to a production then we must
     # check the user has permission to edit this new production.
-    if new_production and not EditProduction.user_has_for(user, new_production):
+    if new_production and not EditProduction.user_has_for(
+        user, new_production
+    ):
         raise AuthorizationException(
             f"You do not have permission to add the {object_name} to this {field}",
             field=field,
@@ -260,7 +273,9 @@ class DeletePerformanceMutation(ModelDeletionMutation):
     @classmethod
     def authorize_request(cls, root, info, **inputs):
         instance = cls.get_instance(inputs["id"])
-        if not EditProduction.user_has_for(info.context.user, instance.production):
+        if not EditProduction.user_has_for(
+            info.context.user, instance.production
+        ):
             raise AuthorizationException
 
     class Meta:
@@ -274,11 +289,17 @@ class PerformanceSeatGroupMutation(SafeFormMutation, AuthRequiredMixin):
 
     @classmethod
     def authorize_request(cls, root, info, **inputs):
-        new_performance = cls.get_python_value(root, info, inputs, "performance")
+        new_performance = cls.get_python_value(
+            root, info, inputs, "performance"
+        )
         current_instance = cls.get_object_instance(root, info, **inputs)
 
         authorize_productions(
-            current_instance.performance.production if current_instance else None,
+            (
+                current_instance.performance.production
+                if current_instance
+                else None
+            ),
             new_performance.production if new_performance else None,
             info.context.user,
             "seat group",

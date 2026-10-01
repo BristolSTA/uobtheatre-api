@@ -18,7 +18,8 @@ def payable_refund_initiated_email(
         )
         .line(
             ", ".join(
-                f"{model.__class__.__name__} {model} ({model.pk})" for model in models
+                f"{model.__class__.__name__} {model} ({model.pk})"
+                for model in models
             )
         )
         .line(

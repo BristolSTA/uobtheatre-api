@@ -40,6 +40,7 @@ class VenueNode(DjangoObjectType):
             "name": ("exact",),
             "slug": ("exact",),
         }
+        fields = "__all__"
 
 
 class Query(graphene.ObjectType):

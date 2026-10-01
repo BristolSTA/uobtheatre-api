@@ -1,7 +1,7 @@
 import pytest
 from django.contrib.auth.models import Group, Permission
 from guardian.shortcuts import assign_perm
-from pytest_django.asserts import assertQuerysetEqual
+from pytest_django.asserts import assertQuerySetEqual
 
 from conftest import AuthenticateableGQLClient
 from uobtheatre.productions.test.factories import ProductionFactory
@@ -60,7 +60,9 @@ def test_boxoffice_permissions_object_level(
     assert not user.has_perm("productions.boxoffice", production)
     assert not user.has_perm("productions.boxoffice", production2)
 
-    assign_perm("boxoffice", user, production)
+    # MyPy doesn't understand how factory instantiation works!
+    assign_perm("boxoffice", user, production)  # type: ignore
+
     assert user.has_perm("boxoffice", production)
     assert not user.has_perm("boxoffice", production2)
 
@@ -117,16 +119,31 @@ def test_user_get_global_permissions():
 @pytest.mark.django_db
 def test_user_get_global_permissions_superuser():
     user = UserFactory(is_superuser=True)
-    assertQuerysetEqual(user.global_perms, Permission.objects.all())
+    assertQuerySetEqual(user.global_perms, Permission.objects.all())
 
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     "global_perms,object_perms,query_perms,expected",
     [
-        (["productions.approve_production"], [], ["productions.add_production"], False),
-        (["productions.approve_production"], [], "productions.add_production", False),
-        (["productions.approve_production"], [], "societies.add_production", False),
+        (
+            ["productions.approve_production"],
+            [],
+            ["productions.add_production"],
+            False,
+        ),
+        (
+            ["productions.approve_production"],
+            [],
+            "productions.add_production",
+            False,
+        ),
+        (
+            ["productions.approve_production"],
+            [],
+            "societies.add_production",
+            False,
+        ),
         (["societies.add_production"], [], "societies.add_production", True),
         (
             ["productions.approve_production"],
@@ -146,8 +163,18 @@ def test_user_get_global_permissions_superuser():
             ["productions.approve_production", "productions.add_production"],
             True,
         ),
-        ([], ["productions.add_production"], ["productions.approve_production"], False),
-        ([], ["productions.add_production"], ["productions.add_production"], True),
+        (
+            [],
+            ["productions.add_production"],
+            ["productions.approve_production"],
+            False,
+        ),
+        (
+            [],
+            ["productions.add_production"],
+            ["productions.add_production"],
+            True,
+        ),
         (
             [],
             ["productions.add_production"],

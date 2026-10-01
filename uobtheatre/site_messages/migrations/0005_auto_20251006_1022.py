@@ -33,7 +33,10 @@ class Migration(migrations.Migration):
                     ("BANNER", "Banner"),
                     ("SITEWIDE_MODAL", "Sitewide Modal"),
                     ("BOOKING_MODAL", "Booking Modal"),
-                    ("PRODUCTION_CREATION_MODAL", "Production Creation/Edit Modal"),
+                    (
+                        "PRODUCTION_CREATION_MODAL",
+                        "Production Creation/Edit Modal",
+                    ),
                 ],
                 default="BANNER",
                 help_text="The location on the site where the message should be displayed. Banner messages are displayed in a banner at the top of the page. Sitewide Modal messages are displayed across the entire website. Booking Modal messages are displayed in a modal on the booking page. Production Creation/Edit Modal messages are displayed in a modal on the production creation and editing page.",

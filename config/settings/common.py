@@ -1,8 +1,5 @@
 import os
 from datetime import timedelta
-from distutils.util import (  # TODO: Replace with supported version # pylint: disable=deprecated-module,fixme
-    strtobool,
-)
 from os.path import join
 from typing import List
 
@@ -10,7 +7,9 @@ import environ
 from square.environment import SquareEnvironment
 
 env = environ.Env()
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+BASE_DIR = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
 
 # Take environment variables from .env file
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
@@ -29,8 +28,8 @@ INSTALLED_APPS = (
     "django.contrib.staticfiles",
     "django.contrib.sites",
     # Third party apps
-    # Authentiaction
-    "graphql_auth",  # Graphql authentication (user setup)
+    # Authentication
+    "uobtheatre.graphql_auth",
     "graphql_jwt.refresh_token.apps.RefreshTokenConfig",
     ##
     "django_filters",  # for filtering rest endpoints
@@ -77,7 +76,9 @@ MIDDLEWARE = (
 # This overrides the location of the django_celery_results. This allows us to
 # override the migrations. This is because we add an additional status in
 # config/__init__.py
-MIGRATION_MODULES = {"django_celery_results": "uobtheatre.utils.celery_migrations"}
+MIGRATION_MODULES = {
+    "django_celery_results": "uobtheatre.utils.celery_migrations"
+}
 
 ALLOWED_HOSTS = ["*"]
 ROOT_URLCONF = "uobtheatre.urls"
@@ -97,7 +98,7 @@ DEFAULT_FROM_EMAIL = "UOB Theatre <no-reply@uobtheatre.com>"
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 EMAIL_SUBJECT_PREFIX = "[UOBTheatre] "
 
-ADMINS = (("Author", "webmaster@bristolsta.com"),)
+ADMINS = ["webmaster@bristolsta.com"]
 
 
 # Postgres
@@ -106,7 +107,7 @@ if env("DATABASE_URL", default=None):  # ignore:
 else:
     DATABASES = {
         "default": {
-            "ENGINE": "django.db.backends.postgresql_psycopg2",
+            "ENGINE": "django.db.backends.postgresql",
             "NAME": env("POSTGRES_DB", default="postgres"),
             "USER": env("POSTGRES_USER", default="postgres"),
             "PASSWORD": env("POSTGRES_PASSWORD", default="postgres"),
@@ -128,15 +129,14 @@ LANGUAGE_CODE = "en-us"
 # If you set this to False, Django will make some optimizations so as not
 # to load the internationalization machinery.
 USE_I18N = False
-USE_L10N = True
 USE_TZ = True
 LOGIN_REDIRECT_URL = "/"
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/2.0/howto/static-files/
+# https://docs.djangoproject.com/en/5.2/howto/static-files/
 STATIC_ROOT = os.path.normpath(join(BASE_DIR, "staticfiles"))
 STATICFILES_DIRS: List[str] = [os.path.normpath(join(BASE_DIR, "static"))]
-STATIC_URL = "/static/"
+STATIC_URL = "static/"
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
@@ -164,10 +164,20 @@ TEMPLATES = [
 
 # Set DEBUG to False as a default for safety
 # https://docs.djangoproject.com/en/dev/ref/settings/#debug
-DEBUG = strtobool(env("DJANGO_DEBUG", default="no"))
+if env("DJANGO_DEBUG", default="no").lower() in (
+    "y",
+    "yes",
+    "on",
+    "1",
+    "true",
+    "t",
+):
+    DEBUG = True
+else:
+    DEBUG = False
 
 # Password Validation
-# https://docs.djangoproject.com/en/2.0/topics/auth/passwords/#module-django.contrib.auth.password_validation
+# https://docs.djangoproject.com/en/5.2/topics/auth/passwords/#module-django.contrib.auth.password_validation
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
@@ -187,7 +197,7 @@ AUTH_PASSWORD_VALIDATORS = [
 SITE_ID = 1
 
 AUTHENTICATION_BACKENDS = [
-    "graphql_auth.backends.GraphQLAuthBackend",
+    "uobtheatre.graphql_auth.backends.GraphQLAuthBackend",
     "guardian.backends.ObjectPermissionBackend",
     "django.contrib.auth.backends.ModelBackend",
 ]
@@ -261,9 +271,17 @@ LOGGING = {
             "level": "INFO",
             "propagate": True,
         },
-        "uobtheatre": {"handlers": ["file"], "level": "INFO", "propagate": True},
+        "uobtheatre": {
+            "handlers": ["file"],
+            "level": "INFO",
+            "propagate": True,
+        },
         "psycopg2": {"handlers": ["file"], "level": "INFO", "propagate": True},
-        "celery": {"handlers": ["console"], "level": "DEBUG", "propagate": True},
+        "celery": {
+            "handlers": ["console"],
+            "level": "DEBUG",
+            "propagate": True,
+        },
     },
 }
 
@@ -293,16 +311,16 @@ GRAPHQL_AUTH = {
 
 GRAPHQL_JWT = {
     "JWT_ALLOW_ANY_CLASSES": [
-        "graphql_auth.mutations.Register",
-        "graphql_auth.mutations.VerifyAccount",
-        "graphql_auth.mutations.ResendActivationEmail",
-        "graphql_auth.mutations.SendPasswordResetEmail",
-        "graphql_auth.mutations.PasswordReset",
-        "graphql_auth.mutations.ObtainJSONWebToken",
-        "graphql_auth.mutations.VerifyToken",
-        "graphql_auth.mutations.RefreshToken",
-        "graphql_auth.mutations.RevokeToken",
-        "graphql_auth.mutations.VerifySecondaryEmail",
+        "uobtheatre.graphql_auth.mutations.Register",
+        "uobtheatre.graphql_auth.mutations.VerifyAccount",
+        "uobtheatre.graphql_auth.mutations.ResendActivationEmail",
+        "uobtheatre.graphql_auth.mutations.SendPasswordResetEmail",
+        "uobtheatre.graphql_auth.mutations.PasswordReset",
+        "uobtheatre.graphql_auth.mutations.ObtainJSONWebToken",
+        "uobtheatre.graphql_auth.mutations.VerifyToken",
+        "uobtheatre.graphql_auth.mutations.RefreshToken",
+        "uobtheatre.graphql_auth.mutations.RevokeToken",
+        "uobtheatre.graphql_auth.mutations.VerifySecondaryEmail",
     ],
     "JWT_VERIFY_EXPIRATION": True,
     "JWT_LONG_RUNNING_REFRESH_TOKEN": True,

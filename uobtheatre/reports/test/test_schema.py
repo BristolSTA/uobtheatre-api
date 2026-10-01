@@ -103,12 +103,15 @@ def test_can_generate_report_for_performance_bookings(
             }
         }
     """ % to_global_id(
-        "PerformanceNode", performance.id if not invalid_id else performance.id + 1
+        "PerformanceNode",
+        performance.id if not invalid_id else performance.id + 1,
     )
 
     gql_client.login()
     if not without_perm:
-        assign_perm("change_production", gql_client.user, performance.production)
+        assign_perm(
+            "change_production", gql_client.user, performance.production
+        )
 
     response = gql_client.execute(request)
 
@@ -123,8 +126,13 @@ def test_can_generate_report_for_performance_bookings(
             "field": "options",
         }
     else:
-        split_url = response["data"]["generateReport"]["downloadUri"].split("?")
-        assert split_url[0] == "https://api.example.com/reports/performance_bookings"
+        split_url = response["data"]["generateReport"]["downloadUri"].split(
+            "?"
+        )
+        assert (
+            split_url[0]
+            == "https://api.example.com/reports/performance_bookings"
+        )
         assert split_url[1] is not None
 
 
@@ -150,7 +158,10 @@ def test_requesting_nonexistant_report(gql_client):
 
     assert response["data"]["generateReport"]["downloadUri"] is None
     assert response["data"]["generateReport"]["success"] is False
-    assert response["data"]["generateReport"]["errors"][0]["__typename"] == "FieldError"
+    assert (
+        response["data"]["generateReport"]["errors"][0]["__typename"]
+        == "FieldError"
+    )
     assert response["data"]["generateReport"]["errors"][0]["field"] == "name"
     assert (
         response["data"]["generateReport"]["errors"][0]["message"]

@@ -16,7 +16,10 @@ class Migration(migrations.Migration):
                 "permissions": (
                     ("boxoffice", "Can use boxoffice for this production"),
                     ("sales", "Can view sales for this production"),
-                    ("force_change_production", "Can edit production once this live"),
+                    (
+                        "force_change_production",
+                        "Can edit production once this live",
+                    ),
                     (
                         "approve_production",
                         "Can approve production pending publication",
@@ -34,7 +37,10 @@ class Migration(migrations.Migration):
                     ("APPROVED", "Approved (not published)"),
                     ("PUBLISHED", "Published (Can view on the site)"),
                     ("CLOSED", "Closed (Ready for money transfers)"),
-                    ("COMPLETE", "Complete (Show finished and all money settled)"),
+                    (
+                        "COMPLETE",
+                        "Complete (Show finished and all money settled)",
+                    ),
                 ],
                 default="DRAFT",
                 max_length=10,

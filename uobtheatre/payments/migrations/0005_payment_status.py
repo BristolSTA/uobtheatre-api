@@ -13,7 +13,10 @@ class Migration(migrations.Migration):
             model_name="payment",
             name="status",
             field=models.CharField(
-                choices=[("PENDING", "In progress"), ("COMPLETED", "Completed")],
+                choices=[
+                    ("PENDING", "In progress"),
+                    ("COMPLETED", "Completed"),
+                ],
                 default="COMPLETED",
                 max_length=20,
             ),

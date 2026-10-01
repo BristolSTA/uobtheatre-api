@@ -42,7 +42,10 @@ class Migration(migrations.Migration):
                 (
                     "status",
                     models.CharField(
-                        choices=[("IN_PROGRESS", "In Progress"), ("PAID", "Paid")],
+                        choices=[
+                            ("IN_PROGRESS", "In Progress"),
+                            ("PAID", "Paid"),
+                        ],
                         default="IN_PROGRESS",
                         max_length=20,
                     ),
@@ -132,9 +135,13 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="misccost",
             constraint=models.CheckConstraint(
-                check=models.Q(
-                    models.Q(("percentage__isnull", True), ("value__isnull", False)),
-                    models.Q(("percentage__isnull", False), ("value__isnull", True)),
+                condition=models.Q(
+                    models.Q(
+                        ("percentage__isnull", True), ("value__isnull", False)
+                    ),
+                    models.Q(
+                        ("percentage__isnull", False), ("value__isnull", True)
+                    ),
                     _connector="OR",
                 ),
                 name="percentage_or_value_must_be_set_on_misc_cost",

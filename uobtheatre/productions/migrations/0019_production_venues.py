@@ -14,7 +14,9 @@ class Migration(migrations.Migration):
             model_name="production",
             name="venues",
             field=models.ManyToManyField(
-                editable=False, through="productions.Performance", to="venues.Venue"
+                editable=False,
+                through="productions.Performance",
+                to="venues.Venue",
             ),
         ),
     ]

@@ -15,7 +15,9 @@ SPEND_SECRET = "3x0000000000000000000000000000000AA"
 def test_validate_no_secret():
     response = validate("dummy_response")
     assert not response.success
-    assert response.error_codes and response.error_codes == ["No secret key defined."]
+    assert response.error_codes and response.error_codes == [
+        "No secret key defined."
+    ]
 
 
 @override_settings(TURNSTILE_SECRET=PASSING_SECRET)
@@ -40,7 +42,9 @@ def test_validate_success():
 def test_validate_failure():
     response = validate("XXXX.DUMMY.TOKEN.XXXX")
     assert not response.success
-    assert response.error_codes and response.error_codes == ["invalid-input-response"]
+    assert response.error_codes and response.error_codes == [
+        "invalid-input-response"
+    ]
 
 
 @override_settings(TURNSTILE_SECRET=SPEND_SECRET)
@@ -48,7 +52,9 @@ def test_validate_failure():
 def test_validate_token_spent():
     response = validate("XXXX.DUMMY.TOKEN.XXXX")
     assert not response.success
-    assert response.error_codes and response.error_codes == ["timeout-or-duplicate"]
+    assert response.error_codes and response.error_codes == [
+        "timeout-or-duplicate"
+    ]
 
 
 @patch("uobtheatre.users.turnstile.requests.post")

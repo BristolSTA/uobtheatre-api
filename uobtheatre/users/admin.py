@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
-from graphql_auth.models import UserStatus
+
+from uobtheatre.graphql_auth.models import UserStatus
 
 from .models import User
 
@@ -41,7 +42,15 @@ class UserAdmin(DjangoUserAdmin):
     add_fieldsets = (
         (
             "Personal info",
-            {"fields": ("first_name", "last_name", "email", "password1", "password2")},
+            {
+                "fields": (
+                    "first_name",
+                    "last_name",
+                    "email",
+                    "password1",
+                    "password2",
+                )
+            },
         ),
         ("Important dates", {"fields": ("last_login", "date_joined")}),
         (

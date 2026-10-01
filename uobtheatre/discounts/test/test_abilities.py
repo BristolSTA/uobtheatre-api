@@ -3,7 +3,10 @@ from unittest.mock import patch
 import pytest
 from guardian.shortcuts import assign_perm
 
-from uobtheatre.discounts.abilities import CreateConcessionType, ModifyConcessionType
+from uobtheatre.discounts.abilities import (
+    CreateConcessionType,
+    ModifyConcessionType,
+)
 from uobtheatre.discounts.test.factories import (
     ConcessionTypeFactory,
     DiscountFactory,
@@ -11,7 +14,10 @@ from uobtheatre.discounts.test.factories import (
 )
 from uobtheatre.productions.abilities import EditProduction
 from uobtheatre.productions.models import Production
-from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
+from uobtheatre.productions.test.factories import (
+    PerformanceFactory,
+    ProductionFactory,
+)
 from uobtheatre.users.test.factories import UserFactory
 
 
@@ -64,8 +70,12 @@ def test_modify_concession_type_ability_when_on_another_production():
     DiscountRequirementFactory(discount=dis_1, concession_type=concession_type)
     DiscountRequirementFactory(discount=dis_2, concession_type=concession_type)
 
-    with patch.object(EditProduction, "user_has_for", return_value=True) as mock:
-        assert ModifyConcessionType.user_has_for(user, concession_type) is False
+    with patch.object(
+        EditProduction, "user_has_for", return_value=True
+    ) as mock:
+        assert (
+            ModifyConcessionType.user_has_for(user, concession_type) is False
+        )
         mock.assert_not_called()  # This shouldn't be called because it shouldn't reach this later part of the ability
 
 
@@ -86,6 +96,8 @@ def test_modify_concession_type_ability_when_only_on_owned_production():
 
     DiscountRequirementFactory(discount=dis_1, concession_type=concession_type)
 
-    with patch.object(EditProduction, "user_has_for", return_value=True) as mock:
+    with patch.object(
+        EditProduction, "user_has_for", return_value=True
+    ) as mock:
         assert ModifyConcessionType.user_has_for(user, concession_type) is True
         mock.assert_called_once_with(user, production)

@@ -3,8 +3,15 @@ from unittest.mock import patch
 import pytest
 from graphql_relay.node.node import to_global_id
 
-from uobtheatre.discounts.abilities import CreateConcessionType, ModifyConcessionType
-from uobtheatre.discounts.models import ConcessionType, Discount, DiscountRequirement
+from uobtheatre.discounts.abilities import (
+    CreateConcessionType,
+    ModifyConcessionType,
+)
+from uobtheatre.discounts.models import (
+    ConcessionType,
+    Discount,
+    DiscountRequirement,
+)
 from uobtheatre.discounts.test.factories import (
     ConcessionTypeFactory,
     DiscountFactory,
@@ -68,9 +75,7 @@ def test_concession_type_mutation_update(gql_client, with_permission):
             }
          }
         }
-    """ % (
-        to_global_id("ConcessionTypeNode", concession_type.id),
-    )
+    """ % (to_global_id("ConcessionTypeNode", concession_type.id),)
 
     with patch.object(
         ModifyConcessionType, "user_has_for", return_value=with_permission
@@ -96,9 +101,7 @@ def test_delete_concession_type_mutation(gql_client, with_permission):
             success
          }
         }
-    """ % (
-        to_global_id("ConcessionType", concession_type.id),
-    )
+    """ % (to_global_id("ConcessionType", concession_type.id),)
 
     with patch.object(
         ModifyConcessionType, "user_has_for", return_value=with_permission
@@ -106,7 +109,10 @@ def test_delete_concession_type_mutation(gql_client, with_permission):
         response = gql_client.login().execute(request)
 
         ability_mock.assert_called()
-        assert response["data"]["deleteConcessionType"]["success"] is with_permission
+        assert (
+            response["data"]["deleteConcessionType"]["success"]
+            is with_permission
+        )
         if with_permission:
             assert ConcessionType.objects.count() == 0
 
@@ -131,9 +137,7 @@ def test_discount_mutation_create(gql_client, with_permission):
             success
          }
         }
-    """ % to_global_id(
-        "PerformanceNode", performance.id
-    )
+    """ % to_global_id("PerformanceNode", performance.id)
 
     with patch.object(
         EditProduction, "user_has_for", return_value=with_permission
@@ -181,9 +185,7 @@ def test_discount_mutation_update(gql_client, with_permission):
             success
          }
         }
-    """ % to_global_id(
-        "DiscountNode", discount.id
-    )
+    """ % to_global_id("DiscountNode", discount.id)
 
     with patch.object(
         EditProduction, "user_has_for", return_value=with_permission
@@ -207,16 +209,16 @@ def test_delete_discount_mutation(gql_client, with_permission):
             success
          }
         }
-    """ % (
-        to_global_id("DiscountNode", discount.id),
-    )
+    """ % (to_global_id("DiscountNode", discount.id),)
 
     with patch.object(
         EditProduction, "user_has_for", return_value=with_permission
     ) as ability_mock:
         response = gql_client.login().execute(request)
 
-        ability_mock.assert_called_once_with(gql_client.user, performance.production)
+        ability_mock.assert_called_once_with(
+            gql_client.user, performance.production
+        )
         assert response["data"]["deleteDiscount"]["success"] is with_permission
         assert Discount.objects.count() == 0 if with_permission else 1
 
@@ -256,7 +258,9 @@ def test_discount_requirement_mutation_create(gql_client, with_permission):
         response = gql_client.login().execute(request)
         mock.assert_called_once_with(gql_client.user, performance.production)
 
-    assert response["data"]["discountRequirement"]["success"] is with_permission
+    assert (
+        response["data"]["discountRequirement"]["success"] is with_permission
+    )
 
 
 @pytest.mark.django_db
@@ -273,9 +277,7 @@ def test_discount_requirement_mutation_create_no_discount(gql_client):
             success
          }
         }
-    """ % (
-        to_global_id("ConcessionTypeNode", concession_type.id),
-    )
+    """ % (to_global_id("ConcessionTypeNode", concession_type.id),)
 
     response = gql_client.login().execute(request)
 
@@ -288,7 +290,9 @@ def test_discount_requirement_mutation_update(gql_client, with_permission):
     discount_1 = DiscountFactory()
     performance_1 = PerformanceFactory()
     discount_1.performances.set([performance_1])
-    discount_requirement = DiscountRequirementFactory(number=1, discount=discount_1)
+    discount_requirement = DiscountRequirementFactory(
+        number=1, discount=discount_1
+    )
     discount_2 = DiscountFactory()
     performance_2 = PerformanceFactory()
     discount_2.performances.set([performance_2])
@@ -324,7 +328,9 @@ def test_discount_requirement_mutation_update(gql_client, with_permission):
         if with_permission:
             mock.assert_any_call(gql_client.user, performance_2.production)
 
-    assert response["data"]["discountRequirement"]["success"] is with_permission
+    assert (
+        response["data"]["discountRequirement"]["success"] is with_permission
+    )
 
 
 @pytest.mark.django_db
@@ -341,17 +347,20 @@ def test_delete_discount_requirement_mutation(gql_client, with_permission):
             success
          }
         }
-    """ % (
-        to_global_id("DiscountRequirementNode", discount_requirement.id),
-    )
+    """ % (to_global_id("DiscountRequirementNode", discount_requirement.id),)
 
     with patch.object(
         EditProduction, "user_has_for", return_value=with_permission
     ) as ability_mock:
         response = gql_client.login().execute(request)
 
-        ability_mock.assert_called_once_with(gql_client.user, performance.production)
-        assert (
-            response["data"]["deleteDiscountRequirement"]["success"] is with_permission
+        ability_mock.assert_called_once_with(
+            gql_client.user, performance.production
         )
-        assert DiscountRequirement.objects.count() == 0 if with_permission else 1
+        assert (
+            response["data"]["deleteDiscountRequirement"]["success"]
+            is with_permission
+        )
+        assert (
+            DiscountRequirement.objects.count() == 0 if with_permission else 1
+        )

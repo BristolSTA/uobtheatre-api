@@ -3,7 +3,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
+from uobtheatre.productions.test.factories import (
+    PerformanceFactory,
+    ProductionFactory,
+)
 from uobtheatre.utils.validators import (
     AndValidator,
     PercentageValidator,
@@ -28,7 +31,9 @@ from uobtheatre.utils.validators import (
             "field",
             ValidationErrors(
                 exceptions=[
-                    ValidationError(attribute="field", message="field is required")
+                    ValidationError(
+                        attribute="field", message="field is required"
+                    )
                 ]
             ),
         ),
@@ -47,7 +52,9 @@ required_a_and_b_parameters = (
             SimpleNamespace(a_field=None, b=1),
             ValidationErrors(
                 exceptions=[
-                    ValidationError(message="a field is required", attribute="a_field")
+                    ValidationError(
+                        message="a field is required", attribute="a_field"
+                    )
                 ]
             ),
         ),
@@ -55,7 +62,9 @@ required_a_and_b_parameters = (
             SimpleNamespace(a_field=None, b=1),
             ValidationErrors(
                 exceptions=[
-                    ValidationError(message="a field is required", attribute="a_field")
+                    ValidationError(
+                        message="a field is required", attribute="a_field"
+                    )
                 ]
             ),
         ),
@@ -63,7 +72,9 @@ required_a_and_b_parameters = (
             SimpleNamespace(a_field=None, b=None),
             ValidationErrors(
                 exceptions=[
-                    ValidationError(message="a field is required", attribute="a_field"),
+                    ValidationError(
+                        message="a field is required", attribute="a_field"
+                    ),
                     ValidationError(message="b is required", attribute="b"),
                 ]
             ),
@@ -166,14 +177,26 @@ def test_realted_objects_validator_min_number(
         (1, None),
         (1.0, None),
         ("1", "A percentage must be a valid number"),
-        (1.1, "1.10 is not a valid percentage. A percentage must be between 0 and 1"),
-        (2, "2.00 is not a valid percentage. A percentage must be between 0 and 1"),
+        (
+            1.1,
+            "1.10 is not a valid percentage. A percentage must be between 0 and 1",
+        ),
+        (
+            2,
+            "2.00 is not a valid percentage. A percentage must be between 0 and 1",
+        ),
         (
             2.22222222,
             "2.22 is not a valid percentage. A percentage must be between 0 and 1",
         ),
-        (-0.1, "-0.10 is not a valid percentage. A percentage must be between 0 and 1"),
-        (-0.1, "-0.10 is not a valid percentage. A percentage must be between 0 and 1"),
+        (
+            -0.1,
+            "-0.10 is not a valid percentage. A percentage must be between 0 and 1",
+        ),
+        (
+            -0.1,
+            "-0.10 is not a valid percentage. A percentage must be between 0 and 1",
+        ),
     ],
 )
 def test_percentage_validator(percentage, error):

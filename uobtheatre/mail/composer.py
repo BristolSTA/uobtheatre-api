@@ -88,7 +88,9 @@ class ComposerItemsContainer(ComposerItemInterface, abc.ABC):
 
     def to_html(self) -> str:
         """Generate the HTML version of this item"""
-        return """{}""".format("\n".join([item.to_html() or "" for item in self.items]))
+        return """{}""".format(
+            "\n".join([item.to_html() or "" for item in self.items])
+        )
 
 
 class Heading(ComposerItemInterface):
@@ -156,7 +158,9 @@ class Panel(ComposerItemsContainer):
     def to_html(self) -> str:
         content = super().to_html()
 
-        return get_template("components/panel.html").render({"content": content})
+        return get_template("components/panel.html").render(
+            {"content": content}
+        )
 
 
 class Html(ComposerItemInterface):
@@ -203,14 +207,20 @@ class MailComposer(ComposerItemsContainer):
         """Generate the plain text version of the email"""
         return """{}""".format(
             "\n\n".join(
-                [item.to_text() for item in self.get_complete_items() if item.to_text()]
+                [
+                    item.to_text()
+                    for item in self.get_complete_items()
+                    if item.to_text()
+                ]
             )
         )
 
     def to_html(self):
         """Generate the HTML version of the email"""
         content = """{}""".format(
-            "\n".join([item.to_html() or "" for item in self.get_complete_items()])
+            "\n".join(
+                [item.to_html() or "" for item in self.get_complete_items()]
+            )
         )
         subcopy = "\n".join((item.to_html() for item in self.subcopy))
 
@@ -225,8 +235,12 @@ class MailComposer(ComposerItemsContainer):
         return email
 
     def get_email(self, subject, to_email):
+        """Generate an EmailMultiAlternatives object for this email, which can then be sent using the send() method of the object"""
         msg = EmailMultiAlternatives(
-            subject, self.to_plain_text(), settings.DEFAULT_FROM_EMAIL, [to_email]
+            subject,
+            self.to_plain_text(),
+            settings.DEFAULT_FROM_EMAIL,
+            [to_email],
         )
         msg.attach_alternative(self.to_html(), "text/html")
         return msg

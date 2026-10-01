@@ -36,7 +36,9 @@ def test_discount_form_clean_with_exisiting(
 
     form = DiscountForm(
         instance=(
-            exisiting_instance if num_exisiting_performances is not None else None
+            exisiting_instance
+            if num_exisiting_performances is not None
+            else None
         ),
         data=form_data,
     )

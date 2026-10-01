@@ -3,26 +3,27 @@ from abc import ABC
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Union
 
-from graphql_relay.node.node import from_global_id
-
 from uobtheatre.bookings.models import Booking
 from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
 from uobtheatre.productions.models import Performance, Production
 from uobtheatre.users.models import User
 from uobtheatre.utils.exceptions import AuthorizationException, GQLException
+from uobtheatre.utils.schema import from_global_id
 
 
 def get_option(options: List[Dict[str, str]], name: str, default=None):
     return next(
-        (option["value"] for option in options if option["name"] == name), default
+        (option["value"] for option in options if option["name"] == name),
+        default,
     )
 
 
 def require_option(options: List[Dict[str, str]], option_name):
     if not get_option(options, option_name):
         raise GQLException(
-            message="You must supply the %s option" % option_name, field="options"
+            message="You must supply the %s option" % option_name,
+            field="options",
         )
 
 
@@ -68,7 +69,8 @@ class Report(ABC):
 
     def dataset_by_name(self, name: str) -> Union[DataSet, None]:
         return next(
-            (dataset for dataset in self.datasets if dataset.name == name), None
+            (dataset for dataset in self.datasets if dataset.name == name),
+            None,
         )
 
     def get_meta_array(self):
@@ -120,7 +122,9 @@ class PeriodTotalsBreakdown(TimeScopedReport):
 
         self.meta.append(MetaItem("No. of Payments", str(len(payments))))
         self.meta.append(
-            MetaItem("Total Income", str(sum(payment.value for payment in payments)))
+            MetaItem(
+                "Total Income", str(sum(payment.value for payment in payments))
+            )
         )
 
         for payment in payments:
@@ -166,7 +170,11 @@ class PeriodTotalsBreakdown(TimeScopedReport):
                 payment.created_at.strftime("%Y-%m-%d %H:%M:%S"),
                 payment.type,
                 str(payment.pay_object.id) if payment.pay_object else "",
-                type(payment.pay_object).__name__ if payment.pay_object else "",
+                (
+                    type(payment.pay_object).__name__
+                    if payment.pay_object
+                    else ""
+                ),
                 str(
                     payment.pay_object.performance.production.id
                     if isinstance(payment.pay_object, Booking)
@@ -262,7 +270,9 @@ class OutstandingSocietyPayments(Report):
             sta_total_due += production_sta_fees
 
             if production.society is None:
-                raise GQLException(f"Production {production.id} has no society")
+                raise GQLException(
+                    f"Production {production.id} has no society"
+                )
             productions_dataset.find_or_create_row_by_first_column(
                 production.id,
                 [
@@ -292,7 +302,9 @@ class OutstandingSocietyPayments(Report):
             )
             row[2] += sales_breakdown["society_transfer_value"]
 
-        societies_dataset.add_row(["", "Stage Technicians' Association", sta_total_due])
+        societies_dataset.add_row(
+            ["", "Stage Technicians' Association", sta_total_due]
+        )
         self.meta.append(
             MetaItem(
                 "Total Outstanding",
@@ -318,7 +330,14 @@ class PerformanceBookings(Report):
         )
         bookings_dataset = DataSet(
             "Bookings",
-            ["ID", "Reference", "Name", "Email", "Tickets", "Total Paid (Pence)"],
+            [
+                "ID",
+                "Reference",
+                "Name",
+                "Email",
+                "Tickets",
+                "Total Paid (Pence)",
+            ],
         )
 
         self.meta.append(MetaItem("Performance", str(performance)))
@@ -338,7 +357,9 @@ class PerformanceBookings(Report):
                     booking.reference,
                     str(booking.user),
                     booking.user.email,
-                    "\r\n".join([str(ticket) for ticket in booking.tickets.all()]),
+                    "\r\n".join(
+                        [str(ticket) for ticket in booking.tickets.all()]
+                    ),
                     str(booking.sales_breakdown.total_payments),
                 ]
             )
@@ -362,4 +383,6 @@ class PerformanceBookings(Report):
         if not Performance.objects.filter(
             pk=from_global_id(get_option(options, "id"))[1]
         ).exists():
-            raise GQLException(message="Invalid performance ID option", field="options")
+            raise GQLException(
+                message="Invalid performance ID option", field="options"
+            )

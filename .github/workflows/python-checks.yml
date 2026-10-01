@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ main, dev, dependabot/dev ]
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -30,7 +33,7 @@ jobs:
     steps:
     # Set up cache for pip packages
     - name: Cache pip packages 📦
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -41,10 +44,10 @@ jobs:
       uses: actions/checkout@master
 
     # Setup python
-    - name: Setup python 3.10 env 🏗
-      uses: actions/setup-python@v5
+    - name: Setup python 3.12 env 🏗
+      uses: actions/setup-python@v7
       with:
-        python-version: "3.10"
+        python-version: "3.12"
 
     # Install dependencies
     - name: Install dependencies 👨🏻‍💻
@@ -70,10 +73,11 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
+
     steps:
     # Set up cache for pip packages
     - name: Cache pip packages 📦
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -84,10 +88,10 @@ jobs:
       uses: actions/checkout@master
 
     # Setup python
-    - name: Setup python 3.10 env 🏗
-      uses: actions/setup-python@v5
+    - name: Setup python 3.12 env 🏗
+      uses: actions/setup-python@v7
       with:
-        python-version: "3.10"
+        python-version: "3.12"
 
     # Install dependencies
     - name: Install dependencies 👨🏻‍💻
@@ -136,7 +140,7 @@ jobs:
     steps:
     # Set up cache for pip packages
     - name: Cache pip packages 📦
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -147,10 +151,10 @@ jobs:
       uses: actions/checkout@master
 
     # Setup python
-    - name: Setup python 3.10 env 🏗
-      uses: actions/setup-python@v5
+    - name: Setup python 3.12 env 🏗
+      uses: actions/setup-python@v7
       with:
-        python-version: "3.10"
+        python-version: "3.12"
 
     # Install dependencies
     - name: Install dependencies 👨🏻‍💻
@@ -179,10 +183,11 @@ jobs:
 
   schema:
     runs-on: ubuntu-latest
+
     steps:
     # Set up cache for pip packages
     - name: Cache pip packages 📦
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
@@ -193,10 +198,10 @@ jobs:
       uses: actions/checkout@master
 
     # Setup python
-    - name: Setup python 3.10 env 🏗
-      uses: actions/setup-python@v5
+    - name: Setup python 3.12 env 🏗
+      uses: actions/setup-python@v7
       with:
-        python-version: "3.10"
+        python-version: "3.12"
 
     # Install dependencies
     - name: Install dependencies 👨🏻‍💻

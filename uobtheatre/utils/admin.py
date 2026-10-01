@@ -41,7 +41,9 @@ def confirm_dangerous_action(func):
             return func(modeladmin, request, queryset)
 
         # get_actions will only return the actions that are allowed
-        has_perm = modeladmin.get_actions(request).get(func.__name__) is not None
+        has_perm = (
+            modeladmin.get_actions(request).get(func.__name__) is not None
+        )
         title = f"Confirm Action: {action_display_name}"
 
         context = {

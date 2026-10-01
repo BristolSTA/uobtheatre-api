@@ -18,8 +18,10 @@ def test_image_upload(rest_client):
 
     # Create image
     image = PILImage.new("RGB", (100, 100))
-    tmp_file = tempfile.NamedTemporaryFile(  # pylint: disable=consider-using-with
-        suffix=".jpg"
+    tmp_file = (
+        tempfile.NamedTemporaryFile(  # pylint: disable=consider-using-with
+            suffix=".jpg"
+        )
     )
     image.save(tmp_file)
 

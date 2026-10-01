@@ -43,7 +43,9 @@ def test_it_generates_correct_html():
     assert ">This is a paragraph</p>" in test_mail.to_html()
     assert "<hr/>" in test_mail.to_html()
     assert "<b>Bold!</b>" in test_mail.to_html()
-    assert Image("http://example.org/my/image").to_html() in test_mail.to_html()
+    assert (
+        Image("http://example.org/my/image").to_html() in test_mail.to_html()
+    )
     assert 'href="https://example.org/call/to/action"' in test_mail.to_html()
     assert ">Call to Action</a>" in test_mail.to_html()
 
@@ -110,7 +112,10 @@ def test_action_item():
     assert action.to_html() == get_template("components/button.html").render(
         {"url": "http://example.org/call/to/action", "text": "Call to Action"}
     )
-    assert action.to_text() == "Call to Action (http://example.org/call/to/action)"
+    assert (
+        action.to_text()
+        == "Call to Action (http://example.org/call/to/action)"
+    )
 
 
 def test_panel_item():
@@ -132,7 +137,9 @@ def test_append():
 
 
 @pytest.mark.django_db
-@pytest.mark.parametrize("with_user,expected", [(True, "Hi Test"), (False, "Hello")])
+@pytest.mark.parametrize(
+    "with_user,expected", [(True, "Hi Test"), (False, "Hello")]
+)
 def test_greeting(with_user, expected):
     composer = MailComposer()
     user = UserFactory(first_name="Test")
@@ -154,7 +161,10 @@ def test_heading_item(size):
 @pytest.mark.django_db
 def test_mass_mail_composer():
     mass_mail = MassMailComposer(
-        [UserFactory(email="joe@example.org"), UserFactory(email="jill@example.org")],
+        [
+            UserFactory(email="joe@example.org"),
+            UserFactory(email="jill@example.org"),
+        ],
         "My Subject",
         mail_compose=MailComposer().greeting().line("Test"),
     )

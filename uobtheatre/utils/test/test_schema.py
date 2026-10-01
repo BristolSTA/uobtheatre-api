@@ -5,13 +5,19 @@ from graphql_relay.node.node import to_global_id
 from guardian.shortcuts import assign_perm
 
 from uobtheatre.bookings.models import Booking
-from uobtheatre.bookings.test.factories import BookingFactory, PerformanceSeatingFactory
+from uobtheatre.bookings.test.factories import (
+    BookingFactory,
+    PerformanceSeatingFactory,
+)
 from uobtheatre.discounts.test.factories import (
     ConcessionTypeFactory,
     DiscountRequirementFactory,
 )
 from uobtheatre.productions.models import Production
-from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
+from uobtheatre.productions.test.factories import (
+    PerformanceFactory,
+    ProductionFactory,
+)
 from uobtheatre.users.test.factories import UserFactory
 from uobtheatre.utils.exceptions import AuthorizationException
 from uobtheatre.utils.schema import (
@@ -50,7 +56,9 @@ def test_auth_required_mixin(gql_client):
           }
         }
     """
-    response = client.execute(request_query % to_global_id("BookingNode", booking.id))
+    response = client.execute(
+        request_query % to_global_id("BookingNode", booking.id)
+    )
     assert response == {
         "data": {
             "payBooking": {

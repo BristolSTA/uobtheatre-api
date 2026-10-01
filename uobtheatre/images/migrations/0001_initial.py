@@ -22,7 +22,10 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("file", models.ImageField(upload_to="")),
-                ("alt_text", models.CharField(blank=True, max_length=50, null=True)),
+                (
+                    "alt_text",
+                    models.CharField(blank=True, max_length=50, null=True),
+                ),
             ],
         ),
     ]

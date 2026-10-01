@@ -97,11 +97,17 @@ class Query(graphene.ObjectType):
 
         devices = []
         include_all = not payment_provider
+
+        # Clean the class name off the payment provider enum
+        payment_provider = str(payment_provider).split(".", 1)[-1]
+
         if not OpenBoxoffice.user_has(info.context.user):
             return None
 
         if include_all or payment_provider == SquarePOS.name:
-            status = None if paired is None else "PAIRED" if paired else "UNPAIRED"
+            status = (
+                None if paired is None else "PAIRED" if paired else "UNPAIRED"
+            )
 
             devices.extend(
                 [

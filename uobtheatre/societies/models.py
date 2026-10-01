@@ -22,7 +22,9 @@ class Society(BaseModel, TimeStampedMixin):
     website = models.CharField(max_length=255, blank=True, null=True)
     contact = models.CharField(max_length=255, blank=True, null=True)
 
-    members = models.ManyToManyField("users.User", related_name="societies", blank=True)
+    members = models.ManyToManyField(
+        "users.User", related_name="societies", blank=True
+    )
 
     su_status = models.BooleanField(
         default=True,
@@ -34,4 +36,6 @@ class Society(BaseModel, TimeStampedMixin):
         return str(self.name)
 
     class Meta:
-        permissions = (("add_production", "Can add productions for this society"),)
+        permissions = (
+            ("add_production", "Can add productions for this society"),
+        )

@@ -15,8 +15,7 @@ def test_payment_schema(gql_client):
     booking = BookingFactory(user=gql_client.login().user)
     payment = TransactionFactory(pay_object=booking)
 
-    response = gql_client.execute(
-        """
+    response = gql_client.execute("""
         {
           me {
             bookings {
@@ -50,8 +49,7 @@ def test_payment_schema(gql_client):
             }
           }
         }
-        """
-    )
+        """)
 
     assert response == {
         "data": {
@@ -65,11 +63,14 @@ def test_payment_schema(gql_client):
                                         {
                                             "node": {
                                                 "id": to_global_id(
-                                                    "TransactionNode", payment.id
+                                                    "TransactionNode",
+                                                    payment.id,
                                                 ),
                                                 "createdAt": payment.created_at.isoformat(),
                                                 "updatedAt": payment.updated_at.isoformat(),
-                                                "type": str(payment.type).upper(),
+                                                "type": str(
+                                                    payment.type
+                                                ).upper(),
                                                 "providerName": str(
                                                     payment.provider_name
                                                 ).upper(),
@@ -108,6 +109,7 @@ def test_list_devices(gql_client, mock_square):
     assign_perm("productions.boxoffice", gql_client.user)
 
     mock_response = SyncPager(
+        response=None,
         has_next=False,
         items=[
             DeviceCode(
@@ -138,8 +140,7 @@ def test_list_devices(gql_client, mock_square):
     )
 
     with mock_square(SquarePOS.client.devices.codes, "list", mock_response):
-        response = gql_client.execute(
-            """
+        response = gql_client.execute("""
             query {
               paymentDevices {
                 id
@@ -151,8 +152,7 @@ def test_list_devices(gql_client, mock_square):
                 locationId
               }
             }
-            """
-        )
+            """)
 
     assert response == {
         "data": {
@@ -188,6 +188,7 @@ def test_list_devices_without_boxoffice_permissions(gql_client, mock_square):
     """
 
     mock_response = SyncPager(
+        response=None,
         has_next=False,
         items=[
             DeviceCode(
@@ -207,15 +208,13 @@ def test_list_devices_without_boxoffice_permissions(gql_client, mock_square):
     )
 
     with mock_square(SquarePOS.client.devices.codes, "list", mock_response):
-        response = gql_client.execute(
-            """
+        response = gql_client.execute("""
             query {
               paymentDevices {
                 id
               }
             }
-            """
-        )
+            """)
 
     assert response == {
         "data": {
@@ -231,21 +230,20 @@ def test_list_devices_empty_response(gql_client, mock_square):
     assign_perm("productions.boxoffice", gql_client.user)
 
     mock_response = SyncPager(
+        response=None,
         has_next=False,
         items=[],
         get_next=None,
     )
 
     with mock_square(SquarePOS.client.devices.codes, "list", mock_response):
-        response = gql_client.execute(
-            """
+        response = gql_client.execute("""
             query {
               paymentDevices {
                 id
               }
             }
-            """
-        )
+            """)
 
     assert response == {"data": {"paymentDevices": []}}
 
@@ -257,18 +255,30 @@ def test_list_devices_empty_response(gql_client, mock_square):
         (
             "paymentProvider: SQUARE_POS, paired: false",
             True,
-            {"product_type": "TERMINAL_API", "status": "UNPAIRED", "location_id": None},
+            {
+                "product_type": "TERMINAL_API",
+                "status": "UNPAIRED",
+                "location_id": None,
+            },
         ),
         ("paymentProvider: SQUARE_ONLINE", False, {}),
         (
             "paymentProvider: SQUARE_POS",
             True,
-            {"product_type": "TERMINAL_API", "status": None, "location_id": None},
+            {
+                "product_type": "TERMINAL_API",
+                "status": None,
+                "location_id": None,
+            },
         ),
         (
             "paymentProvider: SQUARE_POS, paired: true",
             True,
-            {"product_type": "TERMINAL_API", "status": "PAIRED", "location_id": None},
+            {
+                "product_type": "TERMINAL_API",
+                "status": "PAIRED",
+                "location_id": None,
+            },
         ),
     ],
 )
@@ -280,6 +290,7 @@ def test_filter_list_devices(
     assign_perm("productions.boxoffice", gql_client.user)
 
     mock_response = SyncPager(
+        response=None,
         has_next=False,
         items=[],
         get_next=None,
@@ -288,18 +299,13 @@ def test_filter_list_devices(
     with mock_square(
         SquarePOS.client.devices.codes, "list", mock_response
     ) as list_devices_mock:
-        response = gql_client.execute(
-            """
+        response = gql_client.execute("""
             query {
               paymentDevices%s {
                 id
               }
             }
-            """
-            % f"({filters})"
-            if filters
-            else ""
-        )
+            """ % f"({filters})" if filters else "")
 
     assert response == {"data": {"paymentDevices": []}}
 

@@ -7,8 +7,9 @@ from django.forms.models import ModelChoiceField
 from graphene.types.mutation import MutationOptions
 from graphene_django import DjangoObjectType
 from graphene_django.forms.mutation import DjangoModelFormMutation
-from graphql.language.ast import IntValue, StringValue
-from graphql_relay.node.node import from_global_id
+from graphql.language.ast import IntValueNode, StringValueNode
+from graphql_relay.node.node import ResolvedGlobalId
+from graphql_relay.utils import unbase64
 from guardian.shortcuts import (
     assign,
     assign_perm,
@@ -87,9 +88,10 @@ class AssignedUsersMixin:
                 user=user,
                 assigned_permissions=permissions,
             )
+            # Mypy doesn't love the typing of perms in general, and it can't be fixed as this comes from an external package
             for (user, permissions) in get_users_with_perms(
-                self, attach_perms=True, with_group_users=False
-            ).items()
+                self, attach_perms=True, with_group_users=False  # type: ignore
+            ).items()  # type: ignore
         ]
 
     def resolve_assignable_permissions(self, info):
@@ -123,7 +125,9 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
 
     @classmethod
     def mutate(cls, root, info, **inputs):
-        """In order to account for having a possible mix of global and local IDs, override the mutate function so that id input items are parsed from global ids"""
+        """In order to account for having a possible mix of global and local
+        IDs, override the mutate function so that id input items are parsed from global ids
+        """
         input_items = inputs["input"]
 
         # If an ID is passed as top level input, convert from global to local
@@ -139,11 +143,13 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
                     # If this is a multiple model choice field, convert every ID in the list to a local ID
                     if isinstance(form[key].value(), List):
                         input_items[key] = [
-                            from_global_id(item)[1] for item in input_items[key]
+                            from_global_id(item)[1]
+                            for item in input_items[key]
                         ]
                     else:
                         input_items[key] = from_global_id(form[key].value())[1]
-                except ValueError:
+                except ValueError:  # pragma: no cover
+                    # This is just to stop errors breaking everything, but this does literally nothing
                     pass
         return super().mutate(root, info, **input_items)
 
@@ -248,7 +254,9 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
         response = super().mutate_and_get_payload(root, info, **inputs)
 
         if response.errors:
-            return cls(errors=FormExceptions(response.errors).resolve(), success=False)
+            return cls(
+                errors=FormExceptions(response.errors).resolve(), success=False
+            )
 
         cls.on_success(info, response, cls.is_creation(**inputs))
         if cls.is_creation(**inputs):
@@ -259,7 +267,13 @@ class SafeFormMutation(SafeMutation, DjangoModelFormMutation):
 
 
 class UserPermissionFilterMixin(django_filters.FilterSet):
-    user_has_permission = django_filters.CharFilter(method="user_has_permission_filter")
+    """
+    A filter mixin to filter querysets based on user permissions. Adds a user_has_permission filter which takes a permission string and filters the queryset to only include objects for which the user has that permission.
+    """
+
+    user_has_permission = django_filters.CharFilter(
+        method="user_has_permission_filter"
+    )
 
     def user_has_permission_filter(self, query_set, _, permission=None):
         return get_objects_for_user(self.request.user, permission, query_set)
@@ -280,7 +294,7 @@ class IdInputField(graphene.ID):
         Given the global id provided in the mutation (directly as an argument)
         covert it to the local integer id.
         """
-        if isinstance(input_id, (StringValue, IntValue)):
+        if isinstance(input_id, (StringValueNode, IntValueNode)):
             return from_global_id(input_id.value)[1]
         return None
 
@@ -399,7 +413,9 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
         return User.objects.filter(email=email).first()
 
     @classmethod
-    def permissions_delta(cls, pk, executing_user, target_user, requested_permissions):
+    def permissions_delta(
+        cls, pk, executing_user, target_user, requested_permissions
+    ):
         """Calcualte the permissions delta"""
         instance = cls.instance(pk)
         available_permissions = [
@@ -411,12 +427,16 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
             get_user_perms(target_user, instance)
         ).intersection(available_permissions)
 
-        permissions_to_remove = current_user_permissions - set(requested_permissions)
+        permissions_to_remove = current_user_permissions - set(
+            requested_permissions
+        )
         permissions_to_add = set(requested_permissions).intersection(
             available_permissions
         ) - set(current_user_permissions)
 
-        permissions_delta = set(permissions_to_add) | set(permissions_to_remove)
+        permissions_delta = set(permissions_to_add) | set(
+            permissions_to_remove
+        )
 
         return (permissions_to_add, permissions_to_remove, permissions_delta)
 
@@ -437,7 +457,11 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
 
         for permission in inputs["permissions"]:
             if not next(
-                (node for node in available_permissions if node.name == permission),
+                (
+                    node
+                    for node in available_permissions
+                    if node.name == permission
+                ),
                 None,
             ):
                 raise GQLException(
@@ -464,7 +488,9 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
         )[2]:
             # Try and get permission node for permission
             permission_node = [
-                node for node in available_permissions if node.name == permission
+                node
+                for node in available_permissions
+                if node.name == permission
             ][0]
 
             if not permission_node or not permission_node.user_can_assign:
@@ -481,7 +507,7 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
 
         user = cls.subject_user(user_email)
 
-        (permissions_to_add, permissions_to_remove, _) = cls.permissions_delta(
+        permissions_to_add, permissions_to_remove, _ = cls.permissions_delta(
             id, info.context.user, user, permissions
         )
 
@@ -492,3 +518,15 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
             remove_perm(permission, user, model_instance)
 
         return cls()
+
+
+# The graphql_relay package's from_global_id is broken, so we have to replace it with this
+def from_global_id(global_id: str) -> ResolvedGlobalId:
+    """
+    Takes the "global ID" created by to_global_id,
+    and returns the type name and ID used to create it.
+    """
+    unbased_id = unbase64(global_id)
+    if ":" not in unbased_id:
+        return ResolvedGlobalId("", global_id)
+    return ResolvedGlobalId(*unbased_id.split(":", 1))

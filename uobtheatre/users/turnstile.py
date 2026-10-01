@@ -24,12 +24,17 @@ class SiteVerifyResponse(pydantic.BaseModel):
     success: bool
     challenge_ts: Optional[str] = None
     hostname: Optional[str] = None
-    error_codes: list[str] = pydantic.Field(alias="error-codes", default_factory=list)
+    error_codes: list[str] = pydantic.Field(
+        alias="error-codes", default_factory=list
+    )
     action: Optional[str] = None
     cdata: Optional[str] = None
 
 
-request_example = {"secret": "0x5ABAAFAAAn72SdCAP75q6sPP9P6zooFZt", "response": "???"}
+request_example = {
+    "secret": "0x5ABAAFAAAn72SdCAP75q6sPP9P6zooFZt",
+    "response": "???",
+}
 
 success_example = {
     "success": True,

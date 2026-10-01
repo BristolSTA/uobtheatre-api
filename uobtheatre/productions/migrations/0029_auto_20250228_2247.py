@@ -26,7 +26,10 @@ class Migration(migrations.Migration):
                 ("long_description", models.TextField(blank=True, null=True)),
                 ("help_text", models.TextField(blank=True, null=True)),
                 ("default_relaxed", models.BooleanField(default=False)),
-                ("default_sensory_friendly", models.BooleanField(default=False)),
+                (
+                    "default_sensory_friendly",
+                    models.BooleanField(default=False),
+                ),
             ],
         ),
         migrations.AddField(
@@ -37,6 +40,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="performance",
             name="relaxed_categories",
-            field=models.ManyToManyField(blank=True, to="productions.RelaxedCategory"),
+            field=models.ManyToManyField(
+                blank=True, to="productions.RelaxedCategory"
+            ),
         ),
     ]

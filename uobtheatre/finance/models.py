@@ -33,7 +33,7 @@ class FinancialTransfer(TimeStampedMixin, BaseModel):
         User, on_delete=models.SET_NULL, null=True
     )  # The user who recorded the transfer
     method = models.CharField(
-        max_length=20,
+        max_length=40,
         choices=Method.choices,
     )
     reason = models.TextField(null=True)  # Optional reason for transfer

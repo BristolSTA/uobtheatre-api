@@ -20,7 +20,9 @@ def refresh_from_square(modeladmin, request, queryset):
                 f"Error updating payment {payment.id}: {exc.message}",
                 level=messages.ERROR,
             )
-    modeladmin.message_user(request, f"{successful_updates} payments refreshed.")
+    modeladmin.message_user(
+        request, f"{successful_updates} payments refreshed."
+    )
 
 
 class TransactionAdmin(admin.ModelAdmin):

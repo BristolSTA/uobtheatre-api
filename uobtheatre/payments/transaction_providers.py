@@ -1,6 +1,15 @@
 import abc
 import re
-from typing import TYPE_CHECKING, Any, Dict, Literal, Optional, Sequence, Type, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Literal,
+    Optional,
+    Sequence,
+    Type,
+    Union,
+)
 from uuid import uuid4
 
 from django.conf import settings
@@ -79,7 +88,8 @@ class TransactionProvider(abc.ABC):
 
     @classmethod
     def cancel(
-        cls, payment: "payment_models.Transaction"  # pylint: disable=unused-argument
+        cls,
+        payment: "payment_models.Transaction",  # pylint: disable=unused-argument
     ):
         """Cancel the payment
 
@@ -89,7 +99,9 @@ class TransactionProvider(abc.ABC):
         return
 
     @classmethod
-    def get_payment_provider_id(cls, payment: "payment_models.Transaction") -> str:
+    def get_payment_provider_id(
+        cls, payment: "payment_models.Transaction"
+    ) -> str:
         """Get the ID of the provided payment assigned by the provider"""
         if not payment.provider_transaction_id:
             raise PaymentException("Payment has no provider_transaction_id")
@@ -117,7 +129,9 @@ class RefundProvider(TransactionProvider, abc.ABC):
         """
 
     @classmethod
-    def create_payment_object(cls, *args, **kwargs) -> "payment_models.Transaction":
+    def create_payment_object(
+        cls, *args, **kwargs
+    ) -> "payment_models.Transaction":
         kwargs["type"] = payment_models.Transaction.Type.REFUND
         return super().create_payment_object(*args, **kwargs)
 
@@ -152,7 +166,9 @@ class PaymentProvider(TransactionProvider, abc.ABC):
         raise NotImplementedError
 
     @classmethod
-    def create_payment_object(cls, *args, **kwargs) -> "payment_models.Transaction":
+    def create_payment_object(
+        cls, *args, **kwargs
+    ) -> "payment_models.Transaction":
         kwargs["type"] = payment_models.Transaction.Type.PAYMENT
         return super().create_payment_object(*args, **kwargs)
 
@@ -203,7 +219,9 @@ class SquareAPIMixin(abc.ABC):
         "environment": settings.SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],  # type: ignore
     }
 
-    if square_url := settings.SQUARE_SETTINGS["SQUARE_URL"]:  # pragma: no cover
+    if square_url := settings.SQUARE_SETTINGS[
+        "SQUARE_URL"
+    ]:  # pragma: no cover
         kwargs["base_url"] = square_url
 
     client = Client(**kwargs)
@@ -244,7 +262,9 @@ class SquareAPIMixin(abc.ABC):
         payment.status = payment_models.Transaction.Status.from_square_status(
             response_object.status
         )
-        if processing_fees := cls._square_transaction_processing_fee(response_object):
+        if processing_fees := cls._square_transaction_processing_fee(
+            response_object
+        ):
             payment.provider_fee = processing_fees
         return payment
 
@@ -301,10 +321,14 @@ class ManualCardRefund(RefundProvider):
                 provided the full amount will be refunded.
         """
         if custom_refund_amount and custom_refund_amount > payment.value:
-            raise PaymentException("Refund amount is greater than payment amount")
+            raise PaymentException(
+                "Refund amount is greater than payment amount"
+            )
 
         refund_amount = (
-            custom_refund_amount if custom_refund_amount is not None else payment.value
+            custom_refund_amount
+            if custom_refund_amount is not None
+            else payment.value
         )
 
         app_fee_reduction = None
@@ -323,7 +347,9 @@ class ManualCardRefund(RefundProvider):
             payment.pay_object,
             -refund_amount,
             -app_fee_reduction if app_fee_reduction is not None else None,
-            provider_fee=-payment.provider_fee if payment.provider_fee else None,
+            provider_fee=(
+                -payment.provider_fee if payment.provider_fee else None
+            ),
             status=payment_models.Transaction.Status.COMPLETED,
         )
 
@@ -348,10 +374,14 @@ class SquareRefund(RefundProvider, SquareAPIMixin):
         Refund payment using square refund api
         """
         if custom_refund_amount and custom_refund_amount > payment.value:
-            raise PaymentException("Refund amount is greater than payment amount")
+            raise PaymentException(
+                "Refund amount is greater than payment amount"
+            )
 
         refund_amount = (
-            custom_refund_amount if custom_refund_amount is not None else payment.value
+            custom_refund_amount
+            if custom_refund_amount is not None
+            else payment.value
         )
 
         try:
@@ -419,7 +449,9 @@ class SquareRefund(RefundProvider, SquareAPIMixin):
     ):
         if not data:
             try:
-                response = cls.client.refunds.get(cls.get_payment_provider_id(payment))
+                response = cls.client.refunds.get(
+                    cls.get_payment_provider_id(payment)
+                )
 
             except ApiError as error:
                 raise SquareException(error) from error
@@ -569,7 +601,9 @@ class SquarePOS(PaymentProvider, SquarePaymentMethod):
 
         try:
             response = cls.client.devices.codes.list(
-                product_type=product_type, status=status, location_id=location_id
+                product_type=product_type,
+                status=status,
+                location_id=location_id,
             ).items
 
         except ApiError as error:
@@ -618,7 +652,9 @@ class SquarePOS(PaymentProvider, SquarePaymentMethod):
             )
 
         try:
-            cls.client.terminal.checkouts.cancel(payment.provider_transaction_id)
+            cls.client.terminal.checkouts.cancel(
+                payment.provider_transaction_id
+            )
 
         except ApiError as error:
             raise SquareException(error) from error
@@ -645,9 +681,13 @@ class SquarePOS(PaymentProvider, SquarePaymentMethod):
                 if not payment_object:
                     continue
 
-                processing_fee = cls._square_transaction_processing_fee(payment_object)
+                processing_fee = cls._square_transaction_processing_fee(
+                    payment_object
+                )
                 if processing_fee:
-                    payment.provider_fee = (payment.provider_fee or 0) + processing_fee
+                    payment.provider_fee = (
+                        payment.provider_fee or 0
+                    ) + processing_fee
 
         old_status = payment.status
         payment.status = payment_models.Transaction.Status.from_square_status(
@@ -699,7 +739,10 @@ class SquareOnline(PaymentProvider, SquarePaymentMethod):
         return (SquareRefund(idempotency_key=str(uuid4())),)
 
     def __init__(
-        self, nonce: str, idempotency_key: str, verify_token: Optional[str] = None
+        self,
+        nonce: str,
+        idempotency_key: str,
+        verify_token: Optional[str] = None,
     ) -> None:
         """
         Args:
@@ -755,7 +798,9 @@ class SquareOnline(PaymentProvider, SquarePaymentMethod):
 
         if not response.payment:
             error_message = (
-                response.errors[0].detail if response.errors else "No payment returned"
+                response.errors[0].detail
+                if response.errors
+                else "No payment returned"
             )
             raise PaymentException(
                 f"Payment failed for {pay_object.payment_reference_id}: {error_message}"

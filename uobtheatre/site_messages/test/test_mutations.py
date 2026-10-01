@@ -92,9 +92,7 @@ def test_update_site_message(gql_client, with_permission):
             }
          }
         }
-    """ % (
-        to_global_id("SiteMessageNode", message.id)
-    )
+    """ % (to_global_id("SiteMessageNode", message.id))
 
     if with_permission:
         assign_perm("site_messages.change_message", gql_client.user)

@@ -6,7 +6,9 @@ from config.celery import app
 
 
 @app.task
-def send_emails(email_addresses: list[str], subject: str, plain_text: str, html: str):
+def send_emails(
+    email_addresses: list[str], subject: str, plain_text: str, html: str
+):
     """Send emails async"""
 
     from uobtheatre.mail.composer import MailComposer

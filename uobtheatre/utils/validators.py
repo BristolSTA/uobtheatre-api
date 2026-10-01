@@ -72,7 +72,9 @@ class Validator(abc.ABC):
         ```
         """
         errors = reduce(
-            operator.add, (filter(None, generator)), ValidationErrors(exceptions=[])
+            operator.add,
+            (filter(None, generator)),
+            ValidationErrors(exceptions=[]),
         )
         return errors or None
 

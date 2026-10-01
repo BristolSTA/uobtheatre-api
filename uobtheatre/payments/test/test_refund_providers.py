@@ -34,7 +34,9 @@ def test_refund_method_all():
     ],
 )
 def test_is_valid_refund_provider(payment_provider, refund_provider, is_valid):
-    assert payment_provider.is_valid_refund_provider(refund_provider) == is_valid
+    assert (
+        payment_provider.is_valid_refund_provider(refund_provider) == is_valid
+    )
 
 
 @pytest.mark.parametrize(
@@ -46,7 +48,8 @@ def test_automatic_refund_method(payment_method, automatic_refund_method_type):
         assert payment_method.automatic_refund_provider is None
     else:
         assert isinstance(
-            payment_method.automatic_refund_provider, automatic_refund_method_type
+            payment_method.automatic_refund_provider,
+            automatic_refund_method_type,
         )
 
 
@@ -266,7 +269,10 @@ def test_square_refund_custom_amount_refund(
         refund={
             "id": "abc",
             "status": "PENDING",
-            "amount_money": {"amount": custom_refund_amount, "currency": "GBP"},
+            "amount_money": {
+                "amount": custom_refund_amount,
+                "currency": "GBP",
+            },
             "payment_id": "abc",
             "order_id": "nRDUxsrkGgorM3g8AT64kCLBLa4F",
             "created_at": "2021-12-30T10:40:54.672Z",
@@ -319,7 +325,9 @@ def test_square_refund_custom_amount_too_high_refund(mock_square):
         }
     )
 
-    with mock_square(SquareRefund.client.refunds, "refund_payment", mock_response):
+    with mock_square(
+        SquareRefund.client.refunds, "refund_payment", mock_response
+    ):
         with pytest.raises(PaymentException):
             refund_method.refund(payment, payment.value + 1)
 
@@ -335,7 +343,9 @@ def test_square_refund_custom_amount_too_high_refund(mock_square):
     ],
 )
 def test_square_online_sync_transaction(data_fees, data_status):
-    payment = TransactionFactory(status=Transaction.Status.PENDING, provider_fee=None)
+    payment = TransactionFactory(
+        status=Transaction.Status.PENDING, provider_fee=None
+    )
 
     data = PaymentRefund(
         status=data_status,
@@ -391,7 +401,9 @@ def test_square_refund_sync_payment(mock_square, with_data):
     mock_response = RefundPaymentResponse(refund=data)
 
     with mock_square(SquareRefund.client.refunds, "get", mock_response):
-        payment.sync_transaction_with_provider(data=data if with_data else None)
+        payment.sync_transaction_with_provider(
+            data=data if with_data else None
+        )
         payment.refresh_from_db()
     assert payment.provider_fee == -10
     assert payment.status == Transaction.Status.COMPLETED
@@ -406,7 +418,9 @@ def test_square_refund_sync_payment_api_error(mock_square):
         status=Transaction.Status.PENDING,
     )
 
-    with mock_square(SquareRefund.client.refunds, "get", throw_default_exception=True):
+    with mock_square(
+        SquareRefund.client.refunds, "get", throw_default_exception=True
+    ):
         with pytest.raises(SquareException):
             payment.sync_transaction_with_provider()
             payment.refresh_from_db()
@@ -425,7 +439,9 @@ def test_square_refund_sync_payment_no_refund(mock_square):
     )
 
     with mock_square(
-        SquareRefund.client.refunds, "get", response=RefundPaymentResponse(refund=None)
+        SquareRefund.client.refunds,
+        "get",
+        response=RefundPaymentResponse(refund=None),
     ):
         with pytest.raises(PaymentException):
             payment.sync_transaction_with_provider()

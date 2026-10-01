@@ -19,6 +19,7 @@ from graphene.utils.str_converters import to_camel_case
 from graphene_django.types import ErrorType
 from sentry_sdk import capture_exception
 from square.core.api_error import ApiError
+from square.types.error import Error
 
 
 class ExceptionMiddleware:  # pragma: no cover
@@ -32,8 +33,10 @@ class ExceptionMiddleware:  # pragma: no cover
         capture_exception(exc)
         raise exc
 
-    def resolve(self, next, root, info, **kwargs):  # pylint: disable=redefined-builtin
-        return next(root, info, **kwargs).catch(self.on_error)
+    def resolve(
+        self, next, root, info, **kwargs
+    ):  # pylint: disable=redefined-builtin
+        return next(root, info, **kwargs)
 
 
 class NonFieldError(graphene.ObjectType):
@@ -75,24 +78,68 @@ class AuthOutput(MutationResult):
             return None
 
         if isinstance(self.errors, list):
-            non_field_errors = [
-                NonFieldError(error["message"], code=error["code"])
-                for error in self.errors  # pylint: disable=E1133
-            ]
-            return non_field_errors
+            parsed_errors = []
+            for error in self.errors:  # pylint: disable=E1133
+                if not isinstance(error, dict):
+                    parsed_errors.append(NonFieldError(str(error), code=None))
+                    continue
+
+                field_names = [
+                    key
+                    for key in error.keys()
+                    if key not in {"message", "code"}
+                ]
+                message = error.get("message")
+                if not message and field_names:
+                    message = error.get(field_names[0])
+
+                if field_names:
+                    parsed_errors.append(
+                        FieldError(
+                            message,
+                            field=field_names[0],
+                            code=error.get("code"),
+                        )
+                    )
+                else:
+                    parsed_errors.append(
+                        NonFieldError(message, code=error.get("code"))
+                    )
+
+            return parsed_errors
         if isinstance(self.errors, dict):
             non_field_errors = [
                 NonFieldError(error.message, code=error.code)
                 for error in self.errors.pop("field_errors", [])
             ]
-            field_errors = [
-                FieldError(error["message"], field=field, code=error["code"])
-                for field, errors in self.errors.items()
-                for error in errors
-            ]
+            field_errors = []
+            for field, errors in self.errors.items():
+                for error in errors:
+                    message = error.get("message") or next(
+                        (
+                            value
+                            for key, value in error.items()
+                            if key != "code"
+                        ),
+                        None,
+                    )
+                    if field == "nonFieldErrors":
+                        non_field_errors.append(
+                            NonFieldError(message, code=error.get("code"))
+                        )
+                    else:
+                        field_errors.append(
+                            FieldError(
+                                message,
+                                field=field,
+                                code=error.get("code"),
+                            )
+                        )
             return non_field_errors + field_errors
 
-        raise Exception("Internal error")  # pylint: disable=broad-exception-raised
+        raise Exception(  # pylint: disable=broad-exception-raised
+            "Internal error"
+        )
 
 
 class MutationException(Exception):
@@ -140,7 +187,9 @@ class GQLExceptions(MutationException):
     Many GQL errors
     """
 
-    def __init__(self, exceptions: Optional[Iterable[MutationException]] = None):
+    def __init__(
+        self, exceptions: Optional[Iterable[MutationException]] = None
+    ):
         super().__init__()
         self.exceptions = list(exceptions) if exceptions else []
 
@@ -181,14 +230,42 @@ class SquareException(GQLException):
         passthrough_error_categories = [
             "PAYMENT_METHOD_ERROR",
         ]
+        # Turn common Square errors into user-friendly messages
+        user_readable_error_details = {
+            "ADDRESS_VERIFICATION_FAILURE": "Your card details appear to be incorrect. Please check your details and try again.",
+            "CARD_EXPIRED": "Your card details appear to be incorrect. Please check your details and try again.",
+            "CVV_FAILURE": "Your card details appear to be incorrect. Please check your details and try again.",
+            "EXPIRATION_FAILURE": "Your card details appear to be incorrect. Please check your details and try again.",
+            "INVALID_EXPIRATION": "Your card details appear to be incorrect. Please check your details and try again.",
+            "INVALID_CARD": "Your card details appear to be incorrect. Please check your details and try again.",
+            "INVALID_PIN": "Your card details appear to be incorrect. Please check your details and try again.",
+            "PAN_FAILURE": "Your card details appear to be incorrect. Please check your details and try again.",
+            "BAD_EXPIRATION": "Your card details appear to be incorrect. Please check your details and try again.",
+            "GENERIC_DECLINE": "Square received a decline without any additional information. If the payment information seems correct, contact your card issuer to ask for more information.",
+            "INSUFFICIENT_FUNDS": "The funding source has insufficient funds to cover the payment.",
+            "INVALID_PHONE_NUMBER": "The provided phone number is invalid.",
+            "TRANSACTION_LIMIT": "The card issuer has determined the payment amount is either too high or too low.",
+            "CARD_DECLINED_VERIFICATION_REQUIRED": "The payment card was declined with a request for additional verification Square cannot process.",
+            "CHIP_INSERTION_REQUIRED": "The card issuer requires the card to be inserted into a chip reader, which Square cannot process.",
+        }
+
+        def get_user_readable_error_message(error_code: Optional[str]) -> str:
+            return user_readable_error_details.get(
+                str(error_code),
+                "There was an issue processing your payment (%s)" % error_code,
+            )
+
         error = (
-            api_error.errors[0] if api_error.errors and len(api_error.errors) else None
+            api_error.errors[0]
+            if api_error.errors and len(api_error.errors)
+            else None
         )
         message = (
             (
-                error.detail
+                get_user_readable_error_message(error.code)
                 if error.category in passthrough_error_categories
-                else "There was an issue processing your payment (%s)" % error.code
+                else "There was an issue processing your payment (%s)"
+                % error.code
             )
             if error
             else api_error.body
@@ -208,8 +285,14 @@ class BadRequestException(GQLException):
 
 
 class AuthorizationException(GQLException):
+    """
+    An exception for when a user is authenticated but doesn't have permission
+    """
+
     def __init__(
-        self, message="You are not authorized to perform this action", field=None
+        self,
+        message="You are not authorized to perform this action",
+        field=None,
     ):
         super().__init__(message=message, code=403, field=field)
 

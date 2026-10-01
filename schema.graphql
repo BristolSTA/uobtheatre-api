@@ -1,47 +1,473 @@
-schema {
-  query: Query
-  mutation: Mutation
+"""Defines base Query for api"""
+type Query {
+  siteMessages(
+    offset: Int
+    before: String
+    after: String
+    first: Int
+    last: Int
+    message: String
+    active: Boolean
+    indefiniteOverride: Boolean
+    displayStart: DateTime
+    eventStart: DateTime
+    eventEnd: DateTime
+    user: String
+    type: SiteMessagesMessageTypeChoices
+    dismissalPolicy: SiteMessagesMessageDismissalPolicyChoices
+    displayLocation: SiteMessagesMessageDisplayLocationChoices
+    title: String
+    id: ID
+    displayStart_Gte: DateTime
+    displayStart_Lte: DateTime
+    start: DateTime
+    start_Gte: DateTime
+    start_Lte: DateTime
+    end: DateTime
+    end_Gte: DateTime
+    end_Lte: DateTime
+    toDisplay: Boolean
+
+    """Ordering"""
+    orderBy: String
+  ): SiteMessageNodeConnection
+  siteMessage(messageId: IdInputField!): SiteMessageNode
+  images: [ImageNode]
+  paymentDevices(paymentProvider: PaymentProvider, paired: Boolean): [SquarePaymentDevice]
+  miscCosts(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String): MiscCostNodeConnection
+  bookings(
+    offset: Int
+    before: String
+    after: String
+    first: Int
+    last: Int
+    createdAt: DateTime
+    updatedAt: DateTime
+    status: BookingsBookingStatusChoices
+    user: String
+    creator: String
+    reference: String
+    performance: ID
+    adminDiscountPercentage: Float
+    accessibilityInfo: String
+    accessibilityInfoUpdatedAt: DateTime
+    previousAccessibilityInfo: String
+    expiresAt: DateTime
+    id: ID
+    statusIn: [String]
+
+    """Search"""
+    search: String
+
+    """Production Search"""
+    productionSearch: String
+
+    """Production Slug"""
+    productionSlug: String
+
+    """Performance ID"""
+    performanceId: String
+
+    """Checked In"""
+    checkedIn: Boolean
+
+    """Active Bookings"""
+    active: Boolean
+
+    """Expired Bookings"""
+    expired: Boolean
+
+    """Has Accessibility Info"""
+    hasAccessibilityInfo: Boolean
+
+    """Ordering"""
+    orderBy: String
+  ): BookingNodeConnection
+  me: ExtendedUserNode
+  societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String, userHasPermission: String): SocietyNodeConnection
+  society(slug: String!): SocietyNode
+  productions(
+    offset: Int
+    before: String
+    after: String
+    first: Int
+    last: Int
+    createdAt: DateTime
+    updatedAt: DateTime
+    name: String
+    subtitle: String
+    description: String
+    shortDescription: String
+    venues: ID
+    society: ID
+    status: ProductionsProductionStatusChoices
+    ageRating: Int
+    facebookEvent: String
+    contactEmail: String
+    contentWarnings: ID
+    productionAlert: String
+    slug: String
+    id: ID
+    userHasPermission: String
+    start: DateTime
+    start_Gte: DateTime
+    start_Lte: DateTime
+    end: DateTime
+    end_Gte: DateTime
+    end_Lte: DateTime
+
+    """Search"""
+    search: String
+
+    """Ordering"""
+    orderBy: String
+  ): ProductionNodeConnection
+  performances(
+    offset: Int
+    before: String
+    after: String
+    first: Int
+    last: Int
+    createdAt: DateTime
+    updatedAt: DateTime
+    production: ID
+    venue: ID
+    doorsOpen: DateTime
+    start: DateTime
+    end: DateTime
+    intervalDurationMins: Int
+    description: String
+    extraInformation: String
+    isRelaxed: Boolean
+    relaxedName: String
+    relaxedCategories: ID
+    disabled: Boolean
+    seatGroups: ID
+    capacity: Int
+    id: ID
+    hasBoxofficePermissions: Boolean
+    runOn: Date
+
+    """Ordering"""
+    orderBy: String
+  ): PerformanceNodeConnection
+  warnings(offset: Int, before: String, after: String, first: Int, last: Int, id: ID): ContentWarningNodeConnection
+  relaxedCategories(offset: Int, before: String, after: String, first: Int, last: Int, id: ID): RelaxedCategoryNodeConnection
+  production(id: IdInputField, slug: String): ProductionNode
+  performance(
+    """The ID of the object"""
+    id: ID!
+  ): PerformanceNode
+  venues(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String): VenueNodeConnection
+  venue(slug: String!): VenueNode
 }
 
-type AddressNode implements Node {
-  buildingName: String
-  buildingNumber: String
-  street: String!
-  city: String!
-  postcode: String!
-  what3words: String
-  latitude: Float
-  longitude: Float
+type SiteMessageNodeConnection {
+  """Pagination data for this connection."""
+  pageInfo: PageInfo!
+
+  """Contains the nodes in this connection."""
+  edges: [SiteMessageNodeEdge]!
+}
+
+"""
+The Relay compliant `PageInfo` type, containing data necessary to paginate this connection.
+"""
+type PageInfo {
+  """When paginating forwards, are there more items?"""
+  hasNextPage: Boolean!
+
+  """When paginating backwards, are there more items?"""
+  hasPreviousPage: Boolean!
+
+  """When paginating backwards, the cursor to continue."""
+  startCursor: String
+
+  """When paginating forwards, the cursor to continue."""
+  endCursor: String
+}
+
+"""A Relay edge containing a `SiteMessageNode` and its cursor."""
+type SiteMessageNodeEdge {
+  """The item at the end of the edge"""
+  node: SiteMessageNode
+
+  """A cursor for use in pagination"""
+  cursor: String!
+}
+
+type SiteMessageNode implements Node {
+  """The ID of the object"""
+  id: ID!
+
+  """The message displayed in the body of the banner."""
+  message: String!
+
+  """
+  Whether the message is active. Inactive messages will not be displayed, even if display_start is in the past.
+  """
+  active: Boolean!
+
+  """
+  If True, the message will be displayed without a Date/Time/Duration if it is ongoing, and without a duration if it is in the future. In addition, it will continue to display even after the event_end until either active or indefinite_override is set to False.
+  """
+  indefiniteOverride: Boolean!
+
+  """
+  When the message should start being displayed on the website. Used to schedule messages in advance, and to determine whether the message should be displayed.
+  """
+  displayStart: DateTime!
+
+  """
+  When the event will start. Used both to calculate duration, and displayed when in banner display location.
+  """
+  eventStart: DateTime!
+
+  """
+  When the event will end. Used both to calculate duration, which is displayed when in banner display location, and to determine whether the message should be displayed.
+  """
+  eventEnd: DateTime!
+
+  """
+  The type of message, which informs how it is displayed. Maintenance messages are displayed in yellow if upcoming, red if ongoing. Information messages are displayed in yellow information text. Alert messages are displayed in red text.
+  """
+  type: SiteMessagesMessageTypeChoices!
+
+  """
+  The policy for a message's dismissal. By default messages are dismissible, and once a message has been dismissed by a user, it will never reappear for them. Single-Session Only messages can be dismissed, but will reappear whenever the page is loaded. Prevented messages cannot be dismissed by the user: if used for a modal, this will essentially shut down that function (or the whole site, for a sitewide modal).
+  """
+  dismissalPolicy: SiteMessagesMessageDismissalPolicyChoices!
+
+  """
+  The location on the site where the message should be displayed. Banner messages are displayed in a banner at the top of the page. Sitewide Modal messages are displayed across the entire website. Booking Modal messages are displayed in a modal on the booking page. Production Creation/Edit Modal messages are displayed in a modal on the production creation and editing page.
+  """
+  displayLocation: SiteMessagesMessageDisplayLocationChoices!
+
+  """
+  A title for the message. Displayed prominently in modals. If used in a banner, it will override the default title based on message type (e.g. Urgent Future Alert).
+  """
+  title: String
+  eventDuration: Int
+  toDisplay: Boolean
+  creator: ExtendedUserNode
+}
+
+"""An object with an ID"""
+interface Node {
+  """The ID of the object"""
   id: ID!
 }
 
-type ArchiveAccount {
-  success: Boolean!
-  errors: [GQLErrorUnion!]
+"""
+The `DateTime` scalar type represents a DateTime
+value as specified by
+[iso8601](https://en.wikipedia.org/wiki/ISO_8601).
+"""
+scalar DateTime
+
+"""An enumeration."""
+enum SiteMessagesMessageTypeChoices {
+  """Maintenance"""
+  MAINTENANCE
+
+  """Information"""
+  INFORMATION
+
+  """Alert"""
+  ALERT
 }
 
-input BookingMutationInput {
-  performance: ID
-  adminDiscountPercentage: Float
-  accessibilityInfo: String
-  tickets: [TicketInputType]
-  userEmail: String
-  id: ID
-  clientMutationId: String
+"""An enumeration."""
+enum SiteMessagesMessageDismissalPolicyChoices {
+  """Dismissable (Default)"""
+  DEFAULT
+
+  """Single-Session Only"""
+  SINGLE
+
+  """Prevented"""
+  BANNED
 }
 
-type BookingMutationPayload {
-  booking: BookingNode
-  errors: [GQLErrorUnion!]
-  success: Boolean!
-  clientMutationId: String
+"""An enumeration."""
+enum SiteMessagesMessageDisplayLocationChoices {
+  """Banner"""
+  BANNER
+
+  """Sitewide Modal"""
+  SITEWIDE_MODAL
+
+  """Booking Modal"""
+  BOOKING_MODAL
+
+  """Production Creation/Edit Modal"""
+  PRODUCTION_CREATION_MODAL
+}
+
+"""Extends user node to add additional properties."""
+type ExtendedUserNode {
+  firstName: String!
+  lastName: String!
+  dateJoined: DateTime!
+  id: String
+  email: String!
+  bookings(
+    offset: Int
+    before: String
+    after: String
+    first: Int
+    last: Int
+    createdAt: DateTime
+    updatedAt: DateTime
+    status: BookingsBookingStatusChoices
+    user: String
+    creator: String
+    reference: String
+    performance: ID
+    adminDiscountPercentage: Float
+    accessibilityInfo: String
+    accessibilityInfoUpdatedAt: DateTime
+    previousAccessibilityInfo: String
+    expiresAt: DateTime
+    id: ID
+    statusIn: [String]
+
+    """Search"""
+    search: String
+
+    """Production Search"""
+    productionSearch: String
+
+    """Production Slug"""
+    productionSlug: String
+
+    """Performance ID"""
+    performanceId: String
+
+    """Checked In"""
+    checkedIn: Boolean
+
+    """Active Bookings"""
+    active: Boolean
+
+    """Expired Bookings"""
+    expired: Boolean
+
+    """Has Accessibility Info"""
+    hasAccessibilityInfo: Boolean
+
+    """Ordering"""
+    orderBy: String
+  ): BookingNodeConnection!
+  createdBookings(
+    offset: Int
+    before: String
+    after: String
+    first: Int
+    last: Int
+    createdAt: DateTime
+    updatedAt: DateTime
+    status: BookingsBookingStatusChoices
+    user: String
+    creator: String
+    reference: String
+    performance: ID
+    adminDiscountPercentage: Float
+    accessibilityInfo: String
+    accessibilityInfoUpdatedAt: DateTime
+    previousAccessibilityInfo: String
+    expiresAt: DateTime
+    id: ID
+    statusIn: [String]
+
+    """Search"""
+    search: String
+
+    """Production Search"""
+    productionSearch: String
+
+    """Production Slug"""
+    productionSlug: String
+
+    """Performance ID"""
+    performanceId: String
+
+    """Checked In"""
+    checkedIn: Boolean
+
+    """Active Bookings"""
+    active: Boolean
+
+    """Expired Bookings"""
+    expired: Boolean
+
+    """Has Accessibility Info"""
+    hasAccessibilityInfo: Boolean
+
+    """Ordering"""
+    orderBy: String
+  ): BookingNodeConnection!
+  createdSiteMessages(
+    offset: Int
+    before: String
+    after: String
+    first: Int
+    last: Int
+    message: String
+    active: Boolean
+    indefiniteOverride: Boolean
+    displayStart: DateTime
+    eventStart: DateTime
+    eventEnd: DateTime
+    user: String
+    type: SiteMessagesMessageTypeChoices
+    dismissalPolicy: SiteMessagesMessageDismissalPolicyChoices
+    displayLocation: SiteMessagesMessageDisplayLocationChoices
+    title: String
+    id: ID
+    displayStart_Gte: DateTime
+    displayStart_Lte: DateTime
+    start: DateTime
+    start_Gte: DateTime
+    start_Lte: DateTime
+    end: DateTime
+    end_Gte: DateTime
+    end_Lte: DateTime
+    toDisplay: Boolean
+
+    """Ordering"""
+    orderBy: String
+  ): SiteMessageNodeConnection!
+  pk: Int
+  archived: Boolean
+  verified: Boolean
+  secondaryEmail: String
+  permissions: [String]
+}
+
+type BookingNodeConnection {
+  """Pagination data for this connection."""
+  pageInfo: PageInfo!
+
+  """Contains the nodes in this connection."""
+  edges: [BookingNodeEdge]!
+}
+
+"""A Relay edge containing a `BookingNode` and its cursor."""
+type BookingNodeEdge {
+  """The item at the end of the edge"""
+  node: BookingNode
+
+  """A cursor for use in pagination"""
+  cursor: String!
 }
 
 type BookingNode implements Node {
+  """The ID of the object"""
   id: ID!
   createdAt: DateTime!
   updatedAt: DateTime!
-  status: BookingStatus!
+  status: BookingsBookingStatusChoices!
   user: ExtendedUserNode!
   creator: ExtendedUserNode!
   reference: String!
@@ -53,453 +479,36 @@ type BookingNode implements Node {
   expiresAt: DateTime!
   tickets: [TicketNode!]!
   priceBreakdown: PriceBreakdownNode
-  transactions(offset: Int, before: String, after: String, first: Int, last: Int, type: String, provider: String, createdAt: DateTime, id: ID): TransactionNodeConnection
+  transactions(offset: Int, before: String, after: String, first: Int, last: Int, type: PaymentsTransactionTypeChoices, provider: String, createdAt: DateTime, id: ID): TransactionNodeConnection
   expired: Boolean!
   salesBreakdown: SalesBreakdownNode
+
+  """
+  Whether the user can modify the accessibility information of this booking
+  """
   canModifyAccessibility: Boolean!
 }
 
-type BookingNodeConnection {
-  pageInfo: PageInfo!
-  edges: [BookingNodeEdge]!
-}
-
-type BookingNodeEdge {
-  node: BookingNode
-  cursor: String!
-}
-
-enum BookingStatus {
+"""An enumeration."""
+enum BookingsBookingStatusChoices {
+  """In Progress"""
   IN_PROGRESS
+
+  """Cancelled"""
   CANCELLED
+
+  """Paid"""
   PAID
+
+  """Refund Processing"""
   REFUND_PROCESSING
+
+  """Refunded"""
   REFUNDED
 }
 
-type CancelPayment {
-  success: Boolean!
-  errors: [GQLErrorUnion!]
-}
-
-type CastMemberNode implements Node {
-  id: ID!
-  name: String!
-  profilePicture: ImageNode
-  role: String
-  production: ProductionNode!
-}
-
-type CheckInBooking {
-  success: Boolean!
-  errors: [GQLErrorUnion!]
-  performance: PerformanceNode
-  booking: BookingNode
-}
-
-type ConcessionTypeBookingType {
-  concessionType: ConcessionTypeNode
-  price: Int
-  pricePounds: String
-}
-
-input ConcessionTypeMutationInput {
-  name: String
-  description: String
-  id: ID
-  clientMutationId: String
-}
-
-type ConcessionTypeMutationPayload {
-  concessionType: ConcessionTypeNode
-  errors: [GQLErrorUnion!]
-  success: Boolean!
-  clientMutationId: String
-}
-
-type ConcessionTypeNode implements Node {
-  name: String!
-  description: String
-  id: ID!
-}
-
-type ContentWarningNode implements Node {
-  shortDescription: String!
-  longDescription: String
-  id: ID!
-}
-
-type ContentWarningNodeConnection {
-  pageInfo: PageInfo!
-  edges: [ContentWarningNodeEdge]!
-}
-
-type ContentWarningNodeEdge {
-  node: ContentWarningNode
-  cursor: String!
-}
-
-type CrewMemberNode implements Node {
-  id: ID!
-  name: String!
-  role: CrewRoleNode
-  production: ProductionNode!
-}
-
-type CrewMemberNodeConnection {
-  pageInfo: PageInfo!
-  edges: [CrewMemberNodeEdge]!
-}
-
-type CrewMemberNodeEdge {
-  node: CrewMemberNode
-  cursor: String!
-}
-
-enum CrewRoleDepartment {
-  LIGHTING
-  SOUND
-  AV
-  STAGE_MANAGEMENT
-  PRYO
-  SET
-  MISC
-}
-
-type CrewRoleNode implements Node {
-  id: ID!
-  name: String!
-  department: CrewRoleDepartment!
-  crewMembers(offset: Int, before: String, after: String, first: Int, last: Int): CrewMemberNodeConnection!
-}
-
-type DataSetNode {
-  name: String!
-  headings: [String]!
-  data: [[String]]!
-}
-
-scalar Date
-
-scalar DateTime
-
-type DeleteAccount {
-  success: Boolean!
-  errors: [GQLErrorUnion!]
-}
-
-type DeleteBooking {
-  success: Boolean!
-  errors: [GQLErrorUnion!]
-}
-
-type DeleteConcessionTypeMutation {
-  success: Boolean!
-  errors: [GQLErrorUnion!]
-}
-
-type DeleteDiscountMutation {
-  success: Boolean!
-  errors: [GQLErrorUnion!]
-}
-
-type DeleteDiscountRequirementMutation {
-  success: Boolean!
-  errors: [GQLErrorUnion!]
-}
-
-type DeletePerformanceMutation {
-  success: Boolean!
-  errors: [GQLErrorUnion!]
-}
-
-type DeletePerformanceSeatGroupMutation {
-  success: Boolean!
-  errors: [GQLErrorUnion!]
-}
-
-input DiscountMutationInput {
-  percentage: Float
-  performances: [ID]
-  seatGroup: ID
-  id: ID
-  clientMutationId: String
-}
-
-type DiscountMutationPayload {
-  discount: DiscountNode
-  errors: [GQLErrorUnion!]
-  success: Boolean!
-  clientMutationId: String
-}
-
-type DiscountNode implements Node {
-  id: ID!
-  name: String
-  percentage: Float!
-  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, intervalDurationMins: Int, description: String, extraInformation: String, isRelaxed: Boolean, relaxedName: String, relaxedCategories: [ID], disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, hasBoxofficePermissions: Boolean, runOn: Date, orderBy: String): PerformanceNodeConnection!
-  seatGroup: SeatGroupNode
-  requirements: [DiscountRequirementNode!]
-}
-
-type DiscountNodeConnection {
-  pageInfo: PageInfo!
-  edges: [DiscountNodeEdge]!
-}
-
-type DiscountNodeEdge {
-  node: DiscountNode
-  cursor: String!
-}
-
-input DiscountRequirementMutationInput {
-  number: Int
-  discount: ID
-  concessionType: ID
-  id: ID
-  clientMutationId: String
-}
-
-type DiscountRequirementMutationPayload {
-  discountRequirement: DiscountRequirementNode
-  errors: [GQLErrorUnion!]
-  success: Boolean!
-  clientMutationId: String
-}
-
-type DiscountRequirementNode implements Node {
-  id: ID!
-  number: Int!
-  discount: DiscountNode!
-  concessionType: ConcessionTypeNode!
-}
-
-type ExtendedUserNode {
-  firstName: String!
-  lastName: String!
-  dateJoined: DateTime!
-  id: String
-  email: String!
-  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, user: ID, creator: ID, reference: String, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, accessibilityInfoUpdatedAt: DateTime, previousAccessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, productionSearch: String, productionSlug: String, performanceId: String, checkedIn: Boolean, active: Boolean, expired: Boolean, hasAccessibilityInfo: Boolean, orderBy: String): BookingNodeConnection!
-  createdBookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, user: ID, creator: ID, reference: String, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, accessibilityInfoUpdatedAt: DateTime, previousAccessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, productionSearch: String, productionSlug: String, performanceId: String, checkedIn: Boolean, active: Boolean, expired: Boolean, hasAccessibilityInfo: Boolean, orderBy: String): BookingNodeConnection!
-  createdSiteMessages(offset: Int, before: String, after: String, first: Int, last: Int, message: String, active: Boolean, indefiniteOverride: Boolean, displayStart: DateTime, eventStart: DateTime, eventEnd: DateTime, creator: ID, type: String, dismissalPolicy: String, displayLocation: String, title: String, id: ID, displayStart_Gte: DateTime, displayStart_Lte: DateTime, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, toDisplay: Boolean, orderBy: String): SiteMessageNodeConnection!
-  pk: Int
-  archived: Boolean
-  verified: Boolean
-  secondaryEmail: String
-  permissions: [String]
-}
-
-type FieldError {
-  message: String
-  field: String
-  code: String
-}
-
-enum FinancialTransferMethod {
-  INTERNAL
-  BACS
-}
-
-type FinancialTransferNode {
-  id: ID!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  society: SocietyNode
-  value: Int!
-  user: ExtendedUserNode
-  method: FinancialTransferMethod!
-  reason: String
-}
-
-union GQLErrorUnion = FieldError | NonFieldError
-
-type GenerateReport {
-  success: Boolean!
-  errors: [GQLErrorUnion!]
-  downloadUri: String
-  report: ReportNode
-}
-
-scalar GenericScalar
-
-scalar IdInputField
-
-type ImageNode implements Node {
-  id: ID!
-  altText: String
-  url: String
-}
-
-enum MessageDismissalPolicy {
-  DEFAULT
-  SINGLE
-  BANNED
-}
-
-enum MessageDisplayLocation {
-  BANNER
-  SITEWIDE_MODAL
-  BOOKING_MODAL
-  PRODUCTION_CREATION_MODAL
-}
-
-enum MessageType {
-  MAINTENANCE
-  INFORMATION
-  ALERT
-}
-
-type MetaItemNode {
-  name: String!
-  value: String!
-}
-
-type MiscCostNode implements Node {
-  id: ID!
-  name: String!
-  description: String
-  percentage: Float
-  value: Float
-}
-
-type MiscCostNodeConnection {
-  pageInfo: PageInfo!
-  edges: [MiscCostNodeEdge]!
-}
-
-type MiscCostNodeEdge {
-  node: MiscCostNode
-  cursor: String!
-}
-
-type Mutation {
-  siteMessage(input: SiteMessageMutationInput!): SiteMessageMutationPayload
-  recordFinancialTransfer(method: TransferMethodEnum!, reason: String, societyId: IdInputField!, value: Int!): RecordFinancialTransfer
-  concessionType(input: ConcessionTypeMutationInput!): ConcessionTypeMutationPayload
-  deleteConcessionType(id: IdInputField!): DeleteConcessionTypeMutation
-  discount(input: DiscountMutationInput!): DiscountMutationPayload
-  deleteDiscount(id: IdInputField!): DeleteDiscountMutation
-  discountRequirement(input: DiscountRequirementMutationInput!): DiscountRequirementMutationPayload
-  deleteDiscountRequirement(id: IdInputField!): DeleteDiscountRequirementMutation
-  register(turnstileToken: String!, email: String!, firstName: String!, lastName: String!, password1: String!, password2: String!): RegisterTurnstile
-  verifyAccount(token: String!): VerifyAccount
-  resendActivationEmail(email: String!): ResendActivationEmail
-  sendPasswordResetEmail(email: String!): SendPasswordResetEmail
-  passwordReset(token: String!, newPassword1: String!, newPassword2: String!): PasswordReset
-  passwordSet(token: String!, newPassword1: String!, newPassword2: String!): PasswordSet
-  passwordChange(oldPassword: String!, newPassword1: String!, newPassword2: String!): PasswordChange
-  updateAccount(firstName: String, lastName: String): UpdateAccount
-  archiveAccount(password: String!): ArchiveAccount
-  deleteAccount(password: String!): DeleteAccount
-  sendSecondaryEmailActivation(email: String!, password: String!): SendSecondaryEmailActivation
-  verifySecondaryEmail(token: String!): VerifySecondaryEmail
-  swapEmails(password: String!): SwapEmails
-  removeSecondaryEmail(password: String!): RemoveSecondaryEmail
-  login(password: String!, email: String): ObtainJSONWebToken
-  verifyToken(token: String!): VerifyToken
-  refreshToken(refreshToken: String!): RefreshToken
-  revokeToken(refreshToken: String!): RevokeToken
-  production(input: ProductionMutationInput!): ProductionMutationPayload
-  productionPermissions(id: IdInputField!, permissions: [String]!, userEmail: String!): ProductionPermissionsMutation
-  performance(input: PerformanceMutationInput!): PerformanceMutationPayload
-  deletePerformance(id: IdInputField!): DeletePerformanceMutation
-  performanceSeatGroup(input: PerformanceSeatGroupMutationInput!): PerformanceSeatGroupMutationPayload
-  deletePerformanceSeatGroup(id: IdInputField!): DeletePerformanceSeatGroupMutation
-  setProductionStatus(message: String, productionId: IdInputField!, status: Status): SetProductionStatus
-  cancelPayment(paymentId: IdInputField!): CancelPayment
-  generateReport(endTime: DateTime, name: String!, options: [ReportOption], startTime: DateTime): GenerateReport
-  booking(input: BookingMutationInput!): BookingMutationPayload
-  updateBookingAccessibilityInfo(accessibilityInfo: String, bookingId: IdInputField!): UpdateBookingAccessibilityInfo
-  deleteBooking(id: IdInputField!): DeleteBooking
-  payBooking(deviceId: String, id: IdInputField!, idempotencyKey: String, nonce: String, paymentProvider: PaymentProvider, price: Int!, verifyToken: String): PayBooking
-  checkInBooking(bookingReference: String!, performance: IdInputField!, tickets: [TicketIDInput]!): CheckInBooking
-  uncheckInBooking(bookingReference: String!, performance: IdInputField!, tickets: [TicketIDInput]!): UnCheckInBooking
-}
-
-interface Node {
-  id: ID!
-}
-
-type NonFieldError {
-  message: String
-  code: String
-}
-
-type ObtainJSONWebToken {
-  token: String
-  success: Boolean!
-  errors: [GQLErrorUnion!]
-  user: UserNode
-  unarchiving: Boolean
-  refreshToken: String
-}
-
-type PageInfo {
-  hasNextPage: Boolean!
-  hasPreviousPage: Boolean!
-  startCursor: String
-  endCursor: String
-}
-
-type PasswordChange {
-  success: Boolean!
-  errors: [GQLErrorUnion!]
-  refreshToken: String
-  token: String
-}
-
-type PasswordReset {
-  success: Boolean!
-  errors: [GQLErrorUnion!]
-}
-
-type PasswordSet {
-  success: Boolean!
-  errors: [GQLErrorUnion!]
-}
-
-type PayBooking {
-  success: Boolean!
-  errors: [GQLErrorUnion!]
-  booking: BookingNode
-  payment: TransactionNode
-}
-
-union PayObjectUnion = BookingNode
-
-enum PaymentProvider {
-  CASH
-  CARD
-  SQUARE_POS
-  SQUARE_ONLINE
-}
-
-input PerformanceMutationInput {
-  venue: ID
-  doorsOpen: DateTime
-  start: DateTime
-  end: DateTime
-  intervalDurationMins: Int
-  description: String
-  disabled: Boolean
-  isRelaxed: Boolean
-  relaxedName: String
-  relaxedCategories: [ID]
-  capacity: Int
-  production: ID
-  id: ID
-  clientMutationId: String
-}
-
-type PerformanceMutationPayload {
-  performance: PerformanceNode
-  errors: [GQLErrorUnion!]
-  success: Boolean!
-  clientMutationId: String
-}
-
 type PerformanceNode implements Node {
+  """The ID of the object"""
   id: ID!
   createdAt: DateTime!
   updatedAt: DateTime!
@@ -517,8 +526,65 @@ type PerformanceNode implements Node {
   disabled: Boolean!
   seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
   capacity: Int
-  discounts(offset: Int, before: String, after: String, first: Int, last: Int, group: Boolean, id: ID): DiscountNodeConnection!
-  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, user: ID, creator: ID, reference: String, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, accessibilityInfoUpdatedAt: DateTime, previousAccessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, productionSearch: String, productionSlug: String, performanceId: String, checkedIn: Boolean, active: Boolean, expired: Boolean, hasAccessibilityInfo: Boolean, orderBy: String): BookingNodeConnection!
+  discounts(
+    offset: Int
+    before: String
+    after: String
+    first: Int
+    last: Int
+
+    """Group"""
+    group: Boolean
+    id: ID
+  ): DiscountNodeConnection!
+  bookings(
+    offset: Int
+    before: String
+    after: String
+    first: Int
+    last: Int
+    createdAt: DateTime
+    updatedAt: DateTime
+    status: BookingsBookingStatusChoices
+    user: String
+    creator: String
+    reference: String
+    performance: ID
+    adminDiscountPercentage: Float
+    accessibilityInfo: String
+    accessibilityInfoUpdatedAt: DateTime
+    previousAccessibilityInfo: String
+    expiresAt: DateTime
+    id: ID
+    statusIn: [String]
+
+    """Search"""
+    search: String
+
+    """Production Search"""
+    productionSearch: String
+
+    """Production Slug"""
+    productionSlug: String
+
+    """Performance ID"""
+    performanceId: String
+
+    """Checked In"""
+    checkedIn: Boolean
+
+    """Active Bookings"""
+    active: Boolean
+
+    """Expired Bookings"""
+    expired: Boolean
+
+    """Has Accessibility Info"""
+    hasAccessibilityInfo: Boolean
+
+    """Ordering"""
+    orderBy: String
+  ): BookingNodeConnection!
   capacityRemaining: Int
   ticketOptions: [PerformanceSeatGroupNode]
   minSeatPrice: Int
@@ -531,30 +597,576 @@ type PerformanceNode implements Node {
   salesBreakdown: SalesBreakdownNode
 }
 
-type PerformanceNodeConnection {
-  pageInfo: PageInfo!
-  edges: [PerformanceNodeEdge]!
+type ProductionNode implements Node {
+  """The ID of the object"""
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  name: String!
+  subtitle: String
+  description: String
+  shortDescription: String
+  venues: [VenueNode!]
+  society: SocietyNode
+  coverImage: ImageNode
+  posterImage: ImageNode
+  featuredImage: ImageNode
+  status: ProductionsProductionStatusChoices!
+  ageRating: Int
+  facebookEvent: String
+  contactEmail: String
+  contentWarnings: [ProductionContentWarningNode!]
+  productionAlert: String
+  slug: String!
+  cast: [CastMemberNode!]
+  productionTeam: [ProductionTeamMemberNode!]
+  crew: [CrewMemberNode!]
+  performances(
+    offset: Int
+    before: String
+    after: String
+    first: Int
+    last: Int
+    createdAt: DateTime
+    updatedAt: DateTime
+    production: ID
+    venue: ID
+    doorsOpen: DateTime
+    start: DateTime
+    end: DateTime
+    intervalDurationMins: Int
+    description: String
+    extraInformation: String
+    isRelaxed: Boolean
+    relaxedName: String
+    relaxedCategories: ID
+    disabled: Boolean
+    seatGroups: ID
+    capacity: Int
+    id: ID
+    hasBoxofficePermissions: Boolean
+    runOn: Date
+
+    """Ordering"""
+    orderBy: String
+  ): PerformanceNodeConnection!
+  assignedUsers: [UserPermissionsNode]
+  assignablePermissions: [PermissionNode]
+  permissions: [String]
+  start: DateTime
+  end: DateTime
+  isBookable: Boolean!
+  minSeatPrice: Int
+  salesBreakdown: SalesBreakdownNode
+  totalCapacity: Int!
+  totalTicketsSold: Int!
 }
 
-type PerformanceNodeEdge {
-  node: PerformanceNode
+type VenueNode implements Node {
+  """The ID of the object"""
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  name: String!
+  internalCapacity: Int!
+  description: String
+  accessibilityInfo: String
+  accessibilityShort: String
+
+  """Contact email for the venue rather than production team"""
+  email: String
+  website: String
+  address: AddressNode!
+  image: ImageNode!
+  publiclyListed: Boolean!
+  slug: String!
+  seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
+  performances(
+    offset: Int
+    before: String
+    after: String
+    first: Int
+    last: Int
+    createdAt: DateTime
+    updatedAt: DateTime
+    production: ID
+    venue: ID
+    doorsOpen: DateTime
+    start: DateTime
+    end: DateTime
+    intervalDurationMins: Int
+    description: String
+    extraInformation: String
+    isRelaxed: Boolean
+    relaxedName: String
+    relaxedCategories: ID
+    disabled: Boolean
+    seatGroups: ID
+    capacity: Int
+    id: ID
+    hasBoxofficePermissions: Boolean
+    runOn: Date
+
+    """Ordering"""
+    orderBy: String
+  ): PerformanceNodeConnection!
+  productionSet(
+    offset: Int
+    before: String
+    after: String
+    first: Int
+    last: Int
+    createdAt: DateTime
+    updatedAt: DateTime
+    name: String
+    subtitle: String
+    description: String
+    shortDescription: String
+    venues: ID
+    society: ID
+    status: ProductionsProductionStatusChoices
+    ageRating: Int
+    facebookEvent: String
+    contactEmail: String
+    contentWarnings: ID
+    productionAlert: String
+    slug: String
+    id: ID
+    userHasPermission: String
+    start: DateTime
+    start_Gte: DateTime
+    start_Lte: DateTime
+    end: DateTime
+    end_Gte: DateTime
+    end_Lte: DateTime
+
+    """Search"""
+    search: String
+
+    """Ordering"""
+    orderBy: String
+  ): ProductionNodeConnection!
+  productions(
+    offset: Int
+    before: String
+    after: String
+    first: Int
+    last: Int
+    createdAt: DateTime
+    updatedAt: DateTime
+    name: String
+    subtitle: String
+    description: String
+    shortDescription: String
+    venues: ID
+    society: ID
+    status: ProductionsProductionStatusChoices
+    ageRating: Int
+    facebookEvent: String
+    contactEmail: String
+    contentWarnings: ID
+    productionAlert: String
+    slug: String
+    id: ID
+    userHasPermission: String
+    start: DateTime
+    start_Gte: DateTime
+    start_Lte: DateTime
+    end: DateTime
+    end_Gte: DateTime
+    end_Lte: DateTime
+
+    """Search"""
+    search: String
+
+    """Ordering"""
+    orderBy: String
+  ): ProductionNodeConnection
+}
+
+type AddressNode implements Node {
+  buildingName: String
+  buildingNumber: String
+  street: String!
+  city: String!
+  postcode: String!
+
+  """A what3words address, taking the form '///word.word.word'"""
+  what3words: String
+  latitude: Float
+  longitude: Float
+
+  """The ID of the object"""
+  id: ID!
+}
+
+type ImageNode implements Node {
+  """The ID of the object"""
+  id: ID!
+  altText: String
+  url: String
+}
+
+type SeatGroupNodeConnection {
+  """Pagination data for this connection."""
+  pageInfo: PageInfo!
+
+  """Contains the nodes in this connection."""
+  edges: [SeatGroupNodeEdge]!
+}
+
+"""A Relay edge containing a `SeatGroupNode` and its cursor."""
+type SeatGroupNodeEdge {
+  """The item at the end of the edge"""
+  node: SeatGroupNode
+
+  """A cursor for use in pagination"""
   cursor: String!
 }
 
-input PerformanceSeatGroupMutationInput {
-  seatGroup: ID
-  performance: ID
-  price: Int
+type SeatGroupNode implements Node {
+  name: String!
+  description: String
+  venue: VenueNode!
   capacity: Int
-  id: ID
-  clientMutationId: String
+  isInternal: Boolean!
+
+  """The ID of the object"""
+  id: ID!
 }
 
-type PerformanceSeatGroupMutationPayload {
-  performanceSeatGroup: PerformanceSeatGroupNode
-  errors: [GQLErrorUnion!]
-  success: Boolean!
-  clientMutationId: String
+type PerformanceNodeConnection {
+  """Pagination data for this connection."""
+  pageInfo: PageInfo!
+
+  """Contains the nodes in this connection."""
+  edges: [PerformanceNodeEdge]!
+}
+
+"""A Relay edge containing a `PerformanceNode` and its cursor."""
+type PerformanceNodeEdge {
+  """The item at the end of the edge"""
+  node: PerformanceNode
+
+  """A cursor for use in pagination"""
+  cursor: String!
+}
+
+"""
+The `Date` scalar type represents a Date
+value as specified by
+[iso8601](https://en.wikipedia.org/wiki/ISO_8601).
+"""
+scalar Date
+
+type ProductionNodeConnection {
+  """Pagination data for this connection."""
+  pageInfo: PageInfo!
+
+  """Contains the nodes in this connection."""
+  edges: [ProductionNodeEdge]!
+}
+
+"""A Relay edge containing a `ProductionNode` and its cursor."""
+type ProductionNodeEdge {
+  """The item at the end of the edge"""
+  node: ProductionNode
+
+  """A cursor for use in pagination"""
+  cursor: String!
+}
+
+"""An enumeration."""
+enum ProductionsProductionStatusChoices {
+  """Draft"""
+  DRAFT
+
+  """Pending"""
+  PENDING
+
+  """Approved"""
+  APPROVED
+
+  """Published"""
+  PUBLISHED
+
+  """Closed"""
+  CLOSED
+
+  """Complete"""
+  COMPLETE
+}
+
+type SocietyNode implements Node {
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  name: String!
+  slug: String!
+  description: String!
+  logo: ImageNode!
+  banner: ImageNode!
+  website: String
+  contact: String
+  members: [ExtendedUserNode!]!
+
+  """If true, society productions are included in automated reporting."""
+  suStatus: Boolean!
+  productions(
+    offset: Int
+    before: String
+    after: String
+    first: Int
+    last: Int
+    createdAt: DateTime
+    updatedAt: DateTime
+    name: String
+    subtitle: String
+    description: String
+    shortDescription: String
+    venues: ID
+    society: ID
+    status: ProductionsProductionStatusChoices
+    ageRating: Int
+    facebookEvent: String
+    contactEmail: String
+    contentWarnings: ID
+    productionAlert: String
+    slug: String
+    id: ID
+    userHasPermission: String
+    start: DateTime
+    start_Gte: DateTime
+    start_Lte: DateTime
+    end: DateTime
+    end_Gte: DateTime
+    end_Lte: DateTime
+
+    """Search"""
+    search: String
+
+    """Ordering"""
+    orderBy: String
+  ): ProductionNodeConnection!
+
+  """The ID of the object"""
+  id: ID!
+  permissions: [String]
+}
+
+type ProductionContentWarningNode implements Node {
+  """The ID of the object"""
+  id: ID!
+  production: ProductionNode!
+  warning: ContentWarningNode!
+  information: String
+}
+
+type ContentWarningNode implements Node {
+  shortDescription: String!
+  longDescription: String
+
+  """The ID of the object"""
+  id: ID!
+}
+
+type CastMemberNode implements Node {
+  """The ID of the object"""
+  id: ID!
+  name: String!
+  profilePicture: ImageNode
+  role: String
+  production: ProductionNode!
+}
+
+type ProductionTeamMemberNode implements Node {
+  """The ID of the object"""
+  id: ID!
+  name: String!
+  role: String
+  production: ProductionNode!
+}
+
+type CrewMemberNode implements Node {
+  """The ID of the object"""
+  id: ID!
+  name: String!
+  role: CrewRoleNode
+  production: ProductionNode!
+}
+
+type CrewRoleNode implements Node {
+  """The ID of the object"""
+  id: ID!
+  name: String!
+  department: ProductionsCrewRoleDepartmentChoices!
+  crewMembers(offset: Int, before: String, after: String, first: Int, last: Int): CrewMemberNodeConnection!
+}
+
+"""An enumeration."""
+enum ProductionsCrewRoleDepartmentChoices {
+  """Lighting"""
+  LIGHTING
+
+  """Sound"""
+  SOUND
+
+  """AV"""
+  AV
+
+  """Stage Management"""
+  STAGE_MANAGEMENT
+
+  """Pyrotechnics"""
+  PRYO
+
+  """Set"""
+  SET
+
+  """Miscellaneous"""
+  MISC
+}
+
+type CrewMemberNodeConnection {
+  """Pagination data for this connection."""
+  pageInfo: PageInfo!
+
+  """Contains the nodes in this connection."""
+  edges: [CrewMemberNodeEdge]!
+}
+
+"""A Relay edge containing a `CrewMemberNode` and its cursor."""
+type CrewMemberNodeEdge {
+  """The item at the end of the edge"""
+  node: CrewMemberNode
+
+  """A cursor for use in pagination"""
+  cursor: String!
+}
+
+type UserPermissionsNode {
+  user: ExtendedUserNode
+  assignedPermissions: [String]
+}
+
+type PermissionNode {
+  name: String
+  description: String
+  userCanAssign: Boolean
+}
+
+type SalesBreakdownNode {
+  totalPayments: Int!
+  totalCardPayments: Int!
+  totalRefunds: Int!
+  totalCardRefunds: Int!
+  netTransactions: Int!
+  netCardTransactions: Int!
+  providerPaymentValue: Int!
+  appFee: Int!
+  appPaymentValue: Int!
+  societyTransferValue: Int!
+  societyRevenue: Int!
+}
+
+type RelaxedCategoryNode implements Node {
+  """
+  Short description of the category, displayed in the categories display as the 'title' of each category.
+  """
+  shortDescription: String!
+
+  """
+  Long description of the category only shown one the user expands the category in the categories list.
+  """
+  longDescription: String
+
+  """
+  Any additional information that helps the production team to decide whether to select this category – only shown on the admin panel.
+  """
+  helpText: String
+
+  """
+  Whether this category is part of the 'Relaxed Performance' default selections.
+  """
+  defaultRelaxed: Boolean!
+
+  """
+  Whether this category is part of the 'Sensory Friendly Performance' default selections.
+  """
+  defaultSensoryFriendly: Boolean!
+
+  """The ID of the object"""
+  id: ID!
+}
+
+type DiscountNodeConnection {
+  """Pagination data for this connection."""
+  pageInfo: PageInfo!
+
+  """Contains the nodes in this connection."""
+  edges: [DiscountNodeEdge]!
+}
+
+"""A Relay edge containing a `DiscountNode` and its cursor."""
+type DiscountNodeEdge {
+  """The item at the end of the edge"""
+  node: DiscountNode
+
+  """A cursor for use in pagination"""
+  cursor: String!
+}
+
+type DiscountNode implements Node {
+  """The ID of the object"""
+  id: ID!
+  name: String
+  percentage: Float!
+  performances(
+    offset: Int
+    before: String
+    after: String
+    first: Int
+    last: Int
+    createdAt: DateTime
+    updatedAt: DateTime
+    production: ID
+    venue: ID
+    doorsOpen: DateTime
+    start: DateTime
+    end: DateTime
+    intervalDurationMins: Int
+    description: String
+    extraInformation: String
+    isRelaxed: Boolean
+    relaxedName: String
+    relaxedCategories: ID
+    disabled: Boolean
+    seatGroups: ID
+    capacity: Int
+    id: ID
+    hasBoxofficePermissions: Boolean
+    runOn: Date
+
+    """Ordering"""
+    orderBy: String
+  ): PerformanceNodeConnection!
+  seatGroup: SeatGroupNode
+  requirements: [DiscountRequirementNode!]
+}
+
+type DiscountRequirementNode implements Node {
+  """The ID of the object"""
+  id: ID!
+  number: Int!
+  discount: DiscountNode!
+  concessionType: ConcessionTypeNode!
+}
+
+type ConcessionTypeNode implements Node {
+  name: String!
+  description: String
+
+  """The ID of the object"""
+  id: ID!
 }
 
 type PerformanceSeatGroupNode implements Node {
@@ -562,10 +1174,24 @@ type PerformanceSeatGroupNode implements Node {
   performance: PerformanceNode!
   price: Int!
   capacity: Int!
+
+  """The ID of the object"""
   id: ID!
   capacityRemaining: Int
   numberTicketsSold: Int
   concessionTypes: [ConcessionTypeBookingType]
+}
+
+"""
+Node for ConcessionType which can be Booked.
+
+This object gives the information about a ConcessionType for a given
+production. It includes the concession type and its pricing.
+"""
+type ConcessionTypeBookingType {
+  concessionType: ConcessionTypeNode
+  price: Int
+  pricePounds: String
 }
 
 type PerformanceTicketsBreakdown {
@@ -576,13 +1202,29 @@ type PerformanceTicketsBreakdown {
   totalTicketsAvailable: Int!
 }
 
-type PermissionNode {
-  name: String
-  description: String
-  userCanAssign: Boolean
+type TicketNode implements Node {
+  """The ID of the object"""
+  id: ID!
+  seatGroup: SeatGroupNode!
+  booking: BookingNode!
+  concessionType: ConcessionTypeNode!
+  seat: SeatNode
+  checkedInAt: DateTime
+  checkedInUser: ExtendedUserNode
+  checkedIn: Boolean
+  checkedInBy: ExtendedUserNode
+}
+
+type SeatNode implements Node {
+  row: String
+  number: String
+
+  """The ID of the object"""
+  id: ID!
 }
 
 type PriceBreakdownNode implements Node {
+  """The ID of the object"""
   id: ID!
   tickets: [PriceBreakdownTicketNode]
   ticketsPrice: Int!
@@ -602,11 +1244,1098 @@ type PriceBreakdownTicketNode {
   totalPrice: Int!
 }
 
-type ProductionContentWarningNode implements Node {
+type MiscCostNode implements Node {
+  """The ID of the object"""
   id: ID!
-  production: ProductionNode!
-  warning: ContentWarningNode!
-  information: String
+  name: String!
+  description: String
+  percentage: Float
+  value: Float
+}
+
+type TransactionNodeConnection {
+  """Pagination data for this connection."""
+  pageInfo: PageInfo!
+
+  """Contains the nodes in this connection."""
+  edges: [TransactionNodeEdge]!
+}
+
+"""A Relay edge containing a `TransactionNode` and its cursor."""
+type TransactionNodeEdge {
+  """The item at the end of the edge"""
+  node: TransactionNode
+
+  """A cursor for use in pagination"""
+  cursor: String!
+}
+
+type TransactionNode implements Node {
+  """The ID of the object"""
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  type: PaymentsTransactionTypeChoices!
+  status: PaymentsTransactionStatusChoices!
+  providerTransactionId: String
+  providerName: PaymentsTransactionProviderNameChoices!
+  value: Int!
+  currency: String!
+  cardBrand: String
+  last4: String
+  providerFee: Int
+  appFee: Int
+  url: String
+  payObject: PayObjectUnion
+}
+
+"""An enumeration."""
+enum PaymentsTransactionTypeChoices {
+  """Payment"""
+  PAYMENT
+
+  """Refund"""
+  REFUND
+}
+
+"""An enumeration."""
+enum PaymentsTransactionStatusChoices {
+  """In progress"""
+  PENDING
+
+  """Completed"""
+  COMPLETED
+
+  """Failed"""
+  FAILED
+}
+
+"""An enumeration."""
+enum PaymentsTransactionProviderNameChoices {
+  """CASH"""
+  CASH
+
+  """CARD"""
+  CARD
+
+  """SQUARE_POS"""
+  SQUARE_POS
+
+  """SQUARE_ONLINE"""
+  SQUARE_ONLINE
+
+  """MANUAL_CARD_REFUND"""
+  MANUAL_CARD_REFUND
+
+  """SQUARE_REFUND"""
+  SQUARE_REFUND
+}
+
+union PayObjectUnion = BookingNode
+
+"""
+Input field used for global ID in mutation.
+
+When accepting a global id in a mutation (local ids should never be used)
+this Field should be used. The value received by the mutate function will
+then contain the local id (integer value).
+"""
+scalar IdInputField
+
+"""Graphql object for square device"""
+type SquarePaymentDevice {
+  id: String
+  name: String
+  code: String
+  deviceId: String
+  locationId: String
+  productType: String
+  status: String
+}
+
+"""An enumeration."""
+enum PaymentProvider {
+  CASH
+  CARD
+  SQUARE_POS
+  SQUARE_ONLINE
+}
+
+type MiscCostNodeConnection {
+  """Pagination data for this connection."""
+  pageInfo: PageInfo!
+
+  """Contains the nodes in this connection."""
+  edges: [MiscCostNodeEdge]!
+}
+
+"""A Relay edge containing a `MiscCostNode` and its cursor."""
+type MiscCostNodeEdge {
+  """The item at the end of the edge"""
+  node: MiscCostNode
+
+  """A cursor for use in pagination"""
+  cursor: String!
+}
+
+type SocietyNodeConnection {
+  """Pagination data for this connection."""
+  pageInfo: PageInfo!
+
+  """Contains the nodes in this connection."""
+  edges: [SocietyNodeEdge]!
+}
+
+"""A Relay edge containing a `SocietyNode` and its cursor."""
+type SocietyNodeEdge {
+  """The item at the end of the edge"""
+  node: SocietyNode
+
+  """A cursor for use in pagination"""
+  cursor: String!
+}
+
+type ContentWarningNodeConnection {
+  """Pagination data for this connection."""
+  pageInfo: PageInfo!
+
+  """Contains the nodes in this connection."""
+  edges: [ContentWarningNodeEdge]!
+}
+
+"""A Relay edge containing a `ContentWarningNode` and its cursor."""
+type ContentWarningNodeEdge {
+  """The item at the end of the edge"""
+  node: ContentWarningNode
+
+  """A cursor for use in pagination"""
+  cursor: String!
+}
+
+type RelaxedCategoryNodeConnection {
+  """Pagination data for this connection."""
+  pageInfo: PageInfo!
+
+  """Contains the nodes in this connection."""
+  edges: [RelaxedCategoryNodeEdge]!
+}
+
+"""A Relay edge containing a `RelaxedCategoryNode` and its cursor."""
+type RelaxedCategoryNodeEdge {
+  """The item at the end of the edge"""
+  node: RelaxedCategoryNode
+
+  """A cursor for use in pagination"""
+  cursor: String!
+}
+
+type VenueNodeConnection {
+  """Pagination data for this connection."""
+  pageInfo: PageInfo!
+
+  """Contains the nodes in this connection."""
+  edges: [VenueNodeEdge]!
+}
+
+"""A Relay edge containing a `VenueNode` and its cursor."""
+type VenueNodeEdge {
+  """The item at the end of the edge"""
+  node: VenueNode
+
+  """A cursor for use in pagination"""
+  cursor: String!
+}
+
+"""Defines base Mutation for api"""
+type Mutation {
+  """Mutation to create/edit a site message."""
+  siteMessage(input: SiteMessageMutationInput!): SiteMessageMutationPayload
+
+  """Record a transfer of funds from the site operator to a society"""
+  recordFinancialTransfer(method: TransferMethodEnum!, reason: String, societyId: IdInputField!, value: Int!): RecordFinancialTransfer
+  concessionType(input: ConcessionTypeMutationInput!): ConcessionTypeMutationPayload
+  deleteConcessionType(id: IdInputField!): DeleteConcessionTypeMutation
+
+  """Create or update a discount"""
+  discount(input: DiscountMutationInput!): DiscountMutationPayload
+
+  """Delete a discount"""
+  deleteDiscount(id: IdInputField!): DeleteDiscountMutation
+
+  """Create or update a discount"""
+  discountRequirement(input: DiscountRequirementMutationInput!): DiscountRequirementMutationPayload
+
+  """Delete a discount"""
+  deleteDiscountRequirement(id: IdInputField!): DeleteDiscountRequirementMutation
+
+  """Registers a new user with Turnstile verification."""
+  register(turnstileToken: String!, email: String!, firstName: String!, lastName: String!, password1: String!, password2: String!): RegisterTurnstile
+
+  """
+  Verify user account.
+  
+  Receive the token that was sent by email.
+  If the token is valid, make the user verified
+  by making the `user.status.verified` field true.
+  """
+  verifyAccount(token: String!): VerifyAccount
+
+  """
+  Sends activation email.
+  
+  It is called resend because theoretically
+  the first activation email was sent when
+  the user registered.
+  
+  If there is no user with the requested email,
+  a successful response is returned.
+  """
+  resendActivationEmail(email: String!): ResendActivationEmail
+
+  """
+  Send password reset email.
+  
+  For non verified users, send an activation
+  email instead.
+  
+  Accepts both primary and secondary email.
+  
+  If there is no user with the requested email,
+  a successful response is returned.
+  """
+  sendPasswordResetEmail(email: String!): SendPasswordResetEmail
+
+  """
+  Change user password without old password.
+  
+  Receive the token that was sent by email.
+  
+  If token and new passwords are valid, update
+  user password and in case of using refresh
+  tokens, revoke all of them.
+  
+  Also, if user has not been verified yet, verify it.
+  """
+  passwordReset(token: String!, newPassword1: String!, newPassword2: String!): PasswordReset
+
+  """
+  Set user password - for passwordless registration
+  
+  Receive the token that was sent by email.
+  
+  If token and new passwords are valid, set
+  user password and in case of using refresh
+  tokens, revoke all of them.
+  
+  Also, if user has not been verified yet, verify it.
+  """
+  passwordSet(token: String!, newPassword1: String!, newPassword2: String!): PasswordSet
+
+  """
+  Change account password when user knows the old password.
+  
+  A new token and refresh token are sent. User must be verified.
+  """
+  passwordChange(oldPassword: String!, newPassword1: String!, newPassword2: String!): PasswordChange
+
+  """
+  Update user model fields, defined on settings.
+  
+  User must be verified.
+  """
+  updateAccount(firstName: String, lastName: String): UpdateAccount
+
+  """
+  Archive account and revoke refresh tokens.
+  
+  User must be verified and confirm password.
+  """
+  archiveAccount(password: String!): ArchiveAccount
+
+  """
+  Delete account permanently or make `user.is_active=False`.
+  
+  The behavior is defined on settings.
+  Anyway user refresh tokens are revoked.
+  
+  User must be verified and confirm password.
+  """
+  deleteAccount(password: String!): DeleteAccount
+
+  """
+  Send activation to secondary email.
+  
+  User must be verified and confirm password.
+  """
+  sendSecondaryEmailActivation(email: String!, password: String!): SendSecondaryEmailActivation
+
+  """
+  Verify user secondary email.
+  
+  Receive the token that was sent by email.
+  User is already verified when using this mutation.
+  
+  If the token is valid, add the secondary email
+  to `user.status.secondary_email` field.
+  
+  Note that until the secondary email is verified,
+  it has not been saved anywhere beyond the token,
+  so it can still be used to create a new account.
+  After being verified, it will no longer be available.
+  """
+  verifySecondaryEmail(token: String!): VerifySecondaryEmail
+
+  """
+  Swap between primary and secondary emails.
+  
+  Require password confirmation.
+  """
+  swapEmails(password: String!): SwapEmails
+
+  """
+  Remove user secondary email.
+  
+  Require password confirmation.
+  """
+  removeSecondaryEmail(password: String!): RemoveSecondaryEmail
+
+  """
+  Obtain JSON web token for given user.
+  
+  Allow to perform login with different fields,
+  and secondary email if set. The fields are
+  defined on settings.
+  
+  Not verified users can login by default. This
+  can be changes on settings.
+  
+  If user is archived, make it unarchive and
+  return `unarchiving=True` on output.
+  """
+  login(password: String!, email: String): ObtainJSONWebToken
+
+  """
+  Same as `grapgql_jwt` implementation,
+  with change exception error message from "Error decoding signature" to "Invalid token.".
+  """
+  verifyToken(token: String): VerifyToken
+
+  """
+  Same as `grapgql_jwt` implementation,
+  with change exception error message from "Error decoding signature" to "Invalid token.".
+  """
+  refreshToken(refreshToken: String): RefreshToken
+
+  """
+  Same as `grapgql_jwt` implementation,
+  with change exception error message from "Error decoding signature" to "Invalid token.".
+  """
+  revokeToken(refreshToken: String): RevokeToken
+
+  """Mutation to create or update a production"""
+  production(input: ProductionMutationInput!): ProductionMutationPayload
+  productionPermissions(id: IdInputField!, permissions: [String]!, userEmail: String!): ProductionPermissionsMutation
+
+  """Mutation to create or update a performance"""
+  performance(input: PerformanceMutationInput!): PerformanceMutationPayload
+
+  """Mutation to delete a performance"""
+  deletePerformance(id: IdInputField!): DeletePerformanceMutation
+
+  """Mutation to create or update a performance seat group"""
+  performanceSeatGroup(input: PerformanceSeatGroupMutationInput!): PerformanceSeatGroupMutationPayload
+
+  """Mutation to delete a performance seat group"""
+  deletePerformanceSeatGroup(id: IdInputField!): DeletePerformanceSeatGroupMutation
+
+  """Mutation to set the status of a production."""
+  setProductionStatus(message: String, productionId: IdInputField!, status: Status): SetProductionStatus
+
+  """
+  Cancel a payment
+  
+  This is used to cancel PENDING payments. Currently this is only for
+  SquarePOS payments.
+  
+  Args:
+      payment_id (str): The id of the payment to cancel.
+  """
+  cancelPayment(paymentId: IdInputField!): CancelPayment
+
+  """Mutation to generate a report"""
+  generateReport(endTime: DateTime, name: String!, options: [ReportOption], startTime: DateTime): GenerateReport
+
+  """Create/update mutation for booking objects"""
+  booking(input: BookingMutationInput!): BookingMutationPayload
+
+  """Mutation to update the accessibility information for a booking."""
+  updateBookingAccessibilityInfo(accessibilityInfo: String, bookingId: IdInputField!): UpdateBookingAccessibilityInfo
+
+  """
+  Deletes a given booking.
+  
+  Must be in-progress, with no associated transactions.
+  
+  Args:
+      booking_id (str): Global id of the booking to delete
+  """
+  deleteBooking(id: IdInputField!): DeleteBooking
+
+  """
+  Mutation to pay for a Booking.
+  
+  Args:
+      booking_id (str): The gloabl id of the Booking being paid for.
+      price (int): The expected price of the Booking. This must match the
+          actual price of the Booking. This is used to ensure the front end
+          is showing the true price which will be paid.
+      nonce (str): The Square payment form nonce.
+      payment_provider (PaymentProvider): The provider used for the payment.
+  
+  Returns:
+      booking (BookingNode): The Booking which was paid for.
+      transaction (TransactionNode): The Transaction which was created by the
+          transaction.
+  
+  Raises:
+      GQLException: If the Payment was unsucessful.
+  """
+  payBooking(deviceId: String, id: IdInputField!, idempotencyKey: String, nonce: String, paymentProvider: PaymentProvider, price: Int!, verifyToken: String): PayBooking
+
+  """
+  Mutation to check in the tickets of a Booking.
+  
+  Args:
+      booking_reference (str): The booking reference.
+      performance (str): The id of the performance that the ticket is
+          being booked in for, this should match the performance of the
+          booking. If this is not the case an error will be thrown as the
+          Booking cannot be used for the Performance.
+  
+  
+  Returns:
+      booking (BookingNode): The Booking which was paid for.
+      performance (PerformanceNode): The Performance.
+  
+  Raises:
+      GQLException: If the booking does not match the performance booking
+      GQLExceptions: If at least one ticket check in was unsuccessful
+  """
+  checkInBooking(bookingReference: String!, performance: IdInputField!, tickets: [TicketIDInput]!): CheckInBooking
+
+  """
+  Mutation to un-check in the tickets of a Booking.
+  
+  Args:
+      booking_reference (str): The booking reference
+      performance (str): The id of the performance that the ticket is
+          being booked in for, this should match the performance of the
+          booking. If this is not the case an error will be thrown as the
+          Booking cannot be used for the Performance.
+  
+  
+  Returns:
+      booking (BookingNode): The Booking.
+      performance (PerformanceNOde): The Performance.
+  
+  Raises:
+      GQLException: If the un-check in was unsuccessful
+  """
+  uncheckInBooking(bookingReference: String!, performance: IdInputField!, tickets: [TicketIDInput]!): UnCheckInBooking
+}
+
+"""Mutation to create/edit a site message."""
+type SiteMessageMutationPayload {
+  message: SiteMessageNode
+  errors: [GQLErrorUnion!]
+  success: Boolean!
+  clientMutationId: String
+}
+
+union GQLErrorUnion = FieldError | NonFieldError
+
+"""FieldError is used to return errors which are for a specific field."""
+type FieldError {
+  message: String
+  field: String
+  code: String
+}
+
+type NonFieldError {
+  message: String
+  code: String
+}
+
+input SiteMessageMutationInput {
+  """The message displayed in the body of the banner."""
+  message: String
+
+  """
+  Whether the message is active. Inactive messages will not be displayed, even if display_start is in the past.
+  """
+  active: Boolean
+
+  """
+  If True, the message will be displayed without a Date/Time/Duration if it is ongoing, and without a duration if it is in the future. In addition, it will continue to display even after the event_end until either active or indefinite_override is set to False.
+  """
+  indefiniteOverride: Boolean
+
+  """
+  When the message should start being displayed on the website. Used to schedule messages in advance, and to determine whether the message should be displayed.
+  """
+  displayStart: DateTime
+
+  """
+  When the event will start. Used both to calculate duration, and displayed when in banner display location.
+  """
+  eventStart: DateTime
+
+  """
+  When the event will end. Used both to calculate duration, which is displayed when in banner display location, and to determine whether the message should be displayed.
+  """
+  eventEnd: DateTime
+
+  """
+  The type of message, which informs how it is displayed. Maintenance messages are displayed in yellow if upcoming, red if ongoing. Information messages are displayed in yellow information text. Alert messages are displayed in red text.
+  """
+  type: String
+
+  """
+  The policy for a message's dismissal. By default messages are dismissible, and once a message has been dismissed by a user, it will never reappear for them. Single-Session Only messages can be dismissed, but will reappear whenever the page is loaded. Prevented messages cannot be dismissed by the user: if used for a modal, this will essentially shut down that function (or the whole site, for a sitewide modal).
+  """
+  dismissalPolicy: String
+
+  """
+  The location on the site where the message should be displayed. Banner messages are displayed in a banner at the top of the page. Sitewide Modal messages are displayed across the entire website. Booking Modal messages are displayed in a modal on the booking page. Production Creation/Edit Modal messages are displayed in a modal on the production creation and editing page.
+  """
+  displayLocation: String
+
+  """
+  A title for the message. Displayed prominently in modals. If used in a banner, it will override the default title based on message type (e.g. Urgent Future Alert).
+  """
+  title: String
+  id: ID
+  clientMutationId: String
+}
+
+"""Record a transfer of funds from the site operator to a society"""
+type RecordFinancialTransfer {
+  success: Boolean!
+  errors: [GQLErrorUnion!]
+  transfer: FinancialTransferNode
+}
+
+type FinancialTransferNode {
+  id: ID!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  society: SocietyNode
+  value: Int!
+  user: ExtendedUserNode
+  method: FinanceFinancialTransferMethodChoices!
+  reason: String
+}
+
+"""An enumeration."""
+enum FinanceFinancialTransferMethodChoices {
+  """Internal"""
+  INTERNAL
+
+  """BACS"""
+  BACS
+}
+
+"""An enumeration."""
+enum TransferMethodEnum {
+  INTERNAL
+  BACS
+}
+
+type ConcessionTypeMutationPayload {
+  concessionType: ConcessionTypeNode
+  errors: [GQLErrorUnion!]
+  success: Boolean!
+  clientMutationId: String
+}
+
+input ConcessionTypeMutationInput {
+  name: String
+  description: String
+  id: ID
+  clientMutationId: String
+}
+
+type DeleteConcessionTypeMutation {
+  success: Boolean!
+  errors: [GQLErrorUnion!]
+}
+
+"""Create or update a discount"""
+type DiscountMutationPayload {
+  discount: DiscountNode
+  errors: [GQLErrorUnion!]
+  success: Boolean!
+  clientMutationId: String
+}
+
+input DiscountMutationInput {
+  percentage: Float
+  performances: [ID]
+  seatGroup: ID
+  id: ID
+  clientMutationId: String
+}
+
+"""Delete a discount"""
+type DeleteDiscountMutation {
+  success: Boolean!
+  errors: [GQLErrorUnion!]
+}
+
+"""Create or update a discount"""
+type DiscountRequirementMutationPayload {
+  discountRequirement: DiscountRequirementNode
+  errors: [GQLErrorUnion!]
+  success: Boolean!
+  clientMutationId: String
+}
+
+input DiscountRequirementMutationInput {
+  number: Int
+  discount: ID
+  concessionType: ID
+  id: ID
+  clientMutationId: String
+}
+
+"""Delete a discount"""
+type DeleteDiscountRequirementMutation {
+  success: Boolean!
+  errors: [GQLErrorUnion!]
+}
+
+"""Registers a new user with Turnstile verification."""
+type RegisterTurnstile {
+  success: Boolean!
+  errors: [GQLErrorUnion!]
+}
+
+"""
+Verify user account.
+
+Receive the token that was sent by email.
+If the token is valid, make the user verified
+by making the `user.status.verified` field true.
+"""
+type VerifyAccount {
+  success: Boolean!
+  errors: [GQLErrorUnion!]
+}
+
+"""
+Sends activation email.
+
+It is called resend because theoretically
+the first activation email was sent when
+the user registered.
+
+If there is no user with the requested email,
+a successful response is returned.
+"""
+type ResendActivationEmail {
+  success: Boolean!
+  errors: [GQLErrorUnion!]
+}
+
+"""
+Send password reset email.
+
+For non verified users, send an activation
+email instead.
+
+Accepts both primary and secondary email.
+
+If there is no user with the requested email,
+a successful response is returned.
+"""
+type SendPasswordResetEmail {
+  success: Boolean!
+  errors: [GQLErrorUnion!]
+}
+
+"""
+Change user password without old password.
+
+Receive the token that was sent by email.
+
+If token and new passwords are valid, update
+user password and in case of using refresh
+tokens, revoke all of them.
+
+Also, if user has not been verified yet, verify it.
+"""
+type PasswordReset {
+  success: Boolean!
+  errors: [GQLErrorUnion!]
+}
+
+"""
+Set user password - for passwordless registration
+
+Receive the token that was sent by email.
+
+If token and new passwords are valid, set
+user password and in case of using refresh
+tokens, revoke all of them.
+
+Also, if user has not been verified yet, verify it.
+"""
+type PasswordSet {
+  success: Boolean!
+  errors: [GQLErrorUnion!]
+}
+
+"""
+Change account password when user knows the old password.
+
+A new token and refresh token are sent. User must be verified.
+"""
+type PasswordChange {
+  success: Boolean!
+  errors: [GQLErrorUnion!]
+  token: String
+  refreshToken: String
+}
+
+"""
+Update user model fields, defined on settings.
+
+User must be verified.
+"""
+type UpdateAccount {
+  success: Boolean!
+  errors: [GQLErrorUnion!]
+}
+
+"""
+Archive account and revoke refresh tokens.
+
+User must be verified and confirm password.
+"""
+type ArchiveAccount {
+  success: Boolean!
+  errors: [GQLErrorUnion!]
+}
+
+"""
+Delete account permanently or make `user.is_active=False`.
+
+The behavior is defined on settings.
+Anyway user refresh tokens are revoked.
+
+User must be verified and confirm password.
+"""
+type DeleteAccount {
+  success: Boolean!
+  errors: [GQLErrorUnion!]
+}
+
+"""
+Send activation to secondary email.
+
+User must be verified and confirm password.
+"""
+type SendSecondaryEmailActivation {
+  success: Boolean!
+  errors: [GQLErrorUnion!]
+}
+
+"""
+Verify user secondary email.
+
+Receive the token that was sent by email.
+User is already verified when using this mutation.
+
+If the token is valid, add the secondary email
+to `user.status.secondary_email` field.
+
+Note that until the secondary email is verified,
+it has not been saved anywhere beyond the token,
+so it can still be used to create a new account.
+After being verified, it will no longer be available.
+"""
+type VerifySecondaryEmail {
+  success: Boolean!
+  errors: [GQLErrorUnion!]
+}
+
+"""
+Swap between primary and secondary emails.
+
+Require password confirmation.
+"""
+type SwapEmails {
+  success: Boolean!
+  errors: [GQLErrorUnion!]
+}
+
+"""
+Remove user secondary email.
+
+Require password confirmation.
+"""
+type RemoveSecondaryEmail {
+  success: Boolean!
+  errors: [GQLErrorUnion!]
+}
+
+"""
+Obtain JSON web token for given user.
+
+Allow to perform login with different fields,
+and secondary email if set. The fields are
+defined on settings.
+
+Not verified users can login by default. This
+can be changes on settings.
+
+If user is archived, make it unarchive and
+return `unarchiving=True` on output.
+"""
+type ObtainJSONWebToken {
+  payload: GenericScalar
+  refreshExpiresIn: Int
+  success: Boolean!
+  errors: [GQLErrorUnion!]
+  user: UserNode
+  unarchiving: Boolean
+  token: String
+  refreshToken: String
+}
+
+"""
+The `GenericScalar` scalar type represents a generic
+GraphQL scalar value that could be:
+String, Boolean, Int, Float, List or Object.
+"""
+scalar GenericScalar
+
+type UserNode implements Node {
+  lastLogin: DateTime
+
+  """
+  Designates that this user has all permissions without explicitly assigning them.
+  """
+  isSuperuser: Boolean!
+  firstName: String!
+  lastName: String!
+
+  """Designates whether the user can log into this admin site."""
+  isStaff: Boolean!
+
+  """
+  Designates whether this user should be treated as active. Unselect this instead of deleting accounts.
+  """
+  isActive: Boolean!
+  dateJoined: DateTime!
+
+  """The ID of the object"""
+  id: ID!
+  email: String!
+
+  """Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."""
+  username: String!
+  societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String, userHasPermission: String): SocietyNodeConnection!
+  bookings(
+    offset: Int
+    before: String
+    after: String
+    first: Int
+    last: Int
+    createdAt: DateTime
+    updatedAt: DateTime
+    status: BookingsBookingStatusChoices
+    user: String
+    creator: String
+    reference: String
+    performance: ID
+    adminDiscountPercentage: Float
+    accessibilityInfo: String
+    accessibilityInfoUpdatedAt: DateTime
+    previousAccessibilityInfo: String
+    expiresAt: DateTime
+    id: ID
+    statusIn: [String]
+
+    """Search"""
+    search: String
+
+    """Production Search"""
+    productionSearch: String
+
+    """Production Slug"""
+    productionSlug: String
+
+    """Performance ID"""
+    performanceId: String
+
+    """Checked In"""
+    checkedIn: Boolean
+
+    """Active Bookings"""
+    active: Boolean
+
+    """Expired Bookings"""
+    expired: Boolean
+
+    """Has Accessibility Info"""
+    hasAccessibilityInfo: Boolean
+
+    """Ordering"""
+    orderBy: String
+  ): BookingNodeConnection!
+  createdBookings(
+    offset: Int
+    before: String
+    after: String
+    first: Int
+    last: Int
+    createdAt: DateTime
+    updatedAt: DateTime
+    status: BookingsBookingStatusChoices
+    user: String
+    creator: String
+    reference: String
+    performance: ID
+    adminDiscountPercentage: Float
+    accessibilityInfo: String
+    accessibilityInfoUpdatedAt: DateTime
+    previousAccessibilityInfo: String
+    expiresAt: DateTime
+    id: ID
+    statusIn: [String]
+
+    """Search"""
+    search: String
+
+    """Production Search"""
+    productionSearch: String
+
+    """Production Slug"""
+    productionSlug: String
+
+    """Performance ID"""
+    performanceId: String
+
+    """Checked In"""
+    checkedIn: Boolean
+
+    """Active Bookings"""
+    active: Boolean
+
+    """Expired Bookings"""
+    expired: Boolean
+
+    """Has Accessibility Info"""
+    hasAccessibilityInfo: Boolean
+
+    """Ordering"""
+    orderBy: String
+  ): BookingNodeConnection!
+  ticketsCheckedInByUser(offset: Int, before: String, after: String, first: Int, last: Int): TicketNodeConnection!
+  createdSiteMessages(
+    offset: Int
+    before: String
+    after: String
+    first: Int
+    last: Int
+    message: String
+    active: Boolean
+    indefiniteOverride: Boolean
+    displayStart: DateTime
+    eventStart: DateTime
+    eventEnd: DateTime
+    user: String
+    type: SiteMessagesMessageTypeChoices
+    dismissalPolicy: SiteMessagesMessageDismissalPolicyChoices
+    displayLocation: SiteMessagesMessageDisplayLocationChoices
+    title: String
+    id: ID
+    displayStart_Gte: DateTime
+    displayStart_Lte: DateTime
+    start: DateTime
+    start_Gte: DateTime
+    start_Lte: DateTime
+    end: DateTime
+    end_Gte: DateTime
+    end_Lte: DateTime
+    toDisplay: Boolean
+
+    """Ordering"""
+    orderBy: String
+  ): SiteMessageNodeConnection!
+  pk: Int
+  archived: Boolean
+  verified: Boolean
+  secondaryEmail: String
+}
+
+type TicketNodeConnection {
+  """Pagination data for this connection."""
+  pageInfo: PageInfo!
+
+  """Contains the nodes in this connection."""
+  edges: [TicketNodeEdge]!
+}
+
+"""A Relay edge containing a `TicketNode` and its cursor."""
+type TicketNodeEdge {
+  """The item at the end of the edge"""
+  node: TicketNode
+
+  """A cursor for use in pagination"""
+  cursor: String!
+}
+
+"""
+Same as `grapgql_jwt` implementation,
+with change exception error message from "Error decoding signature" to "Invalid token.".
+"""
+type VerifyToken {
+  payload: GenericScalar
+  success: Boolean!
+  errors: [GQLErrorUnion!]
+}
+
+"""
+Same as `grapgql_jwt` implementation,
+with change exception error message from "Error decoding signature" to "Invalid token.".
+"""
+type RefreshToken {
+  payload: GenericScalar
+  refreshExpiresIn: Int
+  success: Boolean!
+  errors: [GQLErrorUnion!]
+  token: String
+  refreshToken: String
+}
+
+"""
+Same as `grapgql_jwt` implementation,
+with change exception error message from "Error decoding signature" to "Invalid token.".
+"""
+type RevokeToken {
+  revoked: Int
+  success: Boolean!
+  errors: [GQLErrorUnion!]
+}
+
+"""Mutation to create or update a production"""
+type ProductionMutationPayload {
+  production: ProductionNode
+  errors: [GQLErrorUnion!]
+  success: Boolean!
+  clientMutationId: String
 }
 
 input ProductionMutationInput {
@@ -623,62 +2352,17 @@ input ProductionMutationInput {
   facebookEvent: String
   contactEmail: String
   productionAlert: String
+
+  """"""
   contentWarnings: [ProductionWarning]
   id: ID
   clientMutationId: String
 }
 
-type ProductionMutationPayload {
-  production: ProductionNode
-  errors: [GQLErrorUnion!]
-  success: Boolean!
-  clientMutationId: String
-}
-
-type ProductionNode implements Node {
-  id: ID!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  name: String!
-  subtitle: String
-  description: String
-  shortDescription: String
-  venues: [VenueNode!]
-  society: SocietyNode
-  coverImage: ImageNode
-  posterImage: ImageNode
-  featuredImage: ImageNode
-  status: ProductionStatus!
-  ageRating: Int
-  facebookEvent: String
-  contactEmail: String
-  contentWarnings: [ProductionContentWarningNode!]
-  productionAlert: String
-  slug: String!
-  cast: [CastMemberNode!]
-  productionTeam: [ProductionTeamMemberNode!]
-  crew: [CrewMemberNode!]
-  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, intervalDurationMins: Int, description: String, extraInformation: String, isRelaxed: Boolean, relaxedName: String, relaxedCategories: [ID], disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, hasBoxofficePermissions: Boolean, runOn: Date, orderBy: String): PerformanceNodeConnection!
-  assignedUsers: [UserPermissionsNode]
-  assignablePermissions: [PermissionNode]
-  permissions: [String]
-  start: DateTime
-  end: DateTime
-  isBookable: Boolean!
-  minSeatPrice: Int
-  salesBreakdown: SalesBreakdownNode
-  totalCapacity: Int!
-  totalTicketsSold: Int!
-}
-
-type ProductionNodeConnection {
-  pageInfo: PageInfo!
-  edges: [ProductionNodeEdge]!
-}
-
-type ProductionNodeEdge {
-  node: ProductionNode
-  cursor: String!
+"""Input for creating Tickets with mutations."""
+input ProductionWarning {
+  information: String
+  id: IdInputField!
 }
 
 type ProductionPermissionsMutation {
@@ -686,251 +2370,75 @@ type ProductionPermissionsMutation {
   errors: [GQLErrorUnion!]
 }
 
-enum ProductionStatus {
-  DRAFT
-  PENDING
-  APPROVED
-  PUBLISHED
-  CLOSED
-  COMPLETE
-}
-
-type ProductionTeamMemberNode implements Node {
-  id: ID!
-  name: String!
-  role: String
-  production: ProductionNode!
-}
-
-input ProductionWarning {
-  information: String
-  id: IdInputField!
-}
-
-type Query {
-  siteMessages(offset: Int, before: String, after: String, first: Int, last: Int, message: String, active: Boolean, indefiniteOverride: Boolean, displayStart: DateTime, eventStart: DateTime, eventEnd: DateTime, creator: ID, type: String, dismissalPolicy: String, displayLocation: String, title: String, id: ID, displayStart_Gte: DateTime, displayStart_Lte: DateTime, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, toDisplay: Boolean, orderBy: String): SiteMessageNodeConnection
-  siteMessage(messageId: IdInputField!): SiteMessageNode
-  images: [ImageNode]
-  paymentDevices(paymentProvider: PaymentProvider, paired: Boolean): [SquarePaymentDevice]
-  miscCosts(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String): MiscCostNodeConnection
-  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, user: ID, creator: ID, reference: String, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, accessibilityInfoUpdatedAt: DateTime, previousAccessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, productionSearch: String, productionSlug: String, performanceId: String, checkedIn: Boolean, active: Boolean, expired: Boolean, hasAccessibilityInfo: Boolean, orderBy: String): BookingNodeConnection
-  me: ExtendedUserNode
-  societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String, userHasPermission: String): SocietyNodeConnection
-  society(slug: String!): SocietyNode
-  productions(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, shortDescription: String, venues: [ID], society: ID, status: String, ageRating: Int, facebookEvent: String, contactEmail: String, contentWarnings: [ID], productionAlert: String, slug: String, id: ID, userHasPermission: String, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, search: String, orderBy: String): ProductionNodeConnection
-  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, intervalDurationMins: Int, description: String, extraInformation: String, isRelaxed: Boolean, relaxedName: String, relaxedCategories: [ID], disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, hasBoxofficePermissions: Boolean, runOn: Date, orderBy: String): PerformanceNodeConnection
-  warnings(offset: Int, before: String, after: String, first: Int, last: Int, id: ID): ContentWarningNodeConnection
-  relaxedCategories(offset: Int, before: String, after: String, first: Int, last: Int, id: ID): RelaxedCategoryNodeConnection
-  production(id: IdInputField, slug: String): ProductionNode
-  performance(id: ID!): PerformanceNode
-  venues(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String): VenueNodeConnection
-  venue(slug: String!): VenueNode
-}
-
-type RecordFinancialTransfer {
-  success: Boolean!
+"""Mutation to create or update a performance"""
+type PerformanceMutationPayload {
+  performance: PerformanceNode
   errors: [GQLErrorUnion!]
-  transfer: FinancialTransferNode
-}
-
-type RefreshToken {
-  token: String
-  payload: GenericScalar
   success: Boolean!
-  errors: [GQLErrorUnion!]
-  refreshToken: String
+  clientMutationId: String
 }
 
-type RegisterTurnstile {
-  success: Boolean!
-  errors: [GQLErrorUnion!]
-}
-
-type RelaxedCategoryNode implements Node {
-  shortDescription: String!
-  longDescription: String
-  helpText: String
-  defaultRelaxed: Boolean!
-  defaultSensoryFriendly: Boolean!
-  id: ID!
-}
-
-type RelaxedCategoryNodeConnection {
-  pageInfo: PageInfo!
-  edges: [RelaxedCategoryNodeEdge]!
-}
-
-type RelaxedCategoryNodeEdge {
-  node: RelaxedCategoryNode
-  cursor: String!
-}
-
-type RemoveSecondaryEmail {
-  success: Boolean!
-  errors: [GQLErrorUnion!]
-}
-
-type ReportNode {
-  datasets: [DataSetNode]
-  meta: [MetaItemNode]
-}
-
-input ReportOption {
-  name: String!
-  value: String!
-}
-
-type ResendActivationEmail {
-  success: Boolean!
-  errors: [GQLErrorUnion!]
-}
-
-type RevokeToken {
-  revoked: Int
-  success: Boolean!
-  errors: [GQLErrorUnion!]
-}
-
-type SalesBreakdownNode {
-  totalPayments: Int!
-  totalCardPayments: Int!
-  totalRefunds: Int!
-  totalCardRefunds: Int!
-  netTransactions: Int!
-  netCardTransactions: Int!
-  providerPaymentValue: Int!
-  appFee: Int!
-  appPaymentValue: Int!
-  societyTransferValue: Int!
-  societyRevenue: Int!
-}
-
-type SeatGroupNode implements Node {
-  name: String!
+input PerformanceMutationInput {
+  venue: ID
+  doorsOpen: DateTime
+  start: DateTime
+  end: DateTime
+  intervalDurationMins: Int
   description: String
-  venue: VenueNode!
+  disabled: Boolean
+
+  """
+  Whether this performance will be displayed as being relaxed/adapted in some way, enables the 'Relaxed', 'Sensory Friendly' etc. labels on performance tiles.
+  """
+  isRelaxed: Boolean
+
+  """
+  The type of performance that this will be if the 'is relaxed' field is true, e.g. 'Relaxed' or 'Sensory Friendly'
+  """
+  relaxedName: String
+  relaxedCategories: [ID]
   capacity: Int
-  isInternal: Boolean!
-  id: ID!
+  production: ID
+  id: ID
+  clientMutationId: String
 }
 
-type SeatGroupNodeConnection {
-  pageInfo: PageInfo!
-  edges: [SeatGroupNodeEdge]!
-}
-
-type SeatGroupNodeEdge {
-  node: SeatGroupNode
-  cursor: String!
-}
-
-type SeatNode implements Node {
-  row: String
-  number: String
-  id: ID!
-}
-
-type SendPasswordResetEmail {
+"""Mutation to delete a performance"""
+type DeletePerformanceMutation {
   success: Boolean!
   errors: [GQLErrorUnion!]
 }
 
-type SendSecondaryEmailActivation {
+"""Mutation to create or update a performance seat group"""
+type PerformanceSeatGroupMutationPayload {
+  performanceSeatGroup: PerformanceSeatGroupNode
+  errors: [GQLErrorUnion!]
+  success: Boolean!
+  clientMutationId: String
+}
+
+input PerformanceSeatGroupMutationInput {
+  seatGroup: ID
+  performance: ID
+  price: Int
+  capacity: Int
+  id: ID
+  clientMutationId: String
+}
+
+"""Mutation to delete a performance seat group"""
+type DeletePerformanceSeatGroupMutation {
   success: Boolean!
   errors: [GQLErrorUnion!]
 }
 
+"""Mutation to set the status of a production."""
 type SetProductionStatus {
   success: Boolean!
   errors: [GQLErrorUnion!]
 }
 
-input SiteMessageMutationInput {
-  message: String
-  active: Boolean
-  indefiniteOverride: Boolean
-  displayStart: DateTime
-  eventStart: DateTime
-  eventEnd: DateTime
-  type: String
-  dismissalPolicy: String
-  displayLocation: String
-  title: String
-  id: ID
-  clientMutationId: String
-}
-
-type SiteMessageMutationPayload {
-  message: SiteMessageNode
-  errors: [GQLErrorUnion!]
-  success: Boolean!
-  clientMutationId: String
-}
-
-type SiteMessageNode implements Node {
-  id: ID!
-  message: String!
-  active: Boolean!
-  indefiniteOverride: Boolean!
-  displayStart: DateTime!
-  eventStart: DateTime!
-  eventEnd: DateTime!
-  creator: ExtendedUserNode
-  type: MessageType!
-  dismissalPolicy: MessageDismissalPolicy!
-  displayLocation: MessageDisplayLocation!
-  title: String
-  eventDuration: Int
-  toDisplay: Boolean
-}
-
-type SiteMessageNodeConnection {
-  pageInfo: PageInfo!
-  edges: [SiteMessageNodeEdge]!
-}
-
-type SiteMessageNodeEdge {
-  node: SiteMessageNode
-  cursor: String!
-}
-
-type SocietyNode implements Node {
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  name: String!
-  slug: String!
-  description: String!
-  logo: ImageNode!
-  banner: ImageNode!
-  website: String
-  contact: String
-  members: [ExtendedUserNode!]!
-  suStatus: Boolean!
-  productions(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, shortDescription: String, venues: [ID], society: ID, status: String, ageRating: Int, facebookEvent: String, contactEmail: String, contentWarnings: [ID], productionAlert: String, slug: String, id: ID, userHasPermission: String, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, search: String, orderBy: String): ProductionNodeConnection!
-  id: ID!
-  permissions: [String]
-}
-
-type SocietyNodeConnection {
-  pageInfo: PageInfo!
-  edges: [SocietyNodeEdge]!
-}
-
-type SocietyNodeEdge {
-  node: SocietyNode
-  cursor: String!
-}
-
-type SquarePaymentDevice {
-  id: String
-  name: String
-  code: String
-  deviceId: String
-  locationId: String
-  productType: String
-  status: String
-}
-
+"""The overall status of the production"""
 enum Status {
   DRAFT
   PENDING
@@ -940,15 +2448,70 @@ enum Status {
   COMPLETE
 }
 
-type SwapEmails {
+"""
+Cancel a payment
+
+This is used to cancel PENDING payments. Currently this is only for
+SquarePOS payments.
+
+Args:
+    payment_id (str): The id of the payment to cancel.
+"""
+type CancelPayment {
   success: Boolean!
   errors: [GQLErrorUnion!]
 }
 
-input TicketIDInput {
-  ticketId: IdInputField!
+"""Mutation to generate a report"""
+type GenerateReport {
+  success: Boolean!
+  errors: [GQLErrorUnion!]
+  downloadUri: String
+  report: ReportNode
 }
 
+type ReportNode {
+  datasets: [DataSetNode]
+  meta: [MetaItemNode]
+}
+
+type DataSetNode {
+  name: String!
+  headings: [String]!
+  data: [[String]]!
+}
+
+type MetaItemNode {
+  name: String!
+  value: String!
+}
+
+input ReportOption {
+  name: String!
+  value: String!
+}
+
+"""Create/update mutation for booking objects"""
+type BookingMutationPayload {
+  booking: BookingNode
+  errors: [GQLErrorUnion!]
+  success: Boolean!
+  clientMutationId: String
+}
+
+input BookingMutationInput {
+  performance: ID
+  adminDiscountPercentage: Float
+  accessibilityInfo: String
+
+  """"""
+  tickets: [TicketInputType]
+  userEmail: String
+  id: ID
+  clientMutationId: String
+}
+
+"""Input for creating Tickets with mutations."""
 input TicketInputType {
   seatGroupId: IdInputField!
   concessionTypeId: IdInputField!
@@ -956,166 +2519,102 @@ input TicketInputType {
   id: IdInputField
 }
 
-type TicketNode implements Node {
-  id: ID!
-  seatGroup: SeatGroupNode!
-  booking: BookingNode!
-  concessionType: ConcessionTypeNode!
-  seat: SeatNode
-  checkedInAt: DateTime
-  checkedInBy: ExtendedUserNode
-  checkedIn: Boolean
+"""Mutation to update the accessibility information for a booking."""
+type UpdateBookingAccessibilityInfo {
+  success: Boolean!
+  errors: [GQLErrorUnion!]
 }
 
-type TicketNodeConnection {
-  pageInfo: PageInfo!
-  edges: [TicketNodeEdge]!
+"""
+Deletes a given booking.
+
+Must be in-progress, with no associated transactions.
+
+Args:
+    booking_id (str): Global id of the booking to delete
+"""
+type DeleteBooking {
+  success: Boolean!
+  errors: [GQLErrorUnion!]
 }
 
-type TicketNodeEdge {
-  node: TicketNode
-  cursor: String!
+"""
+Mutation to pay for a Booking.
+
+Args:
+    booking_id (str): The gloabl id of the Booking being paid for.
+    price (int): The expected price of the Booking. This must match the
+        actual price of the Booking. This is used to ensure the front end
+        is showing the true price which will be paid.
+    nonce (str): The Square payment form nonce.
+    payment_provider (PaymentProvider): The provider used for the payment.
+
+Returns:
+    booking (BookingNode): The Booking which was paid for.
+    transaction (TransactionNode): The Transaction which was created by the
+        transaction.
+
+Raises:
+    GQLException: If the Payment was unsucessful.
+"""
+type PayBooking {
+  success: Boolean!
+  errors: [GQLErrorUnion!]
+  booking: BookingNode
+  payment: TransactionNode
 }
 
-type TransactionNode implements Node {
-  id: ID!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  type: TransactionType!
-  status: TransactionStatus!
-  providerTransactionId: String
-  providerName: TransactionProviderName!
-  value: Int!
-  currency: String!
-  cardBrand: String
-  last4: String
-  providerFee: Int
-  appFee: Int
-  url: String
-  payObject: PayObjectUnion
-}
+"""
+Mutation to check in the tickets of a Booking.
 
-type TransactionNodeConnection {
-  pageInfo: PageInfo!
-  edges: [TransactionNodeEdge]!
-}
+Args:
+    booking_reference (str): The booking reference.
+    performance (str): The id of the performance that the ticket is
+        being booked in for, this should match the performance of the
+        booking. If this is not the case an error will be thrown as the
+        Booking cannot be used for the Performance.
 
-type TransactionNodeEdge {
-  node: TransactionNode
-  cursor: String!
-}
 
-enum TransactionProviderName {
-  CASH
-  CARD
-  SQUARE_POS
-  SQUARE_ONLINE
-  MANUAL_CARD_REFUND
-  SQUARE_REFUND
-}
+Returns:
+    booking (BookingNode): The Booking which was paid for.
+    performance (PerformanceNode): The Performance.
 
-enum TransactionStatus {
-  PENDING
-  COMPLETED
-  FAILED
-}
-
-enum TransactionType {
-  PAYMENT
-  REFUND
-}
-
-enum TransferMethodEnum {
-  INTERNAL
-  BACS
-}
-
-type UnCheckInBooking {
+Raises:
+    GQLException: If the booking does not match the performance booking
+    GQLExceptions: If at least one ticket check in was unsuccessful
+"""
+type CheckInBooking {
   success: Boolean!
   errors: [GQLErrorUnion!]
   performance: PerformanceNode
   booking: BookingNode
 }
 
-type UpdateAccount {
+input TicketIDInput {
+  ticketId: IdInputField!
+}
+
+"""
+Mutation to un-check in the tickets of a Booking.
+
+Args:
+    booking_reference (str): The booking reference
+    performance (str): The id of the performance that the ticket is
+        being booked in for, this should match the performance of the
+        booking. If this is not the case an error will be thrown as the
+        Booking cannot be used for the Performance.
+
+
+Returns:
+    booking (BookingNode): The Booking.
+    performance (PerformanceNOde): The Performance.
+
+Raises:
+    GQLException: If the un-check in was unsuccessful
+"""
+type UnCheckInBooking {
   success: Boolean!
   errors: [GQLErrorUnion!]
-}
-
-type UpdateBookingAccessibilityInfo {
-  success: Boolean!
-  errors: [GQLErrorUnion!]
-}
-
-type UserNode implements Node {
-  lastLogin: DateTime
-  isSuperuser: Boolean!
-  firstName: String!
-  lastName: String!
-  isStaff: Boolean!
-  isActive: Boolean!
-  dateJoined: DateTime!
-  id: ID!
-  email: String!
-  societies(offset: Int, before: String, after: String, first: Int, last: Int, id: ID, name: String, slug: String, userHasPermission: String): SocietyNodeConnection!
-  bookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, user: ID, creator: ID, reference: String, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, accessibilityInfoUpdatedAt: DateTime, previousAccessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, productionSearch: String, productionSlug: String, performanceId: String, checkedIn: Boolean, active: Boolean, expired: Boolean, hasAccessibilityInfo: Boolean, orderBy: String): BookingNodeConnection!
-  createdBookings(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, status: String, user: ID, creator: ID, reference: String, performance: ID, adminDiscountPercentage: Float, accessibilityInfo: String, accessibilityInfoUpdatedAt: DateTime, previousAccessibilityInfo: String, expiresAt: DateTime, id: ID, statusIn: [String], search: String, productionSearch: String, productionSlug: String, performanceId: String, checkedIn: Boolean, active: Boolean, expired: Boolean, hasAccessibilityInfo: Boolean, orderBy: String): BookingNodeConnection!
-  ticketsCheckedInByUser(offset: Int, before: String, after: String, first: Int, last: Int): TicketNodeConnection!
-  createdSiteMessages(offset: Int, before: String, after: String, first: Int, last: Int, message: String, active: Boolean, indefiniteOverride: Boolean, displayStart: DateTime, eventStart: DateTime, eventEnd: DateTime, creator: ID, type: String, dismissalPolicy: String, displayLocation: String, title: String, id: ID, displayStart_Gte: DateTime, displayStart_Lte: DateTime, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, toDisplay: Boolean, orderBy: String): SiteMessageNodeConnection!
-  pk: Int
-  archived: Boolean
-  verified: Boolean
-  secondaryEmail: String
-}
-
-type UserPermissionsNode {
-  user: ExtendedUserNode
-  assignedPermissions: [String]
-}
-
-type VenueNode implements Node {
-  id: ID!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  name: String!
-  internalCapacity: Int!
-  description: String
-  accessibilityInfo: String
-  accessibilityShort: String
-  email: String
-  website: String
-  address: AddressNode!
-  image: ImageNode!
-  publiclyListed: Boolean!
-  slug: String!
-  seatGroups(offset: Int, before: String, after: String, first: Int, last: Int): SeatGroupNodeConnection!
-  performances(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, production: ID, venue: ID, doorsOpen: DateTime, start: DateTime, end: DateTime, intervalDurationMins: Int, description: String, extraInformation: String, isRelaxed: Boolean, relaxedName: String, relaxedCategories: [ID], disabled: Boolean, seatGroups: [ID], capacity: Int, id: ID, hasBoxofficePermissions: Boolean, runOn: Date, orderBy: String): PerformanceNodeConnection!
-  productionSet(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, shortDescription: String, venues: [ID], society: ID, status: String, ageRating: Int, facebookEvent: String, contactEmail: String, contentWarnings: [ID], productionAlert: String, slug: String, id: ID, userHasPermission: String, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, search: String, orderBy: String): ProductionNodeConnection!
-  productions(offset: Int, before: String, after: String, first: Int, last: Int, createdAt: DateTime, updatedAt: DateTime, name: String, subtitle: String, description: String, shortDescription: String, venues: [ID], society: ID, status: String, ageRating: Int, facebookEvent: String, contactEmail: String, contentWarnings: [ID], productionAlert: String, slug: String, id: ID, userHasPermission: String, start: DateTime, start_Gte: DateTime, start_Lte: DateTime, end: DateTime, end_Gte: DateTime, end_Lte: DateTime, search: String, orderBy: String): ProductionNodeConnection
-}
-
-type VenueNodeConnection {
-  pageInfo: PageInfo!
-  edges: [VenueNodeEdge]!
-}
-
-type VenueNodeEdge {
-  node: VenueNode
-  cursor: String!
-}
-
-type VerifyAccount {
-  success: Boolean!
-  errors: [GQLErrorUnion!]
-}
-
-type VerifySecondaryEmail {
-  success: Boolean!
-  errors: [GQLErrorUnion!]
-}
-
-type VerifyToken {
-  payload: GenericScalar
-  success: Boolean!
-  errors: [GQLErrorUnion!]
+  performance: PerformanceNode
+  booking: BookingNode
 }

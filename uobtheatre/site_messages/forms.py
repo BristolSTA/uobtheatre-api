@@ -11,9 +11,9 @@ class SiteMessageForm(MutationForm):
 
     def clean(self):
         """Validate and clean form data"""
-        if not self.instance.creator_id:
-            # If the instance has no creater, the current user is the creator
-            self.instance.creator = self.user
+        if not self.instance.user_id:
+            # If the instance has no creator, the current user is the creator
+            self.instance.user = self.user
 
     class Meta:
         model = Message

@@ -43,7 +43,9 @@ def test_timezone_without_coordinates():
 
 @pytest.mark.django_db
 def test_timezone_with_coordinates():
-    address = AddressFactory(latitude=51.45662710361974, longitude=-2.613237959640326)
+    address = AddressFactory(
+        latitude=51.45662710361974, longitude=-2.613237959640326
+    )
     assert address.timezone.zone == "Europe/London"
 
 
@@ -53,7 +55,11 @@ def test_timezone_with_coordinates():
     [
         (None, True, None),
         ("///word.word.word", True, None),
-        ("word.word.word", False, "The what3words address must start with '///'."),
+        (
+            "word.word.word",
+            False,
+            "The what3words address must start with '///'.",
+        ),
         (
             "///word.word.word.word",
             False,

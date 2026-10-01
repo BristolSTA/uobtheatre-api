@@ -25,12 +25,16 @@ class ImageView(APIView):
         """
         Endpoint to upload an image.
         """
-        if not request.user.is_authenticated or not UploadImage.user_has(request.user):
+        if not request.user.is_authenticated or not UploadImage.user_has(
+            request.user
+        ):
             raise exceptions.AuthenticationFailed
 
         file_serializer = ImageSerializer(data=request.data)
         if not file_serializer.is_valid():
-            return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                file_serializer.errors, status=status.HTTP_400_BAD_REQUEST
+            )
 
         file_serializer.save()
         return Response(file_serializer.data, status=status.HTTP_201_CREATED)

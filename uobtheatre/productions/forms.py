@@ -57,7 +57,9 @@ class ProductionForm(MutationForm):
         super()._save_m2m()
 
         if (warnings := self.cleaned_data.get("contentWarnings")) is not None:
-            ProductionContentWarning.objects.filter(production=self.instance).delete()
+            ProductionContentWarning.objects.filter(
+                production=self.instance
+            ).delete()
 
             ProductionContentWarning.objects.bulk_create(
                 [

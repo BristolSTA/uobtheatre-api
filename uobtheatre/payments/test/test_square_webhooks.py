@@ -153,7 +153,9 @@ TEST_UPDATE_REFUND_PAYLOAD = {
     ],
 )
 def test_get_object_location_id(object_data, expected_location):
-    assert SquareWebhooks.get_object_location_id(object_data) == expected_location
+    assert (
+        SquareWebhooks.get_object_location_id(object_data) == expected_location
+    )
 
 
 @pytest.mark.django_db
@@ -200,7 +202,9 @@ def test_handle_checkout_webhook_with_unknown_transaction(
 
 @pytest.mark.django_db
 def test_handle_webhooks_invalid_signature(rest_client):
-    booking = BookingFactory(reference="id72709", status=Payable.Status.IN_PROGRESS)
+    booking = BookingFactory(
+        reference="id72709", status=Payable.Status.IN_PROGRESS
+    )
     response = rest_client.post(
         "/square",
         TEST_TERMINAL_CHECKOUT_PAYLOAD,
@@ -217,7 +221,8 @@ def test_handle_webhooks_invalid_signature(rest_client):
 @pytest.mark.django_db
 def test_handle_payment_update_webhook_no_processing_fee(rest_client):
     payment = TransactionFactory(
-        provider_transaction_id="hYy9pRFVxpDsO1FB05SunFWUe9JZY", provider_fee=None
+        provider_transaction_id="hYy9pRFVxpDsO1FB05SunFWUe9JZY",
+        provider_fee=None,
     )
 
     with patch.object(SquareWebhooks, "is_valid_callback", return_value=True):
@@ -274,7 +279,9 @@ def test_handle_payment_update_checkout_webhook(rest_client):
     )
 
     payload = deepcopy(TEST_PAYMENT_UPDATE_PAYLOAD)
-    payload["data"]["object"]["payment"]["terminal_checkout_id"] = "dhgENdnFOPXqO"
+    payload["data"]["object"]["payment"][
+        "terminal_checkout_id"
+    ] = "dhgENdnFOPXqO"
 
     with patch.object(
         SquareWebhooks, "is_valid_callback", return_value=True

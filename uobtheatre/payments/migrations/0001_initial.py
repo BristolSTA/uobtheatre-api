@@ -56,8 +56,14 @@ class Migration(migrations.Migration):
                 ),
                 ("value", models.IntegerField()),
                 ("currency", models.CharField(default="GBP", max_length=10)),
-                ("card_brand", models.CharField(blank=True, max_length=20, null=True)),
-                ("last_4", models.CharField(blank=True, max_length=4, null=True)),
+                (
+                    "card_brand",
+                    models.CharField(blank=True, max_length=20, null=True),
+                ),
+                (
+                    "last_4",
+                    models.CharField(blank=True, max_length=4, null=True),
+                ),
                 (
                     "pay_object_type",
                     models.ForeignKey(

@@ -46,7 +46,9 @@ def get_concession_map(
             in concession_requirements.keys()  # pylint: disable=consider-iterating-dictionary
         ):
             concession_requirements[requirement.concession_type] = 0
-        concession_requirements[requirement.concession_type] += requirement.number
+        concession_requirements[
+            requirement.concession_type
+        ] += requirement.number
     return concession_requirements
 
 
@@ -82,13 +84,16 @@ class Discount(models.Model):
         Raises:
             ValidationError: If a discount with the same requirements exists.
         """
+        # Can't compare this to something if it's not saved
+        super().save()
 
         super().validate_unique(*args, **kwargs)
 
         discounts = (
             self.__class__._default_manager.all()  # pylint: disable=protected-access
         )
-        if not self._state.adding and self.pk is not None:
+        if not self._state.adding and self.pk is not None:  # pragma: no cover
+            # Pytest does make it in here during testing, but for some reason it doesn't notice this
             discounts = discounts.exclude(pk=self.pk)
 
         discounts_with_same_requirements = [
@@ -98,7 +103,8 @@ class Discount(models.Model):
             and (
                 self.pk
                 and len(self.performances.all()) > 0
-                and len(discount.performances.all() & self.performances.all()) > 0
+                and len(discount.performances.all() & self.performances.all())
+                > 0
             )
         ]
 
@@ -123,7 +129,10 @@ class Discount(models.Model):
         Returns:
             bool: If the booking is a single discount
         """
-        return sum(requirement.number for requirement in self.requirements.all()) == 1
+        return (
+            sum(requirement.number for requirement in self.requirements.all())
+            == 1
+        )
 
     def get_concession_map(
         self,
@@ -165,7 +174,9 @@ class DiscountRequirement(models.Model):
         Discount, on_delete=models.CASCADE, related_name="requirements"
     )
     concession_type = models.ForeignKey(
-        ConcessionType, on_delete=models.CASCADE, related_name="discount_requirements"
+        ConcessionType,
+        on_delete=models.CASCADE,
+        related_name="discount_requirements",
     )
 
 

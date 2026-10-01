@@ -40,8 +40,10 @@ def post_transaction_save_callback(transaction_instance: Transaction):
     """Post save payment actions"""
     # If the payable is an in-process refund and the transaction has now been completed, mark the payable as refunded
     if (
-        transaction_instance.pay_object.status == Payable.Status.REFUND_PROCESSING
-        and not transaction_instance.pay_object.Status == Payable.Status.REFUNDED
+        transaction_instance.pay_object.status
+        == Payable.Status.REFUND_PROCESSING
+        and not transaction_instance.pay_object.Status
+        == Payable.Status.REFUNDED
         and not transaction_instance.pay_object.is_locked
         and transaction_instance.pay_object.is_refunded
     ):

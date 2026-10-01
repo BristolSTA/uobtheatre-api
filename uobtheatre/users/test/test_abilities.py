@@ -5,7 +5,10 @@ from django.contrib.contenttypes.models import ContentType
 from guardian.shortcuts import assign_perm
 
 from uobtheatre.productions.models import Production
-from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
+from uobtheatre.productions.test.factories import (
+    PerformanceFactory,
+    ProductionFactory,
+)
 from uobtheatre.users.abilities import (
     AbilitiesMixin,
     Ability,
@@ -70,7 +73,11 @@ def test_open_boxoffice():
         (["productions.change_production"], False, True),
         (["productions.view_production"], False, True),
         (["reports.finance_reports"], False, True),
-        (["productions.view_production", "productions.change_production"], False, True),
+        (
+            ["productions.view_production", "productions.change_production"],
+            False,
+            True,
+        ),
         (["productions.boxoffice"], False, False),
     ],
 )
@@ -85,10 +92,16 @@ def test_open_admin(permissions, is_superuser, expected_user_has):
 @pytest.mark.django_db
 def test_permissions_mixin_resolve_permissions_with_get_perms(info):
     class TestModelSchema(PermissionsMixin):
+        """Generates a class to test the model schema
+        Args:
+            PermissionsMixin (_type_): _description_
+        """
+
         def get_perms(self, _):
             pass
 
         class Meta:
+            fields = "__all__"
             model = Production
 
     schema = TestModelSchema()
@@ -108,10 +121,13 @@ def test_permissions_mixin_resolve_permissions_with_get_perms(info):
 def test_permissions_mixin_resolve_permissions_without_get_perms(info):
     class TestModelSchema(PermissionsMixin):
         class Meta:
+            fields = "__all__"
             model = Production
 
     schema = TestModelSchema()
-    with patch("uobtheatre.users.abilities.get_perms") as mock_get_perms, patch.object(
+    with patch(
+        "uobtheatre.users.abilities.get_perms"
+    ) as mock_get_perms, patch.object(
         ContentType.objects,
         "get_for_model",
         return_value=ContentType.objects.get_for_model(Production),
@@ -124,6 +140,7 @@ def test_permissions_mixin_resolve_permissions_without_get_perms(info):
 def test_permissions_mixin_resolve_permissions_with_groups(info):
     class TestModelSchema(PermissionsMixin):
         class Meta:
+            fields = "__all__"
             model = Production
 
     model = ProductionFactory()

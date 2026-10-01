@@ -13,7 +13,9 @@ class Migration(migrations.Migration):
             name="production",
             options={
                 "ordering": ["id"],
-                "permissions": (("boxoffice", "Can use boxoffice for this show"),),
+                "permissions": (
+                    ("boxoffice", "Can use boxoffice for this show"),
+                ),
             },
         ),
     ]

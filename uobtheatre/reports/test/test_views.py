@@ -15,7 +15,10 @@ from uobtheatre.reports.reports import (
     PerformanceBookings,
     PeriodTotalsBreakdown,
 )
-from uobtheatre.reports.utils import ExcelReport, generate_report_download_signature
+from uobtheatre.reports.utils import (
+    ExcelReport,
+    generate_report_download_signature,
+)
 from uobtheatre.reports.views import ValidSignatureMiddleware
 from uobtheatre.users.test.factories import UserFactory
 
@@ -32,14 +35,18 @@ def test_validate_signature_middleware_invalid_reportname():
 
     assert isinstance(response, HttpResponse)
     assert response.status_code == 403
-    assert response.content == b"Invalid signature. Maybe this link has expired?"
+    assert (
+        response.content == b"Invalid signature. Maybe this link has expired?"
+    )
 
 
 # pylint: disable=missing-class-docstring
 class PeriodTotalsTests(TestCase):
     @pytest.mark.django_db
     def test_can_access(self):
-        with patch.object(ExcelReport, "get_response", return_value=HttpResponse()):
+        with patch.object(
+            ExcelReport, "get_response", return_value=HttpResponse()
+        ):
             with patch.object(PeriodTotalsBreakdown, "run") as mock_run:
                 response = self.client.get(
                     reverse(
@@ -50,7 +57,9 @@ class PeriodTotalsTests(TestCase):
                         ),
                     )
                     + "?signature=%s"
-                    % generate_report_download_signature(UserFactory(), "PeriodTotals")
+                    % generate_report_download_signature(
+                        UserFactory(), "PeriodTotals"
+                    )
                 )
             assert mock_run.called
         self.assertEqual(response.status_code, 200)
@@ -68,7 +77,9 @@ class PeriodTotalsTests(TestCase):
 class SocietyOutstandingPaymentsTests(TestCase):
     @pytest.mark.django_db
     def test_can_access(self):
-        with patch.object(ExcelReport, "get_response", return_value=HttpResponse()):
+        with patch.object(
+            ExcelReport, "get_response", return_value=HttpResponse()
+        ):
             with patch.object(OutstandingSocietyPayments, "run") as mock_run:
                 response = self.client.get(
                     reverse(
@@ -94,7 +105,9 @@ class SocietyOutstandingPaymentsTests(TestCase):
 class PerformanceBookingsTests(TestCase):
     @pytest.mark.django_db
     def test_can_access(self):
-        with patch.object(ExcelReport, "get_response", return_value=HttpResponse()):
+        with patch.object(
+            ExcelReport, "get_response", return_value=HttpResponse()
+        ):
             with patch.object(PerformanceBookings, "run") as mock_run:
                 response = self.client.get(
                     reverse(

@@ -20,7 +20,10 @@ from uobtheatre.payments.models import Transaction
 from uobtheatre.payments.payables import Payable
 from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.productions.models import Performance, Production
-from uobtheatre.productions.test.factories import PerformanceFactory, ProductionFactory
+from uobtheatre.productions.test.factories import (
+    PerformanceFactory,
+    ProductionFactory,
+)
 from uobtheatre.reports.reports import (
     DataSet,
     MetaItem,
@@ -51,7 +54,9 @@ def create_fixtures():
                 2021, 9, 23, 15, 0, tzinfo=timezone.get_current_timezone()
             ),
         ),
-        user=UserFactory(first_name="Joe", last_name="Bloggs", email="joe@example.org"),
+        user=UserFactory(
+            first_name="Joe", last_name="Bloggs", email="joe@example.org"
+        ),
         reference="booking1",
     )  # This booking has 1 ticket, priced at 1000. With misc cost, this makes the total 1100.
 
@@ -66,7 +71,8 @@ def create_fixtures():
     booking_3 = BookingFactory(
         performance=PerformanceFactory(
             production=ProductionFactory(
-                name="Amazing Show 2", society=SocietyFactory(id=2, name="Society 2")
+                name="Amazing Show 2",
+                society=SocietyFactory(id=2, name="Society 2"),
             )
         ),
         reference="booking3",
@@ -108,13 +114,19 @@ def create_fixtures():
     concession_1 = ConcessionTypeFactory(name="ConessionType1")
 
     TicketFactory(
-        booking=booking_1, seat_group=seat_group_1, concession_type=concession_1
+        booking=booking_1,
+        seat_group=seat_group_1,
+        concession_type=concession_1,
     )
     TicketFactory(
-        booking=booking_2, seat_group=seat_group_1, concession_type=concession_1
+        booking=booking_2,
+        seat_group=seat_group_1,
+        concession_type=concession_1,
     )
     TicketFactory(
-        booking=booking_2, seat_group=seat_group_1, concession_type=concession_1
+        booking=booking_2,
+        seat_group=seat_group_1,
+        concession_type=concession_1,
     )
     TicketFactory(
         booking=booking_3,
@@ -126,7 +138,9 @@ def create_fixtures():
         seat_group=seat_group_2,
     )
     TicketFactory(
-        booking=booking_5, seat_group=seat_group_1, concession_type=concession_1
+        booking=booking_5,
+        seat_group=seat_group_1,
+        concession_type=concession_1,
     )
 
     payment_1 = TransactionFactory(
@@ -217,10 +231,18 @@ def test_abstract_report():
 
 
 def test_get_option():
-    assert get_option([{"name": "MyName", "value": "MyValue"}], "MyName") == "MyValue"
-    assert get_option([{"name": "MyName", "value": "MyValue"}], "MyOtherName") is None
     assert (
-        get_option([{"name": "MyName", "value": "MyValue"}], "MyOtherName", "foo")
+        get_option([{"name": "MyName", "value": "MyValue"}], "MyName")
+        == "MyValue"
+    )
+    assert (
+        get_option([{"name": "MyName", "value": "MyValue"}], "MyOtherName")
+        is None
+    )
+    assert (
+        get_option(
+            [{"name": "MyName", "value": "MyValue"}], "MyOtherName", "foo"
+        )
         == "foo"
     )
 
@@ -236,13 +258,15 @@ def test_require_option():
 
 @pytest.mark.django_db
 def test_period_totals_breakdown_report():
-    (payment_1, _, payment_3, payment_4, refund_1) = create_fixtures()
+    payment_1, _, payment_3, payment_4, refund_1 = create_fixtures()
     booking_1 = payment_1.pay_object
     booking_3 = payment_3.pay_object
     booking_5 = payment_4.pay_object
 
     # Generate report that covers this period
-    with patch("uobtheatre.payments.models.TransactionQuerySet.sync") as mock_sync:
+    with patch(
+        "uobtheatre.payments.models.TransactionQuerySet.sync"
+    ) as mock_sync:
         report = PeriodTotalsBreakdown(
             [
                 {"name": "start_time", "value": "2021-09-08T00:00:00+00:00"},
@@ -344,7 +368,9 @@ def test_outstanding_society_payments_report():
     production_1 = Production.objects.all()[0]
 
     # NB: As production 2 is not "closed", it shouldn't show in this report
-    with patch("uobtheatre.payments.models.TransactionQuerySet.sync") as mock_sync:
+    with patch(
+        "uobtheatre.payments.models.TransactionQuerySet.sync"
+    ) as mock_sync:
         report = OutstandingSocietyPayments()
         report.run()
 
@@ -396,7 +422,9 @@ def test_outstanding_society_payments_report():
 def test_outstanding_society_payments_report_production_no_society():
     ProductionFactory(id=1, status=Production.Status.CLOSED, society=None)
 
-    with patch("uobtheatre.payments.models.TransactionQuerySet.sync") as mock_sync:
+    with patch(
+        "uobtheatre.payments.models.TransactionQuerySet.sync"
+    ) as mock_sync:
         with pytest.raises(GQLException) as exception:
             OutstandingSocietyPayments().run()
         assert exception.value.message == "Production 1 has no society"
@@ -410,7 +438,12 @@ def test_performance_bookings_report():
     performance_1 = Performance.objects.first()
 
     report = PerformanceBookings(
-        [{"name": "id", "value": to_global_id("PerformanceNode", performance_1.pk)}]
+        [
+            {
+                "name": "id",
+                "value": to_global_id("PerformanceNode", performance_1.pk),
+            }
+        ]
     )
     report.run()
 
@@ -419,7 +452,8 @@ def test_performance_bookings_report():
     assert len(report.meta) == 1
     assert report.meta[0].name == "Performance"
     assert (
-        report.meta[0].value == "Performance of Amazing Show 1 at 15:00 on 23/09/2021"
+        report.meta[0].value
+        == "Performance of Amazing Show 1 at 15:00 on 23/09/2021"
     )
 
     assert report.datasets[0].name == "Bookings"

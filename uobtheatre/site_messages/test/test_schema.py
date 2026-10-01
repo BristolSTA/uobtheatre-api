@@ -4,6 +4,7 @@ import pytest
 from django.utils import timezone
 from graphql_relay.node.node import to_global_id
 
+from uobtheatre.site_messages.models import Message
 from uobtheatre.site_messages.test.factories import (
     SiteMessageFactory,
     create_site_message,
@@ -14,8 +15,7 @@ from uobtheatre.site_messages.test.factories import (
 def test_site_message_schema(gql_client):
     messages = [SiteMessageFactory() for i in range(3)]
 
-    response = gql_client.execute(
-        """
+    response = gql_client.execute("""
         {
           siteMessages {
             edges {
@@ -40,8 +40,7 @@ def test_site_message_schema(gql_client):
             }
           }
         }
-        """
-    )
+        """)
 
     assert response == {
         "data": {
@@ -58,7 +57,7 @@ def test_site_message_schema(gql_client):
                             "eventEnd": message.event_end.isoformat(),
                             "type": message.type,
                             "creator": {
-                                "id": to_global_id("UserNode", message.creator.id)
+                                "id": to_global_id("UserNode", message.user.id)
                             },
                             "dismissalPolicy": message.dismissal_policy,
                             "eventDuration": int(
@@ -96,7 +95,9 @@ def test_resolve_site_message(gql_client, query_args, expected_message):
         }
       }
     """
-    response = gql_client.execute(request % (f"({query_args})" if query_args else ""))
+    response = gql_client.execute(
+        request % (f"({query_args})" if query_args else "")
+    )
 
     if expected_message is not None:
         assert response["data"]["siteMessage"]["id"] == to_global_id(
@@ -122,14 +123,14 @@ def test_resolve_site_message(gql_client, query_args, expected_message):
         # type exact test
         (
             [
-                (SiteMessageFactory, {"type": "INFORMATION"}),
-                (SiteMessageFactory, {"type": "INFORMATION"}),
-                (SiteMessageFactory, {"type": "ALERT"}),
+                (SiteMessageFactory, {"type": Message.Type.INFORMATION}),
+                (SiteMessageFactory, {"type": Message.Type.INFORMATION}),
+                (SiteMessageFactory, {"type": Message.Type.ALERT}),
             ],
             [
-                ('type: "INFORMATION"', 2),
-                ('type: "ALERT"', 1),
-                ('type: "MAINTENANCE"', 0),
+                ("type: INFORMATION", 2),
+                ("type: ALERT", 1),
+                ("type: MAINTENANCE", 0),
             ],
         ),
     ],
@@ -144,10 +145,14 @@ def test_site_message_filter(factories, requests, gql_client):
     for request in requests:
         filter_args, expected_number = request
 
-        query_string = "{ siteMessages(" + filter_args + ") { edges { node { id } } } }"
+        query_string = (
+            "{ siteMessages(" + filter_args + ") { edges { node { id } } } }"
+        )
         response = gql_client.execute(query_string)
 
-        assert len(response["data"]["siteMessages"]["edges"]) == expected_number
+        assert (
+            len(response["data"]["siteMessages"]["edges"]) == expected_number
+        )
 
 
 @pytest.mark.django_db

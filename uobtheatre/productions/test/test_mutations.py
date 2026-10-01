@@ -7,7 +7,10 @@ import pytz
 from graphql_relay.node.node import to_global_id
 from guardian.shortcuts import assign_perm
 
-from uobtheatre.bookings.test.factories import BookingFactory, PerformanceSeatingFactory
+from uobtheatre.bookings.test.factories import (
+    BookingFactory,
+    PerformanceSeatingFactory,
+)
 from uobtheatre.images.test.factories import ImageFactory
 from uobtheatre.productions.abilities import EditProduction
 from uobtheatre.productions.models import (
@@ -145,7 +148,9 @@ def test_production_mutation_create_with_missing_info(gql_client):
 @pytest.mark.parametrize("with_permission", [True, False])
 def test_production_mutation_create_update(gql_client, with_permission):
     production = ProductionFactory(
-        name="My Old Name", subtitle="My subtitle", status=Production.Status.DRAFT
+        name="My Old Name",
+        subtitle="My subtitle",
+        status=Production.Status.DRAFT,
     )
 
     request = """
@@ -173,9 +178,7 @@ def test_production_mutation_create_update(gql_client, with_permission):
             }
          }
         }
-    """ % to_global_id(
-        "ProductionNode", production.id
-    )
+    """ % to_global_id("ProductionNode", production.id)
 
     gql_client.login()
     if with_permission:
@@ -241,7 +244,10 @@ def test_production_mutation_warnings(gql_client):
     response = gql_client.execute(request)
 
     assert response["data"]["production"]["success"] is True
-    assert len(response["data"]["production"]["production"]["contentWarnings"]) == 2
+    assert (
+        len(response["data"]["production"]["production"]["contentWarnings"])
+        == 2
+    )
     assert {
         "information": None,
         "warning": {
@@ -452,7 +458,12 @@ def test_production_mutation_update_by_local_id(gql_client):
     ],
 )
 def test_set_production_status_authorize_request_force_change(
-    permissions, has_change_perm, current_status, updated_status, has_perm, info
+    permissions,
+    has_change_perm,
+    current_status,
+    updated_status,
+    has_perm,
+    info,
 ):
     user = info.context.user
     production = ProductionFactory(status=current_status)
@@ -469,7 +480,9 @@ def test_set_production_status_authorize_request_force_change(
                 None, info, production.id, updated_status
             )
     else:
-        SetProductionStatus.authorize_request(None, info, production.id, updated_status)
+        SetProductionStatus.authorize_request(
+            None, info, production.id, updated_status
+        )
 
 
 @pytest.mark.django_db
@@ -491,7 +504,9 @@ def test_set_production_status_draft(status, gql_client):
 
     with patch.object(
         SetProductionStatus, "authorize_request", return_value=None
-    ), patch.object(Production.VALIDATOR, "validate", return_value=[]) as validator:
+    ), patch.object(
+        Production.VALIDATOR, "validate", return_value=[]
+    ) as validator:
         response = gql_client.execute(query)
         assert response["data"]["setProductionStatus"]["success"]
 
@@ -520,13 +535,13 @@ def test_set_production_status_complete_remove_accessibility(gql_client):
             success
           }
         }
-    """ % (
-        to_global_id("ProductionNode", production.id),
-    )
+    """ % (to_global_id("ProductionNode", production.id),)
 
     with patch.object(
         SetProductionStatus, "authorize_request", return_value=None
-    ), patch.object(Production.VALIDATOR, "validate", return_value=[]) as validator:
+    ), patch.object(
+        Production.VALIDATOR, "validate", return_value=[]
+    ) as validator:
         response = gql_client.execute(query)
         assert response["data"]["setProductionStatus"]["success"]
 
@@ -554,13 +569,13 @@ def test_set_production_status_otherwise_not_remove_accessibility(gql_client):
             success
           }
         }
-    """ % (
-        to_global_id("ProductionNode", production.id),
-    )
+    """ % (to_global_id("ProductionNode", production.id),)
 
     with patch.object(
         SetProductionStatus, "authorize_request", return_value=None
-    ), patch.object(Production.VALIDATOR, "validate", return_value=[]) as validator:
+    ), patch.object(
+        Production.VALIDATOR, "validate", return_value=[]
+    ) as validator:
         response = gql_client.execute(query)
         assert response["data"]["setProductionStatus"]["success"]
 
@@ -586,11 +601,11 @@ def test_set_production_status_approved_email(gql_client):
             success
           }
         }
-    """ % (
-        to_global_id("ProductionNode", production.id),
-    )
+    """ % (to_global_id("ProductionNode", production.id),)
 
-    with patch.object(Production.VALIDATOR, "validate", return_value=[]), patch(
+    with patch.object(
+        Production.VALIDATOR, "validate", return_value=[]
+    ), patch(
         "uobtheatre.productions.mutations.send_production_approved_email",
         return_value=None,
     ) as mock:
@@ -612,11 +627,11 @@ def test_set_production_status_approved_email_with_message(gql_client):
             success
           }
         }
-    """ % (
-        to_global_id("ProductionNode", production.id),
-    )
+    """ % (to_global_id("ProductionNode", production.id),)
 
-    with patch.object(Production.VALIDATOR, "validate", return_value=[]), patch(
+    with patch.object(
+        Production.VALIDATOR, "validate", return_value=[]
+    ), patch(
         "uobtheatre.productions.mutations.send_production_needs_changes_email",
         return_value=None,
     ) as mock:
@@ -639,11 +654,11 @@ def test_set_production_status_pending_email(gql_client):
             success
           }
         }
-    """ % (
-        to_global_id("ProductionNode", production.id),
-    )
+    """ % (to_global_id("ProductionNode", production.id),)
 
-    with patch.object(Production.VALIDATOR, "validate", return_value=[]), patch(
+    with patch.object(
+        Production.VALIDATOR, "validate", return_value=[]
+    ), patch(
         "uobtheatre.productions.mutations.send_production_ready_for_review_email",
         return_value=None,
     ) as mock:
@@ -664,20 +679,49 @@ def test_set_production_status_pending_email(gql_client):
         ("DRAFT", "DRAFT", True, [], False),
         ("PENDING", "DRAFT", True, [], False),
         ("PENDING", "APPROVED", True, [], False),
-        ("PENDING", "APPROVED", False, ["productions.approve_production"], True),
+        (
+            "PENDING",
+            "APPROVED",
+            False,
+            ["productions.approve_production"],
+            True,
+        ),
         ("APPROVED", "PUBLISHED", True, [], True),
         ("PUBLISHED", "CLOSED", True, [], False),
         ("PUBLISHED", "COMPLETE", True, [], False),
-        ("PUBLISHED", "COMPLETE", False, ["productions.force_change_production"], True),
-        ("COMPLETE", "DRAFT", False, ["productions.force_change_production"], True),
-        ("COMPLETE", "CLOSED", False, ["productions.force_change_production"], True),
+        (
+            "PUBLISHED",
+            "COMPLETE",
+            False,
+            ["productions.force_change_production"],
+            True,
+        ),
+        (
+            "COMPLETE",
+            "DRAFT",
+            False,
+            ["productions.force_change_production"],
+            True,
+        ),
+        (
+            "COMPLETE",
+            "CLOSED",
+            False,
+            ["productions.force_change_production"],
+            True,
+        ),
         ("COMPLETE", "CLOSED", False, ["reports.finance_reports"], False),
         ("CLOSED", "COMPLETE", False, ["reports.finance_reports"], True),
         ("CLOSED", "COMPLETE", False, [], False),
     ],
 )
 def test_set_production_status_authorization(
-    gql_client, current_status, new_status, can_edit, global_permissions, should_pass
+    gql_client,
+    current_status,
+    new_status,
+    can_edit,
+    global_permissions,
+    should_pass,
 ):
     production = ProductionFactory(status=current_status)
     PerformanceFactory(production=production)
@@ -797,9 +841,7 @@ def test_production_permissions_without_change_permission(gql_client):
                 success
             }
         }
-    """ % to_global_id(
-        "ProductionNode", production.id
-    )
+    """ % to_global_id("ProductionNode", production.id)
     response = gql_client.execute(request)
     assert response["data"]["productionPermissions"]["success"] is False
 
@@ -819,9 +861,7 @@ def test_production_permissions_with_invalid_user(gql_client):
                 }
             }
         }
-    """ % (
-        to_global_id("ProductionNode", production.id),
-    )
+    """ % (to_global_id("ProductionNode", production.id),)
     assign_perm("change_production", gql_client.login().user, production)
 
     response = gql_client.execute(request)
@@ -834,7 +874,9 @@ def test_production_permissions_with_invalid_user(gql_client):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("permission", ["add_production"])
-def test_production_permissions_unassignable_permission(gql_client, permission):
+def test_production_permissions_unassignable_permission(
+    gql_client, permission
+):
     production = ProductionFactory()
     UserFactory(email="example@example.org")
     request = """
@@ -911,9 +953,7 @@ def test_production_permissions_assignable_permission(gql_client):
                 }
             }
         }
-    """ % to_global_id(
-        "ProductionNode", production.id
-    )
+    """ % to_global_id("ProductionNode", production.id)
     assign_perm("change_production", gql_client.login().user, production)
 
     response = gql_client.execute(request)
@@ -938,9 +978,7 @@ def test_production_permissions_remove_assignable_permission(gql_client):
                 }
             }
         }
-    """ % to_global_id(
-        "ProductionNode", production.id
-    )
+    """ % to_global_id("ProductionNode", production.id)
     assign_perm("change_production", gql_client.login().user, production)
 
     response = gql_client.execute(request)
@@ -969,7 +1007,9 @@ def test_production_permissions_removing_unassignable_permissions(
     assign_perm("change_production", gql_client.login().user, production)
 
     response = gql_client.execute(request)
-    assert response["data"]["productionPermissions"]["success"] is with_permission
+    assert (
+        response["data"]["productionPermissions"]["success"] is with_permission
+    )
     assert user.has_perm("delete_production", production)
 
 
@@ -990,9 +1030,7 @@ def test_production_permissions_removing_self(gql_client, as_superuser):
                 }
             }
         }
-    """ % (
-        to_global_id("ProductionNode", production.id),
-    )
+    """ % (to_global_id("ProductionNode", production.id),)
 
     response = gql_client.login(user).execute(request)
     assert response["data"]["productionPermissions"]["success"] is as_superuser
@@ -1010,7 +1048,9 @@ def test_production_permissions_removing_self(gql_client, as_superuser):
 @pytest.mark.django_db
 @pytest.mark.parametrize("with_permission", [True, False])
 def test_performance_mutation_create(gql_client, with_permission):
-    production = ProductionFactory(name="My Production", status=Production.Status.DRAFT)
+    production = ProductionFactory(
+        name="My Production", status=Production.Status.DRAFT
+    )
     request = """
         mutation {
           performance(
@@ -1038,14 +1078,18 @@ def test_performance_mutation_create(gql_client, with_permission):
 
     gql_client.login()
     if with_permission:
-        assign_perm("productions.change_production", gql_client.user, production)
+        assign_perm(
+            "productions.change_production", gql_client.user, production
+        )
 
     response = gql_client.execute(request)
     assert response["data"]["performance"]["success"] is with_permission
 
     if with_permission:
         assert (
-            response["data"]["performance"]["performance"]["production"]["name"]
+            response["data"]["performance"]["performance"]["production"][
+                "name"
+            ]
             == "My Production"
         )
         assert Performance.objects.count() == 1
@@ -1120,15 +1164,15 @@ def test_performance_mutation_update(gql_client, with_permission):
             }
          }
         }
-    """ % (
-        to_global_id("PerformanceNode", performance.id),
-    )
+    """ % (to_global_id("PerformanceNode", performance.id),)
 
     with patch.object(
         EditProduction, "user_has_for", return_value=with_permission
     ) as ability_mock:
         response = gql_client.login().execute(request)
-        ability_mock.assert_called_with(gql_client.user, performance.production)
+        ability_mock.assert_called_with(
+            gql_client.user, performance.production
+        )
 
     assert response["data"]["performance"]["success"] is with_permission
     if with_permission:
@@ -1257,9 +1301,12 @@ def test_performance_mutation_update_to_unallowed_production(gql_client):
 
 @pytest.mark.django_db
 @pytest.mark.parametrize(
-    "with_permission,with_bookings", [(True, False), (True, True), (False, False)]
+    "with_permission,with_bookings",
+    [(True, False), (True, True), (False, False)],
 )
-def test_delete_performance_mutation(gql_client, with_permission, with_bookings):
+def test_delete_performance_mutation(
+    gql_client, with_permission, with_bookings
+):
     performance = PerformanceFactory()
 
     if with_bookings:
@@ -1273,9 +1320,7 @@ def test_delete_performance_mutation(gql_client, with_permission, with_bookings)
             success
          }
         }
-    """ % to_global_id(
-        "PerformanceNode", performance.id
-    )
+    """ % to_global_id("PerformanceNode", performance.id)
 
     gql_client.login()
 
@@ -1283,7 +1328,9 @@ def test_delete_performance_mutation(gql_client, with_permission, with_bookings)
         EditProduction, "user_has_for", return_value=with_permission
     ) as ability_mock:
         response = gql_client.execute(request)
-        ability_mock.assert_called_once_with(gql_client.user, performance.production)
+        ability_mock.assert_called_once_with(
+            gql_client.user, performance.production
+        )
 
     should_succeed = (
         with_permission and not with_bookings
@@ -1359,7 +1406,9 @@ def test_performance_seat_group_mutation_create(gql_client, price, fails):
 
         ability_mock.assert_called()
         assert response["data"]["performanceSeatGroup"]["success"] is True
-        assert response["data"]["performanceSeatGroup"]["performanceSeatGroup"] == {
+        assert response["data"]["performanceSeatGroup"][
+            "performanceSeatGroup"
+        ] == {
             "performance": {"id": performance_gid},
             "seatGroup": {"id": sg_gid},
         }
@@ -1387,9 +1436,7 @@ def test_performance_seat_group_mutation_create_no_performance(gql_client):
             }
          }
         }
-    """ % (
-        sg_gid,
-    )
+    """ % (sg_gid,)
 
     response = gql_client.login().execute(request)
 
@@ -1413,9 +1460,7 @@ def test_performance_seat_group_mutation_update(gql_client):
             }
          }
         }
-    """ % (
-        to_global_id("PerformanceSeatGroup", psg.id),
-    )
+    """ % (to_global_id("PerformanceSeatGroup", psg.id),)
 
     with patch.object(
         EditProduction, "user_has_for", return_value=True
@@ -1424,9 +1469,9 @@ def test_performance_seat_group_mutation_update(gql_client):
 
         ability_mock.assert_called()
         assert response["data"]["performanceSeatGroup"]["success"] is True
-        assert response["data"]["performanceSeatGroup"]["performanceSeatGroup"] == {
-            "price": 1000
-        }
+        assert response["data"]["performanceSeatGroup"][
+            "performanceSeatGroup"
+        ] == {"price": 1000}
 
 
 @pytest.mark.django_db
@@ -1447,9 +1492,7 @@ def test_delete_performance_seat_group_mutation(gql_client):
             }
          }
         }
-    """ % (
-        to_global_id("PerformanceSeatGroup", psg.id),
-    )
+    """ % (to_global_id("PerformanceSeatGroup", psg.id),)
 
     with patch.object(
         EditProduction, "user_has_for", return_value=True
@@ -1457,5 +1500,7 @@ def test_delete_performance_seat_group_mutation(gql_client):
         response = gql_client.login().execute(request)
 
         ability_mock.assert_called()
-        assert response["data"]["deletePerformanceSeatGroup"]["success"] is True
+        assert (
+            response["data"]["deletePerformanceSeatGroup"]["success"] is True
+        )
         assert PerformanceSeatGroup.objects.count() == 0

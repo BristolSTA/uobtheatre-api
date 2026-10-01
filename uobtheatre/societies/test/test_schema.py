@@ -9,11 +9,11 @@ from uobtheatre.societies.test.factories import SocietyFactory
 def test_societies_schema(gql_client):
     societies = [SocietyFactory() for _ in range(3)]
     society_productions = [
-        [ProductionFactory(society=society) for _ in range(1)] for society in societies
+        [ProductionFactory(society=society) for _ in range(1)]
+        for society in societies
     ]
 
-    response = gql_client.execute(
-        """
+    response = gql_client.execute("""
         {
 	  societies {
             edges {
@@ -43,8 +43,7 @@ def test_societies_schema(gql_client):
             }
           }
         }
-        """
-    )
+        """)
 
     assert response == {
         "data": {
@@ -75,7 +74,9 @@ def test_societies_schema(gql_client):
                                             )
                                         }
                                     }
-                                    for production in society_productions[index]
+                                    for production in society_productions[
+                                        index
+                                    ]
                                 ]
                             },
                         }

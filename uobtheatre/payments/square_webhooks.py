@@ -23,7 +23,9 @@ class SquareWebhooks(APIView):
     webhook_url = f"{settings.BASE_URL}/{settings.SQUARE_SETTINGS['PATH']}"  # type: ignore
 
     @classmethod
-    def is_valid_callback(cls, callback_body: dict, callback_signature: str) -> bool:
+    def is_valid_callback(
+        cls, callback_body: dict, callback_signature: str
+    ) -> bool:
         """
         When square sends a webhook to the api, it is import to check the
         webhook is actually from square. This uses the provided square webhook
@@ -44,9 +46,9 @@ class SquareWebhooks(APIView):
         # Combine your webhook notification URL and the JSON body of the
         # incoming request into a single string
         clean_request = json.dumps(callback_body, separators=(",", ":"))
-        url_request_bytes = cls.webhook_url.encode("utf-8") + clean_request.encode(
+        url_request_bytes = cls.webhook_url.encode(
             "utf-8"
-        )
+        ) + clean_request.encode("utf-8")
 
         # Generate the HMAC-SHA1 signature of the string, signed with the
         # webhook signature key
@@ -61,7 +63,8 @@ class SquareWebhooks(APIView):
         # Compare the generated signature with the signature included in the
         # request
         return hmac.compare_digest(
-            base64.b64encode(generated_hash), callback_signature.encode("utf-8")
+            base64.b64encode(generated_hash),
+            callback_signature.encode("utf-8"),
         )
 
     @classmethod
@@ -70,7 +73,9 @@ class SquareWebhooks(APIView):
         object_types = ["checkout", "payment", "refund"]
 
         for object_type in object_types:
-            if location_id := deep_get(object_data, f"{object_type}.location_id"):
+            if location_id := deep_get(
+                object_data, f"{object_type}.location_id"
+            ):
                 return location_id
 
         return None

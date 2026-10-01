@@ -33,7 +33,9 @@ class Venue(TimeStampedMixin, BaseModel):
     internal_capacity = models.PositiveSmallIntegerField()
     description = TipTapTextField(null=True, blank=True)
     accessibility_info = TipTapTextField(null=True, blank=True)
-    accessibility_short = models.CharField(max_length=255, null=True, blank=True)
+    accessibility_short = models.CharField(
+        max_length=255, null=True, blank=True
+    )
     email = models.EmailField(
         null=True,
         blank=True,
@@ -41,7 +43,9 @@ class Venue(TimeStampedMixin, BaseModel):
     )
     website = models.URLField(null=True, blank=True)
     address = models.ForeignKey(Address, on_delete=models.CASCADE)
-    image = models.ForeignKey(Image, on_delete=models.RESTRICT, related_name="venues")
+    image = models.ForeignKey(
+        Image, on_delete=models.RESTRICT, related_name="venues"
+    )
     publicly_listed = models.BooleanField(default=True)
 
     slug = AutoSlugField(populate_from="name", unique=True, blank=True)
@@ -53,7 +57,9 @@ class Venue(TimeStampedMixin, BaseModel):
             list of Production: A list of all the productions in this Venue.
         """
         production_model = apps.get_model("productions", "production")
-        return production_model.objects.filter(performances__venue=self).distinct()
+        return production_model.objects.filter(
+            performances__venue=self
+        ).distinct()
 
     def __str__(self):
         return str(self.name)
@@ -78,7 +84,9 @@ class SeatGroup(BaseModel):
         Venue, on_delete=models.CASCADE, related_name="seat_groups"
     )
     capacity = models.IntegerField(null=True)
-    seats = models.ForeignKey(Seat, on_delete=models.RESTRICT, null=True, blank=True)
+    seats = models.ForeignKey(
+        Seat, on_delete=models.RESTRICT, null=True, blank=True
+    )
     is_internal = models.BooleanField(default=True)
 
     def __str__(self):

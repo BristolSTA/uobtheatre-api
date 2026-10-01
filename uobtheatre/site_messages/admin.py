@@ -13,7 +13,7 @@ class MessageAdmin(admin.ModelAdmin):
         "event_start",
         "event_end",
         "type",
-        "creator",
+        "user",
     )
     list_filter = ("active", "type", "display_location")
     search_fields = ("message", "creator__email")

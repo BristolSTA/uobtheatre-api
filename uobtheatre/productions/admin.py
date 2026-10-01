@@ -78,13 +78,16 @@ class PerformanceAdmin(DangerousAdminConfirmMixin, ModelAdmin):
 
     @confirm_dangerous_action
     @admin.action(description="Issue provider refund", permissions=["change"])
-    def issue_payment_provider_fee_accomodating_refund(self, request, queryset):
+    def issue_payment_provider_fee_accomodating_refund(
+        self, request, queryset
+    ):
         """Action to issue payment provider fee-accomodating refund(s) for selected booking(s)"""
         self.issue_custom_refunds(request, queryset, True, False)
 
     @confirm_dangerous_action
     @admin.action(
-        description="Issue uobtheatre fee accomodating refund", permissions=["change"]
+        description="Issue uobtheatre fee accomodating refund",
+        permissions=["change"],
     )
     def issue_uobtheatre_fee_accomodating_refund(self, request, queryset):
         """Action to issue uobtheatre fee-accomodating refund(s) for selected booking(s)"""

@@ -17,8 +17,7 @@ def test_cancel_payment_completed_payment(gql_client):
         provider_name=SquarePOS.name,
     )
 
-    response = gql_client.execute(
-        """
+    response = gql_client.execute("""
         mutation {
           cancelPayment(paymentId: "%s") {
             success
@@ -31,9 +30,7 @@ def test_cancel_payment_completed_payment(gql_client):
             }
           }
         }
-        """
-        % to_global_id("TransactionNode", payment.id)
-    )
+        """ % to_global_id("TransactionNode", payment.id))
 
     assert response["data"]["cancelPayment"]["errors"] == [
         {
@@ -58,8 +55,7 @@ def test_cancel_payment_success(gql_client, mock_square):
         SquarePOS.client.terminal.checkouts,
         "cancel",
     ):
-        response = gql_client.execute(
-            """
+        response = gql_client.execute("""
             mutation {
               cancelPayment(paymentId: "%s") {
                 success
@@ -72,9 +68,7 @@ def test_cancel_payment_success(gql_client, mock_square):
                 }
               }
             }
-            """
-            % to_global_id("TransactionNode", payment.id)
-        )
+            """ % to_global_id("TransactionNode", payment.id))
     assert response["data"]["cancelPayment"]["success"]
     assert not response["data"]["cancelPayment"]["errors"]
 
@@ -94,8 +88,7 @@ def test_cancel_payment_failure(gql_client, mock_square):
         "cancel",
         throw_default_exception=True,
     ):
-        response = gql_client.execute(
-            """
+        response = gql_client.execute("""
             mutation {
               cancelPayment(paymentId: "%s") {
                 success
@@ -108,9 +101,7 @@ def test_cancel_payment_failure(gql_client, mock_square):
                 }
               }
             }
-            """
-            % to_global_id("TransactionNode", payment.id)
-        )
+            """ % to_global_id("TransactionNode", payment.id))
 
     assert response["data"]["cancelPayment"]["success"] is False
     assert response["data"]["cancelPayment"]["errors"] == [
@@ -132,8 +123,7 @@ def test_cancel_payment_not_creator_of_booking(gql_client):
         provider_name=SquarePOS.name,
     )
 
-    response = gql_client.execute(
-        """
+    response = gql_client.execute("""
         mutation {
           cancelPayment(paymentId: "%s") {
             success
@@ -146,9 +136,7 @@ def test_cancel_payment_not_creator_of_booking(gql_client):
             }
           }
         }
-        """
-        % to_global_id("TransactionNode", payment.id)
-    )
+        """ % to_global_id("TransactionNode", payment.id))
 
     assert response["data"]["cancelPayment"]["errors"] == [
         {

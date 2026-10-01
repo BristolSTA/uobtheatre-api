@@ -23,7 +23,8 @@ class AbilitiesMixin:
 
     def get_perms(self, user, obj):
         """Override get_perms method to return perms as well as abilities"""
-        django_perms = get_perms(user, self)
+        # Mypy doesn't love the typing of this override, and it can't be fixed as get_perms comes from an external package
+        django_perms = get_perms(user, self)  # type: ignore
         computed_perms = [
             ability.name
             for ability in self.abilities
@@ -132,7 +133,9 @@ class PermissionsMixin(DjangoObjectType):
             )
             + list(
                 Permission.objects.filter(
-                    group__id__in=info.context.user.groups.values_list("id", flat=True),
+                    group__id__in=info.context.user.groups.values_list(
+                        "id", flat=True
+                    ),
                     content_type=ContentType.objects.get_for_model(self),
                 ).all()
             )

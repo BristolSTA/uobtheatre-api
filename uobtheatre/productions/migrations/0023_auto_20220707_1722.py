@@ -12,7 +12,9 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="production",
             name="support_email",
-            field=models.EmailField(default="support@uobtheatre.com", max_length=254),
+            field=models.EmailField(
+                default="support@uobtheatre.com", max_length=254
+            ),
             preserve_default=False,
         ),
         migrations.AlterField(

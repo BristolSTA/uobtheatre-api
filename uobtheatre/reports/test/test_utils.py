@@ -40,7 +40,9 @@ def test_validate_expired_report_signature():
         "time",
         return_value=time.time() - timedelta(minutes=12).seconds,
     ):
-        signature = generate_report_download_signature(UserFactory(), "MyReport", [])
+        signature = generate_report_download_signature(
+            UserFactory(), "MyReport", []
+        )
 
     with pytest.raises(InvalidReportSignature):
         validate_report_download_signature(signature)
