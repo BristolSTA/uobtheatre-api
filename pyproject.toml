@@ -1,9 +1,11 @@
+# black
+
 [tool.black]
 line-length = 79
 include = '\.pyi?$'
 exclude = '''
 (
-    \.git
+  \.git
   | \.hg
   | \.mypy_cache
   | \.tox
@@ -15,9 +17,235 @@ exclude = '''
 )
 '''
 
+# isort
+
 [tool.isort]
 profile = "black"
 line_length = 88
 multi_line_output = 3
 include_trailing_comma = true
 known_third_party = ["PIL", "admin_confirm", "autoslug", "dateutil", "django", "django_filters", "django_tiptap", "environ", "factory", "graphene", "graphene_django", "graphql", "graphql_auth", "graphql_jwt", "graphql_relay", "guardian", "pytest", "pytest_django", "pytz", "rest_framework", "shortuuid", "square", "storages", "timezonefinder", "xlsxwriter", "yaml"]
+
+# pytest
+
+[tool.pytest]
+addopts = ["--ds=config.settings.test", "--reuse-db"]
+python_files = ["tests.py", "test_*.py", "*_tests.py"]
+testpaths = ["uobtheatre"]
+markers = ["square_integration: Marks tests as using integration with Square", "system_test: Mark tests as being system tests"]
+
+# pytest coverage
+
+[tool.coverage.run]
+branch = true
+omit =[
+  "*migrations*",
+  "*urls*",
+  "*test*",
+  "*admin*",
+  "./manage.py",
+  "./uobtheatre-api/config/*",
+  "./uobtheatre-api/wsgi.py",
+  "__init__.py",
+  "./uobtheatre/management/*",
+  "./uobtheatre/storages.py"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+  "pragma: no cover",
+  "raise NotImplementedError",
+  "if TYPE_CHECKING",
+  "pass"
+]
+
+# mypy
+
+[tool.mypy]
+plugins = ["mypy_django_plugin.main"]
+ignore_missing_imports = true
+warn_incomplete_stub = true
+cache_dir = "/dev/null"
+show_error_codes = true
+python_version = "3.12"
+no_implicit_optional = false
+check_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = "uobtheatre.*.test.*"
+check_untyped_defs = false
+
+[[tool.mypy.overrides]]
+module = "uobtheatre.*.migrations.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "uobtheatre.utils.celery_migrations.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "uobtheatre.graphql_auth.*"
+ignore_errors = true
+
+[tool.django-stubs]
+django_settings_module = "config.settings.common"
+
+# pytlint
+
+[tool.pylint.master]
+extension-pkg-whitelist = ""
+fail-under = 10
+ignore = ["migrations", "celery_migrations", "graphql_auth"]
+ignore-patterns = ""
+ignore-paths = ""
+jobs = 0
+limit-inference-results = 100
+load-plugins = ["pylint.extensions.docparams"]
+persistent = true
+unsafe-load-any-extension = false
+
+[tool.pylint."messages control"]
+disable = [
+  "raw-checker-failed",
+  "bad-inline-option",
+  "locally-disabled",
+  "file-ignored",
+  "suppressed-message",
+  "useless-suppression",
+  "deprecated-pragma",
+  "use-symbolic-message-instead",
+  "line-too-long",
+  "import-error",
+  "missing-module-docstring",
+  "duplicate-code",
+  "no-member",
+  "too-many-ancestors",
+  "unused-import",
+  "not-callable",
+  "cyclic-import",
+  "import-outside-toplevel",
+  "arguments-renamed",
+  "consider-using-f-string",
+  "expression-not-assigned",
+]
+enable = ["c-extension-no-member"]
+
+[tool.pylint.reports]
+evaluation = "10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10)"
+output-format = "text"
+reports = false
+score = true
+
+[tool.pylint.refactoring]
+max-nested-blocks = 5
+never-returning-functions = ["sys.exit"]
+
+[tool.pylint.miscellaneous]
+notes = ["FIXME", "XXX", "TODO"]
+
+[tool.pylint.spelling]
+max-spelling-suggestions = 4
+spelling-dict = ""
+spelling-ignore-words = ""
+spelling-private-dict-file = ""
+spelling-store-unknown-words = false
+
+[tool.pylint.similarities]
+ignore-comments = true
+ignore-docstrings = true
+ignore-imports = true
+min-similarity-lines = 4
+
+[tool.pylint.string]
+check-quote-consistency = false
+check-str-concat-over-line-jumps = false
+
+[tool.pylint.basic]
+argument-naming-style = "snake_case"
+attr-naming-style = "snake_case"
+bad-names = ["foo", "bar", "baz", "toto", "tutu", "tata"]
+bad-names-rgxs = ""
+class-attribute-naming-style = "any"
+class-naming-style = "PascalCase"
+const-naming-style = "UPPER_CASE"
+docstring-min-length = 6
+function-naming-style = "snake_case"
+good-names = ["i", "j", "k", "ex", "Run", "pk", "id", "_", "__", "qs"]
+good-names-rgxs = ""
+include-naming-hint = false
+inlinevar-naming-style = "any"
+method-naming-style = "snake_case"
+module-naming-style = "snake_case"
+name-group = ""
+no-docstring-rgx = "((^(test|resolve)_)|.*Factory.*|.*Node$|Meta|Arguments|^Query|^__init_subclass_with_meta__|^__init__$)"
+property-classes = ["abc.abstractproperty"]
+variable-naming-style = "snake_case"
+
+[tool.pylint.format]
+expected-line-ending-format = ""
+ignore-long-lines = "^\\s*(# )?<?https?://\\S+>?$"
+indent-after-paren = 4
+indent-string = "    "
+max-line-length = 100
+max-module-lines = 1000
+single-line-class-stmt = false
+single-line-if-stmt = false
+
+[tool.pylint.variables]
+additional-builtins = []
+allow-global-unused-variables = true
+callbacks = ["cb_", "_cb"]
+dummy-variables-rgx = "_+$|(_[a-zA-Z0-9_]*[a-zA-Z0-9]+?$)|dummy|^ignored_|^unused_"
+ignored-argument-names = "_.*|^ignored_|^unused_|info"
+init-import = false
+redefining-builtins-modules = ["six.moves", "past.builtins", "future.builtins", "builtins", "io"]
+
+[tool.pylint.logging]
+logging-format-style = "old"
+logging-modules = ["logging"]
+
+[tool.pylint.typecheck]
+contextmanager-decorators = ["contextlib.contextmanager"]
+generated-members = ""
+ignore-mixin-members = true
+ignore-none = true
+ignore-on-opaque-inference = true
+ignored-classes = ["optparse.Values", "thread._local", "_thread._local"]
+ignored-modules = ""
+missing-member-hint = true
+missing-member-hint-distance = 1
+missing-member-max-choices = 1
+signature-mutators = []
+
+[tool.pylint.imports]
+allow-any-import-level = ""
+allow-wildcard-with-all = false
+analyse-fallback-blocks = false
+deprecated-modules = ["optparse", "tkinter.tix"]
+ext-import-graph = ""
+import-graph = ""
+int-import-graph = ""
+known-standard-library = ""
+known-third-party = ["enchant"]
+preferred-modules = ""
+
+[tool.pylint.classes]
+defining-attr-methods = ["__init__", "__new__", "setUp", "__post_init__"]
+exclude-protected = ["_asdict", "_fields", "_replace", "_source", "_make"]
+valid-classmethod-first-arg = "cls"
+valid-metaclass-classmethod-first-arg = "cls"
+
+[tool.pylint.design]
+max-args = 5
+max-attributes = 7
+max-bool-expr = 5
+max-branches = 12
+max-locals = 15
+max-parents = 7
+max-public-methods = 20
+max-returns = 6
+max-statements = 50
+min-public-methods = 0
+
+[tool.pylint.exceptions]
+overgeneral-exceptions = ["builtins.BaseException", "builtins.Exception"]

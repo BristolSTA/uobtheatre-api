@@ -98,7 +98,7 @@ DEFAULT_FROM_EMAIL = "UOB Theatre <no-reply@uobtheatre.com>"
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 EMAIL_SUBJECT_PREFIX = "[UOBTheatre] "
 
-ADMINS = (("Author", "webmaster@bristolsta.com"),)
+ADMINS = ["webmaster@bristolsta.com"]
 
 
 # Postgres

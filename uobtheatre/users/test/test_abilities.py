@@ -121,6 +121,7 @@ def test_permissions_mixin_resolve_permissions_with_get_perms(info):
 def test_permissions_mixin_resolve_permissions_without_get_perms(info):
     class TestModelSchema(PermissionsMixin):
         class Meta:
+            fields = "__all__"
             model = Production
 
     schema = TestModelSchema()
@@ -139,6 +140,7 @@ def test_permissions_mixin_resolve_permissions_without_get_perms(info):
 def test_permissions_mixin_resolve_permissions_with_groups(info):
     class TestModelSchema(PermissionsMixin):
         class Meta:
+            fields = "__all__"
             model = Production
 
     model = ProductionFactory()
