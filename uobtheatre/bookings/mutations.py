@@ -16,7 +16,7 @@ from uobtheatre.payments.transaction_providers import (
     SquareOnline,
     SquarePOS,
 )
-from uobtheatre.productions.abilities import BookForPerformance, CompForPerformance, SellForPerformance
+from uobtheatre.productions.abilities import BookForPerformance
 from uobtheatre.productions.exceptions import NotBookableException
 from uobtheatre.productions.models import Performance
 from uobtheatre.users.abilities import AllwaysPasses
