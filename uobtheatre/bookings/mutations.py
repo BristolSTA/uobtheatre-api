@@ -16,7 +16,7 @@ from uobtheatre.payments.transaction_providers import (
     SquareOnline,
     SquarePOS,
 )
-from uobtheatre.productions.abilities import BookForPerformance
+from uobtheatre.productions.abilities import BookForPerformance, CompForPerformance, SellForPerformance
 from uobtheatre.productions.exceptions import NotBookableException
 from uobtheatre.productions.models import Performance
 from uobtheatre.users.abilities import AllwaysPasses
@@ -59,7 +59,7 @@ class BookingMutation(SafeFormMutation, AuthRequiredMixin):
         target_performance = new_performance or current_instance.performance
 
         # Authorize fields
-        cls.authorize_performance(info, target_performance)
+        cls.authorize_performance(info, target_performance, **inputs)
         cls.authorize_admin_discount(info, target_performance, **inputs)
         cls.authorize_target_user(info, target_performance, **inputs)
 
@@ -103,12 +103,27 @@ class BookingMutation(SafeFormMutation, AuthRequiredMixin):
             )
 
     @classmethod
-    def authorize_performance(cls, info, target_performance):
+    def authorize_performance(cls, info, target_performance, **inputs):
         """Authorize the performance given"""
         # Check performance is bookable
         if not BookForPerformance.user_has_for(
             info.context.user, target_performance
         ):
+            from uobtheatre.productions.models import Production
+            if (
+                "admin_discount_percentage" in inputs
+                and info.context.user.has_perm(
+                    "productions.comp_tickets", target_performance.production
+                )
+                and target_performance.production.status not in (
+                    Production.Status.PUBLISHED,
+                    Production.Status.APPROVED,
+                )
+            ):
+                raise NotBookableException(
+                    message="Comp tickets can only be created for published or approved productions",
+                )
+            
             raise NotBookableException(
                 message="You do not have permission to book for this performance",
             )
