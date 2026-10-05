@@ -41,7 +41,7 @@ def test_it_generates_correct_plain_text():
 def test_it_generates_correct_html():
     assert ">This is a heading</h1>" in test_mail.to_html()
     assert ">This is a paragraph</p>" in test_mail.to_html()
-    assert "<hr/>" in test_mail.to_html()
+    assert "<hr />" in test_mail.to_html()
     assert "<b>Bold!</b>" in test_mail.to_html()
     assert (
         Image("http://example.org/my/image").to_html() in test_mail.to_html()
