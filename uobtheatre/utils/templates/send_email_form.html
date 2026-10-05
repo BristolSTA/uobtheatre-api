@@ -2,11 +2,11 @@
 {% load i18n l10n admin_urls static %}
 {% block extrastyle %}
     {{ block.super }} <link rel="stylesheet" href="{% static "admin/css/forms.css" %}">
-    {{ block.super }} <link rel="stylesheet" href="{% static "django_tiptap/css/styles.css" %}">
 {% endblock %}
 
 {% block content %}
 <p> To: {{ emails }} </p>
+  {{ form.media }} # Enables the tiptap editor to work in the form
   <form method="post" novalidate>
    {% csrf_token %}
    {{ form.as_p }}

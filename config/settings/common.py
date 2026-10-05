@@ -37,7 +37,7 @@ INSTALLED_APPS = (
     "autoslug",  # Auto slug
     "graphene_django",  # Graphql
     "guardian",
-    "django_tiptap",
+    "django_tiptap_editor",
     "rest_framework",
     "django_inlinecss",
     "django_celery_results",
