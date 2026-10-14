@@ -63,7 +63,7 @@ squareup==46.0.0.20260916
 
 #=== Logging ===#
 
-sentry-sdk==2.42.0
+sentry-sdk==2.71.0
 whitenoise==6.11.0  # https://github.com/evansd/whitenoise
 
 #=== Email ===#
