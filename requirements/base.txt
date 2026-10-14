@@ -77,4 +77,4 @@ types-pytz==2025.2.0.20250809
 
 #=== Task Queue ===#
 django-celery-results==2.6.0
-redis==6.4.0
+redis==8.1.0
