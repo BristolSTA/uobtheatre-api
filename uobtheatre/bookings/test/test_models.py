@@ -1214,7 +1214,7 @@ def test_booking_display_name():
 
     assert (
         booking.display_name
-        == "Booking Ref. abcd for performance of my production at 10:00 on 14/01/2022"
+        == "Booking Ref. abcd for Performance of My Production at 10:00 on 14/01/2022"
     )
 
 

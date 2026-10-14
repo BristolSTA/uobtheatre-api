@@ -44,6 +44,8 @@ def test_create_and_refund_booking(square_client: Client):
 
     square_payment = response.payment
     assert square_payment.amount_money.amount == 1300
+    assert square_payment.note == booking.display_name
+    assert square_payment.reference_id == booking.payment_reference_id
 
     # Refund the payment
     payment.refund()
