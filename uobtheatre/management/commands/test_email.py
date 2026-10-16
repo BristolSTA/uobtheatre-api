@@ -62,7 +62,8 @@ class Command(BaseCommand):
         composer.line("This is a test email from the UOB Theatre system.")
 
         try:
-            if not composer.send("Test Email from UOB Theatre", target_email):
+            # .send() returns 1 if there was an error sending the email, and 0 if it was sent successfully
+            if composer.send("Test Email from UOB Theatre", target_email):
                 raise CommandError("Failed to send test email, but no exception was raised.")
             self.stdout.write(
                 self.style.SUCCESS(f"Successfully sent test email")

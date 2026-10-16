@@ -63,7 +63,7 @@ repos:
     - squareup==46.0.0.20260916
     - sentry-sdk==2.42.0
     - whitenoise==6.11.0
-    - django-anymail[amazon_ses]==13.1
+    - django-anymail[amazon_ses]==15.2
     - timezonefinder==8.1.0
     - pytz==2025.2
     - types-pytz==2025.2.0.20250809
