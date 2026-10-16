@@ -8,16 +8,11 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <meta name="color-scheme" content="dark">
     <meta name="supported-color-schemes" content="dark">
-
-</head>
-
-<head>
-
-    {% load simpleinliner %}
-    {% inlinecss "css/emails/base.css" %}
-    {% inlinecss "css/emails/button.css" %}
-    {% inlinecss "css/emails/panel.css" %}
-    
+    <style type="text/css">
+        {% include "css/base.css" %}
+        {% include "css/button.css" %}
+        {% include "css/panel.css" %}
+    </style>
 </head>
 
 <body>

@@ -68,7 +68,6 @@ whitenoise==6.11.0  # https://github.com/evansd/whitenoise
 
 #=== Email ===#
 django-anymail[amazon_ses]==15.2  # https://github.com/anymail/django-anymail
-django-simpleinliner==1.0.0
 
 #=== Timezones ===#
 timezonefinder==8.1.0
