@@ -13,11 +13,22 @@ services:
     volumes:
       - .:/app/uobtheatre-api:z
     env_file:
+      - .env
       - ./.envs/.local/.django
       - ./.envs/.local/.postgres
     ports:
       - '8000:8000'
     command: /start
+
+  postgres:
+    image: postgres:16
+    container_name: uobtheatre-postgres
+    volumes:
+      - uobtheatre_local_postgres_data:/var/lib/postgresql/data:Z
+      - uobtheatre_local_postgres_data_backups:/backups:z
+    env_file:
+      - .env
+      - ./.envs/.local/.postgres
 
   celery:
     build:
@@ -27,19 +38,7 @@ services:
     volumes:
       - .:/app/uobtheatre-api:z
     env_file:
-      - ./.envs/.local/.django
-      - ./.envs/.local/.postgres
-    depends_on:
-      - redis
-
-  celery-beat:
-    build:
-      context: .
-      dockerfile: ./compose/local/django/Dockerfile
-    command: celery -A config beat -l debug
-    volumes:
-      - .:/app/uobtheatre-api:z
-    env_file:
+      - .env
       - ./.envs/.local/.django
       - ./.envs/.local/.postgres
     depends_on:
@@ -47,19 +46,5 @@ services:
 
   redis:
     image: redis:alpine
-
-  postgres:
-    build:
-      context: .
-      dockerfile: ./compose/production/postgres/Dockerfile
-    container_name: uobtheatre-postgres
-    volumes:
-      - uobtheatre_local_postgres_data:/var/lib/postgresql/data:Z
-      - uobtheatre_local_postgres_data_backups:/backups:z
-    env_file:
-      - ./.envs/.local/.postgres
-
-  adminer:
-    image: adminer
-    ports:
-      - 8001:8080
+    # Locally, redis acts as a task scheduler for celery
+    # On production, AWS's SQS is used instead
