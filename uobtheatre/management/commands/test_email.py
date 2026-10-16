@@ -1,3 +1,4 @@
+import os
 from uuid import uuid4
 
 from django.conf import settings
@@ -28,6 +29,11 @@ class Command(BaseCommand):
             "--expect-aws",
             action="store_true",
             help="Expect the email to be sent via AWS SES.",
+        ),
+        parser.add_argument(
+            "--check-receipt",
+            action="store_true",
+            help="Check that the email was received by the testmail.app inbox. This requires a namespace AND an API key to be set in the environment variable TESTMAIL_API_KEY.",
         )
 
     def handle(self, *args, **options):  # pylint: disable=unused-argument
@@ -36,11 +42,13 @@ class Command(BaseCommand):
         It does not check the contents of the email, only that it can be sent without error.
         In CI, this is paired with testemail to check reciept of the email.
         """
+        tag = options["tag"] if options["tag"] else str(uuid4())
+
         if options["email"]:
             target_email = options["email"]
         elif options["namespace"]:
             target_email = (
-                options["namespace"] + "." + options["tag"] if options["tag"] else str(uuid4()) + "@inbox.testmail.app"
+                options["namespace"] + "." + tag + "@inbox.testmail.app"
             )
         else:
             # Raise an error if no email or namespace is provided
@@ -70,3 +78,61 @@ class Command(BaseCommand):
             )
         except Exception as e:
             raise CommandError(f"Failed to send test email: {e}")
+
+        if options["check_receipt"]:
+            if not options["namespace"]:
+                raise CommandError(
+                    "You must provide a namespace (--namespace) to check receipt of the email."
+                )
+            if not (api_key := os.getenv("TESTMAIL_API_KEY")):
+                raise CommandError(
+                    "You must set the TESTMAIL_API_KEY environment variable to check receipt of the email."
+                )
+
+            import json
+            import requests
+
+            self.stdout.write(
+                self.style.NOTICE(f"Checking receipt of test email in testmail.app inbox...")
+            )
+
+            ENDPOINT = "https://api.testmail.app/api/json"
+            PARAMS = {
+                "namespace": options["namespace"],
+                "apikey": api_key,
+                "livequery": "true",
+                "tag": tag,
+            }
+
+            for attempt in range(5):
+                response = requests.get(ENDPOINT, params=PARAMS)
+
+                if response.status_code == 200:
+                    break
+                elif response.status_code == 307:
+                    # Still waiting
+                    self.stdout.write(
+                        self.style.NOTICE(f"Waiting for test email to be received... (attempt {attempt + 1}/5)")
+                    )
+                else:
+                    raise CommandError(
+                        f"Failed to check receipt of test email: {response.status_code} {response.text}"
+                    )
+
+            data = response.json()
+
+            if not (data.get("result", "fail") == "success" and data.get("emails", [])):
+                raise CommandError(
+                    f"Testmail could not find the email, and responded with {json.dumps(data, indent=2)}."
+                )
+
+            email = data["emails"][0]
+
+            if email["subject"] == "Test Email from UOB Theatre" and email["to"] == target_email:
+                self.stdout.write(
+                    self.style.SUCCESS(f"Successfully received test email in testmail.app inbox")
+                )
+            else:
+                raise CommandError(
+                    f"Testmail received an email, but it did not match the expected subject or recipient. Received: {json.dumps(email, indent=2)}"
+                )
