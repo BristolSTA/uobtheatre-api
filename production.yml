@@ -1,7 +1,9 @@
 volumes:
   production_postgres_data: {}
   production_postgres_data_backups: {}
-  production_traefik: {}
+
+# This is a REPLICA of the production deployment setup, which is itself on the sta-compose repo
+# This allows for local production-like testing, if you have the right keys
 
 services:
   api:
@@ -11,44 +13,33 @@ services:
     image: uobtheatre_production_django
     depends_on:
       - postgres
-      - redis
     env_file:
       - ./.envs/.production/.django
       - ./.envs/.production/.postgres
+      - path: .env
+        required: false
+    ports:
+      - '8000:5000'
     command: /start
 
   postgres:
-    build:
-      context: .
-      dockerfile: ./compose/production/postgres/Dockerfile
-    image: uobtheatre_api_production_postgres
+    image: postgres:16
     volumes:
       - production_postgres_data:/var/lib/postgresql/data:Z
       - production_postgres_data_backups:/backups:z
     env_file:
       - ./.envs/.production/.postgres
+      - path: .env
+        required: false
 
-  traefik:
+  celery:
     build:
       context: .
-      dockerfile: ./compose/production/traefik/Dockerfile
-    image: uobtheatre_api_production_traefik
-    depends_on:
-      - api
-    volumes:
-      - production_traefik:/etc/traefik/acme:z
-    ports:
-      - "0.0.0.0:80:80"
-      - "0.0.0.0:443:443"
-
-  redis:
-    image: redis:5.0
-
-  awscli:
-    build:
-      context: .
-      dockerfile: ./compose/production/aws/Dockerfile
+      dockerfile: ./compose/production/django/Dockerfile
+    image: uobtheatre_production_celery
+    command: celery -A config worker -l info
     env_file:
       - ./.envs/.production/.django
-    volumes:
-      - production_postgres_data_backups:/backups:z
+      - ./.envs/.production/.postgres
+      - path: .env
+        required: false

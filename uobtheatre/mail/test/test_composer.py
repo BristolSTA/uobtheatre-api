@@ -41,11 +41,9 @@ def test_it_generates_correct_plain_text():
 def test_it_generates_correct_html():
     assert ">This is a heading</h1>" in test_mail.to_html()
     assert ">This is a paragraph</p>" in test_mail.to_html()
-    assert "<hr/>" in test_mail.to_html()
+    assert "<hr>" in test_mail.to_html()
     assert "<b>Bold!</b>" in test_mail.to_html()
-    assert (
-        Image("http://example.org/my/image").to_html() in test_mail.to_html()
-    )
+    assert '<img src="http://example.org/my/image"' in test_mail.to_html()
     assert 'href="https://example.org/call/to/action"' in test_mail.to_html()
     assert ">Call to Action</a>" in test_mail.to_html()
 
@@ -87,7 +85,7 @@ def test_html_item():
 
 def test_rule_item():
     rule = Rule()
-    assert rule.to_html() == "<p><hr /></p>"
+    assert rule.to_html() == "<p><hr></p>"
     assert rule.to_text() == "---------"
 
 

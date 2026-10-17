@@ -1,0 +1,59 @@
+name: E2E Email
+
+# Tests in a production-like environment using Testmail.app to verify email delivery.
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
+
+permissions:
+  contents: read
+
+jobs:
+  email:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout 🛎
+        uses: actions/checkout@master
+
+      - name: Write .env file 📝
+        env:
+            BASE_URL: https://uobtheatre.com
+            EMAIL_ENABLED: true
+            AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            AWS_STORAGE_BUCKET_NAME: ${{ secrets.AWS_STORAGE_BUCKET }}
+            CELERY_QUEUE_PREFIX: ${{ secrets.CELERY_QUEUE_PREFIX }}
+            TESTMAIL_API_KEY: ${{ secrets.TESTMAIL_API_KEY }}
+        run: |
+          touch .env
+          echo "BASE_URL=$BASE_URL" >> .env
+          echo "EMAIL_ENABLED=$EMAIL_ENABLED" >> .env
+          echo "AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION" >> .env
+          echo "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID" >> .env
+          echo "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" >> .env
+          echo "AWS_STORAGE_BUCKET_NAME=$AWS_STORAGE_BUCKET_NAME" >> .env
+          echo "CELERY_QUEUE_PREFIX=$CELERY_QUEUE_PREFIX" >> .env
+          echo "TESTMAIL_API_KEY=$TESTMAIL_API_KEY" >> .env
+
+      - name: Build & run production services 🏗
+        run: docker compose -f production.yml up -d --build
+
+      - name: Run migrations 🧪
+        run: docker compose -f production.yml run --rm api python manage.py migrate
+      
+      - name: Run email smoke tests 🧪
+        env:
+          TESTMAIL_NAMESPACE: ${{ secrets.TESTMAIL_NAMESPACE }}
+          TESTMAIL_TAG: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: >
+          docker compose -f production.yml run --rm api
+          python manage.py test_email
+          --namespace "$TESTMAIL_NAMESPACE"
+          --tag "$TESTMAIL_TAG"
+          --expect-aws
+          --check-receipt

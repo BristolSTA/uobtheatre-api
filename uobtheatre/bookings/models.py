@@ -639,7 +639,7 @@ class Booking(TimeStampedMixin, Payable):
 
     @property
     def display_name(self):
-        return f"Booking Ref. {self.reference} for {str(self.performance).lower()}"
+        return f"Booking Ref. {self.reference} for {str(self.performance)}"
 
 
 class TicketQuerySet(QuerySet):

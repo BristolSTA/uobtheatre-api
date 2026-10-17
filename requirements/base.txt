@@ -40,7 +40,8 @@ django==6.0.8
 #=== Django Extras ===#
 
 django-guardian==3.2.0  # https://github.com/django-guardian/django-guardian
-django_tiptap==0.0.18  # https://github.com/django-tiptap/django_tiptap
+django_tiptap==0.0.18  # Old tiptap editor, we have to keep it around so the migrations don't break
+django_tiptap_editor==0.10.0 # https://github.com/Artui/django-tiptap-editor
 djangorestframework==3.16.1  # https://www.django-rest-framework.org
 django-nonrelated-inlines==0.2
 
@@ -58,7 +59,7 @@ pydantic==2.12.3
 
 #=== Payments ===#
 
-squareup==44.0.1.20260122
+squareup==46.0.0.20260916
 
 #=== Logging ===#
 
@@ -66,8 +67,9 @@ sentry-sdk==2.42.0
 whitenoise==6.11.0  # https://github.com/evansd/whitenoise
 
 #=== Email ===#
-django-anymail[amazon_ses]==13.1  # https://github.com/anymail/django-anymail
-django-inlinecss-redux==0.4.0
+django-anymail[amazon_ses]==15.2  # https://github.com/anymail/django-anymail
+css_inline==0.22.1
+requests==2.34.2
 
 #=== Timezones ===#
 timezonefinder==8.1.0

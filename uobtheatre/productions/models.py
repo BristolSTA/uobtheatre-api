@@ -11,9 +11,9 @@ from django.db.models import Max, Min, Q, Sum
 from django.db.models.query import QuerySet
 from django.utils import timezone
 from django.utils.functional import cached_property
-from django_tiptap.fields import TipTapTextField
 from guardian.shortcuts import get_objects_for_user
 
+from uobtheatre.fields import TipTapTextField
 from uobtheatre.images.models import Image
 from uobtheatre.payments.exceptions import CantBeRefundedException
 from uobtheatre.payments.models import Transaction

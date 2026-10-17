@@ -214,7 +214,7 @@ class SquareAPIMixin(abc.ABC):
     """Mixin that inserts square API client and handlers"""
 
     kwargs = {
-        "version": "2025-04-16",
+        "version": "2026-09-16",
         "token": settings.SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],  # type: ignore
         "environment": settings.SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],  # type: ignore
     }
@@ -542,6 +542,7 @@ class SquarePOS(PaymentProvider, SquarePaymentMethod):
             amount_money=MoneyParams(amount=value, currency="GBP"),
             reference_id=pay_object.payment_reference_id,
             device_options=DeviceCheckoutOptions(device_id=self.device_id),
+            note=str(pay_object.display_name)[:500],
         )
 
         try:
@@ -785,6 +786,7 @@ class SquareOnline(PaymentProvider, SquarePaymentMethod):
             "source_id": self.nonce,
             "amount_money": {"amount": value, "currency": "GBP"},
             "reference_id": pay_object.payment_reference_id,
+            "note": str(pay_object.display_name)[:500],
         }
 
         if self.verify_token:

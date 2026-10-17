@@ -5,9 +5,9 @@ Models for venues.
 from autoslug import AutoSlugField
 from django.apps import apps
 from django.db import models
-from django_tiptap.fields import TipTapTextField
 
 from uobtheatre.addresses.models import Address
+from uobtheatre.fields import TipTapTextField
 from uobtheatre.images.models import Image
 from uobtheatre.utils.models import BaseModel, TimeStampedMixin
 

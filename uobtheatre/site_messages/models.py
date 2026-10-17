@@ -4,8 +4,8 @@ from django.db import models
 from django.db.models import F
 from django.db.models.query import QuerySet
 from django.utils import timezone
-from django_tiptap.fields import TipTapTextField
 
+from uobtheatre.fields import TipTapTextField
 from uobtheatre.users.models import User
 from uobtheatre.utils.models import BaseModel
 from uobtheatre.utils.validators import RequiredFieldsValidator
