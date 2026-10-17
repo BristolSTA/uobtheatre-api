@@ -39,7 +39,6 @@ INSTALLED_APPS = (
     "guardian",
     "django_tiptap_editor",
     "rest_framework",
-    "simpleinliner",
     "django_celery_results",
     "nonrelated_inlines",
     # Your apps

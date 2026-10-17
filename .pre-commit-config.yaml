@@ -46,7 +46,6 @@ repos:
     - Pillow==12.1.1
     - django-cors-headers==4.9.0
     - django-admin-confirm==1.0.1
-    - django-configurations==2.5.1
     - django-environ==0.12.0
     - xlsxwriter==3.2.9
     - html2text==2025.4.15
@@ -64,8 +63,7 @@ repos:
     - squareup==46.0.0.20260916
     - sentry-sdk==2.42.0
     - whitenoise==6.11.0
-    - django-anymail[amazon_ses]==13.1
-    - django-inlinecss-redux==0.4.0
+    - django-anymail[amazon_ses]==15.2
     - timezonefinder==8.1.0
     - pytz==2025.2
     - types-pytz==2025.2.0.20250809

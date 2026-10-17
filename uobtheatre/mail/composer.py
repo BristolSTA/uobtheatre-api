@@ -2,6 +2,7 @@ import abc
 from datetime import datetime
 from typing import List, Optional, Union
 
+import css_inline
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.mail import EmailMultiAlternatives
@@ -184,7 +185,7 @@ class Rule(ComposerItemInterface):
         return "---------"
 
     def to_html(self):
-        return "<p><hr /></p>"
+        return "<p><hr></p>"
 
 
 class MailComposer(ComposerItemsContainer):
@@ -232,7 +233,10 @@ class MailComposer(ComposerItemsContainer):
                 "footer": "&copy; UOB Theatre %s" % datetime.now().year,
             }
         )
-        return email
+
+        inlined_email = css_inline.CSSInliner(keep_at_rules=True).inline(email)
+
+        return inlined_email
 
     def get_email(self, subject, to_email):
         """Generate an EmailMultiAlternatives object for this email, which can then be sent using the send() method of the object"""
