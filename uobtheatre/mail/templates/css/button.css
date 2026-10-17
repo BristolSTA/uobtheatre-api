@@ -4,7 +4,7 @@
     -premailer-cellpadding: 0;
     -premailer-cellspacing: 0;
     -premailer-width: 100%;
-    margin: 30px auto;
+    margin: 16px auto;
     padding: 0;
     text-align: center;
     width: 100%;
@@ -17,15 +17,16 @@
     display: inline-block;
     overflow: hidden;
     text-decoration: none;
+    font-size: 16px;
 }
 
 .button-blue,
 .button-primary {
-    background-color: #2d3748;
-    border-bottom: 8px solid #2d3748;
-    border-left: 18px solid #2d3748;
-    border-right: 18px solid #2d3748;
-    border-top: 8px solid #2d3748;
+    background-color: #23272a;
+    border-bottom: 8px solid #23272a;
+    border-left: 18px solid #23272a;
+    border-right: 18px solid #23272a;
+    border-top: 8px solid #23272a;
 }
 
 .button-green,
