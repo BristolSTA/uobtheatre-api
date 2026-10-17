@@ -42,7 +42,7 @@ django==6.0.8
 django-guardian==3.2.0  # https://github.com/django-guardian/django-guardian
 django_tiptap==0.0.18  # Old tiptap editor, we have to keep it around so the migrations don't break
 django_tiptap_editor==0.10.0 # https://github.com/Artui/django-tiptap-editor
-djangorestframework==3.16.1  # https://www.django-rest-framework.org
+djangorestframework==3.17.2  # https://www.django-rest-framework.org
 django-nonrelated-inlines==0.2
 
 #=== GQL core ===#
