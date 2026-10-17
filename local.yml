@@ -13,9 +13,10 @@ services:
     volumes:
       - .:/app/uobtheatre-api:z
     env_file:
-      - .env
       - ./.envs/.local/.django
       - ./.envs/.local/.postgres
+      - path: .env
+        required: false
     ports:
       - '8000:8000'
     command: /start
@@ -27,8 +28,9 @@ services:
       - uobtheatre_local_postgres_data:/var/lib/postgresql/data:Z
       - uobtheatre_local_postgres_data_backups:/backups:z
     env_file:
-      - .env
       - ./.envs/.local/.postgres
+      - path: .env
+        required: false
 
   celery:
     build:
@@ -38,9 +40,10 @@ services:
     volumes:
       - .:/app/uobtheatre-api:z
     env_file:
-      - .env
       - ./.envs/.local/.django
       - ./.envs/.local/.postgres
+      - path: .env
+        required: false
     depends_on:
       - redis
 

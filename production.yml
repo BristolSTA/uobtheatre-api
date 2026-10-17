@@ -14,9 +14,10 @@ services:
     depends_on:
       - postgres
     env_file:
-      - .env
       - ./.envs/.production/.django
       - ./.envs/.production/.postgres
+      - path: .env
+        required: false
     ports:
       - '8000:5000'
     command: /start
@@ -27,8 +28,9 @@ services:
       - production_postgres_data:/var/lib/postgresql/data:Z
       - production_postgres_data_backups:/backups:z
     env_file:
-      - .env
       - ./.envs/.production/.postgres
+      - path: .env
+        required: false
 
   celery:
     build:
@@ -37,6 +39,7 @@ services:
     image: uobtheatre_production_celery
     command: celery -A config worker -l info
     env_file:
-      - .env
       - ./.envs/.production/.django
       - ./.envs/.production/.postgres
+      - path: .env
+        required: false
