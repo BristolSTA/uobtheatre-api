@@ -1,6 +1,6 @@
 import time
-import css_inline
 
+import css_inline
 from django.conf import settings as django_settings
 from django.contrib.auth import get_user_model
 from django.contrib.sites.shortcuts import get_current_site
@@ -44,7 +44,9 @@ class UserStatus(models.Model):
             render_to_string(subject, context).replace("\n", " ").strip()
         )
         html_message = render_to_string(template, context)
-        inlined_html_message = css_inline.CSSInliner(keep_at_rules=True).inline(html_message)
+        inlined_html_message = css_inline.CSSInliner(
+            keep_at_rules=True
+        ).inline(html_message)
         message = strip_tags(html_message)
 
         return send_mail(
