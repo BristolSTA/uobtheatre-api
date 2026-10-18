@@ -41,6 +41,7 @@ INSTALLED_APPS = (
     "rest_framework",
     "django_celery_results",
     "nonrelated_inlines",
+    "debug_toolbar",
     # Your apps
     "uobtheatre.users",
     "uobtheatre.productions",
@@ -62,6 +63,7 @@ INSTALLED_APPS = (
 
 # https://docs.djangoproject.com/en/2.0/topics/http/middleware/
 MIDDLEWARE = (
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",

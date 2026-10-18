@@ -9,6 +9,7 @@ from django.urls import include, path, re_path
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic.base import RedirectView
 from graphene_django.views import GraphQLView
+from debug_toolbar.toolbar import debug_toolbar_urls
 
 from config.settings.common import SQUARE_SETTINGS
 from uobtheatre.images.views import ImageView
@@ -25,4 +26,4 @@ urlpatterns = [
     # Redirect root to graphql
     re_path(r"^$", RedirectView.as_view(url="graphql/", permanent=False)),
     re_path(r"^upload/$", ImageView.as_view(), name="file-upload"),
-] + static(settings.MEDIA_PATH, document_root=settings.MEDIA_ROOT)
+] + static(settings.MEDIA_PATH, document_root=settings.MEDIA_ROOT) + debug_toolbar_urls()

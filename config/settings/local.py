@@ -16,3 +16,11 @@ EMAIL_BACKEND = os.getenv(
 CORS_ALLOW_ALL_ORIGINS = True
 
 CELERY_WORKER_REDIRECT_STDOUTS_LEVEL = "INFO"
+
+INTERNAL_IPS = [
+    "127.0.0.1"
+]
+
+DEBUG_TOOLBAR_CONFIG = {
+    "SHOW_TOOLBAR_CALLBACK": 'debug_toolbar.middleware.show_toolbar_with_docker'
+}
