@@ -126,12 +126,26 @@ class CommonTestCase(GraphQLTestCase, metaclass=TestCaseMeta):
         # Swap legacy username field selections for email on user nodes.
         query = re.sub(r"\busername\b(?!\s*:)", "email", query)
 
-        # register mutation in this project requires turnstileToken.
+        # Auth mutations using the Turnstile mixins require turnstileToken.
+        # Add it to legacy queries unless the caller already supplied one.
+        turnstile_mutations = (
+            "login",
+            "register",
+            "sendPasswordResetEmail",
+            "resendActivationEmail",
+        )
+
+        def add_turnstile_token(match: re.Match[str]) -> str:
+            name, arguments = match.group(1), match.group(2)
+            if "turnstileToken" not in arguments:
+                arguments = 'turnstileToken: "test-token", ' + arguments
+            return f"{name}({arguments})"
+
         query = re.sub(
-            r"\bregister\(\s*",
-            'register(turnstileToken: "test-token", ',
+            rf"\b({'|'.join(turnstile_mutations)})\(\s*([^)]*?)\)",
+            add_turnstile_token,
             query,
-            count=1,
+            flags=re.DOTALL,
         )
 
         # RegisterTurnstile only returns success/errors in this project.
@@ -278,6 +292,7 @@ class CommonTestCase(GraphQLTestCase, metaclass=TestCaseMeta):
 
     def get_response_result(self, response) -> dict[str, Any]:
         data = json.loads(response.content.decode()).get("data", {})
+        print(f"Response data: {data}")
         if self.RESPONSE_RESULT_KEY in data:
             return data[self.RESPONSE_RESULT_KEY]
 

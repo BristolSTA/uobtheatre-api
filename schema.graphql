@@ -1500,6 +1500,19 @@ type Mutation {
   passwordReset(token: String!, newPassword1: String!, newPassword2: String!): PasswordReset
 
   """
+  Set user password - for passwordless registration
+  
+  Receive the token that was sent by email.
+  
+  If token and new passwords are valid, set
+  user password and in case of using refresh
+  tokens, revoke all of them.
+  
+  Also, if user has not been verified yet, verify it.
+  """
+  passwordSet(token: String!, newPassword1: String!, newPassword2: String!): PasswordSet
+
+  """
   Change account password when user knows the old password.
   
   A new token and refresh token are sent. User must be verified.
@@ -1512,6 +1525,23 @@ type Mutation {
   User must be verified.
   """
   updateAccount(firstName: String, lastName: String): UpdateAccount
+
+  """
+  Archive account and revoke refresh tokens.
+  
+  User must be verified and confirm password.
+  """
+  archiveAccount(password: String!): ArchiveAccount
+
+  """
+  Delete account permanently or make `user.is_active=False`.
+  
+  The behavior is defined on settings.
+  Anyway user refresh tokens are revoked.
+  
+  User must be verified and confirm password.
+  """
+  deleteAccount(password: String!): DeleteAccount
 
   """
   Send activation to secondary email.
@@ -1564,6 +1594,12 @@ type Mutation {
   with change exception error message from "Error decoding signature" to "Invalid token.".
   """
   refreshToken(refreshToken: String): RefreshToken
+
+  """
+  Same as `grapgql_jwt` implementation,
+  with change exception error message from "Error decoding signature" to "Invalid token.".
+  """
+  revokeToken(refreshToken: String): RevokeToken
 
   """Mutation to create or update a production"""
   production(input: ProductionMutationInput!): ProductionMutationPayload
@@ -1894,6 +1930,22 @@ type PasswordReset {
 }
 
 """
+Set user password - for passwordless registration
+
+Receive the token that was sent by email.
+
+If token and new passwords are valid, set
+user password and in case of using refresh
+tokens, revoke all of them.
+
+Also, if user has not been verified yet, verify it.
+"""
+type PasswordSet {
+  success: Boolean!
+  errors: [GQLErrorUnion!]
+}
+
+"""
 Change account password when user knows the old password.
 
 A new token and refresh token are sent. User must be verified.
@@ -1911,6 +1963,29 @@ Update user model fields, defined on settings.
 User must be verified.
 """
 type UpdateAccount {
+  success: Boolean!
+  errors: [GQLErrorUnion!]
+}
+
+"""
+Archive account and revoke refresh tokens.
+
+User must be verified and confirm password.
+"""
+type ArchiveAccount {
+  success: Boolean!
+  errors: [GQLErrorUnion!]
+}
+
+"""
+Delete account permanently or make `user.is_active=False`.
+
+The behavior is defined on settings.
+Anyway user refresh tokens are revoked.
+
+User must be verified and confirm password.
+"""
+type DeleteAccount {
   success: Boolean!
   errors: [GQLErrorUnion!]
 }
@@ -2181,6 +2256,16 @@ type RefreshToken {
   errors: [GQLErrorUnion!]
   token: String
   refreshToken: String
+}
+
+"""
+Same as `grapgql_jwt` implementation,
+with change exception error message from "Error decoding signature" to "Invalid token.".
+"""
+type RevokeToken {
+  revoked: Int
+  success: Boolean!
+  errors: [GQLErrorUnion!]
 }
 
 """Mutation to create or update a production"""

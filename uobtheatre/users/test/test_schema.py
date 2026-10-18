@@ -124,6 +124,147 @@ def test_user_field_error(gql_client):
     }
 
 
+@override_settings(TURNSTILE_SECRET="1x0000000000000000000000000000000AA")
+@override_settings(TURNSTILE_BYPASS_TOKEN="PASSWORD")
+@pytest.mark.django_db
+def test_turnstile_bypass(gql_client):
+    gql_client.execute("""
+        mutation {
+          register(
+            email: "test@email.com"
+            password1: "strongpassword"
+            password2: "strongpassword"
+            firstName: "James"
+            lastName: "Tooof"
+            turnstileToken: "XXXX.DUMMY.TOKEN.XXXX"
+          ) {
+            success
+          }
+        }
+        """)
+
+    user_status = UserStatus.objects.get(user__email="test@email.com")
+    user_status.verified = True
+    user_status.save()
+
+    response = gql_client.execute("""
+        mutation {
+            login(
+                email: "test@email.com"
+                password: "strongpassword"
+                turnstileToken: ""
+                turnstileBypassToken: "PASSWORD"
+            ) {
+                token
+                refreshToken
+                success
+                errors {
+                  ... on FieldError {
+                    message
+                    field
+                    code
+                  }
+                  ... on NonFieldError {
+                    message
+                    code
+                  }
+                }
+                user {
+                  firstName
+                }
+              }
+            }
+            """)
+
+    response_data = response["data"]["login"]
+    # Assert no errors
+    assert all(
+        [
+            not response.get("errors", None),
+            not response_data["errors"],
+            response_data["success"] is True,
+        ]
+    )
+
+    # Check the token is valid
+    assert (
+        isinstance(response_data["token"], str)
+        and len(response_data["token"]) > 150
+    )
+    assert (
+        isinstance(response_data["refreshToken"], str)
+        and len(response_data["refreshToken"]) > 30
+    )
+
+    # Check user is correct
+    assert response_data["user"]["firstName"] == "James"
+
+
+@override_settings(TURNSTILE_SECRET="1x0000000000000000000000000000000AA")
+@override_settings(TURNSTILE_BYPASS_TOKEN="PASSWORD")
+@pytest.mark.django_db
+def test_turnstile_incorrect_bypass(gql_client):
+    gql_client.execute("""
+        mutation {
+          register(
+            email: "test@email.com"
+            password1: "strongpassword"
+            password2: "strongpassword"
+            firstName: "James"
+            lastName: "Tooof"
+            turnstileToken: "XXXX.DUMMY.TOKEN.XXXX"
+          ) {
+            success
+          }
+        }
+        """)
+
+    user_status = UserStatus.objects.get(user__email="test@email.com")
+    user_status.verified = True
+    user_status.save()
+
+    response = gql_client.execute("""
+        mutation {
+            login(
+                email: "test@email.com"
+                password: "strongpassword"
+                turnstileToken: ""
+                turnstileBypassToken: "PASSWORDINCORRECT"
+            ) {
+                success
+                errors {
+                  __typename
+                  ... on FieldError {
+                    message
+                    field
+                    code
+                  }
+                  ... on NonFieldError {
+                    message
+                    code
+                  }
+                }
+              }
+            }
+            """)
+
+    assert response == {
+        "data": {
+            "login": {
+                "success": False,
+                "errors": [
+                    {
+                        "__typename": "FieldError",
+                        "message": "No Turnstile token provided.",
+                        "field": "FieldErrors",
+                        "code": "turnstileTokenReject",
+                    }
+                ],
+            }
+        }
+    }
+
+
 @override_settings(TURNSTILE_SECRET="2x0000000000000000000000000000000AA")
 @pytest.mark.django_db
 def test_turnstile_rejection(gql_client):
@@ -176,7 +317,7 @@ def test_turnstile_rejection(gql_client):
 def test_user_wrong_credentials(gql_client):
     response = gql_client.execute("""
         mutation {
-          login(email:"fakeaccount@email.com", password:"strongpassword"){
+          login(email:"fakeaccount@email.com", password:"strongpassword", turnstileToken: "XXXX.DUMMY.TOKEN.XXXX"){
             token
             success
             errors {
@@ -230,7 +371,8 @@ def test_user_register(gql_client):
 
     login_query = """
         mutation {
-          login(email:"test@email.com", password:"strongpassword"){
+          login(email:"test@email.com", password:"strongpassword", 
+            turnstileToken: "XXXX.DUMMY.TOKEN.XXXX"){
             token
             refreshToken
             success
