@@ -70,7 +70,7 @@ class AuthenticateableGQLClient(GQLClient):
 def square_client():
     """Make a square clients"""
     kwargs = {
-        "version": "2025-04-16",
+        "version": "2026-09-16",
         "token": settings.SQUARE_SETTINGS["SQUARE_ACCESS_TOKEN"],  # type: ignore
         "environment": settings.SQUARE_SETTINGS["SQUARE_ENVIRONMENT"],  # type: ignore
     }
