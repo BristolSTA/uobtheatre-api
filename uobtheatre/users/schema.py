@@ -1,3 +1,6 @@
+import os
+import secrets
+
 import graphene
 from graphql_relay.node.node import to_global_id
 
@@ -78,11 +81,54 @@ class TurnstileMixin(graphene.Mutation):
         return super().mutate(root, info, **inputs)
 
 
+class TurnstileWithBypassMixin(TurnstileMixin):
+    """
+    Mixin to add a bypass token for testing purposes.
+    """
+
+    @classmethod
+    def Field(cls, *args, **kwargs):
+        cls._meta.arguments.update(
+            {"turnstile_bypass_token": graphene.String(required=False), "turnstile_token": graphene.String(required=False)}
+        )
+        return super().Field(*args, **kwargs)
+
+    @classmethod
+    def mutate(cls, root, info, **inputs):
+        """
+        Intercepts the mutation to validate the turnstile token before proceeding.
+        """
+        # Check for bypass token
+        bypass_token = inputs.get("turnstile_bypass_token")
+        if bypass_token is not None and secrets.compare_digest(bypass_token, os.getenv("TURNSTILE_BYPASS_TOKEN", "")):
+            inputs.pop("turnstile_bypass_token")
+            inputs.pop("turnstile_token")
+            return super(TurnstileMixin, cls).mutate(root, info, **inputs)
+        return super().mutate(root, info, **inputs)
+
+
 class RegisterTurnstile(TurnstileMixin, mutations.Register):
     """
     Registers a new user with Turnstile verification.
     """
 
+
+class LoginTurnstile(TurnstileWithBypassMixin, mutations.ObtainJSONWebToken):
+    """
+    Logs in a user with Turnstile verification.
+    """
+
+
+class SendPasswordResetTurnstile(TurnstileMixin, mutations.SendPasswordResetEmail):
+    """
+    Sends a password reset email with Turnstile verification.
+    """
+
+
+class ResendActivationEmailTurnstile(TurnstileMixin, mutations.ResendActivationEmail):
+    """
+    Resends an activation email with Turnstile verification.
+    """
 
 class AuthMutation(graphene.ObjectType):
     """User mutations
@@ -92,16 +138,14 @@ class AuthMutation(graphene.ObjectType):
 
     register = RegisterTurnstile.Field()
     verify_account = mutations.VerifyAccount.Field()
-    resend_activation_email = mutations.ResendActivationEmail.Field()
-    send_password_reset_email = mutations.SendPasswordResetEmail.Field()
+    resend_activation_email = ResendActivationEmailTurnstile.Field()
+    send_password_reset_email = SendPasswordResetTurnstile.Field()
     password_reset = mutations.PasswordReset.Field()
-    password_set = (
-        mutations.PasswordSet.Field()
-    )  # For passwordless registration
+    # password_set = ( mutations.PasswordSet.Field() )  # For passwordless registration
     password_change = mutations.PasswordChange.Field()
     update_account = mutations.UpdateAccount.Field()
-    archive_account = mutations.ArchiveAccount.Field()
-    delete_account = mutations.DeleteAccount.Field()
+    # archive_account = mutations.ArchiveAccount.Field()
+    # delete_account = mutations.DeleteAccount.Field()
     send_secondary_email_activation = (
         mutations.SendSecondaryEmailActivation.Field()
     )
@@ -110,10 +154,10 @@ class AuthMutation(graphene.ObjectType):
     remove_secondary_email = mutations.RemoveSecondaryEmail.Field()
 
     # django-graphql-jwt inheritances
-    login = mutations.ObtainJSONWebToken.Field()
+    login = LoginTurnstile.Field()
     verify_token = mutations.VerifyToken.Field()
     refresh_token = mutations.RefreshToken.Field()
-    revoke_token = mutations.RevokeToken.Field()
+    # revoke_token = mutations.RevokeToken.Field()
 
 
 class ExtendedMeQuery(graphene.ObjectType):
