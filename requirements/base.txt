@@ -76,6 +76,7 @@ timezonefinder==8.1.0
 pytz==2025.2
 types-pytz==2025.2.0.20250809
 
-#=== Task Queue ===#
+#=== Task Queue & Caching ===#
 django-celery-results==2.6.0
-redis==6.4.0
+redis==8.1.0
+django-cachalot==2.9.0

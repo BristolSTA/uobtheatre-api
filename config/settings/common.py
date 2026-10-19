@@ -41,7 +41,6 @@ INSTALLED_APPS = (
     "rest_framework",
     "django_celery_results",
     "nonrelated_inlines",
-    "debug_toolbar",
     # Your apps
     "uobtheatre.users",
     "uobtheatre.productions",
@@ -63,7 +62,6 @@ INSTALLED_APPS = (
 
 # https://docs.djangoproject.com/en/2.0/topics/http/middleware/
 MIDDLEWARE = (
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -369,9 +367,18 @@ DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
 # Celery
 CELERY_RESULT_BACKEND = "django-db"
-CELERY_BROKER_URL = "redis://redis:6379"
+CELERY_BROKER_URL = "redis://redis:6379/0"
 CELERY_TASK_TRACK_STARTED = True
 CELERY_ACCEPT_CONTENT = ["application/json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_INCLUDE = ["uobtheatre.utils.tasks"]
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": "redis://redis:6379/1",
+    }
+}
+
+INSTALLED_APPS += ("cachalot",)  # type: ignore

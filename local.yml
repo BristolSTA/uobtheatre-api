@@ -47,7 +47,7 @@ services:
     depends_on:
       - redis
 
-  redis:
+  redis: # SQL Caching
     image: redis:alpine
     # Locally, redis acts as a task scheduler for celery
     # On production, AWS's SQS is used instead

@@ -42,7 +42,7 @@ setup-devcontainer:
 	make migrate
 
 up: ## Run background
-	docker compose up -d api postgres celery redis
+	docker compose up -d
 
 up-v: ## Run verbose
 	docker compose up

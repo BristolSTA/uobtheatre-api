@@ -43,3 +43,6 @@ services:
       - ./.envs/.production/.postgres
       - path: .env
         required: false
+
+  redis: # SQL Caching
+    image: redis:alpine
