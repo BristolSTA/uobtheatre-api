@@ -49,7 +49,7 @@ django-nonrelated-inlines==0.2
 
 graphene==3.4.3
 graphene-django==3.2.3
-graphql-core==3.2.6
+graphql-core==3.2.12
 
 #=== Auth ===#
 
