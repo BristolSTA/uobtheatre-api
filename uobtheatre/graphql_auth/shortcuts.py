@@ -2,8 +2,9 @@ from typing import Callable
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Q
 from django.utils.module_loading import import_string
+
+from uobtheatre.utils.utils import get_by_email
 
 from .settings import graphql_auth_settings as app_settings
 from .types import ExpectedErrorType
@@ -11,16 +12,16 @@ from .types import ExpectedErrorType
 
 def get_user_by_email(email):
     """
-    get user by email or by secondary email
+    get user by email or by secondary email, ignoring case
     raise ObjectDoesNotExist
     """
 
     UserModel = get_user_model()
 
-    user = (
-        UserModel._default_manager.select_related("status")
-        .filter(Q(**{UserModel.EMAIL_FIELD: email}) | Q(status__secondary_email=email))  # type: ignore
-        .first()
+    user = get_by_email(
+        UserModel._default_manager.select_related("status"),
+        email,
+        [UserModel.EMAIL_FIELD, "status__secondary_email"],  # type: ignore
     )
     if user is None:
         raise ObjectDoesNotExist
@@ -37,13 +38,13 @@ def get_user_to_login(**kwargs):
     UserModel = get_user_model()
 
     if "email" in kwargs.keys():
-        lookup_filter = Q(email=kwargs["email"])
+        email_fields = ["email"]
         if app_settings.ALLOW_LOGIN_WITH_SECONDARY_EMAIL:
-            lookup_filter |= Q(status__secondary_email=kwargs["email"])
-        user = (
-            UserModel._default_manager.select_related("status")
-            .filter(lookup_filter)
-            .first()
+            email_fields.append("status__secondary_email")
+        user = get_by_email(
+            UserModel._default_manager.select_related("status"),
+            kwargs["email"],
+            email_fields,
         )
     else:
         user = (
