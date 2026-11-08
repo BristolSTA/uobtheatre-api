@@ -962,6 +962,26 @@ def test_production_permissions_assignable_permission(gql_client):
 
 
 @pytest.mark.django_db
+def test_production_permissions_finds_user_whatever_the_email_case(
+    gql_client,
+):
+    production = ProductionFactory()
+    user = UserFactory(email="example@example.org")
+    request = """
+        mutation {
+            productionPermissions(id: "%s", userEmail: "Example@Example.org", permissions: ["boxoffice"]) {
+                success
+            }
+        }
+    """ % to_global_id("ProductionNode", production.id)
+    assign_perm("change_production", gql_client.login().user, production)
+
+    response = gql_client.execute(request)
+    assert response["data"]["productionPermissions"]["success"] is True
+    assert user.has_perm("boxoffice", production) is True
+
+
+@pytest.mark.django_db
 def test_production_permissions_remove_assignable_permission(gql_client):
     production = ProductionFactory()
     user = UserFactory(email="example@example.org")

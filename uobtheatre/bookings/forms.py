@@ -11,6 +11,7 @@ from uobtheatre.users.models import User
 from uobtheatre.utils.exceptions import GQLException
 from uobtheatre.utils.forms import MutationForm
 from uobtheatre.utils.schema import IdInputField
+from uobtheatre.utils.utils import get_by_email, normalise_email
 from uobtheatre.venues.models import Seat, SeatGroup
 
 
@@ -75,10 +76,14 @@ class BookingForm(MutationForm):
 
         # We only update the booking's user if an email has be explicitly provided, or no user is currently assigned to it
         if user_email := cleaned_data.get("user_email"):
-            # If a user is supplied to assign the booking to, create or retrieve that user
-            self.instance.user, _ = User.objects.get_or_create(
-                email=user_email,
-                defaults={"first_name": "Anonymous", "last_name": "User"},
+            # If a user is supplied to assign the booking to, retrieve that user
+            # (whatever the case of the email) or create them
+            self.instance.user = get_by_email(
+                User.objects.all(), user_email
+            ) or User.objects.create(
+                email=normalise_email(user_email),
+                first_name="Anonymous",
+                last_name="User",
             )
         elif not self.instance.id:
             # If no exisiting user on booking, set it to be the creator (current user)
