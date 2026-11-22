@@ -11,16 +11,16 @@ from uobtheatre.payments.test.factories import TransactionFactory
 from uobtheatre.payments.transaction_providers import SquarePOS, SquareRefund
 
 TEST_TERMINAL_CHECKOUT_PAYLOAD = {
-    "merchant_id": "ML8M1AQ1GQG2K",
+    "merchant_id": "7NZR58EPNGNPC",
     "type": "terminal.checkout.updated",
-    "event_id": "d395e3d0-1c5c-4372-bdf2-6955b8f44166",
-    "created_at": "2021-08-13T13:45:52.789468835Z",
+    "event_id": "1c3ef831-670d-4f4c-b59c-f0bb2d2fc872",
+    "created_at": "2020-04-10T14:44:06.039Z",
     "data": {
-        "type": "checkout.event",
+        "type": "checkout",
         "id": "dhgENdnFOPXqO",
         "object": {
             "checkout": {
-                "amount_money": {"amount": 111, "currency": "USD"},
+                "amount_money": {"amount": 111, "currency": "GBP"},
                 "app_id": "sq0idp-734Md5EcFjFmwpaR0Snm6g",
                 "created_at": "2020-04-10T14:43:55.262Z",
                 "deadline_duration": "PT5M",
@@ -42,55 +42,55 @@ TEST_TERMINAL_CHECKOUT_PAYLOAD = {
 }
 
 TEST_PAYMENT_UPDATE_PAYLOAD = {
-    "merchant_id": "ML8M1AQ1GQG2K",
+    "merchant_id": "6SSW7HV8K2ST5",
     "type": "payment.updated",
-    "event_id": "8abbbe96-02c3-4818-910f-43d4b83baef8",
-    "created_at": "2021-10-03T11:18:16.523273578Z",
+    "event_id": "6a8f5f28-54a1-4eb0-a98a-3111513fd4fc",
+    "created_at": "2020-02-06T21:27:34.308Z",
     "data": {
         "type": "payment",
-        "id": "KkAkhdMsgzn59SM8A89WgKwekxLZY",
+        "id": "hYy9pRFVxpDsO1FB05SunFWUe9JZY",
         "object": {
             "payment": {
-                "amount_money": {"amount": 100, "currency": "USD"},
-                "approved_money": {"amount": 100, "currency": "USD"},
+                "id": "hYy9pRFVxpDsO1FB05SunFWUe9JZY",
+                "created_at": "2020-11-22T21:16:51.086Z",
+                "updated_at": "2020-11-22T21:19:00.831Z",
+                "amount_money": {"amount": 100, "currency": "GBP"},
+                "status": "COMPLETED",
+                "delay_duration": "PT168H",
+                "source_type": "CARD",
                 "card_details": {
-                    "avs_status": "AVS_ACCEPTED",
+                    "status": "CAPTURED",
                     "card": {
-                        "bin": "540988",
                         "card_brand": "MASTERCARD",
-                        "card_type": "CREDIT",
+                        "last_4": "9029",
                         "exp_month": 11,
                         "exp_year": 2022,
                         "fingerprint": "sq-1-Tvruf3vPQxlvI6n0IcKYfBukrcv6IqWr8UyBdViWXU2yzGn5VMJvrsHMKpINMhPmVg",
-                        "last_4": "9029",
+                        "card_type": "CREDIT",
                         "prepaid_type": "NOT_PREPAID",
+                        "bin": "540988",
                     },
+                    "entry_method": "KEYED",
+                    "cvv_status": "CVV_ACCEPTED",
+                    "avs_status": "AVS_ACCEPTED",
+                    "statement_description": "SQ *DEFAULT TEST ACCOUNT",
                     "card_payment_timeline": {
                         "authorized_at": "2020-11-22T21:16:51.198Z",
                         "captured_at": "2020-11-22T21:19:00.832Z",
                     },
-                    "cvv_status": "CVV_ACCEPTED",
-                    "entry_method": "KEYED",
-                    "statement_description": "SQ *DEFAULT TEST ACCOUNT",
-                    "status": "CAPTURED",
                 },
-                "created_at": "2020-11-22T21:16:51.086Z",
-                "delay_action": "CANCEL",
-                "delay_duration": "PT168H",
-                "delayed_until": "2020-11-29T21:16:51.086Z",
-                "id": "hYy9pRFVxpDsO1FB05SunFWUe9JZY",
                 "location_id": "LMHPTEST",
                 "order_id": "03O3USaPaAaFnI6kkwB1JxGgBsUZY",
-                "receipt_number": "hYy9",
-                "receipt_url": "https://squareup.com/receipt/preview/hYy9pRFVxpDsO1FB05SunFWU11111",
                 "risk_evaluation": {
                     "created_at": "2020-11-22T21:16:51.198Z",
                     "risk_level": "NORMAL",
                 },
-                "source_type": "CARD",
-                "status": "COMPLETED",
-                "total_money": {"amount": 100, "currency": "USD"},
-                "updated_at": "2020-11-22T21:19:00.831Z",
+                "total_money": {"amount": 100, "currency": "GBP"},
+                "approved_money": {"amount": 100, "currency": "GBP"},
+                "receipt_number": "hYy9",
+                "receipt_url": "https://squareup.com/receipt/preview/hYy9pRFVxpDsO1FB05SunFWUe9JZY",
+                "delay_action": "CANCEL",
+                "delayed_until": "2020-11-29T21:16:51.086Z",
                 "version_token": "bhC3b8qKJvNDdxqKzXaeDsAjS1oMFuAKxGgT32HbE6S6o",
             }
         },
@@ -98,36 +98,36 @@ TEST_PAYMENT_UPDATE_PAYLOAD = {
 }
 
 TEST_UPDATE_REFUND_PAYLOAD = {
-    "merchant_id": "ML8M1AQ1GQG2K",
+    "merchant_id": "6SSW7HV8K2ST5",
     "type": "refund.updated",
-    "event_id": "e4f5bcd7-6c4d-4c29-8637-115738d759e1",
-    "created_at": "2021-12-13T21:01:40.805Z",
+    "event_id": "bc316346-6691-4243-88ed-6d651a0d0c47",
+    "created_at": "2020-02-06T22:14:16.421Z",
     "data": {
         "type": "refund",
-        "id": "xwo62Kt4WIOAh9LrczZxzbQbIZCZY_RVpsRbbUP3LmklUotq0kfiJnn1jDOqhNHymoqa6iDpd",
+        "id": "KkAkhdMsgzn59SM8A89WgKwekxLZY_ptNBVqHYxt5gAdfcobBe4u1AZsXhoz06KTtuq9Ls24P",
         "object": {
             "refund": {
+                "id": "KkAkhdMsgzn59SM8A89WgKwekxLZY_ptNBVqHYxt5gAdfcobBe4u1AZsXhoz06KTtuq9Ls24P",
+                "created_at": "2020-02-06T21:27:41.836Z",
+                "updated_at": "2020-02-06T22:14:16.381Z",
                 "amount_money": {"amount": 100, "currency": "GBP"},
-                "created_at": "2021-12-13T21:01:32.340Z",
-                "id": "xwo62Kt4WIOAh9LrczZxzbQbIZCZY_RVpsRbbUP3LmklUotq0kfiJnn1jDOqhNHymoqa6iDpd",
-                "location_id": "LMHPTEST",
-                "order_id": "tsjSHOoLci0yftfu8Z5BYFO2Me4F",
-                "payment_id": "xwo62Kt4WIOAh9LrczZxzbQbIZCZY",
+                "status": "COMPLETED",
                 "processing_fee": [
                     {
-                        "amount_money": {"amount": -2, "currency": "GBP"},
-                        "effective_at": "2021-04-15T13:27:08.000Z",
+                        "effective_at": "2020-02-06T23:27:31.000Z",
                         "type": "INITIAL",
+                        "amount_money": {"amount": -5, "currency": "GBP"},
                     },
                     {
-                        "amount_money": {"amount": -5, "currency": "GBP"},
-                        "effective_at": "2021-04-15T13:27:08.000Z",
+                        "effective_at": "2020-02-06T23:28:31.000Z",
                         "type": "INITIAL",
+                        "amount_money": {"amount": -2, "currency": "GBP"},
                     },
                 ],
-                "status": "COMPLETED",
-                "updated_at": "2021-12-13T21:01:35.266Z",
-                "version": 19,
+                "location_id": "LMHPTEST",
+                "order_id": "haOyDuHiqtAXMk0d8pDKXpL7Jg4F",
+                "payment_id": "KkAkhdMsgzn59SM8A89WgKwekxLZY",
+                "version": 10,
             }
         },
     },
@@ -316,7 +316,7 @@ def test_handle_refund_update_webhook(rest_client):
     booking = BookingFactory()
     payment = TransactionFactory(
         pay_object=booking,
-        provider_transaction_id="xwo62Kt4WIOAh9LrczZxzbQbIZCZY_RVpsRbbUP3LmklUotq0kfiJnn1jDOqhNHymoqa6iDpd",
+        provider_transaction_id="KkAkhdMsgzn59SM8A89WgKwekxLZY_ptNBVqHYxt5gAdfcobBe4u1AZsXhoz06KTtuq9Ls24P",
         provider_fee=0,
         type=Transaction.Type.REFUND,
         provider_name=SquareRefund.name,

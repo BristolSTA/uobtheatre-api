@@ -37,9 +37,8 @@ INSTALLED_APPS = (
     "autoslug",  # Auto slug
     "graphene_django",  # Graphql
     "guardian",
-    "django_tiptap",
+    "django_tiptap_editor",
     "rest_framework",
-    "django_inlinecss",
     "django_celery_results",
     "nonrelated_inlines",
     # Your apps
@@ -132,10 +131,10 @@ USE_I18N = False
 USE_TZ = True
 LOGIN_REDIRECT_URL = "/"
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
+# Static files to be collected by default (CSS, JavaScript, Images)
+# https://docs.djangoproject.com/en/6.0/howto/static-files/
 STATIC_ROOT = os.path.normpath(join(BASE_DIR, "staticfiles"))
-STATICFILES_DIRS: List[str] = [os.path.normpath(join(BASE_DIR, "static"))]
+STATICFILES_DIRS: List[str] = []
 STATIC_URL = "static/"
 STATICFILES_FINDERS = (
     "django.contrib.staticfiles.finders.FileSystemFinder",

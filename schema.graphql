@@ -791,7 +791,7 @@ type AddressNode implements Node {
   city: String!
   postcode: String!
 
-  """A what3words address, taking the form '///word.word.word'"""
+  """A what3words address, taking the form 'word.word.word'"""
   what3words: String
   latitude: Float
   longitude: Float

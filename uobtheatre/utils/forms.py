@@ -4,8 +4,8 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.forms.fields import FileField
 from django.forms.models import ModelForm
-from django_tiptap.fields import TipTapTextFormField
 
+from uobtheatre.fields import TipTapTextFormField
 from uobtheatre.mail.composer import MailComposer, MassMailComposer
 from uobtheatre.users.models import User
 

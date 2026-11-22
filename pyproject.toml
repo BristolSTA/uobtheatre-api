@@ -92,7 +92,7 @@ django_settings_module = "config.settings.common"
 
 # pytlint
 
-[tool.pylint.master]
+[tool.pylint.main]
 extension-pkg-whitelist = ""
 fail-under = 10
 ignore = ["migrations", "celery_migrations", "graphql_auth"]

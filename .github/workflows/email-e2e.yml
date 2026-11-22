@@ -1,0 +1,72 @@
+name: E2E Email
+
+# Tests in a production-like environment using Testmail.app to verify email delivery.
+# This workflow uses deployment secrets, so it must not run against pull requests.
+
+on:
+  push:
+    branches: [ main, dev ]
+
+permissions:
+  contents: read
+
+jobs:
+  email:
+    runs-on: ubuntu-latest
+    env:
+      BASE_URL: https://uobtheatre.com
+      EMAIL_ENABLED: true
+      AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_STORAGE_BUCKET_NAME: ${{ secrets.AWS_STORAGE_BUCKET_NAME }}
+      CELERY_QUEUE_PREFIX: ${{ secrets.CELERY_QUEUE_PREFIX }}
+
+    steps:
+      - name: Checkout 🛎
+        uses: actions/checkout@v4
+
+      - name: Build & run production services 🏗
+        run: docker compose -f production.yml up -d --build
+
+      - name: Run migrations 🧪
+        run: >
+          docker compose -f production.yml run --rm
+          -e BASE_URL="$BASE_URL"
+          -e EMAIL_ENABLED="$EMAIL_ENABLED"
+          -e AWS_DEFAULT_REGION="$AWS_DEFAULT_REGION"
+          -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID"
+          -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY"
+          -e AWS_STORAGE_BUCKET_NAME="$AWS_STORAGE_BUCKET_NAME"
+          -e CELERY_QUEUE_PREFIX="$CELERY_QUEUE_PREFIX"
+          api
+          python manage.py migrate
+      
+      - name: Run email smoke tests 🧪
+        env:
+          TESTMAIL_API_KEY: ${{ secrets.TESTMAIL_API_KEY }}
+          TESTMAIL_NAMESPACE: ${{ secrets.TESTMAIL_NAMESPACE }}
+          TESTMAIL_TAG: ${{ github.run_id }}-${{ github.run_attempt }}
+        run: >
+          docker compose -f production.yml run --rm
+          -e BASE_URL="$BASE_URL"
+          -e EMAIL_ENABLED="$EMAIL_ENABLED"
+          -e AWS_DEFAULT_REGION="$AWS_DEFAULT_REGION"
+          -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID"
+          -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY"
+          -e AWS_STORAGE_BUCKET_NAME="$AWS_STORAGE_BUCKET_NAME"
+          -e CELERY_QUEUE_PREFIX="$CELERY_QUEUE_PREFIX"
+          -e TESTMAIL_API_KEY="$TESTMAIL_API_KEY"
+          -e TESTMAIL_NAMESPACE="$TESTMAIL_NAMESPACE"
+          -e TESTMAIL_TAG="$TESTMAIL_TAG"
+          api
+          python manage.py test_email
+          --namespace "$TESTMAIL_NAMESPACE"
+          --tag "$TESTMAIL_TAG"
+          --expect-aws
+          --check-receipt
+
+      - name: Shut down services and remove secrets 🧹
+        if: always()
+        run: |
+          docker compose -f production.yml down --volumes --remove-orphans

@@ -54,19 +54,19 @@ def test_timezone_with_coordinates():
     "what3words, valid, error_message",
     [
         (None, True, None),
-        ("///word.word.word", True, None),
+        ("word.word.word", True, None),
         (
-            "word.word.word",
+            "///word.word.word",
             False,
-            "The what3words address must start with '///'.",
+            "The what3words address must not start with '///'.",
         ),
         (
-            "///word.word.word.word",
+            "word.word.word.word",
             False,
             "The what3words address must contain 3 words separated by dots.",
         ),
         (
-            "///word.word",
+            "word.word",
             False,
             "The what3words address must contain 3 words separated by dots.",
         ),

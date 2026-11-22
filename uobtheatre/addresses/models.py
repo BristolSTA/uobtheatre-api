@@ -19,7 +19,7 @@ class Address(models.Model):
         max_length=64,
         blank=True,
         null=True,
-        help_text="A what3words address, taking the form '///word.word.word'",
+        help_text="A what3words address, taking the form 'word.word.word'",
     )
     latitude = models.FloatField(blank=True, null=True)
     longitude = models.FloatField(blank=True, null=True)
@@ -38,11 +38,11 @@ class Address(models.Model):
         """Validate the model data on save"""
         super().clean()
 
-        # Check that the what3words address is valid (starts with /// and has 3 words separated by dots)
+        # Check that the what3words address is valid (just the words and has 3 words separated by dots)
         if self.what3words:
-            if not self.what3words.startswith("///"):
+            if self.what3words.startswith("///"):
                 raise ValidationError(
-                    "The what3words address must start with '///'."
+                    "The what3words address must not start with '///'."
                 )
             if len(self.what3words.split(".")) != 3:
                 raise ValidationError(

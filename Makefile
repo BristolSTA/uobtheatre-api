@@ -42,13 +42,10 @@ setup-devcontainer:
 	make migrate
 
 up: ## Run background
-	docker compose up -d api postgres celery celery-beat redis
+	docker compose up -d api postgres celery redis
 
 up-v: ## Run verbose
 	docker compose up
-
-up-adminer:  ## Up adminer on port 8001
-	docker compose up -d adminer
 
 down: ## Down
 	docker compose down
@@ -109,6 +106,9 @@ test-v: ## Run verbose unit tests in docker container, use test_path to specify 
 test-system: ## Run system tests in docker container
 	$(COMMAND_PREFIX) pytest --cov uobtheatre -m "system_test"
 
+test-email-e2e: ## Run email smoke tests in docker container
+	$(COMMAND_PREFIX) python manage.py test_email $(ARGS)
+
 coverage: ## Generate test coverage report
 	$(COMMAND_PREFIX) coverage run --source=uobtheatre -m pytest -m "not square_integration"
 	$(COMMAND_PREFIX) coverage html
@@ -147,11 +147,6 @@ clean-postgres-migrate: ## Apply clean migrations to postgres
 
 clean-migrations: ## Do the migrations from scratch
 	make clean-app-migrations
-	make clean-postgres-migrate
-
-clean-migrations-tom: ## Do the migrations from scratch
-	find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
-	docker compose run --rm --user "$$(id -u):$$(id -g)" api python manage.py makemigrations
 	make clean-postgres-migrate
 
 mypy: ## Type checking - mypy

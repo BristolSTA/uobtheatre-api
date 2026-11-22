@@ -190,6 +190,7 @@ def test_square_online_pay_success(mock_square, with_sca_token):
             amount_money={"amount": 20, "currency": "GBP"},
             reference_id="abcd",
             verification_token="verify_token",
+            note=booking.display_name,
         )
     else:
         mock.assert_called_once_with(
@@ -197,6 +198,7 @@ def test_square_online_pay_success(mock_square, with_sca_token):
             source_id="nonce",
             amount_money={"amount": 20, "currency": "GBP"},
             reference_id="abcd",
+            note=booking.display_name,
         )
 
     # Assert a payment of the correct type is created
