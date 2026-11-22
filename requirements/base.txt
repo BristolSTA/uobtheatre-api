@@ -77,5 +77,7 @@ pytz==2025.2
 types-pytz==2025.2.0.20250809
 
 #=== Task Queue ===#
+celery==5.6.3
+celery[sqs]==5.6.3
 django-celery-results==2.6.0
 redis==6.4.0

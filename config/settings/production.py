@@ -82,8 +82,14 @@ EMAIL_BACKEND = (
     else "django.core.mail.backends.console.EmailBackend"
 )
 
+from kombu.utils.url import safequote
 
-SQS_BROKER_URL = f"sqs://{AWS_ACCESS_KEY_ID}:{AWS_SECRET_ACCESS_KEY}@"
+safequote_aws_access_key_id = safequote(AWS_ACCESS_KEY_ID)
+safequote_aws_secret_access_key = safequote(AWS_SECRET_ACCESS_KEY)
+
+SQS_BROKER_URL = (
+    f"sqs://{safequote_aws_access_key_id}:{safequote_aws_secret_access_key}@"
+)
 CELERY_BROKER_URL = SQS_BROKER_URL
 CELERY_BROKER_TRANSPORT_OPTIONS = {
     "queue_name_prefix": env("CELERY_QUEUE_PREFIX"),
