@@ -1,3 +1,4 @@
+import uuid
 from unittest.mock import patch
 
 import pytest
@@ -7,6 +8,7 @@ from graphql_relay.node.node import to_global_id
 from uobtheatre.bookings.test.factories import BookingFactory
 from uobtheatre.graphql_auth.models import UserStatus
 from uobtheatre.users.abilities import OpenAdmin, OpenBoxoffice
+from uobtheatre.users.models import User
 from uobtheatre.users.test.factories import UserFactory
 
 
@@ -321,3 +323,152 @@ def test_user_schema_abilities(
     permissions = response["data"]["me"]["permissions"]
     assert ("boxoffice_open" in permissions) == user_can_open_boxoffice
     assert ("admin_open" in permissions) == user_can_open_admin
+
+
+REGISTER_MUTATION = """
+    mutation {
+      register(
+        email: "%s"
+        password1: "strongpassword"
+        password2: "strongpassword"
+        firstName: "Mike"
+        lastName: "Smith"
+        turnstileToken: "XXXX.DUMMY.TOKEN.XXXX"
+      ) {
+        success
+      }
+    }
+    """
+
+LOGIN_MUTATION = """
+    mutation {
+      login(email: "%s", password: "%s") {
+        success
+        user {
+          email
+        }
+      }
+    }
+    """
+
+SECONDARY_EMAIL_MUTATION = """
+    mutation {
+      sendSecondaryEmailActivation(email: "%s", password: "strongpassword") {
+        success
+      }
+    }
+    """
+
+
+def make_verified_user(email, password="strongpassword", **kwargs):
+    """Make a verified user that can log in with the given password"""
+    user = UserFactory(email=email, **kwargs)
+    user.set_password(password)
+    user.save()
+    user.status.verified = True
+    user.status.save()
+    return user
+
+
+@override_settings(TURNSTILE_SECRET="1x0000000000000000000000000000000AA")
+@pytest.mark.django_db
+def test_register_stores_email_in_lower_case(gql_client):
+    response = gql_client.execute(REGISTER_MUTATION % "Mike@Example.com")
+
+    assert response["data"]["register"]["success"] is True
+    assert User.objects.get(first_name="Mike").email == "mike@example.com"
+
+
+@override_settings(TURNSTILE_SECRET="1x0000000000000000000000000000000AA")
+@pytest.mark.django_db
+def test_register_rejects_email_that_only_differs_by_case(gql_client):
+    first = gql_client.execute(REGISTER_MUTATION % "Mike@example.com")
+    second = gql_client.execute(REGISTER_MUTATION % "mike@example.com")
+
+    assert first["data"]["register"]["success"] is True
+    assert second["data"]["register"]["success"] is False
+    assert User.objects.filter(email__iexact="mike@example.com").count() == 1
+
+
+@override_settings(TURNSTILE_SECRET="1x0000000000000000000000000000000AA")
+@pytest.mark.django_db
+def test_register_rejects_case_variant_of_existing_mixed_case_email(
+    gql_client,
+):
+    # Accounts made before emails were lower cased keep the case they were typed in
+    UserFactory(email="Mike@example.com")
+
+    response = gql_client.execute(REGISTER_MUTATION % "mike@example.com")
+
+    assert response["data"]["register"]["success"] is False
+    assert User.objects.filter(email__iexact="mike@example.com").count() == 1
+
+
+@pytest.mark.django_db
+def test_login_ignores_email_case(gql_client):
+    make_verified_user("mike@example.com")
+
+    response = gql_client.execute(
+        LOGIN_MUTATION % ("Mike@Example.com", "strongpassword")
+    )
+
+    assert response["data"]["login"]["success"] is True
+    assert response["data"]["login"]["user"]["email"] == "mike@example.com"
+
+
+@pytest.mark.django_db
+def test_login_prefers_exact_email_match(gql_client):
+    # Two old accounts that only differ by case. A case-insensitive lookup on
+    # its own would find the one with the lower id first.
+    make_verified_user("mike@example.com", "password-one", id=uuid.UUID(int=1))
+    make_verified_user("Mike@example.com", "password-two", id=uuid.UUID(int=2))
+
+    response = gql_client.execute(
+        LOGIN_MUTATION % ("Mike@example.com", "password-two")
+    )
+
+    assert response["data"]["login"]["success"] is True
+    assert response["data"]["login"]["user"]["email"] == "Mike@example.com"
+
+
+@pytest.mark.django_db
+def test_password_reset_email_ignores_email_case(gql_client, mailoutbox):
+    UserFactory(email="mike@example.com")
+
+    response = gql_client.execute("""
+        mutation {
+          sendPasswordResetEmail(email: "Mike@Example.com") {
+            success
+          }
+        }
+        """)
+
+    assert response["data"]["sendPasswordResetEmail"]["success"] is True
+    assert len(mailoutbox) == 1
+
+
+@pytest.mark.django_db
+def test_secondary_email_activation_lower_cases_email(gql_client, mailoutbox):
+    gql_client.login(make_verified_user("mike@example.com"))
+
+    response = gql_client.execute(
+        SECONDARY_EMAIL_MUTATION % "Mike.New@Example.com"
+    )
+
+    assert response["data"]["sendSecondaryEmailActivation"]["success"] is True
+    assert mailoutbox[0].to == ["mike.new@example.com"]
+
+
+@pytest.mark.django_db
+def test_secondary_email_activation_rejects_case_variant_of_used_email(
+    gql_client, mailoutbox
+):
+    UserFactory(email="taken@example.com")
+    gql_client.login(make_verified_user("mike@example.com"))
+
+    response = gql_client.execute(
+        SECONDARY_EMAIL_MUTATION % "Taken@Example.com"
+    )
+
+    assert response["data"]["sendSecondaryEmailActivation"]["success"] is False
+    assert len(mailoutbox) == 0

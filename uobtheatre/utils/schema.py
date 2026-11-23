@@ -34,6 +34,7 @@ from uobtheatre.utils.exceptions import (
     SafeMutation,
 )
 from uobtheatre.utils.models import PermissionableModel
+from uobtheatre.utils.utils import get_by_email
 
 
 class CustomDjangoObjectType(DjangoObjectType):
@@ -410,7 +411,7 @@ class AssignPermissionsMutation(SafeMutation, AuthRequiredMixin):
 
     @classmethod
     def subject_user(cls, email):
-        return User.objects.filter(email=email).first()
+        return get_by_email(User.objects.all(), email)
 
     @classmethod
     def permissions_delta(

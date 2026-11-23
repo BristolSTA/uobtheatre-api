@@ -11,6 +11,8 @@ from graphene.types.generic import GenericScalar
 from graphql_jwt.decorators import token_auth
 from graphql_jwt.exceptions import JSONWebTokenError, JSONWebTokenExpired
 
+from uobtheatre.utils.utils import normalise_email
+
 from .bases import SuccessErrorsOutput
 from .constants import Messages, TokenAction
 from .decorators import (
@@ -595,6 +597,7 @@ class SendSecondaryEmailActivationMixin(SuccessErrorsOutput):
             email = kwargs.get("email")
             f = EmailForm({"email": email})
             if f.is_valid():
+                email = normalise_email(f.cleaned_data["email"])
                 user = info.context.user
                 if async_email_func:
                     async_email_func(

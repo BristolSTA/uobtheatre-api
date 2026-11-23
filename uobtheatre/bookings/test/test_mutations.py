@@ -1,6 +1,7 @@
 # pylint: disable=too-many-lines
 
 
+import uuid
 from datetime import timedelta
 from unittest.mock import patch
 
@@ -461,6 +462,89 @@ def test_create_booking_with_new_taget_user(gql_client):
     booking = Booking.objects.first()
     assert booking.user.email == "abc@email.com"
     assert str(booking.creator.id) == str(gql_client.user.id)
+
+
+def comp_booking_request(performance, user_email):
+    """Mutation that creates a comp booking for the user with the given email"""
+    return """
+        mutation {
+          booking(
+              input: {
+                performance: "%s"
+                userEmail: "%s"
+                adminDiscountPercentage: 1
+              }
+          ) {
+            booking {
+              id
+            }
+            success
+          }
+        }
+    """ % (to_global_id("PerformanceNode", performance.id), user_email)
+
+
+@pytest.mark.django_db
+def test_create_comp_booking_finds_target_user_whatever_the_email_case(
+    gql_client,
+):
+    UserFactory(email="abc@email.com")
+    psg = PerformanceSeatingFactory()
+    assign_perm(
+        "productions.comp_tickets",
+        gql_client.login().user,
+        psg.performance.production,
+    )
+
+    response = gql_client.execute(
+        comp_booking_request(psg.performance, "ABC@Email.com")
+    )
+
+    assert response["data"]["booking"]["success"] is True
+    assert Booking.objects.get().user.email == "abc@email.com"
+    assert User.objects.filter(email__iexact="abc@email.com").count() == 1
+
+
+@pytest.mark.django_db
+def test_create_comp_booking_stores_new_target_user_email_in_lower_case(
+    gql_client,
+):
+    psg = PerformanceSeatingFactory()
+    assign_perm(
+        "productions.comp_tickets",
+        gql_client.login().user,
+        psg.performance.production,
+    )
+
+    response = gql_client.execute(
+        comp_booking_request(psg.performance, "New.Person@Email.com")
+    )
+
+    assert response["data"]["booking"]["success"] is True
+    assert Booking.objects.get().user.email == "new.person@email.com"
+
+
+@pytest.mark.django_db
+def test_create_comp_booking_prefers_exact_target_user_email_match(
+    gql_client,
+):
+    # Two old accounts that only differ by case. A case-insensitive lookup on
+    # its own would find the one with the lower id first.
+    UserFactory(email="abc@email.com", id=uuid.UUID(int=1))
+    UserFactory(email="ABC@email.com", id=uuid.UUID(int=2))
+    psg = PerformanceSeatingFactory()
+    assign_perm(
+        "productions.comp_tickets",
+        gql_client.login().user,
+        psg.performance.production,
+    )
+
+    response = gql_client.execute(
+        comp_booking_request(psg.performance, "ABC@email.com")
+    )
+
+    assert response["data"]["booking"]["success"] is True
+    assert Booking.objects.get().user.email == "ABC@email.com"
 
 
 @pytest.mark.django_db

@@ -6,11 +6,23 @@ from django.contrib.auth.forms import (
     UsernameField,
 )
 
+from uobtheatre.utils.utils import normalise_email
+
 from .settings import graphql_auth_settings as app_settings
 from .utils import flat_dict
 
 
-class RegisterForm(UserCreationForm):
+class NormaliseEmailMixin:
+    """
+    Store the email in lower case, so that the same address
+    typed with a different case does not make a second account.
+    """
+
+    def clean_email(self):
+        return normalise_email(self.cleaned_data["email"])
+
+
+class RegisterForm(NormaliseEmailMixin, UserCreationForm):
     class Meta:
         model = get_user_model()
         fields = flat_dict(app_settings.REGISTER_MUTATION_FIELDS) + flat_dict(
@@ -38,7 +50,7 @@ class UpdateAccountForm(UserChangeForm):
             self.fields[key].required = False
 
 
-class PasswordLessRegisterForm(UserCreationForm):
+class PasswordLessRegisterForm(NormaliseEmailMixin, UserCreationForm):
     """
     A RegisterForm with optional password inputs.
     """

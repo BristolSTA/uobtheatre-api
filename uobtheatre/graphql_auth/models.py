@@ -135,7 +135,7 @@ class UserStatus(models.Model):
     @classmethod
     def email_is_free(cls, email) -> bool:
         return not UserModel._default_manager.filter(
-            models.Q(**{UserModel.EMAIL_FIELD: email}) | models.Q(status__secondary_email=email)  # type: ignore
+            models.Q(**{f"{UserModel.EMAIL_FIELD}__iexact": email}) | models.Q(status__secondary_email__iexact=email)  # type: ignore
         ).exists()
 
     @classmethod
