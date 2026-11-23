@@ -24,7 +24,7 @@ django-configurations==2.5.1
 django-environ==0.12.0  # https://github.com/joke2k/django-environ
 
 # Spreadsheet generation
-xlsxwriter==3.2.9
+xlsxwriter==3.3.3
 
 # Text formatting
 html2text==2025.4.15
